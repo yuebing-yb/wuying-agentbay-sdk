@@ -42,7 +42,7 @@ print(f"2 + 3 = {result}")
 `
 
 	fmt.Println("\n=== Running Python Code ===")
-	codeResult, err := session.Code.RunCode(pythonCode, "python", 1000)
+	codeResult, err := session.Code.Run(pythonCode, "python", 1000)
 	if err != nil {
 		log.Printf("Failed to run Python code: %v", err)
 	} else {
@@ -59,7 +59,7 @@ console.log("2 + 3 =", result);
 `
 
 	fmt.Println("\n=== Running JavaScript Code ===")
-	jsResult, err := session.Code.RunCode(jsCode, "javascript", 30)
+	jsResult, err := session.Code.Run(jsCode, "javascript", 30)
 	if err != nil {
 		log.Printf("Failed to run JavaScript code: %v", err)
 	} else {
@@ -70,7 +70,7 @@ console.log("2 + 3 =", result);
 
 	// Demonstrate command execution (should still work)
 	fmt.Println("\n=== Running Shell Command ===")
-	cmdResult, err := session.Command.ExecuteCommand("echo 'Hello from shell!'", 5000)
+	cmdResult, err := session.Command.Run("echo 'Hello from shell!'", 5000)
 	if err != nil {
 		log.Printf("Failed to execute command: %v", err)
 	} else {

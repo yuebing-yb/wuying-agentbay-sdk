@@ -352,6 +352,55 @@ export class FileSystem {
   }
 
   /**
+   * Alias of readFile().
+   */
+  async read(path: string): Promise<FileContentResult> {
+    return await this.readFile(path);
+  }
+
+  /**
+   * Alias of writeFile().
+   */
+  async write(path: string, content: string, mode: string = "overwrite"): Promise<BoolResult> {
+    return await this.writeFile(path, content, mode);
+  }
+
+  /**
+   * Alias of listDirectory().
+   */
+  async list(path: string): Promise<DirectoryListResult> {
+    return await this.listDirectory(path);
+  }
+
+  /**
+   * Alias of listDirectory().
+   */
+  async ls(path: string): Promise<DirectoryListResult> {
+    return await this.listDirectory(path);
+  }
+
+  /**
+   * Alias of deleteFile().
+   */
+  async delete(path: string): Promise<BoolResult> {
+    return await this.deleteFile(path);
+  }
+
+  /**
+   * Alias of deleteFile().
+   */
+  async remove(path: string): Promise<BoolResult> {
+    return await this.deleteFile(path);
+  }
+
+  /**
+   * Alias of deleteFile().
+   */
+  async rm(path: string): Promise<BoolResult> {
+    return await this.deleteFile(path);
+  }
+
+  /**
    * Edits a file by replacing occurrences of oldText with newText.
    * Corresponds to Python's edit_file() method
    *

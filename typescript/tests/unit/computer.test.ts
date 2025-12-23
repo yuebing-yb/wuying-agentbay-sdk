@@ -307,7 +307,7 @@ describe('Computer', () => {
       const mockResult = {
         success: true,
         requestId: 'test-123',
-        data:'https://example.com/screenshot.png'
+        data: 'https://example.com/screenshot.png'
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 

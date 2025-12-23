@@ -171,6 +171,50 @@ class TestAsyncFileSystem(unittest.TestCase):
             "delete_file", {"path": "/path/to/file.txt"}
         )
 
+    @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
+    @pytest.mark.sync
+    def test_read_alias_calls_read_file(self, mock_get_file_info):
+        file_info_result = FileInfoResult(
+            request_id="request-123",
+            success=True,
+            file_info={"size": 0, "isDirectory": False},
+        )
+        mock_get_file_info.return_value = file_info_result
+
+        result = self.fs.read("/path/to/file.txt")
+        self.assertIsInstance(result, FileContentResult)
+        self.assertTrue(result.success)
+
+    @patch("agentbay._sync.filesystem.FileSystem._write_file_chunk")
+    @pytest.mark.sync
+    def test_write_alias_calls_write_file(self, mock_write_file_chunk):
+        mock_write_file_chunk.return_value = BoolResult(
+            request_id="request-123", success=True, data=True
+        )
+        result = self.fs.write("/path/to/file.txt", "content")
+        self.assertIsInstance(result, BoolResult)
+        self.assertTrue(result.success)
+
+    @pytest.mark.sync
+    def test_list_alias_calls_list_directory(self):
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data="[FILE] a.txt",
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+        result = self.fs.list("/path/to")
+        self.assertIsInstance(result, DirectoryListResult)
+        self.assertTrue(result.success)
+
+    @pytest.mark.sync
+    def test_delete_alias_calls_delete_file(self):
+        mock_result = McpToolResult(request_id="request-123", success=True, data="True")
+        self.session.call_mcp_tool.return_value = mock_result
+        result = self.fs.delete("/path/to/file.txt")
+        self.assertIsInstance(result, BoolResult)
+        self.assertTrue(result.success)
+
     @pytest.mark.sync
     def test_delete_file_error(self):
         """

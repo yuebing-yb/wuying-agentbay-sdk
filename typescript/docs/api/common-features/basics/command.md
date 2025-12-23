@@ -16,9 +16,32 @@ Handles command execution operations in the AgentBay cloud environment.
 
 ### Methods
 
+- [exec](#exec)
 - [executeCommand](#executecommand)
+- [run](#run)
 
 ## Methods
+
+### exec
+
+▸ **exec**(`command`, `timeoutMs?`, `cwd?`, `envs?`): `Promise`\<`CommandResult`\>
+
+Alias of executeCommand().
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `command` | `string` | `undefined` |
+| `timeoutMs` | `number` | `1000` |
+| `cwd?` | `string` | `undefined` |
+| `envs?` | `Record`\<`string`, `string`\> | `undefined` |
+
+#### Returns
+
+`Promise`\<`CommandResult`\>
+
+___
 
 ### executeCommand
 
@@ -83,6 +106,27 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### run
+
+▸ **run**(`command`, `timeoutMs?`, `cwd?`, `envs?`): `Promise`\<`CommandResult`\>
+
+Alias of executeCommand().
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `command` | `string` | `undefined` |
+| `timeoutMs` | `number` | `1000` |
+| `cwd?` | `string` | `undefined` |
+| `envs?` | `Record`\<`string`, `string`\> | `undefined` |
+
+#### Returns
+
+`Promise`\<`CommandResult`\>
 
 ## Best Practices
 

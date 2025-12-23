@@ -121,6 +121,27 @@ class Session:
 
         self.agent = Agent(self)
 
+    @property
+    def fs(self) -> FileSystem:
+        """
+        Alias of file_system.
+        """
+        return self.file_system
+
+    @property
+    def filesystem(self) -> FileSystem:
+        """
+        Alias of file_system.
+        """
+        return self.file_system
+
+    @property
+    def files(self) -> FileSystem:
+        """
+        Alias of file_system.
+        """
+        return self.file_system
+
     def _get_api_key(self) -> str:
         """Internal method to get the API key for this session."""
         return self.agent_bay.api_key

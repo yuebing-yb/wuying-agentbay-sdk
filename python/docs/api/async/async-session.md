@@ -37,6 +37,33 @@ AsyncSession represents a session in the AgentBay cloud environment.
 def __init__(self, agent_bay: "AsyncAgentBay", session_id: str)
 ```
 
+### fs
+
+```python
+@property
+def fs() -> AsyncFileSystem
+```
+
+Alias of file_system.
+
+### filesystem
+
+```python
+@property
+def filesystem() -> AsyncFileSystem
+```
+
+Alias of file_system.
+
+### files
+
+```python
+@property
+def files() -> AsyncFileSystem
+```
+
+Alias of file_system.
+
 ### delete
 
 ```python

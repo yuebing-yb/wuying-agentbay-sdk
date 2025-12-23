@@ -28,7 +28,7 @@ async def main():
         print(f"Session: {session.session_id}\n")
 
         # Simple command with new return format
-        result = await session.command.execute_command("echo 'Hello'")
+        result = await session.command.run("echo 'Hello'")
         print(f"1. Simple command:")
         print(f"   Output: {result.output}")
         print(f"   Exit Code: {result.exit_code}")
@@ -36,20 +36,20 @@ async def main():
         print()
 
         # Piped commands (still supported)
-        result = await session.command.execute_command("echo 'test' | wc -c")
+        result = await session.command.run("echo 'test' | wc -c")
         print(f"2. Piped commands:")
         print(f"   Output: {result.output.strip()}")
         print()
 
         # Working directory with cwd parameter
-        result = await session.command.execute_command("pwd", cwd="/tmp")
+        result = await session.command.run("pwd", cwd="/tmp")
         print(f"3. Working directory (using cwd parameter):")
         print(f"   Command: pwd (cwd=/tmp)")
         print(f"   Current directory: {result.stdout.strip()}")
         print()
 
         # Environment variables with envs parameter
-        result = await session.command.execute_command(
+        result = await session.command.run(
             "echo $TEST_VAR",
             envs={"TEST_VAR": "test_value"}
         )
@@ -60,7 +60,7 @@ async def main():
         print()
 
         # Error handling with exit_code, stderr, and trace_id
-        result = await session.command.execute_command("ls /non_existent_12345")
+        result = await session.command.run("ls /non_existent_12345")
         print(f"5. Error handling:")
         print(f"   Command: ls /non_existent_12345")
         print(f"   Success: {result.success}")

@@ -248,4 +248,26 @@ export class Code {
       };
     }
   }
+
+  /**
+   * Alias of runCode().
+   */
+  async run(
+    code: string,
+    language: string,
+    timeoutS = 60
+  ): Promise<CodeExecutionResult> {
+    return await this.runCode(code, language, timeoutS);
+  }
+
+  /**
+   * Alias of runCode().
+   */
+  async execute(
+    code: string,
+    language: string,
+    timeoutS = 60
+  ): Promise<CodeExecutionResult> {
+    return await this.runCode(code, language, timeoutS);
+  }
 }

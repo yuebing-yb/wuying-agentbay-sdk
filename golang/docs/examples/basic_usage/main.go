@@ -61,7 +61,7 @@ func main() {
 
 	// Write a file
 	fmt.Println("\nWriting a file...")
-	writeResult, err := session.FileSystem.WriteFile("/tmp/test_file.txt", "Hello AgentBay SDK!", "overwrite")
+	writeResult, err := session.Fs().Write("/tmp/test_file.txt", "Hello AgentBay SDK!", "overwrite")
 	if err != nil {
 		fmt.Printf("Error writing file: %v\n", err)
 	} else {
@@ -71,7 +71,7 @@ func main() {
 
 	// Read a file
 	fmt.Println("\nReading a file...")
-	fileResult, err := session.FileSystem.ReadFile("/etc/hosts")
+	fileResult, err := session.Fs().Read("/etc/hosts")
 	if err != nil {
 		fmt.Printf("Error reading file: %v\n", err)
 	} else {

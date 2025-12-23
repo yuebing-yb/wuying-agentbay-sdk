@@ -304,5 +304,47 @@ describe('Command', () => {
       });
     });
   });
+
+  describe('aliases', () => {
+    it('run() should call executeCommand()', async () => {
+      const mockResult = {
+        requestId: 'request-123',
+        success: true,
+        data: 'ok',
+        errorMessage: undefined,
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      const result = await (command as any).run('echo test', 2000, '/tmp', {
+        A: 'B',
+      });
+
+      expect(result.success).toBe(true);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
+        command: 'echo test',
+        timeout_ms: 2000,
+        cwd: '/tmp',
+        envs: { A: 'B' },
+      });
+    });
+
+    it('exec() should call executeCommand()', async () => {
+      const mockResult = {
+        requestId: 'request-123',
+        success: true,
+        data: 'ok',
+        errorMessage: undefined,
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      const result = await (command as any).exec('echo test');
+
+      expect(result.success).toBe(true);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
+        command: 'echo test',
+        timeout_ms: 1000,
+      });
+    });
+  });
 });
 

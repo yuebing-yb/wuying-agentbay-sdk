@@ -24,7 +24,7 @@ agent_bay = AgentBay(api_key=api_key)
 result = agent_bay.create()
 if result.success:
     session = result.session
-    cmd_result = session.command.execute_command("echo 'Hello from the cloud!'")
+    cmd_result = session.command.run("echo 'Hello from the cloud!'")
     print(f"✅ Cloud says: {cmd_result.output.strip()}")
     agent_bay.delete(session)
 else:
@@ -75,11 +75,11 @@ print(json.dumps(results, indent=2))
 '''
 
     # 2. Upload script to cloud
-    session.file_system.write_file("/tmp/process_data.py", script_content)
+    session.fs.write("/tmp/process_data.py", script_content)
     print("✅ Script uploaded to cloud")
 
     # 3. Execute the script in cloud environment
-    result = session.command.execute_command("python3 /tmp/process_data.py")
+    result = session.command.run("python3 /tmp/process_data.py")
     print(f"\n📊 Processing results:\n{result.output}")
 
     # Expected output:
@@ -110,8 +110,8 @@ finally:
 
 **Key Operations:**
 - `agent_bay.create()` - Create a new cloud session
-- `session.command.execute_command()` - Run shell commands
-- `session.file_system.write_file()` - Upload files
+- `session.command.run()` - Run shell commands (alias of `execute_command()`)
+- `session.fs.write()` - Upload/write text files (aliases of `file_system.write_file()`)
 - `agent_bay.delete(session)` - Clean up resources
 
 ---

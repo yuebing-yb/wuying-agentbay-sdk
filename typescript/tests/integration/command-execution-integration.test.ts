@@ -65,6 +65,22 @@ describe('Command Execution Integration Tests', () => {
 
     }, );
 
+    it('should support command.run alias and session.fs alias', async () => {
+      const command = session.command;
+      const fs = (session as any).fs;
+      expect(fs).toBe(session.fileSystem);
+
+      const createCommand = 'echo "Alias content" > /tmp/shell_alias_test.txt';
+      const createResult = await command.run(createCommand);
+      expect(createResult.success).toBe(true);
+
+      const fileContent = await fs.read('/tmp/shell_alias_test.txt');
+      expect(fileContent.content.trim()).toBe('Alias content');
+
+      const deleteResult = await command.exec('rm /tmp/shell_alias_test.txt');
+      expect(deleteResult.success).toBe(true);
+    });
+
     it('should handle command errors and edge cases', async () => {
       const command = session.command;
 

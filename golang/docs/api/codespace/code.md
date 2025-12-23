@@ -34,6 +34,22 @@ Code handles code execution operations in the AgentBay cloud environment.
 
 ### Methods
 
+### Execute
+
+```go
+func (c *Code) Execute(code string, language string, timeoutS ...int) (*CodeResult, error)
+```
+
+Execute is an alias of RunCode.
+
+### Run
+
+```go
+func (c *Code) Run(code string, language string, timeoutS ...int) (*CodeResult, error)
+```
+
+Run is an alias of RunCode.
+
 ### RunCode
 
 ```go

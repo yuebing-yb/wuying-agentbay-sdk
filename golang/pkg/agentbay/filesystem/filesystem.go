@@ -261,6 +261,41 @@ func NewFileSystem(session interface {
 	}
 }
 
+// Read is an alias of ReadFile.
+func (fs *FileSystem) Read(path string) (*FileReadResult, error) {
+	return fs.ReadFile(path)
+}
+
+// Write is an alias of WriteFile.
+func (fs *FileSystem) Write(path string, content string, mode string) (*FileWriteResult, error) {
+	return fs.WriteFile(path, content, mode)
+}
+
+// List is an alias of ListDirectory.
+func (fs *FileSystem) List(path string) (*DirectoryListResult, error) {
+	return fs.ListDirectory(path)
+}
+
+// Ls is an alias of ListDirectory.
+func (fs *FileSystem) Ls(path string) (*DirectoryListResult, error) {
+	return fs.ListDirectory(path)
+}
+
+// Delete is an alias of DeleteFile.
+func (fs *FileSystem) Delete(path string) (*FileWriteResult, error) {
+	return fs.DeleteFile(path)
+}
+
+// Remove is an alias of DeleteFile.
+func (fs *FileSystem) Remove(path string) (*FileWriteResult, error) {
+	return fs.DeleteFile(path)
+}
+
+// Rm is an alias of DeleteFile.
+func (fs *FileSystem) Rm(path string) (*FileWriteResult, error) {
+	return fs.DeleteFile(path)
+}
+
 // CreateDirectory creates a new directory.
 //
 // Parameters:

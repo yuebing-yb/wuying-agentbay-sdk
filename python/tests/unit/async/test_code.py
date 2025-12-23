@@ -58,6 +58,42 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.request_id, "test-request-id")
 
     @pytest.mark.asyncio
+    async def test_run_alias_calls_run_code(self):
+        response_body = {
+            "Success": True,
+            "Data": {"content": [{"text": "OK\n"}], "execution_count": 1},
+            "RequestId": "test-request-id",
+        }
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {"body": response_body}
+        self.mock_client.call_mcp_tool_async.return_value = mock_response
+
+        result = await self.code.run("print('OK')", "python", timeout_s=10)
+        self.assertTrue(result.success)
+        self.mock_client.call_mcp_tool_async.assert_called_once()
+
+        request = self.mock_client.call_mcp_tool_async.call_args[0][0]
+        self.assertEqual(request.name, "run_code")
+        args = json.loads(request.args)
+        self.assertEqual(args["language"], "python")
+        self.assertEqual(args["timeout_s"], 10)
+
+    @pytest.mark.asyncio
+    async def test_execute_alias_calls_run_code(self):
+        response_body = {
+            "Success": True,
+            "Data": {"content": [{"text": "OK\n"}], "execution_count": 1},
+            "RequestId": "test-request-id",
+        }
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {"body": response_body}
+        self.mock_client.call_mcp_tool_async.return_value = mock_response
+
+        result = await self.code.execute("print('OK')", "python")
+        self.assertTrue(result.success)
+        self.mock_client.call_mcp_tool_async.assert_called_once()
+
+    @pytest.mark.asyncio
     async def test_run_code_success_javascript(self):
         """
         Test run_code method with JavaScript code.

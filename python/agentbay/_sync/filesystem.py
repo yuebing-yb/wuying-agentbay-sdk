@@ -1442,6 +1442,12 @@ class FileSystem(BaseService):
                 error_message=f"Failed to read file: {e}",
             )
 
+    def read(self, path: str) -> FileContentResult:
+        """
+        Alias of read_file().
+        """
+        return self.read_file(path)
+
     def write_file(
         self, path: str, content: str, mode: str = "overwrite"
     ) -> BoolResult:
@@ -1522,6 +1528,44 @@ class FileSystem(BaseService):
                 success=False,
                 error_message=f"Failed to write file: {e}",
             )
+
+    def write(
+        self, path: str, content: str, mode: str = "overwrite"
+    ) -> BoolResult:
+        """
+        Alias of write_file().
+        """
+        return self.write_file(path=path, content=content, mode=mode)
+
+    def list(self, path: str) -> DirectoryListResult:
+        """
+        Alias of list_directory().
+        """
+        return self.list_directory(path)
+
+    def ls(self, path: str) -> DirectoryListResult:
+        """
+        Alias of list_directory().
+        """
+        return self.list_directory(path)
+
+    def delete(self, path: str) -> BoolResult:
+        """
+        Alias of delete_file().
+        """
+        return self.delete_file(path)
+
+    def remove(self, path: str) -> BoolResult:
+        """
+        Alias of delete_file().
+        """
+        return self.delete_file(path)
+
+    def rm(self, path: str) -> BoolResult:
+        """
+        Alias of delete_file().
+        """
+        return self.delete_file(path)
 
     def upload_file(
         self,

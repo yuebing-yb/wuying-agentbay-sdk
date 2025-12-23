@@ -51,6 +51,20 @@ async def test_execute_command_success(command_session):
     assert result.error_message == ""
 
 
+async def test_run_alias_success(command_session):
+    """Test command.run alias."""
+    result = await command_session.command.run("echo 'Hello, AgentBay!'")
+    assert result.success
+    assert result.output.strip() == "Hello, AgentBay!"
+
+
+async def test_exec_alias_success(command_session):
+    """Test command.exec alias."""
+    result = await command_session.command.exec("echo 'Hello, AgentBay!'")
+    assert result.success
+    assert result.output.strip() == "Hello, AgentBay!"
+
+
 async def test_execute_command_with_timeout(command_session):
     """Test executing a shell command with a timeout."""
     command = command_session.command  # Assuming direct access to command interface

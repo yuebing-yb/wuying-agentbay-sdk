@@ -1465,6 +1465,12 @@ class AsyncFileSystem(BaseService):
                 error_message=f"Failed to read file: {e}",
             )
 
+    async def read(self, path: str) -> FileContentResult:
+        """
+        Alias of read_file().
+        """
+        return await self.read_file(path)
+
     async def write_file(
         self, path: str, content: str, mode: str = "overwrite"
     ) -> BoolResult:
@@ -1545,6 +1551,44 @@ class AsyncFileSystem(BaseService):
                 success=False,
                 error_message=f"Failed to write file: {e}",
             )
+
+    async def write(
+        self, path: str, content: str, mode: str = "overwrite"
+    ) -> BoolResult:
+        """
+        Alias of write_file().
+        """
+        return await self.write_file(path=path, content=content, mode=mode)
+
+    async def list(self, path: str) -> DirectoryListResult:
+        """
+        Alias of list_directory().
+        """
+        return await self.list_directory(path)
+
+    async def ls(self, path: str) -> DirectoryListResult:
+        """
+        Alias of list_directory().
+        """
+        return await self.list_directory(path)
+
+    async def delete(self, path: str) -> BoolResult:
+        """
+        Alias of delete_file().
+        """
+        return await self.delete_file(path)
+
+    async def remove(self, path: str) -> BoolResult:
+        """
+        Alias of delete_file().
+        """
+        return await self.delete_file(path)
+
+    async def rm(self, path: str) -> BoolResult:
+        """
+        Alias of delete_file().
+        """
+        return await self.delete_file(path)
 
     async def upload_file(
         self,

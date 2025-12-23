@@ -40,7 +40,7 @@ async function main() {
     log('\n1. Executing simple shell command (echo)...');
     try {
       const echoCommand = "echo 'Hello from AgentBay SDK!'";
-      const echoResponse = await session.command.executeCommand(echoCommand);
+      const echoResponse = await session.command.run(echoCommand);
       log(`Echo command output:\n${echoResponse.output}`);
       log(`Execute Command RequestId: ${echoResponse.requestId}`);
     } catch (error) {
@@ -52,7 +52,7 @@ async function main() {
     try {
       const lsCommand = "ls -la /etc";
       const timeoutMs = 5000; // 5 seconds timeout
-      const lsResponse = await session.command.executeCommand(lsCommand, timeoutMs);
+      const lsResponse = await session.command.run(lsCommand, timeoutMs);
       log(`Directory listing (first few lines):\n${truncateOutput(lsResponse.output, 5)}`);
       log(`Execute Command with Timeout RequestId: ${lsResponse.requestId}`);
     } catch (error) {
@@ -72,7 +72,7 @@ print("Working with numbers in Python:")
 for i in range(1, 6):
     print(f"{i} squared is {i*i}")
 `;
-      const pythonResponse = await session.code.runCode(pythonCode, "python");
+      const pythonResponse = await session.code.run(pythonCode, "python");
       log(`Python code output:\n${pythonResponse.result}`);
       log(`Run Python Code RequestId: ${pythonResponse.requestId}`);
 
@@ -104,7 +104,7 @@ const sum = numbers.reduce((total, n) => total + n, 0);
 console.log("Sum of array:", sum);
 `;
       const timeoutS = 10; // 10 seconds timeout
-      const jsResponse = await session.code.runCode(jsCode, "javascript", timeoutS);
+      const jsResponse = await session.code.run(jsCode, "javascript", timeoutS);
       log(`JavaScript code output:\n${jsResponse.result}`);
       log(`Run JavaScript Code RequestId: ${jsResponse.requestId}`);
     } catch (error) {

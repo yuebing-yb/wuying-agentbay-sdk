@@ -21,15 +21,15 @@ def main():
         session = session_result.session
 
         # Write file
-        session.file_system.write_file("/tmp/test.txt", "Hello World")
+        session.fs.write("/tmp/test.txt", "Hello World")
         print("1. File written")
 
         # Read file
-        result = session.file_system.read_file("/tmp/test.txt")
+        result = session.fs.read("/tmp/test.txt")
         print(f"2. File content: {result.content}")
 
         # Check file exists
-        result = session.command.execute_command("ls -la /tmp/test.txt")
+        result = session.command.run("ls -la /tmp/test.txt")
         print(f"3. File exists: {result.success}")
 
         print("\n=== Completed ===")

@@ -69,7 +69,7 @@ print(f"Sum of 1 to 10: {total}")
 """
 
         print("🔄 Executing Python code...")
-        result = session.code.run_code(python_code, "python")
+        result = session.code.run(python_code, "python")
         if result.success:
             print("✅ Python code executed successfully:")
             print(result.result)
@@ -101,7 +101,7 @@ console.log("Doubled array:", doubled);
 """
 
         print("🔄 Executing JavaScript code...")
-        result = session.code.run_code(js_code, "javascript")
+        result = session.code.run(js_code, "javascript")
         if result.success:
             print("✅ JavaScript code executed successfully:")
             print(result.result)
@@ -115,11 +115,11 @@ console.log("Doubled array:", doubled);
         test_content = "Hello from AgentBay code execution!"
         test_file_path = "/tmp/test_code.txt"
 
-        write_result = session.file_system.write_file(test_file_path, test_content)
+        write_result = session.fs.write(test_file_path, test_content)
         if write_result.success:
             print("✅ File written successfully")
 
-            read_result = session.file_system.read_file(test_file_path)
+            read_result = session.fs.read(test_file_path)
             if read_result.success:
                 print(f"✅ File content: {read_result.content}")
             else:
@@ -140,7 +140,7 @@ console.log("Doubled array:", doubled);
 
         for cmd in commands:
             print(f"\n🔄 Executing command: {cmd}")
-            result = session.command.execute_command(cmd)
+            result = session.command.run(cmd)
 
             if result.success:
                 print(f"✅ Output: {result.output.strip()}")

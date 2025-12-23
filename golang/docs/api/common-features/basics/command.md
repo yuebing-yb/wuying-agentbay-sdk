@@ -45,6 +45,14 @@ Command handles command execution operations in the AgentBay cloud environment.
 
 ### Methods
 
+### Exec
+
+```go
+func (c *Command) Exec(command string, options ...interface{}) (*CommandResult, error)
+```
+
+Exec is an alias of ExecuteCommand.
+
 ### ExecuteCommand
 
 ```go
@@ -98,6 +106,14 @@ cmd.ExecuteCommand("pwd",
     WithEnvs(map[string]string{"FOO": "bar"}),
 )
 ```
+
+### Run
+
+```go
+func (c *Command) Run(command string, options ...interface{}) (*CommandResult, error)
+```
+
+Run is an alias of ExecuteCommand.
 
 ### Related Functions
 

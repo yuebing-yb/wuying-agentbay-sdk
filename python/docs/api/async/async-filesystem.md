@@ -457,6 +457,14 @@ await session.delete()
 
 FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
 
+### read
+
+```python
+async def read(path: str) -> FileContentResult
+```
+
+Alias of read_file().
+
 ### write\_file
 
 ```python
@@ -512,6 +520,56 @@ await session.delete()
 **See Also**:
 
 FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
+
+### write
+
+```python
+async def write(path: str,
+                content: str,
+                mode: str = "overwrite") -> BoolResult
+```
+
+Alias of write_file().
+
+### list
+
+```python
+async def list(path: str) -> DirectoryListResult
+```
+
+Alias of list_directory().
+
+### ls
+
+```python
+async def ls(path: str) -> DirectoryListResult
+```
+
+Alias of list_directory().
+
+### delete
+
+```python
+async def delete(path: str) -> BoolResult
+```
+
+Alias of delete_file().
+
+### remove
+
+```python
+async def remove(path: str) -> BoolResult
+```
+
+Alias of delete_file().
+
+### rm
+
+```python
+async def rm(path: str) -> BoolResult
+```
+
+Alias of delete_file().
 
 ### upload\_file
 

@@ -193,3 +193,37 @@ class Command(BaseService):
                 success=False,
                 error_message=f"Failed to execute command: {e}",
             )
+
+    def run(
+        self,
+        command: str,
+        timeout_ms: int = 50000,
+        cwd: Optional[str] = None,
+        envs: Optional[Dict[str, str]] = None,
+    ) -> CommandResult:
+        """
+        Alias of execute_command() for better ergonomics and LLM friendliness.
+        """
+        return self.execute_command(
+            command=command,
+            timeout_ms=timeout_ms,
+            cwd=cwd,
+            envs=envs,
+        )
+
+    def exec(
+        self,
+        command: str,
+        timeout_ms: int = 50000,
+        cwd: Optional[str] = None,
+        envs: Optional[Dict[str, str]] = None,
+    ) -> CommandResult:
+        """
+        Alias of execute_command() for better ergonomics and LLM friendliness.
+        """
+        return self.execute_command(
+            command=command,
+            timeout_ms=timeout_ms,
+            cwd=cwd,
+            envs=envs,
+        )

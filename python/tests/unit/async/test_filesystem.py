@@ -171,6 +171,50 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
             "delete_file", {"path": "/path/to/file.txt"}
         )
 
+    @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")
+    @pytest.mark.asyncio
+    async def test_read_alias_calls_read_file(self, mock_get_file_info):
+        file_info_result = FileInfoResult(
+            request_id="request-123",
+            success=True,
+            file_info={"size": 0, "isDirectory": False},
+        )
+        mock_get_file_info.return_value = file_info_result
+
+        result = await self.fs.read("/path/to/file.txt")
+        self.assertIsInstance(result, FileContentResult)
+        self.assertTrue(result.success)
+
+    @patch("agentbay._async.filesystem.AsyncFileSystem._write_file_chunk")
+    @pytest.mark.asyncio
+    async def test_write_alias_calls_write_file(self, mock_write_file_chunk):
+        mock_write_file_chunk.return_value = BoolResult(
+            request_id="request-123", success=True, data=True
+        )
+        result = await self.fs.write("/path/to/file.txt", "content")
+        self.assertIsInstance(result, BoolResult)
+        self.assertTrue(result.success)
+
+    @pytest.mark.asyncio
+    async def test_list_alias_calls_list_directory(self):
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data="[FILE] a.txt",
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+        result = await self.fs.list("/path/to")
+        self.assertIsInstance(result, DirectoryListResult)
+        self.assertTrue(result.success)
+
+    @pytest.mark.asyncio
+    async def test_delete_alias_calls_delete_file(self):
+        mock_result = McpToolResult(request_id="request-123", success=True, data="True")
+        self.session.call_mcp_tool.return_value = mock_result
+        result = await self.fs.delete("/path/to/file.txt")
+        self.assertIsInstance(result, BoolResult)
+        self.assertTrue(result.success)
+
     @pytest.mark.asyncio
     async def test_delete_file_error(self):
         """

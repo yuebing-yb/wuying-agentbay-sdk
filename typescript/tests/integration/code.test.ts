@@ -58,6 +58,25 @@ print(x)
       expect(runCodeResponse.result.includes("2")).toBe(true);
     }, 60000);
 
+    test("should support code.run/code.execute aliases", async () => {
+      if (!session || !session.code) {
+        log("Note: Code interface is nil, skipping code alias test");
+        return;
+      }
+
+      const pythonCode = `
+print("Hello from alias")
+`;
+
+      const runRes = await session.code.run(pythonCode, "python");
+      expect(runRes.success).toBe(true);
+      expect(runRes.result).toContain("Hello from alias");
+
+      const execRes = await session.code.execute(pythonCode, "python");
+      expect(execRes.success).toBe(true);
+      expect(execRes.result).toContain("Hello from alias");
+    }, 60000);
+
     test("should execute JavaScript code successfully", async () => {
       if (!session || !session.code) {
         log("Note: Code interface is nil, skipping code test");

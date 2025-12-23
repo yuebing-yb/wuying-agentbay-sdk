@@ -175,6 +175,16 @@ func (c *Command) ExecuteCommand(command string, options ...interface{}) (*Comma
 	return c.executeCommandInternal(command, opts.timeoutMs, opts.cwd, opts.envs)
 }
 
+// Run is an alias of ExecuteCommand.
+func (c *Command) Run(command string, options ...interface{}) (*CommandResult, error) {
+	return c.ExecuteCommand(command, options...)
+}
+
+// Exec is an alias of ExecuteCommand.
+func (c *Command) Exec(command string, options ...interface{}) (*CommandResult, error) {
+	return c.ExecuteCommand(command, options...)
+}
+
 // executeCommandInternal is the internal implementation of command execution
 func (c *Command) executeCommandInternal(
 	command string,

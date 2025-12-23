@@ -343,3 +343,19 @@ class AsyncCode(AsyncBaseService):
                 success=False,
                 error_message=f"Failed to run code: {e}",
             )
+
+    async def run(
+        self, code: str, language: str, timeout_s: int = 60
+    ) -> EnhancedCodeExecutionResult:
+        """
+        Alias of run_code() for better ergonomics and LLM friendliness.
+        """
+        return await self.run_code(code=code, language=language, timeout_s=timeout_s)
+
+    async def execute(
+        self, code: str, language: str, timeout_s: int = 60
+    ) -> EnhancedCodeExecutionResult:
+        """
+        Alias of run_code() for better ergonomics and LLM friendliness.
+        """
+        return await self.run_code(code=code, language=language, timeout_s=timeout_s)

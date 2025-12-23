@@ -12,16 +12,23 @@ Handles file operations in the AgentBay cloud environment.
 ### Methods
 
 - [createDirectory](#createdirectory)
+- [delete](#delete)
 - [deleteFile](#deletefile)
 - [downloadFile](#downloadfile)
 - [editFile](#editfile)
+- [list](#list)
 - [listDirectory](#listdirectory)
+- [ls](#ls)
 - [moveFile](#movefile)
+- [read](#read)
 - [readFile](#readfile)
 - [readMultipleFiles](#readmultiplefiles)
+- [remove](#remove)
+- [rm](#rm)
 - [searchFiles](#searchfiles)
 - [uploadFile](#uploadfile)
 - [watchDirectory](#watchdirectory)
+- [write](#write)
 - [writeFile](#writefile)
 
 ## Methods
@@ -56,6 +63,24 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### delete
+
+▸ **delete**(`path`): `Promise`\<`BoolResult`\>
+
+Alias of deleteFile().
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+
+#### Returns
+
+`Promise`\<`BoolResult`\>
 
 ___
 
@@ -170,6 +195,24 @@ if (result.success) {
 }
 ```
 
+### list
+
+▸ **list**(`path`): `Promise`\<`DirectoryListResult`\>
+
+Alias of listDirectory().
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+
+#### Returns
+
+`Promise`\<`DirectoryListResult`\>
+
+___
+
 ### listDirectory
 
 ▸ **listDirectory**(`path`): `Promise`\<`DirectoryListResult`\>
@@ -218,6 +261,24 @@ if (result.success) {
 
 ___
 
+### ls
+
+▸ **ls**(`path`): `Promise`\<`DirectoryListResult`\>
+
+Alias of listDirectory().
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+
+#### Returns
+
+`Promise`\<`DirectoryListResult`\>
+
+___
+
 ### moveFile
 
 ▸ **moveFile**(`source`, `destination`): `Promise`\<`BoolResult`\>
@@ -250,6 +311,24 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### read
+
+▸ **read**(`path`): `Promise`\<`FileContentResult`\>
+
+Alias of readFile().
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+
+#### Returns
+
+`Promise`\<`FileContentResult`\>
 
 ___
 
@@ -347,6 +426,42 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### remove
+
+▸ **remove**(`path`): `Promise`\<`BoolResult`\>
+
+Alias of deleteFile().
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+
+#### Returns
+
+`Promise`\<`BoolResult`\>
+
+___
+
+### rm
+
+▸ **rm**(`path`): `Promise`\<`BoolResult`\>
+
+Alias of deleteFile().
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+
+#### Returns
+
+`Promise`\<`BoolResult`\>
 
 ___
 
@@ -462,6 +577,26 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### write
+
+▸ **write**(`path`, `content`, `mode?`): `Promise`\<`BoolResult`\>
+
+Alias of writeFile().
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `path` | `string` | `undefined` |
+| `content` | `string` | `undefined` |
+| `mode` | `string` | `"overwrite"` |
+
+#### Returns
+
+`Promise`\<`BoolResult`\>
 
 ___
 

@@ -58,6 +58,24 @@ print(x)
     assert "Hello, world!" in result.result
     assert "2" in result.result
 
+
+@pytest.mark.sync
+def test_run_alias_python_success(code_session):
+    """Test code.run alias."""
+    code = "print('Hello from alias')"
+    result = code_session.run(code, "python")
+    assert result.success
+    assert "Hello from alias" in result.result
+
+
+@pytest.mark.sync
+def test_execute_alias_python_success(code_session):
+    """Test code.execute alias."""
+    code = "print('Hello from alias')"
+    result = code_session.execute(code, "python")
+    assert result.success
+    assert "Hello from alias" in result.result
+
 @pytest.mark.sync
 def test_run_code_javascript_success(code_session):
     """Test successful JavaScript code execution."""

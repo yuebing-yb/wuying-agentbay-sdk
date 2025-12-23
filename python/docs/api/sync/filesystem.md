@@ -455,6 +455,14 @@ session.delete()
 
 FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
 
+### read
+
+```python
+def read(path: str) -> FileContentResult
+```
+
+Alias of read_file().
+
 ### write\_file
 
 ```python
@@ -508,6 +516,54 @@ session.delete()
 **See Also**:
 
 FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
+
+### write
+
+```python
+def write(path: str, content: str, mode: str = "overwrite") -> BoolResult
+```
+
+Alias of write_file().
+
+### list
+
+```python
+def list(path: str) -> DirectoryListResult
+```
+
+Alias of list_directory().
+
+### ls
+
+```python
+def ls(path: str) -> DirectoryListResult
+```
+
+Alias of list_directory().
+
+### delete
+
+```python
+def delete(path: str) -> BoolResult
+```
+
+Alias of delete_file().
+
+### remove
+
+```python
+def remove(path: str) -> BoolResult
+```
+
+Alias of delete_file().
+
+### rm
+
+```python
+def rm(path: str) -> BoolResult
+```
+
+Alias of delete_file().
 
 ### upload\_file
 

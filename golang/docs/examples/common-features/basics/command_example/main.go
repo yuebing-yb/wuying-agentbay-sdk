@@ -49,7 +49,7 @@ func main() {
 	// 1. Execute simple shell command
 	fmt.Println("\n1. Executing simple shell command (echo)...")
 	echoCommand := "echo 'Hello from AgentBay SDK!'"
-	result, err := session.Command.ExecuteCommand(echoCommand)
+	result, err := session.Command.Run(echoCommand)
 	if err != nil {
 		fmt.Printf("Error executing echo command: %v\n", err)
 	} else {
@@ -61,7 +61,7 @@ func main() {
 	fmt.Println("\n2. Executing command with custom timeout...")
 	lsCommand := "ls -la /etc"
 	timeoutMs := 5000 // 5 seconds timeout
-	result, err = session.Command.ExecuteCommand(lsCommand, timeoutMs)
+	result, err = session.Command.Run(lsCommand, timeoutMs)
 	if err != nil {
 		fmt.Printf("Error executing ls command: %v\n", err)
 	} else {
@@ -81,7 +81,7 @@ print("Working with numbers in Python:")
 for i in range(1, 6):
     print(f"{i} squared is {i*i}")
 `
-	codeResult, err := session.Code.RunCode(pythonCode, "python")
+	codeResult, err := session.Code.Run(pythonCode, "python")
 	if err != nil {
 		fmt.Printf("Error running Python code: %v\n", err)
 	} else {
@@ -106,7 +106,7 @@ const sum = numbers.reduce((total, n) => total + n, 0);
 console.log("Sum of array:", sum);
 `
 	timeoutS := 10 // 10 seconds timeout
-	codeResult, err = session.Code.RunCode(jsCode, "javascript", timeoutS)
+	codeResult, err = session.Code.Run(jsCode, "javascript", timeoutS)
 	if err != nil {
 		fmt.Printf("Error running JavaScript code: %v\n", err)
 	} else {
@@ -126,7 +126,7 @@ free -h 2>/dev/null || vm_stat 2>/dev/null || echo "Memory info not available"
 echo "\nDisk usage:"
 df -h | head -5
 `
-	result, err = session.Command.ExecuteCommand(complexCommand)
+	result, err = session.Command.Run(complexCommand)
 	if err != nil {
 		fmt.Printf("Error executing complex command: %v\n", err)
 	} else {

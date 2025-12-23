@@ -68,6 +68,28 @@ async def test_read_file(filesystem_session):
     assert result.content == test_content
 
 
+async def test_filesystem_aliases(filesystem_session):
+    """Test session.fs and filesystem method aliases."""
+    session = filesystem_session
+    fs = session.fs
+    assert fs is session.file_system
+    assert session.filesystem is session.file_system
+    assert session.files is session.file_system
+
+    test_content = "alias test"
+    test_file_path = "/tmp/test_alias.txt"
+
+    write_result = await fs.write(test_file_path, test_content, "overwrite")
+    assert write_result.success
+
+    read_result = await fs.read(test_file_path)
+    assert read_result.success
+    assert read_result.content == test_content
+
+    delete_result = await fs.delete(test_file_path)
+    assert delete_result.success
+
+
 async def test_write_file(filesystem_session):
     """Test writing to a file."""
     fs = (

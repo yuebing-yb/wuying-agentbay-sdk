@@ -58,6 +58,41 @@ class TestAsyncCommand(unittest.TestCase):
         self.assertEqual(args["timeout_ms"], 50000)  # Default timeout is 50000ms
 
     @pytest.mark.sync
+    def test_run_alias_calls_execute_command(self):
+        from agentbay import McpToolResult
+
+        mock_result = McpToolResult(
+            request_id="request-123", success=True, data="ok"
+        )
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.run("echo test", timeout_ms=1234, cwd="/tmp")
+        self.assertIsInstance(result, CommandResult)
+        self.session.call_mcp_tool.assert_called_once()
+
+        args = self.session.call_mcp_tool.call_args[0][1]
+        self.assertEqual(args["command"], "echo test")
+        self.assertEqual(args["timeout_ms"], 1234)
+        self.assertEqual(args["cwd"], "/tmp")
+
+    @pytest.mark.sync
+    def test_exec_alias_calls_execute_command(self):
+        from agentbay import McpToolResult
+
+        mock_result = McpToolResult(
+            request_id="request-123", success=True, data="ok"
+        )
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.exec("echo test", envs={"A": "B"})
+        self.assertIsInstance(result, CommandResult)
+        self.session.call_mcp_tool.assert_called_once()
+
+        args = self.session.call_mcp_tool.call_args[0][1]
+        self.assertEqual(args["command"], "echo test")
+        self.assertEqual(args["envs"], {"A": "B"})
+
+    @pytest.mark.sync
 
 
     def test_execute_command_with_custom_timeout(self):

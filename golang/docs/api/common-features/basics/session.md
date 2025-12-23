@@ -83,6 +83,30 @@ defer result.Session.Delete()
 deleteResult, _ := result.Session.Delete()
 ```
 
+### Files
+
+```go
+func (s *Session) Files() *filesystem.FileSystem
+```
+
+Files returns the FileSystem module (alias of FileSystem).
+
+### Filesystem
+
+```go
+func (s *Session) Filesystem() *filesystem.FileSystem
+```
+
+Filesystem returns the FileSystem module (alias of FileSystem).
+
+### Fs
+
+```go
+func (s *Session) Fs() *filesystem.FileSystem
+```
+
+Fs returns the FileSystem module (alias of FileSystem).
+
 ### GetEnableBrowserReplay
 
 ```go

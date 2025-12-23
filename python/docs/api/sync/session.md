@@ -35,6 +35,33 @@ Session represents a session in the AgentBay cloud environment.
 def __init__(self, agent_bay: "AgentBay", session_id: str)
 ```
 
+### fs
+
+```python
+@property
+def fs() -> FileSystem
+```
+
+Alias of file_system.
+
+### filesystem
+
+```python
+@property
+def filesystem() -> FileSystem
+```
+
+Alias of file_system.
+
+### files
+
+```python
+@property
+def files() -> FileSystem
+```
+
+Alias of file_system.
+
 ### delete
 
 ```python

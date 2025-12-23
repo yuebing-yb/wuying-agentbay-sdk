@@ -54,7 +54,7 @@ A **session** is your connection to a cloud environment. It's like renting a com
 session = agent_bay.create().session
 
 # Use the session for your tasks
-session.command.execute_command("echo 'Hello World'")
+session.command.run("echo 'Hello World'")
 
 # Always clean up when done
 agent_bay.delete(session)
@@ -157,7 +157,7 @@ params = CreateSessionParams(image_id="code_latest")
 session = agent_bay.create(params).session
 
 # Execute code
-result = session.code.run_code("print('Hello from CodeSpace!')", "python")
+result = session.code.run("print('Hello from CodeSpace!')", "python")
 # Returns: CodeExecutionResult with output
 # Example: result.result = "Hello from CodeSpace!"
 
@@ -198,7 +198,7 @@ Understanding data permanence is crucial when using cloud environments:
 
 ```python
 # This data will be LOST when session ends
-session.file_system.write_file("/tmp/temp_data.txt", "This will disappear")
+session.fs.write("/tmp/temp_data.txt", "This will disappear")
 ```
 
 ### Persistent Data (Context)
@@ -218,7 +218,7 @@ params = CreateSessionParams(context_syncs=[context_sync])
 session = agent_bay.create(params).session
 
 # This data will be SAVED across sessions
-session.file_system.write_file("/persistent/important.txt", "This will persist")
+session.fs.write("/persistent/important.txt", "This will persist")
 ```
 
 **Critical Rule**: If you need to keep data, you MUST use Context. Otherwise, it will be lost forever when the session ends.
@@ -256,7 +256,7 @@ Every API call to AgentBay gets a unique **Request ID** - a special identifier l
 
 **Example troubleshooting:**
 ```python
-result = session.code.run_code("print('hello')", "python")
+result = session.code.run("print('hello')", "python")
 if not result.success:
     print(f"Code execution failed! Request ID: {result.request_id}")
     # Share this Request ID with support for faster help

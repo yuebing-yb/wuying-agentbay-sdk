@@ -12,6 +12,12 @@ Represents a session in the AgentBay cloud environment.
 ### Properties
 
 
+### Accessors
+
+- [files](#files)
+- [filesystem](#filesystem-1)
+- [fs](#fs)
+
 ### Methods
 
 - [callMcpTool](#callmcptool)
@@ -47,6 +53,42 @@ sessionId: `string`
 token: `string` = `""`
 ```
 
+
+## Accessors
+
+### files
+
+• `get` **files**(): [`FileSystem`](filesystem.md)
+
+Alias of fileSystem.
+
+#### Returns
+
+[`FileSystem`](filesystem.md)
+
+___
+
+### filesystem
+
+• `get` **filesystem**(): [`FileSystem`](filesystem.md)
+
+Alias of fileSystem.
+
+#### Returns
+
+[`FileSystem`](filesystem.md)
+
+___
+
+### fs
+
+• `get` **fs**(): [`FileSystem`](filesystem.md)
+
+Alias of fileSystem.
+
+#### Returns
+
+[`FileSystem`](filesystem.md)
 
 ## Methods
 

@@ -106,31 +106,36 @@ from agentbay import AgentBay
 # Create session
 agent_bay = AgentBay()
 session = agent_bay.create().session
- #Create Directory
-session.file_system.create_directory("/path/to")
+# Recommended aliases:
+# - session.fs (alias of session.file_system)
+# - fs.read/fs.write/fs.list/fs.delete (aliases of read_file/write_file/list_directory/delete_file)
+fs = session.fs
+
+# Create Directory
+fs.create_directory("/path/to")
 print("✅ Directory created successfully")
 
 
 # Write text file (UTF-8 text only)
-result = session.file_system.write_file("/path/to/file.txt", "Hello, World!")
+result = fs.write("/path/to/file.txt", "Hello, World!")
 if result.success:
     print("Text file written successfully")
 
 # Read text file (UTF-8 text only)
-result = session.file_system.read_file("/path/to/file.txt")
+result = fs.read("/path/to/file.txt")
 if result.success:
     content = result.content  # String content
     print(f"File content: {content}")
 
 # List directory
-result = session.file_system.list_directory("/path/to")
+result = fs.list("/path/to")
 if result.success:
     entries = result.entries
     for entry in entries:
         print(f"Name: {entry['name']}")
 
 # Get file info
-result = session.file_system.get_file_info("/path/to/file.txt")
+result = fs.get_file_info("/path/to/file.txt")
 
 if result.success:
     info = result.file_info
@@ -164,7 +169,7 @@ agent_bay = AgentBay()
 session = agent_bay.create().session
 
 # Read text file
-result = session.file_system.read_file("/tmp/sample.txt")
+result = session.fs.read("/tmp/sample.txt")
 if result.success:
     content = result.content
     print(f"File content: {content}")
@@ -185,14 +190,14 @@ session = agent_bay.create().session
 
 # Write plain text file
 content = "Hello, AgentBay!\nThis is a multi-line text file."
-result = session.file_system.write_file("/tmp/hello.txt", content)
+result = session.fs.write("/tmp/hello.txt", content)
 if result.success:
     print("Text file written successfully")
 else:
     print(f"Failed to write file: {result.error_message}")
 
 # Append to file
-result = session.file_system.write_file("/tmp/hello.txt", "\nNew log entry", mode="append")
+result = session.fs.write("/tmp/hello.txt", "\nNew log entry", mode="append")
 if result.success:
     print("File appended successfully")
     

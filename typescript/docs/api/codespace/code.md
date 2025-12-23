@@ -21,9 +21,51 @@ Handles code execution operations in the AgentBay cloud environment.
 
 ### Methods
 
+- [execute](#execute)
+- [run](#run)
 - [runCode](#runcode)
 
 ## Methods
+
+### execute
+
+▸ **execute**(`code`, `language`, `timeoutS?`): `Promise`\<`CodeExecutionResult`\>
+
+Alias of runCode().
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `code` | `string` | `undefined` |
+| `language` | `string` | `undefined` |
+| `timeoutS` | `number` | `60` |
+
+#### Returns
+
+`Promise`\<`CodeExecutionResult`\>
+
+___
+
+### run
+
+▸ **run**(`code`, `language`, `timeoutS?`): `Promise`\<`CodeExecutionResult`\>
+
+Alias of runCode().
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `code` | `string` | `undefined` |
+| `language` | `string` | `undefined` |
+| `timeoutS` | `number` | `60` |
+
+#### Returns
+
+`Promise`\<`CodeExecutionResult`\>
+
+___
 
 ### runCode
 

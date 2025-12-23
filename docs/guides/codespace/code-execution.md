@@ -50,6 +50,14 @@ else:
 
 **Important:** The `run_code()` method requires `image_id="code_latest"` when creating the session.
 
+### Recommended Aliases (Non-breaking)
+
+AgentBay SDK provides **non-breaking aliases** to improve ergonomics and LLM-generated code success rate:
+
+- Prefer **`session.code.run(...)`** or **`session.code.execute(...)`** (aliases of `run_code(...)`)
+- Prefer **`session.command.run(...)`** (alias of `execute_command(...)`)
+- Prefer **`session.fs`** (alias of `session.file_system`) for file operations
+
 <a id="enhanced-code-execution"></a>
 ## ✨ Enhanced Code Execution
 
@@ -74,7 +82,7 @@ print(f"2 + 2 = {result}")
 result
 """
     
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
     
     # Enhanced result provides rich information
     print(f"Success: {result.success}")
@@ -111,7 +119,7 @@ from agentbay import (
 )
 
 # Type checking and handling
-result = session.code.run_code(code, "python")
+result = session.code.run(code, "python")
 
 if isinstance(result, EnhancedCodeExecutionResult):
     # Access execution logs
@@ -157,7 +165,7 @@ print(f"Current directory: {os.getcwd()}")
 print("Hello from AgentBay!")
 """
     
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
     if result.success:
         print("Output:", result.result)
         # Output: Python version: 3.11.2 (main, Apr 28 2025, 14:11:48) [GCC 12.2.0]
@@ -212,7 +220,7 @@ print(f"Squares: {squares}")
 <a id="jupyter-like-python-execution-context-persistence"></a>
 ## 📓 Jupyter-like Python Execution (Context Persistence)
 
-When you call `session.code.run_code()` multiple times within the **same session**, the Python runtime may preserve an interactive execution context (similar to a Jupyter kernel). This enables workflows like:
+When you call `session.code.run()` (or `session.code.run_code()`) multiple times within the **same session**, the Python runtime may preserve an interactive execution context (similar to a Jupyter kernel). This enables workflows like:
 
 - Defining variables and functions once, then reusing them in later calls
 - Iterative exploration and debugging
@@ -245,8 +253,8 @@ print(f"CONTEXT_VALUE:{x + 1}")
 print(f"CONTEXT_FUNC:{add(1, 2)}")
 """.strip()
 
-session.code.run_code(setup, "python")
-result = session.code.run_code(use, "python")
+session.code.run(setup, "python")
+result = session.code.run(use, "python")
 print(result.result)
 
 session.delete()

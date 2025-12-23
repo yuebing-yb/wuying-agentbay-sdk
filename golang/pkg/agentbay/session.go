@@ -173,6 +173,21 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 	return session
 }
 
+// Fs returns the FileSystem module (alias of FileSystem).
+func (s *Session) Fs() *filesystem.FileSystem {
+	return s.FileSystem
+}
+
+// Filesystem returns the FileSystem module (alias of FileSystem).
+func (s *Session) Filesystem() *filesystem.FileSystem {
+	return s.FileSystem
+}
+
+// Files returns the FileSystem module (alias of FileSystem).
+func (s *Session) Files() *filesystem.FileSystem {
+	return s.FileSystem
+}
+
 // GetFileUploadUrl returns a presigned upload URL for the given context and file path.
 // This method implements the FileTransferCapableSession interface for lazy loading.
 func (s *Session) GetFileUploadUrl(contextID string, filePath string) (bool, string, string, string, *int64, error) {

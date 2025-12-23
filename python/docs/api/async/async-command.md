@@ -93,6 +93,28 @@ cwd="/tmp",
 print(result.stdout)
 await session.delete()
 
+### run
+
+```python
+async def run(command: str,
+              timeout_ms: int = 50000,
+              cwd: Optional[str] = None,
+              envs: Optional[Dict[str, str]] = None) -> CommandResult
+```
+
+Alias of execute_command() for better ergonomics and LLM friendliness.
+
+### exec
+
+```python
+async def exec(command: str,
+               timeout_ms: int = 50000,
+               cwd: Optional[str] = None,
+               envs: Optional[Dict[str, str]] = None) -> CommandResult
+```
+
+Alias of execute_command() for better ergonomics and LLM friendliness.
+
 ## Best Practices
 
 1. Always specify appropriate timeout values based on expected command duration

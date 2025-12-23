@@ -227,4 +227,28 @@ export class Command {
       };
     }
   }
+
+  /**
+   * Alias of executeCommand().
+   */
+  async run(
+    command: string,
+    timeoutMs = 1000,
+    cwd?: string,
+    envs?: Record<string, string>
+  ): Promise<CommandResult> {
+    return await this.executeCommand(command, timeoutMs, cwd, envs);
+  }
+
+  /**
+   * Alias of executeCommand().
+   */
+  async exec(
+    command: string,
+    timeoutMs = 1000,
+    cwd?: string,
+    envs?: Record<string, string>
+  ): Promise<CommandResult> {
+    return await this.executeCommand(command, timeoutMs, cwd, envs);
+  }
 }

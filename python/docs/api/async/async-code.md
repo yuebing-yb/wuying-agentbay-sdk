@@ -77,7 +77,27 @@ result = await agent_bay.create(CreateSessionParams(image_id="code_latest"))
 code_result = await result.session.code.run_code("print('Hello')", "python")
 print(code_result.result)
 await result.session.delete()
+
 ```
+### run
+
+```python
+async def run(code: str,
+              language: str,
+              timeout_s: int = 60) -> EnhancedCodeExecutionResult
+```
+
+Alias of run_code() for better ergonomics and LLM friendliness.
+
+### execute
+
+```python
+async def execute(code: str,
+                  language: str,
+                  timeout_s: int = 60) -> EnhancedCodeExecutionResult
+```
+
+Alias of run_code() for better ergonomics and LLM friendliness.
 
 ## Best Practices
 

@@ -205,6 +205,27 @@ export class Session {
   }
 
   /**
+   * Alias of fileSystem.
+   */
+  get fs(): FileSystem {
+    return this.fileSystem;
+  }
+
+  /**
+   * Alias of fileSystem.
+   */
+  get filesystem(): FileSystem {
+    return this.fileSystem;
+  }
+
+  /**
+   * Alias of fileSystem.
+   */
+  get files(): FileSystem {
+    return this.fileSystem;
+  }
+
+  /**
    * Return the AgentBay instance that created this session.
    *
    * @returns The AgentBay client instance

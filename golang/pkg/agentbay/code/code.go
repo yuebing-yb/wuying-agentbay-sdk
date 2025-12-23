@@ -320,3 +320,13 @@ func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResu
 
 	return codeRes, nil
 }
+
+// Run is an alias of RunCode.
+func (c *Code) Run(code string, language string, timeoutS ...int) (*CodeResult, error) {
+	return c.RunCode(code, language, timeoutS...)
+}
+
+// Execute is an alias of RunCode.
+func (c *Code) Execute(code string, language string, timeoutS ...int) (*CodeResult, error) {
+	return c.RunCode(code, language, timeoutS...)
+}

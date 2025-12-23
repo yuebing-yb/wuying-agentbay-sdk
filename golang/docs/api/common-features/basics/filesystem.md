@@ -334,6 +334,14 @@ defer result.Session.Delete()
 createResult, _ := result.Session.FileSystem.CreateDirectory("/tmp/test_directory")
 ```
 
+### Delete
+
+```go
+func (fs *FileSystem) Delete(path string) (*FileWriteResult, error)
+```
+
+Delete is an alias of DeleteFile.
+
 ### DeleteFile
 
 ```go
@@ -514,6 +522,14 @@ ft, _ := result.Session.FileSystem.GetFileTransfer()
 uploadResult := ft.Upload("/local/file.txt", "/tmp/file-transfer/file.txt", nil)
 ```
 
+### List
+
+```go
+func (fs *FileSystem) List(path string) (*DirectoryListResult, error)
+```
+
+List is an alias of ListDirectory.
+
 ### ListDirectory
 
 ```go
@@ -543,6 +559,14 @@ result, _ := client.Create(nil)
 defer result.Session.Delete()
 listResult, _ := result.Session.FileSystem.ListDirectory("/tmp")
 ```
+
+### Ls
+
+```go
+func (fs *FileSystem) Ls(path string) (*DirectoryListResult, error)
+```
+
+Ls is an alias of ListDirectory.
 
 ### MoveFile
 
@@ -574,6 +598,14 @@ defer result.Session.Delete()
 result.Session.FileSystem.WriteFile("/tmp/old.txt", "content", "overwrite")
 moveResult, _ := result.Session.FileSystem.MoveFile("/tmp/old.txt", "/tmp/new.txt")
 ```
+
+### Read
+
+```go
+func (fs *FileSystem) Read(path string) (*FileReadResult, error)
+```
+
+Read is an alias of ReadFile.
 
 ### ReadFile
 
@@ -634,6 +666,22 @@ defer result.Session.Delete()
 paths := []string{"/etc/hostname", "/etc/os-release"}
 contents, _ := result.Session.FileSystem.ReadMultipleFiles(paths)
 ```
+
+### Remove
+
+```go
+func (fs *FileSystem) Remove(path string) (*FileWriteResult, error)
+```
+
+Remove is an alias of DeleteFile.
+
+### Rm
+
+```go
+func (fs *FileSystem) Rm(path string) (*FileWriteResult, error)
+```
+
+Rm is an alias of DeleteFile.
 
 ### SearchFiles
 
@@ -750,6 +798,14 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 ```
 
 WatchDirectoryWithDefaults watches a directory for file changes with default 500ms polling interval
+
+### Write
+
+```go
+func (fs *FileSystem) Write(path string, content string, mode string) (*FileWriteResult, error)
+```
+
+Write is an alias of WriteFile.
 
 ### WriteFile
 

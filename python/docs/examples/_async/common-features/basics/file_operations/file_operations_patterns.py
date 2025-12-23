@@ -19,15 +19,15 @@ async def main():
         session = session_result.session
 
         # Write file
-        await session.file_system.write_file("/tmp/test.txt", "Hello World")
+        await session.fs.write("/tmp/test.txt", "Hello World")
         print("1. File written")
 
         # Read file
-        result = await session.file_system.read_file("/tmp/test.txt")
+        result = await session.fs.read("/tmp/test.txt")
         print(f"2. File content: {result.content}")
 
         # Check file exists
-        result = await session.command.execute_command("ls -la /tmp/test.txt")
+        result = await session.command.run("ls -la /tmp/test.txt")
         print(f"3. File exists: {result.success}")
 
         print("\n=== Completed ===")

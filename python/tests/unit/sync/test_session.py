@@ -110,6 +110,9 @@ class TestAsyncSession(unittest.TestCase):
         self.assertIsNotNone(self.session.command)
         self.assertEqual(self.session.file_system.session, self.session)
         self.assertEqual(self.session.command.session, self.session)
+        self.assertIs(self.session.fs, self.session.file_system)
+        self.assertIs(self.session.filesystem, self.session.file_system)
+        self.assertIs(self.session.files, self.session.file_system)
 
     @patch("time.sleep")
     @patch("agentbay._sync.session._log_api_response_with_details")

@@ -20,6 +20,18 @@ describe("TestSession", () => {
         mockSession = new Session(mockAgentBay as unknown as AgentBay, "test_session_id");
     });
 
+    describe("test_filesystem_aliases", () => {
+        it("should expose fs/filesystem/files as aliases of fileSystem", () => {
+            expect((mockSession as any).fileSystem).toBeDefined();
+            expect((mockSession as any).fs).toBeDefined();
+            expect((mockSession as any).filesystem).toBeDefined();
+            expect((mockSession as any).files).toBeDefined();
+            expect((mockSession as any).fs).toBe((mockSession as any).fileSystem);
+            expect((mockSession as any).filesystem).toBe((mockSession as any).fileSystem);
+            expect((mockSession as any).files).toBe((mockSession as any).fileSystem);
+        });
+    });
+
     afterEach(() => {
         sinon.restore();
     });
