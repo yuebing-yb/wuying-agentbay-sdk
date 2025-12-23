@@ -69,6 +69,39 @@ export interface GetSessionData {
 }
 
 /**
+ * Interface for GetSessionDetail data
+ */
+export interface GetSessionDetailData {
+  aliuid: string;
+  apikeyId: string;
+  appInstanceGroupId: string;
+  appInstanceId: string;
+  appUserId: string;
+  bizType: number;
+  endReason: string;
+  id: number;
+  imageId: string;
+  imageType: string;
+  isDeleted: number;
+  policyId: string;
+  regionId: string;
+  resourceConfigId: string;
+  status: string;
+}
+
+/**
+ * Interface for GetSessionDetail operation responses
+ */
+export interface GetSessionDetailResult extends ApiResponse {
+  requestId: string;
+  httpStatusCode: number;
+  code: string;
+  success: boolean;
+  data?: GetSessionDetailData;
+  errorMessage?: string;
+}
+
+/**
  * Interface for GetSession operation responses
  */
 export interface GetSessionResult extends ApiResponse {

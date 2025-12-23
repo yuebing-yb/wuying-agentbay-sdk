@@ -273,6 +273,53 @@ Initialize a GetSessionResult.
 - `error_message` _str, optional_ - Error message if the operation failed.
   Defaults to "".
 
+## GetSessionDetailData
+
+```python
+class GetSessionDetailData()
+```
+
+Data returned by GetSessionDetail API.
+
+### \_\_init\_\_
+
+```python
+def __init__(self, aliuid: str = "",
+             apikey_id: str = "",
+             app_instance_group_id: str = "",
+             app_instance_id: str = "",
+             app_user_id: str = "",
+             biz_type: int = 0,
+             end_reason: str = "",
+             id: int = 0,
+             image_id: str = "",
+             image_type: str = "",
+             is_deleted: int = 0,
+             policy_id: str = "",
+             region_id: str = "",
+             resource_config_id: str = "",
+             status: str = "")
+```
+
+## GetSessionDetailResult
+
+```python
+class GetSessionDetailResult(ApiResponse)
+```
+
+Result of GetSessionDetail operations.
+
+### \_\_init\_\_
+
+```python
+def __init__(self, request_id: str = "",
+             http_status_code: int = 0,
+             code: str = "",
+             success: bool = False,
+             data: Optional[GetSessionDetailData] = None,
+             error_message: str = "")
+```
+
 ## OperationResult
 
 ```python

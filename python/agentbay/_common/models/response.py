@@ -282,6 +282,64 @@ class GetSessionResult(ApiResponse):
         self.error_message = error_message
 
 
+class GetSessionDetailData:
+    """Data returned by GetSessionDetail API."""
+
+    def __init__(
+        self,
+        aliuid: str = "",
+        apikey_id: str = "",
+        app_instance_group_id: str = "",
+        app_instance_id: str = "",
+        app_user_id: str = "",
+        biz_type: int = 0,
+        end_reason: str = "",
+        id: int = 0,
+        image_id: str = "",
+        image_type: str = "",
+        is_deleted: int = 0,
+        policy_id: str = "",
+        region_id: str = "",
+        resource_config_id: str = "",
+        status: str = "",
+    ):
+        self.aliuid = aliuid
+        self.apikey_id = apikey_id
+        self.app_instance_group_id = app_instance_group_id
+        self.app_instance_id = app_instance_id
+        self.app_user_id = app_user_id
+        self.biz_type = biz_type
+        self.end_reason = end_reason
+        self.id = id
+        self.image_id = image_id
+        self.image_type = image_type
+        self.is_deleted = is_deleted
+        self.policy_id = policy_id
+        self.region_id = region_id
+        self.resource_config_id = resource_config_id
+        self.status = status
+
+
+class GetSessionDetailResult(ApiResponse):
+    """Result of GetSessionDetail operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        http_status_code: int = 0,
+        code: str = "",
+        success: bool = False,
+        data: Optional[GetSessionDetailData] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.http_status_code = http_status_code
+        self.code = code
+        self.success = success
+        self.data = data
+        self.error_message = error_message
+
+
 class OperationResult(ApiResponse):
     """Result of general operations."""
 

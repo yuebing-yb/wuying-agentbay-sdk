@@ -138,6 +138,14 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error)
 
 GetSession retrieves session information by session ID
 
+### GetSessionDetail
+
+```go
+func (a *AgentBay) GetSessionDetail(sessionID string) (*GetSessionDetailResult, error)
+```
+
+GetSessionDetail retrieves basic session information by session ID
+
 ### List
 
 ```go

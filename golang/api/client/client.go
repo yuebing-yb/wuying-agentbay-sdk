@@ -890,6 +890,72 @@ func (client *Client) GetSession(request *GetSessionRequest) (_result *GetSessio
 
 // Summary:
 //
+// # Get basic session information by session ID
+//
+// @param request - GetSessionDetailRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return GetSessionDetailResponse
+func (client *Client) GetSessionDetailWithOptions(request *GetSessionDetailRequest, runtime *dara.RuntimeOptions) (_result *GetSessionDetailResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	query := map[string]interface{}{}
+	if !dara.IsNil(request.SessionId) {
+		query["SessionId"] = request.SessionId
+	}
+
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Query: openapiutil.Query(query),
+		Body:  openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("GetSessionDetail"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &GetSessionDetailResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Get basic session information by session ID
+//
+// @param request - GetSessionDetailRequest
+//
+// @return GetSessionDetailResponse
+func (client *Client) GetSessionDetail(request *GetSessionDetailRequest) (_result *GetSessionDetailResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &GetSessionDetailResponse{}
+	_body, _err := client.GetSessionDetailWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
 // # Get forwarding link for specific port
 //
 // @param request - GetLinkRequest

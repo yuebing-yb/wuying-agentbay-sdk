@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import * as $_client from "./api";
-import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
+import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest, GetSessionDetailRequest as $GetSessionDetailRequest } from "./api/models/model";
 import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
@@ -18,6 +18,7 @@ import { ExtraConfigs } from "./types/extra-configs";
 import {
   DeleteResult,
   extractRequestId,
+  GetSessionDetailResult as $GetSessionDetailResult,
   GetSessionResult as $GetSessionResult,
   SessionResult,
 } from "./types/api-response";
@@ -949,6 +950,101 @@ export class AgentBay {
           errorMessage: `Failed to get session ${sessionId}: ${error}`,
         };
       }
+    }
+  }
+
+  /**
+   * Get basic session information by session ID.
+   *
+   * @param sessionId - The ID of the session to retrieve.
+   * @returns GetSessionDetailResult containing basic session information
+   */
+  async getSessionDetail(sessionId: string): Promise<$GetSessionDetailResult> {
+    try {
+      logAPICall("GetSessionDetail", { sessionId });
+
+      const request = new $GetSessionDetailRequest({
+        authorization: `Bearer ${this.apiKey}`,
+        sessionId: sessionId,
+      });
+
+      const response = await this.client.getSessionDetail(request);
+      const body = response.body;
+      const requestId = extractRequestId(response) || body?.requestId || "";
+
+      setRequestId(requestId);
+
+      // Check for API-level errors
+      if (body?.success === false && body.code) {
+        logAPIResponseWithDetails(
+          "GetSessionDetail",
+          requestId,
+          false,
+          {},
+          `[${body.code}] ${body.message || "Unknown error"}`
+        );
+        logDebug(
+          "Full GetSessionDetail response:",
+          JSON.stringify(body, null, 2)
+        );
+        return {
+          requestId,
+          httpStatusCode: body.httpStatusCode || 0,
+          code: body.code,
+          success: false,
+          errorMessage: `[${body.code}] ${body.message || "Unknown error"}`,
+        };
+      }
+
+      const result: $GetSessionDetailResult = {
+        requestId,
+        httpStatusCode: body?.httpStatusCode || 0,
+        code: body?.code || "",
+        success: body?.success || false,
+        errorMessage: "",
+      };
+
+      if (body?.data) {
+        result.data = {
+          aliuid: body.data.aliuid || "",
+          apikeyId: body.data.apikeyId || "",
+          appInstanceGroupId: body.data.appInstanceGroupId || "",
+          appInstanceId: body.data.appInstanceId || "",
+          appUserId: body.data.appUserId || "",
+          bizType: body.data.bizType || 0,
+          endReason: body.data.endReason || "",
+          id: body.data.id || 0,
+          imageId: body.data.imageId || "",
+          imageType: body.data.imageType || "",
+          isDeleted: body.data.isDeleted || 0,
+          policyId: body.data.policyId || "",
+          regionId: body.data.regionId || "",
+          resourceConfigId: body.data.resourceConfigId || "",
+          status: body.data.status || "",
+        };
+
+        logAPIResponseWithDetails(
+          "GetSessionDetail",
+          requestId,
+          true,
+          {
+            appInstanceId: result.data.appInstanceId,
+            regionId: result.data.regionId,
+            status: result.data.status,
+          }
+        );
+      }
+
+      return result;
+    } catch (error: any) {
+      logError("Error calling GetSessionDetail:", error);
+      return {
+        requestId: "",
+        httpStatusCode: 0,
+        code: "",
+        success: false,
+        errorMessage: `Failed to get session detail ${sessionId}: ${error}`,
+      };
     }
   }
 

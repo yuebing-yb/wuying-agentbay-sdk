@@ -635,6 +635,62 @@ export class Client extends OpenApi {
   }
 
   /**
+   * Get basic session information by session ID
+   *
+   * @param request - GetSessionDetailRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns GetSessionDetailResponse
+   */
+  async getSessionDetailWithOptions(
+    request: $_model.GetSessionDetailRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.GetSessionDetailResponse> {
+    request.validate();
+    const query: { [key: string]: any } = {};
+    if (!$dara.isNull(request.sessionId)) {
+      query["SessionId"] = request.sessionId;
+    }
+
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      query: OpenApiUtil.query(query),
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "GetSessionDetail",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.GetSessionDetailResponse>(
+      await this.callApi(params, req, runtime),
+      new $_model.GetSessionDetailResponse({})
+    );
+  }
+
+  /**
+   * Get basic session information by session ID
+   *
+   * @param request - GetSessionDetailRequest
+   * @returns GetSessionDetailResponse
+   */
+  async getSessionDetail(
+    request: $_model.GetSessionDetailRequest
+  ): Promise<$_model.GetSessionDetailResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.getSessionDetailWithOptions(request, runtime);
+  }
+
+  /**
    * Pause session async
    *
    * @param request - PauseSessionAsyncRequest

@@ -267,7 +267,8 @@ func TestSyncCallbackType(t *testing.T) {
 	t.Run("should define SyncCallback type correctly", func(t *testing.T) {
 		// Test that SyncCallback is a function type
 		var callback agentbay.SyncCallback
-		assert.NotNil(t, callback)
+		// In Go, the zero value of a function type is nil. The purpose of this test
+		// is to ensure the type exists and can be assigned/called.
 
 		// Test callback function
 		callback = func(success bool) {

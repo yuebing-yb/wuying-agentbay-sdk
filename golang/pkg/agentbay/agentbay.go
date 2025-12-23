@@ -817,6 +817,35 @@ type GetSessionData struct {
 	Contexts           []ContextInfo
 }
 
+// GetSessionDetailResult represents the result of GetSessionDetail operation
+type GetSessionDetailResult struct {
+	models.ApiResponse
+	HttpStatusCode int32
+	Code           string
+	Success        bool
+	Data           *GetSessionDetailData
+	ErrorMessage   string
+}
+
+// GetSessionDetailData represents the data returned by GetSessionDetail API
+type GetSessionDetailData struct {
+	Aliuid             string
+	ApikeyID           string
+	AppInstanceGroupID string
+	AppInstanceID      string
+	AppUserID          string
+	BizType            int32
+	EndReason          string
+	ID                 int64
+	ImageID            string
+	ImageType          string
+	IsDeleted          int32
+	PolicyID           string
+	RegionID           string
+	ResourceConfigID   string
+	Status             string
+}
+
 // GetSession retrieves session information by session ID
 func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 	getSessionRequest := &mcp.GetSessionRequest{
@@ -959,6 +988,138 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 		}
 
 		result.ErrorMessage = ""
+	}
+
+	return result, nil
+}
+
+// GetSessionDetail retrieves basic session information by session ID
+func (a *AgentBay) GetSessionDetail(sessionID string) (*GetSessionDetailResult, error) {
+	getSessionDetailRequest := &mcp.GetSessionDetailRequest{
+		Authorization: tea.String("Bearer " + a.APIKey),
+		SessionId:     tea.String(sessionID),
+	}
+
+	// Log API request
+	requestParams := fmt.Sprintf("SessionId=%s", *getSessionDetailRequest.SessionId)
+	logAPICall("GetSessionDetail", requestParams)
+
+	response, err := a.Client.GetSessionDetail(getSessionDetailRequest)
+	if err != nil {
+		errorStr := err.Error()
+		if strings.Contains(errorStr, "InvalidMcpSession.NotFound") || strings.Contains(errorStr, "NotFound") {
+			LogInfo(fmt.Sprintf("Session not found: %s", sessionID))
+			LogDebug(fmt.Sprintf("GetSessionDetail error details: %s", errorStr))
+			return &GetSessionDetailResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				HttpStatusCode: 400,
+				Code:           "InvalidMcpSession.NotFound",
+				Success:        false,
+				ErrorMessage:   fmt.Sprintf("Session %s not found", sessionID),
+			}, nil
+		}
+		logOperationError("GetSessionDetail", err.Error(), true)
+		return nil, err
+	}
+
+	requestID := models.ExtractRequestID(response)
+	if requestID == "" && response != nil && response.Body != nil && response.Body.RequestId != nil {
+		requestID = tea.StringValue(response.Body.RequestId)
+	}
+	result := &GetSessionDetailResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+	}
+
+	if response != nil && response.Body != nil {
+		if response.Body.HttpStatusCode != nil {
+			result.HttpStatusCode = *response.Body.HttpStatusCode
+		}
+		if response.Body.Code != nil {
+			result.Code = *response.Body.Code
+		}
+		if response.Body.Success != nil {
+			result.Success = *response.Body.Success
+		}
+
+		// Check for API-level errors
+		if !result.Success && response.Body.Code != nil {
+			code := tea.StringValue(response.Body.Code)
+			message := tea.StringValue(response.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			result.ErrorMessage = fmt.Sprintf("[%s] %s", code, message)
+			logOperationError("GetSessionDetail", result.ErrorMessage, false)
+			return result, nil
+		}
+
+		if response.Body.Data != nil {
+			data := &GetSessionDetailData{}
+			if response.Body.Data.GetAliuid() != nil {
+				data.Aliuid = *response.Body.Data.GetAliuid()
+			}
+			if response.Body.Data.GetApikeyId() != nil {
+				data.ApikeyID = *response.Body.Data.GetApikeyId()
+			}
+			if response.Body.Data.GetAppInstanceGroupId() != nil {
+				data.AppInstanceGroupID = *response.Body.Data.GetAppInstanceGroupId()
+			}
+			if response.Body.Data.GetAppInstanceId() != nil {
+				data.AppInstanceID = *response.Body.Data.GetAppInstanceId()
+			}
+			if response.Body.Data.GetAppUserId() != nil {
+				data.AppUserID = *response.Body.Data.GetAppUserId()
+			}
+			if response.Body.Data.GetBizType() != nil {
+				data.BizType = *response.Body.Data.GetBizType()
+			}
+			if response.Body.Data.GetEndReason() != nil {
+				data.EndReason = *response.Body.Data.GetEndReason()
+			}
+			if response.Body.Data.GetId() != nil {
+				data.ID = *response.Body.Data.GetId()
+			}
+			if response.Body.Data.GetImageId() != nil {
+				data.ImageID = *response.Body.Data.GetImageId()
+			}
+			if response.Body.Data.GetImageType() != nil {
+				data.ImageType = *response.Body.Data.GetImageType()
+			}
+			if response.Body.Data.GetIsDeleted() != nil {
+				data.IsDeleted = *response.Body.Data.GetIsDeleted()
+			}
+			if response.Body.Data.GetPolicyId() != nil {
+				data.PolicyID = *response.Body.Data.GetPolicyId()
+			}
+			if response.Body.Data.GetRegionId() != nil {
+				data.RegionID = *response.Body.Data.GetRegionId()
+			}
+			if response.Body.Data.GetResourceConfigId() != nil {
+				data.ResourceConfigID = *response.Body.Data.GetResourceConfigId()
+			}
+			if response.Body.Data.GetStatus() != nil {
+				data.Status = *response.Body.Data.GetStatus()
+			}
+			result.Data = data
+		}
+
+		keyFields := map[string]interface{}{}
+		if result.Data != nil {
+			if result.Data.AppInstanceID != "" {
+				keyFields["app_instance_id"] = result.Data.AppInstanceID
+			}
+			if result.Data.RegionID != "" {
+				keyFields["region_id"] = result.Data.RegionID
+			}
+			if result.Data.Status != "" {
+				keyFields["status"] = result.Data.Status
+			}
+		}
+		logAPIResponseWithDetails("GetSessionDetail", requestID, result.Success, keyFields, "")
 	}
 
 	return result, nil

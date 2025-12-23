@@ -100,6 +100,12 @@ from ._get_session_response_body import (
     GetSessionResponseBody,
     GetSessionResponseBodyData,
 )
+from ._get_session_detail_request import GetSessionDetailRequest
+from ._get_session_detail_response import GetSessionDetailResponse
+from ._get_session_detail_response_body import (
+    GetSessionDetailResponseBody,
+    GetSessionDetailResponseBodyData,
+)
 from ._init_browser_request import InitBrowserRequest
 from ._init_browser_response import InitBrowserResponse
 from ._init_browser_response_body import (
@@ -193,6 +199,9 @@ __all__ = [
     GetSessionRequest,
     GetSessionResponseBody,
     GetSessionResponse,
+    GetSessionDetailRequest,
+    GetSessionDetailResponseBody,
+    GetSessionDetailResponse,
     InitBrowserRequest,
     InitBrowserResponseBody,
     InitBrowserResponse,
@@ -238,6 +247,7 @@ __all__ = [
     GetMcpResourceResponseBodyDataDesktopInfo,
     GetMcpResourceResponseBodyData,
     GetSessionResponseBodyData,
+    GetSessionDetailResponseBodyData,
     InitBrowserResponseBodyData,
     ListContextsResponseBodyData,
     ListSessionResponseBodyData,

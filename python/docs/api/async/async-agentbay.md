@@ -139,6 +139,23 @@ this returns raw session data without creating a Session object.
 
     GetSessionResult: Result containing session information.
 
+### get\_session\_detail
+
+```python
+async def get_session_detail(session_id: str) -> GetSessionDetailResult
+```
+
+Get basic session information by session ID asynchronously.
+
+**Arguments**:
+
+- `session_id` _str_ - The ID of the session to retrieve.
+  
+
+**Returns**:
+
+    GetSessionDetailResult: Result containing basic session information.
+
 ### get
 
 ```python

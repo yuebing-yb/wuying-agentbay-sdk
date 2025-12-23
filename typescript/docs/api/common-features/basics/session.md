@@ -15,7 +15,7 @@ Represents a session in the AgentBay cloud environment.
 ### Accessors
 
 - [files](#files)
-- [filesystem](#filesystem)
+- [filesystem](#filesystem-1)
 - [fs](#fs)
 
 ### Methods
