@@ -406,5 +406,222 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         args = self.session.call_mcp_tool.call_args[0][1]
         self.assertEqual(args["task_id"], "task-123")
 
+
+class TestAsyncAgentMobile(unittest.TestCase):
+    def setUp(self):
+        self.session = DummySession()
+        self.agent = Agent(self.session)
+        self.max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
+        if not self.max_try_times:
+            self.max_try_times = 5
+
+    @pytest.mark.sync
+    def test_mobile_task_execute_success(self):
+        """
+        Test mobile_execute_task method with successful response.
+        """
+        from agentbay import McpToolResult
+
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data='{"task_id": "task-123"}',
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+
+        result = self.agent.mobile.execute_task(
+            "Open WeChat app", max_steps=100, max_try_times=5
+        )
+        self.assertIsInstance(result, ExecutionResult)
+        self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "request-123")
+        self.assertEqual(result.task_id, "task-123")
+        self.assertEqual(result.task_status, "running")
+        self.assertEqual(result.error_message, "")
+
+        # Verify call arguments
+        self.session.call_mcp_tool.assert_called_once()
+        args = self.session.call_mcp_tool.call_args[0][1]
+        self.assertEqual(args["task"], "Open WeChat app")
+        self.assertEqual(args["max_steps"], 100)
+        self.assertEqual(args["max_try_times"], 5)
+
+    @pytest.mark.sync
+    def test_mobile_task_execute_and_wait_success(self):
+        """
+        Test mobile_execute_task_and_wait method with successful response.
+        """
+        from agentbay import McpToolResult
+
+        mock_result_execute = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data='{"task_id": "task-123"}',
+        )
+        mock_result_status = McpToolResult(
+            request_id="request-124",
+            success=True,
+            data='{"task_id": "task-123", "status": "finished", "action": "Completed", "product": "Task completed successfully"}',
+        )
+        self.session.call_mcp_tool.side_effect = [
+            mock_result_execute,
+            mock_result_status,
+        ]
+
+        result = self.agent.mobile.execute_task_and_wait(
+            "Open WeChat app", max_steps=100, max_try_times=5, max_poll_times=10
+        )
+        self.assertIsInstance(result, ExecutionResult)
+        self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "request-123")
+        self.assertEqual(result.task_status, "finished")
+        self.assertEqual(result.error_message, "")
+        self.assertEqual(result.task_result, "Task completed successfully")
+
+        # Verify call arguments
+        self.assertEqual(self.session.call_mcp_tool.call_count, 2)
+        execute_args = self.session.call_mcp_tool.call_args_list[0][0][1]
+        self.assertEqual(execute_args["task"], "Open WeChat app")
+        self.assertEqual(execute_args["max_steps"], 100)
+        self.assertEqual(execute_args["max_try_times"], 5)
+
+    @pytest.mark.sync
+    def test_mobile_execute_task_and_wait_error(self):
+        """
+        Test execute_task_and_wait method with error response.
+        """
+        from agentbay import McpToolResult
+
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=False,
+            error_message="Task execution failed",
+            data='{"task_id": "task-123", "status": "failed"}',
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+        result = self.agent.mobile.execute_task_and_wait(
+            "Open WeChat app", max_steps=50, max_try_times=3, max_poll_times=10
+        )
+        self.assertIsInstance(result, ExecutionResult)
+        self.assertFalse(result.success)
+        self.assertEqual(result.request_id, "request-123")
+        self.assertEqual(result.error_message, "Task execution failed")
+        self.assertEqual(result.task_status, "failed")
+        args = self.session.call_mcp_tool.call_args[0][1]
+        self.assertEqual(args["task"], "Open WeChat app")
+        self.assertEqual(args["max_steps"], 50)
+        self.assertEqual(args["max_try_times"], 3)
+
+    @pytest.mark.sync
+    def test_mobile_task_execute_timeout(self):
+        """
+        Test mobile_execute_task_and_wait method with timeout.
+        """
+        from agentbay import McpToolResult
+
+        mock_result_execute = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data='{"task_id": "task-123"}',
+        )
+        mock_result_status = McpToolResult(
+            request_id="request-124",
+            success=True,
+            data='{"task_id": "task-123", "status": "running", "action": "Processing"}',
+        )
+        self.session.call_mcp_tool.side_effect = [
+            mock_result_execute,
+            mock_result_status,
+            mock_result_status,
+            mock_result_status,
+        ]
+
+        result = self.agent.mobile.execute_task_and_wait(
+            "Open WeChat app", max_steps=50, max_try_times=3, max_poll_times=2
+        )
+        self.assertIsInstance(result, ExecutionResult)
+        self.assertFalse(result.success)
+        self.assertEqual(result.request_id, "request-123")
+        self.assertEqual(result.error_message, "Task timeout.")
+        self.assertEqual(result.task_status, "failed")
+
+    @pytest.mark.sync
+    def test_mobile_task_terminate_success(self):
+        """
+        Test terminate_task method with successful response.
+        """
+        from agentbay import McpToolResult
+
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data='{"task_id": "task-123", "status": "finished"}',
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+
+        result = self.agent.mobile.terminate_task("task-123")
+        self.assertIsInstance(result, ExecutionResult)
+        self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "request-123")
+        self.assertEqual(result.task_status, "finished")
+        self.assertEqual(result.error_message, "")
+
+        # Verify call arguments
+        self.session.call_mcp_tool.assert_called_once()
+        args = self.session.call_mcp_tool.call_args[0][1]
+        self.assertEqual(args["task_id"], "task-123")
+
+    @pytest.mark.sync
+    def test_mobile_task_terminate_error(self):
+        """
+        Test terminate_task method with error response.
+        """
+        from agentbay import McpToolResult
+
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=False,
+            error_message="Failed to terminate task",
+            data='{"task_id": "task-123", "status": "failed"}',
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+
+        result = self.agent.mobile.terminate_task("task-123")
+        self.assertIsInstance(result, ExecutionResult)
+        self.assertFalse(result.success)
+        self.assertEqual(result.request_id, "request-123")
+        self.assertEqual(result.task_status, "failed")
+        self.assertEqual(result.error_message, "Failed to terminate task")
+
+        # Verify call arguments
+        self.session.call_mcp_tool.assert_called_once()
+        args = self.session.call_mcp_tool.call_args[0][1]
+        self.assertEqual(args["task_id"], "task-123")
+
+    @pytest.mark.sync
+    def test_mobile_execute_task_with_default_params(self):
+        """
+        Test mobile_execute_task method with default parameters.
+        """
+        from agentbay import McpToolResult
+
+        mock_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data='{"task_id": "task-123"}',
+        )
+        self.session.call_mcp_tool.return_value = mock_result
+
+        result = self.agent.mobile.execute_task("Open WeChat app")
+        self.assertIsInstance(result, ExecutionResult)
+        self.assertTrue(result.success)
+
+        # Verify call arguments with default values
+        args = self.session.call_mcp_tool.call_args[0][1]
+        self.assertEqual(args["task"], "Open WeChat app")
+        self.assertEqual(args["max_steps"], 50)  # default value
+        self.assertEqual(args["max_try_times"], 3)  # default value
+
+
 if __name__ == "__main__":
     unittest.main()
