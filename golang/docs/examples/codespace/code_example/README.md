@@ -13,8 +13,9 @@ In this refactored version:
 ## Features Demonstrated
 
 1. **Python Code Execution**: Execute Python code in the cloud environment
-2. **JavaScript Code Execution**: Execute JavaScript/Node.js code 
-3. **Shell Command Execution**: Traditional command execution still works via `Command` module
+2. **JavaScript Code Execution**: Execute JavaScript/Node.js code
+3. **R and Java Code Execution**: Execute R and Java code in the cloud environment (supported by `RunCode`)
+4. **Shell Command Execution**: Traditional command execution still works via `Command` module
 
 ## Usage
 

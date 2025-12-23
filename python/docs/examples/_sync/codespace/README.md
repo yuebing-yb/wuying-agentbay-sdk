@@ -5,7 +5,7 @@ This directory contains examples demonstrating code execution capabilities in Ag
 ## Overview
 
 Codespace environment (`linux_latest` image) provides cloud-based code execution with:
-- Python and JavaScript runtime support
+- Python, JavaScript, R, and Java runtime support
 - File system operations
 - Command execution
 - Package installation and management
@@ -16,6 +16,7 @@ Codespace environment (`linux_latest` image) provides cloud-based code execution
 ### Code Execution
 - **code_execution_example.py**: Basic Python and JavaScript code execution
 - **jupyter_context_persistence.py**: Jupyter-like Python context persistence across consecutive `run_code()` calls within the same session
+- **jupyter_context_persistence_r_java.py**: Jupyter-like R and Java context persistence across consecutive `run_code()` calls within the same session
 - **python_development.py**: Python development workflow
 - **nodejs_development.py**: Node.js development setup
 - **web_server_setup.py**: Web server configuration
@@ -52,7 +53,7 @@ python code_execution_example.py
 
 | Method | Purpose |
 |--------|---------|
-| `session.code.run_code()` | Execute Python or JavaScript code |
+| `session.code.run_code()` | Execute Python, JavaScript, R, or Java code |
 | `session.file_system.write_file()` | Write content to a file |
 | `session.file_system.read_file()` | Read content from a file |
 | `session.command.execute_command()` | Execute shell commands |

@@ -43,6 +43,8 @@ func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResu
 RunCode executes code in the session environment. timeoutS: The timeout for the code execution in
 seconds. Default is 60s. Note: Due to gateway limitations, each request cannot exceed 60 seconds.
 
+language is case-insensitive. Supported values: "python", "javascript", "r", "java".
+
 **Example:**
 
 ```go

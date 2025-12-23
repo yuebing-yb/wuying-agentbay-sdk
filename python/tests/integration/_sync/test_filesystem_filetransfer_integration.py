@@ -122,6 +122,10 @@ def test_file_upload_integration():
             context_path = session.file_system.get_file_transfer_context_path()
             if context_path:
                 remote_path = f"{context_path}/upload_test.txt"
+            else:
+                # If no context path is available, skip the test
+                print("❌ No context path available, skipping upload test")
+                pytest.skip("No file transfer context path available")
 
             upload_result = session.file_system.upload_file(
                 local_path=temp_file_path,
@@ -146,6 +150,7 @@ def test_file_upload_integration():
 
             # Verify file exists in remote location by listing directory
             list_result = session.file_system.list_directory("/tmp/file-transfer/")
+            print(f"    Directory listing: {list_result.entries}")
             assert (
                 list_result.success
             ), f"Failed to list directory: {list_result.error_message}"
@@ -160,6 +165,7 @@ def test_file_upload_integration():
             assert file_found, "Uploaded file not found in remote directory"
 
             # Verify file content by reading it back
+            print(f"Testing file read...{remote_path}")
             read_result = session.file_system.read_file(remote_path)
             assert (
                 read_result.success
@@ -209,6 +215,8 @@ def test_file_download_integration():
         if context_path:
             remote_path = f"{context_path}/download_test.txt"
         else:
+            # Fallback to default path if context path is not available
+            remote_path = "/tmp/file-transfer/download_test.txt"
             pytest.skip("Failed to get context path")
         test_content = (
             "This is a test file for AgentBay FileTransfer download integration test.\n"

@@ -60,7 +60,10 @@ def test_screenshot_with_valid_page(browser_session):
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
-        page = playwright_browser.new_page()
+        contexts = playwright_browser.contexts
+        context = contexts[0] if contexts else playwright_browser.new_context()
+        pages = context.pages
+        page = pages[0] if pages else context.new_page()
         page.goto("https://www.baidu.com", timeout=30000)
 
         try:
@@ -96,7 +99,10 @@ def test_screenshot_with_full_page(browser_session):
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
-        page = playwright_browser.new_page()
+        contexts = playwright_browser.contexts
+        context = contexts[0] if contexts else playwright_browser.new_context()
+        pages = context.pages
+        page = pages[0] if pages else context.new_page()
         page.goto("https://www.baidu.com", timeout=30000)
 
         try:
@@ -132,7 +138,10 @@ def test_screenshot_with_custom_options(browser_session):
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
-        page = playwright_browser.new_page()
+        contexts = playwright_browser.contexts
+        context = contexts[0] if contexts else playwright_browser.new_context()
+        pages = context.pages
+        page = pages[0] if pages else context.new_page()
         page.goto("https://www.baidu.com", timeout=30000)
 
         try:
@@ -173,7 +182,10 @@ def test_screenshot_function_parameter_priority(browser_session):
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
-        page = playwright_browser.new_page()
+        contexts = playwright_browser.contexts
+        context = contexts[0] if contexts else playwright_browser.new_context()
+        pages = context.pages
+        page = pages[0] if pages else context.new_page()
         page.goto("https://www.baidu.com", timeout=30000)
 
         try:
@@ -256,7 +268,10 @@ def test_screenshot_with_multiple_pages(browser_session):
 
         for i, url in enumerate(urls):
             try:
-                page = playwright_browser.new_page()
+                contexts = playwright_browser.contexts
+                context = contexts[0] if contexts else playwright_browser.new_context()
+                pages = context.pages
+                page = pages[0] if pages else context.new_page()
                 page.goto(url, timeout=30000)
 
                 try:
@@ -306,7 +321,10 @@ def test_screenshot_performance(browser_session):
 
     with sync_playwright() as p:
         playwright_browser = p.chromium.connect_over_cdp(endpoint_url)
-        page = playwright_browser.new_page()
+        contexts = playwright_browser.contexts
+        context = contexts[0] if contexts else playwright_browser.new_context()
+        pages = context.pages
+        page = pages[0] if pages else context.new_page()
         page.goto("https://www.baidu.com", timeout=30000)
 
         try:

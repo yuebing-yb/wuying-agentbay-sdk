@@ -3,7 +3,7 @@
  *
  * This example demonstrates how to use AgentBay SDK automation features in codespace environment, including:
  * - Command execution
- * - Code execution (Python and JavaScript)
+ * - Code execution (Python, JavaScript, R, and Java)
  * - Workflow orchestration
  */
 

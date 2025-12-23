@@ -1,6 +1,6 @@
 # Code Execution Guide (CodeSpace)
 
-This guide covers code execution capabilities in AgentBay SDK's CodeSpace environment. CodeSpace provides a dedicated development environment optimized for running code in Python and JavaScript.
+This guide covers code execution capabilities in AgentBay SDK's CodeSpace environment. CodeSpace provides a dedicated development environment optimized for running code in Python, JavaScript, R, and Java.
 
 ## 📋 Table of Contents
 
@@ -19,7 +19,7 @@ This guide covers code execution capabilities in AgentBay SDK's CodeSpace enviro
 
 CodeSpace is AgentBay's development-focused environment that provides:
 
-- **Multi-language Support** - Run Python and JavaScript/Node.js code
+- **Multi-language Support** - Run Python, JavaScript/Node.js, R, and Java code
 - **Isolated Execution** - Secure, containerized code execution
 - **Enhanced Results** - Rich output formats including HTML, images, charts, and more
 - **Development Tools** - Pre-installed interpreters and development utilities
@@ -257,6 +257,15 @@ You can also run the verified end-to-end examples in this repository:
 - Async: `python/docs/examples/_async/codespace/jupyter_context_persistence.py`
 - Sync: `python/docs/examples/_sync/codespace/jupyter_context_persistence.py`
 
+### R and Java Context Persistence (Jupyter-like)
+
+In CodeSpace, you can also use the same notebook-style workflow with **R** and **Java**. Within the same session, you can define variables in one `run_code()` call and reuse them in subsequent calls.
+
+Verified end-to-end examples in this repository:
+
+- Async: `python/docs/examples/_async/codespace/jupyter_context_persistence_r_java.py`
+- Sync: `python/docs/examples/_sync/codespace/jupyter_context_persistence_r_java.py`
+
 <a id="javascript-code-execution"></a>
 ## 🟨 JavaScript Code Execution
 
@@ -324,7 +333,7 @@ console.log('Squares:', squares);
 const data = {
     name: 'AgentBay',
     version: '1.0',
-    features: ['Python', 'JavaScript', 'File I/O']
+    features: ['Python', 'JavaScript', 'R', 'Java', 'File I/O']
 };
 
 console.log('\\nData:', JSON.stringify(data, null, 2));

@@ -422,14 +422,12 @@ def test_chart_output():
     # Use a mock object to simulate chart output without external dependencies like Altair
     code = """
 from IPython.display import display
-
 class MockChart:
     def _repr_mimebundle_(self, include=None, exclude=None):
         return {
             "application/vnd.vegalite.v4+json": {"data": "mock_chart_data", "mark": "bar"},
             "text/plain": "MockChart"
         }
-
 display(MockChart())
 """
     result = session.code.run_code(code, "python")

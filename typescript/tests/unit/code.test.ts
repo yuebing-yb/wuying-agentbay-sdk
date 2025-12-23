@@ -108,11 +108,48 @@ console.log(x);
       expect(result.success).to.be.false;
       expect(result.result).to.equal("");
       expect(result.errorMessage).to.equal(
-        "Unsupported language: ruby. Supported languages are 'python' and 'javascript'"
+        "Unsupported language: ruby. Supported languages are 'python', 'javascript', 'r', and 'java'"
       );
 
       // Verify callMcpTool was not called for unsupported language
       expect(callMcpToolStub.called).to.be.false;
+    });
+
+    it("should support case-insensitive language input", async () => {
+      const mockResult = {
+        success: true,
+        data: "OK\n",
+        errorMessage: "",
+        requestId: "test-request-id",
+      };
+      callMcpToolStub.resolves(mockResult);
+
+      const result = await code.runCode('print("OK")', "PyThOn");
+
+      expect(result.success).to.be.true;
+      expect(callMcpToolStub.calledOnce).to.be.true;
+      expect(callMcpToolStub.firstCall.args[0]).to.equal("run_code");
+      expect(callMcpToolStub.firstCall.args[1].language).to.equal("python");
+    });
+
+    it("should support R and Java languages", async () => {
+      const mockResult = {
+        success: true,
+        data: "OK\n",
+        errorMessage: "",
+        requestId: "test-request-id",
+      };
+
+      callMcpToolStub.resolves(mockResult);
+      const rRes = await code.runCode('cat("OK\\n")', "R");
+      expect(rRes.success).to.be.true;
+      expect(callMcpToolStub.firstCall.args[1].language).to.equal("r");
+
+      callMcpToolStub.resetHistory();
+      callMcpToolStub.resolves(mockResult);
+      const javaRes = await code.runCode('System.out.println("OK");', "Java");
+      expect(javaRes.success).to.be.true;
+      expect(callMcpToolStub.firstCall.args[1].language).to.equal("java");
     });
 
     it("should handle code execution failure", async () => {

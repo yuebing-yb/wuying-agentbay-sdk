@@ -149,7 +149,8 @@ export class Code {
    * Corresponds to Python's run_code() method
    *
    * @param code - The code to execute.
-   * @param language - The programming language of the code. Must be either 'python' or 'javascript'.
+   * @param language - The programming language of the code. Case-insensitive.
+   *                  Supported values: 'python', 'javascript', 'r', 'java'.
    * @param timeoutS - The timeout for the code execution in seconds. Default is 60s.
    *                   Note: Due to gateway limitations, each request cannot exceed 60 seconds.
    * @returns CodeExecutionResult with code execution output and requestId
@@ -175,19 +176,31 @@ export class Code {
     timeoutS = 60
   ): Promise<CodeExecutionResult> {
     try {
-      // Validate language
-      if (language !== "python" && language !== "javascript") {
+      // Normalize and validate language (case-insensitive)
+      const rawLanguage = language ?? "";
+      const normalizedLanguage = String(rawLanguage).trim().toLowerCase();
+      const aliases: Record<string, string> = {
+        py: "python",
+        python3: "python",
+        js: "javascript",
+        node: "javascript",
+        nodejs: "javascript",
+      };
+      const canonicalLanguage = aliases[normalizedLanguage] || normalizedLanguage;
+      const supported = new Set(["python", "javascript", "r", "java"]);
+
+      if (!supported.has(canonicalLanguage)) {
         return {
           requestId: "",
           success: false,
           result: "",
-          errorMessage: `Unsupported language: ${language}. Supported languages are 'python' and 'javascript'`,
+          errorMessage: `Unsupported language: ${rawLanguage}. Supported languages are 'python', 'javascript', 'r', and 'java'`,
         };
       }
 
       const args = {
         code,
-        language,
+        language: canonicalLanguage,
         timeout_s: timeoutS,
       };
 

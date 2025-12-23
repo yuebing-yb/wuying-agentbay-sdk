@@ -9,7 +9,7 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
-// TestCodeRunCodeIntegration tests the code.run_code functionality with Python and JavaScript
+// TestCodeRunCodeIntegration tests the code.run_code functionality with Python, JavaScript, R, and Java
 func TestCodeRunCodeIntegration(t *testing.T) {
 	apiKey := testutil.GetTestAPIKey(t)
 	agentBay, err := agentbay.NewAgentBay(apiKey)
@@ -117,6 +117,104 @@ console.log("Result: " + x);`
 		}
 		if result.RequestID == "" {
 			t.Error("RequestID should not be empty")
+		}
+	})
+
+	// Test 3.1: Case-insensitive language input
+	t.Run("LanguageCaseInsensitive", func(t *testing.T) {
+		pythonCode := `print("CASE_INSENSITIVE_OK")`
+		result, err := session.Code.RunCode(pythonCode, "PyThOn")
+		if err != nil {
+			t.Fatalf("Error executing Python code with mixed-case language: %v", err)
+		}
+		if !strings.Contains(result.Output, "CASE_INSENSITIVE_OK") {
+			t.Errorf("Expected output to contain 'CASE_INSENSITIVE_OK', got: %s", result.Output)
+		}
+	})
+
+	// Test 3.2: Execute simple R code
+	t.Run("SimpleRExecution", func(t *testing.T) {
+		rCode := `cat("Hello from R!\n")
+x <- 10 + 20
+cat(x, "\n")`
+
+		t.Logf("Executing R code:\n%s", rCode)
+		result, err := session.Code.RunCode(rCode, "r")
+		if err != nil {
+			t.Fatalf("Error executing R code: %v", err)
+		}
+
+		t.Logf("R execution output (RequestID: %s):\n%s", result.RequestID, result.Output)
+		if !strings.Contains(result.Output, "Hello from R!") {
+			t.Errorf("Expected output to contain 'Hello from R!', got: %s", result.Output)
+		}
+		if !strings.Contains(result.Output, "30") {
+			t.Errorf("Expected output to contain '30', got: %s", result.Output)
+		}
+	})
+
+	// Test 3.3: Execute simple Java code
+	t.Run("SimpleJavaExecution", func(t *testing.T) {
+		javaCode := `System.out.println("Hello from Java!");
+int x = 10 + 20;
+System.out.println(x);`
+
+		t.Logf("Executing Java code:\n%s", javaCode)
+		result, err := session.Code.RunCode(javaCode, "java")
+		if err != nil {
+			t.Fatalf("Error executing Java code: %v", err)
+		}
+
+		t.Logf("Java execution output (RequestID: %s):\n%s", result.RequestID, result.Output)
+		if !strings.Contains(result.Output, "Hello from Java!") {
+			t.Errorf("Expected output to contain 'Hello from Java!', got: %s", result.Output)
+		}
+		if !strings.Contains(result.Output, "30") {
+			t.Errorf("Expected output to contain '30', got: %s", result.Output)
+		}
+	})
+
+	// Test 3.4: Jupyter-like context persistence for R
+	t.Run("RContextPersistence", func(t *testing.T) {
+		setup := `x <- 41
+cat("R_CONTEXT_SETUP_DONE\n")`
+		setupRes, err := session.Code.RunCode(setup, "R")
+		if err != nil {
+			t.Fatalf("Error executing R setup code: %v", err)
+		}
+		if !strings.Contains(setupRes.Output, "R_CONTEXT_SETUP_DONE") {
+			t.Errorf("Expected setup output to contain 'R_CONTEXT_SETUP_DONE', got: %s", setupRes.Output)
+		}
+
+		use := `cat(paste0("R_CONTEXT_VALUE:", x + 1, "\n"))`
+		useRes, err := session.Code.RunCode(use, "r")
+		if err != nil {
+			t.Fatalf("Error executing R context use code: %v", err)
+		}
+		if !strings.Contains(useRes.Output, "R_CONTEXT_VALUE:42") {
+			t.Errorf("Expected output to contain 'R_CONTEXT_VALUE:42', got: %s", useRes.Output)
+		}
+	})
+
+	// Test 3.5: Jupyter-like context persistence for Java
+	t.Run("JavaContextPersistence", func(t *testing.T) {
+		setup := `int x = 41;
+System.out.println("JAVA_CONTEXT_SETUP_DONE");`
+		setupRes, err := session.Code.RunCode(setup, "JAVA")
+		if err != nil {
+			t.Fatalf("Error executing Java setup code: %v", err)
+		}
+		if !strings.Contains(setupRes.Output, "JAVA_CONTEXT_SETUP_DONE") {
+			t.Errorf("Expected setup output to contain 'JAVA_CONTEXT_SETUP_DONE', got: %s", setupRes.Output)
+		}
+
+		use := `System.out.println("JAVA_CONTEXT_VALUE:" + (x + 1));`
+		useRes, err := session.Code.RunCode(use, "java")
+		if err != nil {
+			t.Fatalf("Error executing Java context use code: %v", err)
+		}
+		if !strings.Contains(useRes.Output, "JAVA_CONTEXT_VALUE:42") {
+			t.Errorf("Expected output to contain 'JAVA_CONTEXT_VALUE:42', got: %s", useRes.Output)
 		}
 	})
 

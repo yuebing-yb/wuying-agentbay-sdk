@@ -30,7 +30,9 @@ examples/
 ├── mobile-use/                    # Mobile UI automation (mobile_latest)
 │   └── mobile-get-adb-url/        # ADB URL retrieval
 └── codespace/                     # Code execution (code_latest)
-    └── automation/                # Automation workflows
+    ├── automation/                # Automation workflows
+    ├── enhanced_code/             # Enhanced runCode() output (logs/results/error)
+    └── jupyter_context_persistence_r_java/ # Jupyter-like context persistence for R and Java
 ```
 
 ## 🚀 Quick Start
@@ -261,6 +263,8 @@ await browser.close();
 
 **Code Execution:**
 - Automation: `codespace/automation/automation-example.ts`
+- Enhanced code result: `codespace/enhanced_code/index.ts`
+- Jupyter-like context persistence (R/Java): `codespace/jupyter_context_persistence_r_java/index.ts`
 
 **Data Management:**
 - File operations: `common-features/basics/filesystem-example/filesystem-example.ts`

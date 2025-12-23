@@ -74,6 +74,83 @@ console.log(x);
     assert "Hello, world!" in result.result
     assert "2" in result.result
 
+
+@pytest.mark.asyncio
+async def test_run_code_language_case_insensitive_python(code_session):
+    """Test case-insensitive language input for Python."""
+    code = """
+print("CASE_INSENSITIVE_OK")
+""".strip()
+    result = await code_session.run_code(code, "PyThOn")
+    assert result.success
+    assert "CASE_INSENSITIVE_OK" in result.result
+
+
+@pytest.mark.asyncio
+async def test_run_code_r_success(code_session):
+    """Test successful R code execution."""
+    code = """
+cat("Hello, R!\\n")
+x <- 1 + 1
+cat(x, "\\n")
+""".strip()
+    result = await code_session.run_code(code, "r")
+    assert result.success
+    assert "Hello, R!" in result.result
+    assert "2" in result.result
+
+
+@pytest.mark.asyncio
+async def test_run_code_java_success(code_session):
+    """Test successful Java code execution."""
+    code = """
+System.out.println("Hello, Java!");
+int x = 1 + 1;
+System.out.println(x);
+""".strip()
+    result = await code_session.run_code(code, "java")
+    assert result.success
+    assert "Hello, Java!" in result.result
+    assert "2" in result.result
+
+
+@pytest.mark.asyncio
+async def test_run_code_r_jupyter_context_persistence(code_session):
+    """Test Jupyter-like context persistence for R (state persists across calls)."""
+    setup_code = """
+x <- 41
+cat("CONTEXT_SETUP_DONE\\n")
+""".strip()
+    setup_result = await code_session.run_code(setup_code, "R")
+    assert setup_result.success
+    assert "CONTEXT_SETUP_DONE" in setup_result.result
+
+    use_code = """
+cat(paste0("CONTEXT_VALUE:", x + 1, "\\n"))
+""".strip()
+    use_result = await code_session.run_code(use_code, "r")
+    assert use_result.success
+    assert "CONTEXT_VALUE:42" in use_result.result
+
+
+@pytest.mark.asyncio
+async def test_run_code_java_jupyter_context_persistence(code_session):
+    """Test Jupyter-like context persistence for Java (state persists across calls)."""
+    setup_code = """
+int x = 41;
+System.out.println("CONTEXT_SETUP_DONE");
+""".strip()
+    setup_result = await code_session.run_code(setup_code, "JAVA")
+    assert setup_result.success
+    assert "CONTEXT_SETUP_DONE" in setup_result.result
+
+    use_code = """
+System.out.println("CONTEXT_VALUE:" + (x + 1));
+""".strip()
+    use_result = await code_session.run_code(use_code, "java")
+    assert use_result.success
+    assert "CONTEXT_VALUE:42" in use_result.result
+
 @pytest.mark.asyncio
 async def test_run_code_unsupported_language(code_session):
     """Test code execution with unsupported language."""

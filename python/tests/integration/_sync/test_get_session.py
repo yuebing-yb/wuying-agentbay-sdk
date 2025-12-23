@@ -56,9 +56,9 @@ def test_list_sessions(agent_bay):
     """Test listing sessions."""
     # Create a session
     create_result = agent_bay.create()
-    session = create_result.session
     assert create_result.success
-    session_id = session.session_id
+    session = create_result.session
+    session_id = create_result.session.session_id
 
     # List sessions
     list_result = agent_bay.list()

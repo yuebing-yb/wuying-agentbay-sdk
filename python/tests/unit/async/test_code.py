@@ -1,6 +1,7 @@
 import unittest
 import pytest
 from unittest.mock import AsyncMock, Mock, MagicMock
+import json
 
 from agentbay import AsyncCode
 from agentbay import EnhancedCodeExecutionResult, CodeExecutionResult
@@ -84,6 +85,69 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.result, "Hello, world!\n2\n")
         self.assertEqual(result.request_id, "test-request-id")
+
+    @pytest.mark.asyncio
+    async def test_run_code_language_case_insensitive(self):
+        """
+        Test run_code method supports case-insensitive language input.
+        """
+        response_body = {
+            "Success": True,
+            "Data": {
+                "content": [{"text": "OK\n"}],
+                "execution_count": 1,
+            },
+            "RequestId": "test-request-id",
+        }
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {"body": response_body}
+        self.mock_client.call_mcp_tool_async.return_value = mock_response
+
+        result = await self.code.run_code("print('OK')", "PyThOn")
+
+        self.assertTrue(result.success)
+        self.mock_client.call_mcp_tool_async.assert_called_once()
+
+        request = self.mock_client.call_mcp_tool_async.call_args[0][0]
+        self.assertEqual(request.name, "run_code")
+        args = json.loads(request.args)
+        self.assertEqual(args["language"], "python")
+
+    @pytest.mark.asyncio
+    async def test_run_code_supports_r_and_java(self):
+        """
+        Test run_code method supports R and Java.
+        """
+        response_body = {
+            "Success": True,
+            "Data": {
+                "content": [{"text": "OK\n"}],
+                "execution_count": 1,
+            },
+            "RequestId": "test-request-id",
+        }
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {"body": response_body}
+        self.mock_client.call_mcp_tool_async.return_value = mock_response
+
+        # R (case-insensitive)
+        result_r = await self.code.run_code('cat("OK\\n")', "R")
+        self.assertTrue(result_r.success)
+
+        request_r = self.mock_client.call_mcp_tool_async.call_args[0][0]
+        args_r = json.loads(request_r.args)
+        self.assertEqual(args_r["language"], "r")
+
+        self.mock_client.call_mcp_tool_async.reset_mock()
+        self.mock_client.call_mcp_tool_async.return_value = mock_response
+
+        # Java (case-insensitive)
+        result_java = await self.code.run_code('System.out.println("OK");', "Java")
+        self.assertTrue(result_java.success)
+
+        request_java = self.mock_client.call_mcp_tool_async.call_args[0][0]
+        args_java = json.loads(request_java.args)
+        self.assertEqual(args_java["language"], "java")
 
     @pytest.mark.asyncio
     async def test_run_code_invalid_language(self):

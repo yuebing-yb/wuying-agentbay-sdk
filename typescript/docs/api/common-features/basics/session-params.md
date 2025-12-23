@@ -67,7 +67,7 @@ ___
 
 • `Optional` **enableBrowserReplay**: `boolean`
 
-Whether to enable browser recording for the session. Defaults to undefined (use default behavior, enabled by default).
+Whether to enable browser recording for the session. Defaults to true.
 
 #### Implementation of
 

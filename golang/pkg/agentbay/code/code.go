@@ -233,6 +233,8 @@ func parseBackendResponse(data string) (*CodeResult, error) {
 // timeoutS: The timeout for the code execution in seconds. Default is 60s.
 // Note: Due to gateway limitations, each request cannot exceed 60 seconds.
 //
+// language is case-insensitive. Supported values: "python", "javascript", "r", "java".
+//
 // Example:
 //
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
@@ -246,14 +248,33 @@ func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResu
 		timeout = timeoutS[0]
 	}
 
-	// Validate language
-	if language != "python" && language != "javascript" {
-		return nil, fmt.Errorf("unsupported language: %s. Supported languages are 'python' and 'javascript'", language)
+	// Normalize and validate language (case-insensitive)
+	rawLanguage := language
+	normalizedLanguage := strings.ToLower(strings.TrimSpace(language))
+	aliases := map[string]string{
+		"py":      "python",
+		"python3": "python",
+		"js":      "javascript",
+		"node":    "javascript",
+		"nodejs":  "javascript",
+	}
+	if canonical, ok := aliases[normalizedLanguage]; ok {
+		normalizedLanguage = canonical
+	}
+
+	switch normalizedLanguage {
+	case "python", "javascript", "r", "java":
+		// supported
+	default:
+		return nil, fmt.Errorf(
+			"unsupported language: %s. Supported languages are 'python', 'javascript', 'r', and 'java'",
+			rawLanguage,
+		)
 	}
 
 	args := map[string]interface{}{
 		"code":      code,
-		"language":  language,
+		"language":  normalizedLanguage,
 		"timeout_s": timeout,
 	}
 

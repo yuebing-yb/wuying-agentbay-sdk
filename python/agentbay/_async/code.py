@@ -236,8 +236,8 @@ class AsyncCode(AsyncBaseService):
 
         Args:
             code: The code to execute.
-            language: The programming language of the code. Must be either 'python'
-                or 'javascript'.
+            language: The programming language of the code. Case-insensitive.
+                Supported values: 'python', 'javascript', 'r', 'java'.
             timeout_s: The timeout for the code execution in seconds. Default is 60s.
                 Note: Due to gateway limitations, each request cannot exceed 60 seconds.
 
@@ -267,16 +267,31 @@ class AsyncCode(AsyncBaseService):
                 await result.session.delete()
         """
         try:
-            # Validate language
-            if language not in ["python", "javascript"]:
+            # Normalize and validate language (case-insensitive)
+            raw_language = "" if language is None else str(language)
+            normalized_language = raw_language.strip().lower()
+
+            aliases = {
+                "py": "python",
+                "python3": "python",
+                "js": "javascript",
+                "node": "javascript",
+                "nodejs": "javascript",
+            }
+            canonical_language = aliases.get(normalized_language, normalized_language)
+
+            supported_languages = {"python", "javascript", "r", "java"}
+            if canonical_language not in supported_languages:
                 return EnhancedCodeExecutionResult(
                     request_id="",
                     success=False,
-                    error_message=f"Unsupported language: {language}. Supported "
-                    "languages are 'python' and 'javascript'",
+                    error_message=(
+                        f"Unsupported language: {raw_language}. Supported languages are "
+                        "'python', 'javascript', 'r', and 'java'"
+                    ),
                 )
 
-            args = {"code": code, "language": language, "timeout_s": timeout_s}
+            args = {"code": code, "language": canonical_language, "timeout_s": timeout_s}
             
             # Use self._call_mcp_tool to use our overridden _parse_response_body
             result = await self._call_mcp_tool("run_code", args)

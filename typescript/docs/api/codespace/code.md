@@ -37,7 +37,7 @@ Corresponds to Python's run_code() method
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `code` | `string` | `undefined` | The code to execute. |
-| `language` | `string` | `undefined` | The programming language of the code. Must be either 'python' or 'javascript'. |
+| `language` | `string` | `undefined` | The programming language of the code. Case-insensitive. Supported values: 'python', 'javascript', 'r', 'java'. |
 | `timeoutS` | `number` | `60` | The timeout for the code execution in seconds. Default is 60s. Note: Due to gateway limitations, each request cannot exceed 60 seconds. |
 
 #### Returns

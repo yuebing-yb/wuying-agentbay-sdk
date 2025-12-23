@@ -77,6 +77,83 @@ console.log(x);
     assert "Hello, world!" in result.result
     assert "2" in result.result
 
+
+@pytest.mark.sync
+def test_run_code_language_case_insensitive_python(code_session):
+    """Test case-insensitive language input for Python."""
+    code = """
+print("CASE_INSENSITIVE_OK")
+""".strip()
+    result = code_session.run_code(code, "PyThOn")
+    assert result.success
+    assert "CASE_INSENSITIVE_OK" in result.result
+
+
+@pytest.mark.sync
+def test_run_code_r_success(code_session):
+    """Test successful R code execution."""
+    code = """
+cat("Hello, R!\\n")
+x <- 1 + 1
+cat(x, "\\n")
+""".strip()
+    result = code_session.run_code(code, "r")
+    assert result.success
+    assert "Hello, R!" in result.result
+    assert "2" in result.result
+
+
+@pytest.mark.sync
+def test_run_code_java_success(code_session):
+    """Test successful Java code execution."""
+    code = """
+System.out.println("Hello, Java!");
+int x = 1 + 1;
+System.out.println(x);
+""".strip()
+    result = code_session.run_code(code, "java")
+    assert result.success
+    assert "Hello, Java!" in result.result
+    assert "2" in result.result
+
+
+@pytest.mark.sync
+def test_run_code_r_jupyter_context_persistence(code_session):
+    """Test Jupyter-like context persistence for R (state persists across calls)."""
+    setup_code = """
+x <- 41
+cat("CONTEXT_SETUP_DONE\\n")
+""".strip()
+    setup_result = code_session.run_code(setup_code, "R")
+    assert setup_result.success
+    assert "CONTEXT_SETUP_DONE" in setup_result.result
+
+    use_code = """
+cat(paste0("CONTEXT_VALUE:", x + 1, "\\n"))
+""".strip()
+    use_result = code_session.run_code(use_code, "r")
+    assert use_result.success
+    assert "CONTEXT_VALUE:42" in use_result.result
+
+
+@pytest.mark.sync
+def test_run_code_java_jupyter_context_persistence(code_session):
+    """Test Jupyter-like context persistence for Java (state persists across calls)."""
+    setup_code = """
+int x = 41;
+System.out.println("CONTEXT_SETUP_DONE");
+""".strip()
+    setup_result = code_session.run_code(setup_code, "JAVA")
+    assert setup_result.success
+    assert "CONTEXT_SETUP_DONE" in setup_result.result
+
+    use_code = """
+System.out.println("CONTEXT_VALUE:" + (x + 1));
+""".strip()
+    use_result = code_session.run_code(use_code, "java")
+    assert use_result.success
+    assert "CONTEXT_VALUE:42" in use_result.result
+
 @pytest.mark.sync
 def test_run_code_unsupported_language(code_session):
     """Test code execution with unsupported language."""
@@ -343,7 +420,7 @@ def test_3_2_code_execution_error_handling(agent_bay_client):
 print("Hello"
 # Missing closing parenthesis
 """.strip()
-  
+
         bad_result = code.run_code(bad_python_code, "python")
         assert not bad_result.success
         assert bad_result.error_message is not None
@@ -353,7 +430,7 @@ print("Hello"
 undefined_variable = nonexistent_variable + 1
 print(undefined_variable)
 """.strip()
-  
+
         runtime_result = code.run_code(runtime_error_code, "python")
         assert not runtime_result.success
         assert "name 'nonexistent_variable' is not defined" in runtime_result.error_message

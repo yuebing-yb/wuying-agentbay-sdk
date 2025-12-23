@@ -86,6 +86,98 @@ console.log(x);
       expect(runCodeResponse.result.includes("2")).toBe(true);
     }, 60000);
 
+    test("should support case-insensitive language input", async () => {
+      if (!session || !session.code) {
+        log("Note: Code interface is nil, skipping code test");
+        return;
+      }
+
+      const pythonCode = `print("CASE_INSENSITIVE_OK")\n`;
+      const runCodeResponse = await session.code.runCode(pythonCode, "PyThOn");
+
+      expect(runCodeResponse.success).toBe(true);
+      expect(runCodeResponse.result).toBeDefined();
+      expect(runCodeResponse.result.includes("CASE_INSENSITIVE_OK")).toBe(true);
+    }, 60000);
+
+    test("should execute R code successfully", async () => {
+      if (!session || !session.code) {
+        log("Note: Code interface is nil, skipping code test");
+        return;
+      }
+
+      const rCode = `
+cat("Hello, R!\\n")
+x <- 1 + 1
+cat(x, "\\n")
+`;
+
+      const runCodeResponse = await session.code.runCode(rCode, "r");
+      expect(runCodeResponse.success).toBe(true);
+      expect(runCodeResponse.result).toBeDefined();
+      expect(runCodeResponse.result.includes("Hello, R!")).toBe(true);
+      expect(runCodeResponse.result.includes("2")).toBe(true);
+    }, 60000);
+
+    test("should execute Java code successfully", async () => {
+      if (!session || !session.code) {
+        log("Note: Code interface is nil, skipping code test");
+        return;
+      }
+
+      const javaCode = `
+System.out.println("Hello, Java!");
+int x = 1 + 1;
+System.out.println(x);
+`;
+
+      const runCodeResponse = await session.code.runCode(javaCode, "java");
+      expect(runCodeResponse.success).toBe(true);
+      expect(runCodeResponse.result).toBeDefined();
+      expect(runCodeResponse.result.includes("Hello, Java!")).toBe(true);
+      expect(runCodeResponse.result.includes("2")).toBe(true);
+    }, 60000);
+
+    test("should support R Jupyter-like context persistence", async () => {
+      if (!session || !session.code) {
+        log("Note: Code interface is nil, skipping code test");
+        return;
+      }
+
+      const setup = `
+x <- 41
+cat("R_CONTEXT_SETUP_DONE\\n")
+`;
+      const setupRes = await session.code.runCode(setup, "R");
+      expect(setupRes.success).toBe(true);
+      expect(setupRes.result.includes("R_CONTEXT_SETUP_DONE")).toBe(true);
+
+      const use = `cat(paste0("R_CONTEXT_VALUE:", x + 1, "\\n"))\n`;
+      const useRes = await session.code.runCode(use, "r");
+      expect(useRes.success).toBe(true);
+      expect(useRes.result.includes("R_CONTEXT_VALUE:42")).toBe(true);
+    }, 60000);
+
+    test("should support Java Jupyter-like context persistence", async () => {
+      if (!session || !session.code) {
+        log("Note: Code interface is nil, skipping code test");
+        return;
+      }
+
+      const setup = `
+int x = 41;
+System.out.println("JAVA_CONTEXT_SETUP_DONE");
+`;
+      const setupRes = await session.code.runCode(setup, "JAVA");
+      expect(setupRes.success).toBe(true);
+      expect(setupRes.result.includes("JAVA_CONTEXT_SETUP_DONE")).toBe(true);
+
+      const use = `System.out.println("JAVA_CONTEXT_VALUE:" + (x + 1));\n`;
+      const useRes = await session.code.runCode(use, "java");
+      expect(useRes.success).toBe(true);
+      expect(useRes.result.includes("JAVA_CONTEXT_VALUE:42")).toBe(true);
+    }, 60000);
+
     test("should handle unsupported language", async () => {
       if (!session || !session.code) {
         log("Note: Code interface is nil, skipping code test");
