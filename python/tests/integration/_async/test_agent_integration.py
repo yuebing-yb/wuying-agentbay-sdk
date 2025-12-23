@@ -131,7 +131,7 @@ async def test_computer_execute_task_success(computer_agent_session):
         logger.info(
             f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
         )
-        if query_result.task_status == "finished":
+        if query_result.task_status == "completed":
             break
         retry_times += 1
         await asyncio.sleep(3)
@@ -182,7 +182,7 @@ async def test_browser_execute_task_success(browser_agent_session):
         logger.info(
             f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
         )
-        if query_result.task_status == "finished":
+        if query_result.task_status == "completed":
             break
         retry_times += 1
         await asyncio.sleep(3)
@@ -234,7 +234,7 @@ async def test_mobile_execute_task_success(mobile_agent_session):
         logger.info(
             f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
         )
-        if query_result.task_status == "finished":
+        if query_result.task_status == "completed":
             break
         retry_times += 1
         await asyncio.sleep(3)

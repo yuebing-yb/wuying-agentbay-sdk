@@ -212,6 +212,14 @@ class Agent(BaseService):
                                 task_id=task_id,
                                 task_status=query.task_status,
                             )
+                        elif query.task_status == "cancelled":
+                            return ExecutionResult(
+                                request_id=result.request_id,
+                                success=False,
+                                error_message="Task was cancelled.",
+                                task_id=task_id,
+                                task_status=query.task_status,
+                            )
                         elif query.task_status == "unsupported":
                             return ExecutionResult(
                                 request_id=result.request_id,
@@ -224,7 +232,7 @@ class Agent(BaseService):
                             f"⏳ Task {task_id} running 🚀: {query.task_action}."
                         )
                         # keep waiting unit timeout if the status is running
-                        # task_status {running, completed, finished, failed, unsupported}
+                        # task_status {running, completed, failed, cancelled}
                         time.sleep(3)
                         tried_time += 1
                     _logger.warning("⚠️ task execution timeout!")
@@ -361,13 +369,14 @@ class Agent(BaseService):
                 )
                 if result.success:
                     content = json.loads(result.data)
-                    task_id = content.get("task_id", task_id)
+                    # Support both taskId (camelCase) and task_id (snake_case)
+                    task_id = content.get("taskId") or content.get("task_id", task_id)
                     return ExecutionResult(
                         request_id=result.request_id,
                         success=True,
                         error_message="",
                         task_id=task_id,
-                        task_status=content.get("status", "completed"),
+                        task_status=content.get("status", "cancelling"),
                     )
                 else:
                     content = json.loads(result.data) if result.data else {}
@@ -782,6 +791,14 @@ class Agent(BaseService):
                         request_id=last_request_id,
                         success=False,
                         error_message="Failed to execute task.",
+                        task_id=task_id,
+                        task_status=query.task_status,
+                    )
+                elif query.task_status == "cancelled":
+                    return ExecutionResult(
+                        request_id=last_request_id,
+                        success=False,
+                        error_message="Task was cancelled.",
                         task_id=task_id,
                         task_status=query.task_status,
                     )

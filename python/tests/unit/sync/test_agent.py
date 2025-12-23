@@ -50,7 +50,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "completed", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -58,7 +58,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "finished")
+        self.assertEqual(result.task_status, "completed")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
@@ -105,7 +105,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "cancelling", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -113,7 +113,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "finished")
+        self.assertEqual(result.task_status, "cancelling")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
@@ -133,7 +133,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -161,7 +161,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
             logger.info(
                 f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
             )
-            if query_result.task_status == "finished":
+            if query_result.task_status == "completed":
                 break
             retry_times += 1
             time.sleep(3)
@@ -179,7 +179,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -238,7 +238,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "completed", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -246,7 +246,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "finished")
+        self.assertEqual(result.task_status, "completed")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
@@ -293,7 +293,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "cancelling", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -301,7 +301,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "finished")
+        self.assertEqual(result.task_status, "cancelling")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
@@ -321,7 +321,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -349,7 +349,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
             logger.info(
                 f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
             )
-            if query_result.task_status == "finished":
+            if query_result.task_status == "completed":
                 break
             retry_times += 1
             time.sleep(3)
@@ -367,7 +367,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -460,7 +460,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         mock_result_status = McpToolResult(
             request_id="request-124",
             success=True,
-            data='{"task_id": "task-123", "status": "finished", "action": "Completed", "product": "Task completed successfully"}',
+            data='{"task_id": "task-123", "status": "completed", "action": "Completed", "product": "Task completed successfully"}',
         )
         self.session.call_mcp_tool.side_effect = [
             mock_result_execute,
@@ -473,7 +473,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "finished")
+        self.assertEqual(result.task_status, "completed")
         self.assertEqual(result.error_message, "")
         self.assertEqual(result.task_result, "Task completed successfully")
 
@@ -552,7 +552,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data='{"task_id": "task-123", "status": "finished"}',
+            data='{"task_id": "task-123", "status": "cancelling"}',
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -560,7 +560,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "finished")
+        self.assertEqual(result.task_status, "cancelling")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
