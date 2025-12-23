@@ -21,13 +21,13 @@ An Agent to manipulate applications to complete specific tasks.
 ### \_\_init\_\_
 
 ```python
-def __init__(self, session)
+def __init__(self, session: "AsyncSession")
 ```
 
 ## Computer
 
 ```python
-class Computer()
+class Computer(_BaseTaskAgent)
 ```
 
 An Agent to perform tasks on the computer.
@@ -35,144 +35,13 @@ An Agent to perform tasks on the computer.
 ### \_\_init\_\_
 
 ```python
-def __init__(self, session)
-```
-
-### execute\_task
-
-```python
-async def execute_task(task: str) -> ExecutionResult
-```
-
-Execute a task in human language without waiting for completion (non-blocking).
-
-This is a fire-and-return interface that immediately provides a task ID.
-Call get_task_status to check the task status. You can control the timeout
-of the task execution in your own code by setting the frequency of calling
-get_task_status and the max_try_times.
-
-**Arguments**:
-
-    task: Task description in human language.
-  
-
-**Returns**:
-
-    ExecutionResult: Result object containing success status, task ID,
-  task status, and error message if any.
-  
-
-**Example**:
-
-```python
-session_result = await agent_bay.create()
-session = session_result.session
-result = await session.agent.computer.execute_task("Open Chrome browser")
-print(f"Task ID: {result.task_id}, Status: {result.task_status}")
-status = await session.agent.computer.get_task_status(result.task_id)
-print(f"Task status: {status.task_status}")
-await session.delete()
-```
-
-### execute\_task\_and\_wait
-
-```python
-async def execute_task_and_wait(task: str,
-                                max_try_times: int) -> ExecutionResult
-```
-
-Execute a specific task described in human language synchronously.
-
-This is a synchronous interface that blocks until the task is completed or
-an error occurs, or timeout happens. The default polling interval is 3 seconds,
-so set a proper max_try_times according to your task complexity.
-
-**Arguments**:
-
-    task: Task description in human language.
-    max_try_times: Maximum number of retries.
-  
-
-**Returns**:
-
-    ExecutionResult: Result object containing success status, task ID,
-  task status, and error message if any.
-  
-
-**Example**:
-
-```python
-session_result = await agent_bay.create()
-session = session_result.session
-result = await session.agent.computer.execute_task_and_wait("Open Chrome browser", max_try_times=20)
-print(f"Task result: {result.task_result}")
-await session.delete()
-```
-
-### get\_task\_status
-
-```python
-async def get_task_status(task_id: str) -> QueryResult
-```
-
-Get the status of the task with the given task ID.
-
-**Arguments**:
-
-    task_id: The ID of the task to query.
-  
-
-**Returns**:
-
-    QueryResult: Result object containing success status, task status,
-  task action, task product, and error message if any.
-  
-
-**Example**:
-
-```python
-session_result = await agent_bay.create()
-session = session_result.session
-result = await session.agent.computer.execute_task("Query the weather in Shanghai with Baidu")
-status = await session.agent.computer.get_task_status(result.task_id)
-print(f"Status: {status.task_status}, Action: {status.task_action}")
-await session.delete()
-```
-
-### terminate\_task
-
-```python
-async def terminate_task(task_id: str) -> ExecutionResult
-```
-
-Terminate a task with a specified task ID.
-
-**Arguments**:
-
-    task_id: The ID of the running task to terminate.
-  
-
-**Returns**:
-
-    ExecutionResult: Result object containing success status, task ID,
-  task status, and error message if any.
-  
-
-**Example**:
-
-```python
-session_result = await agent_bay.create()
-session = session_result.session
-result = await session.agent.computer.execute_task("Query the weather in Shanghai with Baidu")
-terminate_result = await session.agent.computer.terminate_task(result.task_id)
-print(f"Terminated: {terminate_result.success}")
-await session.delete()
+def __init__(self, session: "AsyncSession")
 ```
 
 ## Browser
 
 ```python
-class Browser()
+class Browser(_BaseTaskAgent)
 ```
 
 An Agent(⚠️ Still in BETA) to perform tasks on the browser
@@ -180,7 +49,7 @@ An Agent(⚠️ Still in BETA) to perform tasks on the browser
 ### \_\_init\_\_
 
 ```python
-def __init__(self, session)
+def __init__(self, session: "AsyncSession")
 ```
 
 ### initialize
@@ -212,22 +81,45 @@ print(f"Initialized: {initialize_result.success}")
 await session.delete()
 ```
 
+## Mobile
+
+```python
+class Mobile(_BaseTaskAgent)
+```
+
+An Agent to perform tasks on mobile devices.
+
+### \_\_init\_\_
+
+```python
+def __init__(self, session: "AsyncSession")
+```
+
 ### execute\_task
 
 ```python
-async def execute_task(task: str) -> ExecutionResult
+async def execute_task(task: str,
+                       max_steps: int = 50,
+                       max_step_retries: int = 3) -> ExecutionResult
 ```
 
-Execute a browser task in human language without waiting for completion (non-blocking).
+Execute a task in human language without waiting for completion
+(non-blocking).
 
 This is a fire-and-return interface that immediately provides a task ID.
 Call get_task_status to check the task status. You can control the timeout
 of the task execution in your own code by setting the frequency of calling
-get_task_status and the max_try_times.
+get_task_status.
 
 **Arguments**:
 
     task: Task description in human language.
+    max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
+  Used to prevent infinite loops or excessive resource consumption.
+  Default is 50.
+    max_step_retries: Maximum retry times for MCP tool call failures
+  at SDK level. Used to retry when call_mcp_tool fails
+  (e.g., network errors, timeouts). Default is 3.
   
 
 **Returns**:
@@ -241,9 +133,11 @@ get_task_status and the max_try_times.
 ```python
 session_result = await agent_bay.create()
 session = session_result.session
-result = await session.agent.browser.execute_task("Query the weather in Shanghai with Baidu")
+result = await session.agent.mobile.execute_task(
+  "Open WeChat app", max_steps=100, max_step_retries=5
+)
 print(f"Task ID: {result.task_id}, Status: {result.task_status}")
-status = await session.agent.browser.get_task_status(result.task_id)
+status = await session.agent.mobile.get_task_status(result.task_id)
 print(f"Task status: {status.task_status}")
 await session.delete()
 ```
@@ -252,19 +146,30 @@ await session.delete()
 
 ```python
 async def execute_task_and_wait(task: str,
-                                max_try_times: int) -> ExecutionResult
+                                max_steps: int = 50,
+                                max_step_retries: int = 3,
+                                max_try_times: int = 300) -> ExecutionResult
 ```
 
 Execute a specific task described in human language synchronously.
 
-This is a synchronous interface that blocks until the task is completed or
-an error occurs, or timeout happens. The default polling interval is 3 seconds,
-so set a proper max_try_times according to your task complexity.
+This is a synchronous interface that blocks until the task is
+completed or an error occurs, or timeout happens. The default
+polling interval is 3 seconds, so set a proper max_try_times
+according to your task complexity.
 
 **Arguments**:
 
     task: Task description in human language.
-    max_try_times: Maximum number of retries.
+    max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
+  Used to prevent infinite loops or excessive resource consumption.
+  Default is 50.
+    max_step_retries: Maximum retry times for MCP tool call
+  failures at SDK level. Used to retry when call_mcp_tool
+  fails (e.g., network errors, timeouts). Default is 3.
+    max_try_times: Maximum number of polling attempts (each 3 seconds).
+  Used to control how long to wait for task completion.
+  Default is 300 (about 15 minutes).
   
 
 **Returns**:
@@ -278,68 +183,13 @@ so set a proper max_try_times according to your task complexity.
 ```python
 session_result = await agent_bay.create()
 session = session_result.session
-result = await session.agent.browser.execute_task_and_wait("Query the weather in Shanghai with Baidu", max_try_times=20)
+result = await session.agent.mobile.execute_task_and_wait(
+  "Open WeChat app and send a message",
+  max_steps=100,
+  max_step_retries=3,
+  max_try_times=200
+)
 print(f"Task result: {result.task_result}")
-await session.delete()
-```
-
-### get\_task\_status
-
-```python
-async def get_task_status(task_id: str) -> QueryResult
-```
-
-Get the status of the task with the given task ID.
-
-**Arguments**:
-
-    task_id: The ID of the task to query.
-  
-
-**Returns**:
-
-    QueryResult: Result object containing success status, task status,
-  task action, task product, and error message if any.
-  
-
-**Example**:
-
-```python
-session_result = await agent_bay.create()
-session = session_result.session
-result = await session.agent.browser.execute_task("Open Chrome browser")
-status = await session.agent.browser.get_task_status(result.task_id)
-print(f"Status: {status.task_status}, Action: {status.task_action}")
-await session.delete()
-```
-
-### terminate\_task
-
-```python
-async def terminate_task(task_id: str) -> ExecutionResult
-```
-
-Terminate a task with a specified task ID.
-
-**Arguments**:
-
-    task_id: The ID of the running task to terminate.
-  
-
-**Returns**:
-
-    ExecutionResult: Result object containing success status, task ID,
-  task status, and error message if any.
-  
-
-**Example**:
-
-```python
-session_result = await agent_bay.create()
-session = session_result.session
-result = await session.agent.browser.execute_task("Open Chrome browser")
-terminate_result = await session.agent.browser.terminate_task(result.task_id)
-print(f"Terminated: {terminate_result.success}")
 await session.delete()
 ```
 

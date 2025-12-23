@@ -430,7 +430,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         self.session.call_mcp_tool.return_value = mock_result
 
         result = self.agent.mobile.execute_task(
-            "Open WeChat app", max_steps=100, max_try_times=5
+            "Open WeChat app", max_steps=100, max_step_retries=5
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
@@ -444,7 +444,6 @@ class TestAsyncAgentMobile(unittest.TestCase):
         args = self.session.call_mcp_tool.call_args[0][1]
         self.assertEqual(args["task"], "Open WeChat app")
         self.assertEqual(args["max_steps"], 100)
-        self.assertEqual(args["max_try_times"], 5)
 
     @pytest.mark.sync
     def test_mobile_task_execute_and_wait_success(self):
@@ -469,7 +468,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         ]
 
         result = self.agent.mobile.execute_task_and_wait(
-            "Open WeChat app", max_steps=100, max_try_times=5, max_poll_times=10
+            "Open WeChat app", max_steps=100, max_step_retries=5, max_try_times=10
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
@@ -483,7 +482,6 @@ class TestAsyncAgentMobile(unittest.TestCase):
         execute_args = self.session.call_mcp_tool.call_args_list[0][0][1]
         self.assertEqual(execute_args["task"], "Open WeChat app")
         self.assertEqual(execute_args["max_steps"], 100)
-        self.assertEqual(execute_args["max_try_times"], 5)
 
     @pytest.mark.sync
     def test_mobile_execute_task_and_wait_error(self):
@@ -500,7 +498,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
         result = self.agent.mobile.execute_task_and_wait(
-            "Open WeChat app", max_steps=50, max_try_times=3, max_poll_times=10
+            "Open WeChat app", max_steps=50, max_step_retries=3, max_try_times=10
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
@@ -510,7 +508,6 @@ class TestAsyncAgentMobile(unittest.TestCase):
         args = self.session.call_mcp_tool.call_args[0][1]
         self.assertEqual(args["task"], "Open WeChat app")
         self.assertEqual(args["max_steps"], 50)
-        self.assertEqual(args["max_try_times"], 3)
 
     @pytest.mark.sync
     def test_mobile_task_execute_timeout(self):
@@ -537,7 +534,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         ]
 
         result = self.agent.mobile.execute_task_and_wait(
-            "Open WeChat app", max_steps=50, max_try_times=3, max_poll_times=2
+            "Open WeChat app", max_steps=50, max_step_retries=3, max_try_times=2
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
@@ -620,7 +617,6 @@ class TestAsyncAgentMobile(unittest.TestCase):
         args = self.session.call_mcp_tool.call_args[0][1]
         self.assertEqual(args["task"], "Open WeChat app")
         self.assertEqual(args["max_steps"], 50)  # default value
-        self.assertEqual(args["max_try_times"], 3)  # default value
 
 
 if __name__ == "__main__":
