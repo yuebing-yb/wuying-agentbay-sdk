@@ -721,7 +721,23 @@ export class FileSystem {
         try {
           // In Node.js environment, use Buffer
           if (typeof Buffer !== "undefined") {
-            const binaryContent = Buffer.from(result.data || "", "base64");
+            const base64String = result.data || "";
+            // Validate base64 string format before decoding
+            // Buffer.from() doesn't throw for invalid base64, so we need to validate
+            if (base64String) {
+              // Base64 string should only contain A-Z, a-z, 0-9, +, /, and = (padding)
+              // Remove padding for validation, then check remaining characters
+              const base64WithoutPadding = base64String.replace(/=+$/, "");
+              if (!/^[A-Za-z0-9+/]+$/.test(base64WithoutPadding)) {
+                throw new Error("Invalid base64 string format");
+              }
+              // Also check padding format (0, 1, or 2 = characters at the end)
+              const paddingMatch = base64String.match(/=+$/);
+              if (paddingMatch && paddingMatch[0].length > 2) {
+                throw new Error("Invalid base64 padding format");
+              }
+            }
+            const binaryContent = Buffer.from(base64String, "base64");
             return {
               requestId: result.requestId,
               success: true,
