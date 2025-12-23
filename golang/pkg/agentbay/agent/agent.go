@@ -32,7 +32,8 @@ type QueryResult struct {
 // InitializationResult represents the result of agent initialization
 type InitializationResult struct {
 	models.ApiResponse
-	Success bool `json:"success"`
+	Success      bool   `json:"success"`
+	ErrorMessage string `json:"error_message"`
 }
 
 // Options for configuring the agent.
@@ -45,14 +46,366 @@ type AgentOptions struct {
 	OutputSchema string
 }
 
+// baseTaskAgent provides common functionality for task execution agents
+type baseTaskAgent struct {
+	Session    McpSession
+	ToolPrefix string
+}
+
+// getToolName returns the full MCP tool name based on prefix and action
+func (b *baseTaskAgent) getToolName(action string) string {
+	toolMap := map[string]string{
+		"execute":    b.ToolPrefix + "_execute_task",
+		"get_status": b.ToolPrefix + "_get_task_status",
+		"terminate":  b.ToolPrefix + "_terminate_task",
+	}
+	if toolName, ok := toolMap[action]; ok {
+		return toolName
+	}
+	return action
+}
+
+// executeTask executes a task in human language without waiting for completion (non-blocking).
+// This is a fire-and-return interface that immediately provides a task ID.
+// Call getTaskStatus to check the task status.
+func (b *baseTaskAgent) executeTask(task string) *ExecutionResult {
+	args := map[string]interface{}{
+		"task": task,
+	}
+
+	result, err := b.Session.CallMcpTool(b.getToolName("execute"), args)
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to execute task"
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	// Parse task ID from response
+	var content map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	taskID, ok := content["task_id"].(string)
+	if !ok {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: "Task ID not found in response",
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	return &ExecutionResult{
+		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
+		Success:     true,
+		TaskID:      taskID,
+		TaskStatus:  "running",
+	}
+}
+
+// executeTaskAndWait executes a specific task described in human language synchronously.
+// This is a synchronous interface that blocks until the task is completed or
+// an error occurs, or timeout happens. The default polling interval is 3 seconds.
+func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *ExecutionResult {
+	args := map[string]interface{}{
+		"task": task,
+	}
+
+	result, err := b.Session.CallMcpTool(b.getToolName("execute"), args)
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to execute task"
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+
+	// Parse task ID from response
+	var content map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Invalid execution response.",
+		}
+	}
+
+	taskID, ok := content["task_id"].(string)
+	if !ok {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: "Task ID not found in response",
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Invalid task ID.",
+		}
+	}
+
+	// Poll for task completion
+	triedTime := 0
+	for triedTime < maxTryTimes {
+		query := b.getTaskStatus(taskID)
+		if !query.Success {
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: query.ErrorMessage,
+				TaskStatus:   "failed",
+				TaskID:       taskID,
+			}
+		}
+
+		taskStatus := query.TaskStatus
+		switch taskStatus {
+		case "finished":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      true,
+				ErrorMessage: "",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+				TaskResult:   query.TaskProduct,
+			}
+		case "failed":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: "Failed to execute task.",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+			}
+		case "unsupported":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: "Unsupported task.",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+			}
+		}
+
+		fmt.Printf("⏳ Task %s running 🚀: %s.\n", taskID, query.TaskAction)
+		time.Sleep(3 * time.Second)
+		triedTime++
+	}
+
+	fmt.Println("⚠️ task execution timeout!")
+	return &ExecutionResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      false,
+		ErrorMessage: "Task timeout.",
+		TaskStatus:   "failed",
+		TaskID:       taskID,
+		TaskResult:   "Task timeout.",
+	}
+}
+
+// getTaskStatus gets the status of the task with the given task ID
+func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
+	args := map[string]interface{}{
+		"task_id": taskID,
+	}
+
+	result, err := b.Session.CallMcpTool(b.getToolName("get_status"), args)
+	if err != nil {
+		return &QueryResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to get task status: %v", err),
+			TaskID:       taskID,
+			TaskStatus:   "failed",
+		}
+	}
+
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to get task status"
+		}
+		return &QueryResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskID:       taskID,
+			TaskStatus:   "failed",
+		}
+	}
+
+	var queryResult map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &queryResult); err != nil {
+		return &QueryResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskID:       taskID,
+			TaskStatus:   "failed",
+		}
+	}
+
+	// Safely extract fields with defaults
+	taskIDFromResult, ok := queryResult["task_id"].(string)
+	if !ok {
+		taskIDFromResult = taskID
+	}
+
+	status, ok := queryResult["status"].(string)
+	if !ok {
+		status = "finished"
+	}
+
+	action, ok := queryResult["action"].(string)
+	if !ok {
+		action = ""
+	}
+
+	product, ok := queryResult["product"].(string)
+	if !ok {
+		product = ""
+	}
+
+	return &QueryResult{
+		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
+		Success:     true,
+		TaskID:      taskIDFromResult,
+		TaskStatus:  status,
+		TaskAction:  action,
+		TaskProduct: product,
+	}
+}
+
+// terminateTask terminates a task with a specified task ID
+func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
+	fmt.Println("Terminating task")
+
+	args := map[string]interface{}{
+		"task_id": taskID,
+	}
+
+	result, err := b.Session.CallMcpTool(b.getToolName("terminate"), args)
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to terminate: %v", err),
+			TaskID:       taskID,
+			TaskStatus:   "failed",
+		}
+	}
+
+	var content map[string]interface{}
+	if result.Data != "" {
+		if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+				Success:      false,
+				ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+				TaskID:       taskID,
+				TaskStatus:   "failed",
+			}
+		}
+	}
+
+	terminatedTaskID := taskID
+	if content != nil {
+		if tid, ok := content["task_id"].(string); ok {
+			terminatedTaskID = tid
+		}
+	}
+
+	if result.Success {
+		status := "finished"
+		if content != nil {
+			if s, ok := content["status"].(string); ok {
+				status = s
+			}
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      true,
+			ErrorMessage: "",
+			TaskID:       terminatedTaskID,
+			TaskStatus:   status,
+		}
+	}
+
+	// When result.Success is false, still try to parse status from content if available
+	status := "failed"
+	if content != nil {
+		if s, ok := content["status"].(string); ok {
+			status = s
+		}
+	}
+
+	errorMessage := result.ErrorMessage
+	if errorMessage == "" {
+		errorMessage = "Failed to terminate task"
+	}
+
+	return &ExecutionResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      false,
+		ErrorMessage: errorMessage,
+		TaskID:       terminatedTaskID,
+		TaskStatus:   status,
+	}
+}
+
 // ComputerUseAgent represents an agent to manipulate a browser to complete specific tasks
 type ComputerUseAgent struct {
-	Session McpSession
+	*baseTaskAgent
 }
 
 // BrowserUseAgent represents an agent to manipulate a browser to complete specific tasks
 type BrowserUseAgent struct {
-	Session McpSession
+	*baseTaskAgent
 }
 
 // Agent represents an agent to manipulate applications to complete specific tasks
@@ -70,13 +423,19 @@ type McpSession interface {
 
 func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {
 	return &BrowserUseAgent{
-		Session: session,
+		baseTaskAgent: &baseTaskAgent{
+			Session:    session,
+			ToolPrefix: "browser_use",
+		},
 	}
 }
 
 func NewComputerUseAgent(session McpSession) *ComputerUseAgent {
 	return &ComputerUseAgent{
-		Session: session,
+		baseTaskAgent: &baseTaskAgent{
+			Session:    session,
+			ToolPrefix: "flux",
+		},
 	}
 }
 
@@ -88,121 +447,39 @@ func NewAgent(session McpSession) *Agent {
 	}
 }
 
-// ExecuteTask executes a specific task described in human language
+// ExecuteTask executes a task in human language.
+// If maxTryTimes is provided, it will wait for task completion (blocking).
+// If maxTryTimes is not provided, it returns immediately with a task ID (non-blocking).
+//
+// Non-blocking usage (new style):
+//
+//	result := sessionResult.Session.Agent.Computer.ExecuteTask("Open Chrome browser")
+//	status := sessionResult.Session.Agent.Computer.GetTaskStatus(result.TaskID)
+//
+// Blocking usage (backward compatible):
+//
+//	result := sessionResult.Session.Agent.Computer.ExecuteTask("Open Chrome browser", 20)
+func (a *ComputerUseAgent) ExecuteTask(task string, maxTryTimes ...int) *ExecutionResult {
+	if len(maxTryTimes) > 0 {
+		// Backward compatible: blocking version
+		return a.baseTaskAgent.executeTaskAndWait(task, maxTryTimes[0])
+	}
+	// New non-blocking version
+	return a.baseTaskAgent.executeTask(task)
+}
+
+// ExecuteTaskAndWait executes a specific task described in human language synchronously.
+// This is a synchronous interface that blocks until the task is completed or
+// an error occurs, or timeout happens. The default polling interval is 3 seconds.
 //
 // Example:
 //
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 //	sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
 //	defer sessionResult.Session.Delete()
-//	result := sessionResult.Session.Agent.Computer.ExecuteTask("Find weather in NYC", 10)
-func (a *ComputerUseAgent) ExecuteTask(task string, maxTryTimes int) *ExecutionResult {
-	args := map[string]interface{}{
-		"task": task,
-	}
-
-	result, err := a.Session.CallMcpTool("flux_execute_task", args)
-	if err != nil {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: ""},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
-			TaskStatus:   "failed",
-			TaskID:       "",
-		}
-	}
-
-	if !result.Success {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: result.ErrorMessage,
-			TaskStatus:   "failed",
-			TaskID:       "",
-		}
-	}
-
-	// Parse task ID from response
-	var content map[string]interface{}
-	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskStatus:   "failed",
-			TaskID:       "",
-		}
-	}
-
-	taskID, ok := content["task_id"].(string)
-	if !ok {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: "Task ID not found in response",
-			TaskStatus:   "failed",
-			TaskID:       "",
-		}
-	}
-
-	// Poll for task completion
-	triedTime := 0
-	for triedTime < maxTryTimes {
-		query := a.GetTaskStatus(taskID)
-		if !query.Success {
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: query.ErrorMessage,
-				TaskStatus:   "failed",
-				TaskID:       taskID,
-			}
-		}
-
-		taskStatus := query.TaskStatus
-		switch taskStatus {
-		case "finished":
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      true,
-				ErrorMessage: "",
-				TaskID:       taskID,
-				TaskStatus:   taskStatus,
-				TaskResult:   query.TaskProduct,
-			}
-		case "failed":
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: "Failed to execute task.",
-				TaskID:       taskID,
-				TaskStatus:   taskStatus,
-				TaskResult:   query.TaskProduct,
-			}
-		case "unsupported":
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: "Unsupported task.",
-				TaskID:       taskID,
-				TaskStatus:   taskStatus,
-				TaskResult:   query.TaskProduct,
-			}
-		}
-
-		fmt.Printf("Task %s is still running, please wait for a while.\n", taskID)
-		time.Sleep(3 * time.Second)
-		triedTime++
-	}
-
-	return &ExecutionResult{
-		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-		Success:      false,
-		ErrorMessage: "Task execution timed out",
-		TaskStatus:   "timeout",
-		TaskID:       taskID,
-		TaskResult:   "",
-	}
+//	result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 20)
+func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, maxTryTimes int) *ExecutionResult {
+	return a.baseTaskAgent.executeTaskAndWait(task, maxTryTimes)
 }
 
 // GetTaskStatus gets the status of the task with the given task ID
@@ -215,49 +492,7 @@ func (a *ComputerUseAgent) ExecuteTask(task string, maxTryTimes int) *ExecutionR
 //	execResult := sessionResult.Session.Agent.Computer.ExecuteTask("Find weather in NYC", 10)
 //	statusResult := sessionResult.Session.Agent.Computer.GetTaskStatus(execResult.TaskID)
 func (a *ComputerUseAgent) GetTaskStatus(taskID string) *QueryResult {
-	args := map[string]interface{}{
-		"task_id": taskID,
-	}
-
-	result, err := a.Session.CallMcpTool("flux_get_task_status", args)
-	if err != nil {
-		return &QueryResult{
-			ApiResponse:  models.ApiResponse{RequestID: ""},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to get task status: %v", err),
-			TaskStatus:   "failed",
-		}
-	}
-
-	if !result.Success {
-		return &QueryResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: result.ErrorMessage,
-			TaskStatus:   "failed",
-		}
-	}
-	var queryResult map[string]interface{}
-	if err := json.Unmarshal([]byte(result.Data), &queryResult); err != nil {
-		return &QueryResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskStatus:   "failed",
-		}
-	}
-	product, success := queryResult["product"].(string)
-	var TaskProduct = product
-	if !success {
-		TaskProduct = ""
-	}
-	return &QueryResult{
-		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
-		Success:     true,
-		TaskID:      queryResult["task_id"].(string),
-		TaskStatus:  queryResult["status"].(string),
-		TaskProduct: TaskProduct,
-	}
+	return a.baseTaskAgent.getTaskStatus(taskID)
 }
 
 // TerminateTask terminates a task with a specified task ID
@@ -270,205 +505,98 @@ func (a *ComputerUseAgent) GetTaskStatus(taskID string) *QueryResult {
 //	execResult := sessionResult.Session.Agent.Computer.ExecuteTask("Find weather in NYC", 10)
 //	terminateResult := sessionResult.Session.Agent.Computer.TerminateTask(execResult.TaskID)
 func (a *ComputerUseAgent) TerminateTask(taskID string) *ExecutionResult {
-	fmt.Println("Terminating task")
+	return a.baseTaskAgent.terminateTask(taskID)
+}
+
+// Initialize initializes the browser agent with options.
+// If options is nil, default values will be used (use_vision=false, output_schema={}).
+func (a *BrowserUseAgent) Initialize(options *AgentOptions) *InitializationResult {
+	fmt.Println("Initialize Browser Use Agent...")
 
 	args := map[string]interface{}{
-		"task_id": taskID,
+		"use_vision":    false,
+		"output_schema": map[string]interface{}{},
 	}
 
-	result, err := a.Session.CallMcpTool("flux_terminate_task", args)
+	if options != nil {
+		args["use_vision"] = options.UseVision
+		// Convert string to map if needed, or use empty map if empty string
+		if options.OutputSchema != "" {
+			var schemaMap map[string]interface{}
+			if err := json.Unmarshal([]byte(options.OutputSchema), &schemaMap); err == nil {
+				args["output_schema"] = schemaMap
+			} else {
+				// If not valid JSON, use empty map
+				args["output_schema"] = map[string]interface{}{}
+			}
+		} else {
+			args["output_schema"] = map[string]interface{}{}
+		}
+	}
+
+	result, err := a.baseTaskAgent.Session.CallMcpTool("browser_use_initialize", args)
 	if err != nil {
-		return &ExecutionResult{
+		fmt.Printf("Failed to initialize: %v\n", err)
+		return &InitializationResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to terminate: %v", err),
-			TaskID:       taskID,
-			TaskStatus:   "failed",
+			ErrorMessage: fmt.Sprintf("Failed to initialize: %v", err),
 		}
-	}
-
-	var content map[string]interface{}
-	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskID:       taskID,
-			TaskStatus:   "failed",
-		}
-	}
-
-	terminatedTaskID, ok := content["task_id"].(string)
-	if !ok {
-		terminatedTaskID = taskID
-	}
-
-	status, ok := content["status"].(string)
-	if !ok {
-		status = "unknown"
 	}
 
 	if result.Success {
-		return &ExecutionResult{
+		return &InitializationResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      true,
 			ErrorMessage: "",
-			TaskID:       terminatedTaskID,
-			TaskStatus:   status,
 		}
 	}
 
-	return &ExecutionResult{
+	fmt.Println("Failed to initialize browser use agent")
+	errorMessage := result.ErrorMessage
+	if errorMessage == "" {
+		errorMessage = "Failed to initialize browser use agent"
+	}
+	return &InitializationResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      false,
-		ErrorMessage: result.ErrorMessage,
-		TaskID:       terminatedTaskID,
-		TaskStatus:   status,
+		ErrorMessage: errorMessage,
 	}
 }
 
-func (a *BrowserUseAgent) Initialize(option AgentOptions) *InitializationResult {
-	args := map[string]interface{}{
-		"use_vision":    option.UseVision,
-		"output_schema": option.OutputSchema,
+// ExecuteTask executes a task in human language.
+// If maxTryTimes is provided, it will wait for task completion (blocking).
+// If maxTryTimes is not provided, it returns immediately with a task ID (non-blocking).
+//
+// Non-blocking usage (new style):
+//
+//	result := sessionResult.Session.Agent.Browser.ExecuteTask("Open Chrome browser")
+//	status := sessionResult.Session.Agent.Browser.GetTaskStatus(result.TaskID)
+//
+// Blocking usage (backward compatible):
+//
+//	result := sessionResult.Session.Agent.Browser.ExecuteTask("Open Chrome browser", 20)
+func (a *BrowserUseAgent) ExecuteTask(task string, maxTryTimes ...int) *ExecutionResult {
+	if len(maxTryTimes) > 0 {
+		// Backward compatible: blocking version
+		return a.baseTaskAgent.executeTaskAndWait(task, maxTryTimes[0])
 	}
-	result, err := a.Session.CallMcpTool("browser_use_initialize", args)
-	if err != nil {
-		return &InitializationResult{
-			ApiResponse: models.ApiResponse{RequestID: ""},
-			Success:     false,
-		}
-	}
-
-	if !result.Success {
-		return &InitializationResult{
-			ApiResponse: models.ApiResponse{RequestID: result.RequestID},
-			Success:     false,
-		}
-	}
-
-	return &InitializationResult{
-		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
-		Success:     true,
-	}
-
+	// New non-blocking version
+	return a.baseTaskAgent.executeTask(task)
 }
 
-// ExecuteTask executes a specific task described in human language
+// ExecuteTaskAndWait executes a specific task described in human language synchronously.
+// This is a synchronous interface that blocks until the task is completed or
+// an error occurs, or timeout happens. The default polling interval is 3 seconds.
 //
 // Example:
 //
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 //	sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
 //	defer sessionResult.Session.Delete()
-//	result := sessionResult.Session.Agent.Browser.ExecuteTask("Find weather in NYC", 10)
-func (a *BrowserUseAgent) ExecuteTask(task string, maxTryTimes int) *ExecutionResult {
-	args := map[string]interface{}{
-		"task": task,
-	}
-
-	result, err := a.Session.CallMcpTool("browser_use_execute_task", args)
-	if err != nil {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: ""},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
-			TaskStatus:   "failed",
-			TaskID:       "",
-		}
-	}
-
-	if !result.Success {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: result.ErrorMessage,
-			TaskStatus:   "failed",
-			TaskID:       "",
-		}
-	}
-
-	// Parse task ID from response
-	var content map[string]interface{}
-	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskStatus:   "failed",
-			TaskID:       "",
-		}
-	}
-
-	taskID, ok := content["task_id"].(string)
-	if !ok {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: "Task ID not found in response",
-			TaskStatus:   "failed",
-			TaskID:       "",
-		}
-	}
-
-	// Poll for task completion
-	triedTime := 0
-	for triedTime < maxTryTimes {
-		query := a.GetTaskStatus(taskID)
-		if !query.Success {
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: query.ErrorMessage,
-				TaskStatus:   "failed",
-				TaskID:       taskID,
-			}
-		}
-
-		taskStatus := query.TaskStatus
-		switch taskStatus {
-		case "finished":
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      true,
-				ErrorMessage: "",
-				TaskID:       taskID,
-				TaskStatus:   taskStatus,
-				TaskResult:   query.TaskProduct,
-			}
-		case "failed":
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: "Failed to execute task.",
-				TaskID:       taskID,
-				TaskStatus:   taskStatus,
-				TaskResult:   query.TaskProduct,
-			}
-		case "unsupported":
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: "Unsupported task.",
-				TaskID:       taskID,
-				TaskStatus:   taskStatus,
-				TaskResult:   query.TaskProduct,
-			}
-		}
-
-		fmt.Printf("Task %s is still running, please wait for a while.\n", taskID)
-		time.Sleep(3 * time.Second)
-		triedTime++
-	}
-
-	return &ExecutionResult{
-		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-		Success:      false,
-		ErrorMessage: "Task execution timed out",
-		TaskStatus:   "timeout",
-		TaskID:       taskID,
-		TaskResult:   "",
-	}
+//	result := sessionResult.Session.Agent.Browser.ExecuteTaskAndWait("Open Chrome browser", 20)
+func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, maxTryTimes int) *ExecutionResult {
+	return a.baseTaskAgent.executeTaskAndWait(task, maxTryTimes)
 }
 
 // GetTaskStatus gets the status of the task with the given task ID
@@ -481,49 +609,7 @@ func (a *BrowserUseAgent) ExecuteTask(task string, maxTryTimes int) *ExecutionRe
 //	execResult := sessionResult.Session.Agent.Browser.ExecuteTask("Find weather in NYC", 10)
 //	statusResult := sessionResult.Session.Agent.Browser.GetTaskStatus(execResult.TaskID)
 func (a *BrowserUseAgent) GetTaskStatus(taskID string) *QueryResult {
-	args := map[string]interface{}{
-		"task_id": taskID,
-	}
-
-	result, err := a.Session.CallMcpTool("browser_use_get_task_status", args)
-	if err != nil {
-		return &QueryResult{
-			ApiResponse:  models.ApiResponse{RequestID: ""},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to get task status: %v", err),
-			TaskStatus:   "failed",
-		}
-	}
-
-	if !result.Success {
-		return &QueryResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: result.ErrorMessage,
-			TaskStatus:   "failed",
-		}
-	}
-	var queryResult map[string]interface{}
-	if err := json.Unmarshal([]byte(result.Data), &queryResult); err != nil {
-		return &QueryResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskStatus:   "failed",
-		}
-	}
-	product, success := queryResult["product"].(string)
-	var TaskProduct = product
-	if !success {
-		TaskProduct = ""
-	}
-	return &QueryResult{
-		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
-		Success:     true,
-		TaskID:      queryResult["task_id"].(string),
-		TaskStatus:  queryResult["status"].(string),
-		TaskProduct: TaskProduct,
-	}
+	return a.baseTaskAgent.getTaskStatus(taskID)
 }
 
 // TerminateTask terminates a task with a specified task ID
@@ -536,59 +622,5 @@ func (a *BrowserUseAgent) GetTaskStatus(taskID string) *QueryResult {
 //	execResult := sessionResult.Session.Agent.Browser.ExecuteTask("Find weather in NYC", 10)
 //	terminateResult := sessionResult.Session.Agent.Browser.TerminateTask(execResult.TaskID)
 func (a *BrowserUseAgent) TerminateTask(taskID string) *ExecutionResult {
-	fmt.Println("Terminating task")
-
-	args := map[string]interface{}{
-		"task_id": taskID,
-	}
-
-	result, err := a.Session.CallMcpTool("browser_use_terminate_task", args)
-	if err != nil {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: ""},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to terminate: %v", err),
-			TaskID:       taskID,
-			TaskStatus:   "failed",
-		}
-	}
-
-	var content map[string]interface{}
-	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskID:       taskID,
-			TaskStatus:   "failed",
-		}
-	}
-
-	terminatedTaskID, ok := content["task_id"].(string)
-	if !ok {
-		terminatedTaskID = taskID
-	}
-
-	status, ok := content["status"].(string)
-	if !ok {
-		status = "unknown"
-	}
-
-	if result.Success {
-		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      true,
-			ErrorMessage: "",
-			TaskID:       terminatedTaskID,
-			TaskStatus:   status,
-		}
-	}
-
-	return &ExecutionResult{
-		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-		Success:      false,
-		ErrorMessage: result.ErrorMessage,
-		TaskID:       terminatedTaskID,
-		TaskStatus:   status,
-	}
+	return a.baseTaskAgent.terminateTask(taskID)
 }
