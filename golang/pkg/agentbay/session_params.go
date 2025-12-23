@@ -33,6 +33,11 @@ type CreateSessionParams struct {
 
 	// EnableBrowserReplay specifies whether to enable browser recording for this session.
 	EnableBrowserReplay bool
+
+	// BrowserContext specifies persistent browser context configuration for this session.
+	// When set, the session will be bound to the given cloud context and browser state will
+	// persist across sessions.
+	BrowserContext *BrowserContext
 }
 
 // NewCreateSessionParams creates a new CreateSessionParams with default values.
@@ -77,6 +82,12 @@ func (p *CreateSessionParams) WithExtraConfigs(extraConfigs *models.ExtraConfigs
 // WithEnableBrowserReplay sets the browser replay flag for the session parameters and returns the updated parameters.
 func (p *CreateSessionParams) WithEnableBrowserReplay(enableBrowserReplay bool) *CreateSessionParams {
 	p.EnableBrowserReplay = enableBrowserReplay
+	return p
+}
+
+// WithBrowserContext sets the browser context configuration for the session parameters.
+func (p *CreateSessionParams) WithBrowserContext(browserContext *BrowserContext) *CreateSessionParams {
+	p.BrowserContext = browserContext
 	return p
 }
 

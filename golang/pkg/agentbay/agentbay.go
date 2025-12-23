@@ -250,6 +250,16 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 	}
 
+	// Add BrowserContext as a persistence item if provided
+	if params.BrowserContext != nil {
+		item, err := buildBrowserContextPersistenceDataListItem(params.BrowserContext)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build browser context persistence item: %w", err)
+		}
+		persistenceDataList = append(persistenceDataList, item)
+		needsContextSync = true
+	}
+
 	// Add mobile simulate context sync if needed
 	if params.ExtraConfigs != nil && params.ExtraConfigs.Mobile != nil &&
 		params.ExtraConfigs.Mobile.SimulateConfig != nil &&
@@ -1178,6 +1188,9 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 	// Copy ExtraConfigs (shallow copy as it's a pointer to a complex struct)
 	// If deep copy is needed, we would need to implement a deep copy method for ExtraConfigs
 	copy.ExtraConfigs = params.ExtraConfigs
+
+	// Copy BrowserContext (shallow copy is sufficient as it is immutable in typical usage)
+	copy.BrowserContext = params.BrowserContext
 
 	return copy
 }
