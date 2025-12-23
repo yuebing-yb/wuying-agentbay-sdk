@@ -418,6 +418,25 @@ export interface FileContentResult extends ApiResponse {
 }
 
 /**
+ * Interface for binary file content operation responses
+ * Corresponds to Python's BinaryFileContentResult type
+ */
+export interface BinaryFileContentResult extends ApiResponse {
+  /** Request identifier for tracking API calls */
+  requestId: string;
+  /** Whether the operation was successful */
+  success: boolean;
+  /** Binary file content */
+  content: Uint8Array;
+  /** Optional error message if the operation failed */
+  errorMessage?: string;
+  /** Optional MIME type of the file */
+  contentType?: string;
+  /** Optional size of the file in bytes */
+  size?: number;
+}
+
+/**
  * Interface for multiple file content operation responses
  * Corresponds to Python's MultipleFileContentResult type
  */

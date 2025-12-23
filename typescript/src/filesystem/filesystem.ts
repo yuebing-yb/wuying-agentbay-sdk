@@ -3,6 +3,7 @@ import {
   FileInfoResult,
   DirectoryListResult,
   FileContentResult,
+  BinaryFileContentResult,
   MultipleFileContentResult,
   FileSearchResult,
   ApiResponse,
@@ -665,24 +666,31 @@ export class FileSystem {
    * @param path - Path to the file to read.
    * @param offset - Optional: Byte offset to start reading from (0-based).
    * @param length - Optional: Number of bytes to read. If 0, reads the entire file from offset.
-   * @returns FileContentResult with file content and requestId
+   * @param formatType - Optional: Format to read the file in. "text" (default) or "binary".
+   * @returns FileContentResult for text format, BinaryFileContentResult for binary format
    */
   private async readFileChunk(
     path: string,
     offset = 0,
-    length = 0
-  ): Promise<FileContentResult> {
+    length = 0,
+    formatType: "text" | "binary" = "text"
+  ): Promise<FileContentResult | BinaryFileContentResult> {
     try {
       const args: any = {
         path,
       };
 
-      if (offset > 0) {
+      if (offset >= 0) {
         args.offset = offset;
       }
 
-      if (length > 0) {
+      if (length >= 0) {
         args.length = length;
+      }
+
+      // Only pass format parameter for binary files
+      if (formatType === "binary") {
+        args.format = "binary";
       }
 
       const result = await this.session.callMcpTool(
@@ -691,26 +699,79 @@ export class FileSystem {
       );
 
       if (!result.success) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          content: "",
-          errorMessage: result.errorMessage,
-        };
+        if (formatType === "binary") {
+          return {
+            requestId: result.requestId,
+            success: false,
+            content: new Uint8Array(0),
+            errorMessage: result.errorMessage,
+          };
+        } else {
+          return {
+            requestId: result.requestId,
+            success: false,
+            content: "",
+            errorMessage: result.errorMessage,
+          };
+        }
       }
 
-      return {
-        requestId: result.requestId,
-        success: true,
-        content: result.data || "",
-      };
+      if (formatType === "binary") {
+        // Backend returns base64-encoded string, decode to Uint8Array
+        try {
+          // In Node.js environment, use Buffer
+          if (typeof Buffer !== "undefined") {
+            const binaryContent = Buffer.from(result.data || "", "base64");
+            return {
+              requestId: result.requestId,
+              success: true,
+              content: new Uint8Array(binaryContent),
+            };
+          } else {
+            // In browser environment, use atob
+            const binaryString = atob(result.data || "");
+            const binaryContent = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              binaryContent[i] = binaryString.charCodeAt(i);
+            }
+            return {
+              requestId: result.requestId,
+              success: true,
+              content: binaryContent,
+            };
+          }
+        } catch (e) {
+          return {
+            requestId: result.requestId,
+            success: false,
+            content: new Uint8Array(0),
+            errorMessage: `Failed to decode base64: ${e}`,
+          };
+        }
+      } else {
+        // Text format
+        return {
+          requestId: result.requestId,
+          success: true,
+          content: result.data || "",
+        };
+      }
     } catch (error) {
-      return {
-        requestId: "",
-        success: false,
-        content: "",
-        errorMessage: `Failed to read file: ${error}`,
-      };
+      if (formatType === "binary") {
+        return {
+          requestId: "",
+          success: false,
+          content: new Uint8Array(0),
+          errorMessage: `Failed to read file: ${error}`,
+        };
+      } else {
+        return {
+          requestId: "",
+          success: false,
+          content: "",
+          errorMessage: `Failed to read file: ${error}`,
+        };
+      }
     }
   }
 
@@ -965,7 +1026,7 @@ export class FileSystem {
    * @returns FileContentResult with complete file content and requestId
    */
   /**
-   * Reads the entire content of a file.
+   * Reads the entire content of a file (text format, default).
    *
    * @param path - Absolute path to the file to read.
    *
@@ -974,8 +1035,6 @@ export class FileSystem {
    *          - content: String content of the file
    *          - requestId: Unique identifier for this API request
    *          - errorMessage: Error description if read failed
-   *
-   * @throws Error if the API call fails.
    *
    * @example
    * ```typescript
@@ -987,11 +1046,63 @@ export class FileSystem {
    * if (result.success) {
    *   const session = result.session;
    *
-   *   // Read a text file
+   *   // Read a text file (default)
    *   const fileResult = await session.fileSystem.readFile('/etc/hostname');
    *   if (fileResult.success) {
    *     console.log(`Content: ${fileResult.content}`);
-   *     // Output: Content: agentbay-session-xyz
+   *   }
+   *
+   *   await session.delete();
+   * }
+   * ```
+   */
+  async readFile(path: string): Promise<FileContentResult>;
+  /**
+   * Reads the entire content of a file with explicit text format.
+   *
+   * @param path - Absolute path to the file to read.
+   * @param opts - Options object with format set to "text".
+   *
+   * @returns Promise resolving to FileContentResult containing:
+   *          - success: Whether the read operation succeeded
+   *          - content: String content of the file
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if read failed
+   *
+   * @example
+   * ```typescript
+   * const fileResult = await session.fileSystem.readFile('/tmp/test.txt', { format: 'text' });
+   * ```
+   */
+  async readFile(path: string, opts: { format: "text" }): Promise<FileContentResult>;
+  /**
+   * Reads the entire content of a file in binary format.
+   *
+   * @param path - Absolute path to the file to read.
+   * @param opts - Options object with format set to "bytes".
+   *
+   * @returns Promise resolving to BinaryFileContentResult containing:
+   *          - success: Whether the read operation succeeded
+   *          - content: Uint8Array binary content of the file
+   *          - requestId: Unique identifier for this API request
+   *          - errorMessage: Error description if read failed
+   *          - contentType: Optional MIME type of the file
+   *          - size: Optional size of the file in bytes
+   *
+   * @example
+   * ```typescript
+   * import { AgentBay } from 'wuying-agentbay-sdk';
+   *
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create();
+   *
+   * if (result.success) {
+   *   const session = result.session;
+   *
+   *   // Read a binary file
+   *   const binaryResult = await session.fileSystem.readFile('/tmp/image.png', { format: 'bytes' });
+   *   if (binaryResult.success) {
+   *     console.log(`File size: ${binaryResult.content.length} bytes`);
    *   }
    *
    *   await session.delete();
@@ -1001,98 +1112,218 @@ export class FileSystem {
    * @remarks
    * **Behavior:**
    * - Automatically handles large files by reading in 60KB chunks
-   * - Returns empty string for empty files
+   * - Returns empty Uint8Array for empty files
    * - Fails if path is a directory or doesn't exist
-   * - Content is returned as UTF-8 string
-   *
-   * @see {@link writeFile}, {@link listDirectory}
+   * - Content is returned as Uint8Array (backend uses base64 encoding internally)
    */
+  async readFile(path: string, opts: { format: "bytes" }): Promise<BinaryFileContentResult>;
   async readFile(
-    path: string
-  ): Promise<FileContentResult> {
+    path: string,
+    opts?: { format?: "text" | "bytes" }
+  ): Promise<FileContentResult | BinaryFileContentResult> {
+    const format = opts?.format || "text";
     const chunkSize = DEFAULT_CHUNK_SIZE;
     try {
       // First get the file info
       const fileInfoResult = await this.getFileInfo(path);
 
       if (!fileInfoResult.success) {
-        return {
-          requestId: fileInfoResult.requestId,
-          success: false,
-          content: "",
-          errorMessage: fileInfoResult.errorMessage,
-        };
+        if (format === "bytes") {
+          return {
+            requestId: fileInfoResult.requestId,
+            success: false,
+            content: new Uint8Array(0),
+            errorMessage: fileInfoResult.errorMessage,
+          };
+        } else {
+          return {
+            requestId: fileInfoResult.requestId,
+            success: false,
+            content: "",
+            errorMessage: fileInfoResult.errorMessage,
+          };
+        }
       }
 
       // Check if file exists and is a file (not a directory)
       if (!fileInfoResult.fileInfo || fileInfoResult.fileInfo.isDirectory) {
-        return {
-          requestId: fileInfoResult.requestId,
-          success: false,
-          content: "",
-          errorMessage: `Path does not exist or is a directory: ${path}`,
-        };
+        const errorMsg = `Path does not exist or is a directory: ${path}`;
+        if (format === "bytes") {
+          return {
+            requestId: fileInfoResult.requestId,
+            success: false,
+            content: new Uint8Array(0),
+            errorMessage: errorMsg,
+          };
+        } else {
+          return {
+            requestId: fileInfoResult.requestId,
+            success: false,
+            content: "",
+            errorMessage: errorMsg,
+          };
+        }
       }
 
       // Get size from the fileInfo object
       const fileSize = fileInfoResult.fileInfo.size || 0;
 
       if (fileSize === 0) {
-        return {
-          requestId: fileInfoResult.requestId,
-          success: true,
-          content: "",
-        };
-      }
-
-      // Read the file in chunks
-      let result = "";
-      let offset = 0;
-      let chunkCount = 0;
-
-      while (offset < fileSize) {
-        // Calculate how much to read in this chunk
-        let length = chunkSize;
-        if (offset + length > fileSize) {
-          length = fileSize - offset;
-        }
-
-        try {
-          // Read the chunk
-          const chunkResult = await this.readFileChunk(path, offset, length);
-
-          if (!chunkResult.success) {
-            return chunkResult; // Return the error
-          }
-
-          // Extract the actual content from the response
-          result += chunkResult.content;
-
-          // Move to the next chunk
-          offset += length;
-          chunkCount++;
-        } catch (error) {
+        if (format === "bytes") {
           return {
             requestId: fileInfoResult.requestId,
-            success: false,
+            success: true,
+            content: new Uint8Array(0),
+            size: 0,
+          };
+        } else {
+          return {
+            requestId: fileInfoResult.requestId,
+            success: true,
             content: "",
-            errorMessage: `Error reading chunk at offset ${offset}: ${error}`,
           };
         }
       }
 
-      return {
-        requestId: fileInfoResult.requestId,
-        success: true,
-        content: result,
-      };
+      if (format === "bytes") {
+        // Binary format: read chunks and combine as Uint8Array
+        const contentChunks: Uint8Array[] = [];
+        let offset = 0;
+        let chunkCount = 0;
+
+        while (offset < fileSize) {
+          // Calculate how much to read in this chunk
+          let length = chunkSize;
+          if (offset + length > fileSize) {
+            length = fileSize - offset;
+          }
+
+          try {
+            // Read the chunk
+            const chunkResult = await this.readFileChunk(
+              path,
+              offset,
+              length,
+              "binary"
+            );
+
+            if (!chunkResult.success) {
+              return chunkResult as BinaryFileContentResult; // Return the error
+            }
+
+            // chunkResult is BinaryFileContentResult for binary format
+            if ("content" in chunkResult && chunkResult.content instanceof Uint8Array) {
+              contentChunks.push(chunkResult.content);
+            } else {
+              return {
+                requestId: chunkResult.requestId,
+                success: false,
+                content: new Uint8Array(0),
+                errorMessage: "Unexpected result type for binary format",
+              };
+            }
+
+            // Move to the next chunk
+            offset += length;
+            chunkCount++;
+          } catch (error) {
+            return {
+              requestId: fileInfoResult.requestId,
+              success: false,
+              content: new Uint8Array(0),
+              errorMessage: `Error reading chunk at offset ${offset}: ${error}`,
+            };
+          }
+        }
+
+        // Combine all binary chunks
+        const totalLength = contentChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+        const finalContent = new Uint8Array(totalLength);
+        let position = 0;
+        for (const chunk of contentChunks) {
+          finalContent.set(chunk, position);
+          position += chunk.length;
+        }
+
+        return {
+          requestId: fileInfoResult.requestId,
+          success: true,
+          content: finalContent,
+          size: finalContent.length,
+        };
+      } else {
+        // Text format (default)
+        let result = "";
+        let offset = 0;
+        let chunkCount = 0;
+
+        while (offset < fileSize) {
+          // Calculate how much to read in this chunk
+          let length = chunkSize;
+          if (offset + length > fileSize) {
+            length = fileSize - offset;
+          }
+
+          try {
+            // Read the chunk
+            const chunkResult = await this.readFileChunk(
+              path,
+              offset,
+              length,
+              "text"
+            );
+
+            if (!chunkResult.success) {
+              return chunkResult as FileContentResult; // Return the error
+            }
+
+            // Extract the actual content from the response
+            if ("content" in chunkResult && typeof chunkResult.content === "string") {
+              result += chunkResult.content;
+            } else {
+              return {
+                requestId: chunkResult.requestId,
+                success: false,
+                content: "",
+                errorMessage: "Unexpected result type for text format",
+              };
+            }
+
+            // Move to the next chunk
+            offset += length;
+            chunkCount++;
+          } catch (error) {
+            return {
+              requestId: fileInfoResult.requestId,
+              success: false,
+              content: "",
+              errorMessage: `Error reading chunk at offset ${offset}: ${error}`,
+            };
+          }
+        }
+
+        return {
+          requestId: fileInfoResult.requestId,
+          success: true,
+          content: result,
+        };
+      }
     } catch (error) {
-      return {
-        requestId: "",
-        success: false,
-        content: "",
-        errorMessage: `Failed to read large file: ${error}`,
-      };
+      if (format === "bytes") {
+        return {
+          requestId: "",
+          success: false,
+          content: new Uint8Array(0),
+          errorMessage: `Failed to read large file: ${error}`,
+        };
+      } else {
+        return {
+          requestId: "",
+          success: false,
+          content: "",
+          errorMessage: `Failed to read large file: ${error}`,
+        };
+      }
     }
   }
 

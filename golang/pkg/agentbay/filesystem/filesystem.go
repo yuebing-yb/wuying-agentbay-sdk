@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -98,6 +99,14 @@ func (r *FileChangeResult) GetDeletedFiles() []string {
 type FileReadResult struct {
 	models.ApiResponse // Embedded ApiResponse
 	Content            string
+}
+
+// BinaryFileReadResult wraps binary file read operation result and RequestID
+type BinaryFileReadResult struct {
+	models.ApiResponse // Embedded ApiResponse
+	Content            []byte  // Binary file content
+	ContentType        string  // MIME type (optional)
+	Size               int64   // File size in bytes (optional)
 }
 
 // FileWriteResult wraps file write operation result and RequestID
@@ -579,7 +588,8 @@ func (fs *FileSystem) MoveFile(source, destination string) (*FileWriteResult, er
 }
 
 // readFileChunk reads a file chunk. Internal method used for chunked file operations.
-func (fs *FileSystem) readFileChunk(path string, optionalParams ...int) (*FileReadResult, error) {
+// formatType can be "text" (default) or "binary"
+func (fs *FileSystem) readFileChunk(path string, formatType string, optionalParams ...int) (*FileReadResult, *BinaryFileReadResult, error) {
 	// Handle optional parameters for backward compatibility
 	offset, length := 0, 0
 	if len(optionalParams) > 0 {
@@ -589,31 +599,77 @@ func (fs *FileSystem) readFileChunk(path string, optionalParams ...int) (*FileRe
 		length = optionalParams[1]
 	}
 
+	// Default formatType to "text" if empty
+	if formatType == "" {
+		formatType = "text"
+	}
+
 	args := map[string]interface{}{
 		"path": path,
 	}
-	if offset > 0 {
+	if offset >= 0 {
 		args["offset"] = offset
 	}
-	if length > 0 {
+	if length >= 0 {
 		args["length"] = length
+	}
+
+	// Only pass format parameter for binary files
+	if formatType == "binary" {
+		args["format"] = "binary"
 	}
 
 	result, err := fs.Session.CallMcpTool("read_file", args)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+		if formatType == "binary" {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				Content: []byte{},
+			}, fmt.Errorf("failed to read file: %w", err)
+		}
+		return nil, nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	if !result.Success {
-		return nil, fmt.Errorf("read file failed: %s", result.ErrorMessage)
+		if formatType == "binary" {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: result.RequestID,
+				},
+				Content: []byte{},
+			}, fmt.Errorf("read file failed: %s", result.ErrorMessage)
+		}
+		return nil, nil, fmt.Errorf("read file failed: %s", result.ErrorMessage)
 	}
 
+	if formatType == "binary" {
+		// Backend returns base64-encoded string, decode to []byte
+		binaryContent, err := base64.StdEncoding.DecodeString(result.Data)
+		if err != nil {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: result.RequestID,
+				},
+				Content: []byte{},
+			}, fmt.Errorf("failed to decode base64: %w", err)
+		}
+		return nil, &BinaryFileReadResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			Content: binaryContent,
+		}, nil
+	}
+
+	// Text format
 	return &FileReadResult{
 		ApiResponse: models.ApiResponse{
 			RequestID: result.RequestID,
 		},
 		Content: result.Data,
-	}, nil
+	}, nil, nil
 }
 
 // ReadMultipleFiles reads multiple files and returns their contents as a map.
@@ -778,7 +834,7 @@ func (fs *FileSystem) writeFileChunk(path, content string, mode string) (*FileWr
 const ChunkSize = 50 * 1024
 
 // ReadFile reads the contents of a file. Automatically handles large files by chunking.
-// ReadFile reads the entire content of a file.
+// ReadFile reads the entire content of a file in text format (default).
 //
 // Parameters:
 //   - path: Absolute path to the file to read
@@ -800,31 +856,142 @@ const ChunkSize = 50 * 1024
 //	defer result.Session.Delete()
 //	fileResult, _ := result.Session.FileSystem.ReadFile("/etc/hostname")
 func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
+	result, _, err := fs.ReadFileWithFormat(path, "text")
+	return result, err
+}
+
+// ReadFileWithFormat reads the contents of a file with specified format.
+//
+// Parameters:
+//   - path: Absolute path to the file to read
+//   - format: Format to read the file in. "text" (default) or "binary"
+//
+// Returns:
+//   - *FileReadResult: For text format, contains file content as string
+//   - *BinaryFileReadResult: For binary format, contains file content as []byte
+//   - error: Error if the operation fails
+//
+// Behavior:
+//
+// - Automatically handles large files by reading in 50KB chunks
+// - Returns empty string/bytes for empty files
+// - Fails if path is a directory or doesn't exist
+// - Binary files are returned as []byte (backend uses base64 encoding internally)
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//
+//	// Read text file
+//	textResult, _ := result.Session.FileSystem.ReadFileWithFormat("/tmp/test.txt", "text")
+//
+//	// Read binary file
+//	binaryResult, _ := result.Session.FileSystem.ReadFileWithFormat("/tmp/image.png", "binary")
+func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadResult, *BinaryFileReadResult, error) {
+	// Default format to "text" if empty
+	if format == "" {
+		format = "text"
+	}
+
 	chunkSize := ChunkSize
 
 	// First get the file size
 	fileInfoResult, err := fs.GetFileInfo(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get file info: %w", err)
+		if format == "binary" {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				Content: []byte{},
+			}, fmt.Errorf("failed to get file info: %w", err)
+		}
+		return nil, nil, fmt.Errorf("failed to get file info: %w", err)
 	}
 
 	// Get size from the fileInfo struct
 	size := fileInfoResult.FileInfo.Size
 
 	if size == 0 {
-		return nil, fmt.Errorf("couldn't determine file size")
+		if format == "binary" {
+			return nil, &BinaryFileReadResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: fileInfoResult.RequestID,
+				},
+				Content: []byte{},
+				Size:    0,
+			}, nil
+		}
+		return &FileReadResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: fileInfoResult.RequestID,
+			},
+			Content: "",
+		}, nil, nil
 	}
 
-	// Prepare to read the file in chunks
-	var result strings.Builder
-	offset := 0
 	fileSize := int(size)
 
-	fmt.Printf("ReadFile: Starting chunked read of %s (total size: %d bytes, chunk size: %d bytes)\n",
-		path, fileSize, chunkSize)
+	if format == "binary" {
+		// Binary format: read chunks and combine as []byte
+		var contentChunks [][]byte
+		offset := 0
+		chunkCount := 0
+		var lastRequestID string
 
+		for offset < fileSize {
+			// Calculate how much to read in this chunk
+			length := chunkSize
+			if offset+length > fileSize {
+				length = fileSize - offset
+			}
+
+			// Read the chunk
+			_, chunkResult, err := fs.readFileChunk(path, "binary", offset, length)
+			if err != nil {
+				return nil, chunkResult, fmt.Errorf("error reading chunk at offset %d: %w", offset, err)
+			}
+
+			if chunkResult == nil {
+				return nil, nil, fmt.Errorf("unexpected nil result for binary format")
+			}
+
+			// Append the chunk bytes
+			contentChunks = append(contentChunks, chunkResult.Content)
+			lastRequestID = chunkResult.RequestID
+
+			// Move to the next chunk
+			offset += length
+			chunkCount++
+		}
+
+		// Combine all binary chunks
+		totalLength := 0
+		for _, chunk := range contentChunks {
+			totalLength += len(chunk)
+		}
+		finalContent := make([]byte, 0, totalLength)
+		for _, chunk := range contentChunks {
+			finalContent = append(finalContent, chunk...)
+		}
+
+		return nil, &BinaryFileReadResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: lastRequestID,
+			},
+			Content: finalContent,
+			Size:    int64(len(finalContent)),
+		}, nil
+	}
+
+	// Text format (default)
+	var result strings.Builder
+	offset := 0
 	chunkCount := 0
 	var lastRequestID string
+
 	for offset < fileSize {
 		// Calculate how much to read in this chunk
 		length := chunkSize
@@ -832,13 +999,14 @@ func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
 			length = fileSize - offset
 		}
 
-		fmt.Printf("ReadFile: Reading chunk %d (%d bytes at offset %d/%d)\n",
-			chunkCount+1, length, offset, fileSize)
-
 		// Read the chunk
-		chunkResult, err := fs.readFileChunk(path, offset, length)
+		chunkResult, _, err := fs.readFileChunk(path, "text", offset, length)
 		if err != nil {
-			return nil, fmt.Errorf("error reading chunk at offset %d: %w", offset, err)
+			return nil, nil, fmt.Errorf("error reading chunk at offset %d: %w", offset, err)
+		}
+
+		if chunkResult == nil {
+			return nil, nil, fmt.Errorf("unexpected nil result for text format")
 		}
 
 		// Append the chunk text
@@ -850,15 +1018,32 @@ func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
 		chunkCount++
 	}
 
-	fmt.Printf("ReadFile: Successfully read %s in %d chunks (total: %d bytes)\n",
-		path, chunkCount, fileSize)
-
 	return &FileReadResult{
 		ApiResponse: models.ApiResponse{
 			RequestID: lastRequestID,
 		},
 		Content: result.String(),
-	}, nil
+	}, nil, nil
+}
+
+// ReadFileBinary is a convenience method to read a file in binary format.
+//
+// Parameters:
+//   - path: Absolute path to the file to read
+//
+// Returns:
+//   - *BinaryFileReadResult: Result containing binary file content and request ID
+//   - error: Error if the operation fails
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	binaryResult, _ := result.Session.FileSystem.ReadFileBinary("/tmp/image.png")
+func (fs *FileSystem) ReadFileBinary(path string) (*BinaryFileReadResult, error) {
+	_, result, err := fs.ReadFileWithFormat(path, "binary")
+	return result, err
 }
 
 // WriteFile writes content to a file. Automatically handles large files by chunking.
