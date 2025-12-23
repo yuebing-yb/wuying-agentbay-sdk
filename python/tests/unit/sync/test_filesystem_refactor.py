@@ -107,7 +107,7 @@ class TestAsyncFileSystemRefactor(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.content, "small file content")
         mock_get_file_info.assert_called_once_with("/path/to/small_file.txt")
-        mock_read_chunk.assert_called_once_with("/path/to/small_file.txt", 0, 1024)
+        mock_read_chunk.assert_called_once_with("/path/to/small_file.txt", 0, 1024, format_type="text")
 
     @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
     @patch("agentbay._sync.filesystem.FileSystem._read_file_chunk")

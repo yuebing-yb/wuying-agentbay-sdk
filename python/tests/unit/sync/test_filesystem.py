@@ -886,7 +886,7 @@ class TestAsyncFileSystem(unittest.TestCase):
         self.assertEqual(result.content, binary_data)
         
         # Verify MCP tool was called with format='binary'
-        self.session.call_mcp_tool.assert_awaited_once()
+        self.session.call_mcp_tool.assert_called_once()
         call_args = self.session.call_mcp_tool.call_args
         self.assertEqual(call_args[0][0], "read_file")
         self.assertEqual(call_args[0][1]["format"], "binary")
@@ -941,7 +941,7 @@ class TestAsyncFileSystem(unittest.TestCase):
         self.assertEqual(result.content, "text content")
         
         # Verify MCP tool was called WITHOUT format parameter (default text)
-        self.session.call_mcp_tool.assert_awaited_once()
+        self.session.call_mcp_tool.assert_called_once()
         call_args = self.session.call_mcp_tool.call_args
         self.assertEqual(call_args[0][0], "read_file")
         self.assertNotIn("format", call_args[0][1])  # format should not be in args for text
