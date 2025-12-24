@@ -281,11 +281,6 @@ class Session:
 
                 # Get session status
                 session_result = self.agent_bay.get_session(self.session_id)
-                if(session_result.data.status == "DELETING"):
-                    
-                    status = session_result.data.status
-                    _logger.debug(f"📊 Session status: {status}")
-                    break
                 # Check if session is deleted (NotFound error)
                 if not session_result.success:
                     error_code = session_result.code or ""
