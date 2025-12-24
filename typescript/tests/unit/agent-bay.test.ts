@@ -377,7 +377,7 @@ describe("AgentBay", () => {
             expect(result.success).toBe(true);
             expect(result.requestId).toBe("mock-request-id-page2");
             expect(result.sessionIds.length).toBe(1);
-            expect(result.sessionIds[0]).toBe(mockSessionData.sessionId);
+            expect(result.sessionIds[0].sessionId).toBe(mockSessionData.sessionId);
             expect(listSessionStub.calledTwice).toBe(true);
         });
 
