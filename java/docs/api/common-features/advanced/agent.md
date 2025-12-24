@@ -557,14 +557,12 @@ If browser agent initialization fails:
 
 ## Related Documentation
 
-- [Python Agent API](../../../../python/docs/api/sync/agent.md) - Python equivalent
-- [Computer Module](./Computer-API.md) - Low-level desktop automation
-- [Browser Module](./Browser-API.md) - Low-level browser automation
-- [BrowserAgent Module](./BrowserAgent-API.md) - Playwright-based browser agent
+- [Computer Module](../../computer-use/computer.md) - Low-level desktop automation
+- [Browser Module](../../browser-use/browser.md) - Low-level browser automation
 
 ---
 
 ## See Also
 
-- [AgentExample.java](../src/main/java/com/aliyun/agentbay/examples/AgentExample.java) - Complete working examples
-- [TestAgentIntegration.java](../src/test/java/com/aliyun/agentbay/test/TestAgentIntegration.java) - Integration tests
+- [AgentExample.java](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/AgentExample.java) - Complete working examples
+- [TestAgentIntegration.java](../../../../agentbay/src/test/java/com/aliyun/agentbay/test/TestAgentIntegration.java) - Integration tests

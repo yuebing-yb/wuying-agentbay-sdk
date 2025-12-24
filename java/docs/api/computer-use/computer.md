@@ -2,7 +2,7 @@
 
 ## ⚡ Related Tutorial
 
-- [Computer Use Guide](../../../../../docs/guides/computer-use/README.md) - Learn about computer automation capabilities
+- [Computer Use Guide](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/computer-use/README.md) - Learn about computer automation capabilities
 
 ## Overview
 
@@ -340,7 +340,7 @@ session.delete();
 
 - [Session API Reference](../common-features/basics/session.md)
 - [FileSystem API Reference](../common-features/basics/filesystem.md)
-- [Computer Start App Example](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ComputerStartAppExample.java)
+- [Computer Start App Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ComputerStartAppExample.java)
 
 ---
 

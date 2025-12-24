@@ -2,7 +2,7 @@
 
 ## ⚡ Related Tutorial
 
-- [Code Execution Guide](../../../../../docs/guides/codespace/code-execution.md) - Learn about executing code in cloud environments
+- [Code Execution Guide](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/codespace/code-execution.md) - Learn about executing code in cloud environments
 
 ## Overview
 

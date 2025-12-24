@@ -2,8 +2,7 @@
 
 ## 🌐 Related Tutorial
 
-- [Browser Use Guide](../../../../../docs/guides/browser-use/README.md) - Complete guide to browser automation
-- [Browser Core Features](../../../../../docs/guides/browser-use/core-features.md) - Core browser automation features
+- [Browser Use Guide](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/browser-use/README.md) - Complete guide to browser automation
 
 ## Overview
 

@@ -214,7 +214,6 @@ A: 可以！LangChain4j 支持 OpenAI、Azure OpenAI、Anthropic、本地模型�
 
 - [AgentBay 官方文档](https://agentbay.console.aliyun.com)
 - [LangChain4j 文档](https://docs.langchain4j.dev)
-- [Spring AI 集成示例](参考原文档中的 Spring AI 章节)
 
 ## 许可证
 
