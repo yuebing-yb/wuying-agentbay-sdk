@@ -7,12 +7,14 @@ export class ListSessionRequest extends $dara.Model {
   labels?: string;
   maxResults?: number;
   nextToken?: string;
+  status?: string;
   static names(): { [key: string]: string } {
     return {
       authorization: 'Authorization',
       labels: 'Labels',
       maxResults: 'MaxResults',
       nextToken: 'NextToken',
+      status: 'Status',
     };
   }
 
@@ -22,6 +24,7 @@ export class ListSessionRequest extends $dara.Model {
       labels: 'string',
       maxResults: 'number',
       nextToken: 'string',
+      status: 'string',
     };
   }
 

@@ -70,20 +70,28 @@ func TestAgentBay_List_NoLabels_WithMockClient(t *testing.T) {
 
 	// Set expected behavior - list all sessions without labels
 	expectedResult := &agentbay.SessionListResult{
-		SessionIds: []string{"session-1", "session-2", "session-3"},
+		SessionIds: []map[string]interface{}{
+			{"sessionId": "session-1"},
+			{"sessionId": "session-2"},
+			{"sessionId": "session-3"},
+		},
 		MaxResults: 10,
 		TotalCount: 3,
 	}
-	mockAgentBay.EXPECT().List(nil, nil, nil).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().List("",nil, nil, nil).Return(expectedResult, nil)
 
 	// Test List method call without labels
-	result, err := mockAgentBay.List(nil, nil, nil)
+	result, err := mockAgentBay.List("", nil, nil, nil)
 
 	// Verify call success
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Len(t, result.SessionIds, 3)
-	assert.Equal(t, "session-1", result.SessionIds[0])
+	// Extract sessionId from the first session data
+	sessionData := result.SessionIds[0]
+	if sessionId, exists := sessionData["sessionId"]; exists {
+		assert.Equal(t, "session-1", sessionId)
+	}
 	assert.Equal(t, int32(10), result.MaxResults)
 	assert.Equal(t, int32(3), result.TotalCount)
 }
@@ -98,20 +106,26 @@ func TestAgentBay_List_WithLabels_WithMockClient(t *testing.T) {
 	// Set expected behavior - list sessions with labels
 	labels := map[string]string{"env": "prod"}
 	expectedResult := &agentbay.SessionListResult{
-		SessionIds: []string{"session-prod-1"},
+		SessionIds: []map[string]interface{}{
+			{"sessionId": "session-prod-1"},
+		},
 		MaxResults: 10,
 		TotalCount: 1,
 	}
-	mockAgentBay.EXPECT().List(labels, nil, nil).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().List("", labels, nil, nil).Return(expectedResult, nil)
 
 	// Test List method call with labels
-	result, err := mockAgentBay.List(labels, nil, nil)
+	result, err := mockAgentBay.List("", labels, nil, nil)
 
 	// Verify call success
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Len(t, result.SessionIds, 1)
-	assert.Equal(t, "session-prod-1", result.SessionIds[0])
+	// Extract sessionId from the session data
+	sessionData := result.SessionIds[0]
+	if sessionId, exists := sessionData["sessionId"]; exists {
+		assert.Equal(t, "session-prod-1", sessionId)
+	}
 }
 
 func TestAgentBay_List_WithPagination_WithMockClient(t *testing.T) {
@@ -126,20 +140,27 @@ func TestAgentBay_List_WithPagination_WithMockClient(t *testing.T) {
 	page := 2
 	limit := int32(5)
 	expectedResult := &agentbay.SessionListResult{
-		SessionIds: []string{"session-6", "session-7"},
+		SessionIds: []map[string]interface{}{
+			{"sessionId": "session-6"},
+			{"sessionId": "session-7"},
+		},
 		MaxResults: 5,
 		TotalCount: 10,
 	}
-	mockAgentBay.EXPECT().List(labels, &page, &limit).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().List("", labels, &page, &limit).Return(expectedResult, nil)
 
 	// Test List method call with pagination
-	result, err := mockAgentBay.List(labels, &page, &limit)
+	result, err := mockAgentBay.List("", labels, &page, &limit)
 
 	// Verify call success
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Len(t, result.SessionIds, 2)
-	assert.Equal(t, "session-6", result.SessionIds[0])
+	// Extract sessionId from the first session data
+	sessionData := result.SessionIds[0]
+	if sessionId, exists := sessionData["sessionId"]; exists {
+		assert.Equal(t, "session-6", sessionId)
+	}
 	assert.Equal(t, int32(5), result.MaxResults)
 	assert.Equal(t, int32(10), result.TotalCount)
 }
@@ -152,10 +173,10 @@ func TestAgentBay_Error_WithMockClient(t *testing.T) {
 	mockAgentBay := mock.NewMockAgentBayInterface(ctrl)
 
 	// Set expected behavior - return error
-	mockAgentBay.EXPECT().List(nil, nil, nil).Return(nil, assert.AnError)
+	mockAgentBay.EXPECT().List("", nil, nil, nil).Return(nil, assert.AnError)
 
 	// Test error case
-	result, err := mockAgentBay.List(nil, nil, nil)
+	result, err := mockAgentBay.List("", nil, nil, nil)
 
 	// Verify error handling
 	assert.Error(t, err)

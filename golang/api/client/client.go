@@ -1401,6 +1401,10 @@ func (client *Client) ListSessionWithOptions(request *ListSessionRequest, runtim
 		body["NextToken"] = request.NextToken
 	}
 
+	if !dara.IsNil(request.Status) {
+		body["Status"] = request.Status
+	}
+
 	req := &openapiutil.OpenApiRequest{
 		Body: openapiutil.ParseToMap(body),
 	}

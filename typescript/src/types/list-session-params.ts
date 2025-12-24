@@ -19,8 +19,8 @@ export interface ListSessionParams {
  * Result type for session listing with pagination information
  */
 export interface SessionListResult extends ApiResponse {
-  /** Array of session IDs */
-  sessionIds: string[];
+  /** Array of session information with ID and status */
+  sessionIds: Array<{sessionId: string; sessionStatus: string}>;
 
   /** Token for the next page (if available) */
   nextToken?: string;

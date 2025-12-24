@@ -98,7 +98,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 	t.Run("ListAllSessions", func(t *testing.T) {
 		t.Log("\n=== Testing List() without labels ===")
 
-		result, err := agentBayClient.List(nil, nil, nil)
+		result, err := agentBayClient.List("",nil, nil, nil)
 		if err != nil {
 			t.Fatalf("Error listing all sessions: %v", err)
 		}
@@ -120,6 +120,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		t.Log("\n=== Testing List() with single label ===")
 
 		result, err := agentBayClient.List(
+			"",
 			map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 			nil,
 			nil,
@@ -143,9 +144,13 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		}
 
 		foundCount := 0
-		for _, sessionID := range result.SessionIds {
-			if sessionIDs[sessionID] {
-				foundCount++
+		for _, sessionData := range result.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					if sessionIDs[sessionIDStr] {
+						foundCount++
+					}
+				}
 			}
 		}
 
@@ -163,6 +168,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		t.Log("\n=== Testing List() with multiple labels ===")
 
 		result, err := agentBayClient.List(
+			"",
 			map[string]string{
 				"project":     fmt.Sprintf("list-test-%s", uniqueID),
 				"environment": "dev",
@@ -185,10 +191,14 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		// Verify the dev session is in the results
 		devSessionID := testSessions[0].SessionID
 		found := false
-		for _, sessionID := range result.SessionIds {
-			if sessionID == devSessionID {
-				found = true
-				break
+		for _, sessionData := range result.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					if sessionIDStr == devSessionID {
+						found = true
+						break
+					}
+				}
 			}
 		}
 
@@ -209,6 +219,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		page := 1
 		limit := int32(2)
 		resultPage1, err := agentBayClient.List(
+			"",
 			map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 			&page,
 			&limit,
@@ -232,6 +243,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		if resultPage1.NextToken != "" {
 			page2 := 2
 			resultPage2, err := agentBayClient.List(
+				"",
 				map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 				&page2,
 				&limit,
@@ -254,6 +266,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		t.Log("\n=== Testing List() with non-matching label ===")
 
 		result, err := agentBayClient.List(
+			"",
 			map[string]string{
 				"project":     fmt.Sprintf("list-test-%s", uniqueID),
 				"environment": "nonexistent",
@@ -277,9 +290,13 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		}
 
 		foundCount := 0
-		for _, sessionID := range result.SessionIds {
-			if sessionIDs[sessionID] {
-				foundCount++
+		for _, sessionData := range result.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					if sessionIDs[sessionIDStr] {
+						foundCount++
+					}
+				}
 			}
 		}
 
@@ -296,6 +313,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		t.Log("\n=== Testing List() with default limit ===")
 
 		result, err := agentBayClient.List(
+			"",
 			map[string]string{"owner": fmt.Sprintf("test-%s", uniqueID)},
 			nil,
 			nil,
@@ -321,7 +339,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		t.Log("\n=== Testing List() request_id presence ===")
 
 		// Test 1: No labels
-		result1, err := agentBayClient.List(nil, nil, nil)
+		result1, err := agentBayClient.List("",nil, nil, nil)
 		if err != nil {
 			t.Fatalf("Error in test 1: %v", err)
 		}
@@ -332,6 +350,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 
 		// Test 2: With labels
 		result2, err := agentBayClient.List(
+			"",
 			map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 			nil,
 			nil,
@@ -348,6 +367,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		page := 1
 		limit := int32(5)
 		result3, err := agentBayClient.List(
+			"",
 			map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 			&page,
 			&limit,
@@ -370,6 +390,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		page0 := 0
 		limit := int32(5)
 		_, err := agentBayClient.List(
+			"",
 			map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 			&page0,
 			&limit,
@@ -384,6 +405,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		t.Log("Test 2: Testing page=-1")
 		pageNeg := -1
 		_, err = agentBayClient.List(
+			"",
 			map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 			&pageNeg,
 			&limit,
@@ -399,6 +421,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		pageHuge := 999999
 		limitSmall := int32(2)
 		_, err = agentBayClient.List(
+			"",
 			map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 			&pageHuge,
 			&limitSmall,
@@ -421,6 +444,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 
 		for i := 0; i < maxIterations; i++ {
 			result, err := agentBayClient.List(
+				"",
 				map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 				&page,
 				&limit,
@@ -429,7 +453,14 @@ func TestAgentBay_List_Integration(t *testing.T) {
 				t.Fatalf("Error listing page %d: %v", page, err)
 			}
 
-			allSessionIDs = append(allSessionIDs, result.SessionIds...)
+			// Extract sessionId from each map and append to allSessionIDs
+			for _, sessionData := range result.SessionIds {
+				if sessionID, exists := sessionData["sessionId"]; exists {
+					if sessionIDStr, ok := sessionID.(string); ok {
+						allSessionIDs = append(allSessionIDs, sessionIDStr)
+					}
+				}
+			}
 
 			t.Logf("Page %d: Found %d sessions", page, len(result.SessionIds))
 
@@ -480,6 +511,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		t.Log("Test 1: Verifying total_count >= test sessions")
 		limit := int32(10)
 		result1, err := agentBayClient.List(
+			"",
 			map[string]string{"owner": fmt.Sprintf("test-%s", uniqueID)},
 			nil,
 			&limit,
@@ -496,6 +528,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		// Test 2: total_count consistent across calls
 		t.Log("Test 2: Verifying total_count consistency across calls")
 		result2, err := agentBayClient.List(
+			"",
 			map[string]string{"owner": fmt.Sprintf("test-%s", uniqueID)},
 			nil,
 			&limit,
@@ -518,6 +551,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 
 		for {
 			result, err := agentBayClient.List(
+				"",
 				map[string]string{"project": fmt.Sprintf("list-test-%s", uniqueID)},
 				&page,
 				&pageLimit,
@@ -526,7 +560,14 @@ func TestAgentBay_List_Integration(t *testing.T) {
 				t.Fatalf("Error listing page %d: %v", page, err)
 			}
 
-			allSessionIDs = append(allSessionIDs, result.SessionIds...)
+			// Extract sessionId from each map and append to allSessionIDs
+			for _, sessionData := range result.SessionIds {
+				if sessionID, exists := sessionData["sessionId"]; exists {
+					if sessionIDStr, ok := sessionID.(string); ok {
+						allSessionIDs = append(allSessionIDs, sessionIDStr)
+					}
+				}
+			}
 
 			if result.NextToken == "" {
 				// Verify total_count matches

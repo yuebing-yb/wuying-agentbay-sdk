@@ -15,8 +15,8 @@ type AgentBayInterface interface {
 	// Delete deletes a session
 	Delete(session *agentbay.Session, syncContext ...bool) (*agentbay.DeleteResult, error)
 
-	// List returns paginated list of Sessions filtered by labels
-	List(labels map[string]string, page *int, limit *int32) (*agentbay.SessionListResult, error)
+	// List returns paginated list of Sessions filtered by status and labels
+	List(status string, labels map[string]string, page *int, limit *int32) (*agentbay.SessionListResult, error)
 
 	// Pause synchronously pauses a session
 	Pause(session *agentbay.Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)

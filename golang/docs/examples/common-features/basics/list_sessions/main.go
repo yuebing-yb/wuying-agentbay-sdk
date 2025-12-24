@@ -114,7 +114,7 @@ func main() {
 	fmt.Println("Example 1: List all sessions (no filter)")
 	fmt.Println("============================================================")
 
-	result, err := client.List(nil, nil, nil)
+	result, err := client.List("",nil, nil, nil)
 	if err != nil {
 		fmt.Printf("❌ Error: %v\n", err)
 	} else {
@@ -125,7 +125,12 @@ func main() {
 
 		// Display first few sessions
 		for i := 0; i < 3 && i < len(result.SessionIds); i++ {
-			fmt.Printf("   %d. Session ID: %s\n", i+1, result.SessionIds[i])
+			sessionData := result.SessionIds[i]
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					fmt.Printf("   %d. Session ID: %s\n", i+1, sessionIDStr)
+				}
+			}
 		}
 	}
 
@@ -134,7 +139,7 @@ func main() {
 	fmt.Println("Example 2: List sessions filtered by project label")
 	fmt.Println("============================================================")
 
-	result, err = client.List(map[string]string{"project": "list-demo"}, nil, nil)
+	result, err = client.List("",map[string]string{"project": "list-demo"}, nil, nil)
 	if err != nil {
 		fmt.Printf("❌ Error: %v\n", err)
 	} else {
@@ -142,8 +147,12 @@ func main() {
 		fmt.Printf("📄 Showing %d session IDs on this page\n", len(result.SessionIds))
 		fmt.Printf("🔑 Request ID: %s\n", result.RequestID)
 
-		for i, sessionId := range result.SessionIds {
-			fmt.Printf("   %d. Session ID: %s\n", i+1, sessionId)
+		for i, sessionData := range result.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					fmt.Printf("   %d. Session ID: %s\n", i+1, sessionIDStr)
+				}
+			}
 		}
 	}
 
@@ -153,6 +162,7 @@ func main() {
 	fmt.Println("============================================================")
 
 	result, err = client.List(
+		"",
 		map[string]string{
 			"project":     "list-demo",
 			"environment": "dev",
@@ -167,8 +177,12 @@ func main() {
 		fmt.Printf("📄 Showing %d session IDs\n", len(result.SessionIds))
 		fmt.Printf("🔑 Request ID: %s\n", result.RequestID)
 
-		for i, sessionId := range result.SessionIds {
-			fmt.Printf("   %d. Session ID: %s\n", i+1, sessionId)
+		for i, sessionData := range result.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					fmt.Printf("   %d. Session ID: %s\n", i+1, sessionIDStr)
+				}
+			}
 		}
 	}
 
@@ -181,6 +195,7 @@ func main() {
 	page1 := 1
 	limit := int32(2)
 	resultPage1, err := client.List(
+		"",
 		map[string]string{"project": "list-demo"},
 		&page1,
 		&limit,
@@ -193,8 +208,12 @@ func main() {
 		fmt.Printf("   Session IDs on this page: %d\n", len(resultPage1.SessionIds))
 		fmt.Printf("   Request ID: %s\n", resultPage1.RequestID)
 
-		for i, sessionId := range resultPage1.SessionIds {
-			fmt.Printf("   %d. Session ID: %s\n", i+1, sessionId)
+		for i, sessionData := range resultPage1.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					fmt.Printf("   %d. Session ID: %s\n", i+1, sessionIDStr)
+				}
+			}
 		}
 
 		// Get second page if available
@@ -203,6 +222,7 @@ func main() {
 
 			page2 := 2
 			resultPage2, err := client.List(
+				"",
 				map[string]string{"project": "list-demo"},
 				&page2,
 				&limit,
@@ -214,8 +234,12 @@ func main() {
 				fmt.Printf("   Session IDs on this page: %d\n", len(resultPage2.SessionIds))
 				fmt.Printf("   Request ID: %s\n", resultPage2.RequestID)
 
-				for i, sessionId := range resultPage2.SessionIds {
-					fmt.Printf("   %d. Session ID: %s\n", i+1, sessionId)
+				for i, sessionData := range resultPage2.SessionIds {
+					if sessionID, exists := sessionData["sessionId"]; exists {
+						if sessionIDStr, ok := sessionID.(string); ok {
+							fmt.Printf("   %d. Session ID: %s\n", i+1, sessionIDStr)
+						}
+					}
 				}
 			}
 		}
@@ -232,6 +256,7 @@ func main() {
 
 	for {
 		result, err := client.List(
+			"",
 			map[string]string{"owner": "demo-user"},
 			&page,
 			&pageLimit,
@@ -243,7 +268,15 @@ func main() {
 		}
 
 		fmt.Printf("📄 Page %d: Found %d session IDs\n", page, len(result.SessionIds))
-		allSessionIds = append(allSessionIds, result.SessionIds...)
+		
+		// Extract sessionId from each map and append to allSessionIds
+		for _, sessionData := range result.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					allSessionIds = append(allSessionIds, sessionIDStr)
+				}
+			}
+		}
 
 		// Break if no more pages
 		if result.NextToken == "" {

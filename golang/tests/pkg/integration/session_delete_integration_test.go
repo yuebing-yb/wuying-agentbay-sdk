@@ -41,13 +41,13 @@ func TestSessionDeleteWithoutParams(t *testing.T) {
 	t.Logf("Session deleted (RequestID: %s)", deleteResult.RequestID)
 
 	// Verify session has been deleted
-	listResult, err := client.List(nil, nil, nil)
+	listResult, err := client.List("",nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to list sessions: %v", err)
 	}
 
 	for _, sessionId := range listResult.SessionIds {
-		if sessionId == session.SessionID {
+		if sessionId["sessionId"] == session.SessionID {
 			t.Errorf("Session with ID %s still exists after deletion", session.SessionID)
 		}
 	}
@@ -117,13 +117,13 @@ func TestAgentBayDeleteWithSyncContext(t *testing.T) {
 	t.Logf("Session deleted with client.Delete and syncContext=true (RequestID: %s)", deleteResult.RequestID)
 
 	// Verify session has been deleted
-	listResult, err := client.List(nil, nil, nil)
+	listResult, err := client.List("",nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to list sessions: %v", err)
 	}
 
 	for _, sessionId := range listResult.SessionIds {
-		if sessionId == session.SessionID {
+		if sessionId["sessionId"] == session.SessionID {
 			t.Errorf("Session with ID %s still exists after deletion", session.SessionID)
 		}
 	}

@@ -215,7 +215,7 @@ func TestSession_DeleteMethod(t *testing.T) {
 	}
 
 	// Verify the session was deleted by trying to list sessions
-	listResult, err := agentBay.List(nil, nil, nil)
+	listResult, err := agentBay.List("",nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Error listing sessions: %v", err)
 	}
@@ -224,12 +224,13 @@ func TestSession_DeleteMethod(t *testing.T) {
 	t.Logf("Sessions listed (RequestID: %s)", listResult.RequestID)
 
 	// Check if the deleted session is not in the list
-	for _, sessionId := range listResult.SessionIds {
-		if sessionId == session.SessionID {
-			t.Errorf("Session with ID %s still exists after deletion", session.SessionID)
+	for _, sessionData := range listResult.SessionIds {
+		if sessionID, exists := sessionData["sessionId"]; exists {
+			if sessionIDStr, ok := sessionID.(string); ok && sessionIDStr == session.SessionID {
+				t.Errorf("Session with ID %s still exists after deletion", session.SessionID)
+			}
 		}
-	}
-}
+	}}
 
 func TestSession_GetLinkMethod(t *testing.T) {
 	// Initialize AgentBay client

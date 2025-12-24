@@ -43,6 +43,7 @@ from .._common.models import (
     extract_request_id,
 )
 from .._common.version import __is_release__, __version__
+from .._common.enums import SessionStatus
 from ..api.client import Client as mcp_client
 from ..api.models import (
     CreateMcpSessionRequest,
@@ -674,6 +675,7 @@ class AgentBay:
         labels: Optional[Dict[str, str]] = None,
         page: Optional[int] = None,
         limit: Optional[int] = None,
+        status: Optional[str] = None,
     ) -> SessionListResult:
         """
         Returns paginated list of session IDs filtered by labels asynchronously.
@@ -685,9 +687,12 @@ class AgentBay:
                 Defaults to None (returns first page).
             limit (Optional[int], optional): Maximum number of items per page.
                 Defaults to None (uses default of 10).
+            status (Optional[str], optional): Status to filter sessions. Must be one of:
+                RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED.
+                Defaults to None (returns sessions with any status).
 
         Returns:
-            SessionListResult: Paginated list of session IDs that match the labels.
+            SessionListResult: Paginated list of session IDs that match the filters.
         """
         try:
             # Set default values
@@ -695,6 +700,20 @@ class AgentBay:
                 labels = {}
             if limit is None:
                 limit = 10
+
+            # Validate status parameter
+            if status is not None:
+                valid_statuses = [s.value for s in SessionStatus]
+                if status not in valid_statuses:
+                    return SessionListResult(
+                        request_id="",
+                        success=False,
+                        error_message=f"Invalid status '{status}'. Must be one of: {', '.join(valid_statuses)}",
+                        session_ids=[],
+                        next_token="",
+                        max_results=limit,
+                        total_count=0,
+                    )
 
             # Validate page number
             if page is not None and page < 1:
@@ -720,6 +739,7 @@ class AgentBay:
                         authorization=f"Bearer {self.api_key}",
                         labels=labels_json,
                         max_results=limit,
+                        status=status,
                     )
                     if next_token:
                         request.next_token = next_token
@@ -764,6 +784,7 @@ class AgentBay:
                 authorization=f"Bearer {self.api_key}",
                 labels=labels_json,
                 max_results=limit,
+                status=status,
             )
             if next_token:
                 request.next_token = next_token
@@ -771,11 +792,13 @@ class AgentBay:
             request_details = f"Labels={labels_json}, MaxResults={limit}"
             if request.next_token:
                 request_details += f", NextToken={request.next_token}"
+            if status:
+                request_details += f", Status={status}"
             _log_api_call("list_session", request_details)
 
             # Make the API call asynchronously
             response = self.client.list_session(request)
-
+            _logger.info(f"  ✓ ListSession API call successful{response}")
             # Extract request ID
             request_id = extract_request_id(response)
 
@@ -821,9 +844,14 @@ class AgentBay:
                 for session_data in response_data:
                     if isinstance(session_data, dict):
                         session_id = session_data.get("SessionId")
+                        session_status = session_data.get("SessionStatus")
                         if session_id:
-                            session_ids.append(session_id)
-
+                            # Create a structured session object with both ID and status
+                            session_info = {
+                                "sessionId": session_id,
+                                "sessionStatus": session_status if session_status else "UNKNOWN"
+                            }
+                            session_ids.append(session_info)
             # Log API response with key details
             _log_api_response_with_details(
                 api_name="ListSession",
@@ -940,6 +968,7 @@ class AgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
+                    _logger.info(f"  ✓ GetSession API call successful{data_dict}")
                     data = GetSessionData(
                         app_instance_id=data_dict.get("AppInstanceId", ""),
                         resource_id=data_dict.get("ResourceId", ""),
@@ -1012,7 +1041,7 @@ class AgentBay:
                 error_message=f"Failed to get session {session_id}: {e}",
             )
 
-    def get_session_detail(self, session_id: str) -> GetSessionDetailResult:
+    def get_status(self, session_id: str) -> GetSessionDetailResult:
         """
         Get basic session information by session ID asynchronously.
 
@@ -1027,7 +1056,7 @@ class AgentBay:
             request = GetSessionDetailRequest(
                 authorization=f"Bearer {self.api_key}", session_id=session_id
             )
-            response = self.client.get_session_detail_async(request)
+            response = self.client.get_session_detail(request)
 
             request_id = extract_request_id(response)
 
@@ -1061,6 +1090,7 @@ class AgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
+                    _logger.info(f"  ✓ GetSessionDetail API call successful{data_dict}")
                     data = GetSessionDetailData(
                         aliuid=data_dict.get("Aliuid", ""),
                         apikey_id=data_dict.get("ApikeyId", ""),
@@ -1347,6 +1377,7 @@ class AgentBay:
                 )
 
             body = response_map.get("body", {})
+            _logger.info(f"ResumeSessionAsync response: {body}")
             success = body.get("Success", False)
 
             if not success:
@@ -1359,7 +1390,7 @@ class AgentBay:
                     code=code,
                     message=message,
                 )
-
+            _logger.info("successful")
             return SessionResumeResult(request_id=request_id, success=True)
 
         except Exception as e:

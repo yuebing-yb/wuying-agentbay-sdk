@@ -41,6 +41,7 @@ from .._common.models import (
     extract_request_id,
 )
 from .._common.version import __is_release__, __version__
+from .._common.enums import SessionStatus
 from ..api.client import Client as mcp_client
 from ..api.models import (
     CreateMcpSessionRequest,
@@ -672,6 +673,7 @@ class AsyncAgentBay:
         labels: Optional[Dict[str, str]] = None,
         page: Optional[int] = None,
         limit: Optional[int] = None,
+        status: Optional[str] = None,
     ) -> SessionListResult:
         """
         Returns paginated list of session IDs filtered by labels asynchronously.
@@ -683,9 +685,12 @@ class AsyncAgentBay:
                 Defaults to None (returns first page).
             limit (Optional[int], optional): Maximum number of items per page.
                 Defaults to None (uses default of 10).
+            status (Optional[str], optional): Status to filter sessions. Must be one of:
+                RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED.
+                Defaults to None (returns sessions with any status).
 
         Returns:
-            SessionListResult: Paginated list of session IDs that match the labels.
+            SessionListResult: Paginated list of session IDs that match the filters.
         """
         try:
             # Set default values
@@ -693,6 +698,20 @@ class AsyncAgentBay:
                 labels = {}
             if limit is None:
                 limit = 10
+
+            # Validate status parameter
+            if status is not None:
+                valid_statuses = [s.value for s in SessionStatus]
+                if status not in valid_statuses:
+                    return SessionListResult(
+                        request_id="",
+                        success=False,
+                        error_message=f"Invalid status '{status}'. Must be one of: {', '.join(valid_statuses)}",
+                        session_ids=[],
+                        next_token="",
+                        max_results=limit,
+                        total_count=0,
+                    )
 
             # Validate page number
             if page is not None and page < 1:
@@ -718,6 +737,7 @@ class AsyncAgentBay:
                         authorization=f"Bearer {self.api_key}",
                         labels=labels_json,
                         max_results=limit,
+                        status=status,
                     )
                     if next_token:
                         request.next_token = next_token
@@ -762,6 +782,7 @@ class AsyncAgentBay:
                 authorization=f"Bearer {self.api_key}",
                 labels=labels_json,
                 max_results=limit,
+                status=status,
             )
             if next_token:
                 request.next_token = next_token
@@ -769,6 +790,8 @@ class AsyncAgentBay:
             request_details = f"Labels={labels_json}, MaxResults={limit}"
             if request.next_token:
                 request_details += f", NextToken={request.next_token}"
+            if status:
+                request_details += f", Status={status}"
             _log_api_call("list_session", request_details)
 
             # Make the API call asynchronously
@@ -812,15 +835,21 @@ class AsyncAgentBay:
 
             # Extract session data
             response_data = body.get("Data")
-
+            _logger.info(f"  ✓ ListSession API call async successful{response_data}")
             # Handle both list and dict responses
             if isinstance(response_data, list):
                 # Data is a list of session objects
                 for session_data in response_data:
                     if isinstance(session_data, dict):
                         session_id = session_data.get("SessionId")
+                        session_status = session_data.get("SessionStatus")
                         if session_id:
-                            session_ids.append(session_id)
+                            # Create a structured session object with both ID and status
+                            session_info = {
+                                "sessionId": session_id,
+                                "sessionStatus": session_status if session_status else "UNKNOWN"
+                            }
+                            session_ids.append(session_info)
 
             # Log API response with key details
             _log_api_response_with_details(
@@ -938,6 +967,7 @@ class AsyncAgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
+                    _logger.info(f"  ✓ GetSession API call async successful{data_dict}")
                     data = GetSessionData(
                         app_instance_id=data_dict.get("AppInstanceId", ""),
                         resource_id=data_dict.get("ResourceId", ""),
@@ -1010,7 +1040,7 @@ class AsyncAgentBay:
                 error_message=f"Failed to get session {session_id}: {e}",
             )
 
-    async def get_session_detail(self, session_id: str) -> GetSessionDetailResult:
+    async def get_status(self, session_id: str) -> GetSessionDetailResult:
         """
         Get basic session information by session ID asynchronously.
 
@@ -1059,6 +1089,7 @@ class AsyncAgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
+                    _logger.info(f"  ✓ GetSessionDetail API call async successful{data_dict}")
                     data = GetSessionDetailData(
                         aliuid=data_dict.get("Aliuid", ""),
                         apikey_id=data_dict.get("ApikeyId", ""),

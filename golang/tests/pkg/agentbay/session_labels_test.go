@@ -306,7 +306,7 @@ func TestListByUIDLabel(t *testing.T) {
 	params.MaxResults = 4 // Set page size to 4
 	limit := int32(4)
 
-	firstPageResult, err := agentBayClient.List(params.Labels, nil, &limit)
+	firstPageResult, err := agentBayClient.List("",params.Labels, nil, &limit)
 	if err != nil {
 		t.Fatalf("Error listing first page of sessions: %v", err)
 	}
@@ -320,9 +320,13 @@ func TestListByUIDLabel(t *testing.T) {
 	firstPageSessionIDs := make(map[string]bool)
 	if len(firstPageResult.SessionIds) > 0 {
 		t.Log("First page - Sessions found:")
-		for i, sessionId := range firstPageResult.SessionIds {
-			t.Logf("  %d. Session ID: %s", i+1, sessionId)
-			firstPageSessionIDs[sessionId] = true
+		for i, sessionData := range firstPageResult.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					t.Logf("  %d. Session ID: %s", i+1, sessionIDStr)
+					firstPageSessionIDs[sessionIDStr] = true
+				}
+			}
 		}
 	} else {
 		t.Log("First page - No sessions found with the specified UID label")
@@ -339,7 +343,7 @@ func TestListByUIDLabel(t *testing.T) {
 	t.Log("Fetching second page...")
 	page := 2
 	secondPageLimit := int32(3)
-	secondPageResult, err := agentBayClient.List(uidFilter, &page, &secondPageLimit)
+	secondPageResult, err := agentBayClient.List("",uidFilter, &page, &secondPageLimit)
 	if err != nil {
 		t.Fatalf("Error listing second page of sessions: %v", err)
 	}
@@ -353,13 +357,17 @@ func TestListByUIDLabel(t *testing.T) {
 		t.Log("Second page - Sessions found:")
 		duplicateFound := false
 
-		for i, sessionId := range secondPageResult.SessionIds {
-			t.Logf("  %d. Session ID: %s", i+1, sessionId)
+		for i, sessionData := range secondPageResult.SessionIds {
+			if sessionID, exists := sessionData["sessionId"]; exists {
+				if sessionIDStr, ok := sessionID.(string); ok {
+					t.Logf("  %d. Session ID: %s", i+1, sessionIDStr)
 
-			// Check if this session was already in the first page
-			if firstPageSessionIDs[sessionId] {
-				duplicateFound = true
-				t.Errorf("Session ID %s found in both first and second page", sessionId)
+					// Check if this session was already in the first page
+					if firstPageSessionIDs[sessionIDStr] {
+						duplicateFound = true
+						t.Errorf("Session ID %s found in both first and second page", sessionIDStr)
+					}
+				}
 			}
 		}
 
@@ -470,7 +478,7 @@ func TestListByLabels_OnlyUnreleasedSessions(t *testing.T) {
 
 	// Use List to get sessions with the test label
 	t.Log("Listing sessions by label to verify only unreleased sessions are returned...")
-	sessionsResult, err := agentBayClient.List(testLabel, nil, nil)
+	sessionsResult, err := agentBayClient.List("",testLabel, nil, nil)
 	if err != nil {
 		t.Fatalf("Error listing sessions by label: %v", err)
 	}
@@ -480,18 +488,22 @@ func TestListByLabels_OnlyUnreleasedSessions(t *testing.T) {
 	t.Logf("Found %d sessions in the results", len(sessionsResult.SessionIds))
 
 	// Check each returned session
-	for i, sessionId := range sessionsResult.SessionIds {
-		t.Logf("Result session %d: ID=%s", i+1, sessionId)
+	for i, sessionData := range sessionsResult.SessionIds {
+		if sessionID, exists := sessionData["sessionId"]; exists {
+			if sessionIDStr, ok := sessionID.(string); ok {
+				t.Logf("Result session %d: ID=%s", i+1, sessionIDStr)
 
-		// Verify this session is one of our test sessions
-		if !allSessionIDs[sessionId] {
-			t.Logf("Note: Found a session not created in this test: %s", sessionId)
-			continue
-		}
+				// Verify this session is one of our test sessions
+				if !allSessionIDs[sessionIDStr] {
+					t.Logf("Note: Found a session not created in this test: %s", sessionIDStr)
+					continue
+				}
 
-		// Verify this session was not released
-		if releasedSessionIDs[sessionId] {
-			t.Errorf("Error: Released session with ID %s was returned by ListByLabels", sessionId)
+				// Verify this session was not released
+				if releasedSessionIDs[sessionIDStr] {
+					t.Errorf("Error: Released session with ID %s was returned by ListByLabels", sessionIDStr)
+				}
+			}
 		}
 	}
 
@@ -499,9 +511,13 @@ func TestListByLabels_OnlyUnreleasedSessions(t *testing.T) {
 	expectedUnreleasedCount := totalSessionCount - sessionsToReleaseCount
 	foundUnreleasedCount := 0
 
-	for _, sessionId := range sessionsResult.SessionIds {
-		if allSessionIDs[sessionId] && !releasedSessionIDs[sessionId] {
-			foundUnreleasedCount++
+	for _, sessionData := range sessionsResult.SessionIds {
+		if sessionID, exists := sessionData["sessionId"]; exists {
+			if sessionIDStr, ok := sessionID.(string); ok {
+				if allSessionIDs[sessionIDStr] && !releasedSessionIDs[sessionIDStr] {
+					foundUnreleasedCount++
+				}
+			}
 		}
 	}
 
@@ -515,9 +531,13 @@ func TestListByLabels_OnlyUnreleasedSessions(t *testing.T) {
 
 	// Verify that no released sessions were found
 	releasedSessionsFound := 0
-	for _, sessionId := range sessionsResult.SessionIds {
-		if releasedSessionIDs[sessionId] {
-			releasedSessionsFound++
+	for _, sessionData := range sessionsResult.SessionIds {
+		if sessionID, exists := sessionData["sessionId"]; exists {
+			if sessionIDStr, ok := sessionID.(string); ok {
+				if releasedSessionIDs[sessionIDStr] {
+					releasedSessionsFound++
+				}
+			}
 		}
 	}
 

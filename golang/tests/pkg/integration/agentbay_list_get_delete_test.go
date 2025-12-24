@@ -25,7 +25,7 @@ func TestListGetDeleteWorkflow(t *testing.T) {
 	t.Log("\n[STEP 1] Listing all sessions using agentbay.List()...")
 	t.Log(strings.Repeat("─", 80))
 
-	listResult, err := client.List(nil, nil, nil)
+	listResult, err := client.List("",nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to list sessions: %v", err)
 	}
@@ -49,7 +49,14 @@ func TestListGetDeleteWorkflow(t *testing.T) {
 
 	sessions := make([]*agentbay.Session, 0)
 
-	for i, sessionID := range sessionIDs {
+	for i, sessionData := range sessionIDs {
+		// Extract sessionId from the map
+		sessionID, ok := sessionData["sessionId"].(string)
+		if !ok {
+			t.Logf("\n  [%d/%d] ⚠️  Invalid session data: sessionId not found or not a string", i+1, len(sessionIDs))
+			continue
+		}
+
 		t.Logf("\n  [%d/%d] Getting session: %s", i+1, len(sessionIDs), sessionID)
 
 		getResult, err := client.Get(sessionID)

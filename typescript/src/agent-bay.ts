@@ -616,17 +616,18 @@ export class AgentBay {
 
 
   /**
-   * Returns paginated list of session IDs filtered by labels.
+   * Returns paginated list of session IDs filtered by labels and status.
    *
    * @param labels - Optional labels to filter sessions (defaults to empty object)
    * @param page - Optional page number for pagination (starting from 1, defaults to 1)
    * @param limit - Optional maximum number of items per page (defaults to 10)
-   * @returns SessionListResult - Paginated list of session IDs that match the labels
+   * @param status - Optional status to filter sessions. Must be one of: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED (defaults to undefined)
+   * @returns SessionListResult - Paginated list of session IDs that match the labels and status
    *
    * @example
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: "your_api_key" });
-   * const result = await agentBay.list({ project: "demo" }, 1, 10);
+   * const result = await agentBay.list({ project: "demo" }, 1, 10, "RUNNING");
    * if (result.success) {
    *   console.log(`Found ${result.sessionIds.length} sessions`);
    * }
@@ -635,9 +636,26 @@ export class AgentBay {
   async list(
     labels: Record<string, string> = {},
     page?: number,
-    limit = 10
+    limit = 10,
+    status?: string
   ): Promise<SessionListResult> {
     try {
+      // Validate status parameter
+      if (status !== undefined) {
+        const validStatuses = ["RUNNING", "PAUSING", "PAUSED", "RESUMING", "DELETING", "DELETED"];
+        if (!validStatuses.includes(status)) {
+          return {
+            requestId: "",
+            success: false,
+            errorMessage: `Invalid status '${status}'. Must be one of: ${validStatuses.join(', ')}`,
+            sessionIds: [],
+            nextToken: "",
+            maxResults: limit,
+            totalCount: 0,
+          };
+        }
+      }
+
       // Validate page number
       if (page !== undefined && page < 1) {
         return {
@@ -667,6 +685,9 @@ export class AgentBay {
           });
           if (nextToken) {
             request.nextToken = nextToken;
+          }
+          if (status) {
+            request.status = status;
           }
 
           const response = await this.client.listSession(request);
@@ -712,12 +733,16 @@ export class AgentBay {
       if (nextToken) {
         request.nextToken = nextToken;
       }
+      if (status) {
+        request.status = status;
+      }
 
       // Log API request
       logAPICall("ListSession", {
         labels,
         maxResults: limit,
         nextToken: nextToken || undefined,
+        status: status || undefined,
       });
 
       const response = await this.client.listSession(request);
@@ -749,13 +774,18 @@ export class AgentBay {
         };
       }
 
-      const sessionIds: string[] = [];
+      const sessionIds: Array<{sessionId: string; sessionStatus: string}> = [];
 
       // Extract session data
       if (response.body.data) {
         for (const sessionData of response.body.data) {
           if (sessionData.sessionId) {
-            sessionIds.push(sessionData.sessionId);
+            // Create a structured session object with both ID and status
+            const sessionInfo = {
+              sessionId: sessionData.sessionId,
+              sessionStatus: sessionData.sessionStatus || "UNKNOWN"
+            };
+            sessionIds.push(sessionInfo);
           }
         }
       }
@@ -959,7 +989,7 @@ export class AgentBay {
    * @param sessionId - The ID of the session to retrieve.
    * @returns GetSessionDetailResult containing basic session information
    */
-  async getSessionDetail(sessionId: string): Promise<$GetSessionDetailResult> {
+  async getStatus(sessionId: string): Promise<$GetSessionDetailResult> {
     try {
       logAPICall("GetSessionDetail", { sessionId });
 

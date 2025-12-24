@@ -91,14 +91,14 @@ func TestMcpToolCallWithDeletedSessionAutoGenFalse(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is deleted
-	listResult, err := client.List(nil, nil, nil)
+	listResult, err := client.List("",nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to list sessions: %v", err)
 	}
 
 	sessionExists := false
 	for _, sid := range listResult.SessionIds {
-		if sid == sessionID {
+		if sid["sessionId"] == sessionID {
 			sessionExists = true
 			break
 		}
@@ -160,14 +160,14 @@ func TestMcpToolCallWithDeletedSessionAutoGenTrue(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is deleted
-	listResult, err := client.List(nil, nil, nil)
+	listResult, err := client.List("",nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to list sessions: %v", err)
 	}
 
 	sessionExists := false
 	for _, sid := range listResult.SessionIds {
-		if sid == sessionID {
+		if sid["sessionId"] == sessionID {
 			sessionExists = true
 			break
 		}

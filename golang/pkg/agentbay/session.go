@@ -35,10 +35,10 @@ type SessionResult struct {
 // SessionListResult wraps Session list and RequestID
 type SessionListResult struct {
 	models.ApiResponse
-	SessionIds []string // Session IDs
-	NextToken  string   // Token for the next page
-	MaxResults int32    // Number of results per page
-	TotalCount int32    // Total number of results
+	SessionIds []map[string]interface{} // Session objects with ID and status
+	NextToken  string                   // Token for the next page
+	MaxResults int32                    // Number of results per page
+	TotalCount int32                    // Total number of results
 }
 
 // InfoResult wraps SessionInfo and RequestID

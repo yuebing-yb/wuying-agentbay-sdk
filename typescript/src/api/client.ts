@@ -1106,6 +1106,10 @@ export class Client extends OpenApi {
       body["NextToken"] = request.nextToken;
     }
 
+    if (!$dara.isNull(request.status)) {
+      body["Status"] = request.status;
+    }
+
     const req = new $OpenApiUtil.OpenApiRequest({
       body: OpenApiUtil.parseToMap(body),
     });

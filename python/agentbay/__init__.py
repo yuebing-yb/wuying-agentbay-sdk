@@ -7,6 +7,7 @@ from ._common.config import (
     _find_dotenv_file,
     _load_dotenv_with_fallback,
 )
+from ._common.enums import SessionStatus
 from ._common.exceptions import (
     AgentBayError,
     APIError,
@@ -164,6 +165,8 @@ __all__ = [
     "Session",
     "SessionInfo",
     "AsyncSession",
+    # Enums
+    "SessionStatus",
     # Functional Modules
     "Browser",
     "AsyncBrowser",

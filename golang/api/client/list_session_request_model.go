@@ -17,6 +17,8 @@ type iListSessionRequest interface {
 	GetMaxResults() *int32
 	SetNextToken(v string) *ListSessionRequest
 	GetNextToken() *string
+	SetStatus(v string) *ListSessionRequest
+	GetStatus() *string
 }
 
 type ListSessionRequest struct {
@@ -24,6 +26,7 @@ type ListSessionRequest struct {
 	Labels        *string `json:"Labels,omitempty" xml:"Labels,omitempty"`
 	MaxResults    *int32  `json:"MaxResults,omitempty" xml:"MaxResults,omitempty"`
 	NextToken     *string `json:"NextToken,omitempty" xml:"NextToken,omitempty"`
+	Status        *string `json:"Status,omitempty" xml:"Status,omitempty"`
 }
 
 func (s ListSessionRequest) String() string {
@@ -50,6 +53,10 @@ func (s *ListSessionRequest) GetNextToken() *string {
 	return s.NextToken
 }
 
+func (s *ListSessionRequest) GetStatus() *string {
+	return s.Status
+}
+
 func (s *ListSessionRequest) SetAuthorization(v string) *ListSessionRequest {
 	s.Authorization = &v
 	return s
@@ -67,6 +74,11 @@ func (s *ListSessionRequest) SetMaxResults(v int32) *ListSessionRequest {
 
 func (s *ListSessionRequest) SetNextToken(v string) *ListSessionRequest {
 	s.NextToken = &v
+	return s
+}
+
+func (s *ListSessionRequest) SetStatus(v string) *ListSessionRequest {
+	s.Status = &v
 	return s
 }
 

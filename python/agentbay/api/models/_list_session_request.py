@@ -12,11 +12,13 @@ class ListSessionRequest(DaraModel):
         labels: str = None,
         max_results: int = None,
         next_token: str = None,
+        status: str = None,
     ):
         self.authorization = authorization
         self.labels = labels
         self.max_results = max_results
         self.next_token = next_token
+        self.status = status
 
     def validate(self):
         pass
@@ -38,6 +40,9 @@ class ListSessionRequest(DaraModel):
         if self.next_token is not None:
             result["NextToken"] = self.next_token
 
+        if self.status is not None:
+            result["Status"] = self.status
+
         return result
 
     def from_map(self, m: dict = None):
@@ -53,5 +58,8 @@ class ListSessionRequest(DaraModel):
 
         if m.get("NextToken") is not None:
             self.next_token = m.get("NextToken")
+
+        if m.get("Status") is not None:
+            self.status = m.get("Status")
 
         return self

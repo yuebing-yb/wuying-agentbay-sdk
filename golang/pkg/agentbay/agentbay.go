@@ -13,6 +13,49 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
+// SessionStatus represents the status of a session
+type SessionStatus string
+
+// Session status constants
+const (
+	SessionStatusRunning   SessionStatus = "RUNNING"   // Session is running
+	SessionStatusPaused    SessionStatus = "PAUSED"    // Session is paused
+	SessionStatusPausing   SessionStatus = "PAUSING"   // Session is being paused
+	SessionStatusResuming  SessionStatus = "RESUMING"  // Session is being resumed
+	SessionStatusDeleted   SessionStatus = "DELETED"   // Session is deleted
+	SessionStatusDeleting  SessionStatus = "DELETING"  // Session is being deleted
+	SessionStatusUnknown   SessionStatus = "UNKNOWN"   // Session status is unknown
+)
+
+// String returns the string representation of SessionStatus
+func (s SessionStatus) String() string {
+	return string(s)
+}
+
+// IsValid checks if the session status is valid
+func (s SessionStatus) IsValid() bool {
+	switch s {
+	case SessionStatusRunning, SessionStatusPaused, SessionStatusPausing,
+		SessionStatusResuming, SessionStatusDeleted, SessionStatusDeleting, SessionStatusUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// GetValidStatuses returns all valid session status values
+func GetValidStatuses() []SessionStatus {
+	return []SessionStatus{
+		SessionStatusRunning,
+		SessionStatusPaused,
+		SessionStatusPausing,
+		SessionStatusResuming,
+		SessionStatusDeleted,
+		SessionStatusDeleting,
+		SessionStatusUnknown,
+	}
+}
+
 // Option is a function that sets optional parameters for AgentBay client.
 type Option func(*AgentBayConfig)
 
@@ -543,22 +586,47 @@ func NewListSessionParams() *ListSessionParams {
 	}
 }
 
-// List returns paginated list of session IDs filtered by labels.
+// List returns paginated list of session IDs filtered by labels and status.
 //
 // Parameters:
+//   - status: Optional status to filter sessions (can be empty string or SessionStatus for no filtering)
 //   - labels: Optional labels to filter sessions (can be nil for no filtering)
 //   - page: Optional page number for pagination (starting from 1, nil or 0 for first page)
 //   - limit: Optional maximum number of items per page (nil or 0 uses default of 10)
 //
 // Returns:
-//   - *SessionListResult: Paginated list of session IDs that match the labels
+//   - *SessionListResult: Paginated list of session IDs that match the filters
 //   - error: An error if the operation fails
 //
 // Example:
 //
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//	result, _ := client.List(nil, nil, nil)
-func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error) {
+//	result, _ := client.List("", nil, nil, nil)
+//	// Or using enum:
+//	result, _ := client.List(SessionStatusRunning.String(), nil, nil, nil)
+func (a *AgentBay) List(status string, labels map[string]string, page *int, limit *int32) (*SessionListResult, error) {
+	// Validate status parameter if provided
+	if status != "" {
+		sessionStatus := SessionStatus(status)
+		if !sessionStatus.IsValid() {
+			validStatuses := GetValidStatuses()
+			var statusStrings []string
+			for _, s := range validStatuses {
+				statusStrings = append(statusStrings, string(s))
+			}
+			return &SessionListResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				SessionIds: []map[string]interface{}{},
+				NextToken:  "",
+				MaxResults: 0,
+				TotalCount: 0,
+			}, fmt.Errorf("invalid session status '%s'. Valid values are: [%s]", 
+				status, strings.Join(statusStrings, ", "))
+		}
+	}
+
 	// Set default values
 	if labels == nil {
 		labels = make(map[string]string)
@@ -574,7 +642,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
 			},
-			SessionIds: []string{},
+			SessionIds: []map[string]interface{}{},
 			NextToken:  "",
 			MaxResults: actualLimit,
 			TotalCount: 0,
@@ -609,7 +677,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 					ApiResponse: models.ApiResponse{
 						RequestID: models.ExtractRequestID(response),
 					},
-					SessionIds: []string{},
+					SessionIds: []map[string]interface{}{},
 					NextToken:  "",
 					MaxResults: actualLimit,
 					TotalCount: 0,
@@ -627,7 +695,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 					ApiResponse: models.ApiResponse{
 						RequestID: models.ExtractRequestID(response),
 					},
-					SessionIds: []string{},
+					SessionIds: []map[string]interface{}{},
 					NextToken:  "",
 					MaxResults: actualLimit,
 					TotalCount: 0,
@@ -644,7 +712,7 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 					ApiResponse: models.ApiResponse{
 						RequestID: models.ExtractRequestID(response),
 					},
-					SessionIds: []string{},
+					SessionIds: []map[string]interface{}{},
 					NextToken:  "",
 					MaxResults: actualLimit,
 					TotalCount: totalCount,
@@ -664,11 +732,19 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 	if nextToken != "" {
 		listSessionRequest.NextToken = tea.String(nextToken)
 	}
+	
+	// Add status filter if provided
+	if status != "" {
+		listSessionRequest.Status = tea.String(status)
+	}
 
 	// Log API request
 	requestParams := fmt.Sprintf("Labels=%s, MaxResults=%d", *listSessionRequest.Labels, *listSessionRequest.MaxResults)
 	if listSessionRequest.NextToken != nil {
 		requestParams += fmt.Sprintf(", NextToken=%s", *listSessionRequest.NextToken)
+	}
+	if listSessionRequest.Status != nil {
+		requestParams += fmt.Sprintf(", Status=%s", *listSessionRequest.Status)
 	}
 	logAPICall("ListSession", requestParams)
 
@@ -700,14 +776,14 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 			ApiResponse: models.ApiResponse{
 				RequestID: requestID,
 			},
-			SessionIds: []string{},
+			SessionIds: []map[string]interface{}{},
 			NextToken:  "",
 			MaxResults: actualLimit,
 			TotalCount: 0,
 		}, fmt.Errorf("failed to list sessions: %s", errorMsg)
 	}
 
-	var sessionIds []string
+	var sessionIds []map[string]interface{}
 	var nextTokenResult string
 	var maxResults int32 = actualLimit
 	var totalCount int32
@@ -728,7 +804,16 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 		if response.Body.Data != nil {
 			for _, sessionData := range response.Body.Data {
 				if sessionData.SessionId != nil {
-					sessionIds = append(sessionIds, *sessionData.SessionId)
+					sessionStatus := "UNKNOWN"
+					if sessionData.SessionStatus != nil {
+						sessionStatus = *sessionData.SessionStatus
+					}
+					// Create a structured session object with both ID and status
+					sessionInfo := map[string]interface{}{
+						"sessionId":     *sessionData.SessionId,
+						"sessionStatus": sessionStatus,
+					}
+					sessionIds = append(sessionIds, sessionInfo)
 				}
 			}
 		}
@@ -756,6 +841,28 @@ func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*Ses
 		MaxResults: maxResults,
 		TotalCount: totalCount,
 	}, nil
+}
+
+// ListByStatus returns paginated list of session IDs filtered by SessionStatus enum and labels.
+// This is a convenience method that accepts SessionStatus enum instead of string.
+//
+// Parameters:
+//   - status: SessionStatus enum to filter sessions (use empty SessionStatus("") for no filtering)
+//   - labels: Optional labels to filter sessions (can be nil for no filtering)
+//   - page: Optional page number for pagination (starting from 1, nil or 0 for first page)
+//   - limit: Optional maximum number of items per page (nil or 0 uses default of 10)
+//
+// Returns:
+//   - *SessionListResult: Paginated list of session IDs that match the filters
+//   - error: An error if the operation fails
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.ListByStatus(SessionStatusRunning, nil, nil, nil)
+//	result, _ := client.ListByStatus("", nil, nil, nil) // No status filter
+func (a *AgentBay) ListByStatus(status SessionStatus, labels map[string]string, page *int, limit *int32) (*SessionListResult, error) {
+	return a.List(status.String(), labels, page, limit)
 }
 
 // Delete deletes a session from the AgentBay cloud environment.
@@ -994,7 +1101,7 @@ func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
 }
 
 // GetSessionDetail retrieves basic session information by session ID
-func (a *AgentBay) GetSessionDetail(sessionID string) (*GetSessionDetailResult, error) {
+func (a *AgentBay) GetStatus(sessionID string) (*GetSessionDetailResult, error) {
 	getSessionDetailRequest := &mcp.GetSessionDetailRequest{
 		Authorization: tea.String("Bearer " + a.APIKey),
 		SessionId:     tea.String(sessionID),
