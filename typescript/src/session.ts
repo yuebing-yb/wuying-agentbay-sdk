@@ -1469,9 +1469,9 @@ export class Session {
   }
 
   /**
-   * Get runtime metrics for this session via the MCP get_metrics tool.
+   * Get runtime metrics for this session.
    *
-   * The underlying MCP tool returns a JSON string. This method parses it and
+   * The underlying service returns a JSON string. This method parses it and
    * returns a structured result.
    *
    * @example

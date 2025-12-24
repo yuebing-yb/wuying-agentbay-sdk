@@ -492,7 +492,7 @@ Initialize a McpToolResult.
 class SessionMetrics()
 ```
 
-Structured metrics returned by the MCP get_metrics tool.
+Structured metrics for session monitoring.
 
 ### \_\_init\_\_
 

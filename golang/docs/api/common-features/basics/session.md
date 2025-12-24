@@ -179,9 +179,9 @@ linkResult, _ := result.Session.GetLink(nil, &port, nil)
 func (s *Session) GetMetrics() (*models.SessionMetricsResult, error)
 ```
 
-GetMetrics retrieves runtime metrics for this session via the MCP get_metrics tool.
+GetMetrics retrieves runtime metrics for this session.
 
-The underlying MCP tool returns a JSON string. This method parses it and returns structured metrics.
+The underlying service returns a JSON string. This method parses it and returns structured metrics.
 
 ### GetToken
 

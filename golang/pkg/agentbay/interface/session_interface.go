@@ -37,7 +37,7 @@ type SessionInterface interface {
 	// ListMcpTools lists MCP tools available for this session
 	ListMcpTools() (*agentbay.McpToolsResult, error)
 
-	// GetMetrics retrieves runtime metrics for this session via the MCP get_metrics tool
+	// GetMetrics retrieves runtime metrics for this session
 	GetMetrics() (*models.SessionMetricsResult, error)
 
 	// IsVpc returns whether this session uses VPC resources

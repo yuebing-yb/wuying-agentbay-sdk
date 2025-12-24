@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// SessionMetrics represents structured runtime metrics returned by the MCP get_metrics tool.
+// SessionMetrics represents structured runtime metrics for session monitoring.
 type SessionMetrics struct {
 	CpuCount   int     `json:"cpu_count"`
 	CpuUsedPct float64 `json:"cpu_used_pct"`
@@ -33,7 +33,7 @@ type SessionMetricsResult struct {
 	ErrorMessage string                 `json:"error_message,omitempty"`
 }
 
-// ParseSessionMetrics parses the MCP get_metrics tool result into a structured SessionMetricsResult.
+// ParseSessionMetrics parses the metrics response into a structured SessionMetricsResult.
 func ParseSessionMetrics(toolResult *McpToolResult) *SessionMetricsResult {
 	if toolResult == nil {
 		return &SessionMetricsResult{

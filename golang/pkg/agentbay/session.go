@@ -1112,9 +1112,9 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession 
 	return s.callMcpToolAPI(toolName, string(argsJSON), autoGen)
 }
 
-// GetMetrics retrieves runtime metrics for this session via the MCP get_metrics tool.
+// GetMetrics retrieves runtime metrics for this session.
 //
-// The underlying MCP tool returns a JSON string. This method parses it and returns structured metrics.
+// The underlying service returns a JSON string. This method parses it and returns structured metrics.
 func (s *Session) GetMetrics() (*models.SessionMetricsResult, error) {
 	toolResult, err := s.CallMcpTool("get_metrics", map[string]interface{}{})
 	if err != nil {
