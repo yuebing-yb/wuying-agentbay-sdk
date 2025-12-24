@@ -342,8 +342,8 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         result = await agent_bay.list(labels={"env": "prod"}, page=2, limit=2)
         self.assertEqual(result.request_id, "list-request-id")
         self.assertEqual(len(result.session_ids), 2)
-        self.assertEqual(result.session_ids[0], "session-3")
-        self.assertEqual(result.session_ids[1], "session-4")
+        self.assertEqual(result.session_ids[0]["sessionId"], "session-3")
+        self.assertEqual(result.session_ids[1]["sessionId"], "session-4")
 
     @patch("agentbay._async.agentbay.extract_request_id")
     @patch("agentbay._async.agentbay._load_config")

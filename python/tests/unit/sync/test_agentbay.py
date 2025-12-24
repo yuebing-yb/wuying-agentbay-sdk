@@ -274,6 +274,18 @@ class TestAgentBay(unittest.TestCase):
         self.assertEqual(result.request_id, "list-request-id")
         self.assertEqual(len(result.session_ids), 3)
 
+        # Test listing sessions with status filter
+        result = agent_bay.list(status="RUNNING")
+        self.assertEqual(result.request_id, "list-request-id")
+        self.assertEqual(len(result.session_ids), 3)
+        self.assertTrue(result.success)
+
+        # Test listing sessions with labels and status
+        result = agent_bay.list(labels={"env": "prod"}, status="PAUSED")
+        self.assertEqual(result.request_id, "list-request-id")
+        self.assertEqual(len(result.session_ids), 3)
+        self.assertTrue(result.success)
+
     @patch("agentbay._sync.agentbay.extract_request_id")
     @patch("agentbay._sync.agentbay._load_config")
     @patch("agentbay._sync.agentbay.mcp_client")
@@ -342,8 +354,97 @@ class TestAgentBay(unittest.TestCase):
         result = agent_bay.list(labels={"env": "prod"}, page=2, limit=2)
         self.assertEqual(result.request_id, "list-request-id")
         self.assertEqual(len(result.session_ids), 2)
-        self.assertEqual(result.session_ids[0], "session-3")
-        self.assertEqual(result.session_ids[1], "session-4")
+        self.assertEqual(result.session_ids[0]["sessionId"], "session-3")
+        self.assertEqual(result.session_ids[1]["sessionId"], "session-4")
+
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
+    @pytest.mark.sync
+    def test_list_with_invalid_status(self, mock_mcp_client, mock_load_config):
+        """Test list API with invalid status parameter"""
+        # Mock configuration
+        mock_load_config.return_value = {
+            "region_id": "cn-hangzhou",
+            "endpoint": "test.endpoint.com",
+            "timeout_ms": 30000,
+            "region_id": None,
+        }
+
+        # Mock client
+        mock_client = MagicMock()
+        mock_mcp_client.return_value = mock_client
+
+        # Create AgentBay instance
+        agent_bay = AgentBay(api_key="test-key")
+
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = MagicMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
+        agent_bay.context = mock_context
+
+        # Test with invalid status - should return error result
+        result = agent_bay.list(status="INVALID_STATUS")
+        
+        # Verify error handling
+        self.assertFalse(result.success)
+        self.assertIn("Invalid status", result.error_message)
+        self.assertEqual(len(result.session_ids), 0)
+
+    @patch("agentbay._sync.agentbay.extract_request_id")
+    @patch("agentbay._sync.agentbay._load_config")
+    @patch("agentbay._sync.agentbay.mcp_client")
+    @pytest.mark.sync
+    def test_list_with_status_and_pagination(
+        self, mock_mcp_client, mock_load_config, mock_extract_request_id
+    ):
+        """Test list API with status filter and pagination"""
+        # Mock configuration and request ID
+        mock_load_config.return_value = {
+            "region_id": "cn-hangzhou",
+            "endpoint": "test.endpoint.com",
+            "timeout_ms": 30000,
+            "region_id": None,
+        }
+        mock_extract_request_id.return_value = "list-status-page-request-id"
+
+        # Mock client and response
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {
+            "body": {
+                "Success": True,
+                "Data": [{"SessionId": "running-session-1"}],
+                "TotalCount": 1,
+                "MaxResults": 10,
+            }
+        }
+        mock_client.list_session = MagicMock(return_value=mock_response)
+        mock_mcp_client.return_value = mock_client
+
+        # Create AgentBay instance
+        agent_bay = AgentBay(api_key="test-key")
+
+        # Mock context service
+        mock_context = MagicMock()
+        mock_context.get = MagicMock(
+            return_value=MagicMock(success=True, context_id="test-context")
+        )
+        agent_bay.context = mock_context
+
+        # Test listing with status and pagination
+        result = agent_bay.list(
+            labels={"env": "prod"}, 
+            status="RUNNING", 
+            page=1, 
+            limit=10
+        )
+        
+        self.assertEqual(result.request_id, "list-status-page-request-id")
+        self.assertEqual(len(result.session_ids), 1)
+        self.assertEqual(result.session_ids[0], "running-session-1")
+        self.assertTrue(result.success)
 
     @patch("agentbay._sync.agentbay.extract_request_id")
     @patch("agentbay._sync.agentbay._load_config")
