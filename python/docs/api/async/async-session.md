@@ -10,6 +10,25 @@
 
 
 
+## SessionStatusResult
+
+```python
+class SessionStatusResult(ApiResponse)
+```
+
+Result of Session.get_status() (status only).
+
+### \_\_init\_\_
+
+```python
+def __init__(self, request_id: str = "",
+             http_status_code: int = 0,
+             code: str = "",
+             success: bool = False,
+             status: str = "",
+             error_message: str = "")
+```
+
 ### \_\_init\_\_
 
 ```python
@@ -63,6 +82,18 @@ def files() -> AsyncFileSystem
 ```
 
 Alias of file_system.
+
+### get\_status
+
+```python
+async def get_status() -> "SessionStatusResult"
+```
+
+Get basic session status asynchronously.
+
+**Returns**:
+
+    SessionStatusResult: Result containing session status only.
 
 ### delete
 

@@ -46,18 +46,15 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 
 	// Verify session is initially in RUNNING state
 	fmt.Println("Step 1: Verifying session is initially RUNNING...")
-	getResult, err := client.GetStatus(sessionId)
+	getResult, err := createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
-	}
-	if getResult.Data.Status != "RUNNING" {
-		t.Fatalf("Expected session status RUNNING, got %s", getResult.Data.Status)
+	if getResult.Status != "RUNNING" {
+		t.Fatalf("Expected session status RUNNING, got %s", getResult.Status)
 	}
 	t.Logf("✓ Session is RUNNING: %s", sessionId)
 
@@ -81,21 +78,18 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Check session status after pause
-	getResult, err = client.GetStatus(sessionId)
+	getResult, err = createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
-	}
 	// Session should be PAUSED or still PAUSING
-	if getResult.Data.Status != "PAUSED" && getResult.Data.Status != "PAUSING" {
-		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Data.Status)
+	if getResult.Status != "PAUSED" && getResult.Status != "PAUSING" {
+		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Status)
 	}
-	t.Logf("✓ Session status after pause: %s", getResult.Data.Status)
+	t.Logf("✓ Session status after pause: %s", getResult.Status)
 
 	// Resume the session (synchronous)
 	fmt.Println("Step 4: Resuming session...")
@@ -117,18 +111,15 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 	t.Logf("  Request ID: %s", resumeResult.RequestID)
 
 	// Verify session is RUNNING after resume
-	getResult, err = client.GetStatus(sessionId)
+	getResult, err = createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
-	}
-	if getResult.Data.Status != "RUNNING" {
-		t.Fatalf("Expected session status RUNNING, got %s", getResult.Data.Status)
+	if getResult.Status != "RUNNING" {
+		t.Fatalf("Expected session status RUNNING, got %s", getResult.Status)
 	}
 	t.Logf("✓ Session is RUNNING after resume: %s", sessionId)
 }
@@ -184,20 +175,17 @@ func TestSessionResumeIntegration(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is PAUSED or PAUSING
-	getResult, err := client.GetStatus(sessionId)
+	getResult, err := createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
+	if getResult.Status != "PAUSED" && getResult.Status != "PAUSING" {
+		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Status)
 	}
-	if getResult.Data.Status != "PAUSED" && getResult.Data.Status != "PAUSING" {
-		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Data.Status)
-	}
-	t.Logf("✓ Session status: %s", getResult.Data.Status)
+	t.Logf("✓ Session status: %s", getResult.Status)
 
 	// Resume the session (synchronous)
 	fmt.Println("Step 3: Resuming session...")
@@ -219,21 +207,18 @@ func TestSessionResumeIntegration(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Check session status after async resume
-	getResult, err = client.GetStatus(sessionId)
+	getResult, err = createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
-	}
 	// Session should be RUNNING
-	if getResult.Data.Status != "RUNNING" {
-		t.Fatalf("Expected session status RUNNING, got %s", getResult.Data.Status)
+	if getResult.Status != "RUNNING" {
+		t.Fatalf("Expected session status RUNNING, got %s", getResult.Status)
 	}
-	t.Logf("✓ Session status after resume: %s", getResult.Data.Status)
+	t.Logf("✓ Session status after resume: %s", getResult.Status)
 }
 
 // TestSessionPauseNonExistent tests pause operation on non-existent session
@@ -355,20 +340,17 @@ func TestSessionPauseAlreadyPaused(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is PAUSED or PAUSING
-	getResult, err := client.GetStatus(sessionId)
+	getResult, err := createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
+	if getResult.Status != "PAUSED" && getResult.Status != "PAUSING" {
+		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Status)
 	}
-	if getResult.Data.Status != "PAUSED" && getResult.Data.Status != "PAUSING" {
-		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Data.Status)
-	}
-	t.Logf("✓ Session status: %s", getResult.Data.Status)
+	t.Logf("✓ Session status: %s", getResult.Status)
 
 	// Try to pause again
 	fmt.Println("Step 3: Attempting to pause already paused session...")
@@ -423,18 +405,15 @@ func TestSessionResumeAlreadyRunning(t *testing.T) {
 	}()
 
 	// Verify session is RUNNING
-	getResult, err := client.GetStatus(sessionId)
+	getResult, err := createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
-	}
-	if getResult.Data.Status != "RUNNING" {
-		t.Fatalf("Expected session status RUNNING, got %s", getResult.Data.Status)
+	if getResult.Status != "RUNNING" {
+		t.Fatalf("Expected session status RUNNING, got %s", getResult.Status)
 	}
 	t.Logf("✓ Session is RUNNING: %s", sessionId)
 
@@ -513,20 +492,17 @@ func TestSessionPauseResumeWithCustomParameters(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is PAUSED or PAUSING
-	getResult, err := client.GetStatus(sessionId)
+	getResult, err := createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
+	if getResult.Status != "PAUSED" && getResult.Status != "PAUSING" {
+		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Status)
 	}
-	if getResult.Data.Status != "PAUSED" && getResult.Data.Status != "PAUSING" {
-		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Data.Status)
-	}
-	t.Logf("✓ Session status: %s", getResult.Data.Status)
+	t.Logf("✓ Session status: %s", getResult.Status)
 
 	// Resume with custom parameters
 	fmt.Println("Step 3: Resuming session with custom parameters...")
@@ -543,18 +519,15 @@ func TestSessionPauseResumeWithCustomParameters(t *testing.T) {
 	t.Logf("✓ Session resume with custom parameters successful")
 
 	// Verify session is RUNNING after resume
-	getResult, err = client.GetStatus(sessionId)
+	getResult, err = createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
-	}
-	if getResult.Data.Status != "RUNNING" {
-		t.Fatalf("Expected session status RUNNING, got %s", getResult.Data.Status)
+	if getResult.Status != "RUNNING" {
+		t.Fatalf("Expected session status RUNNING, got %s", getResult.Status)
 	}
 	t.Logf("✓ Session is RUNNING after resume with custom parameters")
 }

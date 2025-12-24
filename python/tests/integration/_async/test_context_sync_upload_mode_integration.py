@@ -110,16 +110,15 @@ class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"Session ID: {session.session_id}")
         print(f"Session creation request ID: {session_result.request_id}")
 
-        # Get session info to verify appInstanceId
-        session_info = await self.agent_bay._get_session(session.session_id)
+        # Get session status (status only)
+        status_result = await session.get_status()
         self.assertTrue(
-            session_info.success,
-            f"Failed to get session info: {session_info.error_message}",
+            status_result.success,
+            f"Failed to get session status: {status_result.error_message}",
         )
-        self.assertIsNotNone(session_info.data)
-
-        print(f"App Instance ID: {session_info.data.app_instance_id}")
-        print(f"Get session request ID: {session_info.request_id}")
+        self.assertTrue(status_result.status)
+        print(f"Status: {status_result.status}")
+        print(f"Get status request ID: {status_result.request_id}")
 
         print("✅ All basic functionality tests passed!")
 
@@ -194,15 +193,14 @@ class TestContextSyncUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         session = session_result.session
         self.test_sessions.append(session)
 
-        # Get session info to verify appInstanceId
-        session_info = await self.agent_bay._get_session(session.session_id)
+        # Get session status (status only)
+        status_result = await session.get_status()
         self.assertTrue(
-            session_info.success,
-            f"Failed to get session info: {session_info.error_message}",
+            status_result.success,
+            f"Failed to get session status: {status_result.error_message}",
         )
-        self.assertIsNotNone(session_info.data)
-
-        print(f"App Instance ID: {session_info.data.app_instance_id}")
+        self.assertTrue(status_result.status)
+        print(f"Status: {status_result.status}")
 
         print(f"✅ Session created successfully with ID: {session.session_id}")
         print(f"Session creation request ID: {session_result.request_id}")

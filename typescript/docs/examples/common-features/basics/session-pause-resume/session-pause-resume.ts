@@ -43,9 +43,9 @@ async function pauseAndResumeSession() {
         log(`📎 Pause Request ID: ${pauseResult.requestId}`);
         
         // Check session status after pause
-        const sessionStatusAfterPause = await agentBay.getStatus(session.sessionId);
+        const sessionStatusAfterPause = await session.getStatus();
         if (sessionStatusAfterPause.success && sessionStatusAfterPause.data) {
-          log(`📊 Session status after pause: ${sessionStatusAfterPause.data.status || 'Unknown'}`);
+          log(`📊 Session status after pause: ${sessionStatusAfterPause.status || 'Unknown'}`);
         }
       } else {
         log(`❌ Failed to pause session: ${pauseResult.errorMessage}`);
@@ -65,9 +65,9 @@ async function pauseAndResumeSession() {
         log(`📎 Resume Request ID: ${resumeResult.requestId}`);
         
         // Check session status after resume
-        const sessionStatusAfterResume = await agentBay.getStatus(session.sessionId);
+        const sessionStatusAfterResume = await session.getStatus();
         if (sessionStatusAfterResume.success && sessionStatusAfterResume.data) {
-          log(`📊 Session status after resume: ${sessionStatusAfterResume.data.status || 'Unknown'}`);
+          log(`📊 Session status after resume: ${sessionStatusAfterResume.status || 'Unknown'}`);
         }
       } else {
         log(`❌ Failed to resume session: ${resumeResult.errorMessage}`);
@@ -175,9 +175,9 @@ async function pauseAndResumeWithCustomParameters() {
         log(`📎 Request ID: ${pauseResult.requestId}`);
         
         // Check session status after pause
-        const sessionStatusAfterPause = await agentBay.getStatus(session.sessionId);
+        const sessionStatusAfterPause = await session.getStatus();
         if (sessionStatusAfterPause.success && sessionStatusAfterPause.data) {
-          log(`📊 Session status after pause: ${sessionStatusAfterPause.data.status || 'Unknown'}`);
+          log(`📊 Session status after pause: ${sessionStatusAfterPause.status || 'Unknown'}`);
         }
       } else {
         log(`❌ Failed to pause session with custom parameters: ${pauseResult.errorMessage}`);
@@ -195,9 +195,9 @@ async function pauseAndResumeWithCustomParameters() {
         log(`📎 Request ID: ${resumeResult.requestId}`);
         
         // Check session status after resume
-        const sessionStatusAfterResume = await agentBay.getStatus(session.sessionId);
+        const sessionStatusAfterResume = await session.getStatus();
         if (sessionStatusAfterResume.success && sessionStatusAfterResume.data) {
-          log(`📊 Session status after resume: ${sessionStatusAfterResume.data.status || 'Unknown'}`);
+          log(`📊 Session status after resume: ${sessionStatusAfterResume.status || 'Unknown'}`);
         }
       } else {
         log(`❌ Failed to resume session with custom parameters: ${resumeResult.errorMessage}`);

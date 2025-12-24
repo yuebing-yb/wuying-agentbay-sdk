@@ -46,12 +46,12 @@ func main() {
 
 	// Verify session is running
 	fmt.Println("\n1. Verifying session is running...")
-	getResult, err := client.GetStatus(session.SessionID)
+	getResult, err := session.GetStatus()
 	if err != nil {
 		log.Fatalf("Failed to get session status: %v", err)
 	}
-	if getResult.Success && getResult.Data != nil {
-		fmt.Printf("Session status: %s\n", getResult.Data.Status)
+	if getResult.Success {
+		fmt.Printf("Session status: %s\n", getResult.Status)
 	} else {
 		log.Fatalf("Failed to get session status: %s", getResult.ErrorMessage)
 	}
@@ -83,12 +83,12 @@ func main() {
 
 	// Verify session is paused
 	fmt.Println("\n4. Verifying session is paused...")
-	getResult, err = client.GetStatus(session.SessionID)
+	getResult, err = session.GetStatus()
 	if err != nil {
 		log.Fatalf("Failed to get session status: %v", err)
 	}
-	if getResult.Success && getResult.Data != nil {
-		fmt.Printf("Session status: %s\n", getResult.Data.Status)
+	if getResult.Success {
+		fmt.Printf("Session status: %s\n", getResult.Status)
 	} else {
 		log.Fatalf("Failed to get session status: %s", getResult.ErrorMessage)
 	}
@@ -120,12 +120,12 @@ func main() {
 
 	// Verify session is running again
 	fmt.Println("\n7. Verifying session is running again...")
-	getResult, err = client.GetStatus(session.SessionID)
+	getResult, err = session.GetStatus()
 	if err != nil {
 		log.Fatalf("Failed to get session status: %v", err)
 	}
-	if getResult.Success && getResult.Data != nil {
-		fmt.Printf("Session status: %s\n", getResult.Data.Status)
+	if getResult.Success {
+		fmt.Printf("Session status: %s\n", getResult.Status)
 	} else {
 		log.Fatalf("Failed to get session status: %s", getResult.ErrorMessage)
 	}

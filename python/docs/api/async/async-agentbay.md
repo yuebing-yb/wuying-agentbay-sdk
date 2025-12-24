@@ -123,23 +123,6 @@ Delete a session by session object asynchronously.
 
     DeleteResult: Result indicating success or failure and request ID.
 
-### get\_status
-
-```python
-async def get_status(session_id: str) -> GetSessionDetailResult
-```
-
-Get basic session information by session ID asynchronously.
-
-**Arguments**:
-
-- `session_id` _str_ - The ID of the session to retrieve.
-  
-
-**Returns**:
-
-    GetSessionDetailResult: Result containing basic session information.
-
 ### get
 
 ```python

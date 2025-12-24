@@ -57,18 +57,15 @@ func TestDeletePausedSession(t *testing.T) {
 
 	// Verify session is initially in RUNNING state
 	fmt.Println("Step 1: Verifying session is initially RUNNING...")
-	getResult, err := client.GetStatus(sessionId)
+	getResult, err := createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
-	}
-	if getResult.Data.Status != "RUNNING" {
-		t.Fatalf("Expected session status RUNNING, got %s", getResult.Data.Status)
+	if getResult.Status != "RUNNING" {
+		t.Fatalf("Expected session status RUNNING, got %s", getResult.Status)
 	}
 	t.Logf("✓ Session is RUNNING: %s", sessionId)
 
@@ -92,21 +89,18 @@ func TestDeletePausedSession(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Check session status after pause
-	getResult, err = client.GetStatus(sessionId)
+	getResult, err = createdSession.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
 	if !getResult.Success {
 		t.Fatalf("Get session failed: %s", getResult.ErrorMessage)
 	}
-	if getResult.Data == nil {
-		t.Fatal("Get session returned nil data")
-	}
 	// Session should be PAUSED or still PAUSING
-	if getResult.Data.Status != "PAUSED" && getResult.Data.Status != "PAUSING" {
-		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Data.Status)
+	if getResult.Status != "PAUSED" && getResult.Status != "PAUSING" {
+		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Status)
 	}
-	t.Logf("✓ Session status after pause: %s", getResult.Data.Status)
+	t.Logf("✓ Session status after pause: %s", getResult.Status)
 
 	// Try to delete the paused session - this should fail gracefully
 	fmt.Println("Step 4: Attempting to delete paused session...")

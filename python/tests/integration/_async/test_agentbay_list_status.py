@@ -59,11 +59,11 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
                 # Try to resume session first in case it's paused
                 try:
                     if(session):
-                        result = await self.agent_bay.get_status(session.session_id)
-                        if(result.data.status in ["PAUSED"]):
+                        result = await session.get_status()
+                        if(result.status in ["PAUSED"]):
                             await session.resume()
                             print(f"  ✓ Resumed session: {session.session_id}")
-                        if result.data.status not in ["DELETING", "DELETED","RESUMING","PAUSING"]:
+                        if result.status not in ["DELETING", "DELETED","RESUMING","PAUSING"]:
                             result = await self.agent_bay.delete(session)
                             if result.success:
                                 print(f"  ✓ Deleted session: {session.session_id}")
@@ -114,10 +114,10 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"\nVerifying session status after {operation_name}...")
         
         # First call get_status to check the current status
-        status_result = await self.agent_bay.get_status(session.session_id)
+        status_result = await session.get_status()
         self.assertTrue(status_result.success, f"Failed to get session status: {status_result.error_message}")
         
-        initial_status = status_result.data.status if status_result.data else "UNKNOWN"
+        initial_status = status_result.status if status_result.status else "UNKNOWN"
         print(f"  ✓ Session status from get_status: {initial_status}")
         self.assertIn(initial_status, expected_statuses, 
                      f"Unexpected status {initial_status}, expected one of {expected_statuses}")
@@ -167,10 +167,10 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
 
         # Verify session is initially in RUNNING state
         # First call get_status to check the current status
-        status_result = await self.agent_bay.get_status(session.session_id)
+        status_result = await session.get_status()
         self.assertTrue(status_result.success, f"Failed to get session status: {status_result.error_message}")
         
-        initial_status = status_result.data.status if status_result.data else "UNKNOWN"
+        initial_status = status_result.status if status_result.status else "UNKNOWN"
         print(f"  ✓ Session status from get_status: {initial_status}")
         self.assertIn(initial_status, "RUNNING", 
                      f"Unexpected status {initial_status}, expected one of RUNNING")
@@ -216,10 +216,10 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(2)
 
         # Session should be PAUSED or PAUSING after pause operation
-        status_result = await self.agent_bay.get_status(session.session_id)
+        status_result = await session.get_status()
         self.assertTrue(status_result.success, f"Failed to get session status: {status_result.error_message}")
         
-        initial_status = status_result.data.status if status_result.data else "UNKNOWN"
+        initial_status = status_result.status if status_result.status else "UNKNOWN"
         print(f"  ✓ Session status from get_status: {initial_status}")
         self.assertIn(initial_status, ["PAUSED","PAUSING"], 
                      f"Unexpected status {initial_status}, expected one of PAUSED or PAUSING")

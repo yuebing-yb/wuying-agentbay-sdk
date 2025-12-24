@@ -35,12 +35,12 @@ describe("AgentBay List Status Integration Tests", () => {
         // Try to resume session first in case it's paused
         try {
           if (session) {
-            const result = await agentBay.getStatus(session.sessionId);
-            if (result.data?.status === "PAUSED") {
+            const result = await session.getStatus();
+            if (result.status === "PAUSED") {
               await session.resumeAsync();
               log(`  ✓ Resumed session: ${session.sessionId}`);
             }
-            if (result.data?.status && !["DELETING", "DELETED", "RESUMING", "PAUSING"].includes(result.data.status)) {
+            if (result.status && !["DELETING", "DELETED", "RESUMING", "PAUSING"].includes(result.status)) {
               const deleteResult = await agentBay.delete(session);
               if (deleteResult.success) {
                 log(`  ✓ Deleted session: ${session.sessionId}`);
@@ -88,11 +88,11 @@ describe("AgentBay List Status Integration Tests", () => {
     log(`\nVerifying session status after ${operationName}...`);
     
     // First call getStatus to check the current status
-    const statusResult = await agentBay.getStatus(session.sessionId);
+    const statusResult = await session.getStatus();
     expect(statusResult.success).toBe(true);
-    expect(statusResult.data).toBeDefined();
+    expect(statusResult.status).toBeDefined();
     
-    const initialStatus = statusResult.data?.status || "UNKNOWN";
+    const initialStatus = statusResult.status || "UNKNOWN";
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(expectedStatuses).toContain(initialStatus);
 
@@ -136,11 +136,11 @@ describe("AgentBay List Status Integration Tests", () => {
     const session = await createTestSession();
 
     // Verify session is initially in RUNNING state
-    const statusResult = await agentBay.getStatus(session.sessionId);
+    const statusResult = await session.getStatus();
     expect(statusResult.success).toBe(true);
-    expect(statusResult.data).toBeDefined();
+    expect(statusResult.status).toBeDefined();
     
-    const initialStatus = statusResult.data?.status || "UNKNOWN";
+    const initialStatus = statusResult.status || "UNKNOWN";
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(initialStatus).toBe("RUNNING");
 
@@ -180,11 +180,11 @@ describe("AgentBay List Status Integration Tests", () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Session should be PAUSED or PAUSING after pause operation
-    const statusResult = await agentBay.getStatus(session.sessionId);
+    const statusResult = await session.getStatus();
     expect(statusResult.success).toBe(true);
-    expect(statusResult.data).toBeDefined();
+    expect(statusResult.status).toBeDefined();
     
-    const initialStatus = statusResult.data?.status || "UNKNOWN";
+    const initialStatus = statusResult.status || "UNKNOWN";
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(["PAUSED", "PAUSING"]).toContain(initialStatus);
     log(`  ✓ Session status checked`);

@@ -34,7 +34,7 @@ func TestGetStatusAPI(t *testing.T) {
 
 	// Test GetStatus API
 	fmt.Println("Testing GetStatus API...")
-	getStatusResult, err := client.GetStatus(sessionID)
+	getStatusResult, err := session.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to call GetStatus API: %v", err)
 	}
@@ -57,20 +57,10 @@ func TestGetStatusAPI(t *testing.T) {
 		t.Error("Expected Success to be true")
 	}
 
-	// Validate Data field
-	if getStatusResult.Data == nil {
-		t.Fatal("Data field should not be nil")
-	}
-
-	if getStatusResult.Data.AppInstanceID == "" {
-		t.Error("AppInstanceID should not be empty")
-	}
-	t.Logf("AppInstanceID: %s", getStatusResult.Data.AppInstanceID)
-
-	if getStatusResult.Data.Status == "" {
+	if getStatusResult.Status == "" {
 		t.Error("Status should not be empty")
 	}
-	t.Logf("Status: %s", getStatusResult.Data.Status)
+	t.Logf("Status: %s", getStatusResult.Status)
 
 	// TODO: Don't support file transfer context yet
 	// Validate contexts field

@@ -109,10 +109,10 @@ async def archive_upload_mode_example(agent_bay, unique_id):
         print(f"   Session ID: {session.session_id}")
         print(f"   Request ID: {session_result.request_id}")
 
-        # Get session status (get_session is internal; use get_status here)
-        session_info = await agent_bay.get_status(session.session_id)
-        if session_info.success and session_info.data:
-            print(f"   Status: {session_info.data.status}")
+        # Get session status
+        session_info = await session.get_status()
+        if session_info.success and session_info.status:
+            print(f"   Status: {session_info.status}")
 
         # Step 5: Create and write test files
         print("\n📝 Step 5: Creating test files in Archive mode context...")

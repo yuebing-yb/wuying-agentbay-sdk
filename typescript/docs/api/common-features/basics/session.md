@@ -343,8 +343,6 @@ if (create.success && create.session) {
 }
 ```
 
-___
-
 ### info
 
 ▸ **info**(): `Promise`\<`OperationResult`\>

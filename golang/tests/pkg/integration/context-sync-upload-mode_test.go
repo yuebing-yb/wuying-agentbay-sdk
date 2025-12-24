@@ -128,7 +128,7 @@ func testBasicFunctionality(t *testing.T, client *agentbay.AgentBay, uniqueId st
 	t.Logf("Session creation request ID: %s", sessionResult.RequestID)
 
 	// Get session status (GetSession is internal; use GetStatus here)
-	sessionInfo, err := client.GetStatus(session.SessionID)
+	sessionInfo, err := session.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session info: %v", err)
 	}
@@ -137,10 +137,8 @@ func testBasicFunctionality(t *testing.T, client *agentbay.AgentBay, uniqueId st
 		t.Fatalf("Get session failed: %s", sessionInfo.ErrorMessage)
 	}
 
-	if sessionInfo.Data != nil {
-		t.Logf("Status: %s", sessionInfo.Data.Status)
-		t.Logf("Get status request ID: %s", sessionInfo.RequestID)
-	}
+	t.Logf("Status: %s", sessionInfo.Status)
+	t.Logf("Get status request ID: %s", sessionInfo.RequestID)
 
 	t.Log("✅ All basic functionality tests passed!")
 }
@@ -214,13 +212,13 @@ func testUploadModeValidation(t *testing.T, client *agentbay.AgentBay, uniqueId 
 	*testSessions = append(*testSessions, session)
 
 	// Get session status (GetSession is internal; use GetStatus here)
-	sessionInfo, err := client.GetStatus(session.SessionID)
+	sessionInfo, err := session.GetStatus()
 	if err != nil {
 		t.Fatalf("Failed to get session info: %v", err)
 	}
 
-	if sessionInfo.Success && sessionInfo.Data != nil {
-		t.Logf("Status: %s", sessionInfo.Data.Status)
+	if sessionInfo.Success {
+		t.Logf("Status: %s", sessionInfo.Status)
 	}
 
 	t.Logf("✅ Session created successfully with ID: %s", session.SessionID)

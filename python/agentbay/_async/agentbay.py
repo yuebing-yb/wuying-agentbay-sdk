@@ -31,8 +31,6 @@ from .._common.logger import (
 from .._common.models import (
     DeleteResult,
     GetSessionData,
-    GetSessionDetailData,
-    GetSessionDetailResult,
     GetSessionResult,
     SessionListResult,
     SessionPauseResult,
@@ -46,7 +44,6 @@ from ..api.client import Client as mcp_client
 from ..api.models import (
     CreateMcpSessionRequest,
     GetSessionRequest,
-    GetSessionDetailRequest,
     ListSessionRequest,
     ResumeSessionAsyncRequest,
 )
@@ -1038,126 +1035,6 @@ class AsyncAgentBay:
                 request_id="",
                 success=False,
                 error_message=f"Failed to get session {session_id}: {e}",
-            )
-
-    async def get_status(self, session_id: str) -> GetSessionDetailResult:
-        """
-        Get basic session information by session ID asynchronously.
-
-        Args:
-            session_id (str): The ID of the session to retrieve.
-
-        Returns:
-            GetSessionDetailResult: Result containing basic session information.
-        """
-        try:
-            _log_api_call("GetSessionDetail", f"SessionId={session_id}")
-            request = GetSessionDetailRequest(
-                authorization=f"Bearer {self.api_key}", session_id=session_id
-            )
-            response = await self.client.get_session_detail_async(request)
-
-            request_id = extract_request_id(response)
-
-            try:
-                response_body = json.dumps(
-                    response.to_map().get("body", {}), ensure_ascii=False, indent=2
-                )
-            except Exception:
-                response_body = str(response)
-
-            try:
-                response_map = response.to_map()
-                body = response_map.get("body", {})
-                http_status_code = body.get("HttpStatusCode", 0)
-                code = body.get("Code", "")
-                success = body.get("Success", False)
-                message = body.get("Message", "")
-                if not request_id:
-                    request_id = body.get("RequestId", "") or ""
-
-                if not success and code:
-                    return GetSessionDetailResult(
-                        request_id=request_id,
-                        http_status_code=http_status_code,
-                        code=code,
-                        success=False,
-                        data=None,
-                        error_message=f"[{code}] {message or 'Unknown error'}",
-                    )
-
-                data = None
-                if body.get("Data"):
-                    data_dict = body.get("Data", {})
-                    _logger.info(f"  ✓ GetSessionDetail API call async successful{data_dict}")
-                    data = GetSessionDetailData(
-                        aliuid=data_dict.get("Aliuid", ""),
-                        apikey_id=data_dict.get("ApikeyId", ""),
-                        app_instance_group_id=data_dict.get("AppInstanceGroupId", ""),
-                        app_instance_id=data_dict.get("AppInstanceId", ""),
-                        app_user_id=data_dict.get("AppUserId", ""),
-                        biz_type=data_dict.get("BizType", 0),
-                        end_reason=data_dict.get("EndReason", ""),
-                        id=data_dict.get("Id", 0),
-                        image_id=data_dict.get("ImageId", ""),
-                        image_type=data_dict.get("ImageType", ""),
-                        is_deleted=data_dict.get("IsDeleted", 0),
-                        policy_id=data_dict.get("PolicyId", ""),
-                        region_id=data_dict.get("RegionId", ""),
-                        resource_config_id=data_dict.get("ResourceConfigId", ""),
-                        status=data_dict.get("Status", ""),
-                    )
-
-                key_fields = {}
-                if data:
-                    key_fields["app_instance_id"] = data.app_instance_id
-                    key_fields["region_id"] = data.region_id
-                    key_fields["status"] = data.status
-                _log_api_response_with_details(
-                    api_name="GetSessionDetail",
-                    request_id=request_id,
-                    success=success,
-                    key_fields=key_fields,
-                    full_response=response_body,
-                )
-
-                return GetSessionDetailResult(
-                    request_id=request_id,
-                    http_status_code=http_status_code,
-                    code=code,
-                    success=success,
-                    data=data,
-                    error_message="",
-                )
-            except Exception as e:
-                _logger.exception(f"Failed to parse response: {str(e)}")
-                return GetSessionDetailResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message=f"Failed to parse response: {str(e)}",
-                )
-        except ClientException as e:
-            error_str = str(e)
-            if "InvalidMcpSession.NotFound" in error_str or "NotFound" in error_str:
-                _log_info_with_color(f"Session not found: {session_id}")
-                _logger.debug(f"GetSessionDetail error details: {error_str}")
-                return GetSessionDetailResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Session {session_id} not found",
-                )
-            _logger.error(f"Error calling GetSessionDetail: {e}")
-            return GetSessionDetailResult(
-                request_id="",
-                success=False,
-                error_message=f"Failed to get session detail {session_id}: {e}",
-            )
-        except Exception as e:
-            _logger.exception(f"Unexpected error calling GetSessionDetail: {e}")
-            return GetSessionDetailResult(
-                request_id="",
-                success=False,
-                error_message=f"Failed to get session detail {session_id}: {e}",
             )
 
     async def get(self, session_id: str) -> SessionResult:

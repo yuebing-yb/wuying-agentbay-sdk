@@ -67,8 +67,8 @@ func main() {
 
     // Wait and verify session is paused
     time.Sleep(2 * time.Second)
-    getResult, _ := client.GetStatus(session.SessionID)
-    fmt.Printf("Session status: %s\n", getResult.Data.Status)
+    getResult, _ := session.GetStatus()
+    fmt.Printf("Session status: %s\n", getResult.Status)
 
     // Resume the session
     resumeResult, err := client.Resume(session, 300, 2.0)

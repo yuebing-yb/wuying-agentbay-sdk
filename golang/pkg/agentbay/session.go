@@ -144,6 +144,96 @@ type Session struct {
 	McpTools []McpTool
 }
 
+// SessionStatusResult represents the result of Session.GetStatus().
+// It only contains status (no extra detail fields).
+type SessionStatusResult struct {
+	models.ApiResponse
+	HttpStatusCode int32
+	Code           string
+	Success        bool
+	Status         string
+	ErrorMessage   string
+}
+
+// GetStatus retrieves basic session status for the current session.
+// This method calls the GetSessionDetail API and returns status only.
+func (s *Session) GetStatus() (*SessionStatusResult, error) {
+	getSessionDetailRequest := &mcp.GetSessionDetailRequest{
+		Authorization: tea.String("Bearer " + s.GetAPIKey()),
+		SessionId:     tea.String(s.SessionID),
+	}
+
+	// Log API request
+	requestParams := fmt.Sprintf("SessionId=%s", *getSessionDetailRequest.SessionId)
+	logAPICall("GetSessionDetail", requestParams)
+
+	response, err := s.GetClient().GetSessionDetail(getSessionDetailRequest)
+	if err != nil {
+		errorStr := err.Error()
+		if strings.Contains(errorStr, "InvalidMcpSession.NotFound") || strings.Contains(errorStr, "NotFound") {
+			LogInfo(fmt.Sprintf("Session not found: %s", s.SessionID))
+			LogDebug(fmt.Sprintf("GetSessionDetail error details: %s", errorStr))
+			return &SessionStatusResult{
+				ApiResponse: models.ApiResponse{
+					RequestID: "",
+				},
+				HttpStatusCode: 400,
+				Code:           "InvalidMcpSession.NotFound",
+				Success:        false,
+				ErrorMessage:   fmt.Sprintf("Session %s not found", s.SessionID),
+			}, nil
+		}
+		logOperationError("GetSessionDetail", err.Error(), true)
+		return nil, err
+	}
+
+	requestID := models.ExtractRequestID(response)
+	if requestID == "" && response != nil && response.Body != nil && response.Body.RequestId != nil {
+		requestID = tea.StringValue(response.Body.RequestId)
+	}
+	result := &SessionStatusResult{
+		ApiResponse: models.ApiResponse{
+			RequestID: requestID,
+		},
+	}
+
+	if response != nil && response.Body != nil {
+		if response.Body.HttpStatusCode != nil {
+			result.HttpStatusCode = *response.Body.HttpStatusCode
+		}
+		if response.Body.Code != nil {
+			result.Code = *response.Body.Code
+		}
+		if response.Body.Success != nil {
+			result.Success = *response.Body.Success
+		}
+
+		// Check for API-level errors
+		if !result.Success && response.Body.Code != nil {
+			code := tea.StringValue(response.Body.Code)
+			message := tea.StringValue(response.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			result.ErrorMessage = fmt.Sprintf("[%s] %s", code, message)
+			logOperationError("GetSessionDetail", result.ErrorMessage, false)
+			return result, nil
+		}
+
+		if response.Body.Data != nil && response.Body.Data.GetStatus() != nil {
+			result.Status = *response.Body.Data.GetStatus()
+		}
+
+		keyFields := map[string]interface{}{}
+		if result.Status != "" {
+			keyFields["status"] = result.Status
+		}
+		logAPIResponseWithDetails("GetSessionDetail", requestID, result.Success, keyFields, "")
+	}
+
+	return result, nil
+}
+
 // NewSession creates a new Session object.
 func NewSession(agentBay *AgentBay, sessionID string) *Session {
 	session := &Session{

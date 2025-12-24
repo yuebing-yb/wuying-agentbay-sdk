@@ -15,6 +15,7 @@ from .._common.logger import (
     get_logger,
 )
 from .._common.models import (
+    ApiResponse,
     DeleteResult,
     McpToolResult,
     OperationResult,
@@ -30,6 +31,7 @@ from ..api.models import (
     GetLabelRequest,
     GetLinkRequest,
     GetLinkResponse,
+    GetSessionDetailRequest,
     GetMcpResourceRequest,
     ListMcpToolsRequest,
     PauseSessionAsyncRequest,
@@ -52,6 +54,26 @@ if TYPE_CHECKING:
 
 # Initialize logger for this module
 _logger = get_logger("session")
+
+
+class SessionStatusResult(ApiResponse):
+    """Result of Session.get_status() (status only)."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        http_status_code: int = 0,
+        code: str = "",
+        success: bool = False,
+        status: str = "",
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.http_status_code = http_status_code
+        self.code = code
+        self.success = success
+        self.status = status
+        self.error_message = error_message
 
 
 class SessionInfo:
@@ -154,6 +176,104 @@ class AsyncSession:
         """Internal method to get the session ID."""
         return self.session_id
 
+    async def get_status(self) -> "SessionStatusResult":
+        """
+        Get basic session status asynchronously.
+
+        Returns:
+            SessionStatusResult: Result containing session status only.
+        """
+        try:
+            _log_api_call("GetSessionDetail", f"SessionId={self.session_id}")
+            request = GetSessionDetailRequest(
+                authorization=f"Bearer {self._get_api_key()}",
+                session_id=self.session_id,
+            )
+
+            response = await self._get_client().get_session_detail_async(request)
+            request_id = extract_request_id(response)
+
+            try:
+                response_body = json.dumps(
+                    response.to_map().get("body", {}), ensure_ascii=False, indent=2
+                )
+            except Exception:
+                response_body = str(response)
+
+            try:
+                response_map = response.to_map()
+                body = response_map.get("body", {})
+                http_status_code = body.get("HttpStatusCode", 0)
+                code = body.get("Code", "")
+                success = body.get("Success", False)
+                message = body.get("Message", "")
+
+                if not request_id:
+                    request_id = body.get("RequestId", "") or ""
+
+                if not success and code:
+                    return SessionStatusResult(
+                        request_id=request_id,
+                        http_status_code=http_status_code,
+                        code=code,
+                        success=False,
+                        status="",
+                        error_message=f"[{code}] {message or 'Unknown error'}",
+                    )
+
+                status = ""
+                if body.get("Data"):
+                    data_dict = body.get("Data", {})
+                    _logger.info(
+                        f"  ✓ GetSessionDetail API call async successful{data_dict}"
+                    )
+                    status = data_dict.get("Status", "") or ""
+
+                key_fields = {}
+                if status:
+                    key_fields["status"] = status
+                _log_api_response_with_details(
+                    api_name="GetSessionDetail",
+                    request_id=request_id,
+                    success=success,
+                    key_fields=key_fields,
+                    full_response=response_body,
+                )
+
+                return SessionStatusResult(
+                    request_id=request_id,
+                    http_status_code=http_status_code,
+                    code=code,
+                    success=success,
+                    status=status,
+                    error_message="",
+                )
+
+            except Exception as e:
+                _logger.exception(f"Failed to parse response: {str(e)}")
+                return SessionStatusResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=f"Failed to parse response: {str(e)}",
+                )
+
+        except Exception as e:
+            error_str = str(e)
+            if "InvalidMcpSession.NotFound" in error_str or "NotFound" in error_str:
+                _log_info_with_color(f"Session not found: {self.session_id}")
+                _logger.debug(f"GetSessionDetail error details: {error_str}")
+                return SessionStatusResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Session {self.session_id} not found",
+                )
+
+            _log_operation_error("get_status", error_str, exc_info=True)
+            return SessionStatusResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get session status {self.session_id}: {e}",
+            )
     def _is_vpc_enabled(self) -> bool:
         """Internal method to check if this session uses VPC resources."""
         return self.is_vpc

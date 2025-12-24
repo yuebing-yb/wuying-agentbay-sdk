@@ -183,6 +183,15 @@ GetMetrics retrieves runtime metrics for this session.
 
 The underlying service returns a JSON string. This method parses it and returns structured metrics.
 
+### GetStatus
+
+```go
+func (s *Session) GetStatus() (*SessionStatusResult, error)
+```
+
+GetStatus retrieves basic session status for the current session. This method calls the
+GetSessionDetail API and returns status only.
+
 ### GetToken
 
 ```go
@@ -531,10 +540,10 @@ SessionResult wraps Session object and RequestID
 ```go
 type SessionListResult struct {
 	models.ApiResponse
-	SessionIds	[]string	// Session IDs
-	NextToken	string		// Token for the next page
-	MaxResults	int32		// Number of results per page
-	TotalCount	int32		// Total number of results
+	SessionIds	[]map[string]interface{}	// Session objects with ID and status
+	NextToken	string				// Token for the next page
+	MaxResults	int32				// Number of results per page
+	TotalCount	int32				// Total number of results
 }
 ```
 

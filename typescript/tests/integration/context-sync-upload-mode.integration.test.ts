@@ -102,12 +102,12 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       log(`Session ID: ${session.sessionId}`);
       log(`Session creation request ID: ${sessionResult.requestId}`);
 
-      // Get session status (GetSession is internal; use getStatus here)
-      const sessionInfo = await agentBay.getStatus(session.sessionId);
+      // Get session status
+      const sessionInfo = await session.getStatus();
       expect(sessionInfo.success).toBe(true);
-      expect(sessionInfo.data).toBeDefined();
+      expect(sessionInfo.status).toBeDefined();
 
-      log(`Status: ${sessionInfo.data?.status}`);
+      log(`Status: ${sessionInfo.status}`);
       log(`Get status request ID: ${sessionInfo.requestId}`);
 
       log("✅ All basic functionality tests passed!");
@@ -161,12 +161,12 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       const session = sessionResult.session!;
       testSessions.push(session);
-      // Get session status (GetSession is internal; use getStatus here)
-      const sessionInfo = await agentBay.getStatus(session.sessionId);
+      // Get session status
+      const sessionInfo = await session.getStatus();
       expect(sessionInfo.success).toBe(true);
-      expect(sessionInfo.data).toBeDefined();
+      expect(sessionInfo.status).toBeDefined();
 
-      log(`Status: ${sessionInfo.data?.status}`);
+      log(`Status: ${sessionInfo.status}`);
 
       log(`✅ Session created successfully with ID: ${session.sessionId}`);
       log(`Session creation request ID: ${sessionResult.requestId}`);

@@ -8,6 +8,7 @@ import {
   GetLabelRequest,
   GetLinkRequest,
   GetMcpResourceRequest,
+  GetSessionDetailRequest,
   ListMcpToolsRequest,
   SetLabelRequest,
 } from "./api/models/model";
@@ -25,6 +26,7 @@ import { FileSystem } from "./filesystem";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
 import {
+  ApiResponse,
   DeleteResult,
   extractRequestId,
   OperationResult,
@@ -85,6 +87,18 @@ export interface McpResourceContentResult extends OperationResult {
     text?: string;
     blob?: string;
   }>;
+}
+
+/**
+ * Result of Session.getStatus() (status only).
+ */
+export interface SessionStatusResult extends ApiResponse {
+  requestId: string;
+  httpStatusCode: number;
+  code: string;
+  success: boolean;
+  status: string;
+  errorMessage?: string;
 }
 
 /**
@@ -267,6 +281,92 @@ export class Session {
    */
   getSessionId(): string {
     return this.sessionId;
+  }
+
+  /**
+   * Get basic session status.
+   *
+   * @returns SessionStatusResult containing status only.
+   */
+  async getStatus(): Promise<SessionStatusResult> {
+    try {
+      logAPICall("GetSessionDetail", { sessionId: this.sessionId });
+
+      const request = new GetSessionDetailRequest({
+        authorization: `Bearer ${this.getAPIKey()}`,
+        sessionId: this.sessionId,
+      });
+
+      const response = await this.getClient().getSessionDetail(request);
+      const body = response.body;
+      const requestId = extractRequestId(response) || body?.requestId || "";
+
+      setRequestId(requestId);
+
+      // Check for API-level errors
+      if (body?.success === false && body.code) {
+        logAPIResponseWithDetails(
+          "GetSessionDetail",
+          requestId,
+          false,
+          {},
+          `[${body.code}] ${body.message || "Unknown error"}`
+        );
+        logDebug(
+          "Full GetSessionDetail response:",
+          JSON.stringify(body, null, 2)
+        );
+        return {
+          requestId,
+          httpStatusCode: body.httpStatusCode || 0,
+          code: body.code,
+          success: false,
+          status: "",
+          errorMessage: `[${body.code}] ${body.message || "Unknown error"}`,
+        };
+      }
+
+      const result: SessionStatusResult = {
+        requestId,
+        httpStatusCode: body?.httpStatusCode || 0,
+        code: body?.code || "",
+        success: body?.success || false,
+        status: body?.data?.status || "",
+        errorMessage: "",
+      };
+
+      logAPIResponseWithDetails("GetSessionDetail", requestId, true, {
+        status: result.status,
+      });
+
+      return result;
+    } catch (error: any) {
+      const errorStr = String(error);
+      const errorCode = error?.data?.Code || error?.code || "";
+
+      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+        logInfoWithColor(`Session not found: ${this.sessionId}`);
+        logDebug(`GetSessionDetail error details: ${errorStr}`);
+        return {
+          requestId: "",
+          httpStatusCode: 400,
+          code: "InvalidMcpSession.NotFound",
+          success: false,
+          status: "",
+          errorMessage: `Session ${this.sessionId} not found`,
+        };
+      }
+
+      logError("Error calling GetSessionDetail:", error);
+      return {
+        requestId: "",
+        httpStatusCode: 0,
+        code: "",
+        success: false,
+        status: "",
+        errorMessage: `Failed to get session detail ${this.sessionId}: ${error}`,
+      };
+    }
   }
 
   /**

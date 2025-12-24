@@ -130,36 +130,61 @@ func (a *AgentBay) GetRegionID() string
 
 GetRegionID returns the region ID from config
 
-### GetStatus
-
-```go
-func (a *AgentBay) GetStatus(sessionID string) (*GetSessionDetailResult, error)
-```
-
-GetStatus retrieves basic session information by session ID.
-
 ### List
 
 ```go
-func (a *AgentBay) List(labels map[string]string, page *int, limit *int32) (*SessionListResult, error)
+func (a *AgentBay) List(status string, labels map[string]string, page *int, limit *int32) (*SessionListResult, error)
 ```
 
-List returns paginated list of session IDs filtered by labels.
+List returns paginated list of session IDs filtered by labels and status.
 
 Parameters:
+  - status: Optional status to filter sessions (can be empty string or SessionStatus for no
+    filtering)
   - labels: Optional labels to filter sessions (can be nil for no filtering)
   - page: Optional page number for pagination (starting from 1, nil or 0 for first page)
   - limit: Optional maximum number of items per page (nil or 0 uses default of 10)
 
 Returns:
-  - *SessionListResult: Paginated list of session IDs that match the labels
+  - *SessionListResult: Paginated list of session IDs that match the filters
   - error: An error if the operation fails
 
 **Example:**
 
 ```go
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-result, _ := client.List(nil, nil, nil)
+result, _ := client.List("", nil, nil, nil)
+
+// Or using enum:
+
+result, _ := client.List(SessionStatusRunning.String(), nil, nil, nil)
+```
+
+### ListByStatus
+
+```go
+func (a *AgentBay) ListByStatus(status SessionStatus, labels map[string]string, page *int, limit *int32) (*SessionListResult, error)
+```
+
+ListByStatus returns paginated list of session IDs filtered by SessionStatus enum and labels.
+This is a convenience method that accepts SessionStatus enum instead of string.
+
+Parameters:
+  - status: SessionStatus enum to filter sessions (use empty SessionStatus("") for no filtering)
+  - labels: Optional labels to filter sessions (can be nil for no filtering)
+  - page: Optional page number for pagination (starting from 1, nil or 0 for first page)
+  - limit: Optional maximum number of items per page (nil or 0 uses default of 10)
+
+Returns:
+  - *SessionListResult: Paginated list of session IDs that match the filters
+  - error: An error if the operation fails
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.ListByStatus(SessionStatusRunning, nil, nil, nil)
+result, _ := client.ListByStatus("", nil, nil, nil) // No status filter
 ```
 
 ### Pause

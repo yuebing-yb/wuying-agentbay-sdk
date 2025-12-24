@@ -49,13 +49,13 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 		fmt.Printf("\nVerifying session status after %s...\n", operationName)
 
 		// First call GetStatus to check the current status
-		statusResult, err := agentBay.GetStatus(session.SessionID)
+		statusResult, err := session.GetStatus()
 		require.NoError(t, err)
 		require.True(t, statusResult.Success, fmt.Sprintf("Failed to get session status: %s", statusResult.ErrorMessage))
 
-		initialStatus := "UNKNOWN"
-		if statusResult.Data != nil {
-			initialStatus = statusResult.Data.Status
+		initialStatus := statusResult.Status
+		if initialStatus == "" {
+			initialStatus = "UNKNOWN"
 		}
 		fmt.Printf("  ✓ Session status from GetStatus: %s\n", initialStatus)
 
@@ -100,11 +100,11 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 		fmt.Println("\nCleaning up test sessions for this test...")
 		if session != nil {
 			// Try to resume session first in case it's paused
-			statusResult, err := agentBay.GetStatus(session.SessionID)
+			statusResult, err := session.GetStatus()
 			if err != nil {
 				fmt.Printf("  ⚠ Could not get session status %s: %v\n", session.SessionID, err)
-			} else if statusResult.Success && statusResult.Data != nil {
-				currentStatus := statusResult.Data.Status
+			} else if statusResult.Success {
+				currentStatus := statusResult.Status
 				
 				// Resume if paused
 				if currentStatus == "PAUSED" {
@@ -141,13 +141,13 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 		fmt.Println(strings.Repeat("=", 60))
 
 		// Verify session is initially in RUNNING state
-		statusResult, err := agentBay.GetStatus(session.SessionID)
+		statusResult, err := session.GetStatus()
 		require.NoError(t, err)
 		require.True(t, statusResult.Success, fmt.Sprintf("Failed to get session status: %s", statusResult.ErrorMessage))
 
-		initialStatus := "UNKNOWN"
-		if statusResult.Data != nil {
-			initialStatus = statusResult.Data.Status
+		initialStatus := statusResult.Status
+		if initialStatus == "" {
+			initialStatus = "UNKNOWN"
 		}
 		fmt.Printf("  ✓ Session status from GetStatus: %s\n", initialStatus)
 		require.Equal(t, "RUNNING", initialStatus, fmt.Sprintf("Unexpected status %s, expected RUNNING", initialStatus))
@@ -176,13 +176,13 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 		fmt.Println(strings.Repeat("=", 60))
 
 		// Session should be PAUSED or PAUSING after previous test
-		statusResult, err := agentBay.GetStatus(session.SessionID)
+		statusResult, err := session.GetStatus()
 		require.NoError(t, err)
 		require.True(t, statusResult.Success, fmt.Sprintf("Failed to get session status: %s", statusResult.ErrorMessage))
 
-		initialStatus := "UNKNOWN"
-		if statusResult.Data != nil {
-			initialStatus = statusResult.Data.Status
+		initialStatus := statusResult.Status
+		if initialStatus == "" {
+			initialStatus = "UNKNOWN"
 		}
 		fmt.Printf("  ✓ Session status from GetStatus: %s\n", initialStatus)
 		require.Contains(t, []string{"PAUSED", "PAUSING"}, initialStatus, fmt.Sprintf("Unexpected status %s, expected PAUSED or PAUSING", initialStatus))
