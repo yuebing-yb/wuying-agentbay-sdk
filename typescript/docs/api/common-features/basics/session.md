@@ -25,6 +25,7 @@ Represents a session in the AgentBay cloud environment.
 - [getLabels](#getlabels)
 - [getLink](#getlink)
 - [getLinkAsync](#getlinkasync)
+- [getMetrics](#getmetrics)
 - [info](#info)
 - [listMcpTools](#listmcptools)
 - [pauseAsync](#pauseasync)
@@ -314,6 +315,35 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### getMetrics
+
+▸ **getMetrics**(): `Promise`\<``SessionMetricsResult``\>
+
+Get runtime metrics for this session.
+
+The underlying service returns a JSON string. This method parses it and
+returns a structured result.
+
+#### Returns
+
+`Promise`\<``SessionMetricsResult``\>
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: "your_api_key" });
+const create = await agentBay.create({ imageId: "linux_latest" });
+if (create.success && create.session) {
+  const metrics = await create.session.getMetrics();
+  console.log(metrics.data);
+  await create.session.delete();
+}
+```
+
+___
 
 ### info
 
