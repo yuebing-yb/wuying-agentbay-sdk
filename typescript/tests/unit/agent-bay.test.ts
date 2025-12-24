@@ -400,6 +400,64 @@ describe("AgentBay", () => {
             const callArgs = listSessionStub.getCall(0).args[0];
             expect(callArgs.maxResults).toBe(10);
         });
+
+        it("should list sessions with specific status", async () => {
+            const mockResponse = {
+                statusCode: 200,
+                body: {
+                    success: true,
+                    data: [mockSessionAData],
+                    maxResults: 10,
+                    totalCount: 1,
+                    requestId: "mock-request-id-list-status",
+                },
+            };
+
+            listSessionStub.resolves(mockResponse);
+
+            const result = await agentBay.list({}, undefined, 10, "RUNNING");
+
+            expect(result.success).toBe(true);
+            expect(result.requestId).toBe("mock-request-id-list-status");
+            expect(result.sessionIds.length).toBe(1);
+            expect(listSessionStub.calledOnce).toBe(true);
+            const callArgs = listSessionStub.getCall(0).args[0];
+            expect(callArgs.status).toBe("RUNNING");
+        });
+
+        it("should return error for invalid status", async () => {
+            const result = await agentBay.list({}, undefined, 10, "INVALID_STATUS");
+
+            expect(result.success).toBe(false);
+            expect(result.errorMessage).toContain("Invalid status 'INVALID_STATUS'");
+            expect(result.sessionIds.length).toBe(0);
+            expect(listSessionStub.called).toBe(false);
+        });
+
+        it("should list sessions with labels and status", async () => {
+            const mockResponse = {
+                statusCode: 200,
+                body: {
+                    success: true,
+                    data: [mockSessionAData],
+                    maxResults: 10,
+                    totalCount: 1,
+                    requestId: "mock-request-id-list-labels-status",
+                },
+            };
+
+            listSessionStub.resolves(mockResponse);
+
+            const result = await agentBay.list({ env: "prod" }, undefined, 10, "PAUSED");
+
+            expect(result.success).toBe(true);
+            expect(result.requestId).toBe("mock-request-id-list-labels-status");
+            expect(result.sessionIds.length).toBe(1);
+            expect(listSessionStub.calledOnce).toBe(true);
+            const callArgs = listSessionStub.getCall(0).args[0];
+            expect(JSON.parse(callArgs.labels)).toEqual({ env: "prod" });
+            expect(callArgs.status).toBe("PAUSED");
+        });
     });
 
     describe("policyId passthrough", () => {

@@ -31,11 +31,22 @@ describe("Region ID Unit Tests", () => {
     });
 
     test("should create AgentBay client without region_id", () => {
-      const client = new AgentBay({ 
-        apiKey: mockApiKey 
-      });
+      // Clear environment variable to ensure clean test
+      const originalRegionId = process.env.AGENTBAY_REGION_ID;
+      delete process.env.AGENTBAY_REGION_ID;
 
-      expect(client.getRegionId()).toBeUndefined();
+      try {
+        const client = new AgentBay({ 
+          apiKey: mockApiKey 
+        });
+
+        expect(client.getRegionId()).toBeUndefined();
+      } finally {
+        // Restore original environment variable
+        if (originalRegionId !== undefined) {
+          process.env.AGENTBAY_REGION_ID = originalRegionId;
+        }
+      }
     });
 
     test("should handle empty region_id", () => {

@@ -29,7 +29,14 @@ describe('TypeScript API documentation generator', () => {
       console.error(output)
     }
 
-    expect({ status: result.status, output }).toMatchObject({ status: 0 })
+    // Handle case where status might be null (process didn't exit normally)
+    if (result.status === null) {
+      // eslint-disable-next-line no-console
+      console.error('Process did not exit normally:', output)
+      expect(result.status).not.toBeNull()
+    }
+    
+    expect(result.status).toBe(0)
 
     const expectedFiles = [
       'common-features/basics/session.md',
