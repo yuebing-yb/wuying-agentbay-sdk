@@ -415,7 +415,7 @@ class TestAgentBay(unittest.TestCase):
         mock_response.to_map.return_value = {
             "body": {
                 "Success": True,
-                "Data": [{"SessionId": "running-session-1"}],
+                "Data": [{"SessionId": "running-session-1","SessionStatus": "RUNNING"},],
                 "TotalCount": 1,
                 "MaxResults": 10,
             }
@@ -443,7 +443,7 @@ class TestAgentBay(unittest.TestCase):
         
         self.assertEqual(result.request_id, "list-status-page-request-id")
         self.assertEqual(len(result.session_ids), 1)
-        self.assertEqual(result.session_ids[0], "running-session-1")
+        self.assertEqual(result.session_ids[0]["sessionId"], "running-session-1")
         self.assertTrue(result.success)
 
     @patch("agentbay._sync.agentbay.extract_request_id")
