@@ -149,9 +149,9 @@ if (createResult.success) {
 
 ### list
 
-▸ **list**(`labels?`, `page?`, `limit?`): `Promise`\<``SessionListResult``\>
+▸ **list**(`labels?`, `page?`, `limit?`, `status?`): `Promise`\<``SessionListResult``\>
 
-Returns paginated list of session IDs filtered by labels.
+Returns paginated list of session IDs filtered by labels and status.
 
 #### Parameters
 
@@ -160,18 +160,19 @@ Returns paginated list of session IDs filtered by labels.
 | `labels` | `Record`\<`string`, `string`\> | `{}` | Optional labels to filter sessions (defaults to empty object) |
 | `page?` | `number` | `undefined` | Optional page number for pagination (starting from 1, defaults to 1) |
 | `limit` | `number` | `10` | Optional maximum number of items per page (defaults to 10) |
+| `status?` | `string` | `undefined` | Optional status to filter sessions. Must be one of: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED (defaults to undefined) |
 
 #### Returns
 
 `Promise`\<``SessionListResult``\>
 
-SessionListResult - Paginated list of session IDs that match the labels
+SessionListResult - Paginated list of session IDs that match the labels and status
 
 **`Example`**
 
 ```typescript
 const agentBay = new AgentBay({ apiKey: "your_api_key" });
-const result = await agentBay.list({ project: "demo" }, 1, 10);
+const result = await agentBay.list({ project: "demo" }, 1, 10, "RUNNING");
 if (result.success) {
   console.log(`Found ${result.sessionIds.length} sessions`);
 }

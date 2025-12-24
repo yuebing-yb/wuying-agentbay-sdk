@@ -127,7 +127,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Verify session is initially in RUNNING state
         print(f"\nStep 1: Verifying session is initially RUNNING...")
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             get_result.success, f"Failed to get session: {get_result.error_message}"
         )
@@ -151,14 +151,14 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Check session status after pause
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             get_result.success, f"Failed to get session: {get_result.error_message}"
         )
         # Session should be PAUSED or still PAUSING
         self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
         print(f"  ✓ Session status after pause: {get_result.data.status}")
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             get_result.success, f"Failed to get session: {get_result.error_message}"
         )
@@ -181,7 +181,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"    Request ID: {resume_result.request_id}")
 
         # Verify session is RUNNING after resume
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             get_result.success, f"Failed to get session: {get_result.error_message}"
         )
@@ -211,7 +211,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Verify session is PAUSED or PAUSING
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(get_result.success)
         self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
         print(f"  ✓ Session status: {get_result.data.status}")
@@ -235,7 +235,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Check session status after async resume
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             get_result.success, f"Failed to get session: {get_result.error_message}"
         )
@@ -255,7 +255,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Verify session is initially in RUNNING state
         print(f"\nStep 1: Verifying session is initially RUNNING...")
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             get_result.success, f"Failed to get session: {get_result.error_message}"
         )
@@ -279,14 +279,14 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Check session status after pause
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             get_result.success, f"Failed to get session: {get_result.error_message}"
         )
         # Session should be PAUSED or still PAUSING
         self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
         print(f"  ✓ Session status after pause: {get_result.data.status}")
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             get_result.success, f"Failed to get session: {get_result.error_message}"
         )
@@ -308,7 +308,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # print(f"    Request ID: {resume_result.request_id}")
 
         # # Verify session is RUNNING after resume
-        # get_result = self.agent_bay.get_session(session.session_id)
+        # get_result = await self.agent_bay._get_session(session.session_id)
         # self.assertTrue(get_result.success, f"Failed to get session: {get_result.error_message}")
         # self.assertEqual(get_result.data.status, "RUNNING")
         # print(f"  ✓ Session is RUNNING after resume: {session.session_id}")
@@ -414,7 +414,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Verify session is PAUSED or PAUSING
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(get_result.success)
         self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
         print(f"  ✓ Session status: {get_result.data.status}")
@@ -435,7 +435,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         session = await self._create_test_session()
 
         # Verify session is RUNNING
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(get_result.success)
         self.assertEqual(get_result.data.status, "RUNNING")
         print(f"  ✓ Session is RUNNING: {session.session_id}")
@@ -476,7 +476,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         time.sleep(2)
 
         # Verify session is PAUSED or PAUSING
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(get_result.success)
         self.assertIn(get_result.data.status, ["PAUSED", "PAUSING"])
         print(f"  ✓ Session status: {get_result.data.status}")
@@ -493,7 +493,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"  ✓ Session resume with custom parameters successful")
 
         # Verify session is RUNNING after resume
-        get_result = self.agent_bay.get_session(session.session_id)
+        get_result = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(get_result.success)
         self.assertEqual(get_result.data.status, "RUNNING")
         print(f"  ✓ Session is RUNNING after resume with custom parameters")

@@ -43,7 +43,7 @@ async function pauseAndResumeSession() {
         log(`📎 Pause Request ID: ${pauseResult.requestId}`);
         
         // Check session status after pause
-        const sessionStatusAfterPause = await agentBay.getSession(session.sessionId);
+        const sessionStatusAfterPause = await agentBay.getStatus(session.sessionId);
         if (sessionStatusAfterPause.success && sessionStatusAfterPause.data) {
           log(`📊 Session status after pause: ${sessionStatusAfterPause.data.status || 'Unknown'}`);
         }
@@ -65,7 +65,7 @@ async function pauseAndResumeSession() {
         log(`📎 Resume Request ID: ${resumeResult.requestId}`);
         
         // Check session status after resume
-        const sessionStatusAfterResume = await agentBay.getSession(session.sessionId);
+        const sessionStatusAfterResume = await agentBay.getStatus(session.sessionId);
         if (sessionStatusAfterResume.success && sessionStatusAfterResume.data) {
           log(`📊 Session status after resume: ${sessionStatusAfterResume.data.status || 'Unknown'}`);
         }
@@ -175,7 +175,7 @@ async function pauseAndResumeWithCustomParameters() {
         log(`📎 Request ID: ${pauseResult.requestId}`);
         
         // Check session status after pause
-        const sessionStatusAfterPause = await agentBay.getSession(session.sessionId);
+        const sessionStatusAfterPause = await agentBay.getStatus(session.sessionId);
         if (sessionStatusAfterPause.success && sessionStatusAfterPause.data) {
           log(`📊 Session status after pause: ${sessionStatusAfterPause.data.status || 'Unknown'}`);
         }
@@ -195,7 +195,7 @@ async function pauseAndResumeWithCustomParameters() {
         log(`📎 Request ID: ${resumeResult.requestId}`);
         
         // Check session status after resume
-        const sessionStatusAfterResume = await agentBay.getSession(session.sessionId);
+        const sessionStatusAfterResume = await agentBay.getStatus(session.sessionId);
         if (sessionStatusAfterResume.success && sessionStatusAfterResume.data) {
           log(`📊 Session status after resume: ${sessionStatusAfterResume.data.status || 'Unknown'}`);
         }

@@ -17,9 +17,9 @@ describe('GetSession API Integration Test', () => {
     agentBay = new AgentBay({ apiKey });
   });
 
-  it('should retrieve session information using GetSession API', async () => {
+  it('should retrieve session information using _getSession API', async () => {
     // Create a session first
-    log('Creating a new session for GetSession testing...');
+    log('Creating a new session for _getSession testing...');
     const createResult = await agentBay.create({ imageId: "linux_latest"});
     expect(createResult.success).toBe(true);
     expect(createResult.session).toBeDefined();
@@ -29,9 +29,9 @@ describe('GetSession API Integration Test', () => {
     log(`Session created with ID: ${sessionId}`);
 
     try {
-      // Test GetSession API
-      log('Testing GetSession API...');
-      const getSessionResult = await agentBay.getSession(sessionId);
+      // Test _getSession API (internal)
+      log('Testing _getSession API...');
+      const getSessionResult = await agentBay._getSession(sessionId);
       // Validate response
       expect(getSessionResult.requestId).toBeTruthy();
       log(`GetSession RequestID: ${getSessionResult.requestId}`);
@@ -49,7 +49,7 @@ describe('GetSession API Integration Test', () => {
       log(`AppInstanceID: ${getSessionResult.data!.appInstanceId}`);
       expect(getSessionResult.data!.resourceId).toBeTruthy();
       log(`ResourceID: ${getSessionResult.data!.resourceId}`);
-      log('GetSession API test passed successfully');
+      log('_getSession API test passed successfully');
     } finally {
       // Clean up: Delete the session
       log('Cleaning up: Deleting the session...');

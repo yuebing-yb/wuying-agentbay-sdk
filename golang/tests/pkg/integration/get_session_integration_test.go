@@ -8,8 +8,8 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 
-// TestGetSessionAPI integration test for GetSession API
-func TestGetSessionAPI(t *testing.T) {
+// TestGetStatusAPI integration test for GetSessionDetail (GetStatus) API
+func TestGetStatusAPI(t *testing.T) {
 	// Get API Key
 	apiKey := os.Getenv("AGENTBAY_API_KEY")
 	if apiKey == "" {
@@ -32,52 +32,45 @@ func TestGetSessionAPI(t *testing.T) {
 	sessionID := session.SessionID
 	t.Logf("Session created with ID: %s", sessionID)
 
-	// Test GetSession API
-	fmt.Println("Testing GetSession API...")
-	getSessionResult, err := client.GetSession(sessionID)
+	// Test GetStatus API
+	fmt.Println("Testing GetStatus API...")
+	getStatusResult, err := client.GetStatus(sessionID)
 	if err != nil {
-		t.Fatalf("Failed to call GetSession API: %v", err)
+		t.Fatalf("Failed to call GetStatus API: %v", err)
 	}
 
 	// Validate response
-	if getSessionResult.RequestID == "" {
+	if getStatusResult.RequestID == "" {
 		t.Error("RequestID should not be empty")
 	}
-	t.Logf("GetSession RequestID: %s", getSessionResult.RequestID)
+	t.Logf("GetStatus RequestID: %s", getStatusResult.RequestID)
 
-	if getSessionResult.HttpStatusCode != 200 {
-		t.Errorf("Expected HttpStatusCode 200, got %d", getSessionResult.HttpStatusCode)
+	if getStatusResult.HttpStatusCode != 200 {
+		t.Errorf("Expected HttpStatusCode 200, got %d", getStatusResult.HttpStatusCode)
 	}
 
-	if getSessionResult.Code != "ok" {
-		t.Errorf("Expected Code 'ok', got '%s'", getSessionResult.Code)
+	if getStatusResult.Code != "ok" {
+		t.Errorf("Expected Code 'ok', got '%s'", getStatusResult.Code)
 	}
 
-	if !getSessionResult.Success {
+	if !getStatusResult.Success {
 		t.Error("Expected Success to be true")
 	}
 
 	// Validate Data field
-	if getSessionResult.Data == nil {
+	if getStatusResult.Data == nil {
 		t.Fatal("Data field should not be nil")
 	}
 
-	if getSessionResult.Data.SessionID != sessionID {
-		t.Errorf("Expected SessionID %s, got %s", sessionID, getSessionResult.Data.SessionID)
-	}
-
-	// Note: Data.Success field is not always populated by the API
-	// The presence of AppInstanceID and ResourceID indicates a successful query
-
-	if getSessionResult.Data.AppInstanceID == "" {
+	if getStatusResult.Data.AppInstanceID == "" {
 		t.Error("AppInstanceID should not be empty")
 	}
-	t.Logf("AppInstanceID: %s", getSessionResult.Data.AppInstanceID)
+	t.Logf("AppInstanceID: %s", getStatusResult.Data.AppInstanceID)
 
-	if getSessionResult.Data.ResourceID == "" {
-		t.Error("ResourceID should not be empty")
+	if getStatusResult.Data.Status == "" {
+		t.Error("Status should not be empty")
 	}
-	t.Logf("ResourceID: %s", getSessionResult.Data.ResourceID)
+	t.Logf("Status: %s", getStatusResult.Data.Status)
 
 	// TODO: Don't support file transfer context yet
 	// Validate contexts field

@@ -45,7 +45,7 @@ class TestSessionPause(unittest.TestCase):
             return_value=mock_response
         )
 
-        # Mock get_session to return PAUSED immediately
+        # Mock _get_session to return PAUSED immediately
         get_session_paused = GetSessionResult(
             request_id="test-request-id",
             success=True,
@@ -54,7 +54,7 @@ class TestSessionPause(unittest.TestCase):
                 status="PAUSED",
             ),
         )
-        self.agent_bay.get_session = MagicMock(return_value=get_session_paused)
+        self.agent_bay._get_session = MagicMock(return_value=get_session_paused)
 
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
@@ -86,7 +86,7 @@ class TestSessionPause(unittest.TestCase):
             return_value=mock_response
         )
 
-        # Mock get_session to return PAUSING first, then PAUSED
+        # Mock _get_session to return PAUSING first, then PAUSED
         get_session_pausing = GetSessionResult(
             request_id="test-request-id",
             success=True,
@@ -104,7 +104,7 @@ class TestSessionPause(unittest.TestCase):
                 status="PAUSED",
             ),
         )
-        self.agent_bay.get_session = MagicMock(
+        self.agent_bay._get_session = MagicMock(
             side_effect=[get_session_pausing, get_session_paused]
         )
 
@@ -138,7 +138,7 @@ class TestSessionPause(unittest.TestCase):
             return_value=mock_response
         )
 
-        # Mock get_session to always return PAUSING
+        # Mock _get_session to always return PAUSING
         get_session_pausing = GetSessionResult(
             request_id="test-request-id",
             success=True,
@@ -147,7 +147,7 @@ class TestSessionPause(unittest.TestCase):
                 status="PAUSING",
             ),
         )
-        self.agent_bay.get_session = MagicMock(return_value=get_session_pausing)
+        self.agent_bay._get_session = MagicMock(return_value=get_session_pausing)
 
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
@@ -162,7 +162,7 @@ class TestSessionPause(unittest.TestCase):
             self.assertEqual(result.request_id, "test-request-id")
 
     def test_pause_get_session_failure(self):
-        """Test session pause when get_session fails."""
+        """Test session pause when _get_session fails."""
         # Mock the PauseSessionAsync response
         mock_response = PauseSessionAsyncResponse()
         mock_response.body = PauseSessionAsyncResponseBody(
@@ -176,13 +176,13 @@ class TestSessionPause(unittest.TestCase):
             return_value=mock_response
         )
 
-        # Mock get_session to return failure
+        # Mock _get_session to return failure
         get_session_failure = GetSessionResult(
             request_id="test-request-id",
             success=False,
             error_message="Failed to get session status",
         )
-        self.agent_bay.get_session = MagicMock(return_value=get_session_failure)
+        self.agent_bay._get_session = MagicMock(return_value=get_session_failure)
 
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
@@ -190,7 +190,7 @@ class TestSessionPause(unittest.TestCase):
             result = self.session.pause(timeout=2, poll_interval=1)
 
             # Verify the result
-            # If get_session fails (success=False), the loop continues (exception handling covers general exceptions, but logic checks result.success)
+            # If _get_session fails (success=False), the loop continues (exception handling covers general exceptions, but logic checks result.success)
             # My implementation does: if session_result.success and session_result.data: check status.
             # If result.success is False, it skips and continues loop.
             # Eventually it times out.
@@ -300,7 +300,7 @@ class TestSessionPause(unittest.TestCase):
             return_value=mock_response
         )
 
-        # Mock get_session to return unexpected state, then PAUSED
+        # Mock _get_session to return unexpected state, then PAUSED
         get_session_running = GetSessionResult(
             request_id="test-request-id",
             success=True,
@@ -318,7 +318,7 @@ class TestSessionPause(unittest.TestCase):
                 status="PAUSED",
             ),
         )
-        self.agent_bay.get_session = MagicMock(
+        self.agent_bay._get_session = MagicMock(
             side_effect=[get_session_running, get_session_paused]
         )
 

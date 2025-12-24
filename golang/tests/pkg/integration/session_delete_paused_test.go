@@ -57,7 +57,7 @@ func TestDeletePausedSession(t *testing.T) {
 
 	// Verify session is initially in RUNNING state
 	fmt.Println("Step 1: Verifying session is initially RUNNING...")
-	getResult, err := client.GetSession(sessionId)
+	getResult, err := client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -92,7 +92,7 @@ func TestDeletePausedSession(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Check session status after pause
-	getResult, err = client.GetSession(sessionId)
+	getResult, err = client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}

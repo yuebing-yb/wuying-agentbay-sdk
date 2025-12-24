@@ -868,7 +868,14 @@ export class AgentBay {
    * @param sessionId - The ID of the session to retrieve.
    * @returns GetSessionResult containing session information
    */
-  async getSession(sessionId: string): Promise<$GetSessionResult> {
+  /**
+   * Get session information by session ID (internal).
+   *
+   * Users should prefer {@link get} which returns a {@link Session}.
+   *
+   * @internal
+   */
+  async _getSession(sessionId: string): Promise<$GetSessionResult> {
     try {
       logAPICall("GetSession", { sessionId });
 
@@ -1112,7 +1119,7 @@ export class AgentBay {
     }
 
     // Call GetSession API
-    const getResult = await this.getSession(sessionId);
+    const getResult = await this._getSession(sessionId);
 
     // Check if the API call was successful
     if (!getResult.success) {

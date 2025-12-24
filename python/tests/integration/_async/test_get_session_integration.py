@@ -34,7 +34,7 @@ async def test_get_session_api():
     try:
         # Test GetSession API
         print("Testing GetSession API...")
-        get_session_result = await agent_bay.get_session(session_id)
+        get_session_result = await agent_bay._get_session(session_id)
 
         # Validate response
         assert get_session_result.request_id, "RequestID should not be empty"

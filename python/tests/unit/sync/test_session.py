@@ -15,7 +15,7 @@ class DummyAgentBay:
     def get_client(self):
         return self.client
 
-    def get_session(self, session_id):
+    def _get_session(self, session_id):
         return MagicMock()
 
 
@@ -116,17 +116,15 @@ class TestAsyncSession(unittest.TestCase):
 
     @patch("time.sleep")
     @patch("agentbay._sync.session._log_api_response_with_details")
-    @patch("agentbay._sync.session.extract_request_id")
     @patch("agentbay._sync.session.DeleteSessionAsyncRequest")
     @pytest.mark.sync
 
     def test_delete_success(
-        self, MockDeleteSessionAsyncRequest, mock_extract_request_id, mock_log_api_response, mock_sleep
+        self, MockDeleteSessionAsyncRequest, mock_log_api_response, mock_sleep
     ):
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockDeleteSessionAsyncRequest.return_value = mock_request
-        mock_extract_request_id.return_value = "request-123"
         self.agent_bay.client.delete_session_async = MagicMock(
             return_value=mock_response
         )
@@ -136,7 +134,7 @@ class TestAsyncSession(unittest.TestCase):
             "body": {"Success": True, "RequestId": "request-123"}
         }
 
-        # Mock get_session to return NotFound (session deleted)
+        # Mock _get_session to return NotFound (session deleted)
         get_session_result = GetSessionResult(
             request_id="get-session-request-id",
             success=False,
@@ -145,10 +143,11 @@ class TestAsyncSession(unittest.TestCase):
             http_status_code=400,
         )
         # Ensure session.agent_bay is the same as self.agent_bay
-        self.session.agent_bay.get_session = MagicMock(return_value=get_session_result)
+        self.session.agent_bay._get_session = MagicMock(return_value=get_session_result)
 
         result = self.session.delete()
         self.assertIsInstance(result, DeleteResult)
+        self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.success)
 
         MockDeleteSessionAsyncRequest.assert_called_once_with(
@@ -160,18 +159,16 @@ class TestAsyncSession(unittest.TestCase):
 
     @patch("time.sleep")
     @patch("agentbay._sync.session._log_api_response_with_details")
-    @patch("agentbay._sync.session.extract_request_id")
     @patch("agentbay._sync.session.DeleteSessionAsyncRequest")
     @pytest.mark.sync
 
     def test_delete_without_params(
-        self, MockDeleteSessionAsyncRequest, mock_extract_request_id, mock_log_api_response, mock_sleep
+        self, MockDeleteSessionAsyncRequest, mock_log_api_response, mock_sleep
     ):
         # Test default behavior when no parameters are provided
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockDeleteSessionAsyncRequest.return_value = mock_request
-        mock_extract_request_id.return_value = "request-123"
         self.agent_bay.client.delete_session_async = MagicMock(
             return_value=mock_response
         )
@@ -181,7 +178,7 @@ class TestAsyncSession(unittest.TestCase):
             "body": {"Success": True, "RequestId": "request-123"}
         }
 
-        # Mock get_session to return NotFound (session deleted)
+        # Mock _get_session to return NotFound (session deleted)
         get_session_result = GetSessionResult(
             request_id="get-session-request-id",
             success=False,
@@ -189,9 +186,8 @@ class TestAsyncSession(unittest.TestCase):
             error_message="Session not found",
             http_status_code=400,
         )
-        get_session_result.data = None  # Explicitly set data to None for NotFound case
         # Ensure session.agent_bay is the same as self.agent_bay
-        self.session.agent_bay.get_session = MagicMock(return_value=get_session_result)
+        self.session.agent_bay._get_session = MagicMock(return_value=get_session_result)
 
         # Set up context mock object
         self.session.context = MagicMock()
@@ -199,6 +195,7 @@ class TestAsyncSession(unittest.TestCase):
         # Call delete method without parameters
         result = self.session.delete()
         self.assertIsInstance(result, DeleteResult)
+        self.assertTrue(result.success)
 
         # Verify sync_context was not called
         self.session.context.sync.assert_not_called()
@@ -213,18 +210,16 @@ class TestAsyncSession(unittest.TestCase):
 
     @patch("time.sleep")
     @patch("agentbay._sync.session._log_api_response_with_details")
-    @patch("agentbay._sync.session.extract_request_id")
     @patch("agentbay._sync.session.DeleteSessionAsyncRequest")
     @pytest.mark.sync
 
     def test_delete_with_sync_context(
-        self, MockDeleteSessionAsyncRequest, mock_extract_request_id, mock_log_api_response, mock_sleep
+        self, MockDeleteSessionAsyncRequest, mock_log_api_response, mock_sleep
     ):
         # Test behavior when sync_context=True
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockDeleteSessionAsyncRequest.return_value = mock_request
-        mock_extract_request_id.return_value = "request-123"
         self.agent_bay.client.delete_session_async = MagicMock(
             return_value=mock_response
         )
@@ -234,7 +229,7 @@ class TestAsyncSession(unittest.TestCase):
             "body": {"Success": True, "RequestId": "request-123"}
         }
 
-        # Mock get_session to return NotFound (session deleted)
+        # Mock _get_session to return NotFound (session deleted)
         get_session_result = GetSessionResult(
             request_id="get-session-request-id",
             success=False,
@@ -242,9 +237,8 @@ class TestAsyncSession(unittest.TestCase):
             error_message="Session not found",
             http_status_code=400,
         )
-        get_session_result.data = None  # Explicitly set data to None for NotFound case
         # Ensure session.agent_bay is the same as self.agent_bay
-        self.session.agent_bay.get_session = MagicMock(return_value=get_session_result)
+        self.session.agent_bay._get_session = MagicMock(return_value=get_session_result)
 
         # Set up context mock object
         self.session.context = MagicMock()
@@ -256,6 +250,7 @@ class TestAsyncSession(unittest.TestCase):
 
         # Call delete method with sync_context=True
         result = self.session.delete(sync_context=True)
+        self.assertIsInstance(result, DeleteResult)
         self.assertTrue(result.success)
 
         # Verify sync was called

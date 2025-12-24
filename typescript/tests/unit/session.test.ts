@@ -137,8 +137,8 @@ describe("TestSession", () => {
 
             mockClient.deleteSessionAsync.resolves(mockResponse as any);
 
-            // Mock getSession to return NotFound error (indicating session is deleted)
-            mockAgentBay.getSession.resolves({
+            // Mock _getSession to return NotFound error (indicating session is deleted)
+            mockAgentBay._getSession.resolves({
                 requestId: "get-session-request-id",
                 success: false,
                 code: "InvalidMcpSession.NotFound",
@@ -179,8 +179,8 @@ describe("TestSession", () => {
 
             mockClient.deleteSessionAsync.resolves(mockResponse as any);
 
-            // Mock getSession to return NotFound error (indicating session is deleted)
-            mockAgentBay.getSession.resolves({
+            // Mock _getSession to return NotFound error (indicating session is deleted)
+            mockAgentBay._getSession.resolves({
                 requestId: "get-session-request-id",
                 success: false,
                 code: "InvalidMcpSession.NotFound",
@@ -232,8 +232,8 @@ describe("TestSession", () => {
 
             mockClient.deleteSessionAsync.resolves(mockResponse as any);
 
-            // Mock getSession to return NotFound error (indicating session is deleted)
-            mockAgentBay.getSession.resolves({
+            // Mock _getSession to return NotFound error (indicating session is deleted)
+            mockAgentBay._getSession.resolves({
                 requestId: "get-session-request-id",
                 success: false,
                 code: "InvalidMcpSession.NotFound",

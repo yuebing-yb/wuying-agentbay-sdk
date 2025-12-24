@@ -409,7 +409,7 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		}
 
 		// Get session status
-		sessionResult, err := s.AgentBay.GetSession(s.SessionID)
+		sessionResult, err := s.AgentBay.getSession(s.SessionID)
 
 		// Check if session is deleted (NotFound error)
 		if err != nil {
@@ -1510,7 +1510,7 @@ func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPause
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		// Get session status
-		getSessionResult, err := s.AgentBay.GetSession(s.SessionID)
+		getSessionResult, err := s.AgentBay.getSession(s.SessionID)
 		if err != nil || !getSessionResult.Success {
 			errorMessage := "Failed to get session status"
 			if err != nil {
@@ -1668,7 +1668,7 @@ func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResu
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		// Get session status
-		getSessionResult, err := s.AgentBay.GetSession(s.SessionID)
+		getSessionResult, err := s.AgentBay.getSession(s.SessionID)
 		if err != nil || !getSessionResult.Success {
 			errorMessage := "Failed to get session status"
 			if err != nil {

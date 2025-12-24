@@ -16,16 +16,13 @@ from agentbay import AgentBayError
 from agentbay import SessionPauseResult, SessionResumeResult
 from agentbay import Config
 
-
 def get_test_api_key():
     """Get API key for testing."""
     return os.environ.get("AGENTBAY_API_KEY")
 
-
 def get_test_endpoint():
     """Get endpoint for testing."""
     return os.environ.get("AGENTBAY_ENDPOINT")
-
 
 class TestSessionPauseResumeIntegration(unittest.TestCase):
     """Integration tests for Session pause and resume operations."""
@@ -82,21 +79,6 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Clear the list for next test
         self.test_sessions = []
 
-    # @classmethod
-    # def tearDownClass(cls):
-    #     """Clean up any remaining test sessions."""
-    #     print("\nCleaning up test sessions...")
-    #     for session in cls.test_sessions:
-    #         try:
-    #             # Delete session
-    #             result = cls.agent_bay.delete(session)
-    #             if result.success:
-    #                 print(f"  ✓ Deleted session: {session.session_id}")
-    #             else:
-    #                 print(f"  ✗ Failed to delete session: {session.session_id}")
-    #         except Exception as e:
-    #             print(f"  ✗ Error deleting session {session.session_id}: {e}")
-
     def _create_test_session(self):
         """Helper method to create a test session."""
         session_name = f"test-pause-resume-{uuid4().hex[:8]}"
@@ -123,7 +105,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
     def _verify_session_status_and_list(self, session, expected_statuses, operation_name="operation"):
         """
-        Helper method to verify session status using both get_status and get_session,
+        Helper method to verify session status using both get_status and _get_session,
         and verify the session appears in the list with correct status.
         
         Args:
@@ -142,14 +124,14 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertIn(initial_status, expected_statuses, 
                      f"Unexpected status {initial_status}, expected one of {expected_statuses}")
 
-        # Then call get_session for detailed information
-        session_info = self.agent_bay.get_session(session.session_id)
+        # Then call _get_session for detailed information
+        session_info = self.agent_bay._get_session(session.session_id)
         self.assertTrue(session_info.success, f"Failed to get session info: {session_info.error_message}")
 
         current_status = session_info.data.status if session_info.data else "UNKNOWN"
         self.assertEqual(current_status, initial_status, 
                         f"Session status mismatch: expected {initial_status}, got {current_status}")
-        print(f"  ✓ Session status from get_session: {current_status}")
+        print(f"  ✓ Session status from _get_session: {current_status}")
         
         # Test list with current status
         list_result = self.agent_bay.list(status=current_status)
@@ -212,6 +194,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Verify session status after pause
         current_status = self._verify_session_status_and_list(session, ["PAUSED", "PAUSING"], "pause")
+
     @pytest.mark.sync
     def test_resume_async_session_success(self):
         """Test successful async resume operation on a session."""
@@ -241,11 +224,12 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         initial_status = status_result.data.status if status_result.data else "UNKNOWN"
         print(f"  ✓ Session status from get_status: {initial_status}")
         self.assertIn(initial_status, ["PAUSED","PAUSING"], 
-                     f"Unexpected status {initial_status}, expected one of RUNNING")
+                     f"Unexpected status {initial_status}, expected one of PAUSED or PAUSING")
         print(f"  ✓ Session status checked")
 
-        import asyncio
-        resume_result = self.agent_bay.resume(session)
+        # Resume the session (asynchronous)
+        print(f"\nStep 3: Resuming session asynchronously...")
+        resume_result = self.agent_bay.resume_async(session)
 
         # Verify async resume result
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -261,6 +245,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Verify session status after async resume
         current_status = self._verify_session_status_and_list(session, ["RUNNING", "RESUMING"], "async resume")
+
     @pytest.mark.sync
     def test_pause_and_delete_session_success(self):
         """Test successful pause and delete operations on a session."""
@@ -289,7 +274,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Session should be PAUSED or PAUSING after pause operation
         print(f"  ✓ Session status after pause checked")
-        # Delete the session (synchronous)
+        # Delete the session (asynchronous)
         print(f"\nStep 4: Deleting session...")
         delete_result = self.agent_bay.delete(session)
         if delete_result.success:

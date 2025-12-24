@@ -96,14 +96,8 @@ describe("AgentBay List Status Integration Tests", () => {
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(expectedStatuses).toContain(initialStatus);
 
-    // Then call getSession for detailed information
-    const sessionInfo = await agentBay.getSession(session.sessionId);
-    expect(sessionInfo.success).toBe(true);
-    expect(sessionInfo.data).toBeDefined();
-
-    const currentStatus = sessionInfo.data?.status || "UNKNOWN";
-    expect(currentStatus).toBe(initialStatus);
-    log(`  ✓ Session status from getSession: ${currentStatus}`);
+    // GetSession is internal in SDK; use getStatus only.
+    const currentStatus = initialStatus;
     
     // Test list with current status
     const listResult = await agentBay.list({}, 1, 10, currentStatus);

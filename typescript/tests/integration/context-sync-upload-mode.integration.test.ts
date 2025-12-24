@@ -102,13 +102,13 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       log(`Session ID: ${session.sessionId}`);
       log(`Session creation request ID: ${sessionResult.requestId}`);
 
-      // Get session info to verify appInstanceId
-      const sessionInfo = await agentBay.getSession(session.sessionId);
+      // Get session status (GetSession is internal; use getStatus here)
+      const sessionInfo = await agentBay.getStatus(session.sessionId);
       expect(sessionInfo.success).toBe(true);
       expect(sessionInfo.data).toBeDefined();
-      
-      log(`App Instance ID: ${sessionInfo.data?.appInstanceId}`);
-      log(`Get session request ID: ${sessionInfo.requestId}`);
+
+      log(`Status: ${sessionInfo.data?.status}`);
+      log(`Get status request ID: ${sessionInfo.requestId}`);
 
       log("✅ All basic functionality tests passed!");
     });
@@ -161,12 +161,12 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       const session = sessionResult.session!;
       testSessions.push(session);
-      // Get session info to verify appInstanceId
-      const sessionInfo = await agentBay.getSession(session.sessionId);
+      // Get session status (GetSession is internal; use getStatus here)
+      const sessionInfo = await agentBay.getStatus(session.sessionId);
       expect(sessionInfo.success).toBe(true);
       expect(sessionInfo.data).toBeDefined();
-      
-      log(`App Instance ID: ${sessionInfo.data?.appInstanceId}`);
+
+      log(`Status: ${sessionInfo.data?.status}`);
 
       log(`✅ Session created successfully with ID: ${session.sessionId}`);
       log(`Session creation request ID: ${sessionResult.requestId}`);

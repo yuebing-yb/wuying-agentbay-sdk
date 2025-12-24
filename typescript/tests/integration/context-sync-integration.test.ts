@@ -72,7 +72,7 @@ describe("ContextSyncIntegration", () => {
         const sessionListResult = await agentBay.list();
         const sessionIdFound = sessionListResult.sessionIds.find(id => id === sessionId);
         if (sessionIdFound) {
-          const session = await agentBay.getSession(sessionId);
+          const session = await agentBay._getSession(sessionId);
           if (session.success && session.data) {
             const sessionObj = new Session(agentBay, sessionId);
             await agentBay.delete(sessionObj);
@@ -113,7 +113,7 @@ describe("ContextSyncIntegration", () => {
     }
     
     // Get session and context info
-    const getSessionResult = await agentBay.getSession(sessionId);
+    const getSessionResult = await agentBay._getSession(sessionId);
     if (!getSessionResult.success || !getSessionResult.data) {
       throw new Error(`Failed to get session ${sessionId}`);
     }
@@ -168,7 +168,7 @@ describe("ContextSyncIntegration", () => {
     }
     
     // Get session and context info
-    const getSessionResult = await agentBay.getSession(sessionId);
+    const getSessionResult = await agentBay._getSession(sessionId);
     if (!getSessionResult.success || !getSessionResult.data) {
       throw new Error(`Failed to get session ${sessionId}`);
     }
@@ -239,7 +239,7 @@ describe("ContextSyncIntegration", () => {
     }
     
     // Get session and context info
-    const getSessionResult = await agentBay.getSession(sessionId);
+    const getSessionResult = await agentBay._getSession(sessionId);
     if (!getSessionResult.success || !getSessionResult.data) {
       throw new Error(`Failed to get session ${sessionId}`);
     }

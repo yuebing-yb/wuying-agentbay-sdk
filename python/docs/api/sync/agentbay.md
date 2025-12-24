@@ -77,7 +77,8 @@ session.delete()
 ```python
 def list(labels: Optional[Dict[str, str]] = None,
          page: Optional[int] = None,
-         limit: Optional[int] = None) -> SessionListResult
+         limit: Optional[int] = None,
+         status: Optional[str] = None) -> SessionListResult
 ```
 
 Returns paginated list of session IDs filtered by labels asynchronously.
@@ -90,11 +91,14 @@ Returns paginated list of session IDs filtered by labels asynchronously.
   Defaults to None (returns first page).
 - `limit` _Optional[int], optional_ - Maximum number of items per page.
   Defaults to None (uses default of 10).
+- `status` _Optional[str], optional_ - Status to filter sessions. Must be one of:
+  RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED.
+  Defaults to None (returns sessions with any status).
   
 
 **Returns**:
 
-    SessionListResult: Paginated list of session IDs that match the labels.
+    SessionListResult: Paginated list of session IDs that match the filters.
 
 ### delete
 
@@ -115,30 +119,10 @@ Delete a session by session object asynchronously.
 
     DeleteResult: Result indicating success or failure and request ID.
 
-### get\_session
+### get\_status
 
 ```python
-def get_session(session_id: str) -> GetSessionResult
-```
-
-Get session information by session ID asynchronously.
-
-This method retrieves detailed session metadata from the API. Unlike `get()`,
-this returns raw session data without creating a Session object.
-
-**Arguments**:
-
-- `session_id` _str_ - The ID of the session to retrieve.
-  
-
-**Returns**:
-
-    GetSessionResult: Result containing session information.
-
-### get\_session\_detail
-
-```python
-def get_session_detail(session_id: str) -> GetSessionDetailResult
+def get_status(session_id: str) -> GetSessionDetailResult
 ```
 
 Get basic session information by session ID asynchronously.

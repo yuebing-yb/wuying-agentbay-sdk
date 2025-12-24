@@ -69,17 +69,8 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 		}
 		require.True(t, found, fmt.Sprintf("Unexpected status %s, expected one of %v", initialStatus, expectedStatuses))
 
-		// Then call GetSession for detailed information
-		sessionInfo, err := agentBay.GetSession(session.SessionID)
-		require.NoError(t, err)
-		require.True(t, sessionInfo.Success, fmt.Sprintf("Failed to get session info: %s", sessionInfo.ErrorMessage))
-
-		currentStatus := "UNKNOWN"
-		if sessionInfo.Data != nil {
-			currentStatus = sessionInfo.Data.Status
-		}
-		require.Equal(t, initialStatus, currentStatus, fmt.Sprintf("Session status mismatch: expected %s, got %s", initialStatus, currentStatus))
-		fmt.Printf("  ✓ Session status from GetSession: %s\n", currentStatus)
+		// GetSession is internal in SDK; use GetStatus only.
+		currentStatus := initialStatus
 
 		// Test list with current status
 		listResult, err := agentBay.List(currentStatus, nil, nil, nil)

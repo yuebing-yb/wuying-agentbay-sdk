@@ -94,10 +94,10 @@ async function archiveUploadModeExample(): Promise<void> {
     console.log(`   Session ID: ${session!.sessionId}`);
     console.log(`   Request ID: ${sessionResult.requestId}`);
 
-    // Get session info to verify setup
-    const sessionInfo = await agentBay.getSession(session!.sessionId);
+    // Get session status (GetSession is internal; use getStatus here)
+    const sessionInfo = await agentBay.getStatus(session!.sessionId);
     if (sessionInfo.success && sessionInfo.data) {
-      console.log(`   App Instance ID: ${sessionInfo.data.appInstanceId}`);
+      console.log(`   Status: ${sessionInfo.data.status}`);
     }
 
     // Step 5: Create and write test files

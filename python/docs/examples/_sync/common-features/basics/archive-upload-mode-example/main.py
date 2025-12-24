@@ -111,10 +111,10 @@ def archive_upload_mode_example(agent_bay, unique_id):
         print(f"   Session ID: {session.session_id}")
         print(f"   Request ID: {session_result.request_id}")
 
-        # Get session info to verify setup
-        session_info = agent_bay.get_session(session.session_id)
+        # Get session status (get_session is internal; use get_status here)
+        session_info = agent_bay.get_status(session.session_id)
         if session_info.success and session_info.data:
-            print(f"   App Instance ID: {session_info.data.app_instance_id}")
+            print(f"   Status: {session_info.data.status}")
 
         # Step 5: Create and write test files
         print("\n📝 Step 5: Creating test files in Archive mode context...")

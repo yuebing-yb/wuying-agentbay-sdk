@@ -121,10 +121,10 @@ func archiveUploadModeExample(ab *agentbay.AgentBay, uniqueID string) error {
 	fmt.Printf("   Session ID: %s\n", session.SessionID)
 	fmt.Printf("   Request ID: %s\n", sessionResult.RequestID)
 
-	// Get session info to verify setup
-	sessionInfo, err := ab.GetSession(session.SessionID)
+	// Get session status (GetSession is internal; use GetStatus here)
+	sessionInfo, err := ab.GetStatus(session.SessionID)
 	if err == nil && sessionInfo.Success && sessionInfo.Data != nil {
-		fmt.Printf("   App Instance ID: %s\n", sessionInfo.Data.AppInstanceID)
+		fmt.Printf("   Status: %s\n", sessionInfo.Data.Status)
 	}
 
 	// Step 5: Create and write test files

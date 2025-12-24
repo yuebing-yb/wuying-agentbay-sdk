@@ -2,10 +2,11 @@ package integration
 
 import (
 	"fmt"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 
 // TestSessionPauseResumeIntegration tests successful pause and resume operations on a session
@@ -45,7 +46,7 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 
 	// Verify session is initially in RUNNING state
 	fmt.Println("Step 1: Verifying session is initially RUNNING...")
-	getResult, err := client.GetSession(sessionId)
+	getResult, err := client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -80,7 +81,7 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Check session status after pause
-	getResult, err = client.GetSession(sessionId)
+	getResult, err = client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -116,7 +117,7 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 	t.Logf("  Request ID: %s", resumeResult.RequestID)
 
 	// Verify session is RUNNING after resume
-	getResult, err = client.GetSession(sessionId)
+	getResult, err = client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -183,7 +184,7 @@ func TestSessionResumeIntegration(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is PAUSED or PAUSING
-	getResult, err := client.GetSession(sessionId)
+	getResult, err := client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -218,7 +219,7 @@ func TestSessionResumeIntegration(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Check session status after async resume
-	getResult, err = client.GetSession(sessionId)
+	getResult, err = client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -354,7 +355,7 @@ func TestSessionPauseAlreadyPaused(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is PAUSED or PAUSING
-	getResult, err := client.GetSession(sessionId)
+	getResult, err := client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -422,7 +423,7 @@ func TestSessionResumeAlreadyRunning(t *testing.T) {
 	}()
 
 	// Verify session is RUNNING
-	getResult, err := client.GetSession(sessionId)
+	getResult, err := client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -512,7 +513,7 @@ func TestSessionPauseResumeWithCustomParameters(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is PAUSED or PAUSING
-	getResult, err := client.GetSession(sessionId)
+	getResult, err := client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}
@@ -542,7 +543,7 @@ func TestSessionPauseResumeWithCustomParameters(t *testing.T) {
 	t.Logf("✓ Session resume with custom parameters successful")
 
 	// Verify session is RUNNING after resume
-	getResult, err = client.GetSession(sessionId)
+	getResult, err = client.GetStatus(sessionId)
 	if err != nil {
 		t.Fatalf("Failed to get session: %v", err)
 	}

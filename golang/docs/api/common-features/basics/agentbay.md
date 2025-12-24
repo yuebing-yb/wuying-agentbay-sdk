@@ -130,21 +130,13 @@ func (a *AgentBay) GetRegionID() string
 
 GetRegionID returns the region ID from config
 
-### GetSession
+### GetStatus
 
 ```go
-func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error)
+func (a *AgentBay) GetStatus(sessionID string) (*GetSessionDetailResult, error)
 ```
 
-GetSession retrieves session information by session ID
-
-### GetSessionDetail
-
-```go
-func (a *AgentBay) GetSessionDetail(sessionID string) (*GetSessionDetailResult, error)
-```
-
-GetSessionDetail retrieves basic session information by session ID
+GetStatus retrieves basic session information by session ID.
 
 ### List
 

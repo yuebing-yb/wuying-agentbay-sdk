@@ -18,13 +18,13 @@ type SessionStatus string
 
 // Session status constants
 const (
-	SessionStatusRunning   SessionStatus = "RUNNING"   // Session is running
-	SessionStatusPaused    SessionStatus = "PAUSED"    // Session is paused
-	SessionStatusPausing   SessionStatus = "PAUSING"   // Session is being paused
-	SessionStatusResuming  SessionStatus = "RESUMING"  // Session is being resumed
-	SessionStatusDeleted   SessionStatus = "DELETED"   // Session is deleted
-	SessionStatusDeleting  SessionStatus = "DELETING"  // Session is being deleted
-	SessionStatusUnknown   SessionStatus = "UNKNOWN"   // Session status is unknown
+	SessionStatusRunning  SessionStatus = "RUNNING"  // Session is running
+	SessionStatusPaused   SessionStatus = "PAUSED"   // Session is paused
+	SessionStatusPausing  SessionStatus = "PAUSING"  // Session is being paused
+	SessionStatusResuming SessionStatus = "RESUMING" // Session is being resumed
+	SessionStatusDeleted  SessionStatus = "DELETED"  // Session is deleted
+	SessionStatusDeleting SessionStatus = "DELETING" // Session is being deleted
+	SessionStatusUnknown  SessionStatus = "UNKNOWN"  // Session status is unknown
 )
 
 // String returns the string representation of SessionStatus
@@ -615,15 +615,15 @@ func (a *AgentBay) List(status string, labels map[string]string, page *int, limi
 				statusStrings = append(statusStrings, string(s))
 			}
 			return &SessionListResult{
-				ApiResponse: models.ApiResponse{
-					RequestID: "",
-				},
-				SessionIds: []map[string]interface{}{},
-				NextToken:  "",
-				MaxResults: 0,
-				TotalCount: 0,
-			}, fmt.Errorf("invalid session status '%s'. Valid values are: [%s]", 
-				status, strings.Join(statusStrings, ", "))
+					ApiResponse: models.ApiResponse{
+						RequestID: "",
+					},
+					SessionIds: []map[string]interface{}{},
+					NextToken:  "",
+					MaxResults: 0,
+					TotalCount: 0,
+				}, fmt.Errorf("invalid session status '%s'. Valid values are: [%s]",
+					status, strings.Join(statusStrings, ", "))
 		}
 	}
 
@@ -732,7 +732,7 @@ func (a *AgentBay) List(status string, labels map[string]string, page *int, limi
 	if nextToken != "" {
 		listSessionRequest.NextToken = tea.String(nextToken)
 	}
-	
+
 	// Add status filter if provided
 	if status != "" {
 		listSessionRequest.Status = tea.String(status)
@@ -953,8 +953,8 @@ type GetSessionDetailData struct {
 	Status             string
 }
 
-// GetSession retrieves session information by session ID
-func (a *AgentBay) GetSession(sessionID string) (*GetSessionResult, error) {
+// getSession retrieves session information by session ID (internal).
+func (a *AgentBay) getSession(sessionID string) (*GetSessionResult, error) {
 	getSessionRequest := &mcp.GetSessionRequest{
 		Authorization: tea.String("Bearer " + a.APIKey),
 		SessionId:     tea.String(sessionID),
@@ -1262,7 +1262,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	}
 
 	// Call GetSession API
-	getResult, err := a.GetSession(sessionID)
+	getResult, err := a.getSession(sessionID)
 	if err != nil {
 		errorMsg := fmt.Sprintf("failed to get session %s: %v", sessionID, err)
 		logOperationError("Get", errorMsg, true)

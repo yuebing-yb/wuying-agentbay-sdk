@@ -463,7 +463,7 @@ export class Session {
         }
 
         // Get session status
-        const sessionResult = await this.agentBay.getSession(this.sessionId);
+        const sessionResult = await this.agentBay._getSession(this.sessionId);
 
         // Check if session is deleted (NotFound error)
         if (!sessionResult.success) {
@@ -1647,7 +1647,7 @@ export class Session {
 
       while (attempt < maxAttempts) {
         // Get session status
-        const getResult = await this.agentBay.getSession(this.sessionId);
+        const getResult = await this.agentBay._getSession(this.sessionId);
         if (!getResult.success) {
           logError(`Failed to get session status: ${getResult.errorMessage}`);
           return {
@@ -1822,7 +1822,7 @@ export class Session {
 
       while (attempt < maxAttempts) {
         // Get session status
-        const getResult = await this.agentBay.getSession(this.sessionId);
+        const getResult = await this.agentBay._getSession(this.sessionId);
         if (!getResult.success) {
           logError(`Failed to get session status: ${getResult.errorMessage}`);
           return {

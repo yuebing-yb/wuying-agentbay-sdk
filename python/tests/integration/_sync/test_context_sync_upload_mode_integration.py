@@ -113,7 +113,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         print(f"Session creation request ID: {session_result.request_id}")
 
         # Get session info to verify appInstanceId
-        session_info = self.agent_bay.get_session(session.session_id)
+        session_info = self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             session_info.success,
             f"Failed to get session info: {session_info.error_message}",
@@ -197,7 +197,7 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         self.test_sessions.append(session)
 
         # Get session info to verify appInstanceId
-        session_info = self.agent_bay.get_session(session.session_id)
+        session_info = self.agent_bay._get_session(session.session_id)
         self.assertTrue(
             session_info.success,
             f"Failed to get session info: {session_info.error_message}",

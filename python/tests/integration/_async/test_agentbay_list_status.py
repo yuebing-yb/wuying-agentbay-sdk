@@ -103,7 +103,7 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
 
     async def _verify_session_status_and_list(self, session, expected_statuses, operation_name="operation"):
         """
-        Helper method to verify session status using both get_status and get_session,
+        Helper method to verify session status using both get_status and _get_session,
         and verify the session appears in the list with correct status.
         
         Args:
@@ -122,14 +122,14 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
         self.assertIn(initial_status, expected_statuses, 
                      f"Unexpected status {initial_status}, expected one of {expected_statuses}")
 
-        # Then call get_session for detailed information
-        session_info = await self.agent_bay.get_session(session.session_id)
+        # Then call _get_session for detailed information
+        session_info = await self.agent_bay._get_session(session.session_id)
         self.assertTrue(session_info.success, f"Failed to get session info: {session_info.error_message}")
 
         current_status = session_info.data.status if session_info.data else "UNKNOWN"
         self.assertEqual(current_status, initial_status, 
                         f"Session status mismatch: expected {initial_status}, got {current_status}")
-        print(f"  ✓ Session status from get_session: {current_status}")
+        print(f"  ✓ Session status from _get_session: {current_status}")
         
         # Test list with current status
         list_result = await self.agent_bay.list(status=current_status)

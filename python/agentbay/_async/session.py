@@ -278,7 +278,7 @@ class AsyncSession:
                     )
 
                 # Get session status
-                session_result = await self.agent_bay.get_session(self.session_id)
+                session_result = await self.agent_bay._get_session(self.session_id)
 
                 # Check if session is deleted (NotFound error)
                 if not session_result.success:
@@ -1094,9 +1094,8 @@ class AsyncSession:
                 attempt += 1
 
                 try:
-                    # Check session status using get_session
-                    # This will work if agent_bay has get_session (which it does)
-                    session_result = await self.agent_bay.get_session(self.session_id)
+                    # Check session status using _get_session (internal)
+                    session_result = await self.agent_bay._get_session(self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         if status == "PAUSED":
@@ -1254,8 +1253,8 @@ class AsyncSession:
                 attempt += 1
 
                 try:
-                    # Check session status using get_session
-                    session_result = await self.agent_bay.get_session(self.session_id)
+                    # Check session status using _get_session (internal)
+                    session_result = await self.agent_bay._get_session(self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         if status == "RUNNING":

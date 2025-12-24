@@ -35,7 +35,7 @@ describe("AgentBay - Enhanced Logging", () => {
     clearRequestId();
   });
 
-  describe("getSession - Logging", () => {
+  describe("_getSession - Logging", () => {
     it("should call logAPICall with correct API name and sessionId", async () => {
       mockClient = sinon.createStubInstance(Client);
       const mockResponse = {

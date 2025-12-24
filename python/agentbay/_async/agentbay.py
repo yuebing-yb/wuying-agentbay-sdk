@@ -915,7 +915,7 @@ class AsyncAgentBay:
                 error_message=f"Failed to delete session {session.session_id}: {e}",
             )
 
-    async def get_session(self, session_id: str) -> GetSessionResult:
+    async def _get_session(self, session_id: str) -> GetSessionResult:
         """
         Get session information by session ID asynchronously.
 
@@ -1179,7 +1179,7 @@ class AsyncAgentBay:
             )
 
         # Call GetSession API
-        get_result = await self.get_session(session_id)
+        get_result = await self._get_session(session_id)
 
         # Check if the API call was successful
         if not get_result.success:

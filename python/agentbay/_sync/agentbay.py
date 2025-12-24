@@ -798,7 +798,7 @@ class AgentBay:
 
             # Make the API call asynchronously
             response = self.client.list_session(request)
-            _logger.info(f"  ✓ ListSession API call successful{response}")
+
             # Extract request ID
             request_id = extract_request_id(response)
 
@@ -837,7 +837,7 @@ class AgentBay:
 
             # Extract session data
             response_data = body.get("Data")
-
+            _logger.info(f"  ✓ ListSession API call async successful{response_data}")
             # Handle both list and dict responses
             if isinstance(response_data, list):
                 # Data is a list of session objects
@@ -852,6 +852,7 @@ class AgentBay:
                                 "sessionStatus": session_status if session_status else "UNKNOWN"
                             }
                             session_ids.append(session_info)
+
             # Log API response with key details
             _log_api_response_with_details(
                 api_name="ListSession",
@@ -916,7 +917,7 @@ class AgentBay:
                 error_message=f"Failed to delete session {session.session_id}: {e}",
             )
 
-    def get_session(self, session_id: str) -> GetSessionResult:
+    def _get_session(self, session_id: str) -> GetSessionResult:
         """
         Get session information by session ID asynchronously.
 
@@ -968,7 +969,7 @@ class AgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
-                    _logger.info(f"  ✓ GetSession API call successful{data_dict}")
+                    _logger.info(f"  ✓ GetSession API call async successful{data_dict}")
                     data = GetSessionData(
                         app_instance_id=data_dict.get("AppInstanceId", ""),
                         resource_id=data_dict.get("ResourceId", ""),
@@ -1056,7 +1057,7 @@ class AgentBay:
             request = GetSessionDetailRequest(
                 authorization=f"Bearer {self.api_key}", session_id=session_id
             )
-            response = self.client.get_session_detail(request)
+            response = self.client.get_session_detail_async(request)
 
             request_id = extract_request_id(response)
 
@@ -1090,7 +1091,7 @@ class AgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
-                    _logger.info(f"  ✓ GetSessionDetail API call successful{data_dict}")
+                    _logger.info(f"  ✓ GetSessionDetail API call async successful{data_dict}")
                     data = GetSessionDetailData(
                         aliuid=data_dict.get("Aliuid", ""),
                         apikey_id=data_dict.get("ApikeyId", ""),
@@ -1180,7 +1181,7 @@ class AgentBay:
             )
 
         # Call GetSession API
-        get_result = self.get_session(session_id)
+        get_result = self._get_session(session_id)
 
         # Check if the API call was successful
         if not get_result.success:
@@ -1377,7 +1378,6 @@ class AgentBay:
                 )
 
             body = response_map.get("body", {})
-            _logger.info(f"ResumeSessionAsync response: {body}")
             success = body.get("Success", False)
 
             if not success:
@@ -1390,7 +1390,7 @@ class AgentBay:
                     code=code,
                     message=message,
                 )
-            _logger.info("successful")
+
             return SessionResumeResult(request_id=request_id, success=True)
 
         except Exception as e:
