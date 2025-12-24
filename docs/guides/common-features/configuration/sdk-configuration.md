@@ -13,6 +13,7 @@ This guide explains how to configure the AgentBay SDK for different environments
 | API Key | `AGENTBAY_API_KEY` | Authentication key for API access | Required |
 | Endpoint | `AGENTBAY_ENDPOINT` | API Gateway endpoint URL (determines gateway location for SDK communication) | `wuyingai.cn-shanghai.aliyuncs.com` |
 | Region ID | `AGENTBAY_REGION_ID` | Cloud resource region for sessions and contexts (e.g., `cn-hangzhou`, `ap-southeast-1`) | `None` |
+| Log Format | `AGENTBAY_LOG_FORMAT` | Log output format (`pretty`, `sls`) | `pretty` |
 
 ## Supported API Gateway Regions
 
@@ -22,6 +23,31 @@ The following API gateway locations are available. Choose the gateway closest to
 |-----------------|----------|
 | Shanghai | `wuyingai.cn-shanghai.aliyuncs.com` |
 | Singapore | `wuyingai.ap-southeast-1.aliyuncs.com` |
+
+## Log Configuration
+
+### Log Formats
+
+The SDK supports two log output formats:
+
+1.  **Pretty (Default)**: Designed for human readability in terminal. Uses multi-line output, emojis, and colors.
+    ```text
+    ✅ API Response: GetContext, RequestId=E11EF0D5...
+       └─ context_id=SdkCtx-04ml...
+       └─ name=context-name
+    ```
+
+2.  **SLS (Compact)**: Designed for Simple Log Service (SLS) or other log aggregators. Uses single-line output, no emojis, no colors, and key-value pairs.
+    ```text
+    API Response: GetContext, RequestId=E11EF0D5..., context_id=SdkCtx-04ml..., name=context-name
+    ```
+
+To enable SLS format, set the environment variable:
+```bash
+export AGENTBAY_LOG_FORMAT=sls
+```
+
+You can also set this in your `.env` file (recommended for local development).
 
 ## Default Configuration
 
@@ -76,6 +102,7 @@ The SDK automatically searches for `.env` files using the following strategy:
 AGENTBAY_API_KEY=your-api-key-here
 AGENTBAY_ENDPOINT=wuyingai.ap-southeast-1.aliyuncs.com
 AGENTBAY_REGION_ID=ap-southeast-1
+AGENTBAY_LOG_FORMAT=sls
 ```
 
 **File locations examples:**

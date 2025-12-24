@@ -12,6 +12,11 @@ import * as path from 'path';
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 
 /**
+ * Log format type
+ */
+export type LogFormat = 'pretty' | 'sls';
+
+/**
  * Logger configuration options
  *
  * @example
@@ -50,6 +55,7 @@ export interface LoggerConfig {
   logFile?: string;
   maxFileSize?: string;
   enableConsole?: boolean;
+  format?: LogFormat | string;
 }
 
 /**
@@ -78,6 +84,19 @@ let currentLogLevel: LogLevel = (
 );
 
 /**
+ * Current log format configuration
+ */
+let currentLogFormat: LogFormat = (
+    (process.env.AGENTBAY_LOG_FORMAT as LogFormat) || 'pretty'
+);
+if (['sls', 'compact'].includes(String(currentLogFormat).toLowerCase())) {
+    currentLogFormat = 'sls';
+} else {
+    currentLogFormat = 'pretty';
+}
+
+
+/**
  * File logging configuration
  */
 let fileLoggingEnabled = false;
@@ -90,6 +109,11 @@ let consoleLoggingEnabled = true;
  * Priority: DISABLE_COLORS > FORCE_COLOR > TTY > IDE > default
  */
 function shouldUseColors(): boolean {
+  // Disable colors if SLS format is enabled
+  if (currentLogFormat === 'sls') {
+    return false;
+  }
+
   // Priority 1: Explicit disable via DISABLE_COLORS
   if (process.env.DISABLE_COLORS === 'true') {
     return false;
@@ -131,7 +155,7 @@ const ANSI_GREEN = '\x1b[32m';
 /**
  * Determine if colors should be used (evaluated once at startup)
  */
-const useColors = shouldUseColors();
+let useColors = shouldUseColors();
 
 /**
  * Sensitive field names for data masking
@@ -147,6 +171,10 @@ const SENSITIVE_FIELDS = [
  * Get emoji for log level
  */
 function getLogLevelEmoji(level: LogLevel): string {
+  if (currentLogFormat === 'sls') {
+      // No emojis in SLS format
+      return level;
+  }
   switch (level) {
     case 'DEBUG':
       return '🐛 DEBUG';
@@ -172,6 +200,14 @@ function shouldLog(level: LogLevel): boolean {
  * Format log message with level and RequestID
  */
 function formatLogMessage(level: LogLevel, message: string, forFile = false): string {
+  if (currentLogFormat === 'sls') {
+      let formattedMessage = `${level}: ${message}`;
+      if (currentRequestId) {
+          formattedMessage += ` [RequestId=${currentRequestId}]`;
+      }
+      return formattedMessage;
+  }
+
   let formattedMessage = `${getLogLevelEmoji(level)}: ${message}`;
   if (currentRequestId) {
     formattedMessage += ` [RequestId=${currentRequestId}]`;
@@ -421,6 +457,26 @@ export function setupLogger(config: LoggerConfig): void {
   if (config.enableConsole !== undefined) {
     consoleLoggingEnabled = config.enableConsole;
   }
+  
+  if (config.format) {
+      if (['sls', 'compact'].includes(String(config.format).toLowerCase())) {
+          currentLogFormat = 'sls';
+      } else {
+          currentLogFormat = 'pretty';
+      }
+  } else {
+      // Respect env var if not set in config
+      const envFormat = process.env.AGENTBAY_LOG_FORMAT;
+      if (envFormat) {
+          if (['sls', 'compact'].includes(String(envFormat).toLowerCase())) {
+              currentLogFormat = 'sls';
+          } else {
+              currentLogFormat = 'pretty';
+          }
+      }
+  }
+  // Re-evaluate colors based on format
+  useColors = shouldUseColors();
 }
 
 /**
@@ -586,6 +642,26 @@ export function logError(message: string, error?: any): void {
  */
 export function logAPICall(apiName: string, requestData?: any): void {
   if (!shouldLog('INFO')) return;
+  
+  if (currentLogFormat === 'sls') {
+      let message = `API Call: ${apiName}`;
+      if (requestData) {
+          const maskedData = maskSensitiveData(requestData);
+          if (typeof maskedData === 'string') {
+              message += `, ${maskedData}`;
+          } else {
+              // Convert object to comma separated string if possible, or simple JSON
+              // For SLS compact mode, usually key=value or inline json
+              message += `, ${JSON.stringify(maskedData)}`;
+          }
+      }
+      if (consoleLoggingEnabled) {
+          process.stdout.write(message + '\n');
+      }
+      writeToFile(message);
+      return;
+  }
+
   const message = `🔗 API Call: ${apiName}`;
 
   // Temporarily clear RequestId since it's not available until API response
@@ -622,6 +698,41 @@ export function logAPIResponseWithDetails(
   keyFields?: Record<string, any>,
   fullResponse?: string
 ): void {
+  
+  if (currentLogFormat === 'sls') {
+    if (!shouldLog(success ? 'INFO' : 'ERROR')) return;
+    
+    const status = success ? "API Response" : "API Response Failed";
+    let msg = `${status}: ${apiName}`;
+    
+    if (requestId) {
+        msg += `, RequestId=${requestId}`;
+    }
+    
+    if (keyFields) {
+        for (const [key, value] of Object.entries(keyFields)) {
+            const maskedValue = maskSensitiveData({ [key]: value });
+            msg += `, ${key}=${maskedValue[key]}`;
+        }
+    }
+    
+    if (success) {
+        if (consoleLoggingEnabled) {
+            process.stdout.write(msg + '\n');
+        }
+        writeToFile(msg);
+    } else {
+        if (consoleLoggingEnabled) {
+            process.stderr.write(msg + '\n');
+        }
+        writeToFile(msg);
+    }
+    
+    if (fullResponse && shouldLog('DEBUG')) {
+        logDebug(`Full Response: ${fullResponse}`);
+    }
+    return;
+  }
 
   if (success) {
     if (shouldLog('INFO')) {
@@ -708,6 +819,17 @@ export function logCodeExecutionOutput(requestId: string, rawOutput: string): vo
     }
 
     const actualOutput = texts.join('');
+    
+    if (currentLogFormat === 'sls') {
+        const header = `Code Execution Output (RequestID: ${requestId}):`;
+        if (consoleLoggingEnabled) {
+            process.stdout.write(header + '\n');
+            process.stdout.write(actualOutput + '\n');
+        }
+        writeToFile(header);
+        writeToFile(actualOutput);
+        return;
+    }
 
     // Format the output with a clear separator
     const header = `📋 Code Execution Output (RequestID: ${requestId}):`;
@@ -748,6 +870,14 @@ export function logCodeExecutionOutput(requestId: string, rawOutput: string): vo
  */
 export function logOperationStart(operation: string, details?: string): void {
   if (!shouldLog('INFO')) return;
+  
+  if (currentLogFormat === 'sls') {
+      let msg = `Starting: ${operation}`;
+      if (details) msg += `, Details: ${details}`;
+      logInfo(msg); // logInfo uses formatLogMessage which handles sls
+      return;
+  }
+  
   const message = `🚀 Starting: ${operation}`;
   logInfo(message);
 
@@ -763,6 +893,14 @@ export function logOperationStart(operation: string, details?: string): void {
  */
 export function logOperationSuccess(operation: string, result?: string): void{
   if (!shouldLog('INFO')) return;
+  
+  if (currentLogFormat === 'sls') {
+      let msg = `Completed: ${operation}`;
+      if (result) msg += `, Result: ${result}`;
+      logInfo(msg);
+      return;
+  }
+  
   const message = `✅ Completed: ${operation}`;
   logInfo(message);
 
@@ -783,6 +921,13 @@ export function logOperationError(
   includeStackTrace = false
 ): void {
   if (!shouldLog('ERROR')) return;
+  
+  if (currentLogFormat === 'sls') {
+      let errorMsg = error instanceof Error ? error.message : String(error);
+      logError(`Failed: ${operation}, Error: ${errorMsg}`, includeStackTrace ? error : undefined);
+      return;
+  }
+  
   const message = `❌ Failed: ${operation}`;
 
   if (typeof error === 'string') {
@@ -805,6 +950,12 @@ export function logOperationError(
  */
 export function logInfoWithColor(message: string, color: string = ANSI_RED): void {
   if (!shouldLog('INFO')) return;
+
+  if (currentLogFormat === 'sls') {
+      // No colors in SLS
+      logInfo(message);
+      return;
+  }
 
   const emoji = 'ℹ️  INFO';
   const fullMessage = `${emoji}: ${message}`;

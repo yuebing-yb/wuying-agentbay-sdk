@@ -434,22 +434,37 @@ def _mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
         return data
 
 
+def _is_sls_format() -> bool:
+    """Check if logging should be in SLS/compact format."""
+    return os.getenv("AGENTBAY_LOG_FORMAT", "pretty").lower() in ("sls", "compact")
+
+
 # Compatibility functions for common logging patterns
 def _log_api_call(api_name: str, request_data: str = "") -> None:
     """Log API call with consistent formatting."""
-    log.opt(depth=1).info(f"🔗 API Call: {api_name}")
-    if request_data:
-        log.opt(depth=1).info(f"  └─ {request_data}")
+    if _is_sls_format():
+        msg = f"API Call: {api_name}"
+        if request_data:
+            msg += f", {request_data}"
+        log.opt(depth=1).info(msg)
+    else:
+        log.opt(depth=1).info(f"🔗 API Call: {api_name}")
+        if request_data:
+            log.opt(depth=1).info(f"  └─ {request_data}")
 
 
 def _log_api_response(response_data: str, success: bool = True) -> None:
     """Log API response with consistent formatting."""
-    if success:
-        log.opt(depth=1).info("✅ API Response received")
-        log.opt(depth=1).debug(f"📥 Response: {response_data}")
+    if _is_sls_format():
+        status = "received" if success else "failed"
+        log.opt(depth=1).info(f"API Response {status}: {response_data}")
     else:
-        log.opt(depth=1).error("❌ API Response failed")
-        log.opt(depth=1).error(f"📥 Response: {response_data}")
+        if success:
+            log.opt(depth=1).info("✅ API Response received")
+            log.opt(depth=1).debug(f"📥 Response: {response_data}")
+        else:
+            log.opt(depth=1).error("❌ API Response failed")
+            log.opt(depth=1).error(f"📥 Response: {response_data}")
 
 
 def _log_api_response_with_details(
@@ -469,28 +484,60 @@ def _log_api_response_with_details(
         key_fields: Dictionary of key business fields to log
         full_response: Full response body (logged at DEBUG level)
     """
-    if success:
-        # Main response line with API name and requestId
-        main_info = f"✅ API Response: {api_name}"
+    if _is_sls_format():
+        status_prefix = "API Response" if success else "API Response Failed"
+        msg = f"{status_prefix}: {api_name}"
+        
+        parts = []
         if request_id:
-            main_info += f", RequestId={request_id}"
-        log.opt(depth=1).info(main_info)
-
-        # Log key fields on separate lines for better readability
+            parts.append(f"RequestId={request_id}")
+        
         if key_fields:
             for key, value in key_fields.items():
-                # Add green color to parameter lines
-                param_line = f"{_COLOR_GREEN}  └─ {key}={value}{_COLOR_RESET}"
-                log.opt(depth=1).info(param_line)
+                parts.append(f"{key}={value}")
+        
+        if parts:
+            msg += ", " + ", ".join(parts)
+            
+        if success:
+            log.opt(depth=1).info(msg)
+        else:
+            log.opt(depth=1).error(msg)
+            
+        if full_response:
+             # In SLS format, full response might still be useful but maybe on same line or debug
+             # Requirement says "all API Response logs on one line". 
+             # Full response is usually large json, putting it on INFO line might be too much.
+             # But if it's debug, it's fine.
+             # Let's keep full response as debug log, potentially another line, 
+             # because "one line" usually refers to the main info log. 
+             # If user wants EVERYTHING on one line including full body, that's json logging.
+             # The user complaint was "dispersed" meaning the key info was on multiple lines.
+             log.opt(depth=1).debug(f"Full Response: {full_response}")
 
-        if full_response:
-            log.opt(depth=1).debug(f"📥 Full Response: {full_response}")
     else:
-        log.opt(depth=1).error(
-            f"❌ API Response Failed: {api_name}, RequestId={request_id}"
-        )
-        if full_response:
-            log.opt(depth=1).error(f"📥 Response: {full_response}")
+        if success:
+            # Main response line with API name and requestId
+            main_info = f"✅ API Response: {api_name}"
+            if request_id:
+                main_info += f", RequestId={request_id}"
+            log.opt(depth=1).info(main_info)
+
+            # Log key fields on separate lines for better readability
+            if key_fields:
+                for key, value in key_fields.items():
+                    # Add green color to parameter lines
+                    param_line = f"{_COLOR_GREEN}  └─ {key}={value}{_COLOR_RESET}"
+                    log.opt(depth=1).info(param_line)
+
+            if full_response:
+                log.opt(depth=1).debug(f"📥 Full Response: {full_response}")
+        else:
+            log.opt(depth=1).error(
+                f"❌ API Response Failed: {api_name}, RequestId={request_id}"
+            )
+            if full_response:
+                log.opt(depth=1).error(f"📥 Response: {full_response}")
 
 
 def _log_code_execution_output(request_id: str, raw_output: str) -> None:
@@ -518,18 +565,26 @@ def _log_code_execution_output(request_id: str, raw_output: str) -> None:
             return
 
         actual_output = "".join(texts)
+        
+        if _is_sls_format():
+             # For SLS, we might want to log this as a single line JSON or escaped string
+             # But code output is naturally multiline.
+             # Let's just remove the fancy headers and colors.
+             header = f"Code Execution Output (RequestID: {request_id}):"
+             log.opt(depth=1).info(header)
+             log.opt(depth=1).info(actual_output)
+        else:
+            # Format the output with a clear separator
+            header = f"📋 Code Execution Output (RequestID: {request_id}):"
+            colored_header = f"{_COLOR_GREEN}{header}{_COLOR_RESET}"
 
-        # Format the output with a clear separator
-        header = f"📋 Code Execution Output (RequestID: {request_id}):"
-        colored_header = f"{_COLOR_GREEN}{header}{_COLOR_RESET}"
+            log.opt(depth=1).info(colored_header)
 
-        log.opt(depth=1).info(colored_header)
-
-        # Print each line with indentation
-        lines = actual_output.rstrip("\n").split("\n")
-        for line in lines:
-            colored_line = f"{_COLOR_GREEN}   {line}{_COLOR_RESET}"
-            log.opt(depth=1).info(colored_line)
+            # Print each line with indentation
+            lines = actual_output.rstrip("\n").split("\n")
+            for line in lines:
+                colored_line = f"{_COLOR_GREEN}   {line}{_COLOR_RESET}"
+                log.opt(depth=1).info(colored_line)
 
     except (json.JSONDecodeError, KeyError, TypeError):
         # If parsing fails, just return without logging
@@ -538,16 +593,28 @@ def _log_code_execution_output(request_id: str, raw_output: str) -> None:
 
 def _log_operation_start(operation: str, details: str = "") -> None:
     """Log the start of an operation."""
-    log.opt(depth=1).info(f"🚀 Starting: {operation}")
-    if details:
-        log.opt(depth=1).debug(f"📋 Details: {details}")
+    if _is_sls_format():
+        msg = f"Starting: {operation}"
+        if details:
+            msg += f", Details: {details}"
+        log.opt(depth=1).info(msg)
+    else:
+        log.opt(depth=1).info(f"🚀 Starting: {operation}")
+        if details:
+            log.opt(depth=1).debug(f"📋 Details: {details}")
 
 
 def _log_operation_success(operation: str, result: str = "") -> None:
     """Log successful operation completion."""
-    log.opt(depth=1).info(f"✅ Completed: {operation}")
-    if result:
-        log.opt(depth=1).debug(f"📊 Result: {result}")
+    if _is_sls_format():
+        msg = f"Completed: {operation}"
+        if result:
+            msg += f", Result: {result}"
+        log.opt(depth=1).info(msg)
+    else:
+        log.opt(depth=1).info(f"✅ Completed: {operation}")
+        if result:
+            log.opt(depth=1).debug(f"📊 Result: {result}")
 
 
 def _log_operation_error(operation: str, error: str, exc_info: bool = False) -> None:
@@ -559,18 +626,29 @@ def _log_operation_error(operation: str, error: str, exc_info: bool = False) -> 
         error: Error message
         exc_info: Whether to include exception traceback
     """
-    if exc_info:
-        log.opt(depth=1).exception(f"❌ Failed: {operation}")
+    if _is_sls_format():
+        log.opt(depth=1).error(f"Failed: {operation}, Error: {error}")
+        if exc_info:
+             log.opt(depth=1).exception(f"Exception details for {operation}")
     else:
-        log.opt(depth=1).error(f"❌ Failed: {operation}")
-        log.opt(depth=1).error(f"💥 Error: {error}")
+        if exc_info:
+            log.opt(depth=1).exception(f"❌ Failed: {operation}")
+        else:
+            log.opt(depth=1).error(f"❌ Failed: {operation}")
+            log.opt(depth=1).error(f"💥 Error: {error}")
 
 
 def _log_warning(message: str, details: str = "") -> None:
     """Log warning with consistent formatting."""
-    log.opt(depth=1).warning(f"⚠️  {message}")
-    if details:
-        log.opt(depth=1).warning(f"📝 Details: {details}")
+    if _is_sls_format():
+        msg = f"Warning: {message}"
+        if details:
+            msg += f", Details: {details}"
+        log.opt(depth=1).warning(msg)
+    else:
+        log.opt(depth=1).warning(f"⚠️  {message}")
+        if details:
+            log.opt(depth=1).warning(f"📝 Details: {details}")
 
 
 def _log_info_with_color(message: str, color: str = "\033[31m") -> None:
@@ -581,5 +659,9 @@ def _log_info_with_color(message: str, color: str = "\033[31m") -> None:
         message: Message to log
         color: ANSI color code (default is red: \033[31m)
     """
-    colored_message = f"{color}{message}{_COLOR_RESET}"
-    log.opt(depth=1).info(colored_message)
+    if _is_sls_format():
+        # No colors in SLS format
+        log.opt(depth=1).info(message)
+    else:
+        colored_message = f"{color}{message}{_COLOR_RESET}"
+        log.opt(depth=1).info(colored_message)

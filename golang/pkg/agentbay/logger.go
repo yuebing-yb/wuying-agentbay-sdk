@@ -19,6 +19,12 @@ const (
 	LOG_ERROR
 )
 
+// Log format constants
+const (
+	LogFormatPretty = "pretty"
+	LogFormatSLS    = "sls"
+)
+
 // Color constants for terminal output
 const (
 	ColorReset  = "\033[0m"
@@ -30,6 +36,9 @@ const (
 
 // globalLogLevel (default is LOG_INFO)
 var globalLogLevel = LOG_INFO
+
+// globalLogFormat (default is LogFormatPretty)
+var globalLogFormat = LogFormatPretty
 
 // File logging configuration
 var (
@@ -46,6 +55,7 @@ type LoggerConfig struct {
 	LogFile       string
 	MaxFileSize   string
 	EnableConsole *bool
+	Format        string // "pretty" or "sls"
 }
 
 // sensitiveFields names for data masking
@@ -57,11 +67,22 @@ var sensitiveFields = []string{
 	"authorization",
 }
 
-// Initialize log level from environment variable
+// Initialize log level and format from environment variable
 func init() {
 	if levelStr := os.Getenv("AGENTBAY_LOG_LEVEL"); levelStr != "" {
 		level := parseLogLevel(levelStr)
 		SetLogLevel(level)
+	}
+
+	setLogFormatFromEnv()
+}
+
+func setLogFormatFromEnv() {
+	formatStr := os.Getenv("AGENTBAY_LOG_FORMAT")
+	if strings.ToLower(formatStr) == "sls" || strings.ToLower(formatStr) == "compact" {
+		globalLogFormat = LogFormatSLS
+	} else {
+		globalLogFormat = LogFormatPretty
 	}
 }
 
@@ -222,10 +243,26 @@ func SetupLogger(config LoggerConfig) {
 	if config.EnableConsole != nil {
 		consoleLoggingEnabled = *config.EnableConsole
 	}
+
+	if config.Format != "" {
+		if strings.ToLower(config.Format) == "sls" || strings.ToLower(config.Format) == "compact" {
+			globalLogFormat = LogFormatSLS
+		} else {
+			globalLogFormat = LogFormatPretty
+		}
+	} else {
+		// Respect env var if not set in config
+		setLogFormatFromEnv()
+	}
 }
 
 // getColorCodes returns ANSI color codes based on environment detection
 func getColorCodes() (reset, green, red, yellow, blue string) {
+	// If SLS format, disable colors
+	if globalLogFormat == LogFormatSLS {
+		return "", "", "", "", ""
+	}
+
 	// Priority 1: Check if stdout is a real terminal (TTY)
 	// This is the most reliable indicator of an interactive environment
 	if terminal.IsTerminal(os.Stdout.Fd()) {
@@ -286,21 +323,32 @@ func logAPICall(apiName, requestParams string) {
 		return
 	}
 
-	reset, _, _, _, blue := getColorCodes()
-	coloredMsg := fmt.Sprintf("%s🔗 API Call: %s%s", blue, apiName, reset)
-	plainMsg := fmt.Sprintf("🔗 API Call: %s", apiName)
-
-	if consoleLoggingEnabled {
-		fmt.Println(coloredMsg)
-	}
-	writeToFile(plainMsg)
-
-	if requestParams != "" && globalLogLevel <= LOG_DEBUG {
-		requestMsg := fmt.Sprintf("   Request: %s", requestParams)
-		if consoleLoggingEnabled {
-			fmt.Println(requestMsg)
+	if globalLogFormat == LogFormatSLS {
+		msg := fmt.Sprintf("API Call: %s", apiName)
+		if requestParams != "" {
+			msg += fmt.Sprintf(", %s", requestParams)
 		}
-		writeToFile(requestMsg)
+		if consoleLoggingEnabled {
+			fmt.Println(msg)
+		}
+		writeToFile(msg)
+	} else {
+		reset, _, _, _, blue := getColorCodes()
+		coloredMsg := fmt.Sprintf("%s🔗 API Call: %s%s", blue, apiName, reset)
+		plainMsg := fmt.Sprintf("🔗 API Call: %s", apiName)
+
+		if consoleLoggingEnabled {
+			fmt.Println(coloredMsg)
+		}
+		writeToFile(plainMsg)
+
+		if requestParams != "" && globalLogLevel <= LOG_DEBUG {
+			requestMsg := fmt.Sprintf("   Request: %s", requestParams)
+			if consoleLoggingEnabled {
+				fmt.Println(requestMsg)
+			}
+			writeToFile(requestMsg)
+		}
 	}
 }
 
@@ -315,65 +363,101 @@ func logAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 		return
 	}
 
-	reset, green, red, _, blue := getColorCodes()
+	if globalLogFormat == LogFormatSLS {
+		status := "API Response"
+		if !success {
+			status = "API Response Failed"
+		}
 
-	if success {
-		coloredMsg := fmt.Sprintf("%s✅ API Response: %s", green, apiName)
-		plainMsg := fmt.Sprintf("✅ API Response: %s", apiName)
+		var parts []string
+		parts = append(parts, fmt.Sprintf("%s: %s", status, apiName))
 
 		if requestID != "" {
-			coloredMsg += fmt.Sprintf(", RequestId=%s", requestID)
-			plainMsg += fmt.Sprintf(", RequestId=%s", requestID)
+			parts = append(parts, fmt.Sprintf("RequestId=%s", requestID))
 		}
-
-		if consoleLoggingEnabled {
-			fmt.Printf("%s%s\n", coloredMsg, reset)
-		}
-		writeToFile(plainMsg)
 
 		if keyFields != nil && len(keyFields) > 0 {
 			for key, value := range keyFields {
-				coloredField := fmt.Sprintf("%s   └─ %s=%v%s", green, key, value, reset)
-				plainField := fmt.Sprintf("   └─ %s=%v", key, value)
-
-				if consoleLoggingEnabled {
-					fmt.Println(coloredField)
-				}
-				writeToFile(plainField)
+				parts = append(parts, fmt.Sprintf("%s=%v", key, value))
 			}
 		}
 
-		if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
-			coloredResp := fmt.Sprintf("%s📥 Full Response: %s%s", blue, fullResponse, reset)
-			plainResp := fmt.Sprintf("📥 Full Response: %s", fullResponse)
-
-			if consoleLoggingEnabled {
-				fmt.Println(coloredResp)
-			}
-			writeToFile(plainResp)
-		}
-	} else {
-		coloredMsg := fmt.Sprintf("%s❌ API Response Failed: %s", red, apiName)
-		plainMsg := fmt.Sprintf("❌ API Response Failed: %s", apiName)
-
-		if requestID != "" {
-			coloredMsg += fmt.Sprintf(", RequestId=%s", requestID)
-			plainMsg += fmt.Sprintf(", RequestId=%s", requestID)
-		}
+		msg := strings.Join(parts, ", ")
 
 		if consoleLoggingEnabled {
-			fmt.Printf("%s%s\n", coloredMsg, reset)
+			fmt.Println(msg)
 		}
-		writeToFile(plainMsg)
+		writeToFile(msg)
 
+		// Optionally log full response at debug level for SLS too
 		if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
-			coloredResp := fmt.Sprintf("%s📥 Response: %s%s", red, fullResponse, reset)
-			plainResp := fmt.Sprintf("📥 Response: %s", fullResponse)
+			if consoleLoggingEnabled {
+				fmt.Printf("Full Response: %s\n", fullResponse)
+			}
+			writeToFile(fmt.Sprintf("Full Response: %s", fullResponse))
+		}
+
+	} else {
+		reset, green, red, _, blue := getColorCodes()
+
+		if success {
+			coloredMsg := fmt.Sprintf("%s✅ API Response: %s", green, apiName)
+			plainMsg := fmt.Sprintf("✅ API Response: %s", apiName)
+
+			if requestID != "" {
+				coloredMsg += fmt.Sprintf(", RequestId=%s", requestID)
+				plainMsg += fmt.Sprintf(", RequestId=%s", requestID)
+			}
 
 			if consoleLoggingEnabled {
-				fmt.Println(coloredResp)
+				fmt.Printf("%s%s\n", coloredMsg, reset)
 			}
-			writeToFile(plainResp)
+			writeToFile(plainMsg)
+
+			if keyFields != nil && len(keyFields) > 0 {
+				for key, value := range keyFields {
+					coloredField := fmt.Sprintf("%s   └─ %s=%v%s", green, key, value, reset)
+					plainField := fmt.Sprintf("   └─ %s=%v", key, value)
+
+					if consoleLoggingEnabled {
+						fmt.Println(coloredField)
+					}
+					writeToFile(plainField)
+				}
+			}
+
+			if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
+				coloredResp := fmt.Sprintf("%s📥 Full Response: %s%s", blue, fullResponse, reset)
+				plainResp := fmt.Sprintf("📥 Full Response: %s", fullResponse)
+
+				if consoleLoggingEnabled {
+					fmt.Println(coloredResp)
+				}
+				writeToFile(plainResp)
+			}
+		} else {
+			coloredMsg := fmt.Sprintf("%s❌ API Response Failed: %s", red, apiName)
+			plainMsg := fmt.Sprintf("❌ API Response Failed: %s", apiName)
+
+			if requestID != "" {
+				coloredMsg += fmt.Sprintf(", RequestId=%s", requestID)
+				plainMsg += fmt.Sprintf(", RequestId=%s", requestID)
+			}
+
+			if consoleLoggingEnabled {
+				fmt.Printf("%s%s\n", coloredMsg, reset)
+			}
+			writeToFile(plainMsg)
+
+			if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
+				coloredResp := fmt.Sprintf("%s📥 Response: %s%s", red, fullResponse, reset)
+				plainResp := fmt.Sprintf("📥 Response: %s", fullResponse)
+
+				if consoleLoggingEnabled {
+					fmt.Println(coloredResp)
+				}
+				writeToFile(plainResp)
+			}
 		}
 	}
 }
@@ -388,33 +472,50 @@ func logOperationError(operation, errorMsg string, withStack bool) {
 		return
 	}
 
-	reset, _, red, _, _ := getColorCodes()
+	if globalLogFormat == LogFormatSLS {
+		msg := fmt.Sprintf("Failed: %s, Error: %s", operation, errorMsg)
+		if consoleLoggingEnabled {
+			fmt.Println(msg)
+		}
+		writeToFile(msg)
 
-	coloredFail := fmt.Sprintf("%s❌ Failed: %s%s", red, operation, reset)
-	plainFail := fmt.Sprintf("❌ Failed: %s", operation)
+		if withStack {
+			stack := debug.Stack()
+			stackMsg := fmt.Sprintf("Stack Trace:\n%s", string(stack))
+			if consoleLoggingEnabled {
+				fmt.Println(stackMsg)
+			}
+			writeToFile(stackMsg)
+		}
+	} else {
+		reset, _, red, _, _ := getColorCodes()
 
-	if consoleLoggingEnabled {
-		fmt.Println(coloredFail)
-	}
-	writeToFile(plainFail)
-
-	coloredError := fmt.Sprintf("%s💥 Error: %s%s", red, errorMsg, reset)
-	plainError := fmt.Sprintf("💥 Error: %s", errorMsg)
-
-	if consoleLoggingEnabled {
-		fmt.Println(coloredError)
-	}
-	writeToFile(plainError)
-
-	if withStack {
-		stack := debug.Stack()
-		coloredStack := fmt.Sprintf("%s[Stack Trace]:\n%s%s", red, string(stack), reset)
-		plainStack := fmt.Sprintf("[Stack Trace]:\n%s", string(stack))
+		coloredFail := fmt.Sprintf("%s❌ Failed: %s%s", red, operation, reset)
+		plainFail := fmt.Sprintf("❌ Failed: %s", operation)
 
 		if consoleLoggingEnabled {
-			fmt.Println(coloredStack)
+			fmt.Println(coloredFail)
 		}
-		writeToFile(plainStack)
+		writeToFile(plainFail)
+
+		coloredError := fmt.Sprintf("%s💥 Error: %s%s", red, errorMsg, reset)
+		plainError := fmt.Sprintf("💥 Error: %s", errorMsg)
+
+		if consoleLoggingEnabled {
+			fmt.Println(coloredError)
+		}
+		writeToFile(plainError)
+
+		if withStack {
+			stack := debug.Stack()
+			coloredStack := fmt.Sprintf("%s[Stack Trace]:\n%s%s", red, string(stack), reset)
+			plainStack := fmt.Sprintf("[Stack Trace]:\n%s", string(stack))
+
+			if consoleLoggingEnabled {
+				fmt.Println(coloredStack)
+			}
+			writeToFile(plainStack)
+		}
 	}
 }
 
@@ -460,26 +561,38 @@ func logCodeExecutionOutput(requestID, rawOutput string) {
 	}
 
 	actualOutput := strings.Join(texts, "")
-	reset, green, _, _, _ := getColorCodes()
 
-	// Format the output with a clear separator
-	coloredHeader := fmt.Sprintf("%s📋 Code Execution Output (RequestID: %s):%s", green, requestID, reset)
-	plainHeader := fmt.Sprintf("📋 Code Execution Output (RequestID: %s):", requestID)
+	if globalLogFormat == LogFormatSLS {
+		// Simple text output without colors or fancy headers
+		header := fmt.Sprintf("Code Execution Output (RequestID: %s):", requestID)
+		if consoleLoggingEnabled {
+			fmt.Println(header)
+			fmt.Println(actualOutput)
+		}
+		writeToFile(header)
+		writeToFile(actualOutput)
+	} else {
+		reset, green, _, _, _ := getColorCodes()
 
-	if consoleLoggingEnabled {
-		fmt.Println(coloredHeader)
-		// Print each line with indentation
+		// Format the output with a clear separator
+		coloredHeader := fmt.Sprintf("%s📋 Code Execution Output (RequestID: %s):%s", green, requestID, reset)
+		plainHeader := fmt.Sprintf("📋 Code Execution Output (RequestID: %s):", requestID)
+
+		if consoleLoggingEnabled {
+			fmt.Println(coloredHeader)
+			// Print each line with indentation
+			lines := strings.Split(strings.TrimRight(actualOutput, "\n"), "\n")
+			for _, line := range lines {
+				fmt.Printf("%s   %s%s\n", green, line, reset)
+			}
+		}
+
+		writeToFile(plainHeader)
+		// Write to file with indentation
 		lines := strings.Split(strings.TrimRight(actualOutput, "\n"), "\n")
 		for _, line := range lines {
-			fmt.Printf("%s   %s%s\n", green, line, reset)
+			writeToFile(fmt.Sprintf("   %s", line))
 		}
-	}
-
-	writeToFile(plainHeader)
-	// Write to file with indentation
-	lines := strings.Split(strings.TrimRight(actualOutput, "\n"), "\n")
-	for _, line := range lines {
-		writeToFile(fmt.Sprintf("   %s", line))
 	}
 }
 
@@ -600,14 +713,21 @@ func LogInfo(message string) {
 		return
 	}
 
-	reset, _, _, _, blue := getColorCodes()
-	coloredMsg := fmt.Sprintf("%sℹ️  %s%s", blue, message, reset)
-	plainMsg := fmt.Sprintf("ℹ️  %s", message)
+	if globalLogFormat == LogFormatSLS {
+		if consoleLoggingEnabled {
+			fmt.Println(message)
+		}
+		writeToFile(message)
+	} else {
+		reset, _, _, _, blue := getColorCodes()
+		coloredMsg := fmt.Sprintf("%sℹ️  %s%s", blue, message, reset)
+		plainMsg := fmt.Sprintf("ℹ️  %s", message)
 
-	if consoleLoggingEnabled {
-		fmt.Println(coloredMsg)
+		if consoleLoggingEnabled {
+			fmt.Println(coloredMsg)
+		}
+		writeToFile(plainMsg)
 	}
-	writeToFile(plainMsg)
 }
 
 // LogDebug logs a debug message
@@ -620,14 +740,22 @@ func LogDebug(message string) {
 		return
 	}
 
-	reset, _, _, _, _ := getColorCodes()
-	coloredMsg := fmt.Sprintf("%s🐛 %s%s", reset, message, reset)
-	plainMsg := fmt.Sprintf("🐛 %s", message)
+	if globalLogFormat == LogFormatSLS {
+		msg := fmt.Sprintf("DEBUG: %s", message)
+		if consoleLoggingEnabled {
+			fmt.Println(msg)
+		}
+		writeToFile(msg)
+	} else {
+		reset, _, _, _, _ := getColorCodes()
+		coloredMsg := fmt.Sprintf("%s🐛 %s%s", reset, message, reset)
+		plainMsg := fmt.Sprintf("🐛 %s", message)
 
-	if consoleLoggingEnabled {
-		fmt.Println(coloredMsg)
+		if consoleLoggingEnabled {
+			fmt.Println(coloredMsg)
+		}
+		writeToFile(plainMsg)
 	}
-	writeToFile(plainMsg)
 }
 
 // logInfoWithColor logs an informational message with custom color
@@ -640,12 +768,20 @@ func logInfoWithColor(message string) {
 		return
 	}
 
-	reset, _, red, _, _ := getColorCodes()
-	coloredMsg := fmt.Sprintf("%sℹ️  %s%s", red, message, reset)
-	plainMsg := fmt.Sprintf("ℹ️  %s", message)
+	if globalLogFormat == LogFormatSLS {
+		// No colors in SLS format
+		if consoleLoggingEnabled {
+			fmt.Println(message)
+		}
+		writeToFile(message)
+	} else {
+		reset, _, red, _, _ := getColorCodes()
+		coloredMsg := fmt.Sprintf("%sℹ️  %s%s", red, message, reset)
+		plainMsg := fmt.Sprintf("ℹ️  %s", message)
 
-	if consoleLoggingEnabled {
-		fmt.Println(coloredMsg)
+		if consoleLoggingEnabled {
+			fmt.Println(coloredMsg)
+		}
+		writeToFile(plainMsg)
 	}
-	writeToFile(plainMsg)
 }
