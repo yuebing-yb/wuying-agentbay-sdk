@@ -565,7 +565,7 @@ def _log_code_execution_output(request_id: str, raw_output: str) -> None:
             return
 
         actual_output = "".join(texts)
-        
+
         if _is_sls_format():
              # For SLS, we might want to log this as a single line JSON or escaped string
              # But code output is naturally multiline.

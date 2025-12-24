@@ -35,6 +35,29 @@ func TestRegionIDSupport(t *testing.T) {
 		}
 	})
 
+	t.Run("NewAgentBayWithPartialConfigFillsDefaults", func(t *testing.T) {
+		// Only region_id is set; other values should be filled with defaults
+		config := &agentbay.Config{
+			RegionID: "cn-hangzhou",
+		}
+		client, err := agentbay.NewAgentBay("test-api-key", agentbay.WithConfig(config))
+		if err != nil {
+			t.Fatalf("Failed to create AgentBay client: %v", err)
+		}
+
+		if client.GetRegionID() != "cn-hangzhou" {
+			t.Errorf("Expected RegionID to be 'cn-hangzhou', got '%s'", client.GetRegionID())
+		}
+
+		// Endpoint should fall back to default when not provided in config
+		if client.Client == nil || client.Client.Endpoint == nil {
+			t.Fatalf("Expected OpenAPI client endpoint to be initialized")
+		}
+		if *client.Client.Endpoint != "wuyingai.cn-shanghai.aliyuncs.com" {
+			t.Errorf("Expected Endpoint to be 'wuyingai.cn-shanghai.aliyuncs.com', got '%s'", *client.Client.Endpoint)
+		}
+	})
+
 	t.Run("NewAgentBayWithoutRegionID", func(t *testing.T) {
 		// Test creating AgentBay client without region_id
 		client, err := agentbay.NewAgentBay("test-api-key")

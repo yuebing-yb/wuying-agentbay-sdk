@@ -197,7 +197,7 @@ if (result.success) {
 
 ### list
 
-▸ **list**(`path`): `Promise`\<`DirectoryListResult`\>
+▸ **list**(`path`): `Promise`\<``DirectoryListResult``\>
 
 Alias of listDirectory().
 
@@ -209,13 +209,13 @@ Alias of listDirectory().
 
 #### Returns
 
-`Promise`\<`DirectoryListResult`\>
+`Promise`\<``DirectoryListResult``\>
 
 ___
 
 ### listDirectory
 
-▸ **listDirectory**(`path`): `Promise`\<`DirectoryListResult`\>
+▸ **listDirectory**(`path`): `Promise`\<``DirectoryListResult``\>
 
 Lists the contents of a directory.
 
@@ -227,7 +227,7 @@ Lists the contents of a directory.
 
 #### Returns
 
-`Promise`\<`DirectoryListResult`\>
+`Promise`\<``DirectoryListResult``\>
 
 Promise resolving to DirectoryListResult containing array of entries.
 
@@ -263,7 +263,7 @@ ___
 
 ### ls
 
-▸ **ls**(`path`): `Promise`\<`DirectoryListResult`\>
+▸ **ls**(`path`): `Promise`\<``DirectoryListResult``\>
 
 Alias of listDirectory().
 
@@ -275,7 +275,7 @@ Alias of listDirectory().
 
 #### Returns
 
-`Promise`\<`DirectoryListResult`\>
+`Promise`\<``DirectoryListResult``\>
 
 ___
 
@@ -316,7 +316,7 @@ ___
 
 ### read
 
-▸ **read**(`path`): `Promise`\<`FileContentResult`\>
+▸ **read**(`path`): `Promise`\<``FileContentResult``\>
 
 Alias of readFile().
 
@@ -328,13 +328,13 @@ Alias of readFile().
 
 #### Returns
 
-`Promise`\<`FileContentResult`\>
+`Promise`\<``FileContentResult``\>
 
 ___
 
 ### readFile
 
-▸ **readFile**(`path`): `Promise`\<`FileContentResult`\>
+▸ **readFile**(`path`): `Promise`\<``FileContentResult``\>
 
 Reads the entire content of a file (text format, default).
 
@@ -346,63 +346,13 @@ Reads the entire content of a file (text format, default).
 
 #### Returns
 
-`Promise`\<`FileContentResult`\>
+`Promise`\<``FileContentResult``\>
 
 Promise resolving to FileContentResult containing:
          - success: Whether the read operation succeeded
          - content: String content of the file
          - requestId: Unique identifier for this API request
          - errorMessage: Error description if read failed
-
-▸ **readFile**(`path`, `opts`): `Promise`\<`FileContentResult`\>
-
-Reads the entire content of a file with explicit text format.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `path` | `string` | Absolute path to the file to read. |
-| `opts` | `Object` | Options object with format set to "text". |
-| `opts.format` | `"text"` | Format to read the file in. |
-
-#### Returns
-
-`Promise`\<`FileContentResult`\>
-
-Promise resolving to FileContentResult containing:
-         - success: Whether the read operation succeeded
-         - content: String content of the file
-         - requestId: Unique identifier for this API request
-         - errorMessage: Error description if read failed
-
-▸ **readFile**(`path`, `opts`): `Promise`\<`BinaryFileContentResult`\>
-
-Reads the entire content of a file in binary format.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `path` | `string` | Absolute path to the file to read. |
-| `opts` | `Object` | Options object with format set to "bytes". |
-| `opts.format` | `"bytes"` | Format to read the file in. |
-
-#### Returns
-
-`Promise`\<`BinaryFileContentResult`\>
-
-Promise resolving to BinaryFileContentResult containing:
-         - success: Whether the read operation succeeded
-         - content: Uint8Array binary content of the file
-         - requestId: Unique identifier for this API request
-         - errorMessage: Error description if read failed
-         - contentType: Optional MIME type of the file
-         - size: Optional size of the file in bytes
-
-**`Throws`**
-
-Error if the API call fails.
 
 **`Example`**
 
@@ -419,8 +369,74 @@ if (result.success) {
   const fileResult = await session.fileSystem.readFile('/etc/hostname');
   if (fileResult.success) {
     console.log(`Content: ${fileResult.content}`);
-    // Output: Content: agentbay-session-xyz
   }
+
+  await session.delete();
+}
+```
+
+▸ **readFile**(`path`, `opts`): `Promise`\<``FileContentResult``\>
+
+Reads the entire content of a file with explicit text format.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `path` | `string` | Absolute path to the file to read. |
+| `opts` | `Object` | Options object with format set to "text". |
+| `opts.format` | ``"text"`` | - |
+
+#### Returns
+
+`Promise`\<``FileContentResult``\>
+
+Promise resolving to FileContentResult containing:
+         - success: Whether the read operation succeeded
+         - content: String content of the file
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if read failed
+
+**`Example`**
+
+```typescript
+const fileResult = await session.fileSystem.readFile('/tmp/test.txt', { format: 'text' });
+```
+
+▸ **readFile**(`path`, `opts`): `Promise`\<``BinaryFileContentResult``\>
+
+Reads the entire content of a file in binary format.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `path` | `string` | Absolute path to the file to read. |
+| `opts` | `Object` | Options object with format set to "bytes". |
+| `opts.format` | ``"bytes"`` | - |
+
+#### Returns
+
+`Promise`\<``BinaryFileContentResult``\>
+
+Promise resolving to BinaryFileContentResult containing:
+         - success: Whether the read operation succeeded
+         - content: Uint8Array binary content of the file
+         - requestId: Unique identifier for this API request
+         - errorMessage: Error description if read failed
+         - contentType: Optional MIME type of the file
+         - size: Optional size of the file in bytes
+
+**`Example`**
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create();
+
+if (result.success) {
+  const session = result.session;
 
   // Read a binary file
   const binaryResult = await session.fileSystem.readFile('/tmp/image.png', { format: 'bytes' });
@@ -436,20 +452,15 @@ if (result.success) {
 
 **Behavior:**
 - Automatically handles large files by reading in 60KB chunks
-- Returns empty string/Uint8Array for empty files
+- Returns empty Uint8Array for empty files
 - Fails if path is a directory or doesn't exist
-- Text format: Content is returned as UTF-8 string
-- Binary format: Content is returned as Uint8Array (backend uses base64 encoding internally)
-
-**`See`**
-
-[writeFile](#writefile), [listDirectory](#listdirectory)
+- Content is returned as Uint8Array (backend uses base64 encoding internally)
 
 ___
 
 ### readMultipleFiles
 
-▸ **readMultipleFiles**(`paths`): `Promise`\<`MultipleFileContentResult`\>
+▸ **readMultipleFiles**(`paths`): `Promise`\<``MultipleFileContentResult``\>
 
 Reads the content of multiple files.
 Corresponds to Python's read_multiple_files() method
@@ -462,7 +473,7 @@ Corresponds to Python's read_multiple_files() method
 
 #### Returns
 
-`Promise`\<`MultipleFileContentResult`\>
+`Promise`\<``MultipleFileContentResult``\>
 
 MultipleFileContentResult with file contents and requestId
 
@@ -520,7 +531,7 @@ ___
 
 ### searchFiles
 
-▸ **searchFiles**(`path`, `pattern`, `excludePatterns?`): `Promise`\<`FileSearchResult`\>
+▸ **searchFiles**(`path`, `pattern`, `excludePatterns?`): `Promise`\<``FileSearchResult``\>
 
 Searches for files in a directory that match a wildcard pattern.
 Corresponds to Python's search_files() method
@@ -535,7 +546,7 @@ Corresponds to Python's search_files() method
 
 #### Returns
 
-`Promise`\<`FileSearchResult`\>
+`Promise`\<``FileSearchResult``\>
 
 FileSearchResult with search results and requestId
 

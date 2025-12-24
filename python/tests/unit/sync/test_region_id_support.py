@@ -31,6 +31,28 @@ class TestRegionIdSupport(unittest.TestCase):
         self.assertEqual(agent_bay.api_key, "test-api-key")
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._sync.agentbay.mcp_client")
+    @pytest.mark.sync
+    def test_agentbay_initialization_with_partial_config_fills_defaults(
+        self, mock_mcp_client
+    ):
+        """Test initializing AgentBay with partial config fills default endpoint/timeout"""
+        mock_client = MagicMock()
+        mock_mcp_client.return_value = mock_client
+
+        # Only region_id is meaningful; endpoint/timeout are left empty/zero
+        config = Config(endpoint="", timeout_ms=0, region_id="cn-hangzhou")
+        agent_bay = AgentBay(cfg=config)
+
+        self.assertEqual(agent_bay.region_id, "cn-hangzhou")
+
+        # Ensure default endpoint/timeout are used when config is partial
+        called_openapi_cfg = mock_mcp_client.call_args[0][0]
+        self.assertEqual(called_openapi_cfg.endpoint, "wuyingai.cn-shanghai.aliyuncs.com")
+        self.assertEqual(called_openapi_cfg.read_timeout, 60000)
+        self.assertEqual(called_openapi_cfg.connect_timeout, 60000)
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._sync.agentbay._load_config")
     @patch("agentbay._sync.agentbay.mcp_client")
     @pytest.mark.sync

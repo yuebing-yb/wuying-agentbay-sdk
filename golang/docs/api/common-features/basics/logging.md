@@ -12,6 +12,7 @@ type LoggerConfig struct {
 	LogFile		string
 	MaxFileSize	string
 	EnableConsole	*bool
+	Format		string	// "pretty" or "sls"
 }
 ```
 

@@ -43,6 +43,7 @@ demonstrateLogging().catch(console.error);
 ### Properties
 
 - `enableConsole`
+- `format`
 - `level`
 - `logFile`
 - `maxFileSize`
@@ -52,6 +53,12 @@ demonstrateLogging().catch(console.error);
 ### enableConsole
 
 • `Optional` **enableConsole**: `boolean`
+
+___
+
+### format
+
+• `Optional` **format**: `string`
 
 ___
 

@@ -14,6 +14,7 @@ These documents are generated automatically using TypeDoc. Run `npm run docs:gen
   - agent.md
   - browser-use-agent.md
   - computer-use-agent.md
+  - mobile-use-agent.md
   - oss.md
 - `common-features/basics`
   - agentbay.md

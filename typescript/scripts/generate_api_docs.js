@@ -43,6 +43,7 @@ const docMappings = [
   { target: 'common-features/advanced/agent.md', symbol: 'Agent', identifiers: ['Class Agent', 'Agent'] },
   { target: 'common-features/advanced/browser-use-agent.md', symbol: 'BrowserUseAgent', identifiers: ['Class BrowserUseAgent', 'BrowserUseAgent'] },
   { target: 'common-features/advanced/computer-use-agent.md', symbol: 'ComputerUseAgent', identifiers: ['Class ComputerUseAgent', 'ComputerUseAgent'] },
+  { target: 'common-features/advanced/mobile-use-agent.md', symbol: 'MobileUseAgent', identifiers: ['Class MobileUseAgent', 'MobileUseAgent'] },
   { target: 'common-features/advanced/oss.md', symbol: 'Oss', identifiers: ['Class Oss', 'Oss'] },
   { target: 'browser-use/browser.md', symbol: 'Browser', identifiers: ['Class Browser', 'Browser'] },
   {
@@ -214,8 +215,58 @@ function normalizeContent(content, targetRelativePath) {
     normalized = optimizeTypedocOutput(normalized)
   }
 
+  // Fix same-file anchor links when TypeDoc/markdown anchor generation differs.
+  normalized = fixSameFileAnchorLinks(normalized)
+
   const rewritten = rewriteLinks(normalized, targetRelativePath)
   return rewritten.trimEnd() + '\n'
+}
+
+function slugifyHeading(text) {
+  // Approximate GitHub-style heading anchors used by our link checker.
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[`*_~]/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9\u4e00-\u9fff\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+}
+
+function collectAnchorsFromHeadings(markdown) {
+  const anchors = new Set()
+  const counts = new Map()
+  const lines = markdown.split('\n')
+  for (const line of lines) {
+    const match = line.match(/^#{1,6}\s+(.+?)\s*$/)
+    if (!match) continue
+    const raw = match[1].trim()
+    if (!raw) continue
+    const base = slugifyHeading(raw)
+    if (!base) continue
+    const prev = counts.get(base) ?? 0
+    counts.set(base, prev + 1)
+    const anchor = prev === 0 ? base : `${base}-${prev}`
+    anchors.add(anchor)
+  }
+  return anchors
+}
+
+function fixSameFileAnchorLinks(markdown) {
+  const anchors = collectAnchorsFromHeadings(markdown)
+  return markdown.replace(/\]\(#([^)]+)\)/g, (match, hash) => {
+    const target = String(hash).trim()
+    if (!target) return match
+    if (anchors.has(target)) return match
+
+    const deduped = target.replace(/-\d+$/, '')
+    if (deduped !== target && anchors.has(deduped)) {
+      return `](#${deduped})`
+    }
+    return match
+  })
 }
 
 function rewriteLinks(markdown, targetRelativePath) {
@@ -843,6 +894,9 @@ function enhanceMarkdownFile(filePath, metadata) {
   if (resourcesSection && !content.includes('## Related Resources')) {
     content = addBeforeFooter(content, resourcesSection)
   }
+
+  // Ensure same-file anchor links stay consistent after all enhancements.
+  content = fixSameFileAnchorLinks(content)
 
   writeFileSync(filePath, content, 'utf8')
 }

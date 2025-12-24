@@ -139,11 +139,19 @@ def _load_config(cfg, custom_env_path: Optional[str] = None) -> Dict[str, Any]:
         Configuration dictionary
     """
     if cfg is not None:
-        config = {
-            "endpoint": cfg.endpoint,
-            "timeout_ms": cfg.timeout_ms,
-            "region_id": cfg.region_id,
-        }
+        config = _default_config()
+
+        # When explicit config is provided, do NOT load env/.env.
+        # Fill missing/empty fields with defaults, but preserve explicit values.
+        if getattr(cfg, "endpoint", None):
+            config["endpoint"] = cfg.endpoint
+        if getattr(cfg, "timeout_ms", None):
+            # Treat 0 as "not provided"
+            if isinstance(cfg.timeout_ms, int) and cfg.timeout_ms > 0:
+                config["timeout_ms"] = cfg.timeout_ms
+        if getattr(cfg, "region_id", None) is not None:
+            # Preserve empty string if explicitly provided
+            config["region_id"] = cfg.region_id
     else:
         config = _default_config()
 

@@ -2,13 +2,44 @@
 
 An Agent to perform tasks on the computer.
 
+## Hierarchy
+
+- `BaseTaskAgent`
+
+  ↳ **`ComputerUseAgent`**
+
 ## Table of contents
 
+
+### Properties
+
+- [session](#session)
+- [toolPrefix](#toolprefix)
 
 ### Methods
 
 - [executeTask](#executetask)
 - [terminateTask](#terminatetask)
+
+## Properties
+
+### session
+
+• `Protected` **session**: ``McpSession``
+
+#### Inherited from
+
+BaseTaskAgent.session
+
+___
+
+### toolPrefix
+
+• `Protected` **toolPrefix**: `string` = `'flux'`
+
+#### Overrides
+
+BaseTaskAgent.toolPrefix
 
 ## Methods
 
@@ -20,32 +51,18 @@ Execute a specific task described in human language.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `task` | `string` | Task description in human language. |
-| `maxTryTimes` | `number` | Maximum number of retry attempts. |
+| Name | Type |
+| :------ | :------ |
+| `task` | `string` |
+| `maxTryTimes` | `number` |
 
 #### Returns
 
 `Promise`\<``ExecutionResult``\>
 
-ExecutionResult containing success status, task output, and error
-    message if any.
+#### Inherited from
 
-**`Example`**
-
-```typescript
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const result = await agentBay.create({ imageId: 'windows_latest' });
-if (result.success) {
-  const taskResult = await result.session.agent.computer.executeTask(
-    'Open notepad',
-    10
-  );
-  console.log(`Task status: ${taskResult.taskStatus}`);
-  await result.session.delete();
-}
-```
+BaseTaskAgent.executeTask
 
 ### terminateTask
 
@@ -55,31 +72,14 @@ Terminate a task with a specified task ID.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `taskId` | `string` | The ID of the running task. |
+| Name | Type |
+| :------ | :------ |
+| `taskId` | `string` |
 
 #### Returns
 
 `Promise`\<``ExecutionResult``\>
 
-ExecutionResult containing success status, task output, and
-    error message if any.
+#### Inherited from
 
-**`Example`**
-
-```typescript
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const result = await agentBay.create({ imageId: 'windows_latest' });
-if (result.success) {
-  const taskResult = await result.session.agent.computer.executeTask(
-    'Open notepad',
-    5
-  );
-  const terminateResult = await result.session.agent.computer.terminateTask(
-    taskResult.taskId
-  );
-  console.log(`Terminated: ${terminateResult.taskStatus}`);
-  await result.session.delete();
-}
-```
+BaseTaskAgent.terminateTask

@@ -127,12 +127,19 @@ func loadDotEnvWithFallback(customEnvPath string) {
 //	customEnvPath: Custom path to .env file (empty string means search upward)
 func loadConfig(cfg *Config, customEnvPath string) Config {
 	if cfg != nil {
-		// If config is explicitly provided, use it directly
-		return Config{
-			Endpoint:  cfg.Endpoint,
-			TimeoutMs: cfg.TimeoutMs,
-			RegionID:  cfg.RegionID,
+		// If config is explicitly provided, do NOT load env/.env.
+		// Fill missing/zero fields with defaults, but preserve explicit values.
+		config := defaultConfig()
+		if cfg.Endpoint != "" {
+			config.Endpoint = cfg.Endpoint
 		}
+		if cfg.TimeoutMs > 0 {
+			config.TimeoutMs = cfg.TimeoutMs
+		}
+		if cfg.RegionID != "" {
+			config.RegionID = cfg.RegionID
+		}
+		return config
 	}
 
 	// Load .env file with improved search

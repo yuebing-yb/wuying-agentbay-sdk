@@ -31,6 +31,26 @@ class TestRegionIdSupport(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(agent_bay.api_key, "test-api-key")
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._async.agentbay.mcp_client")
+    @pytest.mark.asyncio
+    async def test_agentbay_initialization_with_partial_config_fills_defaults(
+        self, mock_mcp_client
+    ):
+        """Test initializing AsyncAgentBay with partial config fills default endpoint/timeout"""
+        mock_client = MagicMock()
+        mock_mcp_client.return_value = mock_client
+
+        config = Config(endpoint="", timeout_ms=0, region_id="cn-hangzhou")
+        agent_bay = AsyncAgentBay(cfg=config)
+
+        self.assertEqual(agent_bay.region_id, "cn-hangzhou")
+
+        called_openapi_cfg = mock_mcp_client.call_args[0][0]
+        self.assertEqual(called_openapi_cfg.endpoint, "wuyingai.cn-shanghai.aliyuncs.com")
+        self.assertEqual(called_openapi_cfg.read_timeout, 60000)
+        self.assertEqual(called_openapi_cfg.connect_timeout, 60000)
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._async.agentbay._load_config")
     @patch("agentbay._async.agentbay.mcp_client")
     @pytest.mark.asyncio

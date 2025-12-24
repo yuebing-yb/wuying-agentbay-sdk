@@ -1,13 +1,44 @@
 # Class: BrowserUseAgent
 
+## Hierarchy
+
+- `BaseTaskAgent`
+
+  ↳ **`BrowserUseAgent`**
+
 ## Table of contents
 
+
+### Properties
+
+- [session](#session)
+- [toolPrefix](#toolprefix)
 
 ### Methods
 
 - [executeTask](#executetask)
 - [initialize](#initialize)
 - [terminateTask](#terminatetask)
+
+## Properties
+
+### session
+
+• `Protected` **session**: ``McpSession``
+
+#### Inherited from
+
+BaseTaskAgent.session
+
+___
+
+### toolPrefix
+
+• `Protected` **toolPrefix**: `string` = `'browser_use'`
+
+#### Overrides
+
+BaseTaskAgent.toolPrefix
 
 ## Methods
 
@@ -19,32 +50,18 @@ Execute a specific task described in human language.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `task` | `string` | Task description in human language. |
-| `maxTryTimes` | `number` | Maximum number of retry attempts. |
+| Name | Type |
+| :------ | :------ |
+| `task` | `string` |
+| `maxTryTimes` | `number` |
 
 #### Returns
 
 `Promise`\<``ExecutionResult``\>
 
-ExecutionResult containing success status, task output, and
-    error message if any.
+#### Inherited from
 
-**`Example`**
-
-```typescript
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const result = await agentBay.create({ imageId: 'linux_latest' });
-if (result.success) {
-  const taskResult = await result.session.agent.browser.executeTask(
-    'Navigate to baidu and query the weather of Shanghai',
-    10
-  );
-  console.log(`Task status: ${taskResult.taskStatus}`);
-  await result.session.delete();
-}
-```
+BaseTaskAgent.executeTask
 
 ### initialize
 
@@ -88,31 +105,14 @@ Terminate a task with a specified task ID.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `taskId` | `string` | The ID of the running task. |
+| Name | Type |
+| :------ | :------ |
+| `taskId` | `string` |
 
 #### Returns
 
 `Promise`\<``ExecutionResult``\>
 
-ExecutionResult containing success status, task output, and
-    error message if any.
+#### Inherited from
 
-**`Example`**
-
-```typescript
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const result = await agentBay.create({ imageId: 'linux_latest' });
-if (result.success) {
-  const taskResult = await result.session.agent.browser.executeTask(
-    'Navigate to baidu and query the weather of Shanghai',
-    10
-  );
-  const terminateResult = await result.session.agent.browser.terminateTask(
-    taskResult.taskId
-  );
-  console.log(`Terminated: ${terminateResult.taskStatus}`);
-  await result.session.delete();
-}
-```
+BaseTaskAgent.terminateTask
