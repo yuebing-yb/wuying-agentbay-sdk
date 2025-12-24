@@ -510,4 +510,52 @@ class McpToolResult(ApiResponse):
         self.error_message = error_message
 
 
+class SessionMetrics:
+    """Structured metrics returned by the MCP get_metrics tool."""
+
+    def __init__(
+        self,
+        cpu_count: int = 0,
+        cpu_used_pct: float = 0.0,
+        disk_total: int = 0,
+        disk_used: int = 0,
+        mem_total: int = 0,
+        mem_used: int = 0,
+        rx_rate_kbps: float = 0.0,
+        tx_rate_kbps: float = 0.0,
+        rx_used_kb: float = 0.0,
+        tx_used_kb: float = 0.0,
+        timestamp: str = "",
+    ):
+        self.cpu_count = cpu_count
+        self.cpu_used_pct = cpu_used_pct
+        self.disk_total = disk_total
+        self.disk_used = disk_used
+        self.mem_total = mem_total
+        self.mem_used = mem_used
+        self.rx_rate_kbps = rx_rate_kbps
+        self.tx_rate_kbps = tx_rate_kbps
+        self.rx_used_kb = rx_used_kb
+        self.tx_used_kb = tx_used_kb
+        self.timestamp = timestamp
+
+
+class SessionMetricsResult(ApiResponse):
+    """Result of session get_metrics() operation."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        metrics: Optional[SessionMetrics] = None,
+        error_message: str = "",
+        raw: Optional[dict] = None,
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.metrics = metrics
+        self.error_message = error_message
+        self.raw = raw or {}
+
+
 Response = ApiResponse

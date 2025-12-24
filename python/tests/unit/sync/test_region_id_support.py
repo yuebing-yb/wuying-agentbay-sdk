@@ -40,13 +40,11 @@ class TestRegionIdSupport(unittest.TestCase):
         mock_client = MagicMock()
         mock_mcp_client.return_value = mock_client
 
-        # Only region_id is meaningful; endpoint/timeout are left empty/zero
         config = Config(endpoint="", timeout_ms=0, region_id="cn-hangzhou")
         agent_bay = AgentBay(cfg=config)
 
         self.assertEqual(agent_bay.region_id, "cn-hangzhou")
 
-        # Ensure default endpoint/timeout are used when config is partial
         called_openapi_cfg = mock_mcp_client.call_args[0][0]
         self.assertEqual(called_openapi_cfg.endpoint, "wuyingai.cn-shanghai.aliyuncs.com")
         self.assertEqual(called_openapi_cfg.read_timeout, 60000)

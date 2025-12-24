@@ -1112,6 +1112,23 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession 
 	return s.callMcpToolAPI(toolName, string(argsJSON), autoGen)
 }
 
+// GetMetrics retrieves runtime metrics for this session via the MCP get_metrics tool.
+//
+// The underlying MCP tool returns a JSON string. This method parses it and returns structured metrics.
+func (s *Session) GetMetrics() (*models.SessionMetricsResult, error) {
+	toolResult, err := s.CallMcpTool("get_metrics", map[string]interface{}{})
+	if err != nil {
+		return &models.SessionMetricsResult{
+			Success:      false,
+			Metrics:      nil,
+			Raw:          nil,
+			ErrorMessage: err.Error(),
+		}, err
+	}
+
+	return models.ParseSessionMetrics(toolResult), nil
+}
+
 // callMcpToolVPC handles VPC-based MCP tool calls
 func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResult, error) {
 	// VPC mode: Use HTTP request to the VPC endpoint

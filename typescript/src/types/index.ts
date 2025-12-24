@@ -9,6 +9,8 @@ export {
   type ApiResponse,
   type ApiResponseWithData,
   type DeleteResult,
+  type SessionMetrics,
+  type SessionMetricsResult,
   type BinaryFileContentResult,
   type FileContentResult,
   type FileInfoResult,

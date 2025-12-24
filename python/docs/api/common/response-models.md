@@ -486,6 +486,48 @@ Initialize a McpToolResult.
 - `error_message` _str, optional_ - Error message if the call failed.
   Defaults to "".
 
+## SessionMetrics
+
+```python
+class SessionMetrics()
+```
+
+Structured metrics returned by the MCP get_metrics tool.
+
+### \_\_init\_\_
+
+```python
+def __init__(self, cpu_count: int = 0,
+             cpu_used_pct: float = 0.0,
+             disk_total: int = 0,
+             disk_used: int = 0,
+             mem_total: int = 0,
+             mem_used: int = 0,
+             rx_rate_kbps: float = 0.0,
+             tx_rate_kbps: float = 0.0,
+             rx_used_kb: float = 0.0,
+             tx_used_kb: float = 0.0,
+             timestamp: str = "")
+```
+
+## SessionMetricsResult
+
+```python
+class SessionMetricsResult(ApiResponse)
+```
+
+Result of session get_metrics() operation.
+
+### \_\_init\_\_
+
+```python
+def __init__(self, request_id: str = "",
+             success: bool = False,
+             metrics: Optional[SessionMetrics] = None,
+             error_message: str = "",
+             raw: Optional[dict] = None)
+```
+
 #### Response
 
 ```python

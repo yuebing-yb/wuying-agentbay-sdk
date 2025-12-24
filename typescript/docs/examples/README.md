@@ -20,6 +20,7 @@ examples/
 │   │   └── get/                   # Session retrieval
 │   └── advanced/                  # Advanced features
 │       ├── agent-module-example/  # AI-powered automation
+│       ├── session-metrics/       # Runtime metrics via MCP get_metrics
 │       ├── vpc-session-example/   # Secure isolated network environments
 │       └── archive-upload-mode-example/ # Archive upload mode
 ├── browser-use/                   # Browser automation (browser_latest)

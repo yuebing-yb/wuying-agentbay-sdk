@@ -127,6 +127,21 @@ func (mr *MockSessionInterfaceMockRecorder) GetLink(arg0, arg1, arg2 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLink", reflect.TypeOf((*MockSessionInterface)(nil).GetLink), arg0, arg1, arg2)
 }
 
+// GetMetrics mocks base method.
+func (m *MockSessionInterface) GetMetrics() (*models.SessionMetricsResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMetrics")
+	ret0, _ := ret[0].(*models.SessionMetricsResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMetrics indicates an expected call of GetMetrics.
+func (mr *MockSessionInterfaceMockRecorder) GetMetrics() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetrics", reflect.TypeOf((*MockSessionInterface)(nil).GetMetrics))
+}
+
 // GetSessionId mocks base method.
 func (m *MockSessionInterface) GetSessionId() string {
 	m.ctrl.T.Helper()

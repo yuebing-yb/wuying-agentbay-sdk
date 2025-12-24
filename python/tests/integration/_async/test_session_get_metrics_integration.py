@@ -1,0 +1,49 @@
+import os
+import unittest
+import pytest
+
+from agentbay import AsyncAgentBay, CreateSessionParams
+
+
+def get_test_api_key():
+    return os.environ.get("AGENTBAY_API_KEY")
+
+
+class TestSessionGetMetricsIntegration(unittest.IsolatedAsyncioTestCase):
+    @classmethod
+    def setUpClass(cls):
+        api_key = get_test_api_key()
+        if not api_key:
+            raise unittest.SkipTest("AGENTBAY_API_KEY environment variable not set")
+        cls.agent_bay = AsyncAgentBay(api_key=api_key)
+
+    @pytest.mark.asyncio
+    async def test_get_metrics_returns_structured_data(self):
+        result = await self.agent_bay.create(CreateSessionParams(image_id="linux_latest"))
+        self.assertTrue(result.success)
+        session = result.session
+        self.assertIsNotNone(session)
+
+        try:
+            metrics_result = await session.get_metrics()
+            self.assertTrue(
+                metrics_result.success,
+                f"get_metrics failed: {metrics_result.error_message}",
+            )
+            self.assertIsNotNone(metrics_result.metrics)
+
+            m = metrics_result.metrics
+            self.assertGreaterEqual(m.cpu_count, 1)
+            self.assertGreater(m.mem_total, 0)
+            self.assertGreater(m.disk_total, 0)
+            self.assertGreaterEqual(m.cpu_used_pct, 0.0)
+            self.assertLessEqual(m.cpu_used_pct, 100.0)
+            self.assertTrue(len(m.timestamp) > 0)
+        finally:
+            await session.delete()
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+

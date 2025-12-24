@@ -144,6 +144,19 @@ async def call_mcp_tool(tool_name: str,
 
 Call an MCP tool directly asynchronously.
 
+### get\_metrics
+
+```python
+async def get_metrics(
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None) -> SessionMetricsResult
+```
+
+Get runtime metrics for this session via the MCP get_metrics tool.
+
+The underlying MCP tool returns a JSON string. This method parses it and
+returns a structured result.
+
 ### pause
 
 ```python

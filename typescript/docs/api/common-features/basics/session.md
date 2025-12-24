@@ -315,8 +315,6 @@ if (result.success) {
 }
 ```
 
-___
-
 ### info
 
 ▸ **info**(): `Promise`\<`OperationResult`\>

@@ -30,6 +30,8 @@ import {
   OperationResult,
   SessionPauseResult,
   SessionResumeResult,
+  SessionMetrics,
+  SessionMetricsResult,
 } from "./types/api-response";
 import {
   log,
@@ -1462,6 +1464,77 @@ export class Session {
         data: "",
         errorMessage: error instanceof Error ? error.message : String(error),
         requestId: "",
+      };
+    }
+  }
+
+  /**
+   * Get runtime metrics for this session via the MCP get_metrics tool.
+   *
+   * The underlying MCP tool returns a JSON string. This method parses it and
+   * returns a structured result.
+   *
+   * @example
+   * ```typescript
+   * const agentBay = new AgentBay({ apiKey: "your_api_key" });
+   * const create = await agentBay.create({ imageId: "linux_latest" });
+   * if (create.success && create.session) {
+   *   const metrics = await create.session.getMetrics();
+   *   console.log(metrics.data);
+   *   await create.session.delete();
+   * }
+   * ```
+   */
+  async getMetrics(): Promise<SessionMetricsResult> {
+    const toolResult = await this.callMcpTool("get_metrics", {});
+    const requestId = toolResult.requestId || "";
+
+    if (!toolResult.success) {
+      return {
+        requestId,
+        success: false,
+        data: undefined,
+        raw: undefined,
+        errorMessage: toolResult.errorMessage || "",
+      };
+    }
+
+    try {
+      const raw =
+        typeof toolResult.data === "string" ? JSON.parse(toolResult.data) : toolResult.data;
+
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+        throw new Error("get_metrics returned non-object JSON");
+      }
+
+      const metrics: SessionMetrics = {
+        cpuCount: Number((raw as any).cpu_count ?? 0),
+        cpuUsedPct: Number((raw as any).cpu_used_pct ?? 0),
+        diskTotal: Number((raw as any).disk_total ?? 0),
+        diskUsed: Number((raw as any).disk_used ?? 0),
+        memTotal: Number((raw as any).mem_total ?? 0),
+        memUsed: Number((raw as any).mem_used ?? 0),
+        rxRateKBps: Number((raw as any).rx_rate_KBps ?? 0),
+        txRateKBps: Number((raw as any).tx_rate_KBps ?? 0),
+        rxUsedKB: Number((raw as any).rx_used_KB ?? 0),
+        txUsedKB: Number((raw as any).tx_used_KB ?? 0),
+        timestamp: String((raw as any).timestamp ?? ""),
+      };
+
+      return {
+        requestId,
+        success: true,
+        data: metrics,
+        raw: raw as Record<string, any>,
+        errorMessage: "",
+      };
+    } catch (err: any) {
+      return {
+        requestId,
+        success: false,
+        data: undefined,
+        raw: undefined,
+        errorMessage: `Failed to parse get_metrics response: ${err?.message || String(err)}`,
       };
     }
   }

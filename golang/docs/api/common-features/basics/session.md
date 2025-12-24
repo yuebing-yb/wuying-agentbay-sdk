@@ -173,6 +173,16 @@ port := int32(30100)
 linkResult, _ := result.Session.GetLink(nil, &port, nil)
 ```
 
+### GetMetrics
+
+```go
+func (s *Session) GetMetrics() (*models.SessionMetricsResult, error)
+```
+
+GetMetrics retrieves runtime metrics for this session via the MCP get_metrics tool.
+
+The underlying MCP tool returns a JSON string. This method parses it and returns structured metrics.
+
 ### GetToken
 
 ```go

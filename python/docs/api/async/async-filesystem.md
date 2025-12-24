@@ -411,7 +411,34 @@ await session.delete()
 ### read\_file
 
 ```python
-async def read_file(path: str, *, format: str = "text") -> Union[FileContentResult, BinaryFileContentResult]
+@overload
+async def read_file(path: str) -> FileContentResult
+```
+
+### read\_file
+
+```python
+@overload
+async def read_file(path: str, *,
+                    format: Literal["text"]) -> FileContentResult
+```
+
+### read\_file
+
+```python
+@overload
+async def read_file(path: str, *,
+                    format: Literal["bytes"]) -> BinaryFileContentResult
+```
+
+### read\_file
+
+```python
+async def read_file(
+        path: str,
+        *,
+        format: str = "text"
+) -> Union[FileContentResult, BinaryFileContentResult]
 ```
 
 Read the contents of a file. Automatically handles large files by chunking.
@@ -419,27 +446,16 @@ Read the contents of a file. Automatically handles large files by chunking.
 **Arguments**:
 
 - `path` _str_ - The path of the file to read.
-- `format` _str, optional_ - Format to read the file in. Defaults to "text".
+- `format` _str_ - Format to read the file in. "text" (default) or "bytes".
   - "text": Returns FileContentResult with content as string (UTF-8)
   - "bytes": Returns BinaryFileContentResult with content as bytes
+  
 
 **Returns**:
 
     FileContentResult: For text format, contains file content as string.
     BinaryFileContentResult: For bytes format, contains file content as bytes.
   
-  Common fields:
-  - success (bool): True if the operation succeeded
-  - request_id (str): Unique identifier for this API request
-  - error_message (str): Error description (if success is False)
-  
-  FileContentResult fields:
-  - content (str): The file content as string (if success is True)
-  
-  BinaryFileContentResult fields:
-  - content (bytes): The file content as bytes (if success is True)
-  - content_type (str, optional): MIME type of the file
-  - size (int, optional): Size of the file in bytes
 
 **Raises**:
 
@@ -458,7 +474,6 @@ print(text_result.content)  # str
 # Read binary file
 binary_result = await session.file_system.read_file("/tmp/image.png", format="bytes")
 print(binary_result.content)  # bytes
-print(f"File size: {len(binary_result.content)} bytes")
 
 await session.delete()
 ```

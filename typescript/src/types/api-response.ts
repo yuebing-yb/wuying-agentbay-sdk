@@ -150,6 +150,31 @@ export interface OperationResult extends ApiResponse {
 }
 
 /**
+ * Structured runtime metrics returned by Session.getMetrics().
+ */
+export interface SessionMetrics {
+  cpuCount: number;
+  cpuUsedPct: number;
+  diskTotal: number;
+  diskUsed: number;
+  memTotal: number;
+  memUsed: number;
+  rxRateKBps: number;
+  txRateKBps: number;
+  rxUsedKB: number;
+  txUsedKB: number;
+  timestamp: string;
+}
+
+/**
+ * Result of Session.getMetrics() operation.
+ */
+export interface SessionMetricsResult extends OperationResult {
+  data?: SessionMetrics;
+  raw?: Record<string, any>;
+}
+
+/**
  * Interface for session info operation responses
  * Corresponds to Go's InfoResult type
  */

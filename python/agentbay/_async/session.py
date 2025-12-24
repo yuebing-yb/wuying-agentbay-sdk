@@ -18,6 +18,8 @@ from .._common.models import (
     DeleteResult,
     McpToolResult,
     OperationResult,
+    SessionMetrics,
+    SessionMetricsResult,
     SessionPauseResult,
     SessionResumeResult,
     extract_request_id,
@@ -747,6 +749,71 @@ class AsyncSession:
                 success=False,
                 data="",
                 error_message=f"Failed to call MCP tool: {e}",
+            )
+
+    async def get_metrics(
+        self,
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
+    ) -> SessionMetricsResult:
+        """
+        Get runtime metrics for this session via the MCP get_metrics tool.
+
+        The underlying MCP tool returns a JSON string. This method parses it and
+        returns a structured result.
+        """
+        tool_result = await self.call_mcp_tool(
+            tool_name="get_metrics",
+            args={},
+            read_timeout=read_timeout,
+            connect_timeout=connect_timeout,
+        )
+
+        if not tool_result.success:
+            return SessionMetricsResult(
+                request_id=tool_result.request_id,
+                success=False,
+                metrics=None,
+                error_message=tool_result.error_message,
+                raw={},
+            )
+
+        try:
+            raw = (
+                json.loads(tool_result.data)
+                if isinstance(tool_result.data, str)
+                else tool_result.data
+            )
+            if not isinstance(raw, dict):
+                raise ValueError("get_metrics returned non-object JSON")
+
+            metrics = SessionMetrics(
+                cpu_count=int(raw.get("cpu_count", 0) or 0),
+                cpu_used_pct=float(raw.get("cpu_used_pct", 0.0) or 0.0),
+                disk_total=int(raw.get("disk_total", 0) or 0),
+                disk_used=int(raw.get("disk_used", 0) or 0),
+                mem_total=int(raw.get("mem_total", 0) or 0),
+                mem_used=int(raw.get("mem_used", 0) or 0),
+                rx_rate_kbps=float(raw.get("rx_rate_KBps", 0.0) or 0.0),
+                tx_rate_kbps=float(raw.get("tx_rate_KBps", 0.0) or 0.0),
+                rx_used_kb=float(raw.get("rx_used_KB", 0.0) or 0.0),
+                tx_used_kb=float(raw.get("tx_used_KB", 0.0) or 0.0),
+                timestamp=str(raw.get("timestamp", "") or ""),
+            )
+            return SessionMetricsResult(
+                request_id=tool_result.request_id,
+                success=True,
+                metrics=metrics,
+                error_message="",
+                raw=raw,
+            )
+        except Exception as e:
+            return SessionMetricsResult(
+                request_id=tool_result.request_id,
+                success=False,
+                metrics=None,
+                error_message=f"Failed to parse get_metrics response: {e}",
+                raw={},
             )
 
     async def _call_mcp_tool_vpc(self, tool_name: str, args_json: str):
