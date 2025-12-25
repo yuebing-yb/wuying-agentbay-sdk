@@ -145,7 +145,7 @@ func (b *baseTaskAgent) executeTask(task string) *ExecutionResult {
 // executeTaskAndWait executes a specific task described in human language synchronously.
 // This is a synchronous interface that blocks until the task is completed or
 // an error occurs, or timeout happens. The default polling interval is 3 seconds.
-func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *ExecutionResult {
+func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionResult {
 	args := map[string]interface{}{
 		"task": task,
 	}
@@ -203,8 +203,10 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 	}
 
 	// Poll for task completion
+	pollInterval := 3
+	maxPollAttempts := timeout / pollInterval
 	triedTime := 0
-	for triedTime < maxTryTimes {
+	for triedTime < maxPollAttempts {
 		query := b.getTaskStatus(taskID)
 		if !query.Success {
 			return &ExecutionResult{
@@ -507,8 +509,8 @@ func NewAgent(session McpSession) *Agent {
 }
 
 // ExecuteTask executes a task in human language.
-// If maxTryTimes is provided, it will wait for task completion (blocking).
-// If maxTryTimes is not provided, it returns immediately with a task ID (non-blocking).
+// If timeout is provided, it will wait for task completion (blocking).
+// If timeout is not provided, it returns immediately with a task ID (non-blocking).
 //
 // Non-blocking usage (new style):
 //
@@ -518,10 +520,10 @@ func NewAgent(session McpSession) *Agent {
 // Blocking usage (backward compatible):
 //
 //	result := sessionResult.Session.Agent.Computer.ExecuteTask("Open Chrome browser", 20)
-func (a *ComputerUseAgent) ExecuteTask(task string, maxTryTimes ...int) *ExecutionResult {
-	if len(maxTryTimes) > 0 {
+func (a *ComputerUseAgent) ExecuteTask(task string, timeout ...int) *ExecutionResult {
+	if len(timeout) > 0 {
 		// Backward compatible: blocking version
-		return a.baseTaskAgent.executeTaskAndWait(task, maxTryTimes[0])
+		return a.baseTaskAgent.executeTaskAndWait(task, timeout[0])
 	}
 	// New non-blocking version
 	return a.baseTaskAgent.executeTask(task)
@@ -536,9 +538,9 @@ func (a *ComputerUseAgent) ExecuteTask(task string, maxTryTimes ...int) *Executi
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 //	sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
 //	defer sessionResult.Session.Delete()
-//	result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 20)
-func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, maxTryTimes int) *ExecutionResult {
-	return a.baseTaskAgent.executeTaskAndWait(task, maxTryTimes)
+//	result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 60)
+func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, timeout int) *ExecutionResult {
+	return a.baseTaskAgent.executeTaskAndWait(task, timeout)
 }
 
 // GetTaskStatus gets the status of the task with the given task ID
@@ -624,8 +626,8 @@ func (a *BrowserUseAgent) Initialize(options *AgentOptions) *InitializationResul
 }
 
 // ExecuteTask executes a task in human language.
-// If maxTryTimes is provided, it will wait for task completion (blocking).
-// If maxTryTimes is not provided, it returns immediately with a task ID (non-blocking).
+// If timeout is provided, it will wait for task completion (blocking).
+// If timeout is not provided, it returns immediately with a task ID (non-blocking).
 //
 // Non-blocking usage (new style):
 //
@@ -635,10 +637,10 @@ func (a *BrowserUseAgent) Initialize(options *AgentOptions) *InitializationResul
 // Blocking usage (backward compatible):
 //
 //	result := sessionResult.Session.Agent.Browser.ExecuteTask("Open Chrome browser", 20)
-func (a *BrowserUseAgent) ExecuteTask(task string, maxTryTimes ...int) *ExecutionResult {
-	if len(maxTryTimes) > 0 {
+func (a *BrowserUseAgent) ExecuteTask(task string, timeout ...int) *ExecutionResult {
+	if len(timeout) > 0 {
 		// Backward compatible: blocking version
-		return a.baseTaskAgent.executeTaskAndWait(task, maxTryTimes[0])
+		return a.baseTaskAgent.executeTaskAndWait(task, timeout[0])
 	}
 	// New non-blocking version
 	return a.baseTaskAgent.executeTask(task)
@@ -653,9 +655,9 @@ func (a *BrowserUseAgent) ExecuteTask(task string, maxTryTimes ...int) *Executio
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 //	sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
 //	defer sessionResult.Session.Delete()
-//	result := sessionResult.Session.Agent.Browser.ExecuteTaskAndWait("Open Chrome browser", 20)
-func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, maxTryTimes int) *ExecutionResult {
-	return a.baseTaskAgent.executeTaskAndWait(task, maxTryTimes)
+//	result := sessionResult.Session.Agent.Browser.ExecuteTaskAndWait("Open Chrome browser", 60)
+func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int) *ExecutionResult {
+	return a.baseTaskAgent.executeTaskAndWait(task, timeout)
 }
 
 // GetTaskStatus gets the status of the task with the given task ID
@@ -690,95 +692,70 @@ func (a *BrowserUseAgent) TerminateTask(taskID string) *ExecutionResult {
 //
 // Example:
 //
-//	result := sessionResult.Session.Agent.Mobile.ExecuteTask("Open WeChat app", 100, 5)
+//	result := sessionResult.Session.Agent.Mobile.ExecuteTask("Open WeChat app", 100)
 //	status := sessionResult.Session.Agent.Mobile.GetTaskStatus(result.TaskID)
-func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int, maxStepRetries int) *ExecutionResult {
+func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult {
 	args := map[string]interface{}{
 		"task":      task,
 		"max_steps": maxSteps,
 	}
 
-	var lastError string
-	var lastRequestID string
-
-	for attempt := 0; attempt < maxStepRetries; attempt++ {
-		result, err := a.baseTaskAgent.Session.CallMcpTool(
-			a.baseTaskAgent.getToolName("execute"), args)
-		if err != nil {
-			lastError = fmt.Sprintf("Failed to execute: %v", err)
-			if attempt < maxStepRetries-1 {
-				time.Sleep(3 * time.Second)
-				continue
-			}
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: lastRequestID},
-				Success:      false,
-				ErrorMessage: lastError,
-				TaskStatus:   "failed",
-				TaskID:       "",
-			}
-		}
-
-		lastRequestID = result.RequestID
-
-		if !result.Success {
-			errorMessage := result.ErrorMessage
-			if errorMessage == "" {
-				errorMessage = "Failed to execute task"
-			}
-			lastError = errorMessage
-			if attempt < maxStepRetries-1 {
-				time.Sleep(3 * time.Second)
-				continue
-			}
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: lastError,
-				TaskStatus:   "failed",
-				TaskID:       "",
-			}
-		}
-
-		var content map[string]interface{}
-		if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-				TaskStatus:   "failed",
-				TaskID:       "",
-			}
-		}
-
-		taskID, ok := content["taskId"].(string)
-		if !ok {
-			taskID, ok = content["task_id"].(string)
-		}
-		if !ok {
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: "Task ID not found in response",
-				TaskStatus:   "failed",
-				TaskID:       "",
-			}
-		}
-
+	result, err := a.baseTaskAgent.Session.CallMcpTool(
+		a.baseTaskAgent.getToolName("execute"), args)
+	if err != nil {
 		return &ExecutionResult{
-			ApiResponse: models.ApiResponse{RequestID: result.RequestID},
-			Success:     true,
-			TaskID:      taskID,
-			TaskStatus:  "running",
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to execute task"
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	var content map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	taskID, ok := content["taskId"].(string)
+	if !ok {
+		taskID, ok = content["task_id"].(string)
+	}
+	if !ok {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: "Task ID not found in response",
+			TaskStatus:   "failed",
+			TaskID:       "",
 		}
 	}
 
 	return &ExecutionResult{
-		ApiResponse:  models.ApiResponse{RequestID: lastRequestID},
-		Success:      false,
-		ErrorMessage: fmt.Sprintf("Failed after %d attempts: %s", maxStepRetries, lastError),
-		TaskStatus:   "failed",
-		TaskID:       "",
+		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
+		Success:     true,
+		TaskID:      taskID,
+		TaskStatus:  "running",
 	}
 }
 
@@ -789,102 +766,74 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int, maxStepRetries i
 //
 // Example:
 //
-//	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait("Open WeChat app", 100, 3, 200)
-func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRetries int, maxTryTimes int) *ExecutionResult {
+//	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait("Open WeChat app", 100, 180)
+func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout int) *ExecutionResult {
 	args := map[string]interface{}{
 		"task":      task,
 		"max_steps": maxSteps,
 	}
 
-	var taskID string
-	var lastError string
-	var lastRequestID string
-
-	for attempt := 0; attempt < maxStepRetries; attempt++ {
-		result, err := a.baseTaskAgent.Session.CallMcpTool(
-			a.baseTaskAgent.getToolName("execute"), args)
-		if err != nil {
-			lastError = fmt.Sprintf("Failed to execute: %v", err)
-			if attempt < maxStepRetries-1 {
-				time.Sleep(3 * time.Second)
-				continue
-			}
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: lastRequestID},
-				Success:      false,
-				ErrorMessage: lastError,
-				TaskStatus:   "failed",
-				TaskID:       "",
-				TaskResult:   "Task Failed",
-			}
-		}
-
-		lastRequestID = result.RequestID
-
-		if !result.Success {
-			errorMessage := result.ErrorMessage
-			if errorMessage == "" {
-				errorMessage = "Failed to execute task"
-			}
-			lastError = errorMessage
-			if attempt < maxStepRetries-1 {
-				time.Sleep(3 * time.Second)
-				continue
-			}
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: lastError,
-				TaskStatus:   "failed",
-				TaskID:       "",
-				TaskResult:   "Task Failed",
-			}
-		}
-
-		var content map[string]interface{}
-		if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-				TaskStatus:   "failed",
-				TaskID:       "",
-				TaskResult:   "Invalid execution response.",
-			}
-		}
-
-		var ok bool
-		taskID, ok = content["taskId"].(string)
-		if !ok {
-			taskID, ok = content["task_id"].(string)
-		}
-		if !ok {
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: "Task ID not found in response",
-				TaskStatus:   "failed",
-				TaskID:       "",
-				TaskResult:   "Invalid task ID.",
-			}
-		}
-		break
-	}
-
-	if taskID == "" {
+	result, err := a.baseTaskAgent.Session.CallMcpTool(
+		a.baseTaskAgent.getToolName("execute"), args)
+	if err != nil {
 		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: lastRequestID},
+			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to get task_id after %d attempts: %s", maxStepRetries, lastError),
+			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
 			TaskStatus:   "failed",
 			TaskID:       "",
 			TaskResult:   "Task Failed",
 		}
 	}
 
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to execute task"
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+
+	var content map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Invalid execution response.",
+		}
+	}
+
+	var ok bool
+	taskID, ok := content["taskId"].(string)
+	if !ok {
+		taskID, ok = content["task_id"].(string)
+	}
+	if !ok {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: "Task ID not found in response",
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Invalid task ID.",
+		}
+	}
+
+	pollInterval := 3
+	maxPollAttempts := timeout / pollInterval
 	triedTime := 0
 	processedTimestamps := make(map[int64]bool) // Track processed stream fragments by timestamp_ms
-	for triedTime < maxTryTimes {
+	for triedTime < maxPollAttempts {
 		query := a.GetTaskStatus(taskID)
 		if !query.Success {
 			return &ExecutionResult{
@@ -966,7 +915,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 
 	fmt.Println("⚠️ task execution timeout!")
 	return &ExecutionResult{
-		ApiResponse:  models.ApiResponse{RequestID: lastRequestID},
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      false,
 		ErrorMessage: "Task timeout.",
 		TaskStatus:   "failed",

@@ -15,14 +15,14 @@ Session
 └── getAgent() → Agent
     ├── getComputer() → Agent.Computer
     │   ├── executeTask(String task)
-    │   ├── executeTaskAndWait(String task, int maxTryTimes)
+    │   ├── executeTaskAndWait(String task, int timeout)
     │   ├── getTaskStatus(String taskId)
     │   └── terminateTask(String taskId)
     │
     └── getBrowser() → Agent.Browser
         ├── initialize(AgentOptions options)
         ├── executeTask(String task)
-        ├── executeTaskAndWait(String task, int maxTryTimes)
+        ├── executeTaskAndWait(String task, int timeout)
         ├── getTaskStatus(String taskId)
         └── terminateTask(String taskId)
 ```
@@ -79,12 +79,12 @@ QueryResult status = session.getAgent().getComputer()
 Execute a task synchronously, blocking until completion or timeout.
 
 ```java
-public ExecutionResult executeTaskAndWait(String task, int maxTryTimes)
+public ExecutionResult executeTaskAndWait(String task, int timeout)
 ```
 
 **Parameters:**
 - `task` (String) - Task description in human language
-- `maxTryTimes` (int) - Maximum number of status checks (polls every 3 seconds)
+- `timeout` (int) - Maximum time to wait for task completion in seconds (default polling interval is 3 seconds)
 
 **Returns:**
 - `ExecutionResult` - Contains success status, task ID, status, and result
@@ -92,7 +92,7 @@ public ExecutionResult executeTaskAndWait(String task, int maxTryTimes)
 **Example:**
 ```java
 ExecutionResult result = session.getAgent().getComputer()
-    .executeTaskAndWait("Create a folder named 'test' on Desktop", 20);
+    .executeTaskAndWait("Create a folder named 'test' on Desktop", 180);
 
 if (result.isSuccess()) {
     System.out.println("Task completed!");
@@ -226,12 +226,12 @@ System.out.println("Task ID: " + result.getTaskId());
 Execute a browser task synchronously, blocking until completion.
 
 ```java
-public ExecutionResult executeTaskAndWait(String task, int maxTryTimes)
+public ExecutionResult executeTaskAndWait(String task, int timeout)
 ```
 
 **Parameters:**
 - `task` (String) - Browser task description in human language
-- `maxTryTimes` (int) - Maximum number of status checks (polls every 3 seconds)
+- `timeout` (int) - Maximum time to wait for task completion in seconds (default polling interval is 3 seconds)
 
 **Returns:**
 - `ExecutionResult` - Contains success status, task ID, status, and result
@@ -239,7 +239,7 @@ public ExecutionResult executeTaskAndWait(String task, int maxTryTimes)
 **Example:**
 ```java
 ExecutionResult result = session.getAgent().getBrowser()
-    .executeTaskAndWait("Go to example.com and get the page title", 20);
+    .executeTaskAndWait("Go to example.com and get the page title", 180);
 
 if (result.isSuccess()) {
     System.out.println("Result: " + result.getTaskResult());
@@ -368,7 +368,7 @@ Session session = sessionResult.getSession();
 // Execute task synchronously
 String task = "Open Notepad and type 'Hello World'";
 ExecutionResult result = session.getAgent().getComputer()
-    .executeTaskAndWait(task, 30);
+    .executeTaskAndWait(task, 180);
 
 if (result.isSuccess()) {
     System.out.println("✅ Completed: " + result.getTaskResult());
@@ -431,7 +431,7 @@ session.getAgent().getBrowser().initialize(options);
 // Execute browser task
 String task = "Go to example.com and extract the page title";
 ExecutionResult result = session.getAgent().getBrowser()
-    .executeTaskAndWait(task, 30);
+    .executeTaskAndWait(task, 180);
 
 if (result.isSuccess()) {
     System.out.println("✅ Result: " + result.getTaskResult());
@@ -447,7 +447,7 @@ agentBay.delete(session, false);
 
 ```java
 ExecutionResult result = session.getAgent().getComputer()
-    .executeTaskAndWait(task, 30);
+    .executeTaskAndWait(task, 180);
 
 if (result.isSuccess()) {
     System.out.println("Success: " + result.getTaskResult());
@@ -464,10 +464,10 @@ if (result.isSuccess()) {
 
 ### 1. Task Timeout Configuration
 
-Set `maxTryTimes` based on task complexity:
-- Simple tasks (e.g., open application): 10-20 tries (30-60 seconds)
-- Medium tasks (e.g., file operations): 20-40 tries (1-2 minutes)
-- Complex tasks (e.g., multi-step workflows): 40-100 tries (2-5 minutes)
+Set `timeout` (in seconds) based on task complexity:
+- Simple tasks (e.g., open application): 60-120 seconds
+- Medium tasks (e.g., file operations): 120-300 seconds
+- Complex tasks (e.g., multi-step workflows): 300-900 seconds
 
 ### 2. Error Handling
 
@@ -535,7 +535,7 @@ while (retries < maxRetries) {
 ### Task Timeout
 
 If tasks frequently timeout:
-1. Increase `maxTryTimes`
+1. Increase `timeout` value
 2. Break complex tasks into smaller steps
 3. Check session resources (CPU/memory)
 

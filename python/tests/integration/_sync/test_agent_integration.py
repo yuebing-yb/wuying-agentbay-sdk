@@ -101,11 +101,12 @@ def test_computer_execute_task_and_wait_success(computer_agent_session):
     agent = computer_agent_session.agent
 
     task = "create a folder named 'agentbay' in C:\\Window\\Temp"
-    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-    if not max_try_times:
-        max_try_times = 100
+    timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not timeout:
+        timeout = 180
+    timeout = int(timeout)
     logger.info("🚀 task of creating folders")
-    result = agent.computer.execute_task_and_wait(task, int(max_try_times))
+    result = agent.computer.execute_task_and_wait(task, timeout)
     assert result.success
     assert result.request_id != ""
     assert result.error_message == ""
@@ -118,9 +119,11 @@ def test_computer_execute_task_success(computer_agent_session):
     agent = computer_agent_session.agent
 
     task = "create a folder named 'agentbay' in C:\\Window\\Temp"
-    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-    if not max_try_times:
-        max_try_times = 100
+    timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not timeout:
+        timeout = 180
+    timeout = int(timeout)
+    max_poll_attempts = timeout // 3
     logger.info("🚀 async task of creating folders")
     result = agent.computer.execute_task(task)
     assert result.success
@@ -128,7 +131,7 @@ def test_computer_execute_task_success(computer_agent_session):
     assert result.error_message == ""
     retry_times: int = 0
     query_result = None
-    while retry_times < int(max_try_times):
+    while retry_times < max_poll_attempts:
         query_result = agent.computer.get_task_status(result.task_id)
         assert result.success
         logger.info(
@@ -139,7 +142,7 @@ def test_computer_execute_task_success(computer_agent_session):
         retry_times += 1
         time.sleep(3)
     # Verify the final task status
-    assert retry_times < int(max_try_times)
+    assert retry_times < max_poll_attempts
     logger.info(f"✅ result {query_result.task_product}")
 
 
@@ -149,14 +152,15 @@ def test_browser_execute_task_and_wait_success(browser_agent_session):
     agent = browser_agent_session.agent
 
     task = "Navigate to baidu.com and Query the date when Alibaba listed in the U.S"
-    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-    if not max_try_times:
-        max_try_times = 100
+    timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not timeout:
+        timeout = 180
+    timeout = int(timeout)
     logger.info("🚀 task of Query the date when Alibaba listed in the U.S")
     options: AgentOptions = AgentOptions(use_vision=False, output_schema="text")
     result = agent.browser.initialize(options)
     assert result.success
-    result = agent.browser.execute_task_and_wait(task, int(max_try_times))
+    result = agent.browser.execute_task_and_wait(task, timeout)
     assert result.success
     assert result.request_id != ""
     assert result.error_message == ""
@@ -169,9 +173,11 @@ def test_browser_execute_task_success(browser_agent_session):
     agent = browser_agent_session.agent
 
     task = "Navigate to baidu.com and Query the weather in Shanghai"
-    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-    if not max_try_times:
-        max_try_times = 100
+    timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not timeout:
+        timeout = 180
+    timeout = int(timeout)
+    max_poll_attempts = timeout // 3
     logger.info("🚀 async task Query the weather in Shanghai.")
     result = agent.browser.execute_task(task)
     assert result.success
@@ -179,7 +185,7 @@ def test_browser_execute_task_success(browser_agent_session):
     assert result.error_message == ""
     retry_times: int = 0
     query_result = None
-    while retry_times < int(max_try_times):
+    while retry_times < max_poll_attempts:
         query_result = agent.browser.get_task_status(result.task_id)
         assert result.success
         logger.info(
@@ -190,7 +196,7 @@ def test_browser_execute_task_success(browser_agent_session):
         retry_times += 1
         time.sleep(3)
     # Verify the final task status
-    assert retry_times < int(max_try_times)
+    assert retry_times < max_poll_attempts
     logger.info(f"✅ result {query_result.task_product}")
 
 
@@ -200,12 +206,13 @@ def test_mobile_execute_task_and_wait_success(mobile_agent_session):
     agent = mobile_agent_session.agent
 
     task = "Open WeChat app"
-    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-    if not max_try_times:
-        max_try_times = 100
+    timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not timeout:
+        timeout = 180
+    timeout = int(timeout)
     logger.info("🚀 task of opening WeChat app")
     result = agent.mobile.execute_task_and_wait(
-        task, max_steps=50, max_step_retries=3, max_try_times=int(max_try_times)
+        task, max_steps=50, timeout=timeout
     )
     assert result.success
     assert result.request_id != ""
@@ -219,19 +226,21 @@ def test_mobile_execute_task_success(mobile_agent_session):
     agent = mobile_agent_session.agent
 
     task = "Open WeChat app"
-    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-    if not max_try_times:
-        max_try_times = 100
+    timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not timeout:
+        timeout = 180
+    timeout = int(timeout)
+    max_poll_attempts = timeout // 3
     logger.info("🚀 async task of opening WeChat app")
     result = agent.mobile.execute_task(
-        task, max_steps=50, max_step_retries=3
+        task, max_steps=50
     )
     assert result.success
     assert result.request_id != ""
     assert result.error_message == ""
     retry_times: int = 0
     query_result = None
-    while retry_times < int(max_try_times):
+    while retry_times < max_poll_attempts:
         query_result = agent.mobile.get_task_status(result.task_id)
         assert result.success
         logger.info(
@@ -242,5 +251,5 @@ def test_mobile_execute_task_success(mobile_agent_session):
         retry_times += 1
         time.sleep(3)
     # Verify the final task status
-    assert retry_times < int(max_try_times)
+    assert retry_times < max_poll_attempts
     logger.info(f"✅ result {query_result.task_product}")

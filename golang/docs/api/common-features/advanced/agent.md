@@ -50,11 +50,11 @@ BrowserUseAgent represents an agent to manipulate a browser to complete specific
 ### ExecuteTask
 
 ```go
-func (a *BrowserUseAgent) ExecuteTask(task string, maxTryTimes ...int) *ExecutionResult
+func (a *BrowserUseAgent) ExecuteTask(task string, timeout ...int) *ExecutionResult
 ```
 
-ExecuteTask executes a task in human language. If maxTryTimes is provided, it will wait for task
-completion (blocking). If maxTryTimes is not provided, it returns immediately with a task ID
+ExecuteTask executes a task in human language. If timeout is provided, it will wait for task
+completion (blocking). If timeout is not provided, it returns immediately with a task ID
 (non-blocking).
 
 Non-blocking usage (new style):
@@ -72,7 +72,7 @@ result := sessionResult.Session.Agent.Browser.ExecuteTask("Open Chrome browser",
 ### ExecuteTaskAndWait
 
 ```go
-func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, maxTryTimes int) *ExecutionResult
+func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int) *ExecutionResult
 ```
 
 ExecuteTaskAndWait executes a specific task described in human language synchronously. This is
@@ -85,7 +85,7 @@ happens. The default polling interval is 3 seconds.
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
 defer sessionResult.Session.Delete()
-result := sessionResult.Session.Agent.Browser.ExecuteTaskAndWait("Open Chrome browser", 20)
+result := sessionResult.Session.Agent.Browser.ExecuteTaskAndWait("Open Chrome browser", 60)
 ```
 
 ### GetTaskStatus
@@ -156,11 +156,11 @@ ComputerUseAgent represents an agent to manipulate a browser to complete specifi
 ### ExecuteTask
 
 ```go
-func (a *ComputerUseAgent) ExecuteTask(task string, maxTryTimes ...int) *ExecutionResult
+func (a *ComputerUseAgent) ExecuteTask(task string, timeout ...int) *ExecutionResult
 ```
 
-ExecuteTask executes a task in human language. If maxTryTimes is provided, it will wait for task
-completion (blocking). If maxTryTimes is not provided, it returns immediately with a task ID
+ExecuteTask executes a task in human language. If timeout is provided, it will wait for task
+completion (blocking). If timeout is not provided, it returns immediately with a task ID
 (non-blocking).
 
 Non-blocking usage (new style):
@@ -178,7 +178,7 @@ result := sessionResult.Session.Agent.Computer.ExecuteTask("Open Chrome browser"
 ### ExecuteTaskAndWait
 
 ```go
-func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, maxTryTimes int) *ExecutionResult
+func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, timeout int) *ExecutionResult
 ```
 
 ExecuteTaskAndWait executes a specific task described in human language synchronously. This is
@@ -191,7 +191,7 @@ happens. The default polling interval is 3 seconds.
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
 defer sessionResult.Session.Delete()
-result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 20)
+result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 60)
 ```
 
 ### GetTaskStatus
@@ -292,7 +292,7 @@ MobileUseAgent represents an agent to perform tasks on mobile devices
 ### ExecuteTask
 
 ```go
-func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int, maxStepRetries int) *ExecutionResult
+func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
 ```
 
 ExecuteTask executes a task in human language without waiting for completion (non-blocking).
@@ -302,14 +302,14 @@ the task status.
 **Example:**
 
 ```go
-result := sessionResult.Session.Agent.Mobile.ExecuteTask("Open WeChat app", 100, 5)
+result := sessionResult.Session.Agent.Mobile.ExecuteTask("Open WeChat app", 100)
 status := sessionResult.Session.Agent.Mobile.GetTaskStatus(result.TaskID)
 ```
 
 ### ExecuteTaskAndWait
 
 ```go
-func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRetries int, maxTryTimes int) *ExecutionResult
+func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout int) *ExecutionResult
 ```
 
 ExecuteTaskAndWait executes a specific task described in human language synchronously. This is
@@ -319,7 +319,7 @@ happens. The default polling interval is 3 seconds.
 **Example:**
 
 ```go
-result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait("Open WeChat app", 100, 3, 200)
+result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait("Open WeChat app", 100, 180)
 ```
 
 ### GetTaskStatus

@@ -98,9 +98,7 @@ def __init__(self, session: "AsyncSession")
 ### execute\_task
 
 ```python
-async def execute_task(task: str,
-                       max_steps: int = 50,
-                       max_step_retries: int = 3) -> ExecutionResult
+async def execute_task(task: str, max_steps: int = 50) -> ExecutionResult
 ```
 
 Execute a task in human language without waiting for completion
@@ -117,9 +115,6 @@ get_task_status.
     max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
   Used to prevent infinite loops or excessive resource consumption.
   Default is 50.
-    max_step_retries: Maximum retry times for MCP tool call failures
-  at SDK level. Used to retry when call_mcp_tool fails
-  (e.g., network errors, timeouts). Default is 3.
   
 
 **Returns**:
@@ -134,7 +129,7 @@ get_task_status.
 session_result = await agent_bay.create()
 session = session_result.session
 result = await session.agent.mobile.execute_task(
-  "Open WeChat app", max_steps=100, max_step_retries=5
+  "Open WeChat app", max_steps=100
 )
 print(f"Task ID: {result.task_id}, Status: {result.task_status}")
 status = await session.agent.mobile.get_task_status(result.task_id)
@@ -146,30 +141,24 @@ await session.delete()
 
 ```python
 async def execute_task_and_wait(task: str,
-                                max_steps: int = 50,
-                                max_step_retries: int = 3,
-                                max_try_times: int = 300) -> ExecutionResult
+                                timeout: int,
+                                max_steps: int = 50) -> ExecutionResult
 ```
 
 Execute a specific task described in human language synchronously.
 
 This is a synchronous interface that blocks until the task is
 completed or an error occurs, or timeout happens. The default
-polling interval is 3 seconds, so set a proper max_try_times
-according to your task complexity.
+polling interval is 3 seconds.
 
 **Arguments**:
 
     task: Task description in human language.
+    timeout: Maximum time to wait for task completion in seconds.
+  Used to control how long to wait for task completion.
     max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
   Used to prevent infinite loops or excessive resource consumption.
   Default is 50.
-    max_step_retries: Maximum retry times for MCP tool call
-  failures at SDK level. Used to retry when call_mcp_tool
-  fails (e.g., network errors, timeouts). Default is 3.
-    max_try_times: Maximum number of polling attempts (each 3 seconds).
-  Used to control how long to wait for task completion.
-  Default is 300 (about 15 minutes).
   
 
 **Returns**:
@@ -185,9 +174,8 @@ session_result = await agent_bay.create()
 session = session_result.session
 result = await session.agent.mobile.execute_task_and_wait(
   "Open WeChat app and send a message",
-  max_steps=100,
-  max_step_retries=3,
-  max_try_times=200
+  timeout=180,
+  max_steps=100
 )
 print(f"Task result: {result.task_result}")
 await session.delete()

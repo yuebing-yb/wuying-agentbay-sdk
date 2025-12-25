@@ -34,9 +34,10 @@ class TestAsyncAgentComputer(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
         self.agent = Agent(self.session)
-        self.max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-        if not self.max_try_times:
-            self.max_try_times = 5
+        timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+        if not timeout:
+            timeout = 180
+        self.timeout = int(timeout)
 
     @pytest.mark.sync
 
@@ -54,7 +55,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        result = self.agent.computer.execute_task_and_wait("Hello, Computer Agent", int(self.max_try_times))
+        result = self.agent.computer.execute_task_and_wait("Hello, Computer Agent", self.timeout)
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -83,7 +84,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
             data="""{"task_id": "task-123", "status": "failed", "result":"", "product": "Task Failed"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
-        result = self.agent.computer.execute_task_and_wait("Hello, Computer Agent", self.max_try_times)
+        result = self.agent.computer.execute_task_and_wait("Hello, Computer Agent", self.timeout)
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -149,7 +150,8 @@ class TestAsyncAgentComputer(unittest.TestCase):
         self.assertEqual(self.session.call_mcp_tool.call_count, 1)
 
         retry_times: int = 0
-        while retry_times < int(self.max_try_times):
+        max_poll_attempts = self.timeout // 3
+        while retry_times < max_poll_attempts:
             mock_query_result = OperationResult(
                 request_id="request-123",
                 success=True,
@@ -165,7 +167,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
                 break
             retry_times += 1
             time.sleep(3)
-        self.assertTrue(retry_times >= int(self.max_try_times))
+        self.assertTrue(retry_times >= max_poll_attempts)
 
     @pytest.mark.sync
 
@@ -222,9 +224,10 @@ class TestAsyncAgentBrowser(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
         self.agent = Agent(self.session)
-        self.max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-        if not self.max_try_times:
-            self.max_try_times = 5
+        timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+        if not timeout:
+            timeout = 180
+        self.timeout = int(timeout)
 
     @pytest.mark.sync
 
@@ -242,7 +245,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
 
-        result = self.agent.browser.execute_task_and_wait("Hello, Browser Agent", int(self.max_try_times))
+        result = self.agent.browser.execute_task_and_wait("Hello, Browser Agent", self.timeout)
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -271,7 +274,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
             data="""{"task_id": "task-123", "status": "failed", "result":"", "product": "Task Failed"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
-        result = self.agent.browser.execute_task_and_wait("Hello, Browser Agent", self.max_try_times)
+        result = self.agent.browser.execute_task_and_wait("Hello, Browser Agent", self.timeout)
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -337,7 +340,8 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         self.assertEqual(self.session.call_mcp_tool.call_count, 1)
 
         retry_times: int = 0
-        while retry_times < int(self.max_try_times):
+        max_poll_attempts = self.timeout // 3
+        while retry_times < max_poll_attempts:
             mock_query_result = OperationResult(
                 request_id="request-123",
                 success=True,
@@ -353,7 +357,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
                 break
             retry_times += 1
             time.sleep(3)
-        self.assertTrue(retry_times >= int(self.max_try_times))
+        self.assertTrue(retry_times >= max_poll_attempts)
 
     @pytest.mark.sync
 
@@ -411,9 +415,10 @@ class TestAsyncAgentMobile(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
         self.agent = Agent(self.session)
-        self.max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
-        if not self.max_try_times:
-            self.max_try_times = 5
+        timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+        if not timeout:
+            timeout = 180
+        self.timeout = int(timeout)
 
     @pytest.mark.sync
     def test_mobile_task_execute_success(self):
@@ -430,7 +435,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         self.session.call_mcp_tool.return_value = mock_result
 
         result = self.agent.mobile.execute_task(
-            "Open WeChat app", max_steps=100, max_step_retries=5
+            "Open WeChat app", max_steps=100
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
@@ -468,7 +473,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         ]
 
         result = self.agent.mobile.execute_task_and_wait(
-            "Open WeChat app", max_steps=100, max_step_retries=5, max_try_times=10
+            "Open WeChat app", timeout=30, max_steps=100
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
@@ -498,7 +503,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         )
         self.session.call_mcp_tool.return_value = mock_result
         result = self.agent.mobile.execute_task_and_wait(
-            "Open WeChat app", max_steps=50, max_step_retries=3, max_try_times=10
+            "Open WeChat app", timeout=30, max_steps=50
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
@@ -534,7 +539,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         ]
 
         result = self.agent.mobile.execute_task_and_wait(
-            "Open WeChat app", max_steps=50, max_step_retries=3, max_try_times=2
+            "Open WeChat app", timeout=6, max_steps=50
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)

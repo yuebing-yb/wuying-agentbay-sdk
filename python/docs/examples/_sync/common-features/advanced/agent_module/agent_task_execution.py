@@ -71,8 +71,8 @@ def main():
         print("\n5. Mobile Agent usage pattern...")
         print("For mobile device automation:")
         print("  - Create session with image_id='mobile_latest'")
-        print("  - result = session.agent.mobile.execute_task('Open WeChat app', max_steps=100, max_step_retries=3)")
-        print("  - Or use blocking: result = session.agent.mobile.execute_task_and_wait('Open WeChat app', max_steps=100, max_step_retries=3, max_try_times=200)")
+        print("  - result = session.agent.mobile.execute_task('Open WeChat app', max_steps=100)")
+        print("  - Or use blocking: result = session.agent.mobile.execute_task_and_wait('Open WeChat app', timeout=180, max_steps=100)")
 
         print("\n=== Example completed successfully ===")
 

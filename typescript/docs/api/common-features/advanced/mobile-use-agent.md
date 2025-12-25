@@ -46,7 +46,7 @@ BaseTaskAgent.toolPrefix
 
 ### executeTask
 
-▸ **executeTask**(`task`, `maxSteps?`, `maxStepRetries?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTask**(`task`, `maxSteps?`): `Promise`\<``ExecutionResult``\>
 
 Execute a task in human language without waiting for completion
 (non-blocking). This is a fire-and-return interface that immediately
@@ -58,7 +58,6 @@ provides a task ID. Call getTaskStatus to check the task status.
 | :------ | :------ | :------ | :------ |
 | `task` | `string` | `undefined` | Task description in human language. |
 | `maxSteps` | `number` | `50` | Maximum number of steps (clicks/swipes/etc.) allowed. Used to prevent infinite loops or excessive resource consumption. Default is 50. |
-| `maxStepRetries` | `number` | `3` | Maximum retry times for MCP tool call failures at SDK level. Used to retry when callMcpTool fails (e.g., network errors, timeouts). Default is 3. |
 
 #### Returns
 
@@ -74,7 +73,7 @@ const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const result = await agentBay.create({ imageId: 'mobile_latest' });
 if (result.success) {
   const execResult = await result.session.agent.mobile.executeTask(
-    'Open WeChat app', 100, 5
+    'Open WeChat app', 100
   );
   console.log(`Task ID: ${execResult.taskId}`);
   await result.session.delete();
@@ -89,7 +88,7 @@ ___
 
 ### executeTaskAndWait
 
-▸ **executeTaskAndWait**(`task`, `maxSteps?`, `maxStepRetries?`, `maxTryTimes?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTaskAndWait**(`task`, `timeout`, `maxSteps?`): `Promise`\<``ExecutionResult``\>
 
 Execute a specific task described in human language synchronously.
 This is a synchronous interface that blocks until the task is completed or
@@ -101,9 +100,8 @@ an error occurs, or timeout happens. The default polling interval is
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `task` | `string` | `undefined` | Task description in human language. |
+| `timeout` | `number` | `undefined` | Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion. |
 | `maxSteps` | `number` | `50` | Maximum number of steps (clicks/swipes/etc.) allowed. Used to prevent infinite loops or excessive resource consumption. Default is 50. |
-| `maxStepRetries` | `number` | `3` | Maximum retry times for MCP tool call failures at SDK level. Used to retry when callMcpTool fails (e.g., network errors, timeouts). Default is 3. |
-| `maxTryTimes` | `number` | `300` | Maximum number of polling attempts (each 3 seconds). Used to control how long to wait for task completion. Default is 300 (about 15 minutes). |
 
 #### Returns
 
@@ -119,12 +117,16 @@ const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const result = await agentBay.create({ imageId: 'mobile_latest' });
 if (result.success) {
   const execResult = await result.session.agent.mobile.executeTaskAndWait(
-    'Open WeChat app', 100, 3, 200
+    'Open WeChat app', 180, 100
   );
   console.log(`Task result: ${execResult.taskResult}`);
   await result.session.delete();
 }
 ```
+
+#### Overrides
+
+BaseTaskAgent.executeTaskAndWait
 
 ### terminateTask
 

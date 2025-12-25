@@ -37,20 +37,18 @@ describe("Agent", () => {
         const task = "create a folder named 'agentbay' in C:\\Windows\\Temp";
         
         // Get timeout from environment or use default
-        const maxTryTimesStr = process.env.AGENT_TASK_TIMEOUT;
-        let maxTryTimes = 300; // default value
-        if (maxTryTimesStr) {
-          const parsed = parseInt(maxTryTimesStr, 10);
+        const timeoutStr = process.env.AGENT_TASK_TIMEOUT;
+        let timeout = 180; // default value in seconds
+        if (timeoutStr) {
+          const parsed = parseInt(timeoutStr, 10);
           if (!isNaN(parsed)) {
-            maxTryTimes = parsed;
+            timeout = parsed;
           }
-        } else {
-          log("We will wait for 300 * 3 seconds to finish.");
         }
 
         try {
           log(`Executing computer agent task: ${task}`);
-          const result = await session.agent.computer.executeTask(task, maxTryTimes);
+          const result = await session.agent.computer.executeTask(task, timeout);
           
           log(`Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`);
           log(`Agent Task RequestId: ${result.requestId || "undefined"}`);
@@ -111,20 +109,18 @@ describe("Agent", () => {
         const task = "Navigate to baidu.com and Query the date when Alibaba listed in the U.S";
         
         // Get timeout from environment or use default
-        const maxTryTimesStr = process.env.AGENT_TASK_TIMEOUT;
-        let maxTryTimes = 300; // default value
-        if (maxTryTimesStr) {
-          const parsed = parseInt(maxTryTimesStr, 10);
+        const timeoutStr = process.env.AGENT_TASK_TIMEOUT;
+        let timeout = 180; // default value in seconds
+        if (timeoutStr) {
+          const parsed = parseInt(timeoutStr, 10);
           if (!isNaN(parsed)) {
-            maxTryTimes = parsed;
+            timeout = parsed;
           }
-        } else {
-          log("We will wait for 300 * 3 seconds to finish.");
         }
 
         try {
           log(`Executing browser agent task: ${task}`);
-          const result = await session.agent.browser.executeTask(task, maxTryTimes);
+          const result = await session.agent.browser.executeTask(task, timeout);
           
           log(`Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`);
           log(`Agent Task RequestId: ${result.requestId || "undefined"}`);
@@ -184,12 +180,11 @@ describe("Agent", () => {
       if (session.agent) {
         const task = "Open WeChat app";
         const maxSteps = 100;
-        const maxStepRetries = 5;
 
         try {
           log(`Executing mobile agent task (non-blocking): ${task}`);
           const result = await session.agent.mobile.executeTask(
-              task, maxSteps, maxStepRetries);
+              task, maxSteps);
 
           log(`Mobile Agent task result: Success=${result.success}, ` +
               `TaskID=${result.taskId}, Status=${result.taskStatus}`);
@@ -220,13 +215,19 @@ describe("Agent", () => {
       if (session.agent) {
         const task = "Open WeChat app";
         const maxSteps = 100;
-        const maxStepRetries = 3;
-        const maxTryTimes = 300;
+        const timeoutStr = process.env.AGENT_TASK_TIMEOUT;
+        let timeout = 180; // default value in seconds
+        if (timeoutStr) {
+          const parsed = parseInt(timeoutStr, 10);
+          if (!isNaN(parsed)) {
+            timeout = parsed;
+          }
+        }
 
         try {
           log(`Executing mobile agent task (blocking): ${task}`);
           const result = await session.agent.mobile.executeTaskAndWait(
-              task, maxSteps, maxStepRetries, maxTryTimes);
+              task, timeout, maxSteps);
 
           log(`Mobile Agent task result: Success=${result.success}, ` +
               `TaskID=${result.taskId}, Status=${result.taskStatus}`);

@@ -17,6 +17,7 @@
 ### Methods
 
 - [executeTask](#executetask)
+- [executeTaskAndWait](#executetaskandwait)
 - [initialize](#initialize)
 - [terminateTask](#terminatetask)
 
@@ -44,7 +45,7 @@ BaseTaskAgent.toolPrefix
 
 ### executeTask
 
-▸ **executeTask**(`task`, `maxTryTimes`): `Promise`\<``ExecutionResult``\>
+▸ **executeTask**(`task`, `timeout?`): `Promise`\<``ExecutionResult``\>
 
 Execute a specific task described in human language.
 
@@ -53,7 +54,7 @@ Execute a specific task described in human language.
 | Name | Type |
 | :------ | :------ |
 | `task` | `string` |
-| `maxTryTimes` | `number` |
+| `timeout?` | `number` |
 
 #### Returns
 
@@ -62,6 +63,31 @@ Execute a specific task described in human language.
 #### Inherited from
 
 BaseTaskAgent.executeTask
+
+___
+
+### executeTaskAndWait
+
+▸ **executeTaskAndWait**(`task`, `timeout`): `Promise`\<``ExecutionResult``\>
+
+Execute a specific task described in human language synchronously.
+This is a synchronous interface that blocks until the task is completed or
+an error occurs, or timeout happens. The default polling interval is 3 seconds.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `task` | `string` |
+| `timeout` | `number` |
+
+#### Returns
+
+`Promise`\<``ExecutionResult``\>
+
+#### Inherited from
+
+BaseTaskAgent.executeTaskAndWait
 
 ### initialize
 

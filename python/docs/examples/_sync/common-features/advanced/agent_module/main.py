@@ -46,7 +46,7 @@ def main():
         logger.info(f"🚀 Executing task: {task_description}")
 
         execution_result = session.agent.computer.execute_task_and_wait(
-            task_description, max_try_times=50
+            task_description, timeout=150
         )
 
         if execution_result.success:

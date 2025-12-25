@@ -1,5 +1,9 @@
 package com.aliyun.agentbay.model;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public class QueryResult extends ApiResponse {
     private boolean success;
     private String errorMessage;
@@ -7,6 +11,8 @@ public class QueryResult extends ApiResponse {
     private String taskStatus;
     private String taskAction;
     private String taskProduct;
+    private List<Map<String, Object>> stream;
+    private String error;
 
     public QueryResult() {
         super();
@@ -16,6 +22,8 @@ public class QueryResult extends ApiResponse {
         this.taskStatus = "";
         this.taskAction = "";
         this.taskProduct = "";
+        this.stream = new ArrayList<>();
+        this.error = "";
     }
 
     public QueryResult(String requestId, boolean success, String errorMessage,
@@ -27,6 +35,8 @@ public class QueryResult extends ApiResponse {
         this.taskStatus = taskStatus;
         this.taskAction = "";
         this.taskProduct = "";
+        this.stream = new ArrayList<>();
+        this.error = "";
     }
 
     public QueryResult(String requestId, boolean success, String errorMessage,
@@ -38,6 +48,8 @@ public class QueryResult extends ApiResponse {
         this.taskStatus = taskStatus;
         this.taskAction = taskAction;
         this.taskProduct = taskProduct;
+        this.stream = new ArrayList<>();
+        this.error = "";
     }
 
     public boolean isSuccess() {
@@ -86,5 +98,21 @@ public class QueryResult extends ApiResponse {
 
     public void setTaskProduct(String taskProduct) {
         this.taskProduct = taskProduct;
+    }
+
+    public List<Map<String, Object>> getStream() {
+        return stream;
+    }
+
+    public void setStream(List<Map<String, Object>> stream) {
+        this.stream = stream != null ? stream : new ArrayList<>();
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error != null ? error : "";
     }
 }

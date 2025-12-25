@@ -69,7 +69,7 @@ async def test_mobile_execute_task_success(mobile_agent_session):
         
         # Execute task and get task_id immediately
         result = await agent.mobile.execute_task(
-            task, max_steps=1, max_step_retries=1
+            task, max_steps=1
         )
         task_id = result.task_id
         
@@ -94,57 +94,47 @@ async def test_mobile_execute_task_success(mobile_agent_session):
         # Poll until task completes to avoid blocking subsequent tests
         max_try_times = 100
         retry_times = 0
-        import json
+        task_status = None
 
         while retry_times < max_try_times:
-            # Call the underlying API directly to get raw response
-            raw_result = await agent.mobile.session.call_mcp_tool(
-                agent.mobile._get_tool_name("get_status"), {"task_id": task_id}
-            )
+            status_result = await agent.mobile.get_task_status(task_id)
             
             # Verify the response
-            assert raw_result.success, f"get_task_status failed: {raw_result.error_message}"
+            assert status_result.success, f"get_task_status failed: {status_result.error_message}"
             
-            if raw_result.success and raw_result.data:
-                try:
-                    content = json.loads(raw_result.data)
-                    
-                    # Only print content
-                    print(f"\n📋 Content (Attempt #{retry_times + 1}):")
-                    print(json.dumps(content, indent=2, ensure_ascii=False))
-                    print()
-                    
-                    # Check for error first (task finished or not found)
-                    if "error" in content:
-                        logger.info(f"✅ Task returned error (task finished or not found): {content.get('error')}")
-                        break
-                    
-                    # Support both taskId (camelCase) and task_id (snake_case)
-                    content_task_id = content.get("taskId") or content.get("task_id", task_id)
-                    task_status = content.get("status", "unknown")
-                    
-                    assert content_task_id == task_id, f"Task ID mismatch: expected {task_id}, got {content_task_id}"
-                    
-                    logger.info(f"⏳ Polling task status: {task_status} (attempt {retry_times + 1})")
-                    
-                    # If task completed, end polling immediately
-                    if task_status == "completed":
-                        logger.info(f"✅ Task reached completed status")
-                        break
-                    
-                    if task_status in ["failed", "unsupported"]:
-                        logger.info(f"✅ Task reached final status: {task_status}")
-                        break
-                except json.JSONDecodeError as e:
-                    logger.error(f"Failed to parse response: {e}")
-                    print(f"📋 Raw Content (parse error): {raw_result.data}")
-                    break
+            # Print status for debugging
+            print(f"\n📋 Content (Attempt #{retry_times + 1}):")
+            print(f"  Task ID: {status_result.task_id}")
+            print(f"  Status: {status_result.task_status}")
+            print(f"  Error: {status_result.error}")
+            print()
+            
+            # Check for error field (task finished or not found)
+            if status_result.error:
+                logger.info(f"✅ Task returned error (task finished or not found): {status_result.error}")
+                break
+            
+            # Verify task ID matches
+            assert status_result.task_id == task_id, f"Task ID mismatch: expected {task_id}, got {status_result.task_id}"
+            
+            task_status = status_result.task_status
+            logger.info(f"⏳ Polling task status: {task_status} (attempt {retry_times + 1})")
+            
+            # If task completed, end polling immediately
+            if task_status == "completed":
+                logger.info(f"✅ Task reached completed status")
+                break
+            
+            if task_status in ["failed", "unsupported"]:
+                logger.info(f"✅ Task reached final status: {task_status}")
+                break
             
             retry_times += 1
             await asyncio.sleep(3)
         
         # Verify task completed
         assert retry_times < max_try_times, f"Task did not complete within {max_try_times} attempts"
+        assert task_status is not None, "Task status should be set"
         logger.info(f"✅ Task completed: status={task_status}")
         
     finally:
@@ -179,9 +169,8 @@ async def test_mobile_execute_task_and_wait_success(mobile_agent_session):
         # Execute task and wait for completion using SDK's built-in polling
         result = await agent.mobile.execute_task_and_wait(
             task,
-            max_steps=1,
-            max_step_retries=1,
-            max_try_times=100  # Only 1 attempt for quick test
+            timeout=180,
+            max_steps=1
         )
         task_id = result.task_id
         
@@ -253,7 +242,7 @@ async def test_mobile_get_task_status_success(mobile_agent_session):
         
         # First, execute a task
         execute_result = await agent.mobile.execute_task(
-            task, max_steps=1, max_step_retries=1
+            task, max_steps=1
         )
         assert execute_result.success, f"execute_task failed: {execute_result.error_message}"
         task_id = execute_result.task_id
@@ -326,7 +315,7 @@ async def test_mobile_terminate_task_success(mobile_agent_session):
         
         # First, execute a task
         execute_result = await agent.mobile.execute_task(
-            task, max_steps=1, max_step_retries=1
+            task, max_steps=1
         )
         assert execute_result.success, f"execute_task failed: {execute_result.error_message}"
         task_id = execute_result.task_id

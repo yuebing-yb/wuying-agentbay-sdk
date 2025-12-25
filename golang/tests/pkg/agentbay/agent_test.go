@@ -22,18 +22,16 @@ func TestComputerAgent_ExecuteTask(t *testing.T) {
 		task := "create a folder named 'agentbay' in C:\\Windows\\Temp"
 
 		// Get timeout from environment or use default
-		maxTryTimesStr := os.Getenv("AGENT_TASK_TIMEOUT")
-		maxTryTimes := 300 // default value
-		if maxTryTimesStr != "" {
-			if parsed, err := strconv.Atoi(maxTryTimesStr); err == nil {
-				maxTryTimes = parsed
+		timeoutStr := os.Getenv("AGENT_TASK_TIMEOUT")
+		timeout := 180 // default value in seconds
+		if timeoutStr != "" {
+			if parsed, err := strconv.Atoi(timeoutStr); err == nil {
+				timeout = parsed
 			}
-		} else {
-			t.Log("We will wait for 300 * 3 seconds to finish.")
 		}
 
 		t.Logf("Executing agent task: %s", task)
-		result := session.Agent.Computer.ExecuteTask(task, maxTryTimes)
+		result := session.Agent.Computer.ExecuteTask(task, timeout)
 
 		t.Logf("Computer Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
 			result.RequestID, result.Success, result.TaskID, result.TaskStatus)
@@ -69,18 +67,16 @@ func TestBrowserAgent_ExecuteTask(t *testing.T) {
 		task := "Navigate to baidu.com and Query the date when Alibaba listed in the U.S"
 
 		// Get timeout from environment or use default
-		maxTryTimesStr := os.Getenv("AGENT_TASK_TIMEOUT")
-		maxTryTimes := 300 // default value
-		if maxTryTimesStr != "" {
-			if parsed, err := strconv.Atoi(maxTryTimesStr); err == nil {
-				maxTryTimes = parsed
+		timeoutStr := os.Getenv("AGENT_TASK_TIMEOUT")
+		timeout := 180 // default value in seconds
+		if timeoutStr != "" {
+			if parsed, err := strconv.Atoi(timeoutStr); err == nil {
+				timeout = parsed
 			}
-		} else {
-			t.Log("We will wait for 300 * 3 seconds to finish.")
 		}
 
 		t.Logf("Executing agent task: %s", task)
-		result := session.Agent.Browser.ExecuteTask(task, maxTryTimes)
+		result := session.Agent.Browser.ExecuteTask(task, timeout)
 
 		t.Logf("Browser Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
 			result.RequestID, result.Success, result.TaskID, result.TaskStatus)
@@ -112,10 +108,9 @@ func TestMobileAgent_ExecuteTask(t *testing.T) {
 	if session.Agent != nil {
 		task := "Open WeChat app"
 		maxSteps := 100
-		maxStepRetries := 5
 
 		t.Logf("Executing mobile agent task (non-blocking): %s", task)
-		result := session.Agent.Mobile.ExecuteTask(task, maxSteps, maxStepRetries)
+		result := session.Agent.Mobile.ExecuteTask(task, maxSteps)
 
 		t.Logf("Mobile Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
 			result.RequestID, result.Success, result.TaskID, result.TaskStatus)
@@ -151,22 +146,19 @@ func TestMobileAgent_ExecuteTaskAndWait(t *testing.T) {
 	if session.Agent != nil {
 		task := "Open WeChat app"
 
-		maxTryTimesStr := os.Getenv("AGENT_TASK_TIMEOUT")
-		maxTryTimes := 300
-		if maxTryTimesStr != "" {
-			if parsed, err := strconv.Atoi(maxTryTimesStr); err == nil {
-				maxTryTimes = parsed
+		timeoutStr := os.Getenv("AGENT_TASK_TIMEOUT")
+		timeout := 180 // default value in seconds
+		if timeoutStr != "" {
+			if parsed, err := strconv.Atoi(timeoutStr); err == nil {
+				timeout = parsed
 			}
-		} else {
-			t.Log("We will wait for 300 * 3 seconds to finish.")
 		}
 
 		maxSteps := 100
-		maxStepRetries := 3
 
 		t.Logf("Executing mobile agent task (blocking): %s", task)
 		result := session.Agent.Mobile.ExecuteTaskAndWait(
-			task, maxSteps, maxStepRetries, maxTryTimes)
+			task, maxSteps, timeout)
 
 		t.Logf("Mobile Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
 			result.RequestID, result.Success, result.TaskID, result.TaskStatus)

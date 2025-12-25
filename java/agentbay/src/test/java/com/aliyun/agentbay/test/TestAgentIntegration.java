@@ -83,12 +83,12 @@ public class TestAgentIntegration {
         System.out.println("🚀 Test: Execute task synchronously");
 
         String task = "create a folder named 'agentbay' in C:\\Windows\\Temp";
-        String maxTryTimesEnv = System.getenv("AGENT_TASK_TIMEOUT");
-        int maxTryTimes = (maxTryTimesEnv != null && !maxTryTimesEnv.isEmpty())
-            ? Integer.parseInt(maxTryTimesEnv)
-            : 100;
+        String timeoutEnv = System.getenv("AGENT_TASK_TIMEOUT");
+        int timeout = (timeoutEnv != null && !timeoutEnv.isEmpty())
+            ? Integer.parseInt(timeoutEnv)
+            : 300;
 
-        ExecutionResult result = agent.getComputer().executeTaskAndWait(task, maxTryTimes);
+        ExecutionResult result = agent.getComputer().executeTaskAndWait(task, timeout);
 
         assertTrue("Task execution should succeed", result.isSuccess());
         assertNotNull("Request ID should not be null", result.getRequestId());
@@ -104,10 +104,10 @@ public class TestAgentIntegration {
         System.out.println("🚀 Test: Execute task asynchronously");
 
         String task = "create a folder named 'agentbay' in C:\\Windows\\Temp";
-        String maxTryTimesEnv = System.getenv("AGENT_TASK_TIMEOUT");
-        int maxTryTimes = (maxTryTimesEnv != null && !maxTryTimesEnv.isEmpty())
-            ? Integer.parseInt(maxTryTimesEnv)
-            : 100;
+        String timeoutEnv = System.getenv("AGENT_TASK_TIMEOUT");
+        int timeout = (timeoutEnv != null && !timeoutEnv.isEmpty())
+            ? Integer.parseInt(timeoutEnv)
+            : 300;
 
         // Start async task execution
         ExecutionResult result = agent.getComputer().executeTask(task);
@@ -120,10 +120,12 @@ public class TestAgentIntegration {
         assertFalse("Task ID should not be empty", result.getTaskId().isEmpty());
 
         // Poll task status until finished
+        int pollInterval = 3;
+        int maxPollAttempts = timeout / pollInterval;
         int retryTimes = 0;
         QueryResult queryResult = null;
 
-        while (retryTimes < maxTryTimes) {
+        while (retryTimes < maxPollAttempts) {
             queryResult = agent.getComputer().getTaskStatus(result.getTaskId());
 
             assertTrue("Query should succeed", queryResult.isSuccess());
@@ -140,7 +142,7 @@ public class TestAgentIntegration {
 
         // Verify the final task status
         assertNotNull("Query result should not be null", queryResult);
-        assertTrue("Task should finish within timeout", retryTimes < maxTryTimes);
+        assertTrue("Task should finish within timeout", retryTimes < maxPollAttempts);
         assertEquals("Task status should be finished", "finished", queryResult.getTaskStatus());
 
         System.out.println("✅ Task result: " + queryResult.getTaskProduct());

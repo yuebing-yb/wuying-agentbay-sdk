@@ -96,7 +96,7 @@ class AsyncAgent(AsyncBaseService):
             This is a fire-and-return interface that immediately provides a task ID.
             Call get_task_status to check the task status. You can control the timeout
             of the task execution in your own code by setting the frequency of calling
-            get_task_status and the max_try_times.
+            get_task_status.
 
             Args:
                 task: Task description in human language.
@@ -156,18 +156,18 @@ class AsyncAgent(AsyncBaseService):
                 )
 
         async def execute_task_and_wait(
-            self, task: str, max_try_times: int
+            self, task: str, timeout: int
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
 
             This is a synchronous interface that blocks until the task is completed or
-            an error occurs, or timeout happens. The default polling interval is 3 seconds,
-            so set a proper max_try_times according to your task complexity.
+            an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
             Args:
                 task: Task description in human language.
-                max_try_times: Maximum number of retries.
+                timeout: Maximum time to wait for task completion in seconds.
+                    Used to control how long to wait for task completion.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -177,11 +177,14 @@ class AsyncAgent(AsyncBaseService):
                 ```python
                 session_result = await agent_bay.create()
                 session = session_result.session
-                result = await session.agent.computer.execute_task_and_wait("Open Chrome browser", max_try_times=20)
+                result = await session.agent.computer.execute_task_and_wait("Open Chrome browser", timeout=60)
                 print(f"Task result: {result.task_result}")
                 await session.delete()
                 ```
             """
+            poll_interval = 3
+            max_poll_attempts = timeout // poll_interval
+
             try:
                 args = {"task": task}
                 result = await self.session.call_mcp_tool(
@@ -191,7 +194,7 @@ class AsyncAgent(AsyncBaseService):
                     content = json.loads(result.data)
                     task_id = content.get("task_id", "")
                     tried_time: int = 0
-                    while tried_time < max_try_times:
+                    while tried_time < max_poll_attempts:
                         query = await self.get_task_status(task_id)
                         if query.task_status == "finished":
                             return ExecutionResult(
@@ -221,7 +224,7 @@ class AsyncAgent(AsyncBaseService):
                         _logger.info(
                             f"⏳ Task {task_id} running 🚀: {query.task_action}."
                         )
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(poll_interval)
                         tried_time += 1
                     _logger.warning("⚠️ task execution timeout!")
                     return ExecutionResult(
@@ -483,7 +486,6 @@ class AsyncAgent(AsyncBaseService):
             self,
             task: str,
             max_steps: int = 50,
-            max_step_retries: int = 3,
         ) -> ExecutionResult:
             """
             Execute a task in human language without waiting for completion
@@ -499,9 +501,6 @@ class AsyncAgent(AsyncBaseService):
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
-                max_step_retries: Maximum retry times for MCP tool call failures
-                    at SDK level. Used to retry when call_mcp_tool fails
-                    (e.g., network errors, timeouts). Default is 3.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -512,7 +511,7 @@ class AsyncAgent(AsyncBaseService):
                 session_result = await agent_bay.create()
                 session = session_result.session
                 result = await session.agent.mobile.execute_task(
-                    "Open WeChat app", max_steps=100, max_step_retries=5
+                    "Open WeChat app", max_steps=100
                 )
                 print(f"Task ID: {result.task_id}, Status: {result.task_status}")
                 status = await session.agent.mobile.get_task_status(result.task_id)
@@ -525,125 +524,72 @@ class AsyncAgent(AsyncBaseService):
                 "max_steps": max_steps,
             }
 
-            last_error = None
-            last_request_id = ""
+            try:
+                result = await self.session.call_mcp_tool(
+                    self._get_tool_name("execute"), args
+                )
 
-            for attempt in range(max_step_retries):
-                try:
-                    result = await self.session.call_mcp_tool(
-                        self._get_tool_name("execute"), args
+                if result.success:
+                    content = json.loads(result.data)
+                    task_id = content.get("taskId") or content.get("task_id", "")
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=True,
+                        error_message="",
+                        task_id=task_id,
+                        task_status="running",
                     )
-                    last_request_id = result.request_id
-
-                    if result.success:
-                        content = json.loads(result.data)
-                        task_id = content.get("taskId") or content.get("task_id", "")
-                        return ExecutionResult(
-                            request_id=result.request_id,
-                            success=True,
-                            error_message="",
-                            task_id=task_id,
-                            task_status="running",
-                        )
-                    else:
-                        last_error = (
-                            result.error_message or "Failed to execute task"
-                        )
-                        if attempt < max_step_retries - 1:
-                            _logger.warning(
-                                f"Attempt {attempt + 1}/{max_step_retries} "
-                                "failed, retrying..."
-                            )
-                            await asyncio.sleep(3)
-                            continue
-                        else:
-                            _logger.error(
-                                "task execute failed after all retries"
-                            )
-                            return ExecutionResult(
-                                request_id=result.request_id,
-                                success=False,
-                                error_message=last_error,
-                                task_status="failed",
-                                task_id="",
-                            )
-                except AgentError as e:
-                    handled_error = self._handle_error(e)
-                    last_error = str(handled_error)
-                    if attempt < max_step_retries - 1:
-                        _logger.warning(
-                            f"Attempt {attempt + 1}/{max_step_retries} "
-                            "raised exception, retrying..."
-                        )
-                        await asyncio.sleep(3)
-                        continue
-                    else:
-                        return ExecutionResult(
-                            request_id=last_request_id,
-                            success=False,
-                            error_message=str(handled_error),
-                            task_status="failed",
-                            task_id="",
-                        )
-                except Exception as e:
-                    handled_error = self._handle_error(AgentBayError(str(e)))
-                    last_error = f"Failed to execute: {handled_error}"
-                    if attempt < max_step_retries - 1:
-                        _logger.warning(
-                            f"Attempt {attempt + 1}/{max_step_retries} "
-                            "raised exception, retrying..."
-                        )
-                        await asyncio.sleep(3)
-                        continue
-                    else:
-                        return ExecutionResult(
-                            request_id=last_request_id,
-                            success=False,
-                            error_message=(
-                                f"Failed after {max_step_retries} attempts: "
-                                f"{handled_error}"
-                            ),
-                            task_status="failed",
-                            task_id="",
-                        )
-
-            return ExecutionResult(
-                request_id=last_request_id,
-                success=False,
-                error_message=(
-                    f"Failed after {max_step_retries} attempts: "
-                    f"{last_error or 'Unknown error'}"
-                ),
-                task_status="failed",
-                task_id="",
-            )
+                else:
+                    error_message = result.error_message or "Failed to execute task"
+                    _logger.error(f"Task execution failed: {error_message}")
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=False,
+                        error_message=error_message,
+                        task_status="failed",
+                        task_id="",
+                    )
+            except AgentError as e:
+                handled_error = self._handle_error(e)
+                _logger.error(f"Task execution failed: {handled_error}")
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=str(handled_error),
+                    task_status="failed",
+                    task_id="",
+                )
+            except Exception as e:
+                handled_error = self._handle_error(AgentBayError(str(e)))
+                _logger.error(f"Task execution failed: {handled_error}")
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Failed to execute: {handled_error}",
+                    task_status="failed",
+                    task_id="",
+                )
 
         async def execute_task_and_wait(
             self,
             task: str,
+            timeout: int,
             max_steps: int = 50,
-            max_step_retries: int = 3,
-            max_try_times: int = 300,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
 
             This is a synchronous interface that blocks until the task is
             completed or an error occurs, or timeout happens. The default
-            polling interval is 3 seconds, so set a proper max_try_times
-            according to your task complexity.
+            polling interval is 3 seconds.
 
             Args:
                 task: Task description in human language.
+                timeout: Maximum time to wait for task completion in seconds.
+                    Used to control how long to wait for task completion.
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
-                max_step_retries: Maximum retry times for MCP tool call
-                    failures at SDK level. Used to retry when call_mcp_tool
-                    fails (e.g., network errors, timeouts). Default is 3.
-                max_try_times: Maximum number of polling attempts (each 3 seconds).
-                    Used to control how long to wait for task completion.
-                    Default is 300 (about 15 minutes).
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -655,9 +601,8 @@ class AsyncAgent(AsyncBaseService):
                 session = session_result.session
                 result = await session.agent.mobile.execute_task_and_wait(
                     "Open WeChat app and send a message",
-                    max_steps=100,
-                    max_step_retries=3,
-                    max_try_times=200
+                    timeout=180,
+                    max_steps=100
                 )
                 print(f"Task result: {result.task_result}")
                 await session.delete()
@@ -668,102 +613,66 @@ class AsyncAgent(AsyncBaseService):
                 "max_steps": max_steps,
             }
 
-            task_id = None
-            last_error = None
-            last_request_id = ""
+            poll_interval = 3
+            max_poll_attempts = timeout // poll_interval
 
-            for attempt in range(max_step_retries):
-                try:
-                    result = await self.session.call_mcp_tool(
-                        self._get_tool_name("execute"), args
+            try:
+                result = await self.session.call_mcp_tool(
+                    self._get_tool_name("execute"), args
+                )
+
+                if not result.success:
+                    error_message = result.error_message or "Failed to execute task"
+                    _logger.error(f"Task execution failed: {error_message}")
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=False,
+                        error_message=error_message,
+                        task_status="failed",
+                        task_id="",
+                        task_result="Task Failed",
                     )
-                    last_request_id = result.request_id
 
-                    if result.success:
-                        content = json.loads(result.data)
-                        task_id = content.get("taskId") or content.get("task_id", "")
-                        break
-                    else:
-                        last_error = (
-                            result.error_message or "Failed to execute task"
-                        )
-                        if attempt < max_step_retries - 1:
-                            _logger.warning(
-                                f"Attempt {attempt + 1}/{max_step_retries} "
-                                "failed, retrying..."
-                            )
-                            await asyncio.sleep(3)
-                            continue
-                        else:
-                            _logger.error(
-                                "Task execution failed after all retries"
-                            )
-                            return ExecutionResult(
-                                request_id=result.request_id,
-                                success=False,
-                                error_message=last_error,
-                                task_status="failed",
-                                task_id="",
-                                task_result="Task Failed",
-                            )
-                except AgentError as e:
-                    handled_error = self._handle_error(e)
-                    last_error = str(handled_error)
-                    if attempt < max_step_retries - 1:
-                        _logger.warning(
-                            f"Attempt {attempt + 1}/{max_step_retries} "
-                            "raised exception, retrying..."
-                        )
-                        await asyncio.sleep(3)
-                        continue
-                    else:
-                        return ExecutionResult(
-                            request_id=last_request_id,
-                            success=False,
-                            error_message=str(handled_error),
-                            task_status="failed",
-                            task_id="",
-                            task_result="Task Failed",
-                        )
-                except Exception as e:
-                    handled_error = self._handle_error(AgentBayError(str(e)))
-                    last_error = f"Failed to execute: {handled_error}"
-                    if attempt < max_step_retries - 1:
-                        _logger.warning(
-                            f"Attempt {attempt + 1}/{max_step_retries} "
-                            "raised exception, retrying..."
-                        )
-                        await asyncio.sleep(3)
-                        continue
-                    else:
-                        return ExecutionResult(
-                            request_id=last_request_id,
-                            success=False,
-                            error_message=(
-                                f"Failed after {max_step_retries} attempts: "
-                                f"{handled_error}"
-                            ),
-                            task_status="failed",
-                            task_id="",
-                            task_result="Task Failed",
-                        )
-
-            if not task_id:
+                content = json.loads(result.data)
+                task_id = content.get("taskId") or content.get("task_id", "")
+                
+                if not task_id:
+                    _logger.error("Failed to get task_id from response")
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=False,
+                        error_message="Failed to get task_id from response",
+                        task_status="failed",
+                        task_id="",
+                        task_result="Task Failed",
+                    )
+            except AgentError as e:
+                handled_error = self._handle_error(e)
+                _logger.error(f"Task execution failed: {handled_error}")
                 return ExecutionResult(
-                    request_id=last_request_id,
+                    request_id="",
                     success=False,
-                    error_message=(
-                        f"Failed to get task_id after {max_step_retries} "
-                        f"attempts: {last_error or 'Unknown error'}"
-                    ),
+                    error_message=str(handled_error),
+                    task_status="failed",
+                    task_id="",
+                    task_result="Task Failed",
+                )
+            except Exception as e:
+                handled_error = self._handle_error(AgentBayError(str(e)))
+                _logger.error(f"Task execution failed: {handled_error}")
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Failed to execute: {handled_error}",
                     task_status="failed",
                     task_id="",
                     task_result="Task Failed",
                 )
 
+            last_request_id = result.request_id
             tried_time: int = 0
             processed_timestamps = set()  # Track processed stream fragments by timestamp_ms
-            while tried_time < max_try_times:
+            while tried_time < max_poll_attempts:
                 query = await self.get_task_status(task_id)
                 
                 # Process new stream fragments for real-time output
@@ -828,7 +737,7 @@ class AsyncAgent(AsyncBaseService):
                 _logger.info(
                     f"⏳ Task {task_id} running 🚀: {query.task_action}."
                 )
-                await asyncio.sleep(3)
+                await asyncio.sleep(poll_interval)
                 tried_time += 1
 
             _logger.warning("⚠️ task execution timeout!")
