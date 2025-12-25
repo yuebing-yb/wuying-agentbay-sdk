@@ -56,7 +56,7 @@ class TestAsyncFileTransferResultClasses(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.etag, "etag_789")
         self.assertEqual(result.bytes_sent, 1024)
         self.assertEqual(result.path, "/remote/file.txt")
-        self.assertIsNone(result.error)
+        self.assertIsNone(result.error_message)
 
     @pytest.mark.asyncio
 
@@ -71,11 +71,11 @@ class TestAsyncFileTransferResultClasses(unittest.IsolatedAsyncioTestCase):
             etag=None,
             bytes_sent=0,
             path="/remote/file.txt",
-            error="Test error message",
+            error_message="Test error message",
         )
 
         self.assertFalse(result.success)
-        self.assertEqual(result.error, "Test error message")
+        self.assertEqual(result.error_message, "Test error message")
 
     @pytest.mark.asyncio
 
@@ -99,7 +99,7 @@ class TestAsyncFileTransferResultClasses(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.bytes_received, 2048)
         self.assertEqual(result.path, "/remote/file.txt")
         self.assertEqual(result.local_path, "/local/file.txt")
-        self.assertIsNone(result.error)
+        self.assertIsNone(result.error_message)
 
     @pytest.mark.asyncio
 
@@ -114,11 +114,11 @@ class TestAsyncFileTransferResultClasses(unittest.IsolatedAsyncioTestCase):
             bytes_received=0,
             path="/remote/file.txt",
             local_path="/local/file.txt",
-            error="Test error message",
+            error_message="Test error message",
         )
 
         self.assertFalse(result.success)
-        self.assertEqual(result.error, "Test error message")
+        self.assertEqual(result.error_message, "Test error message")
 
 
 class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
@@ -169,7 +169,7 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
         )
 
         self.assertFalse(result.success)
-        self.assertIn("not found", result.error)
+        self.assertIn("not found", result.error_message)
 
 
 class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
@@ -295,9 +295,9 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
 
             # Verify result
             self.assertFalse(result.success)
-            self.assertIsNotNone(result.error)
-            if result.error:
-                self.assertIn("get_file_upload_url failed", result.error)
+            self.assertIsNotNone(result.error_message)
+            if result.error_message:
+                self.assertIn("get_file_upload_url failed", result.error_message)
             self.assertEqual(result.request_id_upload_url, "req_upload_123")
 
         # Run the async test
@@ -339,9 +339,9 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
 
             # Verify result
             self.assertFalse(result.success)
-            self.assertIsNotNone(result.error)
-            if result.error:
-                self.assertIn("Upload failed with HTTP 500", result.error)
+            self.assertIsNotNone(result.error_message)
+            if result.error_message:
+                self.assertIn("Upload failed with HTTP 500", result.error_message)
             self.assertEqual(result.request_id_upload_url, "req_upload_123")
             self.assertEqual(result.http_status, 500)
 
@@ -468,7 +468,7 @@ class TestAsyncFileTransfer(unittest.IsolatedAsyncioTestCase):
 
             # Verify result
             self.assertFalse(result.success)
-            self.assertIn("get_file_download_url failed", result.error)
+            self.assertIn("get_file_download_url failed", result.error_message)
 
         # Run the async test
         await async_test()
@@ -636,7 +636,7 @@ class TestAsyncFileSystemFileTransfer(unittest.IsolatedAsyncioTestCase):
 
         # Verify result
         self.assertIsInstance(result, UploadResult)
-        self.assertTrue(result.success, f"Upload failed: {result.error}")
+        self.assertTrue(result.success, f"Upload failed: {result.error_message}")
         mock_file_transfer.upload.assert_called_once_with(
             local_path="/local/file.txt",
             remote_path="/remote/file.txt",
@@ -675,7 +675,7 @@ class TestAsyncFileSystemFileTransfer(unittest.IsolatedAsyncioTestCase):
 
         # Verify result
         self.assertIsInstance(result, DownloadResult)
-        self.assertTrue(result.success, f"Download failed: {result.error}")
+        self.assertTrue(result.success, f"Download failed: {result.error_message}")
         mock_file_transfer.download.assert_called_once_with(
             remote_path="/remote/file.txt",
             local_path="/local/file.txt",

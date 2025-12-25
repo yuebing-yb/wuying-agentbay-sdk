@@ -178,7 +178,7 @@ class AsyncFileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=f"Local file not found: {local_path}",
+                error_message=f"Local file not found: {local_path}",
             )
         if self._context_id is None:
             ensure_result, message = await self._ensure_context_id()
@@ -191,7 +191,7 @@ class AsyncFileTransfer:
                     etag=None,
                     bytes_sent=0,
                     path=remote_path,
-                    error=message,
+                    error_message=message,
                 )
         # 1. Get pre-signed upload URL
         url_res = await self._context_svc.get_file_upload_url(
@@ -206,7 +206,7 @@ class AsyncFileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=f"get_file_upload_url failed: {getattr(url_res, 'message', 'unknown error')}",
+                error_message=f"get_file_upload_url failed: {getattr(url_res, 'message', 'unknown error')}",
             )
 
         upload_url = url_res.url
@@ -235,7 +235,7 @@ class AsyncFileTransfer:
                     etag=etag,
                     bytes_sent=bytes_sent,
                     path=remote_path,
-                    error=f"Upload failed with HTTP {http_status}",
+                    error_message=f"Upload failed with HTTP {http_status}",
                 )
         except Exception as e:
             return UploadResult(
@@ -246,7 +246,7 @@ class AsyncFileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=f"Upload exception: {e}",
+                error_message=f"Upload exception: {e}",
             )
 
         # 3. Trigger sync to cloud disk (download mode),download from oss to cloud disk
@@ -265,7 +265,7 @@ class AsyncFileTransfer:
                 etag=etag,
                 bytes_sent=bytes_sent,
                 path=remote_path,
-                error=f"session.context.sync(upload) failed: {e}",
+                error_message=f"session.context.sync(upload) failed: {e}",
             )
 
         print(f"Sync request ID: {req_id_sync}")
@@ -288,7 +288,7 @@ class AsyncFileTransfer:
                     etag=etag,
                     bytes_sent=bytes_sent,
                     path=remote_path,
-                    error=f"Upload sync not finished: {err or 'timeout or unknown'}",
+                    error_message=f"Upload sync not finished: {err or 'timeout or unknown'}",
                 )
 
         return UploadResult(
@@ -299,7 +299,7 @@ class AsyncFileTransfer:
             etag=etag,
             bytes_sent=bytes_sent,
             path=remote_path,
-            error=None,
+            error_message=None,
         )
 
     async def download(
@@ -337,7 +337,7 @@ class AsyncFileTransfer:
                     bytes_received=0,
                     path=remote_path,
                     local_path=local_path,
-                    error=message,
+                    error_message=message,
                 )
         # 1. Trigger cloud disk to OSS download sync
         req_id_sync = None
@@ -354,7 +354,7 @@ class AsyncFileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=f"session.context.sync(download) failed: {e}",
+                error_message=f"session.context.sync(download) failed: {e}",
             )
 
         # Optionally wait for task completion (ensure object is ready in OSS)
@@ -376,7 +376,7 @@ class AsyncFileTransfer:
                     bytes_received=0,
                     path=remote_path,
                     local_path=local_path,
-                    error=f"Download sync not finished: {err or 'timeout or unknown'}",
+                    error_message=f"Download sync not finished: {err or 'timeout or unknown'}",
                 )
 
         # 2. Get pre-signed download URL
@@ -392,7 +392,7 @@ class AsyncFileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=f"get_file_download_url failed: {getattr(url_res, 'message', 'unknown error')}",
+                error_message=f"get_file_download_url failed: {getattr(url_res, 'message', 'unknown error')}",
             )
 
         download_url = url_res.url
@@ -410,7 +410,7 @@ class AsyncFileTransfer:
                     bytes_received=0,
                     path=remote_path,
                     local_path=local_path,
-                    error=f"Destination exists and overwrite=False: {local_path}",
+                    error_message=f"Destination exists and overwrite=False: {local_path}",
                 )
 
             http_status, bytes_received = await asyncio.to_thread(
@@ -430,7 +430,7 @@ class AsyncFileTransfer:
                     bytes_received=bytes_received,
                     path=remote_path,
                     local_path=local_path,
-                    error=f"Download failed with HTTP {http_status}",
+                    error_message=f"Download failed with HTTP {http_status}",
                 )
         except Exception as e:
             return DownloadResult(
@@ -441,7 +441,7 @@ class AsyncFileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=f"Download exception: {e}",
+                error_message=f"Download exception: {e}",
             )
 
         return DownloadResult(
@@ -454,7 +454,7 @@ class AsyncFileTransfer:
             ),
             path=remote_path,
             local_path=local_path,
-            error=None,
+            error_message=None,
         )
 
     # ========== Internal Utilities ==========
@@ -1801,7 +1801,7 @@ class AsyncFileSystem(BaseService):
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=f"Upload failed: {str(e)}",
+                error_message=f"Upload failed: {str(e)}",
             )
 
     async def download_file(
@@ -1861,7 +1861,7 @@ class AsyncFileSystem(BaseService):
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=f"Download exception: {str(e)}",
+                error_message=f"Download exception: {str(e)}",
             )
 
     async def _get_file_change(self, path: str) -> FileChangeResult:
