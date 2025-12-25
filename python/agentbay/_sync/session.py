@@ -192,7 +192,7 @@ class Session:
                 session_id=self.session_id,
             )
 
-            response = self._get_client().get_session_detail_async(request)
+            response = self._get_client().get_session_detail(request)
             request_id = extract_request_id(response)
 
             try:

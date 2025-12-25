@@ -23,6 +23,39 @@ EXAMPLES_DIR = os.path.join(ROOT, "docs", "examples")
 EXAMPLES_ASYNC_DIR = os.path.join(EXAMPLES_DIR, "_async")
 EXAMPLES_SYNC_DIR = os.path.join(EXAMPLES_DIR, "_sync")
 
+def _build_client_api_method_replacements() -> dict:
+    """
+    Build replacements for client API methods automatically.
+
+    Assumption: async client methods are strictly sync method name + "_async",
+    e.g. get_session_detail() and get_session_detail_async().
+
+    We only generate replacements when BOTH methods exist in agentbay/api/client.py,
+    to avoid accidental renames of non-client symbols.
+    """
+    client_path = os.path.join(AGENTBAY_DIR, "api", "client.py")
+    if not os.path.exists(client_path):
+        return {}
+
+    try:
+        with open(client_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception:
+        return {}
+
+    sync_methods = set(re.findall(r"^\s*def\s+([a-zA-Z_]\w*)\s*\(", content, flags=re.MULTILINE))
+    async_methods = set(re.findall(r"^\s*async\s+def\s+([a-zA-Z_]\w*)\s*\(", content, flags=re.MULTILINE))
+
+    replacements = {}
+    for async_name in async_methods:
+        if not async_name.endswith("_async"):
+            continue
+        sync_name = async_name[: -len("_async")]
+        if sync_name in sync_methods:
+            replacements[async_name] = sync_name
+    return replacements
+
+
 def _apply_custom_replacements(content: str, file_path: str) -> str:
     """Apply custom replacements that unasync doesn't handle."""
     # Fix asyncio.wait_for with stop_event.wait() - this is a common pattern in filesystem.py
@@ -94,29 +127,6 @@ def generate_sync():
         "list_mcp_tools_async": "list_mcp_tools",
         "get_adb_link_async": "get_adb_link",
 
-        # Client API methods rename
-        "get_link_async": "get_link",
-        "get_context_async": "get_context",
-        "delete_context_async": "delete_context",
-        "list_contexts_async": "list_contexts",
-        "modify_context_async": "modify_context",
-        "delete_context_file_async": "delete_context_file",
-        "describe_context_files_async": "describe_context_files",
-        "get_context_file_download_url_async": "get_context_file_download_url",
-        "get_context_file_upload_url_async": "get_context_file_upload_url",
-        "get_cdp_link_async": "get_cdp_link",
-        "get_endpoint_url_async": "get_endpoint_url",
-        "get_context_info_async": "get_context_info",
-        "get_label_async": "get_label",
-        "get_session_async": "get_session",
-        "list_session_async": "list_session",
-        "create_mcp_session_async": "create_mcp_session",
-        "get_mcp_resource_async": "get_mcp_resource",
-        "sync_context_async": "sync_context",
-        "clear_context_async": "clear_context",
-        "get_and_load_internal_context_async": "get_and_load_internal_context",
-        "delete_session_async_async": "delete_session_async",
-
         # Browser Agent specific
         "navigate_async": "navigate",
         "screenshot_async": "screenshot",
@@ -167,6 +177,10 @@ def generate_sync():
         "asyncSetUp": "setUp",
         "asyncTearDown": "tearDown",
     }
+
+    # Automatically derive client API method mappings from api/client.py
+    # (reduces manual maintenance for newly added client methods).
+    common_replacements.update(_build_client_api_method_replacements())
 
     rules = [
         unasync.Rule(

@@ -21,7 +21,6 @@ import {
   ContextSyncResult,
   newContextManager,
 } from "./context-manager";
-import { BROWSER_RECORD_PATH } from "./config";
 import { FileSystem } from "./filesystem";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
@@ -36,7 +35,6 @@ import {
   SessionMetricsResult,
 } from "./types/api-response";
 import {
-  log,
   logError,
   logInfo,
   logDebug,
@@ -46,7 +44,6 @@ import {
   logCodeExecutionOutput,
   logInfoWithColor,
   setRequestId,
-  getRequestId,
 } from "./utils/logger";
 
 /**
