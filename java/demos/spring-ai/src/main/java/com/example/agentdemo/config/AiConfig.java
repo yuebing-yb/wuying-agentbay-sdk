@@ -20,7 +20,7 @@ public class AiConfig {
             throw new IllegalStateException("环境变量 AGENTBAY_API_KEY 未设置");
         }
         try {
-            return new AgentBay(apiKey);
+            return new AgentBay();
         } catch (AgentBayException e) {
             throw new IllegalStateException("初始化 AgentBay 失败", e);
         }

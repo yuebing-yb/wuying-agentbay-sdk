@@ -64,7 +64,7 @@ public class TestVisitAliyunExample {
     @Test
     public void testAgentBayInitialization() throws AgentBayException {
         logger.info("Testing AgentBay initialization");
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         assertNotNull("AgentBay instance should not be null", agentBay);
         logger.info("AgentBay initialized successfully");
     }
@@ -76,7 +76,7 @@ public class TestVisitAliyunExample {
     public void testSessionCreation() throws AgentBayException {
         logger.info("Testing session creation");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -100,7 +100,7 @@ public class TestVisitAliyunExample {
     public void testBrowserInitialization() throws AgentBayException, BrowserException {
         logger.info("Testing browser initialization");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -128,7 +128,7 @@ public class TestVisitAliyunExample {
     public void testVisitAliyun() throws AgentBayException, BrowserException {
         logger.info("Testing visit to aliyun.com");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -178,7 +178,7 @@ public class TestVisitAliyunExample {
     public void testPageFontManipulation() throws AgentBayException, BrowserException {
         logger.info("Testing page font manipulation");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -222,7 +222,7 @@ public class TestVisitAliyunExample {
     public void testPageTransformation() throws AgentBayException, BrowserException {
         logger.info("Testing page transformation");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -274,7 +274,7 @@ public class TestVisitAliyunExample {
     public void testCompleteWorkflow() throws AgentBayException, BrowserException {
         logger.info("Testing complete workflow");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         assertNotNull("AgentBay instance should not be null", agentBay);
         
         CreateSessionParams params = new CreateSessionParams();
@@ -337,7 +337,7 @@ public class TestVisitAliyunExample {
     public void testSessionCreationFailureHandling() throws AgentBayException {
         logger.info("Testing session creation failure handling");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -361,7 +361,7 @@ public class TestVisitAliyunExample {
     public void testBrowserInitializationFailureHandling() throws AgentBayException, BrowserException {
         logger.info("Testing browser initialization failure handling");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");

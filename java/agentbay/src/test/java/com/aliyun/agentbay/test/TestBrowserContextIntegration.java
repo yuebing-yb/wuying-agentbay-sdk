@@ -40,7 +40,7 @@ public class TestBrowserContextIntegration {
         }
         
         // Initialize AgentBay client
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         // Create a unique context name for this test
         contextName = "test-browser-context-" + System.currentTimeMillis();

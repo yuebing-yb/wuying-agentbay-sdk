@@ -38,7 +38,7 @@ public class TestAgentBaySdkStats {
     @Test
     public void testCreateSessionWithoutFramework() throws AgentBayException {
         String apiKey = getTestApiKey();
-        AgentBay agentBay = new AgentBay(apiKey);
+        AgentBay agentBay = new AgentBay();
 
         // Create session parameters without framework
         CreateSessionParams params = new CreateSessionParams();
@@ -73,7 +73,7 @@ public class TestAgentBaySdkStats {
     @Test
     public void testCreateSessionWithFramework() throws AgentBayException {
         String apiKey = getTestApiKey();
-        AgentBay agentBay = new AgentBay(apiKey);
+        AgentBay agentBay = new AgentBay();
 
         // Create session parameters with framework
         CreateSessionParams params = new CreateSessionParams();
@@ -109,7 +109,7 @@ public class TestAgentBaySdkStats {
     @Test
     public void testCreateSessionWithDifferentFrameworks() throws AgentBayException {
         String apiKey = getTestApiKey();
-        AgentBay agentBay = new AgentBay(apiKey);
+        AgentBay agentBay = new AgentBay();
 
         String[] frameworks = {"spring-ai", "langchain4j", ""};
 

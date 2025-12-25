@@ -48,7 +48,7 @@ public class TestSessionContextExample {
         assertFalse("AGENTBAY_API_KEY must not be empty", apiKey.trim().isEmpty());
         
         // Initialize AgentBay client
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         assertNotNull("AgentBay client should be initialized", agentBay);
         
         // Generate unique context name for this test run

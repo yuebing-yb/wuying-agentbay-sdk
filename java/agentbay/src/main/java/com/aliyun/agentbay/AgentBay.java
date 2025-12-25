@@ -45,11 +45,19 @@ public class AgentBay {
     private MobileSimulate mobileSimulate;
     private Network network;
 
+    public AgentBay() throws AgentBayException {
+        this(null, null);
+    }
+
     public AgentBay(String apiKey) throws AgentBayException {
-        this(apiKey, new com.aliyun.agentbay.Config());
+        this(apiKey, null);
     }
 
     public AgentBay(String apiKey, com.aliyun.agentbay.Config config) throws AgentBayException {
+        if (config == null) {
+            config = new com.aliyun.agentbay.Config();
+        }
+
         if (apiKey == null || apiKey.trim().isEmpty()) {
             apiKey = System.getenv("AGENTBAY_API_KEY");
             if (apiKey == null || apiKey.trim().isEmpty()) {

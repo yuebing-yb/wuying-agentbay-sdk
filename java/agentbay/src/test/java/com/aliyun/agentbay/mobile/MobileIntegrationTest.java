@@ -31,7 +31,7 @@ public class MobileIntegrationTest {
             apiKey != null && !apiKey.isEmpty());
         
         try {
-            agentBay = new AgentBay(apiKey);
+            agentBay = new AgentBay();
             
             System.out.println("Creating mobile session for integration tests...");
             CreateSessionParams params = new CreateSessionParams();

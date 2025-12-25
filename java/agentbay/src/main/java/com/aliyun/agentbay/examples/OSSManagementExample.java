@@ -67,7 +67,7 @@ public class OSSManagementExample {
         Session session = null;
         
         try {
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             
             // Create session
             System.out.println("\nCreating a new session...");

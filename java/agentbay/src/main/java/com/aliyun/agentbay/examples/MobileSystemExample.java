@@ -38,7 +38,7 @@ public class MobileSystemExample {
         
         try {
             // Initialize AgentBay client
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             
             // Create a mobile session
             System.out.println("Creating a new mobile session...");

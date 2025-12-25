@@ -23,7 +23,7 @@ public class MobileAppOperationsExample {
         
         try {
             // Initialize AgentBay client
-            AgentBay client = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
+            AgentBay client = new AgentBay();
             
             // Create a mobile session
             System.out.println("Creating mobile session...");

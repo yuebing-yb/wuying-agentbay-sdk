@@ -340,15 +340,13 @@ public Session createMobileTestSession(
 ## 相关 API
 
 - [ExtraConfigs](ExtraConfigs.md)
-- [MobileSimulateConfig](MobileSimulateConfig.md)
-- [AppManagerRule](AppManagerRule.md)
 - [CreateSessionParams](CreateSessionParams.md)
-- [Mobile.configure()](Mobile.md#configure)
+- [Mobile API](mobile-use/mobile.md)
 
 ## 参考示例
 
 完整示例代码：
-- [基础移动配置示例](../examples/mobile-extra-config-usage.md#示例1基础配置)
-- [应用白名单示例](../examples/mobile-extra-config-usage.md#示例2应用白名单配置)
-- [设备模拟示例](../examples/mobile-extra-config-usage.md#示例3设备模拟完整流程)
+- [基础配置](../examples/mobile-extra-config-usage.md#基础配置)
+- [应用白名单/黑名单](../examples/mobile-extra-config-usage.md#2-应用白名单黑名单-appmanagerrule)
+- [设备模拟](../examples/mobile-extra-config-usage.md#5-设备模拟-simulateconfig--核心功能)
 

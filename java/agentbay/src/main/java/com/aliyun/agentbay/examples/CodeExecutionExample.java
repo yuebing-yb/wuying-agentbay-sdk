@@ -16,15 +16,8 @@ public class CodeExecutionExample {
 
     public static void main(String[] args) {
         try {
-            String apiKey = System.getenv("AGENTBAY_API_KEY");
-            if (apiKey == null || apiKey.trim().isEmpty()) {
-                System.err.println("Error: AGENTBAY_API_KEY environment variable not set");
-                return;
-            }
-
-            // Create AgentBay client (API key from environment variable AGENTBAY_API_KEY)
             System.out.println("Creating AgentBay client...");
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
 
             // Create a session
             System.out.println("Creating session...");

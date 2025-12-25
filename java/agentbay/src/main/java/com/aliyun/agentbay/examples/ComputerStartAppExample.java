@@ -37,7 +37,7 @@ public class ComputerStartAppExample {
 
             // Create AgentBay client
             System.out.println("Creating AgentBay client...");
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
 
             // Create a session
             System.out.println("Creating session...");

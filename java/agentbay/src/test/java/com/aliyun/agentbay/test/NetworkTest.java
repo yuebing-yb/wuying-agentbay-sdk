@@ -1,5 +1,6 @@
-package com.aliyun.agentbay;
+package com.aliyun.agentbay.test;
 
+import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.network.Network;
 import com.aliyun.agentbay.network.NetworkResult;
 import com.aliyun.agentbay.network.NetworkStatusResult;

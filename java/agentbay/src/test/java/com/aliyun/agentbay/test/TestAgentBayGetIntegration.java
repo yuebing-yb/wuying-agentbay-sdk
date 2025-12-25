@@ -53,7 +53,7 @@ public class TestAgentBayGetIntegration {
     @Before
     public void setUp() throws AgentBayException {
         String apiKey = getTestApiKey();
-        this.agentBayClient = new AgentBay(apiKey);
+        this.agentBayClient = new AgentBay();
     }
 
     /**

@@ -29,7 +29,7 @@ public class NetworkExample {
             }
 
             System.out.println("Creating AgentBay client...");
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
 
             System.out.println("\n" + repeat("=", 60));
             System.out.println("Example 1: Create a network");

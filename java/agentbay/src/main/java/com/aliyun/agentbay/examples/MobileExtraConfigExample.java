@@ -34,7 +34,7 @@ public class MobileExtraConfigExample {
 
         try {
             // Initialize AgentBay client
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             System.out.println("AgentBay client initialized successfully");
 
             // Example 1: Basic Mobile Configuration

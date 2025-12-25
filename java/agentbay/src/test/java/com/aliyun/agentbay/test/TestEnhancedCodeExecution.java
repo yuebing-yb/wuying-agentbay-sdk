@@ -33,7 +33,7 @@ public class TestEnhancedCodeExecution {
             throw new RuntimeException("AGENTBAY_API_KEY environment variable not set");
         }
 
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("code_latest");
         SessionResult sessionResult = agentBay.create(params);

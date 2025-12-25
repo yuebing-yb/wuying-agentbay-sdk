@@ -76,7 +76,7 @@ public class TestOSSManagement {
         System.out.println("OSS_TEST_BUCKET: " + ossBucket);
         
         // Initialize AgentBay
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         // Create session
         System.out.println("\nCreating a new session...");

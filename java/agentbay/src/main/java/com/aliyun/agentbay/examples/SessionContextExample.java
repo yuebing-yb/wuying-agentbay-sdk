@@ -40,7 +40,7 @@ public class SessionContextExample {
         Context context = null;
         
         try {
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             
             // Example 1: List all contexts
             System.out.println("\nExample 1: Listing all contexts...");

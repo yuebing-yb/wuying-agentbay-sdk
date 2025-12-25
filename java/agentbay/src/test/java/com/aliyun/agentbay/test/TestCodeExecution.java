@@ -42,7 +42,7 @@ public class TestCodeExecution {
     public static void setUp() throws AgentBayException {
         System.out.println("Setting up test environment...");
         String apiKey = getTestApiKey();
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
 
         // Create a session with Linux image for code execution
         CreateSessionParams params = new CreateSessionParams();

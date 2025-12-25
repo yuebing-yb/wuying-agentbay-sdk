@@ -33,7 +33,7 @@ public class MobileSimulateIntegrationTest {
             apiKey != null && !apiKey.isEmpty());
         
         try {
-            agentBay = new AgentBay(apiKey);
+            agentBay = new AgentBay();
             mobileSimulate = new MobileSimulate(agentBay);
             
             System.out.println("MobileSimulate integration tests initialized");

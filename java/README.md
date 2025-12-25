@@ -4,8 +4,7 @@
 
 ## 📦 Installation
 
-Add the dependency to your `pom.xml`:
-
+### Maven
 ```xml
 <dependency>
     <groupId>com.aliyun</groupId>
@@ -14,10 +13,9 @@ Add the dependency to your `pom.xml`:
 </dependency>
 ```
 
-Or if you're using Gradle:
-
+### Gradle
 ```gradle
-implementation 'com.aliyun:agentbay-sdk:0.0.3'
+implementation 'com.aliyun:agentbay-sdk:0.0.7'
 ```
 
 ## 🚀 Prerequisites
@@ -31,46 +29,69 @@ Before using the SDK, you need to:
 ## 🚀 Quick Start
 
 ```java
-import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.session.Session;
-import com.aliyun.agentbay.session.CreateSessionParams;
-import com.aliyun.agentbay.model.SessionResult;
-import com.aliyun.agentbay.model.CommandResult;
-import com.aliyun.agentbay.filesystem.FileContentResult;
+import com.aliyun.agentbay.*;
 
-public class QuickStart {
-    public static void main(String[] args) throws Exception {
-        // Create AgentBay client
-        AgentBay agentBay = new AgentBay();
+// Create session
+AgentBay agentBay = new AgentBay();
+CreateSessionParams params = new CreateSessionParams();
+SessionResult result = agentBay.create(params);
 
-        // Create session
-        CreateSessionParams params = new CreateSessionParams();
-        params.setImageId("linux_latest");
-        SessionResult result = agentBay.create(params);
-        // Verified: ✓ Client initialized and session created successfully
+if (result.isSuccess()) {
+    Session session = result.getSession();
 
-        if (result.isSuccess()) {
-            Session session = result.getSession();
+    // Execute command
+    CommandResult cmdResult = session.getCommand().executeCommand("ls -la");
+    System.out.println(cmdResult.getOutput());
 
-            // Execute command
-            CommandResult cmdResult = session.getCommand().executeCommand("ls -la");
-            System.out.println(cmdResult.getOutput());
-            // Verified: ✓ Command executed successfully
-            // Sample output: "总计 100\ndrwxr-x--- 16 wuying wuying 4096..."
+    // File operations
+    session.getFileSystem().writeFile("/tmp/test.txt", "Hello World");
+    FileContentResult content = session.getFileSystem().readFile("/tmp/test.txt");
+    System.out.println(content.getContent());  // Hello World
 
-            // File operations
-            session.getFileSystem().writeFile("/tmp/test.txt", "Hello World");
-            FileContentResult content = session.getFileSystem().readFile("/tmp/test.txt");
-            System.out.println(content.getContent());
-            // Verified: ✓ File written and read successfully
-            // Output: "Hello World"
-
-            // Clean up
-            session.delete();
-        }
-    }
+    // Clean up
+    session.delete();
 }
 ```
+
+## ⚙️ Configuration
+
+### Using Environment Variables (Recommended)
+
+The SDK automatically reads configuration from environment variables:
+
+```bash
+export AGENTBAY_API_KEY=your_api_key
+export AGENTBAY_ENDPOINT=wuyingai.cn-shanghai.aliyuncs.com  # Optional
+export AGENTBAY_REGION_ID=cn-shanghai                       # Optional
+export AGENTBAY_TIMEOUT_MS=60000                            # Optional
+```
+
+```java
+AgentBay agentBay = new AgentBay();
+```
+
+### Explicit Configuration
+
+You can also provide configuration explicitly:
+
+```java
+String apiKey = "your_api_key";
+Config config = new Config("cn-shanghai", "wuyingai.cn-shanghai.aliyuncs.com", 60000);
+AgentBay agentBay = new AgentBay(apiKey, config);
+```
+
+Or just override the API key:
+
+```java
+AgentBay agentBay = new AgentBay("your_api_key");
+```
+
+### Configuration Priority
+
+The SDK uses the following precedence order (highest to lowest):
+1. Explicitly passed configuration in code
+2. Environment variables
+3. Default configuration
 
 ## 📖 Complete Documentation
 
@@ -78,14 +99,7 @@ public class QuickStart {
 - [📚 Quick Start Tutorial](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/README.md) - Get started in 5 minutes
 - [🎯 Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understand cloud environments and sessions
 
-### 🚀 Java SDK Documentation
-
-**Java-Specific Guides:**
-- [📖 Java SDK Guides](docs/guides/README.md) - Complete guide index for Java SDK
-- [🔄 Programming Model](docs/guides/programming-model.md) - Java sync/concurrency patterns
-- [🔧 Java API Reference](docs/api/README.md) - Detailed API documentation with quick links
-- [💻 Java Examples](docs/examples/README.md) - Runnable example code with detailed explanations
-
+### 🚀 Experienced Users
 **Choose Your Cloud Environment:**
 - 🌐 [Browser Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/browser-use/README.md) - Web scraping, browser testing, form automation
 - 🖥️ [Computer Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/computer-use/README.md) - Windows desktop automation, UI testing
@@ -93,37 +107,26 @@ public class QuickStart {
 - 💻 [CodeSpace](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/codespace/README.md) - Code execution, development environments
 
 **Additional Resources:**
-- [📖 Platform Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Cross-language platform features
+- [📖 Feature Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Complete feature introduction
+- [🔧 Java API Reference](docs/api/README.md) - Detailed API documentation
+- [💻 Java Examples](docs/examples/README.md) - Complete example code
 - [📋 Logging Configuration](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
-- [⚙️ Extra Configs Guide](docs/EXTRA_CONFIGS_GUIDE.md) - Advanced mobile and browser configurations
 
 ## 🔧 Core Features Quick Reference
 
 ### Session Management
 ```java
 // Create session
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("linux_latest");
-SessionResult result = agentBay.create(params);
+SessionResult result = agentBay.create(new CreateSessionParams());
 Session session = result.getSession();
-// Verified: ✓ Session created successfully
 
-// List sessions by labels with pagination
-import com.aliyun.agentbay.model.SessionListResult;
-import java.util.HashMap;
-import java.util.Map;
-
+// List sessions by labels
 Map<String, String> labels = new HashMap<>();
 labels.put("environment", "production");
 SessionListResult listResult = agentBay.list(labels, 10);
-if (listResult.isSuccess()) {
-    List<String> sessionIds = listResult.getSessionIds();
-}
-// Verified: ✓ Sessions listed successfully with pagination support
 
 // Delete session
 session.delete();
-// Verified: ✓ Session deleted successfully
 ```
 
 ### File Operations
@@ -131,12 +134,10 @@ session.delete();
 // Read and write files
 session.getFileSystem().writeFile("/path/file.txt", "content");
 FileContentResult content = session.getFileSystem().readFile("/path/file.txt");
-// Verified: ✓ File operations work correctly
-// content.getContent() contains the file's text content
+System.out.println(content.getContent());
 
 // List directory
 DirectoryListResult files = session.getFileSystem().listDirectory("/path");
-// Verified: ✓ Returns list of file/directory information
 ```
 
 ### Command Execution
@@ -144,101 +145,34 @@ DirectoryListResult files = session.getFileSystem().listDirectory("/path");
 // Execute command
 CommandResult result = session.getCommand().executeCommand("java MyClass.java");
 System.out.println(result.getOutput());
-// Verified: ✓ Command executed successfully
-// result.getOutput() contains the command's stdout
 ```
 
 ### Data Persistence
 ```java
 // Create context
-import com.aliyun.agentbay.context.ContextResult;
-import com.aliyun.agentbay.context.Context;
-
-ContextResult contextResult = agentBay.getContext().get("my-project", true);
-Context context = contextResult.getContext();
-// Verified: ✓ Context created or retrieved successfully
+Context context = agentBay.getContext().get("my-project", true).getContext();
 
 // Create session with context
-import com.aliyun.agentbay.context.ContextSync;
-import com.aliyun.agentbay.context.SyncPolicy;
-import java.util.Arrays;
-
 ContextSync contextSync = ContextSync.create(
     context.getId(),
     "/tmp/data",
     SyncPolicy.defaultPolicy()
 );
-CreateSessionParams params = new CreateSessionParams();
-params.setContextSyncs(Arrays.asList(contextSync));
-params.setImageId("linux_latest");
+CreateSessionParams params = new CreateSessionParams()
+    .setContextSyncs(Arrays.asList(contextSync));
 Session session = agentBay.create(params).getSession();
-// Verified: ✓ Session created with context synchronization
-// Data in /tmp/data will be synchronized to the context
-```
-
-### Browser Automation
-```java
-// Initialize browser
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.Page;
-
-session.getBrowser().init();
-Browser browser = session.getBrowser().getBrowser();
-Page page = browser.newContext().newPage();
-page.navigate("https://example.com");
-// Verified: ✓ Browser automation with Playwright integration
 ```
 
 ### Code Execution
 ```java
-// Execute Python code
-import com.aliyun.agentbay.model.CodeExecutionResult;
+// Run code in isolated environment
+CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
+Session session = agentBay.create(params).getSession();
 
-String pythonCode = "print('Hello World')";
-CodeExecutionResult result = session.getCode().runCode(pythonCode, "python");
-System.out.println(result.getResult());
-// Verified: ✓ Code execution in isolated environment
-```
-
-## 📝 Examples
-
-Comprehensive examples are available in the `src/main/java/com/aliyun/agentbay/examples/` directory:
-
-- **[FileSystemExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/FileSystemExample.java)** - File operations, directory management, file editing
-- **[SessionContextExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/SessionContextExample.java)** - Context management and data persistence
-- **[ContextSyncLifecycleExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/ContextSyncLifecycleExample.java)** - Complete context sync lifecycle with different sync modes
-- **[CodeExecutionExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/CodeExecutionExample.java)** - Execute Python and JavaScript code
-- **[PlaywrightExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/PlaywrightExample.java)** - Browser automation with Playwright
-- **[BrowserContextExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserContextExample.java)** - Browser context and cookies persistence
-- **[FileTransferExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/FileTransferExample.java)** - Large file upload/download
-- **[OSSManagementExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/OSSManagementExample.java)** - OSS integration
-- **[VisitAliyunExample.java](agentbay/src/main/java/com/aliyun/agentbay/examples/VisitAliyunExample.java)** - Real-world browser automation
-- **[Game2048Example.java](agentbay/src/main/java/com/aliyun/agentbay/examples/Game2048Example.java)** - Interactive UI automation
-
-### Running Examples
-
-```bash
-# Set your API key
-export AGENTBAY_API_KEY=your_api_key_here
-
-# Run any example
-cd agentbay
-mvn clean compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.FileSystemExample"
-```
-
-## 🏗️ Development
-
-### Build from Source
-
-```bash
-cd agentbay
-mvn clean install
-```
-
-### Run Tests
-
-```bash
-mvn test
+CodeExecutionResult result = session.getCode().runCode("print('Hello World')", "python");
+if (result.isSuccess()) {
+    System.out.println(result.getResult());  // Hello World
+}
 ```
 
 ## 🆘 Get Help

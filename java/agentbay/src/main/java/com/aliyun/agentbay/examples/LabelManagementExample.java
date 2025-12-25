@@ -38,7 +38,7 @@ public class LabelManagementExample {
 
         try {
             // Initialize AgentBay client
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             System.out.println("✓ AgentBay client initialized");
 
             // Create a new session

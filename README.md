@@ -35,6 +35,7 @@
 | Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) |
 | TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) |
 | Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) |
+| Java | Maven/Gradle (see docs) | [Java Docs](java/README.md) |
 
 ## 🚀 Prerequisites
 
@@ -99,6 +100,24 @@ fmt.Println(res.Output)  // Hello AgentBay
 
 // Clean up
 client.Delete(session, false)
+```
+
+### Java
+```java
+import com.aliyun.agentbay.*;
+
+// Create session and execute code
+AgentBay agentBay = new AgentBay();
+CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
+Session session = agentBay.create(params).getSession();
+
+CodeExecutionResult result = session.getCode().runCode("print('Hello AgentBay')", "python");
+if (result.isSuccess()) {
+    System.out.println(result.getResult());  // Hello AgentBay
+}
+
+// Clean up
+agentBay.delete(session, false);
 ```
 
 

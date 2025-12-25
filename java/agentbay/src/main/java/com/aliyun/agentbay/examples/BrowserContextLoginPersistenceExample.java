@@ -21,7 +21,7 @@ public class BrowserContextLoginPersistenceExample {
                 return;
             }
 
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             System.out.println("AgentBay client initialized");
 
             String contextName = "xiaohongshu-login-context-" + System.currentTimeMillis();

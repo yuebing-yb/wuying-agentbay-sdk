@@ -23,28 +23,21 @@ import com.aliyun.agentbay.session.Session;
 public class AgentExample {
 
     public static void main(String[] args) throws Exception {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            System.err.println("Error: AGENTBAY_API_KEY environment variable is not set");
-            System.err.println("Please set it with: export AGENTBAY_API_KEY=your_api_key_here");
-            return;
-        }
-
-        AgentBay agentBay = new AgentBay(apiKey, new Config());
+        AgentBay agentBay = new AgentBay();
 
         System.out.println("=== AgentBay Agent Module Example ===\n");
 
         // Example 1: Computer Agent - Synchronous execution
         System.out.println("--- Example 1: Computer Agent (Sync) ---");
-        //computerAgentSyncExample(agentBay);
+        computerAgentSyncExample(agentBay);
 
         // Example 2: Computer Agent - Asynchronous execution
         System.out.println("\n--- Example 2: Computer Agent (Async) ---");
-        //computerAgentAsyncExample(agentBay);
+        computerAgentAsyncExample(agentBay);
 
         // Example 3: Browser Agent - Synchronous execution
         System.out.println("\n--- Example 3: Browser Agent (Sync) ---");
-        //browserAgentSyncExample(agentBay);
+        browserAgentSyncExample(agentBay);
 
         // Example 4: Browser Agent - Asynchronous execution
         System.out.println("\n--- Example 4: Browser Agent (Async) ---");
@@ -265,16 +258,11 @@ public class AgentExample {
                 System.err.println("Failed to initialize browser agent: " + initResult.getErrorMessage());
                 return;
             }
-            SessionInfoResult info = session.info();
-            System.out.println(info.getSessionInfo().getResourceUrl());
 
             System.out.println("✅ Browser agent initialized");
 
             // Execute a browser task asynchronously
-            String task = "1.打开 https://www.brcargo.com/NEC_WEB，接受所有cookies\\n\" +\n"
-                    + "                \"2. 点击页面的【货况快速查询】\\n\" +\n"
-                    + "                \"3. 在提单编号的第二个输入框中输入：55024933，前面固定的3位数字不要动\\n\" +\n"
-                    + "                \"4. 点击“查询”\\n\" +\n" + "                \"5. 分析页面，提取页面所有航班的班机编号、起飞时间和到达时间";
+            String task = "Search 'AgentBay documentation' on Baidu";
             System.out.println("\nExecuting task asynchronously: " + task);
 
             ExecutionResult result = session.getAgent().getBrowser().executeTask(task);

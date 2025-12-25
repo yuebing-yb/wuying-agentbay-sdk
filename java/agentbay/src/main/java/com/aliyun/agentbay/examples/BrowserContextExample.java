@@ -54,7 +54,7 @@ public class BrowserContextExample {
                 return;
             }
             
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             System.out.println("✅ AgentBay client initialized");
             
             // Example 1: Basic browser context with data persistence

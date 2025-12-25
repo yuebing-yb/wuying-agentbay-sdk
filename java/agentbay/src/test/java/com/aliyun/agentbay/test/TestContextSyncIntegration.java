@@ -40,7 +40,7 @@ public class TestContextSyncIntegration {
         }
         
         // Initialize AgentBay client
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         logger.info("AgentBay client initialized");
     }
     

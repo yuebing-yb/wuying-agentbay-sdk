@@ -29,7 +29,7 @@ public class VisitAliyunExample {
 
         try {
             System.out.println("Initializing AgentBay client...");
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
 
             System.out.println("Creating a new session...");
             CreateSessionParams params = new CreateSessionParams();

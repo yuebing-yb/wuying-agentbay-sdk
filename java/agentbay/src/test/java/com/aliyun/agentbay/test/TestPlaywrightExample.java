@@ -65,7 +65,7 @@ public class TestPlaywrightExample {
     public void testCreateAgentBayClient() throws AgentBayException {
         logger.info("Testing AgentBay client creation");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         assertNotNull("AgentBay client should be created", agentBay);
         
         logger.info("AgentBay client created successfully");
@@ -78,7 +78,7 @@ public class TestPlaywrightExample {
     public void testCreateSession() throws AgentBayException {
         logger.info("Testing session creation");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -103,7 +103,7 @@ public class TestPlaywrightExample {
     public void testBrowserInitialization() throws AgentBayException, BrowserException {
         logger.info("Testing browser initialization");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -132,7 +132,7 @@ public class TestPlaywrightExample {
     public void testPlaywrightIntegration() throws AgentBayException, BrowserException {
         logger.info("Testing Playwright integration");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -180,7 +180,7 @@ public class TestPlaywrightExample {
     public void testPageManipulation() throws AgentBayException, BrowserException {
         logger.info("Testing page manipulation");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -227,7 +227,7 @@ public class TestPlaywrightExample {
     public void testSessionDeletion() throws AgentBayException {
         logger.info("Testing session deletion");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -275,7 +275,7 @@ public class TestPlaywrightExample {
     public void testCreateSessionWithNullParams() throws AgentBayException {
         logger.info("Testing session creation with null parameters");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         // Create session with null params (should use defaults)
         SessionResult sessionResult = agentBay.create(null);
@@ -301,7 +301,7 @@ public class TestPlaywrightExample {
     public void testBrowserInitializationWithCustomOptions() throws AgentBayException, BrowserException {
         logger.info("Testing browser initialization with custom options");
         
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -328,7 +328,7 @@ public class TestPlaywrightExample {
         logger.info("Testing complete workflow");
         
         // Step 1: Initialize client
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         assertNotNull("AgentBay client should be created", agentBay);
         
         // Step 2: Create session

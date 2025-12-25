@@ -41,7 +41,7 @@ public class TestContextManagerUnit {
         }
 
         // Initialize AgentBay client
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
 
         // Create a unique context name for this test
         String contextName = "test-context-manager-" + System.currentTimeMillis();

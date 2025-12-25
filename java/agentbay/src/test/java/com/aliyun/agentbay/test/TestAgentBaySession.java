@@ -34,7 +34,7 @@ public class TestAgentBaySession {
     public void testCreateListDelete() throws AgentBayException {
         // Test create, list, and delete methods
         String apiKey = getTestApiKey();
-        AgentBay agentBay = new AgentBay(apiKey);
+        AgentBay agentBay = new AgentBay();
 
         // Create a session
         System.out.println("Creating a new session...");

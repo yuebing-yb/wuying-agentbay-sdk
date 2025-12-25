@@ -42,7 +42,7 @@ public class MobileSimulateExample {
 
         try {
             // Initialize AgentBay client
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             System.out.println("AgentBay client initialized successfully");
 
             // Example: Mobile device simulation

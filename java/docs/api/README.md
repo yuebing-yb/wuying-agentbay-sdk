@@ -99,7 +99,7 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
 
 - [ExtraConfigs](ExtraConfigs.md) - `com.aliyun.agentbay.model.ExtraConfigs`
   - Advanced environment configurations (mobile, browser)
-  - See also: [ExtraConfigs Complete Guide](../EXTRA_CONFIGS_GUIDE.md)
+  - See also: [MobileExtraConfig Usage Guide](../examples/mobile-extra-config-usage.md)
 
 ## 🎯 Quick Start by Use Case
 

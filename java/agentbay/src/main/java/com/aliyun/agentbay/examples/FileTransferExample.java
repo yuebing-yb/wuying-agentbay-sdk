@@ -37,7 +37,7 @@ public class FileTransferExample {
         System.out.println("🚀 File Transfer Example");
         System.out.println("==================================================");
 
-        AgentBay agentbay = new AgentBay(apiKey);
+        AgentBay agentbay = new AgentBay();
         System.out.println("✅ AgentBay client initialized");
 
         CreateSessionParams sessionParams = new CreateSessionParams();
@@ -193,7 +193,7 @@ public class FileTransferExample {
         System.out.println("\n🚀 Byte Array Transfer Example (Java SDK Extension)");
         System.out.println("==================================================");
 
-        AgentBay agentbay = new AgentBay(apiKey);
+        AgentBay agentbay = new AgentBay();
         System.out.println("✅ AgentBay client initialized");
 
         CreateSessionParams sessionParams = new CreateSessionParams();

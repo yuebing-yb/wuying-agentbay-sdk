@@ -78,7 +78,7 @@ public class TestGame2048Example {
         assertFalse("AGENTBAY_API_KEY cannot be empty", apiKey.trim().isEmpty());
         
         // Initialize AgentBay client for each test
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         // Create session for tests that need it
         CreateSessionParams params = new CreateSessionParams();

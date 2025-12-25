@@ -1,5 +1,6 @@
-package com.aliyun.agentbay;
+package com.aliyun.agentbay.test;
 
+import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.SessionResult;
@@ -26,7 +27,7 @@ public class SessionLabelTest {
         String apiKey = System.getenv("AGENTBAY_API_KEY");
         assertNotNull(apiKey, "AGENTBAY_API_KEY environment variable must be set");
 
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
 
         // Create a test session
         CreateSessionParams params = new CreateSessionParams();

@@ -28,7 +28,7 @@ public class MobileGetAdbUrlExample {
             }
             
             // Initialize AgentBay client
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
             
             // Create a mobile session
             // NOTE: This will only work with mobile_latest image

@@ -33,7 +33,7 @@ public class TestSessionConfigurationIntegration {
     public void setUp() throws Exception {
         String apiKey = System.getenv("AGENTBAY_API_KEY");
         assertNotNull(apiKey, "AGENTBAY_API_KEY must be set");
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
     }
 
     @AfterEach

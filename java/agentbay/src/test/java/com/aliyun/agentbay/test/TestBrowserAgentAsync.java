@@ -111,7 +111,7 @@ public class TestBrowserAgentAsync {
         assertNotNull("AGENTBAY_API_KEY environment variable must be set", apiKey);
         assertFalse("AGENTBAY_API_KEY cannot be empty", apiKey.trim().isEmpty());
 
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
 
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");

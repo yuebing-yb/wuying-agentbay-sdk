@@ -84,7 +84,7 @@ public class TestFileTransfer {
         System.out.println("========================================");
 
         String apiKey = getTestApiKey();
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
 
         // Create a simple session - let AgentBay handle context creation automatically
         CreateSessionParams params = new CreateSessionParams();

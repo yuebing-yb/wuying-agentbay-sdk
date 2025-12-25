@@ -39,7 +39,7 @@ public class TestSession {
     public static void setUp() throws AgentBayException {
         // Set up test fixtures
         String apiKey = getTestApiKey();
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
 
         // Create a session with default windows image
         System.out.println("Creating a new session for testing...");

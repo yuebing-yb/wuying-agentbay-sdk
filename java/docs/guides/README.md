@@ -4,7 +4,7 @@ Complete guides for using the AgentBay Java SDK effectively.
 
 ## 📚 Getting Started
 
-- [Quick Start](../../README.md#-quick-start) - Get up and running in 5 minutes
+- [Quick Start](../../README.md#quick-start) - Get up and running in 5 minutes
 - [Core Concepts](../../../docs/guides/README.md) - Understand sessions, contexts, and cloud environments
 
 ## 🎯 Feature Guides
@@ -24,7 +24,7 @@ Complete guides for using the AgentBay Java SDK effectively.
 **Configuration:**
 - [Logging Configuration](../../../docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
 - [Session Configuration](../api/session-configuration-parameters.md) - Complete session parameter reference
-- [Extra Configs Guide](../EXTRA_CONFIGS_GUIDE.md) - Advanced mobile and browser configurations
+- [MobileExtraConfig Usage Guide](../examples/mobile-extra-config-usage.md) - Advanced mobile configurations
 
 ### Environment-Specific Guides
 
@@ -58,7 +58,7 @@ Comprehensive examples demonstrating SDK capabilities:
 - [Example Index](../examples/README.md) - Complete list of runnable examples
 - [Basic Examples](../examples/README.md#core-features) - File operations, session management
 - [Browser Examples](../examples/README.md#browser-automation) - Playwright integration, browser automation
-- [Mobile Examples](../examples/README.md#mobile-use--mobile-automation) - Mobile UI automation, ADB connection
+- [Mobile Examples](../examples/README.md#mobile-use) - Mobile UI automation, ADB connection
 - [Computer Examples](../examples/README.md#computer-use--application-management) - Desktop app management
 
 ## 🔍 API Reference
@@ -135,7 +135,7 @@ agentBay.delete(session, true);  // sync_context=true
 
 ## 🚀 Next Steps
 
-1. **New to AgentBay?** Start with the [Quick Start](../../README.md#-quick-start)
+1. **New to AgentBay?** Start with the [Quick Start](../../README.md#quick-start)
 2. **Need examples?** Browse the [Example Index](../examples/README.md)
 3. **Looking for specific features?** Check the [API Reference](../api/README.md)
 4. **Want to understand concepts?** Read the [Feature Guides](../../../docs/guides/README.md)

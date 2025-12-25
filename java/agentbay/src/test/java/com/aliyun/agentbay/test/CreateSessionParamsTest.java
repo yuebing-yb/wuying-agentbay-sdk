@@ -1,4 +1,4 @@
-package com.aliyun.agentbay;
+package com.aliyun.agentbay.test;
 
 import com.aliyun.agentbay.mobile.MobileExtraConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateConfig;

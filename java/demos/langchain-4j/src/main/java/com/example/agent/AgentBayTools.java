@@ -14,7 +14,7 @@ public class AgentBayTools {
     private final AgentBay agentBay;
 
     public AgentBayTools(String apiKey) throws AgentBayException {
-        this.agentBay = new AgentBay(apiKey);
+        this.agentBay = new AgentBay();
     }
 
     @Tool("在安全的云端沙箱中执行 Python 3 代码。适用于任何计算、数据分析或代码生成任务。返回执行结果或错误信息。")

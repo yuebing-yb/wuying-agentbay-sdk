@@ -46,7 +46,7 @@ params.setExtraConfigs(extraConfigs);
 - [ExtraConfigs API 文档](ExtraConfigs.md)
 - [MobileExtraConfig API 文档](MobileExtraConfig.md)
 - [CreateSessionParams API 文档](CreateSessionParams.md)
-- [完整使用指南](EXTRA_CONFIGS_GUIDE.md)
+- [MobileExtraConfig 使用指南](../examples/mobile-extra-config-usage.md)
 
 ## 代码示例
 
@@ -56,7 +56,7 @@ params.setExtraConfigs(extraConfigs);
 
 ## 测试用例
 
-- [ExtraConfigsTest.java](../../agentbay/src/test/java/com/aliyun/agentbay/ExtraConfigsTest.java)
-- [CreateSessionParamsTest.java](../../agentbay/src/test/java/com/aliyun/agentbay/CreateSessionParamsTest.java)
+- [ExtraConfigsTest.java](../../agentbay/src/test/java/com/aliyun/agentbay/test/ExtraConfigsTest.java)
+- [CreateSessionParamsTest.java](../../agentbay/src/test/java/com/aliyun/agentbay/test/CreateSessionParamsTest.java)
 - [TestSessionConfigurationIntegration.java](../../agentbay/src/test/java/com/aliyun/agentbay/test/TestSessionConfigurationIntegration.java)
 

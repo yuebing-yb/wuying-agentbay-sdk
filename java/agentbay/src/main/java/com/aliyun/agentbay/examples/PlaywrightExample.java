@@ -28,7 +28,7 @@ public class PlaywrightExample {
         try {
             // Initialize AgentBay client
             System.out.println("Initializing AgentBay client...");
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
 
             // Create a session
             System.out.println("Creating a new session...");

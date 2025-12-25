@@ -22,9 +22,31 @@ public class Config {
     }
 
     public Config() {
-        this.regionId = "cn-shanghai";
-        this.endpoint = "wuyingai.cn-shanghai.aliyuncs.com";
-        this.timeoutMs = 60000; // 60 seconds - matches Python version for browser automation
+        this.regionId = loadRegionId();
+        this.endpoint = loadEndpoint();
+        this.timeoutMs = loadTimeoutMs();
+    }
+
+    private String loadRegionId() {
+        String envValue = System.getenv("AGENTBAY_REGION_ID");
+        return (envValue != null && !envValue.trim().isEmpty()) ? envValue : "cn-shanghai";
+    }
+
+    private String loadEndpoint() {
+        String envValue = System.getenv("AGENTBAY_ENDPOINT");
+        return (envValue != null && !envValue.trim().isEmpty()) ? envValue : "wuyingai.cn-shanghai.aliyuncs.com";
+    }
+
+    private int loadTimeoutMs() {
+        String envValue = System.getenv("AGENTBAY_TIMEOUT_MS");
+        if (envValue != null && !envValue.trim().isEmpty()) {
+            try {
+                return Integer.parseInt(envValue);
+            } catch (NumberFormatException e) {
+                System.err.println("Warning: Invalid AGENTBAY_TIMEOUT_MS value: " + envValue + ", using default");
+            }
+        }
+        return 60000;
     }
 
     public String getRegionId() {

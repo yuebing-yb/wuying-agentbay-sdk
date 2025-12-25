@@ -44,7 +44,7 @@ public class TestAgentIntegration {
         Thread.sleep(3000);
         
         String apiKey = getTestApiKey();
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         // Create a session with windows_latest image
         CreateSessionParams params = new CreateSessionParams();

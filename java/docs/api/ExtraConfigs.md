@@ -205,8 +205,6 @@ Session session = result.getSession();
 ## 相关类
 
 - [MobileExtraConfig](MobileExtraConfig.md) - 移动环境配置
-- [MobileSimulateConfig](MobileSimulateConfig.md) - 设备模拟配置
-- [AppManagerRule](AppManagerRule.md) - 应用管理规则
 - [CreateSessionParams](CreateSessionParams.md) - 会话创建参数
 
 ## 注意事项
@@ -219,7 +217,5 @@ Session session = result.getSession();
 ## 完整示例
 
 参考示例代码：
-- [MobileExtraConfigExample.java](../examples/MobileExtraConfigExample.java)
-- [MobileSimulateExample.java](../examples/MobileSimulateExample.java)
-- [SessionConfigurationExample.java](../examples/SessionConfigurationExample.java)
+- [MobileExtraConfig 使用指南](../examples/mobile-extra-config-usage.md)
 

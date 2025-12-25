@@ -66,7 +66,7 @@ public class BrowserAgentAsyncExample {
         try {
             // 1. Initialize AgentBay client
             System.out.println("1. Initializing AgentBay client...");
-            AgentBay agentBay = new AgentBay(apiKey);
+            AgentBay agentBay = new AgentBay();
 
             // 2. Create a browser session
             System.out.println("2. Creating browser session...");
