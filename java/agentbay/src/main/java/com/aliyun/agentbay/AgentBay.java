@@ -6,10 +6,13 @@ import com.aliyun.agentbay.context.*;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.exception.AuthenticationException;
 import com.aliyun.agentbay.mobile.MobileSimulate;
+import com.aliyun.agentbay.mobile.MobileSimulateConfig;
+import com.aliyun.agentbay.mobile.MobileSimulateMode;
 import com.aliyun.agentbay.model.GetSessionData;
 import com.aliyun.agentbay.model.GetSessionResult;
 import com.aliyun.agentbay.model.SessionParams;
 import com.aliyun.agentbay.model.SessionResult;
+import com.aliyun.agentbay.network.Network;
 import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.util.ResponseUtil;
@@ -40,6 +43,7 @@ public class AgentBay {
     private ApiClient apiClient;
     private ConcurrentHashMap<String, Session> sessions;
     private MobileSimulate mobileSimulate;
+    private Network network;
 
     public AgentBay(String apiKey) throws AgentBayException {
         this(apiKey, new com.aliyun.agentbay.Config());
@@ -72,6 +76,7 @@ public class AgentBay {
             this.client = new Client(clientConfig);
             this.apiClient = new ApiClient(this.client, apiKey);
             this.mobileSimulate = new MobileSimulate(this);
+            this.network = new Network(this);
 
             logger.info("AgentBay client initialized successfully");
         } catch (Exception e) {
@@ -436,6 +441,7 @@ public class AgentBay {
             if (params.getImageId() != null) {
                 request.setImageId(params.getImageId());
             }
+            
             // Set labels if provided
             if (params.getLabels() != null && !params.getLabels().isEmpty()) {
                 try {
@@ -446,6 +452,29 @@ public class AgentBay {
                     logger.warn("Failed to serialize labels to JSON: {}", e.getMessage());
                 }
             }
+
+            // Set policy ID if provided
+            if (params.getPolicyId() != null && !params.getPolicyId().isEmpty()) {
+                request.setMcpPolicyId(params.getPolicyId());
+                logger.debug("Added policy ID: {}", params.getPolicyId());
+            }
+
+            // Set network ID if provided
+            if (params.getNetworkId() != null && !params.getNetworkId().isEmpty()) {
+                request.setNetworkId(params.getNetworkId());
+                logger.debug("Added network ID: {}", params.getNetworkId());
+            }
+
+            // Set enable_browser_replay if explicitly set to false
+            // Browser replay is enabled by default, so only set when explicitly False
+            if (params.getEnableBrowserReplay() != null && !params.getEnableBrowserReplay()) {
+                request.setEnableRecord(false);
+                logger.info("enable_browser_replay is False, setting enable_record to False");
+            }
+
+            // Note: ExtraConfigs is handled automatically by MobileExtraConfig during session creation
+            // The mobile configuration will be applied after session is created
+            // See: session.getMobile().configure() call below
 
             // Add SDK stats for tracking
             String framework = params.getFramework() != null ? params.getFramework() : "";
@@ -503,6 +532,9 @@ public class AgentBay {
             sessionParams.setBrowserType(params.getBrowserType());
             Session session = new Session(result.getSessionId(), this, sessionParams);
 
+            // Set browser recording state (default to True if not explicitly set to False)
+            session.setEnableBrowserReplay(params.getEnableBrowserReplay() != null ? params.getEnableBrowserReplay() : true);
+
             // Set VPC-related fields if this is a VPC session
             /*if (response.getBody().getData() != null) {
                 boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
@@ -523,11 +555,32 @@ public class AgentBay {
             sessions.put(result.getSessionId(), session);
             result.setSession(session);
 
+            // Process mobile configuration if provided
+            if (params.getExtraConfigs() != null && params.getExtraConfigs().getMobile() != null) {
+                try {
+                    session.getMobile().configure(params.getExtraConfigs().getMobile());
+                    logger.info("Applied mobile configuration to session");
+                } catch (Exception e) {
+                    logger.warn("Failed to apply mobile configuration: {}", e.getMessage());
+                }
+            }
+
             // If we have persistence data, wait for context synchronization
             boolean needsContextSync = (params.getContextSyncs() != null && !params.getContextSyncs().isEmpty()) ||
                                       (params.getBrowserContext() != null);
             if (needsContextSync) {
                 waitForContextSynchronization(session);
+            }
+
+            // Handle mobile simulate if configured
+            if (params.getExtraConfigs() != null && 
+                params.getExtraConfigs().getMobile() != null &&
+                params.getExtraConfigs().getMobile().getSimulateConfig() != null) {
+                
+                MobileSimulateConfig simConfig = params.getExtraConfigs().getMobile().getSimulateConfig();
+                if (simConfig.isSimulate() && simConfig.getSimulatePath() != null) {
+                    waitForMobileSimulate(session, simConfig);
+                }
             }
 
             logger.info("Session created successfully: {}", result.getSessionId());
@@ -545,6 +598,62 @@ public class AgentBay {
                 }
             }
             return result;
+        }
+    }
+
+    /**
+     * Wait for mobile simulate to complete
+     *
+     * @param session The session to wait for mobile simulate
+     * @param simConfig Mobile simulate configuration
+     */
+    private void waitForMobileSimulate(Session session, MobileSimulateConfig simConfig) {
+        logger.info("Waiting for mobile simulate to complete");
+        
+        String mobileSimPath = simConfig.getSimulatePath();
+        MobileSimulateMode mobileSimMode = simConfig.getSimulateMode();
+        
+        if (mobileSimPath == null || mobileSimPath.isEmpty()) {
+            logger.info("mobile_sim_path is not set, skip mobile simulate operation");
+            return;
+        }
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            String devInfoFilePath = mobileSimPath + "/dev_info.json";
+            String wyaApplyOption = "";
+            
+            if (mobileSimMode == null || mobileSimMode == MobileSimulateMode.PROPERTIES_ONLY) {
+                wyaApplyOption = "";
+            } else if (mobileSimMode == MobileSimulateMode.SENSORS_ONLY) {
+                wyaApplyOption = "-sensors";
+            } else if (mobileSimMode == MobileSimulateMode.PACKAGES_ONLY) {
+                wyaApplyOption = "-packages";
+            } else if (mobileSimMode == MobileSimulateMode.SERVICES_ONLY) {
+                wyaApplyOption = "-services";
+            } else if (mobileSimMode == MobileSimulateMode.ALL) {
+                wyaApplyOption = "-all";
+            }
+            
+            String command = String.format("chmod -R a+rwx %s; wya apply %s %s", 
+                                          mobileSimPath, wyaApplyOption, devInfoFilePath).trim();
+            logger.info("Waiting for mobile simulate completion, command: {}", command);
+            
+            com.aliyun.agentbay.model.CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
+            if (cmdResult.isSuccess()) {
+                long endTime = System.currentTimeMillis();
+                double consumeTime = (endTime - startTime) / 1000.0;
+                String modeStr = mobileSimMode != null ? mobileSimMode.getValue() : "PropertiesOnly";
+                logger.info("Mobile simulate completed with mode: {}, duration: {:.2f} seconds", 
+                           modeStr, consumeTime);
+                if (cmdResult.getOutput() != null && !cmdResult.getOutput().isEmpty()) {
+                    logger.info("   Output: {}", cmdResult.getOutput().trim());
+                }
+            } else {
+                logger.warn("Failed to execute mobile simulate command: {}", cmdResult.getErrorMessage());
+            }
+        } catch (Exception e) {
+            logger.warn("Error executing mobile simulate command: {}", e.getMessage());
         }
     }
 
@@ -637,6 +746,15 @@ public class AgentBay {
      */
     public MobileSimulate getMobileSimulate() {
         return mobileSimulate;
+    }
+
+    /**
+     * Get network service for this AgentBay instance
+     *
+     * @return Network instance
+     */
+    public Network getNetwork() {
+        return network;
     }
 
     /**

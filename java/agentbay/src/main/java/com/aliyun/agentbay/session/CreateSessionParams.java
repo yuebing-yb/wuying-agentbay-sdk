@@ -5,9 +5,20 @@ import java.util.List;
 import java.util.Map;
 import com.aliyun.agentbay.browser.BrowserContext;
 import com.aliyun.agentbay.context.ContextSync;
+import com.aliyun.agentbay.model.ExtraConfigs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Parameters for creating a new session in the AgentBay cloud environment.
+ * 
+ * <p>Supports various configuration options including labels, context synchronization,
+ * browser context, policy management, browser replay, and mobile extra configurations.</p>
+ * 
+ * @see BrowserContext
+ * @see ContextSync
+ * @see ExtraConfigs
+ */
 public class CreateSessionParams {
     private static final Logger logger = LoggerFactory.getLogger(CreateSessionParams.class);
     
@@ -20,6 +31,10 @@ public class CreateSessionParams {
     private List<ContextSync> contextSyncs;
     private BrowserContext browserContext;
     private String framework;
+    private String policyId;
+    private Boolean enableBrowserReplay;
+    private ExtraConfigs extraConfigs;
+    private String networkId;
 
     public CreateSessionParams() {
         this.contextSyncs = new ArrayList<>();
@@ -141,6 +156,87 @@ public class CreateSessionParams {
      */
     public void setFramework(String framework) {
         this.framework = framework;
+    }
+
+    /**
+     * Get the policy ID to apply when creating the session.
+     * 
+     * @return Policy ID, or null if not set
+     */
+    public String getPolicyId() {
+        return policyId;
+    }
+
+    /**
+     * Set the policy ID to apply when creating the session.
+     * 
+     * @param policyId Policy ID
+     */
+    public void setPolicyId(String policyId) {
+        this.policyId = policyId;
+    }
+
+    /**
+     * Get whether browser replay recording is enabled.
+     * 
+     * @return true if enabled, false if disabled, null if not set (defaults to true)
+     */
+    public Boolean getEnableBrowserReplay() {
+        return enableBrowserReplay;
+    }
+
+    /**
+     * Set whether to enable browser replay recording for the session.
+     * 
+     * <p>Browser replay is enabled by default. Set to false to disable recording.</p>
+     * 
+     * @param enableBrowserReplay true to enable, false to disable
+     */
+    public void setEnableBrowserReplay(Boolean enableBrowserReplay) {
+        this.enableBrowserReplay = enableBrowserReplay;
+    }
+
+    /**
+     * Get advanced configuration parameters.
+     * 
+     * @return ExtraConfigs instance, or null if not set
+     */
+    public ExtraConfigs getExtraConfigs() {
+        return extraConfigs;
+    }
+
+    /**
+     * Set advanced configuration parameters for specialized environments.
+     *
+     * <p>Currently supports mobile environment configurations including
+     * device simulation, app management rules, and more.</p>
+     *
+     * @param extraConfigs Advanced configuration parameters
+     * @see ExtraConfigs
+     */
+    public void setExtraConfigs(ExtraConfigs extraConfigs) {
+        this.extraConfigs = extraConfigs;
+    }
+
+    /**
+     * Get the network ID to bind this session to.
+     *
+     * @return Network ID, or null if not set
+     */
+    public String getNetworkId() {
+        return networkId;
+    }
+
+    /**
+     * Set the network ID to bind this session to.
+     *
+     * <p>Multiple sessions can share the same network ID, enabling network communication
+     * between sessions and network isolation.</p>
+     *
+     * @param networkId Network ID created via Network.create()
+     */
+    public void setNetworkId(String networkId) {
+        this.networkId = networkId;
     }
 
 }

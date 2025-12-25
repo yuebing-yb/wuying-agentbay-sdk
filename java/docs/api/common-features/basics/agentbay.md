@@ -157,6 +157,49 @@ Get the context service (alias for `getContext()`).
 **Returns:**
 - `ContextService`: Context service instance
 
+### getMobileSimulate
+
+```java
+public MobileSimulate getMobileSimulate()
+```
+
+Get the mobile simulate service for device simulation.
+
+**Returns:**
+- `MobileSimulate`: Mobile simulate service instance
+
+**Example:**
+
+```java
+MobileSimulate mobileSimulate = agentBay.getMobileSimulate();
+mobileSimulate.setSimulateEnable(true);
+mobileSimulate.setSimulateMode(MobileSimulateMode.ALL);
+```
+
+**See Also:**
+- [MobileSimulate API Reference](../../mobile-use/mobile-simulate.md)
+
+### getNetwork
+
+```java
+public Network getNetwork()
+```
+
+Get the network service for VPC and network configuration.
+
+**Returns:**
+- `Network`: Network service instance
+
+**Example:**
+
+```java
+Network network = agentBay.getNetwork();
+// Configure network settings
+```
+
+**See Also:**
+- [Network API Reference](../advanced/network.md)
+
 ## Session Retrieval Methods
 
 The AgentBay class provides three methods for retrieving sessions, each serving different use cases:
@@ -608,11 +651,23 @@ agentBay.delete(session2, false);
 
 ## Limitations and Notes
 
-1. **Session Listing**: The current SDK version does not support listing all sessions across the platform. You can only access sessions created by the current AgentBay instance through `getSession()`.
+### Differences from Python SDK
 
-2. **Session Retrieval**: There is no method to retrieve a session by ID from the server. Once a session is created, you must keep the Session object reference or retrieve it from the local cache.
+The Java SDK has some intentional differences from the Python SDK:
 
-3. **Cache Management**: The AgentBay client maintains an internal cache of created sessions. Use `removeSession()` to manually clean up the cache if needed.
+1. **No list() method**: The Java SDK does not currently support the `list(labels, page, limit)` method for listing sessions. This feature may be added in future versions.
+
+2. **No pause/resume methods**: The Java SDK does not currently support `pause()`, `pause_async()`, `resume()`, and `resume_async()` methods. Session pause/resume functionality may be added in future versions.
+
+3. **No get_session_detail() method**: The Java SDK uses `getSessionInfo()` for retrieving session metadata, which provides similar functionality.
+
+### Java SDK Specific Notes
+
+1. **Session Retrieval**: Use `get(sessionId)` to retrieve sessions from the server, enabling session recovery after application restart.
+
+2. **Cache Management**: The AgentBay client maintains an internal cache of created sessions. Use `removeSession()` to manually clean up the cache if needed.
+
+3. **Synchronous API**: The Java SDK provides a synchronous API only. Use Java's concurrency utilities (CompletableFuture, ExecutorService) for parallel operations.
 
 ## Related Resources
 

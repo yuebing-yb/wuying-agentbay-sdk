@@ -827,6 +827,108 @@ public class Session {
         }
     }
 
+    /**
+     * Set labels for this session
+     *
+     * @param labels Map of label key-value pairs to set
+     * @return OperationResult indicating success or failure
+     * @throws AgentBayException if the API call fails
+     */
+    public OperationResult setLabels(Map<String, String> labels) throws AgentBayException {
+        try {
+            // Validate labels
+            if (labels == null) {
+                throw new IllegalArgumentException("Labels cannot be null");
+            }
+
+            // Validate label constraints
+            if (labels.size() > 20) {
+                throw new IllegalArgumentException("Maximum 20 labels allowed");
+            }
+
+            for (Map.Entry<String, String> entry : labels.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+
+                if (key == null || key.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Label key cannot be null or empty");
+                }
+                if (key.length() > 128) {
+                    throw new IllegalArgumentException("Label key cannot exceed 128 characters: " + key);
+                }
+                if (value != null && value.length() > 256) {
+                    throw new IllegalArgumentException("Label value cannot exceed 256 characters for key: " + key);
+                }
+            }
+
+            // Convert labels to JSON string
+            String labelsJson = objectMapper.writeValueAsString(labels);
+
+            // Create request
+            SetLabelRequest request = new SetLabelRequest();
+            request.setAuthorization("Bearer " + agentBay.getApiKey());
+            request.setSessionId(sessionId);
+            request.setLabels(labelsJson);
+
+            // Call API
+            SetLabelResponse response = agentBay.getClient().setLabel(request);
+
+            // Extract request ID
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            logger.info("Successfully set labels for session {}: {} labels", sessionId, labels.size());
+            return new OperationResult(requestId, true, labelsJson, "");
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid labels: {}", e.getMessage());
+            throw new AgentBayException("Invalid labels: " + e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("Failed to set labels for session {}: {}", sessionId, e.getMessage());
+            throw new AgentBayException("Failed to set labels: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Get labels for this session
+     *
+     * @return OperationResult containing the labels map in the data field
+     * @throws AgentBayException if the API call fails
+     */
+    public OperationResult getLabels() throws AgentBayException {
+        try {
+            // Create request
+            GetLabelRequest request = new GetLabelRequest();
+            request.setAuthorization("Bearer " + agentBay.getApiKey());
+            request.setSessionId(sessionId);
+
+            // Call API
+            GetLabelResponse response = agentBay.getClient().getLabel(request);
+
+            // Extract request ID
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            // Extract labels from response
+            Map<String, Object> responseMap = response.toMap();
+            Map<String, Object> body = (Map<String, Object>) responseMap.get("body");
+            Map<String, Object> data = body != null ? (Map<String, Object>) body.get("Data") : null;
+            String labelsJson = data != null ? (String) data.get("Labels") : null;
+
+            Map<String, String> labels = new java.util.HashMap<>();
+            if (labelsJson != null && !labelsJson.isEmpty()) {
+                labels = objectMapper.readValue(labelsJson,
+                    objectMapper.getTypeFactory().constructMapType(Map.class, String.class, String.class));
+            }
+
+            String labelsJsonResult = objectMapper.writeValueAsString(labels);
+            logger.info("Successfully retrieved labels for session {}: {} labels", sessionId, labels.size());
+            return new OperationResult(requestId, true, labelsJsonResult, "");
+
+        } catch (Exception e) {
+            logger.error("Failed to get labels for session {}: {}", sessionId, e.getMessage());
+            throw new AgentBayException("Failed to get labels: " + e.getMessage(), e);
+        }
+    }
+
     @Override
     public String toString() {
         return "Session{" +

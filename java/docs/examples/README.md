@@ -27,6 +27,24 @@ cd agentbay
 mvn clean compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.FileSystemExample"
 ```
 
+## 📁 Documentation Structure
+
+This examples directory is part of a comprehensive documentation system:
+
+```
+java/
+├── README.md                  # SDK overview and quick start
+├── docs/
+│   ├── guides/               # Feature guides and tutorials
+│   │   ├── README.md         # Guide index
+│   │   └── programming-model.md  # Java programming patterns
+│   ├── api/                  # API reference documentation
+│   │   └── README.md         # API index with quick links
+│   └── examples/             # This directory - runnable examples
+│       └── README.md         # You are here
+└── agentbay/src/main/java/com/aliyun/agentbay/examples/  # Example source code
+```
+
 ## 📚 Available Examples
 
 ### Core Features
@@ -56,7 +74,31 @@ mvn exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.FileSystemExample"
 
 ---
 
-#### 2. SessionContextExample.java
+#### 2. LabelManagementExample.java
+
+**Purpose**: Demonstrates session label management functionality
+
+**Features:**
+- Set labels on sessions
+- Retrieve labels from sessions
+- Update existing labels
+- Label validation examples
+- Common use case patterns (environment, team, version tracking)
+
+**Example Usage:**
+```bash
+mvn exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.LabelManagementExample"
+```
+
+**Key Concepts:**
+- Label key-value pairs for session organization
+- Label constraints (max 20 labels, key/value length limits)
+- Using labels for filtering and categorization
+- Common labeling patterns
+
+---
+
+#### 3. SessionContextExample.java
 
 **Purpose**: Demonstrates context management and data persistence across sessions
 
@@ -80,7 +122,7 @@ mvn exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.SessionContextExamp
 
 ---
 
-#### 3. ContextSyncLifecycleExample.java
+#### 4. ContextSyncLifecycleExample.java
 
 **Purpose**: Demonstrates the complete context synchronization lifecycle with different sync modes
 
@@ -832,10 +874,18 @@ mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="in
 
 ## 📚 Related Documentation
 
-- [API Reference](../api/README.md) - Detailed API documentation
-- [Quick Start Guide](../../../docs/quickstart/README.md) - Getting started
-- [Feature Guides](../../../docs/guides/README.md) - Comprehensive feature guides
-- [Java README](../../README.md) - Java SDK overview
+### Java SDK Documentation
+
+- [Java SDK Overview](../../README.md) - Quick start and installation
+- [Feature Guides](../guides/README.md) - Complete guide index for Java SDK
+- [Programming Model](../guides/programming-model.md) - Java sync/concurrency patterns
+- [API Reference](../api/README.md) - Detailed API documentation with quick links
+
+### Platform Documentation
+
+- [Platform Guides](../../../docs/guides/README.md) - Comprehensive platform feature guides
+- [Quick Start Guide](../../../docs/quickstart/README.md) - Getting started tutorial
+- [Common Features](../../../docs/guides/common-features/README.md) - Cross-language features
 
 ## 🤝 Getting Help
 

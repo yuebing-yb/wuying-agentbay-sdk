@@ -334,6 +334,151 @@ if (customLink.isSuccess()) {
 }
 ```
 
+### Label Management
+
+#### setLabels
+
+```java
+public OperationResult setLabels(Map<String, String> labels) throws AgentBayException
+```
+
+Set labels for this session. Labels are key-value pairs that help organize and filter sessions.
+
+**Parameters:**
+- `labels` (Map<String, String>): Map of label key-value pairs to set
+
+**Returns:**
+- `OperationResult`: Result containing the set labels in the data field
+
+**Throws:**
+- `AgentBayException`: If the API call fails
+- `IllegalArgumentException`: If label validation fails
+
+**Label Constraints:**
+- Maximum 20 labels per session
+- Label keys cannot be null or empty
+- Label keys cannot exceed 128 characters
+- Label values cannot exceed 256 characters
+- Label values can be null
+
+**Example:**
+
+```java
+Session session = agentBay.create(new CreateSessionParams()).getSession();
+
+// Set labels for the session
+Map<String, String> labels = new HashMap<>();
+labels.put("environment", "production");
+labels.put("team", "backend");
+labels.put("project", "data-pipeline");
+labels.put("version", "v2.1.0");
+
+OperationResult result = session.setLabels(labels);
+if (result.isSuccess()) {
+    System.out.println("Labels set successfully");
+    Map<String, String> setLabels = (Map<String, String>) result.getData();
+    System.out.println("Set " + setLabels.size() + " labels");
+}
+```
+
+**Use Cases:**
+- Organize sessions by environment (dev, staging, production)
+- Track sessions by team or project
+- Add version or release tags
+- Filter sessions in monitoring dashboards
+
+#### getLabels
+
+```java
+public OperationResult getLabels() throws AgentBayException
+```
+
+Get all labels currently set on this session.
+
+**Returns:**
+- `OperationResult`: Result containing the labels map in the data field
+  - `data` field contains `Map<String, String>` of all labels
+  - Returns empty map if no labels are set
+
+**Throws:**
+- `AgentBayException`: If the API call fails
+
+**Example:**
+
+```java
+Session session = agentBay.create(new CreateSessionParams()).getSession();
+
+// Set some labels
+Map<String, String> labels = Map.of(
+    "environment", "production",
+    "team", "backend"
+);
+session.setLabels(labels);
+
+// Later, retrieve the labels
+OperationResult result = session.getLabels();
+if (result.isSuccess()) {
+    Map<String, String> retrievedLabels = (Map<String, String>) result.getData();
+    System.out.println("Session has " + retrievedLabels.size() + " labels:");
+    for (Map.Entry<String, String> entry : retrievedLabels.entrySet()) {
+        System.out.println("  " + entry.getKey() + " = " + entry.getValue());
+    }
+}
+```
+
+**Complete Example - Label Lifecycle:**
+
+```java
+import com.aliyun.agentbay.AgentBay;
+import com.aliyun.agentbay.session.Session;
+import com.aliyun.agentbay.session.CreateSessionParams;
+import com.aliyun.agentbay.model.OperationResult;
+import java.util.HashMap;
+import java.util.Map;
+
+public class LabelManagementExample {
+    public static void main(String[] args) throws Exception {
+        AgentBay agentBay = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
+
+        // Create session
+        Session session = agentBay.create(new CreateSessionParams()).getSession();
+
+        try {
+            // Set initial labels
+            Map<String, String> labels = new HashMap<>();
+            labels.put("environment", "production");
+            labels.put("team", "backend");
+            labels.put("project", "api-service");
+
+            OperationResult setResult = session.setLabels(labels);
+            System.out.println("Set labels: " + setResult.isSuccess());
+
+            // Retrieve labels
+            OperationResult getResult = session.getLabels();
+            Map<String, String> retrievedLabels = (Map<String, String>) getResult.getData();
+            System.out.println("Retrieved " + retrievedLabels.size() + " labels");
+
+            // Update labels (adds/updates, doesn't remove existing)
+            labels = new HashMap<>();
+            labels.put("environment", "staging");  // Update existing
+            labels.put("version", "v2.0.0");       // Add new
+
+            session.setLabels(labels);
+
+            // Get updated labels
+            getResult = session.getLabels();
+            retrievedLabels = (Map<String, String>) getResult.getData();
+            System.out.println("After update: " + retrievedLabels.size() + " labels");
+
+        } finally {
+            session.delete();
+        }
+    }
+}
+```
+
+**Note:** Setting labels will merge with existing labels. To remove labels, you need to explicitly set them to null or use a complete label map.
+
 ### MCP Tool Operations
 
 ### listTools

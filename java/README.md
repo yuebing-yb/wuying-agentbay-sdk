@@ -78,7 +78,14 @@ public class QuickStart {
 - [📚 Quick Start Tutorial](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/README.md) - Get started in 5 minutes
 - [🎯 Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understand cloud environments and sessions
 
-### 🚀 Experienced Users
+### 🚀 Java SDK Documentation
+
+**Java-Specific Guides:**
+- [📖 Java SDK Guides](docs/guides/README.md) - Complete guide index for Java SDK
+- [🔄 Programming Model](docs/guides/programming-model.md) - Java sync/concurrency patterns
+- [🔧 Java API Reference](docs/api/README.md) - Detailed API documentation with quick links
+- [💻 Java Examples](docs/examples/README.md) - Runnable example code with detailed explanations
+
 **Choose Your Cloud Environment:**
 - 🌐 [Browser Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/browser-use/README.md) - Web scraping, browser testing, form automation
 - 🖥️ [Computer Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/computer-use/README.md) - Windows desktop automation, UI testing
@@ -86,9 +93,9 @@ public class QuickStart {
 - 💻 [CodeSpace](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/codespace/README.md) - Code execution, development environments
 
 **Additional Resources:**
-- [📖 Feature Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Complete feature introduction
-- [💻 Java Examples](agentbay/src/main/java/com/aliyun/agentbay/examples) - Complete example code
+- [📖 Platform Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Cross-language platform features
 - [📋 Logging Configuration](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
+- [⚙️ Extra Configs Guide](docs/EXTRA_CONFIGS_GUIDE.md) - Advanced mobile and browser configurations
 
 ## 🔧 Core Features Quick Reference
 
