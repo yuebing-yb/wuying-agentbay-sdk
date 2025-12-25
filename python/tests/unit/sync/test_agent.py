@@ -50,7 +50,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "completed", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -58,7 +58,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "completed")
+        self.assertEqual(result.task_status, "finished")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
@@ -105,7 +105,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "cancelling", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "finised", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -113,7 +113,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "cancelling")
+        self.assertEqual(result.task_status, "finised")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
@@ -161,7 +161,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
             logger.info(
                 f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
             )
-            if query_result.task_status == "completed":
+            if query_result.task_status == "finished":
                 break
             retry_times += 1
             time.sleep(3)
@@ -238,7 +238,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "completed", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "finished", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -246,7 +246,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "completed")
+        self.assertEqual(result.task_status, "finished")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
@@ -293,7 +293,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
-            data="""{"task_id": "task-123", "status": "cancelling", "result":"", "product": "Task completed successfully"}""",
+            data="""{"task_id": "task-123", "status": "finised", "result":"", "product": "Task completed successfully"}""",
         )
         self.session.call_mcp_tool.return_value = mock_result
 
@@ -301,7 +301,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.task_status, "cancelling")
+        self.assertEqual(result.task_status, "finised")
         self.assertEqual(result.error_message, "")
 
         # Verify call arguments
@@ -349,7 +349,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
             logger.info(
                 f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
             )
-            if query_result.task_status == "completed":
+            if query_result.task_status == "finished":
                 break
             retry_times += 1
             time.sleep(3)

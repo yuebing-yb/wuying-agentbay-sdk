@@ -126,7 +126,7 @@ class Agent(BaseService):
                 )
                 if result.success:
                     content = json.loads(result.data)
-                    task_id = content.get("taskId") or content.get("task_id", "")
+                    task_id = content.get("task_id", "")
                     return ExecutionResult(
                         request_id=result.request_id,
                         success=True,
@@ -192,11 +192,11 @@ class Agent(BaseService):
                 )
                 if result.success:
                     content = json.loads(result.data)
-                    task_id = content.get("taskId") or content.get("task_id", "")
+                    task_id = content.get("task_id", "")
                     tried_time: int = 0
                     while tried_time < max_try_times:
                         query = self.get_task_status(task_id)
-                        if query.task_status == "completed":
+                        if query.task_status == "finished":
                             return ExecutionResult(
                                 request_id=result.request_id,
                                 success=True,
@@ -213,14 +213,6 @@ class Agent(BaseService):
                                 task_id=task_id,
                                 task_status=query.task_status,
                             )
-                        elif query.task_status == "cancelled":
-                            return ExecutionResult(
-                                request_id=result.request_id,
-                                success=False,
-                                error_message="Task was cancelled.",
-                                task_id=task_id,
-                                task_status=query.task_status,
-                            )
                         elif query.task_status == "unsupported":
                             return ExecutionResult(
                                 request_id=result.request_id,
@@ -232,8 +224,6 @@ class Agent(BaseService):
                         _logger.info(
                             f"⏳ Task {task_id} running 🚀: {query.task_action}."
                         )
-                        # keep waiting unit timeout if the status is running
-                        # task_status {running, completed, failed, cancelled}
                         time.sleep(3)
                         tried_time += 1
                     _logger.warning("⚠️ task execution timeout!")
@@ -304,30 +294,14 @@ class Agent(BaseService):
                 )
                 if result.success:
                     content = json.loads(result.data)
-                    # Support both taskId (camelCase) and task_id (snake_case)
-                    content_task_id = content.get("taskId") or content.get("task_id", task_id)
-                    # Mobile Agent returns "result", other agents return "product"
-                    # Support both for compatibility, prefer "result"
-                    task_product = content.get("result") or content.get("product", "")
-                    
-                    # Extract stream and error fields
-                    stream = content.get("stream", [])
-                    if not isinstance(stream, list):
-                        _logger.warning(f"⚠️ Stream is not a list (type: {type(stream)}), converting to empty list")
-                        stream = []
-                    
-                    error = content.get("error", "")
-                    
                     return QueryResult(
                         success=True,
                         request_id=result.request_id,
                         error_message="",
-                        task_id=content_task_id,
-                        task_status=content.get("status", "completed"),
+                        task_id=content.get("task_id", task_id),
+                        task_status=content.get("status", "finished"),
                         task_action=content.get("action", ""),
-                        task_product=task_product,
-                        stream=stream,
-                        error=error,
+                        task_product=content.get("product", ""),
                     )
                 else:
                     return QueryResult(
@@ -386,14 +360,13 @@ class Agent(BaseService):
                 )
                 if result.success:
                     content = json.loads(result.data)
-                    # Support both taskId (camelCase) and task_id (snake_case)
-                    task_id = content.get("taskId") or content.get("task_id", task_id)
+                    task_id = content.get("task_id", task_id)
                     return ExecutionResult(
                         request_id=result.request_id,
                         success=True,
                         error_message="",
                         task_id=task_id,
-                        task_status=content.get("status", "cancelling"),
+                        task_status=content.get("status", "finised"),
                     )
                 else:
                     content = json.loads(result.data) if result.data else {}
@@ -584,7 +557,7 @@ class Agent(BaseService):
                                 f"Attempt {attempt + 1}/{max_step_retries} "
                                 "failed, retrying..."
                             )
-                            time.sleep(1)
+                            time.sleep(3)
                             continue
                         else:
                             _logger.error(
@@ -605,7 +578,7 @@ class Agent(BaseService):
                             f"Attempt {attempt + 1}/{max_step_retries} "
                             "raised exception, retrying..."
                         )
-                        time.sleep(1)
+                        time.sleep(3)
                         continue
                     else:
                         return ExecutionResult(
@@ -623,7 +596,7 @@ class Agent(BaseService):
                             f"Attempt {attempt + 1}/{max_step_retries} "
                             "raised exception, retrying..."
                         )
-                        time.sleep(1)
+                        time.sleep(3)
                         continue
                     else:
                         return ExecutionResult(
@@ -722,7 +695,7 @@ class Agent(BaseService):
                                 f"Attempt {attempt + 1}/{max_step_retries} "
                                 "failed, retrying..."
                             )
-                            time.sleep(1)
+                            time.sleep(3)
                             continue
                         else:
                             _logger.error(
@@ -744,7 +717,7 @@ class Agent(BaseService):
                             f"Attempt {attempt + 1}/{max_step_retries} "
                             "raised exception, retrying..."
                         )
-                        time.sleep(1)
+                        time.sleep(3)
                         continue
                     else:
                         return ExecutionResult(
@@ -763,7 +736,7 @@ class Agent(BaseService):
                             f"Attempt {attempt + 1}/{max_step_retries} "
                             "raised exception, retrying..."
                         )
-                        time.sleep(1)
+                        time.sleep(3)
                         continue
                     else:
                         return ExecutionResult(
@@ -870,3 +843,106 @@ class Agent(BaseService):
                 task_status="failed",
                 task_result="Task timeout.",
             )
+
+        def get_task_status(self, task_id: str) -> QueryResult:
+            try:
+                args = {"task_id": task_id}
+                result = self.session.call_mcp_tool(
+                    self._get_tool_name("get_status"), args
+                )
+                if result.success:
+                    content = json.loads(result.data)
+                    content_task_id = content.get("taskId") or content.get("task_id", task_id)
+                    task_product = content.get("result") or content.get("product", "")
+                    
+                    stream = content.get("stream", [])
+                    if not isinstance(stream, list):
+                        _logger.warning(f"⚠️ Stream is not a list (type: {type(stream)}), converting to empty list")
+                        stream = []
+                    
+                    error = content.get("error", "")
+                    
+                    return QueryResult(
+                        success=True,
+                        request_id=result.request_id,
+                        error_message="",
+                        task_id=content_task_id,
+                        task_status=content.get("status", "completed"),
+                        task_action=content.get("action", ""),
+                        task_product=task_product,
+                        stream=stream,
+                        error=error,
+                    )
+                else:
+                    return QueryResult(
+                        request_id=result.request_id,
+                        success=False,
+                        error_message=result.error_message
+                        or "Failed to get task status",
+                        task_id=task_id,
+                        task_status="failed",
+                    )
+            except AgentError as e:
+                handled_error = self._handle_error(e)
+                return QueryResult(
+                    request_id="",
+                    success=False,
+                    error_message=str(handled_error),
+                    task_id=task_id,
+                    task_status="failed",
+                )
+            except Exception as e:
+                handled_error = self._handle_error(AgentBayError(str(e)))
+                return QueryResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Failed to get task status: {handled_error}",
+                    task_id=task_id,
+                    task_status="failed",
+                )
+
+        def terminate_task(self, task_id: str) -> ExecutionResult:
+            _logger.info("Terminating task")
+            try:
+                args = {"task_id": task_id}
+                result = self.session.call_mcp_tool(
+                    self._get_tool_name("terminate"), args
+                )
+                if result.success:
+                    content = json.loads(result.data)
+                    content_task_id = content.get("taskId") or content.get("task_id", task_id)
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=True,
+                        error_message="",
+                        task_id=content_task_id,
+                        task_status=content.get("status", "cancelling"),
+                    )
+                else:
+                    content = json.loads(result.data) if result.data else {}
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=False,
+                        error_message=result.error_message
+                        or "Failed to terminate task",
+                        task_id=task_id,
+                        task_status="failed",
+                    )
+            except AgentError as e:
+                handled_error = self._handle_error(e)
+                return ExecutionResult(
+                    request_id=result.request_id if "result" in locals() else "",
+                    success=False,
+                    error_message=str(handled_error),
+                    task_id=task_id,
+                    task_status="failed",
+                )
+            except Exception as e:
+                handled_error = self._handle_error(AgentBayError(str(e)))
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Failed to terminate: {handled_error}",
+                    task_id=task_id,
+                    task_status="failed",
+                )

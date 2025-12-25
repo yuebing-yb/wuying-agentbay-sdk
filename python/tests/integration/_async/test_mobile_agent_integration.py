@@ -1,5 +1,5 @@
 """Integration tests for Mobile Agent functionality."""
-
+import e2b
 import asyncio
 import os
 
@@ -46,12 +46,15 @@ async def mobile_agent_session(agent_bay):
     logger.info(f"Session created: {session.session_id}")
     yield session
 
-    # Clean up session
+    # Clean up session with timeout to avoid hanging
     try:
-        await session.delete()
+        print(f"🧹 Cleaning up session: {session.session_id}")
+        await asyncio.wait_for(session.delete(), timeout=10.0)
         print(f"✅ Session deleted: {session.session_id}")
+    except asyncio.TimeoutError:
+        logger.warning(f"Session deletion timed out: {session.session_id}")
     except Exception as e:
-        logger.info(f"Warning: Error deleting session: {e}")
+        logger.warning(f"Error deleting session: {e}")
 
 
 @pytest.mark.asyncio
@@ -149,11 +152,16 @@ async def test_mobile_execute_task_success(mobile_agent_session):
         if task_id:
             try:
                 status = await agent.mobile.get_task_status(task_id)
-                if status.task_status == "running":
+                if not status.success:
+                    logger.debug(f"Could not get task status for {task_id}: {status.error_message}")
+                elif status.task_status == "running":
                     logger.info(f"Cleaning up: terminating task {task_id}")
                     terminate_result = await agent.mobile.terminate_task(task_id)
                     if terminate_result.success:
                         logger.info(f"✅ Task {task_id} terminated successfully")
+                        await asyncio.sleep(1)
+                else:
+                    logger.debug(f"Task {task_id} already in final state: {status.task_status}")
             except Exception as e:
                 logger.debug(f"Could not terminate task {task_id}: {e}")
 
@@ -219,11 +227,16 @@ async def test_mobile_execute_task_and_wait_success(mobile_agent_session):
         if task_id:
             try:
                 status = await agent.mobile.get_task_status(task_id)
-                if status.task_status == "running":
+                if not status.success:
+                    logger.debug(f"Could not get task status for {task_id}: {status.error_message}")
+                elif status.task_status == "running":
                     logger.info(f"Cleaning up: terminating task {task_id}")
                     terminate_result = await agent.mobile.terminate_task(task_id)
                     if terminate_result.success:
                         logger.info(f"✅ Task {task_id} terminated successfully")
+                        await asyncio.sleep(1)
+                else:
+                    logger.debug(f"Task {task_id} already in final state: {status.task_status}")
             except Exception as e:
                 logger.debug(f"Could not terminate task {task_id}: {e}")
 
@@ -376,22 +389,31 @@ async def test_mobile_terminate_task_success(mobile_agent_session):
         if task_id:
             try:
                 status = await agent.mobile.get_task_status(task_id)
-                if status.task_status == "running":
+                if not status.success:
+                    logger.debug(f"Could not get task status for {task_id}: {status.error_message}")
+                elif status.task_status == "running":
                     logger.info(f"Final cleanup: attempting to terminate task {task_id}")
                     terminate_result = await agent.mobile.terminate_task(task_id)
                     if terminate_result.success:
                         logger.info(f"✅ Task {task_id} terminated in cleanup")
+                        await asyncio.sleep(1)
                     else:
-                        # Poll until task completes naturally
-                        max_try_times = 50
+                        # Poll until task completes naturally, but with shorter timeout
+                        max_try_times = 5
                         retry_times = 0
                         while retry_times < max_try_times:
                             status = await agent.mobile.get_task_status(task_id)
+                            if not status.success:
+                                logger.debug(f"Could not get task status: {status.error_message}")
+                                break
                             if status.task_status in ["completed", "finished", "failed", "cancelled", "unsupported"]:
                                 logger.info(f"✅ Task completed in cleanup: {status.task_status}")
                                 break
                             retry_times += 1
-                            await asyncio.sleep(3)
+                            await asyncio.sleep(1)
+                else:
+                    # Task is already in final state, no cleanup needed
+                    logger.debug(f"Task {task_id} already in final state: {status.task_status}")
             except Exception as e:
                 logger.debug(f"Final cleanup failed for task {task_id}: {e}")
 

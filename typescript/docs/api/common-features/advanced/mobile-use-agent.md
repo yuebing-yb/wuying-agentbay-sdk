@@ -142,6 +142,6 @@ Terminate a task with a specified task ID.
 
 `Promise`\<``ExecutionResult``\>
 
-#### Inherited from
+#### Overrides
 
 BaseTaskAgent.terminateTask

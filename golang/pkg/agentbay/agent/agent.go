@@ -123,10 +123,7 @@ func (b *baseTaskAgent) executeTask(task string) *ExecutionResult {
 		}
 	}
 
-	taskID, ok := content["taskId"].(string)
-	if !ok {
-		taskID, ok = content["task_id"].(string)
-	}
+	taskID, ok := content["task_id"].(string)
 	if !ok {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -193,10 +190,7 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 		}
 	}
 
-	taskID, ok := content["taskId"].(string)
-	if !ok {
-		taskID, ok = content["task_id"].(string)
-	}
+	taskID, ok := content["task_id"].(string)
 	if !ok {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -210,7 +204,6 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 
 	// Poll for task completion
 	triedTime := 0
-	processedTimestamps := make(map[int64]bool) // Track processed stream fragments by timestamp_ms
 	for triedTime < maxTryTimes {
 		query := b.getTaskStatus(taskID)
 		if !query.Success {
@@ -223,35 +216,9 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 			}
 		}
 
-		// Process new stream fragments for real-time output
-		if len(query.Stream) > 0 {
-			for _, streamItem := range query.Stream {
-				if streamItem.TimestampMs != nil {
-					timestamp := *streamItem.TimestampMs
-					// Use timestamp_ms to identify new fragments (handles backend returning snapshots)
-					if !processedTimestamps[timestamp] {
-						processedTimestamps[timestamp] = true // Mark as processed immediately
-
-						// Output immediately for true streaming effect
-						if streamItem.Content != "" {
-							// Use fmt.Print for streaming output without automatic newlines
-							fmt.Print(streamItem.Content)
-						}
-						// Note: reasoning can be logged at debug level if needed
-					}
-				}
-			}
-		}
-
-		// Check for error field
-		if query.Error != "" {
-			// Log error if needed
-			// logWarning(fmt.Sprintf("⚠️ Task error: %s", query.Error))
-		}
-
 		taskStatus := query.TaskStatus
 		switch taskStatus {
-		case "completed":
+		case "finished":
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      true,
@@ -265,14 +232,6 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, maxTryTimes int) *Execut
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      false,
 				ErrorMessage: "Failed to execute task.",
-				TaskID:       taskID,
-				TaskStatus:   taskStatus,
-			}
-		case "cancelled":
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
-				Success:      false,
-				ErrorMessage: "Task was cancelled.",
 				TaskID:       taskID,
 				TaskStatus:   taskStatus,
 			}
@@ -344,18 +303,14 @@ func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 		}
 	}
 
-	// Safely extract fields with defaults
-	taskIDFromResult, ok := queryResult["taskId"].(string)
-	if !ok {
-		taskIDFromResult, ok = queryResult["task_id"].(string)
-	}
+	taskIDFromResult, ok := queryResult["task_id"].(string)
 	if !ok {
 		taskIDFromResult = taskID
 	}
 
 	status, ok := queryResult["status"].(string)
 	if !ok {
-		status = "completed"
+		status = "finised"
 	}
 
 	action, ok := queryResult["action"].(string)
@@ -363,14 +318,8 @@ func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 		action = ""
 	}
 
-	// Mobile Agent returns "result", other agents return "product"
-	// Support both for compatibility, prefer "result"
-	var product string
-	if resultValue, ok := queryResult["result"].(string); ok && resultValue != "" {
-		product = resultValue
-	} else if productValue, ok := queryResult["product"].(string); ok {
-		product = productValue
-	} else {
+	product, ok := queryResult["product"].(string)
+	if !ok {
 		product = ""
 	}
 
@@ -449,15 +398,13 @@ func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
 
 	terminatedTaskID := taskID
 	if content != nil {
-		if tid, ok := content["taskId"].(string); ok {
-			terminatedTaskID = tid
-		} else if tid, ok := content["task_id"].(string); ok {
+		if tid, ok := content["task_id"].(string); ok {
 			terminatedTaskID = tid
 		}
 	}
 
 	if result.Success {
-		status := "cancelling"
+		status := "finised"
 		if content != nil {
 			if s, ok := content["status"].(string); ok {
 				status = s
@@ -760,7 +707,7 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int, maxStepRetries i
 		if err != nil {
 			lastError = fmt.Sprintf("Failed to execute: %v", err)
 			if attempt < maxStepRetries-1 {
-				time.Sleep(1 * time.Second)
+				time.Sleep(3 * time.Second)
 				continue
 			}
 			return &ExecutionResult{
@@ -781,7 +728,7 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int, maxStepRetries i
 			}
 			lastError = errorMessage
 			if attempt < maxStepRetries-1 {
-				time.Sleep(1 * time.Second)
+				time.Sleep(3 * time.Second)
 				continue
 			}
 			return &ExecutionResult{
@@ -859,7 +806,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 		if err != nil {
 			lastError = fmt.Sprintf("Failed to execute: %v", err)
 			if attempt < maxStepRetries-1 {
-				time.Sleep(1 * time.Second)
+				time.Sleep(3 * time.Second)
 				continue
 			}
 			return &ExecutionResult{
@@ -881,7 +828,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 			}
 			lastError = errorMessage
 			if attempt < maxStepRetries-1 {
-				time.Sleep(1 * time.Second)
+				time.Sleep(3 * time.Second)
 				continue
 			}
 			return &ExecutionResult{
@@ -938,7 +885,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 	triedTime := 0
 	processedTimestamps := make(map[int64]bool) // Track processed stream fragments by timestamp_ms
 	for triedTime < maxTryTimes {
-		query := a.baseTaskAgent.getTaskStatus(taskID)
+		query := a.GetTaskStatus(taskID)
 		if !query.Success {
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
@@ -1034,7 +981,112 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, maxStepRe
 //
 //	statusResult := sessionResult.Session.Agent.Mobile.GetTaskStatus(execResult.TaskID)
 func (a *MobileUseAgent) GetTaskStatus(taskID string) *QueryResult {
-	return a.baseTaskAgent.getTaskStatus(taskID)
+	args := map[string]interface{}{
+		"task_id": taskID,
+	}
+
+	result, err := a.baseTaskAgent.Session.CallMcpTool(a.baseTaskAgent.getToolName("get_status"), args)
+	if err != nil {
+		return &QueryResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to get task status: %v", err),
+			TaskID:       taskID,
+			TaskStatus:   "failed",
+		}
+	}
+
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to get task status"
+		}
+		return &QueryResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskID:       taskID,
+			TaskStatus:   "failed",
+		}
+	}
+
+	var queryResult map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &queryResult); err != nil {
+		return &QueryResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskID:       taskID,
+			TaskStatus:   "failed",
+		}
+	}
+
+	taskIDFromResult, ok := queryResult["taskId"].(string)
+	if !ok {
+		taskIDFromResult, ok = queryResult["task_id"].(string)
+	}
+	if !ok {
+		taskIDFromResult = taskID
+	}
+
+	status, ok := queryResult["status"].(string)
+	if !ok {
+		status = "completed"
+	}
+
+	action, ok := queryResult["action"].(string)
+	if !ok {
+		action = ""
+	}
+
+	var product string
+	if resultValue, ok := queryResult["result"].(string); ok && resultValue != "" {
+		product = resultValue
+	} else if productValue, ok := queryResult["product"].(string); ok {
+		product = productValue
+	} else {
+		product = ""
+	}
+
+	var stream []StreamItem
+	if streamValue, ok := queryResult["stream"]; ok {
+		if streamArray, ok := streamValue.([]interface{}); ok {
+			stream = make([]StreamItem, 0, len(streamArray))
+			for _, item := range streamArray {
+				if itemMap, ok := item.(map[string]interface{}); ok {
+					streamItem := StreamItem{}
+					if content, ok := itemMap["content"].(string); ok {
+						streamItem.Content = content
+					}
+					if reasoning, ok := itemMap["reasoning"].(string); ok {
+						streamItem.Reasoning = reasoning
+					}
+					if timestampMs, ok := itemMap["timestamp_ms"].(float64); ok {
+						timestampInt := int64(timestampMs)
+						streamItem.TimestampMs = &timestampInt
+					}
+					stream = append(stream, streamItem)
+				}
+			}
+		}
+	}
+
+	var errorStr string
+	if errorValue, ok := queryResult["error"].(string); ok {
+		errorStr = errorValue
+	}
+
+	return &QueryResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      true,
+		ErrorMessage: "",
+		TaskID:       taskIDFromResult,
+		TaskStatus:   status,
+		TaskAction:   action,
+		TaskProduct:  product,
+		Stream:       stream,
+		Error:        errorStr,
+	}
 }
 
 // TerminateTask terminates a task with a specified task ID
@@ -1043,5 +1095,69 @@ func (a *MobileUseAgent) GetTaskStatus(taskID string) *QueryResult {
 //
 //	terminateResult := sessionResult.Session.Agent.Mobile.TerminateTask(execResult.TaskID)
 func (a *MobileUseAgent) TerminateTask(taskID string) *ExecutionResult {
-	return a.baseTaskAgent.terminateTask(taskID)
+	fmt.Println("Terminating task")
+	args := map[string]interface{}{
+		"task_id": taskID,
+	}
+
+	result, err := a.baseTaskAgent.Session.CallMcpTool(a.baseTaskAgent.getToolName("terminate"), args)
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to terminate: %v", err),
+			TaskID:       taskID,
+			TaskStatus:   "failed",
+		}
+	}
+
+	var content map[string]interface{}
+	if result.Data != "" {
+		json.Unmarshal([]byte(result.Data), &content)
+	}
+
+	terminatedTaskID := taskID
+	if content != nil {
+		if tid, ok := content["taskId"].(string); ok {
+			terminatedTaskID = tid
+		} else if tid, ok := content["task_id"].(string); ok {
+			terminatedTaskID = tid
+		}
+	}
+
+	if result.Success {
+		status := "cancelling"
+		if content != nil {
+			if s, ok := content["status"].(string); ok {
+				status = s
+			}
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      true,
+			ErrorMessage: "",
+			TaskID:       terminatedTaskID,
+			TaskStatus:   status,
+		}
+	}
+
+	status := "failed"
+	if content != nil {
+		if s, ok := content["status"].(string); ok {
+			status = s
+		}
+	}
+
+	errorMessage := result.ErrorMessage
+	if errorMessage == "" {
+		errorMessage = "Failed to terminate task"
+	}
+
+	return &ExecutionResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      false,
+		ErrorMessage: errorMessage,
+		TaskID:       terminatedTaskID,
+		TaskStatus:   status,
+	}
 }

@@ -57,7 +57,7 @@ def browser_agent_session(agent_bay):
     # Ensure a delay to avoid session creation conflicts
     time.sleep(3)
     params = CreateSessionParams(
-        image_id="imgc-0aae4rgkx5fdch0et",
+        image_id="browser_latest",
     )
     session_result = agent_bay.create(params)
     if not session_result.success or not session_result.session:
@@ -79,7 +79,7 @@ def mobile_agent_session(agent_bay):
     # Ensure a delay to avoid session creation conflicts
     time.sleep(3)
     params = CreateSessionParams(
-        image_id="mobile_latest",
+        image_id="imgc-0aae4rgien5oudgb6",
     )
     session_result = agent_bay.create(params)
     if not session_result.success or not session_result.session:
@@ -134,7 +134,7 @@ def test_computer_execute_task_success(computer_agent_session):
         logger.info(
             f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
         )
-        if query_result.task_status == "completed":
+        if query_result.task_status == "finished":
             break
         retry_times += 1
         time.sleep(3)
@@ -185,7 +185,7 @@ def test_browser_execute_task_success(browser_agent_session):
         logger.info(
             f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
         )
-        if query_result.task_status == "completed":
+        if query_result.task_status == "finished":
             break
         retry_times += 1
         time.sleep(3)
@@ -200,12 +200,12 @@ def test_mobile_execute_task_and_wait_success(mobile_agent_session):
     agent = mobile_agent_session.agent
 
     task = "Open WeChat app"
-    max_poll_times = os.environ.get("AGENT_TASK_TIMEOUT")
-    if not max_poll_times:
-        max_poll_times = 100
+    max_try_times = os.environ.get("AGENT_TASK_TIMEOUT")
+    if not max_try_times:
+        max_try_times = 100
     logger.info("🚀 task of opening WeChat app")
     result = agent.mobile.execute_task_and_wait(
-        task, max_steps=50, max_try_times=3, max_poll_times=int(max_poll_times)
+        task, max_steps=50, max_step_retries=3, max_try_times=int(max_try_times)
     )
     assert result.success
     assert result.request_id != ""
@@ -224,7 +224,7 @@ def test_mobile_execute_task_success(mobile_agent_session):
         max_try_times = 100
     logger.info("🚀 async task of opening WeChat app")
     result = agent.mobile.execute_task(
-        task, max_steps=50, max_try_times=3
+        task, max_steps=50, max_step_retries=3
     )
     assert result.success
     assert result.request_id != ""

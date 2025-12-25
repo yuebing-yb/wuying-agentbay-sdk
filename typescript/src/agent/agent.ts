@@ -121,7 +121,7 @@ abstract class BaseTaskAgent {
         };
       }
 
-      const taskId = content.taskId || content.task_id;
+      const taskId = content.task_id || '';
       if (!taskId) {
         return {
           requestId: result.requestId,
@@ -149,13 +149,13 @@ abstract class BaseTaskAgent {
         }
 
         switch (query.taskStatus) {
-          case 'completed':
+          case 'finished':
             return {
               requestId: query.requestId,
               success: true,
               errorMessage: '',
               taskId: taskId,
-              taskStatus: 'completed',
+              taskStatus: 'finished',
               taskResult: query.taskProduct,
             };
           case 'failed':
@@ -165,15 +165,6 @@ abstract class BaseTaskAgent {
               errorMessage: query.errorMessage || 'Failed to execute task.',
               taskId: taskId,
               taskStatus: 'failed',
-              taskResult: '',
-            };
-          case 'cancelled':
-            return {
-              requestId: query.requestId,
-              success: false,
-              errorMessage: query.errorMessage || 'Task was cancelled.',
-              taskId: taskId,
-              taskStatus: 'cancelled',
               taskResult: '',
             };
           case 'unsupported':
@@ -235,24 +226,14 @@ abstract class BaseTaskAgent {
       let queryResult: any;
       try {
         queryResult = JSON.parse(result.data);
-        // Support both taskId (camelCase) and task_id (snake_case)
-        const contentTaskId = queryResult.taskId || queryResult.task_id || taskId;
-        // Mobile Agent returns "result", other agents return "product"
-        // Support both for compatibility, prefer "result"
-        const taskProduct = queryResult.result || queryResult.product || '';
-        // Extract stream and error fields
-        const stream = Array.isArray(queryResult.stream) ? queryResult.stream : undefined;
-        const error = queryResult.error || undefined;
         return {
           requestId: result.requestId,
           success: true,
           errorMessage: '',
-          taskId: contentTaskId,
+          taskId: queryResult.task_id || taskId,
           taskAction: queryResult.action || '',
-          taskProduct: taskProduct,
-          taskStatus: queryResult.status || 'completed',
-          stream: stream,
-          error: error,
+          taskProduct: queryResult.product || '',
+          taskStatus: queryResult.status || 'finised',
         };
       } catch (error) {
         return {
@@ -303,8 +284,8 @@ abstract class BaseTaskAgent {
         };
       }
 
-      const terminatedTaskId = content.taskId || content.task_id || taskId;
-      const status = content.status || 'cancelling';
+      const terminatedTaskId = content.task_id || taskId;
+      const status = content.status || 'finised';
 
       if (result.success) {
         return {
@@ -488,7 +469,7 @@ export class MobileUseAgent extends BaseTaskAgent {
           if (attempt < maxStepRetries - 1) {
             logDebug(
                 `Attempt ${attempt + 1}/${maxStepRetries} failed, retrying...`);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 3000));
             continue;
           } else {
             return {
@@ -507,7 +488,7 @@ export class MobileUseAgent extends BaseTaskAgent {
           logDebug(
               `Attempt ${attempt + 1}/${maxStepRetries} raised exception, ` +
               'retrying...');
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 3000));
           continue;
         } else {
           return {
@@ -618,7 +599,7 @@ export class MobileUseAgent extends BaseTaskAgent {
           if (attempt < maxStepRetries - 1) {
             logDebug(
                 `Attempt ${attempt + 1}/${maxStepRetries} failed, retrying...`);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 3000));
             continue;
           } else {
             return {
@@ -637,7 +618,7 @@ export class MobileUseAgent extends BaseTaskAgent {
           logDebug(
               `Attempt ${attempt + 1}/${maxStepRetries} raised exception, ` +
               'retrying...');
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 3000));
           continue;
         } else {
           return {
@@ -761,6 +742,127 @@ export class MobileUseAgent extends BaseTaskAgent {
       taskId: taskId,
       taskResult: 'Task timeout.',
     };
+  }
+
+  /**
+   * Get the status of the task with the given task ID.
+   */
+  async getTaskStatus(taskId: string): Promise<QueryResult> {
+    try {
+      const args = {task_id: taskId};
+      const result = await this.session.callMcpTool(
+          this.getToolName('get_status'), args);
+
+      if (!result.success) {
+        return {
+          requestId: result.requestId,
+          success: false,
+          errorMessage: result.errorMessage,
+          taskId: taskId,
+          taskAction: '',
+          taskProduct: '',
+          taskStatus: 'failed',
+        };
+      }
+      let queryResult: any;
+      try {
+        queryResult = JSON.parse(result.data);
+        const contentTaskId = queryResult.taskId || queryResult.task_id || taskId;
+        const taskProduct = queryResult.result || queryResult.product || '';
+        const stream = Array.isArray(queryResult.stream) ? queryResult.stream : undefined;
+        const error = queryResult.error || undefined;
+        return {
+          requestId: result.requestId,
+          success: true,
+          errorMessage: '',
+          taskId: contentTaskId,
+          taskAction: queryResult.action || '',
+          taskProduct: taskProduct,
+          taskStatus: queryResult.status || 'completed',
+          stream: stream,
+          error: error,
+        };
+      } catch (error) {
+        return {
+          requestId: result.requestId,
+          success: false,
+          errorMessage: `Failed to get task status: ${error}`,
+          taskId: taskId,
+          taskAction: '',
+          taskProduct: '',
+          taskStatus: 'failed',
+        };
+      }
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to get task status: ${error}`,
+        taskId: taskId,
+        taskAction: '',
+        taskProduct: '',
+        taskStatus: 'failed',
+      };
+    }
+  }
+
+  /**
+   * Terminate a task with a specified task ID.
+   */
+  async terminateTask(taskId: string): Promise<ExecutionResult> {
+    logDebug('Terminating task');
+
+    try {
+      const args = {task_id: taskId};
+      const result = await this.session.callMcpTool(
+          this.getToolName('terminate'), args);
+
+      let content: any;
+      try {
+        content = JSON.parse(result.data);
+      } catch (err) {
+        return {
+          requestId: result.requestId,
+          success: false,
+          errorMessage: `Failed to parse response: ${err}`,
+          taskId,
+          taskStatus: 'failed',
+          taskResult: '',
+        };
+      }
+
+      const terminatedTaskId = content.taskId || content.task_id || taskId;
+      const status = content.status || 'cancelling';
+
+      if (result.success) {
+        return {
+          requestId: result.requestId,
+          success: true,
+          errorMessage: '',
+          taskId: terminatedTaskId,
+          taskStatus: status,
+          taskResult: '',
+        };
+      }
+
+      return {
+        requestId: result.requestId,
+        success: false,
+        errorMessage: result.errorMessage,
+        taskId: terminatedTaskId,
+        taskStatus: status,
+        taskResult: '',
+      };
+    } catch (error) {
+      return {
+        requestId: '',
+        success: false,
+        errorMessage: `Failed to terminate: ${error}`,
+        taskId,
+        taskStatus: 'failed',
+        taskResult: '',
+      };
+    }
   }
 }
 
