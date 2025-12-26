@@ -12,7 +12,8 @@ import {
   DownloadStrategy,
   Lifecycle,
   MappingPolicy,
-  newMappingPolicy
+  newMappingPolicy,
+  SyncPolicyImpl
 } from "../../src/context-sync";
 import { log } from "../../src/utils/logger";
 
@@ -223,6 +224,20 @@ describe("ContextSync Unit Tests", () => {
       expect(() => {
         new ContextSync("test-context", "/test/path", syncPolicyWithInvalidPath);
       }).toThrow("Wildcard patterns are not supported in path. Got: /path/with/*. Please use exact directory paths instead.");
+    });
+
+    it("should throw error when SyncPolicy contains unknown properties (e.g. bwlist typo)", () => {
+      expect(() => {
+        new SyncPolicyImpl({
+          bwlist: { whiteLists: [] }
+        } as any);
+      }).toThrow("Unknown property in SyncPolicy: 'bwlist'.");
+
+      expect(() => {
+        new ContextSync("test-context", "/test/path", {
+          bwlist: { whiteLists: [] }
+        } as any);
+      }).toThrow("Unknown property in SyncPolicy: 'bwlist'.");
     });
   });
 

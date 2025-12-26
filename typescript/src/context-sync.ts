@@ -143,6 +143,30 @@ export interface SyncPolicy {
   mappingPolicy?: MappingPolicy;
 }
 
+const ALLOWED_POLICY_KEYS = new Set([
+  'uploadPolicy',
+  'downloadPolicy',
+  'deletePolicy',
+  'extractPolicy',
+  'recyclePolicy',
+  'bwList',
+  'mappingPolicy'
+]);
+
+// Helper to validate object keys
+function validatePolicyKeys(policy: any): void {
+  if (!policy || typeof policy !== 'object') return;
+  
+  for (const key of Object.keys(policy)) {
+    if (!ALLOWED_POLICY_KEYS.has(key)) {
+      throw new Error(
+        `Unknown property in SyncPolicy: '${key}'. ` +
+        `Valid properties are: ${Array.from(ALLOWED_POLICY_KEYS).join(', ')}`
+      );
+    }
+  }
+}
+
 // SyncPolicyImpl provides a class-based implementation with default value handling
 export class SyncPolicyImpl implements SyncPolicy {
   uploadPolicy?: UploadPolicy;
@@ -154,6 +178,7 @@ export class SyncPolicyImpl implements SyncPolicy {
 
   constructor(policy?: Partial<SyncPolicy>) {
     if (policy) {
+      validatePolicyKeys(policy);
       this.uploadPolicy = policy.uploadPolicy;
       this.downloadPolicy = policy.downloadPolicy;
       this.deletePolicy = policy.deletePolicy;
@@ -328,7 +353,15 @@ function isValidUploadMode(uploadMode: UploadMode): boolean {
   return uploadMode === UploadMode.File || uploadMode === UploadMode.Archive;
 }
 
-function validateSyncPolicy(policy?: SyncPolicy): void {
+export function validateSyncPolicy(policy?: SyncPolicy): void {
+  if (policy) {
+    // If policy is NOT an instance of SyncPolicyImpl (which already validated keys), validate keys
+    // This catches POJOs passed directly to ContextSync
+    if (!(policy instanceof SyncPolicyImpl)) {
+      validatePolicyKeys(policy);
+    }
+  }
+
   if (policy?.bwList?.whiteLists) {
     for (const whitelist of policy.bwList.whiteLists) {
       WhiteListValidator.validate(whitelist);
