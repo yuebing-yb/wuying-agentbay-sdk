@@ -6,9 +6,6 @@ import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.CallMcpToolResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -28,7 +25,6 @@ import java.util.concurrent.TimeUnit;
  * Similar to Python's BaseService, handles MCP tool calls and response parsing.
  */
 public class BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(BaseService.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final OkHttpClient httpClient = new OkHttpClient.Builder()
         .readTimeout(120, TimeUnit.SECONDS)
@@ -59,7 +55,6 @@ public class BaseService {
                 return callMcpToolApi(toolName, args);
             }
         } catch (Exception e) {
-            logger.error("Unexpected error calling MCP tool: {}", toolName, e);
             return new OperationResult("", false, "", "Unexpected error: " + e.getMessage());
         }
     }
@@ -93,7 +88,6 @@ public class BaseService {
             }
 
         } catch (AgentBayException e) {
-            logger.error("Failed to call MCP tool: {}", toolName, e);
             return new OperationResult("", false, "", "Failed to call MCP tool " + toolName + ": " + e.getMessage());
         }
     }
@@ -103,8 +97,7 @@ public class BaseService {
      */
     private OperationResult callMcpToolVpc(String toolName, Object args) {
         try {
-            //logger.debug("Calling VPC tool: {} with args: {}", toolName, args);
-
+            //
             String server = findServerForTool(toolName);
             if (server == null || server.isEmpty()) {
                 return new OperationResult("", false, "", "Server not found for tool: " + toolName);
@@ -133,8 +126,7 @@ public class BaseService {
                 vpcLinkUrl,
                 bodyJson
             );
-            //logger.info("VPC tool call curl command: \n {}", curlCommand);
-
+            //
             RequestBody requestBody = RequestBody.create(bodyJson, MediaType.parse("application/json"));
             Request request = new Request.Builder()
                 .url(url)
@@ -190,19 +182,14 @@ public class BaseService {
                 }
 
                 if (isError != null && isError) {
-                    logger.error("VPC tool returned error: {}", textContent);
                     return new OperationResult(requestId, false, "", textContent);
                 }
-
-                logger.debug("VPC tool call successful: {}", textContent.substring(0, Math.min(200, textContent.length())));
                 return new OperationResult(requestId, true, textContent, "");
             }
 
         } catch (IOException e) {
-            logger.error("HTTP request failed for VPC tool call: {}", toolName, e);
             return new OperationResult("", false, "", "HTTP request failed: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Failed to call VPC tool: {}", toolName, e);
             return new OperationResult("", false, "", "Unexpected error: " + e.getMessage());
         }
     }
@@ -264,14 +251,12 @@ public class BaseService {
             }
 
             // Fallback to toString if parsing fails
-            logger.warn("Failed to parse MCP response structure, using fallback");
             return responseData.toString();
 
         } catch (RuntimeException e) {
             // Re-throw RuntimeExceptions (like MCP tool execution errors) to be handled upstream
             throw e;
         } catch (Exception e) {
-            logger.error("Error parsing MCP response", e);
             return "Error parsing MCP response: " + e.getMessage();
         }
     }

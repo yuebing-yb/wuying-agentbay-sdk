@@ -5,9 +5,6 @@ import com.aliyun.agentbay.model.DeleteResult;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,8 +13,6 @@ import java.util.Map;
  * Similar to Python's Oss class.
  */
 public class OSS extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(OSS.class);
-
     public OSS(Session session) {
         super(session);
     }
@@ -48,8 +43,6 @@ public class OSS extends BaseService {
             }
 
             OperationResult result = callMcpTool("oss_env_init", args);
-            logger.debug("oss_env_init response: {}", result);
-
             if (result.isSuccess()) {
                 return new OSSClientResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -58,7 +51,6 @@ public class OSS extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to initialize OSS environment", e);
             return new OSSClientResult("", false, null, "Failed to initialize OSS environment: " + e.getMessage());
         }
     }
@@ -91,8 +83,6 @@ public class OSS extends BaseService {
             args.put("path", path);
 
             OperationResult result = callMcpTool("oss_upload", args);
-            logger.debug("oss_upload response: {}", result);
-
             if (result.isSuccess()) {
                 return new OSSUploadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -101,7 +91,6 @@ public class OSS extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to upload to OSS", e);
             return new OSSUploadResult("", false, "", "Failed to upload to OSS: " + e.getMessage());
         }
     }
@@ -129,8 +118,6 @@ public class OSS extends BaseService {
             args.put("path", path);
 
             OperationResult result = callMcpTool("oss_upload_annon", args);
-            logger.debug("oss_upload_annon response: {}", result);
-
             if (result.isSuccess()) {
                 return new OSSUploadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -139,7 +126,6 @@ public class OSS extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to upload anonymously", e);
             return new OSSUploadResult("", false, "", "Failed to upload anonymously: " + e.getMessage());
         }
     }
@@ -172,8 +158,6 @@ public class OSS extends BaseService {
             args.put("path", path);
 
             OperationResult result = callMcpTool("oss_download", args);
-            logger.debug("oss_download response: {}", result);
-
             if (result.isSuccess()) {
                 return new OSSDownloadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -182,7 +166,6 @@ public class OSS extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to download from OSS", e);
             return new OSSDownloadResult("", false, "", "Failed to download from OSS: " + e.getMessage());
         }
     }
@@ -210,8 +193,6 @@ public class OSS extends BaseService {
             args.put("path", path);
 
             OperationResult result = callMcpTool("oss_download_annon", args);
-            logger.debug("oss_download_annon response: {}", result);
-
             if (result.isSuccess()) {
                 return new OSSDownloadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -220,7 +201,6 @@ public class OSS extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to download anonymously", e);
             return new OSSDownloadResult("", false, "", "Failed to download anonymously: " + e.getMessage());
         }
     }

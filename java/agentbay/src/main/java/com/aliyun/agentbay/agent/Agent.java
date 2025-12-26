@@ -5,9 +5,6 @@ import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +13,6 @@ import java.util.Map;
  * Provides high-level task automation capabilities for both computer and browser operations.
  */
 public class Agent extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(Agent.class);
     private static final Gson gson = new Gson();
 
     private final Computer computer;
@@ -51,8 +47,6 @@ public class Agent extends BaseService {
      * Uses flux_* MCP tools for task execution.
      */
     public static class Computer extends BaseService {
-        private static final Logger logger = LoggerFactory.getLogger(Computer.class);
-
         public Computer(Session session) {
             super(session);
         }
@@ -95,7 +89,6 @@ public class Agent extends BaseService {
                         "running"
                     );
                 } else {
-                    logger.error("Task execute failed");
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
@@ -105,7 +98,6 @@ public class Agent extends BaseService {
                     );
                 }
             } catch (Exception e) {
-                logger.error("Failed to execute task", e);
                 return new ExecutionResult(
                     "",
                     false,
@@ -177,14 +169,9 @@ public class Agent extends BaseService {
                                 ""
                             );
                         }
-
-                        logger.info("⏳ Task {} running 🚀: {}.", taskId, query.getTaskAction());
-
                         Thread.sleep(3000);
                         triedTime++;
                     }
-
-                    logger.warn("⚠️ task execution timeout!");
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
@@ -194,7 +181,6 @@ public class Agent extends BaseService {
                         "Task timeout."
                     );
                 } else {
-                    logger.error("❌ Task execution failed");
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
@@ -215,7 +201,6 @@ public class Agent extends BaseService {
                     "Task Failed"
                 );
             } catch (Exception e) {
-                logger.error("Failed to execute task", e);
                 return new ExecutionResult(
                     "",
                     false,
@@ -270,7 +255,6 @@ public class Agent extends BaseService {
                     );
                 }
             } catch (Exception e) {
-                logger.error("Failed to get task status", e);
                 return new QueryResult(
                     "",
                     false,
@@ -297,7 +281,6 @@ public class Agent extends BaseService {
          * </pre>
          */
         public ExecutionResult terminateTask(String taskId) {
-            logger.info("Terminating task");
             try {
                 Map<String, Object> args = new HashMap<>();
                 args.put("task_id", taskId);
@@ -325,7 +308,6 @@ public class Agent extends BaseService {
                     );
                 }
             } catch (Exception e) {
-                logger.error("Failed to terminate task", e);
                 return new ExecutionResult(
                     "",
                     false,
@@ -343,8 +325,6 @@ public class Agent extends BaseService {
      * Still in BETA.
      */
     public static class Browser extends BaseService {
-        private static final Logger logger = LoggerFactory.getLogger(Browser.class);
-
         public Browser(Session session) {
             super(session);
         }
@@ -363,7 +343,6 @@ public class Agent extends BaseService {
          * </pre>
          */
         public InitializationResult initialize(AgentOptions options) {
-            logger.info("Initialize Browser Use Agent...");
             try {
                 Map<String, Object> args = new HashMap<>();
                 if (options != null) {
@@ -390,7 +369,6 @@ public class Agent extends BaseService {
                     );
                 }
             } catch (Exception e) {
-                logger.error("Failed to initialize", e);
                 return new InitializationResult(
                     "",
                     false,
@@ -438,7 +416,6 @@ public class Agent extends BaseService {
                         "running"
                     );
                 } else {
-                    logger.error("Task execute failed");
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
@@ -448,7 +425,6 @@ public class Agent extends BaseService {
                     );
                 }
             } catch (Exception e) {
-                logger.error("Failed to execute task", e);
                 return new ExecutionResult(
                     "",
                     false,
@@ -520,14 +496,9 @@ public class Agent extends BaseService {
                                 ""
                             );
                         }
-
-                        logger.info("⏳ Task {} running 🚀: {}.", taskId, query.getTaskAction());
-
                         Thread.sleep(3000);
                         triedTime++;
                     }
-
-                    logger.warn("⚠️ task execution timeout!");
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
@@ -537,7 +508,6 @@ public class Agent extends BaseService {
                         "Task timeout."
                     );
                 } else {
-                    logger.error("❌ Task execution failed");
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
@@ -558,7 +528,6 @@ public class Agent extends BaseService {
                     "Task Failed"
                 );
             } catch (Exception e) {
-                logger.error("Failed to execute task", e);
                 return new ExecutionResult(
                     "",
                     false,
@@ -613,7 +582,6 @@ public class Agent extends BaseService {
                     );
                 }
             } catch (Exception e) {
-                logger.error("Failed to get task status", e);
                 return new QueryResult(
                     "",
                     false,
@@ -640,7 +608,6 @@ public class Agent extends BaseService {
          * </pre>
          */
         public ExecutionResult terminateTask(String taskId) {
-            logger.info("Terminating task");
             try {
                 Map<String, Object> args = new HashMap<>();
                 args.put("task_id", taskId);
@@ -668,7 +635,6 @@ public class Agent extends BaseService {
                     );
                 }
             } catch (Exception e) {
-                logger.error("Failed to terminate task", e);
                 return new ExecutionResult(
                     "",
                     false,

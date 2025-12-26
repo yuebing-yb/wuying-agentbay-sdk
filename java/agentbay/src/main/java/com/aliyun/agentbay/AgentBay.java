@@ -25,16 +25,12 @@ import com.aliyun.wuyingai20250506.models.CreateMcpSessionResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Main client for interacting with the AgentBay cloud runtime environment
  */
 public class AgentBay {
-    private static final Logger logger = LoggerFactory.getLogger(AgentBay.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private String apiKey;
@@ -85,14 +81,10 @@ public class AgentBay {
             this.apiClient = new ApiClient(this.client, apiKey);
             this.mobileSimulate = new MobileSimulate(this);
             this.network = new Network(this);
-
-            logger.info("AgentBay client initialized successfully");
         } catch (Exception e) {
-            logger.error("Failed to initialize AgentBay client", e);
             throw new AgentBayException("Failed to initialize AgentBay client", e);
         }
     }
-
 
     /**
      * Get an existing session by ID from local cache only.
@@ -115,8 +107,6 @@ public class AgentBay {
      */
     public GetSessionResult getSessionInfo(String sessionId) {
         try {
-            logger.debug("Getting session information for session: {}", sessionId);
-
             com.aliyun.wuyingai20250506.models.GetSessionRequest request = 
                 new com.aliyun.wuyingai20250506.models.GetSessionRequest();
             request.setAuthorization("Bearer " + apiKey);
@@ -189,7 +179,6 @@ public class AgentBay {
             // Check if this is an expected business error (e.g., session not found)
             if (errorStr != null && (errorStr.contains("InvalidMcpSession.NotFound") || 
                                      errorStr.contains("NotFound"))) {
-                logger.info("Session not found: {}", sessionId);
                 return new GetSessionResult(
                     requestId,
                     false,
@@ -197,7 +186,6 @@ public class AgentBay {
                     "Session " + sessionId + " not found"
                 );
             } else {
-                logger.error("Error calling GetSession API for session: {}", sessionId, e);
                 return new GetSessionResult(
                     requestId,
                     false,
@@ -206,7 +194,6 @@ public class AgentBay {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error calling GetSession API for session: {}", sessionId, e);
             return new GetSessionResult(
                 "",
                 false,
@@ -273,14 +260,9 @@ public class AgentBay {
                 getContextService().get(contextName, true);
             if (contextResult.isSuccess() && contextResult.getContext() != null) {
                 session.setFileTransferContextId(contextResult.getContext().getContextId());
-                logger.info("Created file transfer context for recovered session: {}", 
-                           contextResult.getContext().getContextId());
             } else {
-                logger.warn("Failed to create file transfer context for recovered session: {}", 
-                           contextResult.getErrorMessage() != null ? contextResult.getErrorMessage() : "Unknown error");
             }
         } catch (Exception e) {
-            logger.warn("Failed to create file transfer context for recovered session: {}", e.getMessage());
         }
 
         SessionResult result = new SessionResult();
@@ -297,7 +279,6 @@ public class AgentBay {
      */
     public void removeSession(String sessionId) {
         sessions.remove(sessionId);
-        logger.info("Session removed from cache: {}", sessionId);
     }
 
     /**
@@ -348,9 +329,6 @@ public class AgentBay {
             if (params == null) {
                 params = new CreateSessionParams();
             }
-
-            logger.info("Creating new session with params");
-
             CreateMcpSessionRequest request = new CreateMcpSessionRequest();
             request.authorization = "Bearer " + apiKey;
 
@@ -367,7 +345,6 @@ public class AgentBay {
                             Map<String, Object> policyMap = cs.getPolicy().toMap();
                             policyJson = objectMapper.writeValueAsString(policyMap);
                         } catch (Exception e) {
-                            logger.warn("Failed to serialize policy to JSON: {}", e.getMessage());
                         }
                     }
 
@@ -381,7 +358,6 @@ public class AgentBay {
                 }
 
                 request.setPersistenceDataList(persistenceDataList);
-                logger.debug("Added {} context sync configurations", persistenceDataList.size());
             }
 
             // Add BrowserContext as a ContextSync if provided
@@ -417,7 +393,6 @@ public class AgentBay {
                     Map<String, Object> policyMap = syncPolicy.toMap();
                     policyJson = objectMapper.writeValueAsString(policyMap);
                 } catch (Exception e) {
-                    logger.warn("Failed to serialize browser context policy to JSON: {}", e.getMessage());
                 }
                 
                 // Create browser context sync item
@@ -432,16 +407,10 @@ public class AgentBay {
                     request.setPersistenceDataList(new ArrayList<>());
                 }
                 request.getPersistenceDataList().add(browserContextSync);
-                
-                logger.info("Added browser context to persistence_data_list. Total items: {}", 
-                          request.getPersistenceDataList().size());
                 for (int i = 0; i < request.getPersistenceDataList().size(); i++) {
                     CreateMcpSessionRequest.CreateMcpSessionRequestPersistenceDataList item = 
                         request.getPersistenceDataList().get(i);
-                    logger.info("persistence_data_list[{}]: context_id={}, path={}, policy_length={}", 
-                              i, item.getContextId(), item.getPath(), 
-                              item.getPolicy() != null ? item.getPolicy().length() : 0);
-                    logger.debug("persistence_data_list[{}] policy content: {}", i, item.getPolicy());
+
                 }
             }
 
@@ -455,29 +424,24 @@ public class AgentBay {
                 try {
                     String labelsJson = objectMapper.writeValueAsString(params.getLabels());
                     request.setLabels(labelsJson);
-                    logger.debug("Added labels: {}", labelsJson);
                 } catch (Exception e) {
-                    logger.warn("Failed to serialize labels to JSON: {}", e.getMessage());
                 }
             }
 
             // Set policy ID if provided
             if (params.getPolicyId() != null && !params.getPolicyId().isEmpty()) {
                 request.setMcpPolicyId(params.getPolicyId());
-                logger.debug("Added policy ID: {}", params.getPolicyId());
             }
 
             // Set network ID if provided
             if (params.getNetworkId() != null && !params.getNetworkId().isEmpty()) {
                 request.setNetworkId(params.getNetworkId());
-                logger.debug("Added network ID: {}", params.getNetworkId());
             }
 
             // Set enable_browser_replay if explicitly set to false
             // Browser replay is enabled by default, so only set when explicitly False
             if (params.getEnableBrowserReplay() != null && !params.getEnableBrowserReplay()) {
                 request.setEnableRecord(false);
-                logger.info("enable_browser_replay is False, setting enable_record to False");
             }
 
             // Note: ExtraConfigs is handled automatically by MobileExtraConfig during session creation
@@ -494,8 +458,6 @@ public class AgentBay {
                 framework
             );
             request.setSdkStats(sdkStatsJson);
-            logger.debug("Added SDK stats: {}", sdkStatsJson);
-
             CreateMcpSessionResponse response = client.createMcpSession(request);
 
             if (response == null || response.getBody() == null) {
@@ -516,7 +478,6 @@ public class AgentBay {
                 try {
                     sessionId = response.getBody().getData().getSessionId();
                 } catch (Exception e) {
-                    logger.warn("Failed to extract session ID directly, trying alternative approach", e);
                     sessionId = response.getBody().getData().toString();
                 }
             }
@@ -550,12 +511,9 @@ public class AgentBay {
                     session.setHttpPort(response.getBody().getData().getHttpPort());
                     session.updateVpcLinkUrl();
                     session.setToken(response.getBody().getData().getToken());
-                    logger.info("session created with http Port: {}", session.getHttpPort());
                     try {
                         session.listMcpTools();
-                        logger.info("Successfully fetched MCP tools for VPC session");
                     } catch (Exception e) {
-                        logger.warn("Failed to fetch MCP tools for VPC session: {}", e.getMessage());
                     }
                 }
             }*/
@@ -567,9 +525,7 @@ public class AgentBay {
             if (params.getExtraConfigs() != null && params.getExtraConfigs().getMobile() != null) {
                 try {
                     session.getMobile().configure(params.getExtraConfigs().getMobile());
-                    logger.info("Applied mobile configuration to session");
                 } catch (Exception e) {
-                    logger.warn("Failed to apply mobile configuration: {}", e.getMessage());
                 }
             }
 
@@ -590,11 +546,8 @@ public class AgentBay {
                     waitForMobileSimulate(session, simConfig);
                 }
             }
-
-            logger.info("Session created successfully: {}", result.getSessionId());
             return result;
         } catch (Exception e) {
-            logger.error("Failed to create session", e);
             SessionResult result = new SessionResult();
             result.setSuccess(false);
             result.setErrorMessage(e.getMessage());
@@ -616,13 +569,10 @@ public class AgentBay {
      * @param simConfig Mobile simulate configuration
      */
     private void waitForMobileSimulate(Session session, MobileSimulateConfig simConfig) {
-        logger.info("Waiting for mobile simulate to complete");
-        
         String mobileSimPath = simConfig.getSimulatePath();
         MobileSimulateMode mobileSimMode = simConfig.getSimulateMode();
         
         if (mobileSimPath == null || mobileSimPath.isEmpty()) {
-            logger.info("mobile_sim_path is not set, skip mobile simulate operation");
             return;
         }
         
@@ -645,23 +595,16 @@ public class AgentBay {
             
             String command = String.format("chmod -R a+rwx %s; wya apply %s %s", 
                                           mobileSimPath, wyaApplyOption, devInfoFilePath).trim();
-            logger.info("Waiting for mobile simulate completion, command: {}", command);
-            
             com.aliyun.agentbay.model.CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
             if (cmdResult.isSuccess()) {
                 long endTime = System.currentTimeMillis();
                 double consumeTime = (endTime - startTime) / 1000.0;
                 String modeStr = mobileSimMode != null ? mobileSimMode.getValue() : "PropertiesOnly";
-                logger.info("Mobile simulate completed with mode: {}, duration: {:.2f} seconds", 
-                           modeStr, consumeTime);
                 if (cmdResult.getOutput() != null && !cmdResult.getOutput().isEmpty()) {
-                    logger.info("   Output: {}", cmdResult.getOutput().trim());
                 }
             } else {
-                logger.warn("Failed to execute mobile simulate command: {}", cmdResult.getErrorMessage());
             }
         } catch (Exception e) {
-            logger.warn("Error executing mobile simulate command: {}", e.getMessage());
         }
     }
 
@@ -671,8 +614,6 @@ public class AgentBay {
      * @param session The session to wait for context synchronization
      */
     private void waitForContextSynchronization(Session session) {
-        logger.info("Waiting for context synchronization to complete");
-
         // Wait for context synchronization to complete
         int maxRetries = 150; // Maximum number of retries
         int retryInterval = 2000; // 2 seconds in milliseconds
@@ -687,9 +628,6 @@ public class AgentBay {
                 boolean hasFailure = false;
 
                 for (com.aliyun.agentbay.context.ContextStatusData item : infoResult.getContextStatusData()) {
-                    logger.info("Context {} status: {}, path: {}",
-                               item.getContextId(), item.getStatus(), item.getPath());
-
                     if (!"Success".equals(item.getStatus()) && !"Failed".equals(item.getStatus())) {
                         allCompleted = false;
                         break;
@@ -697,28 +635,20 @@ public class AgentBay {
 
                     if ("Failed".equals(item.getStatus())) {
                         hasFailure = true;
-                        logger.error("Context synchronization failed for {}: {}",
-                                   item.getContextId(), item.getErrorMessage());
                     }
                 }
 
                 if (allCompleted || infoResult.getContextStatusData().isEmpty()) {
                     if (hasFailure) {
-                        logger.warn("Context synchronization completed with failures");
                     } else {
-                        logger.info("Context synchronization completed successfully");
                     }
                     break;
                 }
-
-                logger.debug("Waiting for context synchronization, attempt {}/{}", retry + 1, maxRetries);
                 Thread.sleep(retryInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("Context synchronization wait interrupted");
                 break;
             } catch (Exception e) {
-                logger.error("Error checking context status on attempt {}: {}", retry + 1, e.getMessage());
                 try {
                     Thread.sleep(retryInterval);
                 } catch (InterruptedException ie) {

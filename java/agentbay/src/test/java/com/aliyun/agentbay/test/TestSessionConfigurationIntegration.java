@@ -8,35 +8,33 @@ import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
 /**
  * Integration tests for session configuration parameters including
  * policy_id, enable_browser_replay, and extra_configs.
  */
-@EnabledIfEnvironmentVariable(named = "AGENTBAY_API_KEY", matches = ".+")
 public class TestSessionConfigurationIntegration {
 
     private AgentBay agentBay;
     private Session session;
 
-    @BeforeEach
+    @Before
     public void setUp() throws Exception {
         String apiKey = System.getenv("AGENTBAY_API_KEY");
         assertNotNull(apiKey, "AGENTBAY_API_KEY must be set");
         agentBay = new AgentBay();
     }
 
-    @AfterEach
+    @After
     public void tearDown() {
         if (session != null) {
             try {
@@ -64,7 +62,7 @@ public class TestSessionConfigurationIntegration {
         SessionResult result = agentBay.create(params);
 
         assertNotNull(result);
-        assertTrue(result.isSuccess(), "Session creation should succeed");
+        assertTrue(result.isSuccess());
         assertNotNull(result.getSession());
         assertNotNull(result.getRequestId());
         
@@ -89,7 +87,7 @@ public class TestSessionConfigurationIntegration {
         SessionResult result = agentBay.create(params);
 
         assertNotNull(result);
-        assertTrue(result.isSuccess(), "Session creation should succeed");
+        assertTrue(result.isSuccess());
         assertNotNull(result.getSession());
         
         session = result.getSession();
@@ -123,7 +121,7 @@ public class TestSessionConfigurationIntegration {
         SessionResult result = agentBay.create(params);
 
         assertNotNull(result);
-        assertTrue(result.isSuccess(), "Session creation should succeed");
+        assertTrue(result.isSuccess());
         assertNotNull(result.getSession());
         
         session = result.getSession();
@@ -160,7 +158,7 @@ public class TestSessionConfigurationIntegration {
         SessionResult result = agentBay.create(params);
 
         assertNotNull(result);
-        assertTrue(result.isSuccess(), "Session creation should succeed");
+        assertTrue(result.isSuccess());
         assertNotNull(result.getSession());
         
         session = result.getSession();
@@ -202,7 +200,7 @@ public class TestSessionConfigurationIntegration {
         SessionResult result = agentBay.create(params);
 
         assertNotNull(result);
-        assertTrue(result.isSuccess(), "Session creation should succeed");
+        assertTrue(result.isSuccess());
         assertNotNull(result.getSession());
         assertNotNull(result.getRequestId());
         

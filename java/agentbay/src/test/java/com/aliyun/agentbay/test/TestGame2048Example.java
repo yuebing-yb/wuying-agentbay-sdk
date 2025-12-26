@@ -14,9 +14,6 @@ import com.microsoft.playwright.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -30,7 +27,6 @@ import static org.junit.Assert.*;
  * - Browser agent data extraction
  */
 public class TestGame2048Example {
-    private static final Logger logger = LoggerFactory.getLogger(TestGame2048Example.class);
     private static AgentBay agentBay;
     private static Session session;
     private static String apiKey;
@@ -72,7 +68,6 @@ public class TestGame2048Example {
 
     @BeforeClass
     public static void setUp() throws AgentBayException {
-        logger.info("=== Starting Game2048Example Test ===");
         apiKey = System.getenv("AGENTBAY_API_KEY");
         assertNotNull("AGENTBAY_API_KEY environment variable must be set", apiKey);
         assertFalse("AGENTBAY_API_KEY cannot be empty", apiKey.trim().isEmpty());
@@ -87,7 +82,6 @@ public class TestGame2048Example {
         
         if (sessionResult.isSuccess()) {
             session = sessionResult.getSession();
-            logger.info("Session created with ID: {}", session.getSessionId());
         } else {
             fail("Failed to create session: " + sessionResult.getErrorMessage());
         }
@@ -97,38 +91,26 @@ public class TestGame2048Example {
     public static void tearDown() {
         if (session != null) {
             try {
-                logger.info("Cleaning up session: {}", session.getSessionId());
                 // Note: Session cleanup is handled automatically by the SDK
             } catch (Exception e) {
-                logger.error("Error in cleanup", e);
             }
         }
-        logger.info("=== Game2048Example Test Completed ===");
     }
 
     @Test
     public void test01_AgentBayInitialization() {
-        logger.info("Test 1: Testing AgentBay client initialization");
-        
         assertNotNull("AgentBay client should not be null", agentBay);
-        logger.info("✅ AgentBay client initialized successfully");
     }
 
     @Test
     public void test02_SessionCreation() {
-        logger.info("Test 2: Testing session creation");
-        
         assertNotNull("Session should not be null", session);
         assertNotNull("Session ID should not be null", session.getSessionId());
         assertFalse("Session ID should not be empty", session.getSessionId().isEmpty());
-        
-        logger.info("✅ Session created successfully with ID: {}", session.getSessionId());
     }
 
     @Test
     public void test03_SessionInfo() throws Exception {
-        logger.info("Test 3: Testing session info retrieval");
-        
         assertNotNull("Session must be created before testing info", session);
         
         SessionInfoResult result = session.info();
@@ -140,15 +122,11 @@ public class TestGame2048Example {
         String desktopUrl = result.getSessionInfo().getResourceUrl();
         assertNotNull("Desktop URL should not be null", desktopUrl);
         assertFalse("Desktop URL should not be empty", desktopUrl.isEmpty());
-        
-        logger.info("✅ Session info retrieved successfully");
-        logger.info("Session URL: {}", desktopUrl);
+
     }
 
     @Test
     public void test04_BrowserInitialization() {
-        logger.info("Test 4: Testing browser initialization");
-        
         assertNotNull("Session must be created before testing browser", session);
         assertNotNull("Browser object should not be null", session.getBrowser());
         
@@ -156,13 +134,10 @@ public class TestGame2048Example {
         boolean initResult = session.getBrowser().initialize(browserOption);
         
         assertTrue("Browser initialization should succeed", initResult);
-        logger.info("✅ Browser initialized successfully");
     }
 
     @Test
     public void test05_BrowserEndpointUrl() throws Exception {
-        logger.info("Test 5: Testing browser endpoint URL retrieval");
-        
         assertNotNull("Session must be created before testing endpoint URL", session);
         assertNotNull("Browser object should not be null", session.getBrowser());
         
@@ -175,15 +150,11 @@ public class TestGame2048Example {
         assertFalse("Endpoint URL should not be empty", endpointUrl.isEmpty());
         assertTrue("Endpoint URL should be a WebSocket URL", 
                    endpointUrl.startsWith("ws://") || endpointUrl.startsWith("wss://"));
-        
-        logger.info("✅ Browser endpoint URL retrieved successfully");
-        logger.info("Endpoint URL: {}", endpointUrl);
+
     }
 
     @Test
     public void test06_BrowserAgentAccess() {
-        logger.info("Test 6: Testing browser agent access");
-        
         assertNotNull("Session must be created before testing agent", session);
         assertNotNull("Browser object should not be null", session.getBrowser());
         
@@ -193,13 +164,10 @@ public class TestGame2048Example {
         BrowserAgent agent = session.getBrowser().getAgent();
         
         assertNotNull("Browser agent should not be null", agent);
-        logger.info("✅ Browser agent accessed successfully");
     }
 
     @Test
     public void test07_BrowserAgentExtract() {
-        logger.info("Test 7: Testing browser agent extract functionality");
-        
         assertNotNull("Session must be created before testing extract", session);
         
         try {
@@ -212,15 +180,11 @@ public class TestGame2048Example {
                 BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
                 BrowserAgent agent = session.getBrowser().getAgent();
-                
-                logger.info("Navigating to 2048 game...");
                 page.navigate("https://ovolve.github.io/2048-AI/",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
                         .setTimeout(180000));
                 Thread.sleep(1000);
-                
-                logger.info("Waiting for game grid to load...");
                 page.waitForSelector(".grid-container", new Page.WaitForSelectorOptions().setTimeout(10000));
                 
                 // Wait a bit for initial tiles to appear
@@ -237,8 +201,6 @@ public class TestGame2048Example {
                     "    Empty spaces should be represented as 0 in the grid.\n" +
                     "    For instance, if the only tiles present are the two above, the grid should be:[[0, 0, 0, 2], [0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 0, 0]]\n" +
                     "3. Highest tile value present";
-                
-                logger.info("Extracting game state using agent...");
                 ExtractOptions<GameState> extractOptions = new ExtractOptions<>(instruction, GameState.class);
                 extractOptions.setUseTextExtract(false);
                 
@@ -261,12 +223,7 @@ public class TestGame2048Example {
                 
                 assertNotNull("Highest tile should not be null", gameState.getHighestTile());
                 assertTrue("Highest tile should be positive", gameState.getHighestTile() > 0);
-                
-                logger.info("✅ Browser agent extract functionality working correctly");
-                logger.info("Extracted game state - Score: {}, Highest Tile: {}", 
-                           gameState.getScore(), gameState.getHighestTile());
-                logger.info("Grid: {}", gameState.getGrid());
-                
+
                 page.close();
                 browser.close();
             }
@@ -277,8 +234,6 @@ public class TestGame2048Example {
 
     @Test
     public void test08_KeyboardInteraction() {
-        logger.info("Test 8: Testing keyboard interaction");
-        
         assertNotNull("Session must be created before testing keyboard", session);
         
         try {
@@ -290,8 +245,6 @@ public class TestGame2048Example {
                 com.microsoft.playwright.Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                
-                logger.info("Navigating to 2048 game for keyboard test...");
                 page.navigate("https://ovolve.github.io/2048-AI/",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
@@ -301,16 +254,11 @@ public class TestGame2048Example {
                 
                 page.waitForSelector(".grid-container", new Page.WaitForSelectorOptions().setTimeout(10000));
                 Thread.sleep(1000);
-                
-                logger.info("Testing keyboard arrow key press...");
                 page.keyboard().press("ArrowLeft");
                 Thread.sleep(1000);
                 
                 page.keyboard().press("ArrowUp");
                 Thread.sleep(1000);
-                
-                logger.info("✅ Keyboard interaction working correctly");
-                
                 page.close();
                 browser.close();
             }
@@ -321,8 +269,6 @@ public class TestGame2048Example {
 
     @Test
     public void test09_InvalidApiKey() {
-        logger.info("Test 9: Testing error handling with invalid API key");
-        
         try {
             AgentBay invalidClient = new AgentBay("invalid_api_key");
             CreateSessionParams params = new CreateSessionParams();
@@ -331,21 +277,15 @@ public class TestGame2048Example {
             
             assertFalse("Invalid API key should not create session successfully", result.isSuccess());
             assertNotNull("Error message should be present", result.getErrorMessage());
-            
-            logger.info("✅ Error handling for invalid API key working correctly");
         } catch (AgentBayException e) {
-            logger.info("✅ AgentBayException thrown as expected: {}", e.getMessage());
             // This is expected behavior
         } catch (Exception e) {
-            logger.info("✅ Exception thrown as expected: {}", e.getMessage());
             // This is also acceptable
         }
     }
 
     @Test
     public void test10_ExtractOptionsConfiguration() {
-        logger.info("Test 10: Testing extract options configuration");
-        
         String instruction = "Extract game state";
         ExtractOptions<GameState> extractOptions = new ExtractOptions<>(instruction, GameState.class);
         
@@ -357,8 +297,6 @@ public class TestGame2048Example {
         
         extractOptions.setUseTextExtract(true);
         // Note: If there's no getter, we can't verify but we can ensure no exception is thrown
-        
-        logger.info("✅ Extract options configuration working correctly");
     }
 }
 

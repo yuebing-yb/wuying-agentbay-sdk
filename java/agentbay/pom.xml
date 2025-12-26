@@ -55,8 +55,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.13.2</junit.version>
         <jackson.version>2.15.2</jackson.version>
-        <slf4j.version>1.7.36</slf4j.version>
-        <logback.version>1.2.12</logback.version>
         <!-- SDK release flag: set to true when publishing to Maven Central -->
         <!-- Usage: mvn deploy -Dagentbay.is.release.build=true -->
         <agentbay.is.release.build>false</agentbay.is.release.build>
@@ -110,19 +108,6 @@
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-jsonSchema</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
-
-        <!-- 日志 -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- HTTP客户端 -->

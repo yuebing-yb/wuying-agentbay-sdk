@@ -14,8 +14,6 @@ import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +27,6 @@ import java.util.Map;
  * window management, application management, and screen operations.
  */
 public class Computer extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(Computer.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public Computer(Session session) {
@@ -55,14 +52,9 @@ public class Computer extends BaseService {
                 args.put("activity", activity);
             }
 
-            logger.debug("Starting app: {} with work directory: {}, activity: {}", startCmd, workDirectory, activity);
-            logger.debug("MCP tool args: {}", args);
-
             OperationResult result = callMcpTool("start_app", args);
 
             if (!result.isSuccess()) {
-                logger.warn("Failed to start app. Command: {}, WorkDirectory: {}, Error: {}, RequestId: {}", 
-                    startCmd, workDirectory, result.getErrorMessage(), result.getRequestId());
                 return new ProcessListResult(
                     result.getRequestId(),
                     false,
@@ -113,7 +105,6 @@ public class Computer extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse processes JSON", e);
                 return new ProcessListResult(
                     result.getRequestId(),
                     false,
@@ -122,7 +113,6 @@ public class Computer extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during startApp", e);
             return new ProcessListResult(
                 "",
                 false,
@@ -164,8 +154,6 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("pname", pname);
 
-            logger.debug("Stopping app by process name: {}", pname);
-
             OperationResult result = callMcpTool("stop_app_by_pname", args);
 
             return new AppOperationResult(
@@ -174,7 +162,6 @@ public class Computer extends BaseService {
                 result.getErrorMessage()
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during stopAppByPName", e);
             return new AppOperationResult(
                 "",
                 false,
@@ -194,8 +181,6 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("pid", pid);
 
-            logger.debug("Stopping app by process ID: {}", pid);
-
             OperationResult result = callMcpTool("stop_app_by_pid", args);
 
             return new AppOperationResult(
@@ -204,7 +189,6 @@ public class Computer extends BaseService {
                 result.getErrorMessage()
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during stopAppByPID", e);
             return new AppOperationResult(
                 "",
                 false,
@@ -224,8 +208,6 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("stop_cmd", stopCmd);
 
-            logger.debug("Stopping app by command: {}", stopCmd);
-
             OperationResult result = callMcpTool("stop_app_by_cmd", args);
 
             return new AppOperationResult(
@@ -234,7 +216,6 @@ public class Computer extends BaseService {
                 result.getErrorMessage()
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during stopAppByCmd", e);
             return new AppOperationResult(
                 "",
                 false,
@@ -250,7 +231,6 @@ public class Computer extends BaseService {
      */
     public ProcessListResult listVisibleApps() {
         try {
-            logger.debug("Listing visible apps");
 
             OperationResult result = callMcpTool("list_visible_apps", new HashMap<>());
 
@@ -305,7 +285,6 @@ public class Computer extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse processes JSON", e);
                 return new ProcessListResult(
                     result.getRequestId(),
                     false,
@@ -314,7 +293,6 @@ public class Computer extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during listVisibleApps", e);
             return new ProcessListResult(
                 "",
                 false,
@@ -338,9 +316,6 @@ public class Computer extends BaseService {
             args.put("start_menu", startMenu);
             args.put("desktop", desktop);
             args.put("ignore_system_apps", ignoreSystemApps);
-
-            logger.debug("Getting installed apps (startMenu: {}, desktop: {}, ignoreSystemApps: {})",
-                startMenu, desktop, ignoreSystemApps);
 
             OperationResult result = callMcpTool("get_installed_apps", args);
 
@@ -401,7 +376,6 @@ public class Computer extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse installed apps JSON", e);
                 return new InstalledAppListResult(
                     result.getRequestId(),
                     false,
@@ -410,7 +384,6 @@ public class Computer extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during getInstalledApps", e);
             return new InstalledAppListResult(
                 "",
                 false,
@@ -477,8 +450,6 @@ public class Computer extends BaseService {
             args.put("y", y);
             args.put("button", button);
 
-            logger.debug("Clicking mouse at ({}, {}) with button: {}", x, y, button);
-
             OperationResult result = callMcpTool("click_mouse", args);
 
             if (!result.isSuccess()) {
@@ -497,7 +468,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during clickMouse", e);
             return new BoolResult(
                 "",
                 false,
@@ -520,8 +490,6 @@ public class Computer extends BaseService {
             args.put("x", x);
             args.put("y", y);
 
-            logger.debug("Moving mouse to ({}, {})", x, y);
-
             OperationResult result = callMcpTool("move_mouse", args);
 
             if (!result.isSuccess()) {
@@ -540,7 +508,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during moveMouse", e);
             return new BoolResult(
                 "",
                 false,
@@ -602,9 +569,6 @@ public class Computer extends BaseService {
             args.put("to_x", toX);
             args.put("to_y", toY);
             args.put("button", button);
-
-            logger.debug("Dragging mouse from ({}, {}) to ({}, {}) with button: {}", fromX, fromY, toX, toY, button);
-
             OperationResult result = callMcpTool("drag_mouse", args);
 
             if (!result.isSuccess()) {
@@ -623,7 +587,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during dragMouse", e);
             return new BoolResult(
                 "",
                 false,
@@ -680,9 +643,6 @@ public class Computer extends BaseService {
             args.put("y", y);
             args.put("direction", direction);
             args.put("amount", amount);
-
-            logger.debug("Scrolling at ({}, {}) direction: {} amount: {}", x, y, direction, amount);
-
             OperationResult result = callMcpTool("scroll", args);
 
             if (!result.isSuccess()) {
@@ -701,7 +661,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during scroll", e);
             return new BoolResult(
                 "",
                 false,
@@ -718,8 +677,6 @@ public class Computer extends BaseService {
      */
     public OperationResult getCursorPosition() {
         try {
-            logger.debug("Getting cursor position");
-
             OperationResult result = callMcpTool("get_cursor_position", new HashMap<>());
 
             if (!result.isSuccess()) {
@@ -738,7 +695,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during getCursorPosition", e);
             return new OperationResult(
                 "",
                 false,
@@ -760,9 +716,6 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("text", text);
-
-            logger.debug("Inputting text: {}", text.length() > 50 ? text.substring(0, 50) + "..." : text);
-
             OperationResult result = callMcpTool("input_text", args);
 
             if (!result.isSuccess()) {
@@ -781,7 +734,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during inputText", e);
             return new BoolResult(
                 "",
                 false,
@@ -803,9 +755,6 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("keys", keys);
             args.put("hold", hold);
-
-            logger.debug("Pressing keys: {} (hold: {})", keys, hold);
-
             OperationResult result = callMcpTool("press_keys", args);
 
             if (!result.isSuccess()) {
@@ -824,7 +773,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during pressKeys", e);
             return new BoolResult(
                 "",
                 false,
@@ -854,9 +802,6 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("keys", keys);
-
-            logger.debug("Releasing keys: {}", keys);
-
             OperationResult result = callMcpTool("release_keys", args);
 
             if (!result.isSuccess()) {
@@ -875,7 +820,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during releaseKeys", e);
             return new BoolResult(
                 "",
                 false,
@@ -895,8 +839,6 @@ public class Computer extends BaseService {
      */
     public OperationResult getScreenSize() {
         try {
-            logger.debug("Getting screen size");
-
             OperationResult result = callMcpTool("get_screen_size", new HashMap<>());
 
             if (!result.isSuccess()) {
@@ -915,7 +857,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during getScreenSize", e);
             return new OperationResult(
                 "",
                 false,
@@ -932,8 +873,6 @@ public class Computer extends BaseService {
      */
     public OperationResult screenshot() {
         try {
-            logger.debug("Taking screenshot");
-
             OperationResult result = callMcpTool("system_screenshot", new HashMap<>());
 
             if (!result.isSuccess()) {
@@ -952,7 +891,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during screenshot", e);
             return new OperationResult(
                 "",
                 false,
@@ -974,9 +912,6 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-
-            logger.debug("Listing root windows with timeout: {}ms", timeoutMs);
-
             OperationResult result = callMcpTool("list_root_windows", args);
 
             if (!result.isSuccess()) {
@@ -1016,7 +951,6 @@ public class Computer extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse windows JSON", e);
                 return new WindowListResult(
                     result.getRequestId(),
                     false,
@@ -1025,7 +959,6 @@ public class Computer extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during listRootWindows", e);
             return new WindowListResult(
                 "",
                 false,
@@ -1054,9 +987,6 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-
-            logger.debug("Getting active window with timeout: {}ms", timeoutMs);
-
             OperationResult result = callMcpTool("get_active_window", args);
 
             if (!result.isSuccess()) {
@@ -1093,7 +1023,6 @@ public class Computer extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse window JSON", e);
                 return new WindowInfoResult(
                     result.getRequestId(),
                     false,
@@ -1102,7 +1031,6 @@ public class Computer extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during getActiveWindow", e);
             return new WindowInfoResult(
                 "",
                 false,
@@ -1185,9 +1113,6 @@ public class Computer extends BaseService {
             args.put("window_id", windowId);
             args.put("width", width);
             args.put("height", height);
-
-            logger.debug("Resizing window {} to {}x{}", windowId, width, height);
-
             OperationResult result = callMcpTool("resize_window", args);
 
             if (!result.isSuccess()) {
@@ -1206,7 +1131,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during resizeWindow", e);
             return new BoolResult(
                 "",
                 false,
@@ -1236,9 +1160,6 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("on", on);
-
-            logger.debug("Setting focus mode: {}", on);
-
             OperationResult result = callMcpTool("focus_mode", args);
 
             if (!result.isSuccess()) {
@@ -1257,7 +1178,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during focusMode", e);
             return new BoolResult(
                 "",
                 false,
@@ -1276,9 +1196,6 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("window_id", windowId);
-
-            logger.debug("Executing {} for window {}", toolName, windowId);
-
             OperationResult result = callMcpTool(toolName, args);
 
             if (!result.isSuccess()) {
@@ -1297,7 +1214,6 @@ public class Computer extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during {}", toolName, e);
             return new BoolResult(
                 "",
                 false,

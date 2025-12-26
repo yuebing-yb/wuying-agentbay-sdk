@@ -5,13 +5,9 @@ import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.*;
 
 public class Code extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(Code.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public Code(Session session) {
@@ -60,7 +56,6 @@ public class Code extends BaseService {
             return parseLegacyFormat(responseData);
 
         } catch (Exception e) {
-            logger.error("Error parsing response body", e);
             throw new RuntimeException("Error parsing response body: " + e.getMessage());
         }
     }
@@ -151,7 +146,6 @@ public class Code extends BaseService {
             return enhancedResult;
 
         } catch (Exception e) {
-            logger.error("Error parsing new JSON format", e);
             throw new RuntimeException("Error parsing new JSON format: " + e.getMessage());
         }
     }
@@ -224,7 +218,6 @@ public class Code extends BaseService {
             return enhancedResult;
 
         } catch (Exception e) {
-            logger.error("Error parsing rich format", e);
             throw new RuntimeException("Error parsing rich format: " + e.getMessage());
         }
     }
@@ -297,12 +290,7 @@ public class Code extends BaseService {
             args.put("code", code);
             args.put("language", language);
             args.put("timeout_s", timeoutS);
-
-            logger.debug("Executing {} code: {}", language, code.substring(0, Math.min(100, code.length())));
-
             OperationResult result = callMcpTool("run_code", args);
-            logger.debug("Run code response: {}", result);
-
             if (result.isSuccess()) {
                 try {
                     Map<String, Object> responseData = objectMapper.readValue(result.getData(), Map.class);
@@ -332,7 +320,6 @@ public class Code extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Error executing code", e);
             return new EnhancedCodeExecutionResult("", false, "Failed to run code: " + e.getMessage());
         }
     }

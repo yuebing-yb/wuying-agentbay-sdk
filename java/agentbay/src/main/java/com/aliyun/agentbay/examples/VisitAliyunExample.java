@@ -7,9 +7,6 @@ import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.microsoft.playwright.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Example demonstrating AIBrowser capabilities with AgentBay SDK.
  * This example shows how to use AIBrowser to visit aliyun.com, including:
@@ -18,8 +15,6 @@ import org.slf4j.LoggerFactory;
  * - Utilize playwright to visit aliyun.com
  */
 public class VisitAliyunExample {
-    private static final Logger logger = LoggerFactory.getLogger(VisitAliyunExample.class);
-
     public static void main(String[] args) {
         String apiKey = System.getenv("AGENTBAY_API_KEY");
         if (apiKey == null || apiKey.trim().isEmpty()) {
@@ -80,10 +75,8 @@ public class VisitAliyunExample {
             }
 
         } catch (AgentBayException e) {
-            logger.error("AgentBay error occurred", e);
             System.err.println("AgentBay error: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Unexpected error occurred", e);
             System.err.println("Unexpected error: " + e.getMessage());
         }
     }

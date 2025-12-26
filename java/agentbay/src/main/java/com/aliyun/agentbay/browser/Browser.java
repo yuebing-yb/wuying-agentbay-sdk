@@ -11,9 +11,6 @@ import com.aliyun.wuyingai20250506.models.InitBrowserRequest;
 import com.aliyun.wuyingai20250506.models.InitBrowserResponse;
 import com.aliyun.wuyingai20250506.models.InitBrowserResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,7 +18,6 @@ import java.util.Map;
  * Browser provides browser-related operations for the session.
  */
 public class Browser extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(Browser.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private String endpointUrl;
@@ -65,34 +61,23 @@ public class Browser extends BaseService {
             request.setBrowserOption(browserOptionJson);
 
             InitBrowserResponse response = session.getAgentBay().getClient().initBrowser(request);
-
-            logger.debug("Response from init_browser: {}", response);
             String requestId = ResponseUtil.extractRequestId(response);
 
             if (response != null && response.getBody() != null && response.getBody().getData() != null) {
                 // Extract port from response using the correct data type
                 InitBrowserResponseBody.InitBrowserResponseBodyData data = response.getBody().getData();
-                logger.debug("Data object: {}", data);
-
                 Integer port = data.getPort();
-                logger.debug("Port from response: {}", port);
-
                 if (port != null) {
                     this.endpointRouterPort = port;
                     this.initialized = true;
                     this.option = option;
-                    logger.info("Browser instance successfully initialized with port: {}", endpointRouterPort);
                     return true;
                 } else {
-                    logger.warn("Port is null in response data");
                 }
             }
-
-            logger.error("Failed to initialize browser: No port in response");
             return false;
 
         } catch (Exception e) {
-            logger.error("Failed to initialize browser instance", e);
             this.initialized = false;
             this.endpointUrl = null;
             this.option = null;
@@ -118,7 +103,6 @@ public class Browser extends BaseService {
             try {
                 stopBrowser();
             } catch (BrowserException e) {
-                logger.warn("Failed to destroy browser", e);
             }
         }
     }
@@ -185,12 +169,10 @@ public class Browser extends BaseService {
             screenshotOptions.setTimeout((Double) enhancedOptions.getOrDefault("timeout", 60000.0));
 
             byte[] screenshotBytes = page.screenshot(screenshotOptions);
-            logger.info("Screenshot captured successfully.");
             return screenshotBytes;
 
         } catch (Exception e) {
             String errorMsg = "Failed to capture screenshot: " + e.getMessage();
-            logger.error(errorMsg, e);
             throw new BrowserException(errorMsg);
         }
     }
@@ -222,10 +204,8 @@ public class Browser extends BaseService {
         try {
             OperationResult result = callMcpTool("stopChrome", new HashMap<>());
             if (!result.isSuccess()) {
-                logger.warn("Failed to stop browser: {}", result.getErrorMessage());
             }
         } catch (Exception e) {
-            logger.error("Error stopping browser", e);
             throw new BrowserException("Failed to stop browser: " + e.getMessage());
         }
     }
@@ -264,7 +244,6 @@ public class Browser extends BaseService {
         try {
             return session.getLink();
         } catch (Exception e) {
-            logger.error("Failed to get link from session", e);
             return new OperationResult("", false, "", "Failed to get link from session: " + e.getMessage());
         }
     }

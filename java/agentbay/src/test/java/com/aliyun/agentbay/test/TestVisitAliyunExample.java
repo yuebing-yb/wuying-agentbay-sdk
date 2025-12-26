@@ -9,9 +9,6 @@ import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.microsoft.playwright.*;
 import org.junit.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static org.junit.Assert.*;
 
 /**
@@ -19,15 +16,12 @@ import static org.junit.Assert.*;
  * Tests the integration of AgentBay SDK with Playwright to visit aliyun.com
  */
 public class TestVisitAliyunExample {
-    private static final Logger logger = LoggerFactory.getLogger(TestVisitAliyunExample.class);
-    
     private AgentBay agentBay;
     private Session session;
     private String apiKey;
 
     @BeforeClass
     public static void setUpClass() {
-        logger.info("Starting Visit Aliyun Example Tests");
     }
 
     @Before
@@ -36,8 +30,6 @@ public class TestVisitAliyunExample {
         apiKey = System.getenv("AGENTBAY_API_KEY");
         assertNotNull("AGENTBAY_API_KEY environment variable must be set", apiKey);
         assertFalse("AGENTBAY_API_KEY must not be empty", apiKey.trim().isEmpty());
-        
-        logger.info("Test setup completed with API key");
     }
 
     @After
@@ -46,16 +38,13 @@ public class TestVisitAliyunExample {
         if (agentBay != null && session != null) {
             try {
                 agentBay.delete(session, false);
-                logger.info("Session cleaned up successfully");
             } catch (Exception e) {
-                logger.error("Failed to clean up session", e);
             }
         }
     }
 
     @AfterClass
     public static void tearDownClass() {
-        logger.info("Visit Aliyun Example Tests completed");
     }
 
     /**
@@ -63,10 +52,8 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testAgentBayInitialization() throws AgentBayException {
-        logger.info("Testing AgentBay initialization");
         agentBay = new AgentBay();
         assertNotNull("AgentBay instance should not be null", agentBay);
-        logger.info("AgentBay initialized successfully");
     }
 
     /**
@@ -74,8 +61,6 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testSessionCreation() throws AgentBayException {
-        logger.info("Testing session creation");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -89,8 +74,6 @@ public class TestVisitAliyunExample {
         session = sessionResult.getSession();
         assertNotNull("Session ID should not be null", session.getSessionId());
         assertFalse("Session ID should not be empty", session.getSessionId().isEmpty());
-        
-        logger.info("Session created successfully with ID: " + session.getSessionId());
     }
 
     /**
@@ -98,8 +81,6 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testBrowserInitialization() throws AgentBayException, BrowserException {
-        logger.info("Testing browser initialization");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -117,8 +98,6 @@ public class TestVisitAliyunExample {
         assertNotNull("Endpoint URL should not be null", endpointUrl);
         assertFalse("Endpoint URL should not be empty", endpointUrl.isEmpty());
 //        assertTrue("Endpoint URL should start with ws://", endpointUrl.startsWith("ws://"));
-        
-        logger.info("Browser initialized successfully with endpoint: " + endpointUrl);
     }
 
     /**
@@ -126,8 +105,6 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testVisitAliyun() throws AgentBayException, BrowserException {
-        logger.info("Testing visit to aliyun.com");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -161,13 +138,9 @@ public class TestVisitAliyunExample {
             String pageTitle = page.title();
             assertNotNull("Page title should not be null", pageTitle);
             assertFalse("Page title should not be empty", pageTitle.isEmpty());
-            
-            logger.info("Page title: " + pageTitle);
-            
             page.waitForTimeout(5000);
             
             browser.close();
-            logger.info("Successfully visited aliyun.com");
         }
     }
 
@@ -176,8 +149,6 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testPageFontManipulation() throws AgentBayException, BrowserException {
-        logger.info("Testing page font manipulation");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -206,12 +177,9 @@ public class TestVisitAliyunExample {
             
             // Change font family
             Object result = page.evaluate("document.body.style.fontFamily = 'Microsoft YaHei';");
-            logger.info("Font family changed successfully");
-            
             page.waitForTimeout(5000);
             
             browser.close();
-            logger.info("Page font manipulation test completed");
         }
     }
 
@@ -220,8 +188,6 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testPageTransformation() throws AgentBayException, BrowserException {
-        logger.info("Testing page transformation");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -257,13 +223,9 @@ public class TestVisitAliyunExample {
                 "document.body.style.transform = 'scale(2)';" +
                 "document.body.style.transformOrigin = 'top left';"
             );
-            
-            logger.info("Page transformation applied successfully");
-            
             page.waitForTimeout(10000);
             
             browser.close();
-            logger.info("Page transformation test completed");
         }
     }
 
@@ -272,8 +234,6 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testCompleteWorkflow() throws AgentBayException, BrowserException {
-        logger.info("Testing complete workflow");
-        
         agentBay = new AgentBay();
         assertNotNull("AgentBay instance should not be null", agentBay);
         
@@ -286,15 +246,11 @@ public class TestVisitAliyunExample {
         session = sessionResult.getSession();
         String sessionId = session.getSessionId();
         assertNotNull("Session ID should not be null", sessionId);
-        logger.info("Session created with ID: " + sessionId);
-        
         boolean browserInitialized = session.getBrowser().initialize(new BrowserOption());
         assertTrue("Browser should be initialized successfully", browserInitialized);
         
         String endpointUrl = session.getBrowser().getEndpointUrl();
         assertNotNull("Endpoint URL should not be null", endpointUrl);
-        logger.info("Endpoint URL: " + endpointUrl);
-        
         try (Playwright playwright = Playwright.create()) {
             Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
             BrowserContext context = browser.contexts().get(0);
@@ -305,8 +261,6 @@ public class TestVisitAliyunExample {
                     .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
                     .setTimeout(60000));
             String pageTitle = page.title();
-            logger.info("Page title: " + pageTitle);
-            
             page.waitForTimeout(5000);
             
             page.evaluate("document.body.style.fontFamily = 'Microsoft YaHei';");
@@ -322,12 +276,8 @@ public class TestVisitAliyunExample {
         }
         
         agentBay.delete(session, false);
-        logger.info("Session deleted successfully");
-        
         // Prevent duplicate cleanup in tearDown
         session = null;
-        
-        logger.info("Complete workflow test finished successfully");
     }
 
     /**
@@ -335,8 +285,6 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testSessionCreationFailureHandling() throws AgentBayException {
-        logger.info("Testing session creation failure handling");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -347,10 +295,8 @@ public class TestVisitAliyunExample {
         if (!sessionResult.isSuccess()) {
             assertNotNull("Error message should be provided", sessionResult.getErrorMessage());
             assertFalse("Error message should not be empty", sessionResult.getErrorMessage().isEmpty());
-            logger.info("Session creation failed as expected: " + sessionResult.getErrorMessage());
         } else {
             session = sessionResult.getSession();
-            logger.info("Session created successfully");
         }
     }
 
@@ -359,8 +305,6 @@ public class TestVisitAliyunExample {
      */
     @Test
     public void testBrowserInitializationFailureHandling() throws AgentBayException, BrowserException {
-        logger.info("Testing browser initialization failure handling");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -374,9 +318,7 @@ public class TestVisitAliyunExample {
         boolean browserInitialized = session.getBrowser().initialize(new BrowserOption());
         
         if (!browserInitialized) {
-            logger.warn("Browser initialization failed");
         } else {
-            logger.info("Browser initialized successfully");
         }
     }
 }

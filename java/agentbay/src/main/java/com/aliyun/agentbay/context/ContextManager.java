@@ -5,16 +5,12 @@ import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 public class ContextManager {
-    private static final Logger logger = LoggerFactory.getLogger(ContextManager.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final Session session;
@@ -53,10 +49,6 @@ public class ContextManager {
             if (taskType != null) {
                 request.setTaskType(taskType);
             }
-
-            logger.debug("GetContextInfo - SessionId={}, ContextId={}, Path={}, TaskType={}",
-                        session.getSessionId(), contextId, path, taskType);
-
             GetContextInfoResponse response = session.getAgentBay().getClient().getContextInfo(request);
 
             String requestId = ResponseUtil.extractRequestId(response);
@@ -71,7 +63,6 @@ public class ContextManager {
                     String code = body.getCode();
                     String message = body.getMessage() != null ? body.getMessage() : "Unknown error";
                     String errorMessage = String.format("[%s] %s", code, message);
-                    logger.error("GetContextInfo failed: {}", errorMessage);
                     return new ContextInfoResult(requestId, false, contextStatusData, errorMessage);
                 }
                 
@@ -92,7 +83,6 @@ public class ContextManager {
                                 }
                             }
                         } catch (Exception e) {
-                            logger.error("Error parsing context status: {}", e.getMessage());
                         }
                     }
                 }
@@ -101,7 +91,6 @@ public class ContextManager {
             return new ContextInfoResult(requestId, true, contextStatusData, "");
 
         } catch (Exception e) {
-            logger.error("Failed to get context info", e);
             return new ContextInfoResult("", false, new ArrayList<>(), "Failed to get context info: " + e.getMessage());
         }
     }
@@ -136,10 +125,6 @@ public class ContextManager {
             if (mode != null) {
                 request.setMode(mode);
             }
-
-            logger.debug("SyncContext - SessionId={}, ContextId={}, Path={}, Mode={}",
-                        session.getSessionId(), contextId, path, mode);
-
             SyncContextResponse response = session.getAgentBay().getClient().syncContext(request);
 
             String requestId = ResponseUtil.extractRequestId(response);
@@ -155,14 +140,12 @@ public class ContextManager {
                     String code = body.getCode();
                     String message = body.getMessage() != null ? body.getMessage() : "Unknown error";
                     errorMessage = String.format("[%s] %s", code, message);
-                    logger.error("SyncContext failed: {}", errorMessage);
                 }
             }
 
             return new ContextSyncResult(requestId, success, errorMessage);
 
         } catch (Exception e) {
-            logger.error("Failed to sync context", e);
             return new ContextSyncResult("", false, "Failed to sync context: " + e.getMessage());
         }
     }
@@ -258,9 +241,6 @@ public class ContextManager {
                     }
 
                     hasSyncTasks = true;
-                    logger.info("Sync task {} status: {}, path: {}",
-                               item.getContextId(), item.getStatus(), item.getPath());
-
                     if (!"Success".equals(item.getStatus()) && !"Failed".equals(item.getStatus())) {
                         allCompleted = false;
                         break;
@@ -268,35 +248,26 @@ public class ContextManager {
 
                     if ("Failed".equals(item.getStatus())) {
                         hasFailure = true;
-                        logger.error("Sync failed for context {}: {}",
-                                   item.getContextId(), item.getErrorMessage());
                     }
                 }
 
                 if (allCompleted || !hasSyncTasks) {
                     // All tasks completed or no sync tasks found
                     if (hasFailure) {
-                        logger.warn("Context sync completed with failures");
                         callback.accept(false);
                     } else if (hasSyncTasks) {
-                        logger.info("Context sync completed successfully");
                         callback.accept(true);
                     } else {
-                        logger.info("No sync tasks found");
                         callback.accept(true);
                     }
                     return;
                 }
-
-                logger.debug("Waiting for context sync to complete, attempt {}/{}", retry + 1, maxRetries);
                 Thread.sleep(retryInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("Context synchronization polling interrupted");
                 callback.accept(false);
                 return;
             } catch (Exception e) {
-                logger.error("Error checking context status on attempt {}: {}", retry + 1, e.getMessage());
                 try {
                     Thread.sleep(retryInterval);
                 } catch (InterruptedException ie) {
@@ -308,7 +279,6 @@ public class ContextManager {
         }
 
         // Timeout
-        logger.error("Context sync polling timed out after {} attempts", maxRetries);
         callback.accept(false);
     }
 
@@ -353,8 +323,6 @@ public class ContextManager {
         }
 
         // Wait for sync to complete
-        logger.info("Waiting for context synchronization to complete");
-
         for (int retry = 0; retry < maxRetries; retry++) {
             try {
                 // Get context status data
@@ -373,9 +341,6 @@ public class ContextManager {
                     }
 
                     hasSyncTasks = true;
-                    logger.info("Sync task {} status: {}, path: {}",
-                               item.getContextId(), item.getStatus(), item.getPath());
-
                     if (!"Success".equals(item.getStatus()) && !"Failed".equals(item.getStatus())) {
                         allCompleted = false;
                         break;
@@ -383,33 +348,24 @@ public class ContextManager {
 
                     if ("Failed".equals(item.getStatus())) {
                         hasFailure = true;
-                        logger.error("Sync failed for context {}: {}",
-                                   item.getContextId(), item.getErrorMessage());
                     }
                 }
 
                 if (allCompleted || !hasSyncTasks) {
                     // All tasks completed or no sync tasks found
                     if (hasFailure) {
-                        logger.warn("Context sync completed with failures");
                         return new ContextSyncResult(syncResult.getRequestId(), false);
                     } else if (hasSyncTasks) {
-                        logger.info("Context sync completed successfully");
                         return new ContextSyncResult(syncResult.getRequestId(), true);
                     } else {
-                        logger.info("No sync tasks found");
                         return new ContextSyncResult(syncResult.getRequestId(), true);
                     }
                 }
-
-                logger.debug("Waiting for context sync to complete, attempt {}/{}", retry + 1, maxRetries);
                 Thread.sleep(retryInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                logger.warn("Context synchronization wait interrupted");
                 return new ContextSyncResult(syncResult.getRequestId(), false);
             } catch (Exception e) {
-                logger.error("Error checking context status on attempt {}: {}", retry + 1, e.getMessage());
                 try {
                     Thread.sleep(retryInterval);
                 } catch (InterruptedException ie) {
@@ -420,7 +376,6 @@ public class ContextManager {
         }
 
         // Timeout
-        logger.error("Context sync polling timed out after {} attempts", maxRetries);
         return new ContextSyncResult(syncResult.getRequestId(), false);
     }
 

@@ -2,14 +2,10 @@ package com.aliyun.agentbay.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Utility class for handling API responses
  */
 public class ResponseUtil {
-    private static final Logger logger = LoggerFactory.getLogger(ResponseUtil.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -46,7 +42,6 @@ public class ResponseUtil {
                 }
             }
         } catch (Exception e) {
-            logger.debug("Failed to extract request ID from response: {}", e.getMessage());
         }
 
         return "";

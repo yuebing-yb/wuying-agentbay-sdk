@@ -20,9 +20,6 @@ import com.aliyun.agentbay.mcp.McpToolsResult;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +27,6 @@ import java.util.Map;
  * Represents a session in the AgentBay cloud environment
  */
 public class Session {
-    private static final Logger logger = LoggerFactory.getLogger(Session.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final String sessionId;
@@ -132,7 +128,6 @@ public class Session {
      * @throws AgentBayException if the call fails
      */
     public CallMcpToolResponse callTool(String toolName, Object args) throws AgentBayException {
-        logger.debug("Calling tool: {} with args: {}", toolName, args);
         return agentBay.getApiClient().callMcpTool(sessionId, toolName, args);
     }
 
@@ -143,7 +138,6 @@ public class Session {
      * @throws AgentBayException if the call fails
      */
     public List<Object> listTools() throws AgentBayException {
-        logger.debug("Listing tools for session: {}", sessionId);
         ListMcpToolsResponse response = agentBay.getApiClient().listMcpTools(sessionId);
 
         if (response != null && response.getBody() != null && response.getBody().getData() != null) {
@@ -152,13 +146,11 @@ public class Session {
                 List<Object> toolsList = objectMapper.readValue(dataJson, List.class);
                 return toolsList;
             } catch (Exception e) {
-                logger.error("Failed to parse tools data from JSON: {}", e.getMessage(), e);
                 throw new AgentBayException("Failed to parse tools data", e);
             }
         }
         return new java.util.ArrayList<>();
     }
-
 
     /**
      * Check if the session is active
@@ -181,9 +173,6 @@ public class Session {
             GetMcpResourceRequest request = new GetMcpResourceRequest();
             request.setAuthorization("Bearer " + agentBay.getApiKey());
             request.setSessionId(sessionId);
-
-            logger.debug("Getting session info for session: {}", sessionId);
-
             GetMcpResourceResponse response = agentBay.getApiClient().getClient().getMcpResource(request);
 
             String requestId = ResponseUtil.extractRequestId(response);
@@ -234,7 +223,6 @@ public class Session {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to get session info for session {}", sessionId, e);
             throw new AgentBayException("Failed to get session info for session " + sessionId + ": " + e.getMessage(), e);
         }
     }
@@ -345,7 +333,6 @@ public class Session {
 
             InitBrowserResponseBody.InitBrowserResponseBodyData data = response.getBody().getData();
             if (data != null && data.getPort() != null) {
-                logger.info("Browser initialized successfully with port: {}", data.getPort());
                 return new OperationResult(
                     ResponseUtil.extractRequestId(response),
                     true,
@@ -356,7 +343,6 @@ public class Session {
                 return new OperationResult("", false, "", "Failed to get browser port from response");
             }
         } catch (Exception e) {
-            logger.error("Failed to initialize browser", e);
             return new OperationResult("", false, "", "Failed to initialize browser: " + e.getMessage());
         }
     }
@@ -413,7 +399,6 @@ public class Session {
                             tools.add(tool);
                         }
                     } catch (Exception e) {
-                        logger.warn("Failed to parse tool data: {}", toolData, e);
                     }
                 }
             }
@@ -580,7 +565,6 @@ public class Session {
             long elapsedMinutes = (currentTime - vpcLinkUrlTimestamp) / (60 * 1000);
 
             if (elapsedMinutes >= 1) {
-                logger.info("VPC link URL expired ({} minutes old), refreshing...", elapsedMinutes);
                 updateVpcLinkUrl();
             }
         }
@@ -598,10 +582,8 @@ public class Session {
                 if (linkResult.isSuccess() && linkResult.getData() != null) {
                     this.vpcLinkUrl = linkResult.getData();
                     this.vpcLinkUrlTimestamp = System.currentTimeMillis();
-                    logger.info("VPC link URL cached: {}", vpcLinkUrl);
                 }
             } catch (Exception e) {
-                logger.warn("Failed to update VPC link URL: {}", e.getMessage());
             }
         }
     }
@@ -636,7 +618,6 @@ public class Session {
                 return new OperationResult(requestId, false, "", "No URL in response");
             }
         } catch (Exception e) {
-            logger.error("Failed to get link for session {}: {}", sessionId, e.getMessage());
             throw new AgentBayException("Failed to get link: " + e.getMessage(), e);
         }
     }
@@ -670,7 +651,6 @@ public class Session {
 
             return objectMapper.writeValueAsString(state);
         } catch (Exception e) {
-            logger.error("Failed to dump session state", e);
             throw new AgentBayException("Failed to dump session state: " + e.getMessage(), e);
         }
     }
@@ -695,11 +675,8 @@ public class Session {
             session.setMcpTools(state.getMcpTools());
             session.vpcLinkUrl = state.getVpcLinkUrl();
             session.vpcLinkUrlTimestamp = state.getVpcLinkUrlTimestamp();
-
-            logger.info("Session state restored successfully: {}", state.getSessionId());
             return session;
         } catch (Exception e) {
-            logger.error("Failed to restore session state", e);
             throw new AgentBayException("Failed to restore session state: " + e.getMessage(), e);
         }
     }
@@ -723,16 +700,12 @@ public class Session {
         try {
             // If sync_context is True, trigger file uploads first
             if (syncContext) {
-                logger.info("Context synchronization before session deletion");
-
                 // Trigger file upload
                 try {
                     ContextSyncResult syncResult = contextManager.sync();
                     if (!syncResult.isSuccess()) {
-                        logger.warn("Context sync operation returned failure status");
                     }
                 } catch (Exception e) {
-                    logger.warn("Failed to trigger context sync: {}", e.getMessage());
                     // Continue with deletion even if sync fails
                 }
 
@@ -757,9 +730,6 @@ public class Session {
                             }
 
                             hasUploads = true;
-                            logger.info("Upload context {} status: {}, path: {}",
-                                       item.getContextId(), item.getStatus(), item.getPath());
-
                             if (!"Success".equals(item.getStatus()) && !"Failed".equals(item.getStatus())) {
                                 allCompleted = false;
                                 break;
@@ -767,26 +737,18 @@ public class Session {
 
                             if ("Failed".equals(item.getStatus())) {
                                 hasFailure = true;
-                                logger.error("Upload failed for context {}: {}",
-                                           item.getContextId(), item.getErrorMessage());
                             }
                         }
 
                         if (allCompleted || !hasUploads) {
                             if (hasFailure) {
-                                logger.warn("Context upload completed with failures");
                             } else if (hasUploads) {
-                                logger.info("Context upload completed successfully");
                             } else {
-                                logger.info("No upload tasks found");
                             }
                             break;
                         }
-
-                        logger.info("Waiting for context upload to complete, attempt {}/{}", retry + 1, maxRetries);
                         Thread.sleep(retryInterval);
                     } catch (Exception e) {
-                        logger.error("Error checking context status on attempt {}: {}", retry + 1, e.getMessage());
                         try {
                             Thread.sleep(retryInterval);
                         } catch (InterruptedException ie) {
@@ -816,12 +778,9 @@ public class Session {
                 return new com.aliyun.agentbay.model.DeleteResult(
                     requestId, false, "Failed to delete session");
             }
-
-            logger.info("Session deleted successfully: {}", sessionId);
             return new com.aliyun.agentbay.model.DeleteResult(requestId, true, "");
 
         } catch (Exception e) {
-            logger.error("Failed to delete session {}: {}", sessionId, e.getMessage());
             return new com.aliyun.agentbay.model.DeleteResult(
                 "", false, "Failed to delete session " + sessionId + ": " + e.getMessage());
         }
@@ -875,15 +834,11 @@ public class Session {
 
             // Extract request ID
             String requestId = ResponseUtil.extractRequestId(response);
-
-            logger.info("Successfully set labels for session {}: {} labels", sessionId, labels.size());
             return new OperationResult(requestId, true, labelsJson, "");
 
         } catch (IllegalArgumentException e) {
-            logger.error("Invalid labels: {}", e.getMessage());
             throw new AgentBayException("Invalid labels: " + e.getMessage(), e);
         } catch (Exception e) {
-            logger.error("Failed to set labels for session {}: {}", sessionId, e.getMessage());
             throw new AgentBayException("Failed to set labels: " + e.getMessage(), e);
         }
     }
@@ -920,11 +875,9 @@ public class Session {
             }
 
             String labelsJsonResult = objectMapper.writeValueAsString(labels);
-            logger.info("Successfully retrieved labels for session {}: {} labels", sessionId, labels.size());
             return new OperationResult(requestId, true, labelsJsonResult, "");
 
         } catch (Exception e) {
-            logger.error("Failed to get labels for session {}: {}", sessionId, e.getMessage());
             throw new AgentBayException("Failed to get labels: " + e.getMessage(), e);
         }
     }

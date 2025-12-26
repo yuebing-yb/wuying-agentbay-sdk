@@ -4,15 +4,10 @@ import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class ContextService {
-    private static final Logger logger = LoggerFactory.getLogger(ContextService.class);
-
     private final AgentBay agentBay;
 
     public ContextService(AgentBay agentBay) {
@@ -32,18 +27,12 @@ public class ContextService {
             }
 
             int maxResults = params.getMaxResults() != null ? params.getMaxResults() : 10;
-
-            logger.debug("Listing contexts - MaxResults={}, NextToken={}", maxResults, params.getNextToken());
-
             ListContextsRequest request = new ListContextsRequest();
             request.setAuthorization("Bearer " + agentBay.getApiKey());
             request.setMaxResults(maxResults);
             request.setNextToken(params.getNextToken());
 
             ListContextsResponse response = agentBay.getClient().listContexts(request);
-
-            logger.debug("ListContexts response received");
-
             String requestId = ResponseUtil.extractRequestId(response);
 
             if (response == null || response.getBody() == null) {
@@ -78,7 +67,6 @@ public class ContextService {
             );
 
         } catch (Exception e) {
-            logger.error("Failed to list contexts", e);
             return new ContextListResult("", false, new ArrayList<>(),
                 null, null, null, "Failed to list contexts: " + e.getMessage());
         }
@@ -103,8 +91,6 @@ public class ContextService {
      */
     public ContextResult get(String name, boolean create, String regionId) throws AgentBayException {
         try {
-            logger.debug("Getting context - Name={}, AllowCreate={}", name, create);
-
             GetContextRequest request = new GetContextRequest();
             request.setName(name);
             request.setAllowCreate(create);
@@ -112,9 +98,6 @@ public class ContextService {
             request.setAuthorization("Bearer " + agentBay.getApiKey());
 
             GetContextResponse response = agentBay.getClient().getContext(request);
-
-            logger.debug("GetContext response received");
-
             String requestId = ResponseUtil.extractRequestId(response);
 
             if (response == null || response.getBody() == null) {
@@ -150,7 +133,6 @@ public class ContextService {
             );
 
         } catch (Exception e) {
-            logger.error("Failed to get context {}", name, e);
             throw new AgentBayException("Failed to get context " + name + ": " + e.getMessage(), e);
         }
     }
@@ -194,16 +176,11 @@ public class ContextService {
      */
     public com.aliyun.agentbay.model.OperationResult delete(Context context) throws AgentBayException {
         try {
-            logger.debug("Deleting context - Id={}", context.getContextId());
-
             DeleteContextRequest request = new DeleteContextRequest();
             request.setId(context.getContextId());
             request.setAuthorization("Bearer " + agentBay.getApiKey());
 
             DeleteContextResponse response = agentBay.getClient().deleteContext(request);
-
-            logger.debug("DeleteContext response received");
-
             String requestId = ResponseUtil.extractRequestId(response);
 
             if (response == null || response.getBody() == null) {
@@ -227,7 +204,6 @@ public class ContextService {
             );
 
         } catch (Exception e) {
-            logger.error("Failed to delete context {}", context.getContextId(), e);
             throw new AgentBayException("Failed to delete context " + context.getContextId() + ": " + e.getMessage(), e);
         }
     }
@@ -241,17 +217,12 @@ public class ContextService {
      */
     public com.aliyun.agentbay.model.FileUrlResult getFileDownloadUrl(String contextId, String filePath) throws AgentBayException {
         try {
-            logger.debug("Getting file download URL - ContextId={}, FilePath={}", contextId, filePath);
-
             GetContextFileDownloadUrlRequest request = new GetContextFileDownloadUrlRequest();
             request.setAuthorization("Bearer " + agentBay.getApiKey());
             request.setContextId(contextId);
             request.setFilePath(filePath);
 
             GetContextFileDownloadUrlResponse response = agentBay.getClient().getContextFileDownloadUrl(request);
-
-            logger.debug("GetContextFileDownloadUrl response received");
-
             String requestId = ResponseUtil.extractRequestId(response);
 
             if (response == null || response.getBody() == null) {
@@ -279,7 +250,6 @@ public class ContextService {
             );
 
         } catch (Exception e) {
-            logger.error("Failed to get file download URL for context {} and file {}", contextId, filePath, e);
             throw new AgentBayException("Failed to get file download URL: " + e.getMessage(), e);
         }
     }
@@ -293,17 +263,12 @@ public class ContextService {
      */
     public com.aliyun.agentbay.model.FileUrlResult getFileUploadUrl(String contextId, String filePath) throws AgentBayException {
         try {
-            logger.debug("Getting file upload URL - ContextId={}, FilePath={}", contextId, filePath);
-
             GetContextFileUploadUrlRequest request = new GetContextFileUploadUrlRequest();
             request.setAuthorization("Bearer " + agentBay.getApiKey());
             request.setContextId(contextId);
             request.setFilePath(filePath);
 
             GetContextFileUploadUrlResponse response = agentBay.getClient().getContextFileUploadUrl(request);
-
-            logger.debug("GetContextFileUploadUrl response received");
-
             String requestId = ResponseUtil.extractRequestId(response);
 
             if (response == null || response.getBody() == null) {
@@ -331,7 +296,6 @@ public class ContextService {
             );
 
         } catch (Exception e) {
-            logger.error("Failed to get file upload URL for context {} and file {}", contextId, filePath, e);
             throw new AgentBayException("Failed to get file upload URL: " + e.getMessage(), e);
         }
     }
@@ -345,17 +309,12 @@ public class ContextService {
      */
     public com.aliyun.agentbay.model.OperationResult deleteFile(String contextId, String filePath) throws AgentBayException {
         try {
-            logger.debug("Deleting file - ContextId={}, FilePath={}", contextId, filePath);
-
             DeleteContextFileRequest request = new DeleteContextFileRequest();
             request.setAuthorization("Bearer " + agentBay.getApiKey());
             request.setContextId(contextId);
             request.setFilePath(filePath);
 
             DeleteContextFileResponse response = agentBay.getClient().deleteContextFile(request);
-
-            logger.debug("DeleteContextFile response received");
-
             String requestId = ResponseUtil.extractRequestId(response);
 
             if (response == null || response.getBody() == null) {
@@ -379,7 +338,6 @@ public class ContextService {
             );
 
         } catch (Exception e) {
-            logger.error("Failed to delete file for context {} and file {}", contextId, filePath, e);
             throw new AgentBayException("Failed to delete file: " + e.getMessage(), e);
         }
     }
@@ -395,9 +353,6 @@ public class ContextService {
      */
     public ContextFileListResult listFiles(String contextId, String parentFolderPath, int pageNumber, int pageSize) {
         try {
-            logger.debug("Listing files - ContextId={}, ParentFolderPath={}, PageNumber={}, PageSize={}", 
-                contextId, parentFolderPath, pageNumber, pageSize);
-
             DescribeContextFilesRequest request = new DescribeContextFilesRequest();
             request.setAuthorization("Bearer " + agentBay.getApiKey());
             request.setContextId(contextId);
@@ -406,9 +361,6 @@ public class ContextService {
             request.setPageSize(pageSize);
 
             DescribeContextFilesResponse response = agentBay.getClient().describeContextFiles(request);
-
-            logger.debug("DescribeContextFiles response received");
-
             String requestId = ResponseUtil.extractRequestId(response);
 
             if (response == null || response.getBody() == null) {
@@ -448,7 +400,6 @@ public class ContextService {
             );
 
         } catch (Exception e) {
-            logger.error("Failed to list files for context {} and path {}", contextId, parentFolderPath, e);
             return new ContextFileListResult(
                 "", false, new ArrayList<>(), null, "Failed to list files: " + e.getMessage()
             );

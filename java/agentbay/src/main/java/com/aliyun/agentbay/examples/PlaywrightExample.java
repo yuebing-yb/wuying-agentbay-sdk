@@ -7,16 +7,11 @@ import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.microsoft.playwright.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Java Playwright Browser Example
  * This example shows direct Playwright API usage with AgentBay
  */
 public class PlaywrightExample {
-    private static final Logger logger = LoggerFactory.getLogger(PlaywrightExample.class);
-
     public static void main(String[] args) {
         // Get API key from environment variable
         String apiKey = System.getenv("AGENTBAY_API_KEY");
@@ -87,10 +82,8 @@ public class PlaywrightExample {
             }
 
         } catch (AgentBayException e) {
-            logger.error("AgentBay error occurred", e);
             System.err.println("AgentBay error: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Unexpected error occurred", e);
             System.err.println("Unexpected error: " + e.getMessage());
         }
     }

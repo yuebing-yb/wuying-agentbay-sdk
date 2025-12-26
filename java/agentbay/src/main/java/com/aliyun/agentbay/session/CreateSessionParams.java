@@ -6,8 +6,6 @@ import java.util.Map;
 import com.aliyun.agentbay.browser.BrowserContext;
 import com.aliyun.agentbay.context.ContextSync;
 import com.aliyun.agentbay.model.ExtraConfigs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Parameters for creating a new session in the AgentBay cloud environment.
@@ -20,7 +18,6 @@ import org.slf4j.LoggerFactory;
  * @see ExtraConfigs
  */
 public class CreateSessionParams {
-    private static final Logger logger = LoggerFactory.getLogger(CreateSessionParams.class);
     
     private String appId;
     private String browserType;
@@ -65,15 +62,12 @@ public class CreateSessionParams {
             List<ContextSync> extensionSyncs = browserContext.getExtensionContextSyncs();
             if (extensionSyncs != null && !extensionSyncs.isEmpty()) {
                 this.contextSyncs.addAll(extensionSyncs);
-                logger.info("Added {} extension context sync(s) from BrowserContext", 
-                          extensionSyncs.size());
             }
             
             // Add fingerprint context sync from browser_context if available
             ContextSync fingerprintSync = browserContext.getFingerprintContextSync();
             if (fingerprintSync != null) {
                 this.contextSyncs.add(fingerprintSync);
-                logger.info("Added fingerprint context sync from BrowserContext");
             }
         }
     }

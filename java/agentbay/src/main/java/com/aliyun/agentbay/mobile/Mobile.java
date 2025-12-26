@@ -5,9 +5,6 @@ import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +19,6 @@ import com.aliyun.agentbay.model.Process;
  * and mobile environment configuration operations.
  */
 public class Mobile extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(Mobile.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public Mobile(Session session) {
@@ -43,9 +39,6 @@ public class Mobile extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("x", x);
             args.put("y", y);
-
-            logger.debug("Tapping at ({}, {})", x, y);
-
             OperationResult result = callMcpTool("tap", args);
 
             if (!result.isSuccess()) {
@@ -64,7 +57,6 @@ public class Mobile extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during tap", e);
             return new BoolResult(
                 "",
                 false,
@@ -92,10 +84,6 @@ public class Mobile extends BaseService {
             args.put("end_x", endX);
             args.put("end_y", endY);
             args.put("duration_ms", durationMs);
-
-            logger.debug("Swiping from ({}, {}) to ({}, {}) with duration: {}ms", 
-                startX, startY, endX, endY, durationMs);
-
             OperationResult result = callMcpTool("swipe", args);
 
             if (!result.isSuccess()) {
@@ -114,7 +102,6 @@ public class Mobile extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during swipe", e);
             return new BoolResult(
                 "",
                 false,
@@ -147,9 +134,6 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("text", text);
-
-            logger.debug("Inputting text: {}", text.length() > 50 ? text.substring(0, 50) + "..." : text);
-
             OperationResult result = callMcpTool("input_text", args);
 
             if (!result.isSuccess()) {
@@ -168,7 +152,6 @@ public class Mobile extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during inputText", e);
             return new BoolResult(
                 "",
                 false,
@@ -194,9 +177,6 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("key", key);
-
-            logger.debug("Sending key: {}", key);
-
             OperationResult result = callMcpTool("send_key", args);
 
             if (!result.isSuccess()) {
@@ -215,7 +195,6 @@ public class Mobile extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during sendKey", e);
             return new BoolResult(
                 "",
                 false,
@@ -237,9 +216,6 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-
-            logger.debug("Getting clickable UI elements with timeout: {}ms", timeoutMs);
-
             OperationResult result = callMcpTool("get_clickable_ui_elements", args);
 
             if (!result.isSuccess()) {
@@ -274,7 +250,6 @@ public class Mobile extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse clickable UI elements JSON", e);
                 return new UIElementListResult(
                     result.getRequestId(),
                     false,
@@ -283,7 +258,6 @@ public class Mobile extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during getClickableUiElements", e);
             return new UIElementListResult(
                 "",
                 false,
@@ -312,9 +286,6 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-
-            logger.debug("Getting all UI elements with timeout: {}ms", timeoutMs);
-
             OperationResult result = callMcpTool("get_all_ui_elements", args);
 
             if (!result.isSuccess()) {
@@ -354,7 +325,6 @@ public class Mobile extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse UI elements JSON", e);
                 return new UIElementListResult(
                     result.getRequestId(),
                     false,
@@ -363,7 +333,6 @@ public class Mobile extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during getAllUiElements", e);
             return new UIElementListResult(
                 "",
                 false,
@@ -425,10 +394,6 @@ public class Mobile extends BaseService {
             args.put("start_menu", startMenu);
             args.put("desktop", desktop);
             args.put("ignore_system_apps", ignoreSystemApps);
-
-            logger.debug("Getting installed apps (startMenu: {}, desktop: {}, ignoreSystemApps: {})",
-                startMenu, desktop, ignoreSystemApps);
-
             OperationResult result = callMcpTool("get_installed_apps", args);
 
             if (!result.isSuccess()) {
@@ -487,7 +452,6 @@ public class Mobile extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse installed apps JSON", e);
                 return new InstalledAppListResult(
                     result.getRequestId(),
                     false,
@@ -496,7 +460,6 @@ public class Mobile extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during getInstalledApps", e);
             return new InstalledAppListResult(
                 "",
                 false,
@@ -533,9 +496,6 @@ public class Mobile extends BaseService {
             if (activity != null && !activity.isEmpty()) {
                 args.put("activity", activity);
             }
-
-            logger.debug("Starting app: {} with work directory: {}, activity: {}", startCmd, workDirectory, activity);
-
             OperationResult result = callMcpTool("start_app", args);
 
             if (!result.isSuccess()) {
@@ -588,7 +548,6 @@ public class Mobile extends BaseService {
                     ""
                 );
             } catch (Exception e) {
-                logger.error("Failed to parse processes JSON", e);
                 return new ProcessListResult(
                     result.getRequestId(),
                     false,
@@ -597,7 +556,6 @@ public class Mobile extends BaseService {
                 );
             }
         } catch (Exception e) {
-            logger.error("Unexpected error during startApp", e);
             return new ProcessListResult(
                 "",
                 false,
@@ -638,9 +596,6 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("stop_cmd", stopCmd);
-
-            logger.debug("Stopping app by command: {}", stopCmd);
-
             OperationResult result = callMcpTool("stop_app_by_cmd", args);
 
             return new AppOperationResult(
@@ -649,7 +604,6 @@ public class Mobile extends BaseService {
                 result.getErrorMessage()
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during stopAppByCmd", e);
             return new AppOperationResult(
                 "",
                 false,
@@ -667,8 +621,6 @@ public class Mobile extends BaseService {
      */
     public OperationResult screenshot() {
         try {
-            logger.debug("Taking screenshot");
-
             OperationResult result = callMcpTool("system_screenshot", new HashMap<>());
 
             if (!result.isSuccess()) {
@@ -687,7 +639,6 @@ public class Mobile extends BaseService {
                 ""
             );
         } catch (Exception e) {
-            logger.error("Unexpected error during screenshot", e);
             return new OperationResult(
                 "",
                 false,
@@ -708,7 +659,6 @@ public class Mobile extends BaseService {
      */
     public void configure(MobileExtraConfig mobileConfig) {
         if (mobileConfig == null) {
-            logger.warn("No mobile configuration provided");
             return;
         }
 
@@ -730,7 +680,6 @@ public class Mobile extends BaseService {
                     setAppBlacklist(packageNames);
                 }
             } else if (packageNames == null || packageNames.isEmpty()) {
-                logger.warn("No package names provided for {} list", appRule.getRuleType());
             }
         }
 
@@ -762,7 +711,6 @@ public class Mobile extends BaseService {
      */
     public void setAppWhitelist(List<String> packageNames) {
         if (packageNames == null || packageNames.isEmpty()) {
-            logger.warn("Empty package names list for whitelist");
             return;
         }
         executeAppListCommand("app_whitelist", packageNames, 
@@ -776,7 +724,6 @@ public class Mobile extends BaseService {
      */
     public void setAppBlacklist(List<String> packageNames) {
         if (packageNames == null || packageNames.isEmpty()) {
-            logger.warn("Empty package names list for blacklist");
             return;
         }
         executeAppListCommand("app_blacklist", packageNames, 
@@ -800,7 +747,6 @@ public class Mobile extends BaseService {
      */
     public void setUninstallBlacklist(List<String> packageNames) {
         if (packageNames == null || packageNames.isEmpty()) {
-            logger.warn("Empty package names list for uninstall blacklist");
             return;
         }
         executeAppListCommand("uninstall_blacklist", packageNames, 
@@ -815,8 +761,6 @@ public class Mobile extends BaseService {
      */
     public AdbUrlResult getAdbUrl(String adbkeyPub) {
         try {
-            logger.debug("Getting ADB URL for session: {}", session.getSessionId());
-            
             // Call get_adb_link API via ApiClient
             com.aliyun.wuyingai20250506.models.GetAdbLinkResponse response = 
                 session.getAgentBay().getApiClient().getAdbLink(
@@ -831,8 +775,6 @@ public class Mobile extends BaseService {
                 if (body.getSuccess() != null && body.getSuccess() && body.getData() != null) {
                     String adbUrl = body.getData().getUrl();
                     String requestId = body.getRequestId() != null ? body.getRequestId() : "";
-                    
-                    logger.info("✅ get_adb_url completed successfully. RequestID: {}", requestId);
                     return new AdbUrlResult(
                         requestId,
                         true,
@@ -842,7 +784,6 @@ public class Mobile extends BaseService {
                 } else {
                     String errorMsg = body.getMessage() != null ? body.getMessage() : "Unknown error";
                     String requestId = body.getRequestId() != null ? body.getRequestId() : "";
-                    logger.error("❌ Failed to get ADB URL: {}", errorMsg);
                     return new AdbUrlResult(
                         requestId,
                         false,
@@ -851,7 +792,6 @@ public class Mobile extends BaseService {
                     );
                 }
             } else {
-                logger.error("❌ Failed to get ADB URL: No response from server");
                 return new AdbUrlResult(
                     "",
                     false,
@@ -862,7 +802,6 @@ public class Mobile extends BaseService {
 
         } catch (Exception e) {
             String errorMsg = "Failed to get ADB URL: " + e.getMessage();
-            logger.error("❌ {}", errorMsg, e);
             return new AdbUrlResult(
                 "",
                 false,
@@ -880,19 +819,14 @@ public class Mobile extends BaseService {
     private void executeTemplateCommand(String templateName, int lockSwitch, String operationName) {
         try {
             String command = String.format("setprop sys.wuying.lockres %d", lockSwitch);
-            logger.info("Executing {}", operationName);
-            
             // Execute via command service if available
             if (session.getCommand() != null) {
                 CommandResult result = session.getCommand().executeCommand(command, 5000);
                 if (result.isSuccess()) {
-                    logger.info("✅ {} completed successfully", operationName);
                 } else {
-                    logger.error("❌ {} failed: {}", operationName, result.getErrorMessage());
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to execute {}", operationName, e);
         }
     }
 
@@ -903,20 +837,14 @@ public class Mobile extends BaseService {
         try {
             String packageList = String.join("\n", packageNames);
             String command = buildAppListCommand(templateName, packageList);
-            
-            logger.info("Executing {}", operationName);
-            
             // Execute via command service if available
             if (session.getCommand() != null) {
                 CommandResult result = session.getCommand().executeCommand(command, 5000);
                 if (result.isSuccess()) {
-                    logger.info("✅ {} completed successfully", operationName);
                 } else {
-                    logger.error("❌ {} failed: {}", operationName, result.getErrorMessage());
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to execute {}", operationName, e);
         }
     }
 
@@ -963,20 +891,14 @@ public class Mobile extends BaseService {
             } else {
                 command = "setprop persist.wy.hasnavibar true; killall com.android.systemui";
             }
-            
-            logger.info("Executing {}", operationName);
-            
             // Execute via command service if available
             if (session.getCommand() != null) {
                 CommandResult result = session.getCommand().executeCommand(command, 5000);
                 if (result.isSuccess()) {
-                    logger.info("✅ {} completed successfully", operationName);
                 } else {
-                    logger.error("❌ {} failed: {}", operationName, result.getErrorMessage());
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to execute {}", operationName, e);
         }
     }
 }

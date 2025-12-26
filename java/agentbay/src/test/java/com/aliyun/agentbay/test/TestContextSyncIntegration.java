@@ -10,9 +10,6 @@ import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import org.junit.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 
 import static org.junit.Assert.*;
@@ -24,8 +21,6 @@ import static org.junit.Assert.*;
  * This test is equivalent to Python's test_context_sync_integration.py
  */
 public class TestContextSyncIntegration {
-    private static final Logger logger = LoggerFactory.getLogger(TestContextSyncIntegration.class);
-    
     private static AgentBay agentBay;
     
     @BeforeClass
@@ -41,7 +36,6 @@ public class TestContextSyncIntegration {
         
         // Initialize AgentBay client
         agentBay = new AgentBay();
-        logger.info("AgentBay client initialized");
     }
     
     /**
@@ -58,8 +52,6 @@ public class TestContextSyncIntegration {
      */
     @Test
     public void testContextSyncPersistenceWithRetry() throws Exception {
-        logger.info("Test: Context sync persistence with retry");
-        
         // 1. Create a unique context name and get its ID
         String contextName = "test-persistence-retry-java-" + System.currentTimeMillis();
         ContextResult contextResult = agentBay.getContext().get(contextName, true);
@@ -67,8 +59,6 @@ public class TestContextSyncIntegration {
         assertNotNull("Context should not be None", contextResult.getContext());
         
         Context context = contextResult.getContext();
-        logger.info("Created context: {} (ID: {})", context.getName(), context.getId());
-        
         Session session1 = null;
         Session session2 = null;
         
@@ -92,11 +82,7 @@ public class TestContextSyncIntegration {
             assertNotNull("Session should not be null", sessionResult.getSession());
             
             session1 = sessionResult.getSession();
-            logger.info("Created first session: {}", session1.getSessionId());
-            
             // 3. Wait for session to be ready and retry context info until data is available
-            logger.info("Waiting for session to be ready and context status data to be available...");
-            
             boolean foundData = false;
             ContextInfoResult contextInfo = null;
             
@@ -104,12 +90,9 @@ public class TestContextSyncIntegration {
                 contextInfo = session1.getContext().info();
                 
                 if (!contextInfo.getContextStatusData().isEmpty()) {
-                    logger.info("Found context status data on attempt {}", i + 1);
                     foundData = true;
                     break;
                 }
-                
-                logger.info("No context status data available yet (attempt {}), retrying in 1 second...", i + 1);
                 Thread.sleep(1000);
             }
             
@@ -126,28 +109,19 @@ public class TestContextSyncIntegration {
             String testContent = contentBuilder.toString();
             
             // Create directory first
-            logger.info("Creating directory: {}", syncPath);
             BoolResult dirResult = session1.getFileSystem().createDirectory(syncPath);
             assertTrue("Error creating directory", dirResult.isSuccess());
             
             // Create test file
-            logger.info("Creating test file at {}", testFilePath);
             BoolResult fileResult = session1.getFileSystem().writeFile(
                 testFilePath, 
                 testContent
             );
             assertTrue("Error creating test file", fileResult.isSuccess());
-            logger.info("Created test file successfully");
-            
             // 5. Sync to trigger file upload
-            logger.info("Triggering context sync...");
             ContextSyncResult syncResult = session1.getContext().syncAndWait();
             assertTrue("Context sync should be successful", syncResult.isSuccess());
-            logger.info("Context sync successful (RequestID: {})", syncResult.getRequestId());
-            
             // 6. Get context info with retry for upload status
-            logger.info("Checking file upload status with retry...");
-            
             boolean foundUpload = false;
             for (int i = 0; i < 20; i++) {
                 contextInfo = session1.getContext().info();
@@ -156,7 +130,6 @@ public class TestContextSyncIntegration {
                 for (ContextStatusData data : contextInfo.getContextStatusData()) {
                     if (data.getContextId().equals(context.getId()) && "upload".equals(data.getTaskType())) {
                         foundUpload = true;
-                        logger.info("Found upload task for context at attempt {}", i + 1);
                         break;
                     }
                 }
@@ -164,26 +137,20 @@ public class TestContextSyncIntegration {
                 if (foundUpload) {
                     break;
                 }
-                
-                logger.info("No upload status found yet (attempt {}), retrying in 1 second...", i + 1);
                 Thread.sleep(1000);
             }
             
             if (foundUpload) {
-                logger.info("Found upload status for context");
                 printContextStatusData(contextInfo.getContextStatusData());
             } else {
-                logger.warn("Warning: Could not find upload status after all retries");
             }
             
             // 7. Release first session
-            logger.info("Releasing first session...");
             DeleteResult deleteResult = agentBay.delete(session1, true);
             assertTrue("Error deleting first session", deleteResult.isSuccess());
             session1 = null;  // Mark as deleted
             
             // 8. Create a second session with the same context
-            logger.info("Creating second session with the same context...");
             sessionParams = new CreateSessionParams();
             contextSync = ContextSync.create(context.getId(), syncPath, defaultPolicy);
             sessionParams.setContextSyncs(Arrays.asList(contextSync));
@@ -194,11 +161,7 @@ public class TestContextSyncIntegration {
             assertNotNull("Second session should not be null", sessionResult.getSession());
             
             session2 = sessionResult.getSession();
-            logger.info("Created second session: {}", session2.getSessionId());
-            
             // 9. Get context info with retry for download status
-            logger.info("Checking file download status with retry...");
-            
             boolean foundDownload = false;
             for (int i = 0; i < 20; i++) {
                 contextInfo = session2.getContext().info();
@@ -207,7 +170,6 @@ public class TestContextSyncIntegration {
                 for (ContextStatusData data : contextInfo.getContextStatusData()) {
                     if (data.getContextId().equals(context.getId()) && "download".equals(data.getTaskType())) {
                         foundDownload = true;
-                        logger.info("Found download task for context at attempt {}", i + 1);
                         break;
                     }
                 }
@@ -215,67 +177,48 @@ public class TestContextSyncIntegration {
                 if (foundDownload) {
                     break;
                 }
-                
-                logger.info("No download status found yet (attempt {}), retrying in 1 second...", i + 1);
                 Thread.sleep(1000);
             }
             
             if (foundDownload) {
-                logger.info("Found download status for context");
                 printContextStatusData(contextInfo.getContextStatusData());
             } else {
-                logger.warn("Warning: Could not find download status after all retries");
             }
             
             // 10. Verify the test file exists in the second session
-            logger.info("Verifying test file exists in second session...");
-            
             // Check file exists using command
             String checkFileCmd = "test -f " + testFilePath + " && echo 'File exists'";
             CommandResult existsResult = session2.getCommand().executeCommand(checkFileCmd, 5000);
             assertTrue("Error checking if file exists", existsResult.isSuccess());
             assertTrue("Test file should exist in second session", 
                       existsResult.getOutput().contains("File exists"));
-            logger.info("Test file persistence verified successfully");
-            
             // Read file content to verify it matches
             try {
                 String readContent = session2.getFileSystem().read(testFilePath);
                 assertEquals("File content should match", testContent, readContent);
-                logger.info("File content verified successfully");
             } catch (AgentBayException e) {
-                logger.error("Error reading file: {}", e.getMessage());
                 fail("Should be able to read the file");
             }
-            
-            logger.info("✅ Test passed: Context sync persistence works correctly");
-            
         } finally {
             // Clean up sessions
             if (session1 != null) {
                 try {
                     agentBay.delete(session1, false);
-                    logger.info("First session deleted: {}", session1.getSessionId());
                 } catch (Exception e) {
-                    logger.warn("Warning: Failed to delete first session: {}", e.getMessage());
                 }
             }
             
             if (session2 != null) {
                 try {
                     agentBay.delete(session2, false);
-                    logger.info("Second session deleted: {}", session2.getSessionId());
                 } catch (Exception e) {
-                    logger.warn("Warning: Failed to delete second session: {}", e.getMessage());
                 }
             }
             
             // Clean up context
             try {
                 agentBay.getContext().delete(context);
-                logger.info("Context deleted: {}", context.getId());
             } catch (Exception e) {
-                logger.warn("Warning: Failed to delete context: {}", e.getMessage());
             }
         }
     }
@@ -285,8 +228,6 @@ public class TestContextSyncIntegration {
      */
     @Test
     public void testRecyclePolicyWithLifecycle1Day() {
-        logger.info("Test: RecyclePolicy with Lifecycle_1Day");
-        
         // Create a custom recycle policy with Lifecycle_1Day
         RecyclePolicy customRecyclePolicy = new RecyclePolicy(
             Lifecycle.LIFECYCLE_1DAY,
@@ -323,8 +264,6 @@ public class TestContextSyncIntegration {
         assertEquals("Context ID should match", "test-recycle-context", contextSync.getContextId());
         assertEquals("Path should match", "/test/recycle/path", contextSync.getPath());
         assertEquals("Policy should match", syncPolicy, contextSync.getPolicy());
-        
-        logger.info("✅ Test passed: RecyclePolicy with Lifecycle_1Day works correctly");
     }
     
     /**
@@ -332,21 +271,13 @@ public class TestContextSyncIntegration {
      */
     private void printContextStatusData(java.util.List<ContextStatusData> data) {
         if (data == null || data.isEmpty()) {
-            logger.info("No context status data available");
             return;
         }
         
         for (int i = 0; i < data.size(); i++) {
             ContextStatusData item = data.get(i);
-            logger.info("Context Status Data [{}]:", i);
-            logger.info("  ContextId: {}", item.getContextId());
-            logger.info("  Path: {}", item.getPath());
-            logger.info("  Status: {}", item.getStatus());
-            logger.info("  TaskType: {}", item.getTaskType());
-            logger.info("  StartTime: {}", item.getStartTime());
-            logger.info("  FinishTime: {}", item.getFinishTime());
+
             if (item.getErrorMessage() != null && !item.getErrorMessage().isEmpty()) {
-                logger.info("  ErrorMessage: {}", item.getErrorMessage());
             }
         }
     }

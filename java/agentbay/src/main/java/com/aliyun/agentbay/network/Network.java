@@ -1,12 +1,7 @@
 package com.aliyun.agentbay.network;
 
 import com.aliyun.agentbay.AgentBay;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class Network {
-    private static final Logger logger = LoggerFactory.getLogger(Network.class);
-
     private AgentBay agentBay;
 
     public Network(AgentBay agentBay) {
@@ -19,8 +14,6 @@ public class Network {
 
     public NetworkResult create(String networkId) {
         try {
-            logger.debug("Creating network with networkId: {}", networkId);
-
             com.aliyun.wuyingai20250506.models.CreateNetworkRequest request =
                 new com.aliyun.wuyingai20250506.models.CreateNetworkRequest();
             request.setAuthorization("Bearer " + agentBay.getApiKey());
@@ -71,9 +64,6 @@ public class Network {
 
             String createdNetworkId = body.getData().getNetworkId();
             String networkToken = body.getData().getNetworkToken();
-
-            logger.info("Network created successfully: {}", createdNetworkId);
-
             return new NetworkResult(
                 requestId,
                 true,
@@ -88,8 +78,6 @@ public class Network {
             if (e.getData() != null && e.getData().get("RequestId") != null) {
                 requestId = e.getData().get("RequestId").toString();
             }
-
-            logger.error("Error creating network: {}", errorStr, e);
             return new NetworkResult(
                 requestId,
                 false,
@@ -98,7 +86,6 @@ public class Network {
                 "Failed to create network: " + errorStr
             );
         } catch (Exception e) {
-            logger.error("Unexpected error creating network", e);
             return new NetworkResult(
                 "",
                 false,
@@ -120,8 +107,6 @@ public class Network {
         }
 
         try {
-            logger.debug("Describing network: {}", networkId);
-
             com.aliyun.wuyingai20250506.models.DescribeNetworkRequest request =
                 new com.aliyun.wuyingai20250506.models.DescribeNetworkRequest();
             request.setAuthorization("Bearer " + agentBay.getApiKey());
@@ -159,9 +144,6 @@ public class Network {
             if (body.getData() != null && body.getData().getOnline() != null) {
                 online = body.getData().getOnline();
             }
-
-            logger.debug("Network {} status: online={}", networkId, online);
-
             return new NetworkStatusResult(
                 requestId,
                 true,
@@ -177,7 +159,6 @@ public class Network {
             }
 
             if (errorStr != null && errorStr.contains("NotFound")) {
-                logger.info("Network not found: {}", networkId);
                 return new NetworkStatusResult(
                     requestId,
                     false,
@@ -185,8 +166,6 @@ public class Network {
                     "Network " + networkId + " not found"
                 );
             }
-
-            logger.error("Error describing network: {}", errorStr, e);
             return new NetworkStatusResult(
                 requestId,
                 false,
@@ -194,7 +173,6 @@ public class Network {
                 "Failed to describe network: " + errorStr
             );
         } catch (Exception e) {
-            logger.error("Unexpected error describing network", e);
             return new NetworkStatusResult(
                 "",
                 false,

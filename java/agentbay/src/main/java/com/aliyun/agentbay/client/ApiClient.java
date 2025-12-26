@@ -5,14 +5,11 @@ import com.aliyun.agentbay.exception.ApiException;
 import com.aliyun.wuyingai20250506.Client;
 import com.aliyun.wuyingai20250506.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * API client wrapper for WuyingAI client
  */
 public class ApiClient {
-    private static final Logger logger = LoggerFactory.getLogger(ApiClient.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final Client client;
@@ -49,20 +46,15 @@ public class ApiClient {
                 try {
                     argsJson = objectMapper.writeValueAsString(args);
                 } catch (Exception e) {
-                    logger.warn("Failed to serialize args to JSON, using toString: " + e.getMessage());
                     argsJson = args.toString();
                 }
             }
             request.args = argsJson;
 
-            logger.debug("Calling MCP tool: {} for session: {} with args: {}", toolName, sessionId, argsJson);
-
             CallMcpToolResponse response = client.callMcpTool(request);
 
-            logger.debug("MCP tool called successfully: {} for session: {}", toolName, sessionId);
             return response;
         } catch (Exception e) {
-            logger.error("Failed to call MCP tool: {} for session: {}", toolName, sessionId, e);
             throw new ApiException(String.format(
                     "Failed to call MCP tool '%s' for session '%s': %s",
                     toolName,
@@ -87,14 +79,11 @@ public class ApiClient {
 
             ListMcpToolsResponse response = client.listMcpTools(request);
 
-            logger.debug("Listed MCP tools for session: {}", sessionId);
             return response;
         } catch (Exception e) {
-            logger.error("Failed to list MCP tools for session: {}", sessionId, e);
             throw new ApiException("Failed to list MCP tools", e);
         }
     }
-
 
     /**
      * Get ADB connection link for mobile sessions
@@ -114,14 +103,10 @@ public class ApiClient {
             String optionsJson = String.format("{\"adbkey_pub\":\"%s\"}", adbkeyPub);
             request.setOption(optionsJson);
 
-            logger.debug("Getting ADB link for session: {} with adbkey_pub", sessionId);
-
             GetAdbLinkResponse response = client.getAdbLink(request);
 
-            logger.debug("ADB link retrieved successfully for session: {}", sessionId);
             return response;
         } catch (Exception e) {
-            logger.error("Failed to get ADB link for session: {}", sessionId, e);
             throw new ApiException(String.format(
                     "Failed to get ADB link for session '%s': %s",
                     sessionId,
@@ -137,9 +122,7 @@ public class ApiClient {
      * @throws AgentBayException if the call fails
      */
     public void deleteSession(String sessionId) throws AgentBayException {
-        logger.info("Session deletion requested: {}", sessionId);
         // In a real implementation, this would call the appropriate API
-        // For now, we just log the deletion request
     }
 
     /**

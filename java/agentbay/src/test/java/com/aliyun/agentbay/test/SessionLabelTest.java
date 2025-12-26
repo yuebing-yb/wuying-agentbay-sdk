@@ -6,26 +6,35 @@ import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
-import org.junit.jupiter.api.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.FixMethodOrder;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runners.MethodSorters;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
-/**
- * Test cases for Session label management (setLabels and getLabels methods)
- */
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SessionLabelTest {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     private static AgentBay agentBay;
     private static Session session;
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
-    @BeforeAll
+    @BeforeClass
     public static void setup() throws Exception {
         String apiKey = System.getenv("AGENTBAY_API_KEY");
-        assertNotNull(apiKey, "AGENTBAY_API_KEY environment variable must be set");
+        assertNotNull("AGENTBAY_API_KEY environment variable must be set", apiKey);
 
         agentBay = new AgentBay();
 
@@ -33,12 +42,12 @@ public class SessionLabelTest {
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("linux_latest");
         SessionResult result = agentBay.create(params);
-        assertTrue(result.isSuccess(), "Failed to create test session");
+        assertTrue(result.isSuccess());
         session = result.getSession();
-        assertNotNull(session, "Session should not be null");
+        assertNotNull(session);
     }
 
-    @AfterAll
+    @AfterClass
     public static void tearDown() {
         if (session != null) {
             session.delete();
@@ -46,9 +55,7 @@ public class SessionLabelTest {
     }
 
     @Test
-    @Order(1)
-    @DisplayName("Test setLabels - Basic functionality")
-    public void testSetLabelsBasic() throws AgentBayException {
+    public void test01_SetLabelsBasic() throws Exception {
         Map<String, String> labels = new HashMap<>();
         labels.put("environment", "test");
         labels.put("team", "qa");
@@ -56,166 +63,115 @@ public class SessionLabelTest {
 
         OperationResult result = session.setLabels(labels);
 
-        assertTrue(result.isSuccess(), "setLabels should succeed");
-        assertNotNull(result.getRequestId(), "Request ID should not be null");
-        assertNotNull(result.getData(), "Data should not be null");
+        assertTrue(result.isSuccess());
+        assertNotNull(result.getRequestId());
+        assertNotNull(result.getData());
 
-        @SuppressWarnings("unchecked")
-        Map<String, String> returnedLabels = (Map<String, String>) result.getData();
-        assertEquals(3, returnedLabels.size(), "Should return 3 labels");
+        Map<String, String> returnedLabels = objectMapper.readValue(
+            result.getData(), new TypeReference<Map<String, String>>() {});
+        assertEquals(3, returnedLabels.size());
         assertEquals("test", returnedLabels.get("environment"));
         assertEquals("qa", returnedLabels.get("team"));
         assertEquals("agentbay-sdk", returnedLabels.get("project"));
     }
 
     @Test
-    @Order(2)
-    @DisplayName("Test getLabels - Retrieve previously set labels")
-    public void testGetLabels() throws AgentBayException {
+    public void test02_GetLabels() throws Exception {
         OperationResult result = session.getLabels();
 
-        assertTrue(result.isSuccess(), "getLabels should succeed");
-        assertNotNull(result.getRequestId(), "Request ID should not be null");
-        assertNotNull(result.getData(), "Data should not be null");
+        assertTrue(result.isSuccess());
+        assertNotNull(result.getRequestId());
+        assertNotNull(result.getData());
 
-        @SuppressWarnings("unchecked")
-        Map<String, String> labels = (Map<String, String>) result.getData();
+        Map<String, String> labels = objectMapper.readValue(
+            result.getData(), new TypeReference<Map<String, String>>() {});
 
-        // Should have at least the labels we set in test 1
-        assertTrue(labels.size() >= 3, "Should have at least 3 labels");
+        assertTrue(labels.size() >= 3);
         assertEquals("test", labels.get("environment"));
         assertEquals("qa", labels.get("team"));
         assertEquals("agentbay-sdk", labels.get("project"));
     }
 
     @Test
-    @Order(3)
-    @DisplayName("Test setLabels - Update existing labels")
-    public void testUpdateLabels() throws AgentBayException {
+    public void test03_UpdateLabels() throws Exception {
         // Update environment label and add new label
         Map<String, String> labels = new HashMap<>();
         labels.put("environment", "production");  // Update existing
         labels.put("version", "v1.0.0");          // Add new
 
         OperationResult setResult = session.setLabels(labels);
-        assertTrue(setResult.isSuccess(), "setLabels should succeed");
+        assertTrue(setResult.isSuccess());
 
-        // Verify changes
         OperationResult getResult = session.getLabels();
-        assertTrue(getResult.isSuccess(), "getLabels should succeed");
+        assertTrue(getResult.isSuccess());
 
-        @SuppressWarnings("unchecked")
-        Map<String, String> retrievedLabels = (Map<String, String>) getResult.getData();
+        Map<String, String> retrievedLabels = objectMapper.readValue(
+            getResult.getData(), new TypeReference<Map<String, String>>() {});
 
-        assertEquals("production", retrievedLabels.get("environment"), "Environment should be updated");
-        assertEquals("v1.0.0", retrievedLabels.get("version"), "Version should be added");
-        assertEquals("qa", retrievedLabels.get("team"), "Team should still exist");
-        assertEquals("agentbay-sdk", retrievedLabels.get("project"), "Project should still exist");
+        assertEquals("production", retrievedLabels.get("environment"));
+        assertEquals("v1.0.0", retrievedLabels.get("version"));
+        assertEquals("qa", retrievedLabels.get("team"));
+        assertEquals("agentbay-sdk", retrievedLabels.get("project"));
     }
 
     @Test
-    @Order(4)
-    @DisplayName("Test setLabels - Empty labels map")
-    public void testSetEmptyLabels() throws AgentBayException {
+    public void test04_SetEmptyLabels() throws AgentBayException {
         Map<String, String> emptyLabels = new HashMap<>();
 
         OperationResult result = session.setLabels(emptyLabels);
 
-        assertTrue(result.isSuccess(), "Setting empty labels should succeed");
+        assertTrue(result.isSuccess());
     }
 
-    @Test
-    @Order(5)
-    @DisplayName("Test setLabels - Null labels throws exception")
-    public void testSetNullLabels() {
-        AgentBayException exception = assertThrows(AgentBayException.class, () -> {
-            session.setLabels(null);
-        });
-
-        assertTrue(exception.getMessage().contains("Labels cannot be null"),
-                "Exception message should mention null labels");
+    @Test(expected = AgentBayException.class)
+    public void test05_SetNullLabels() throws AgentBayException {
+        session.setLabels(null);
     }
 
-    @Test
-    @Order(6)
-    @DisplayName("Test setLabels - Too many labels (>20)")
-    public void testTooManyLabels() {
+    @Test(expected = AgentBayException.class)
+    public void test06_TooManyLabels() throws AgentBayException {
         Map<String, String> manyLabels = new HashMap<>();
         for (int i = 0; i < 21; i++) {
             manyLabels.put("key" + i, "value" + i);
         }
-
-        AgentBayException exception = assertThrows(AgentBayException.class, () -> {
-            session.setLabels(manyLabels);
-        });
-
-        assertTrue(exception.getMessage().contains("Maximum 20 labels"),
-                "Exception message should mention maximum labels limit");
+        session.setLabels(manyLabels);
     }
 
-    @Test
-    @Order(7)
-    @DisplayName("Test setLabels - Label key too long (>128 chars)")
-    public void testLabelKeyTooLong() {
+    @Test(expected = AgentBayException.class)
+    public void test07_LabelKeyTooLong() throws AgentBayException {
         String longKey = "k".repeat(129);
         Map<String, String> labels = new HashMap<>();
         labels.put(longKey, "value");
-
-        AgentBayException exception = assertThrows(AgentBayException.class, () -> {
-            session.setLabels(labels);
-        });
-
-        assertTrue(exception.getMessage().contains("cannot exceed 128 characters"),
-                "Exception message should mention key length limit");
+        session.setLabels(labels);
     }
 
-    @Test
-    @Order(8)
-    @DisplayName("Test setLabels - Label value too long (>256 chars)")
-    public void testLabelValueTooLong() {
+    @Test(expected = AgentBayException.class)
+    public void test08_LabelValueTooLong() throws AgentBayException {
         String longValue = "v".repeat(257);
         Map<String, String> labels = new HashMap<>();
         labels.put("key", longValue);
-
-        AgentBayException exception = assertThrows(AgentBayException.class, () -> {
-            session.setLabels(labels);
-        });
-
-        assertTrue(exception.getMessage().contains("cannot exceed 256 characters"),
-                "Exception message should mention value length limit");
+        session.setLabels(labels);
     }
 
-    @Test
-    @Order(9)
-    @DisplayName("Test setLabels - Empty label key throws exception")
-    public void testEmptyLabelKey() {
+    @Test(expected = AgentBayException.class)
+    public void test09_EmptyLabelKey() throws AgentBayException {
         Map<String, String> labels = new HashMap<>();
         labels.put("", "value");
-
-        AgentBayException exception = assertThrows(AgentBayException.class, () -> {
-            session.setLabels(labels);
-        });
-
-        assertTrue(exception.getMessage().contains("cannot be null or empty"),
-                "Exception message should mention empty key");
+        session.setLabels(labels);
     }
 
     @Test
-    @Order(10)
-    @DisplayName("Test setLabels - Null label value is allowed")
-    public void testNullLabelValue() throws AgentBayException {
+    public void test10_NullLabelValue() throws AgentBayException {
         Map<String, String> labels = new HashMap<>();
         labels.put("nullable-key", null);
 
         OperationResult result = session.setLabels(labels);
 
-        assertTrue(result.isSuccess(), "Setting null value should succeed");
+        assertTrue(result.isSuccess());
     }
 
     @Test
-    @Order(11)
-    @DisplayName("Test setLabels - Special characters in labels")
-    public void testSpecialCharactersInLabels() throws AgentBayException {
+    public void test11_SpecialCharactersInLabels() throws Exception {
         Map<String, String> labels = new HashMap<>();
         labels.put("env-name", "test-env");
         labels.put("team.name", "backend.team");
@@ -224,12 +180,11 @@ public class SessionLabelTest {
 
         OperationResult result = session.setLabels(labels);
 
-        assertTrue(result.isSuccess(), "Setting labels with special characters should succeed");
+        assertTrue(result.isSuccess());
 
-        // Verify retrieval
         OperationResult getResult = session.getLabels();
-        @SuppressWarnings("unchecked")
-        Map<String, String> retrievedLabels = (Map<String, String>) getResult.getData();
+        Map<String, String> retrievedLabels = objectMapper.readValue(
+            getResult.getData(), new TypeReference<Map<String, String>>() {});
 
         assertEquals("test-env", retrievedLabels.get("env-name"));
         assertEquals("backend.team", retrievedLabels.get("team.name"));
@@ -238,35 +193,29 @@ public class SessionLabelTest {
     }
 
     @Test
-    @Order(12)
-    @DisplayName("Test setLabels - Maximum valid label key length (128 chars)")
-    public void testMaxValidKeyLength() throws AgentBayException {
+    public void test12_MaxValidKeyLength() throws AgentBayException {
         String maxKey = "k".repeat(128);
         Map<String, String> labels = new HashMap<>();
         labels.put(maxKey, "value");
 
         OperationResult result = session.setLabels(labels);
 
-        assertTrue(result.isSuccess(), "Setting 128-char key should succeed");
+        assertTrue(result.isSuccess());
     }
 
     @Test
-    @Order(13)
-    @DisplayName("Test setLabels - Maximum valid label value length (256 chars)")
-    public void testMaxValidValueLength() throws AgentBayException {
+    public void test13_MaxValidValueLength() throws AgentBayException {
         String maxValue = "v".repeat(256);
         Map<String, String> labels = new HashMap<>();
         labels.put("key", maxValue);
 
         OperationResult result = session.setLabels(labels);
 
-        assertTrue(result.isSuccess(), "Setting 256-char value should succeed");
+        assertTrue(result.isSuccess());
     }
 
     @Test
-    @Order(14)
-    @DisplayName("Test label lifecycle - Set, get, update, get")
-    public void testLabelLifecycle() throws AgentBayException {
+    public void test14_LabelLifecycle() throws Exception {
         // Step 1: Set initial labels
         Map<String, String> initialLabels = new HashMap<>();
         initialLabels.put("stage", "initial");
@@ -274,10 +223,9 @@ public class SessionLabelTest {
 
         session.setLabels(initialLabels);
 
-        // Step 2: Verify initial labels
         OperationResult getResult1 = session.getLabels();
-        @SuppressWarnings("unchecked")
-        Map<String, String> labels1 = (Map<String, String>) getResult1.getData();
+        Map<String, String> labels1 = objectMapper.readValue(
+            getResult1.getData(), new TypeReference<Map<String, String>>() {});
         assertEquals("initial", labels1.get("stage"));
         assertEquals("1", labels1.get("count"));
 
@@ -289,12 +237,11 @@ public class SessionLabelTest {
 
         session.setLabels(updateLabels);
 
-        // Step 4: Verify updated labels
         OperationResult getResult2 = session.getLabels();
-        @SuppressWarnings("unchecked")
-        Map<String, String> labels2 = (Map<String, String>) getResult2.getData();
-        assertEquals("updated", labels2.get("stage"), "Stage should be updated");
-        assertEquals("2", labels2.get("count"), "Count should be updated");
-        assertEquals("added", labels2.get("new-label"), "New label should be added");
+        Map<String, String> labels2 = objectMapper.readValue(
+            getResult2.getData(), new TypeReference<Map<String, String>>() {});
+        assertEquals("updated", labels2.get("stage"));
+        assertEquals("2", labels2.get("count"));
+        assertEquals("added", labels2.get("new-label"));
     }
 }

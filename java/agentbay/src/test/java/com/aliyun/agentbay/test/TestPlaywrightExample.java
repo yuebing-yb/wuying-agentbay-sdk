@@ -9,9 +9,6 @@ import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.microsoft.playwright.*;
 import org.junit.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static org.junit.Assert.*;
 
 /**
@@ -19,15 +16,12 @@ import static org.junit.Assert.*;
  * Tests the integration of AgentBay SDK with Playwright browser automation
  */
 public class TestPlaywrightExample {
-    private static final Logger logger = LoggerFactory.getLogger(TestPlaywrightExample.class);
-    
     private AgentBay agentBay;
     private Session session;
     private String apiKey;
 
     @BeforeClass
     public static void setUpClass() {
-        logger.info("Starting Playwright Example Tests");
     }
 
     @Before
@@ -36,8 +30,6 @@ public class TestPlaywrightExample {
         apiKey = System.getenv("AGENTBAY_API_KEY");
         assertNotNull("AGENTBAY_API_KEY environment variable must be set", apiKey);
         assertFalse("AGENTBAY_API_KEY must not be empty", apiKey.trim().isEmpty());
-        
-        logger.info("Test setup completed with API key");
     }
 
     @After
@@ -46,16 +38,13 @@ public class TestPlaywrightExample {
         if (agentBay != null && session != null) {
             try {
                 agentBay.delete(session, false);
-                logger.info("Session cleaned up successfully");
             } catch (Exception e) {
-                logger.warn("Failed to clean up session: " + e.getMessage());
             }
         }
     }
 
     @AfterClass
     public static void tearDownClass() {
-        logger.info("Completed Playwright Example Tests");
     }
 
     /**
@@ -63,12 +52,8 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testCreateAgentBayClient() throws AgentBayException {
-        logger.info("Testing AgentBay client creation");
-        
         agentBay = new AgentBay();
         assertNotNull("AgentBay client should be created", agentBay);
-        
-        logger.info("AgentBay client created successfully");
     }
 
     /**
@@ -76,8 +61,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testCreateSession() throws AgentBayException {
-        logger.info("Testing session creation");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -92,8 +75,6 @@ public class TestPlaywrightExample {
         assertNotNull("Session should not be null", session);
         assertNotNull("Session ID should not be null", session.getSessionId());
         assertFalse("Session ID should not be empty", session.getSessionId().isEmpty());
-        
-        logger.info("Session created successfully with ID: " + session.getSessionId());
     }
 
     /**
@@ -101,8 +82,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testBrowserInitialization() throws AgentBayException, BrowserException {
-        logger.info("Testing browser initialization");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -121,8 +100,6 @@ public class TestPlaywrightExample {
         String endpointUrl = session.getBrowser().getEndpointUrl();
         assertNotNull("Endpoint URL should not be null", endpointUrl);
         assertFalse("Endpoint URL should not be empty", endpointUrl.isEmpty());
-        
-        logger.info("Browser initialized successfully with endpoint: " + endpointUrl);
     }
 
     /**
@@ -130,8 +107,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testPlaywrightIntegration() throws AgentBayException, BrowserException {
-        logger.info("Testing Playwright integration");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -164,9 +139,6 @@ public class TestPlaywrightExample {
             String title = page.title();
             assertNotNull("Page title should not be null", title);
             assertFalse("Page title should not be empty", title.isEmpty());
-            
-            logger.info("Successfully navigated to page with title: " + title);
-            
             browser.close();
         } catch (Exception e) {
             fail("Playwright integration failed: " + e.getMessage());
@@ -178,8 +150,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testPageManipulation() throws AgentBayException, BrowserException {
-        logger.info("Testing page manipulation");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -211,9 +181,6 @@ public class TestPlaywrightExample {
                 "document.body.style.transformOrigin = 'top left';"
             );
             page.waitForTimeout(2000);
-            
-            logger.info("Page manipulation completed successfully");
-            
             browser.close();
         } catch (Exception e) {
             fail("Page manipulation failed: " + e.getMessage());
@@ -225,8 +192,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testSessionDeletion() throws AgentBayException {
-        logger.info("Testing session deletion");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -240,8 +205,6 @@ public class TestPlaywrightExample {
         
         // Delete the session
         agentBay.delete(session, false);
-        logger.info("Session " + sessionId + " deleted successfully");
-        
         // Prevent double cleanup in tearDown
         session = null;
     }
@@ -251,8 +214,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testInvalidApiKey() throws AgentBayException {
-        logger.info("Testing error handling with invalid API key");
-        
         AgentBay invalidClient = new AgentBay("invalid_api_key");
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
@@ -264,8 +225,6 @@ public class TestPlaywrightExample {
         assertFalse("Session creation should fail with invalid API key", result.isSuccess());
         assertNotNull("Error message should be provided", result.getErrorMessage());
         assertFalse("Error message should not be empty", result.getErrorMessage().isEmpty());
-        
-        logger.info("Invalid API key correctly handled with error: " + result.getErrorMessage());
     }
 
     /**
@@ -273,8 +232,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testCreateSessionWithNullParams() throws AgentBayException {
-        logger.info("Testing session creation with null parameters");
-        
         agentBay = new AgentBay();
         
         // Create session with null params (should use defaults)
@@ -288,9 +245,7 @@ public class TestPlaywrightExample {
             session = sessionResult.getSession();
             assertNotNull("Session should not be null", session);
             assertNotNull("Session ID should not be null", session.getSessionId());
-            logger.info("Session created with default parameters: " + session.getSessionId());
         } else {
-            logger.warn("Session creation with null params failed: " + sessionResult.getErrorMessage());
         }
     }
 
@@ -299,8 +254,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testBrowserInitializationWithCustomOptions() throws AgentBayException, BrowserException {
-        logger.info("Testing browser initialization with custom options");
-        
         agentBay = new AgentBay();
         
         CreateSessionParams params = new CreateSessionParams();
@@ -316,8 +269,6 @@ public class TestPlaywrightExample {
         
         boolean initResult = session.getBrowser().initialize(browserOption);
         assertTrue("Browser initialization with custom options should succeed", initResult);
-        
-        logger.info("Browser initialized with custom options");
     }
 
     /**
@@ -325,8 +276,6 @@ public class TestPlaywrightExample {
      */
     @Test
     public void testCompleteWorkflow() throws AgentBayException, BrowserException {
-        logger.info("Testing complete workflow");
-        
         // Step 1: Initialize client
         agentBay = new AgentBay();
         assertNotNull("AgentBay client should be created", agentBay);
@@ -359,8 +308,6 @@ public class TestPlaywrightExample {
         
         // Step 5: Delete session
         agentBay.delete(session, false);
-        logger.info("Complete workflow executed successfully");
-        
         session = null; // Prevent double cleanup
     }
 }

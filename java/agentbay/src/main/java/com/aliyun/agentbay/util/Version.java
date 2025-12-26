@@ -10,9 +10,6 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Version information for the AgentBay SDK.
  * 
@@ -24,8 +21,6 @@ import org.slf4j.LoggerFactory;
  * 4. Default version constant
  */
 public class Version {
-    private static final Logger logger = LoggerFactory.getLogger(Version.class);
-    
     private static final String DEFAULT_VERSION = "0.0.3";
     private static final String VERSION_PROPERTIES_FILE = "/META-INF/maven/com.aliyun/agentbay-sdk/pom.properties";
     
@@ -47,26 +42,22 @@ public class Version {
         // Try 1: Read from Maven-generated pom.properties file
         String version = readVersionFromPomProperties();
         if (version != null && !version.isEmpty()) {
-            logger.debug("SDK version {} read from pom.properties: {}", version, VERSION_PROPERTIES_FILE);
             return version;
         }
         
         // Try 2: Read from MANIFEST.MF (from SDK's own JAR, not other JARs)
         version = readVersionFromManifest();
         if (version != null && !version.isEmpty()) {
-            logger.debug("SDK version {} read from MANIFEST.MF", version);
             return version;
         }
         
         // Try 3: Read from pom.xml (for development mode)
         version = readVersionFromPomXml();
         if (version != null && !version.isEmpty()) {
-            logger.debug("SDK version {} read from pom.xml", version);
             return version;
         }
         
         // Fallback: Use default version (this should match pom.xml version)
-        logger.debug("SDK version {} read from DEFAULT_VERSION constant", DEFAULT_VERSION);
         return DEFAULT_VERSION;
     }
     
@@ -163,7 +154,6 @@ public class Version {
             }
         } catch (Exception e) {
             // Ignore exceptions and try next method
-            logger.debug("Failed to read version from pom.xml: {}", e.getMessage());
         }
         return null;
     }

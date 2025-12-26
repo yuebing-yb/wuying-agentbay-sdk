@@ -6,9 +6,6 @@ import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.FileUrlResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.UUID;
 
@@ -17,7 +14,6 @@ import java.util.UUID;
  * Provides methods to upload mobile simulation data and configure simulation settings.
  */
 public class MobileSimulate {
-    private static final Logger logger = LoggerFactory.getLogger(MobileSimulate.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final OkHttpClient httpClient = new OkHttpClient();
 
@@ -95,7 +91,6 @@ public class MobileSimulate {
      */
     public void setSimulateContextId(String contextId) {
         this.contextId = contextId;
-        logger.info("Set simulate context id = {}", contextId);
         updateContext(true, contextId, null);
     }
 
@@ -141,9 +136,6 @@ public class MobileSimulate {
         }
 
         String mobileDevInfoPath = contextSync.getPath() + MOBILE_INFO_SUB_PATH;
-        logger.debug("hasMobileInfo: context_id = {}, mobile_dev_info_path = {}", 
-            contextSync.getContextId(), mobileDevInfoPath);
-
         try {
             // List files in the context to check if mobile info exists
             ContextFileListResult res = contextService.listFiles(
@@ -162,21 +154,17 @@ public class MobileSimulate {
                     }
                 }
             } else {
-                logger.error("Failed to list files: {}", res.getErrorMessage());
                 return false;
             }
 
             if (foundDevInfo) {
-                logger.info("Mobile dev info already exists");
                 // Update and save context sync if check success
                 updateContext(false, contextSync.getContextId(), contextSync);
                 return true;
             } else {
-                logger.info("Mobile dev info does not exist");
                 return false;
             }
         } catch (Exception e) {
-            logger.error("Failed to check mobile info existence", e);
             return false;
         }
     }
@@ -205,7 +193,6 @@ public class MobileSimulate {
         if (contextSync == null) {
             Context createdContext = createContextForSimulate();
             if (createdContext == null) {
-                logger.error("Failed to create context for simulate");
                 return new MobileSimulateUploadResult(false, "", "Failed to create context for simulate");
             }
             updateContext(true, createdContext.getId(), null);
@@ -222,17 +209,12 @@ public class MobileSimulate {
         try {
             uploadUrlResult = contextService.getFileUploadUrl(contextId, uploadPath);
         } catch (AgentBayException e) {
-            logger.error("Failed to get file upload URL: {}", e.getMessage());
             return new MobileSimulateUploadResult(false, "", e.getMessage());
         }
         
         if (!uploadUrlResult.isSuccess()) {
-            logger.error("Failed to get file upload URL: {}", uploadUrlResult.getErrorMessage());
             return new MobileSimulateUploadResult(false, "", uploadUrlResult.getErrorMessage());
         }
-
-        logger.debug("upload_url = {}", uploadUrlResult.getUrl());
-
         // Upload file using HTTP PUT
         try {
             RequestBody body = RequestBody.create(
@@ -248,16 +230,12 @@ public class MobileSimulate {
             try (Response response = httpClient.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
                     String errorMsg = "HTTP upload failed with code: " + response.code();
-                    logger.error(errorMsg);
                     return new MobileSimulateUploadResult(false, "", errorMsg);
                 }
             }
         } catch (IOException e) {
-            logger.error("An error occurred while uploading the file", e);
             return new MobileSimulateUploadResult(false, "", e.getMessage());
         }
-
-        logger.info("Mobile dev info uploaded successfully");
         return new MobileSimulateUploadResult(true, contextId, "");
     }
 
@@ -298,8 +276,6 @@ public class MobileSimulate {
                     mobileInfoWhiteList.setPath(MOBILE_INFO_SUB_PATH);
                     mobileInfoWhiteList.setExcludePaths(new java.util.ArrayList<String>());
                     whiteLists.add(mobileInfoWhiteList);
-                    logger.info("Added mobile_dev_info_path to context_sync.policy.bw_list.white_lists: {}", 
-                        MOBILE_INFO_SUB_PATH);
                 }
             }
         }
@@ -313,9 +289,6 @@ public class MobileSimulate {
         } else {
             this.mobileDevInfoPath = contextSync.getPath() + MOBILE_INFO_SUB_PATH;
         }
-        
-        logger.info("Updated context, is_internal = {}, context_id = {}, mobile_dev_info_path = {}", 
-            isInternal, this.contextId, this.mobileDevInfoPath);
     }
 
     /**
@@ -329,16 +302,12 @@ public class MobileSimulate {
         try {
             ContextResult contextResult = contextService.get(contextName, true);
             if (!contextResult.isSuccess() || contextResult.getContext() == null) {
-                logger.error("Failed to create mobile simulate context: {}", contextResult.getErrorMessage());
                 return null;
             }
 
             Context context = contextResult.getContext();
-            logger.info("Created mobile simulate context, context_id = {}, context_name = {}", 
-                context.getId(), context.getName());
             return context;
         } catch (AgentBayException e) {
-            logger.error("Failed to create mobile simulate context: {}", e.getMessage());
             return null;
         }
     }

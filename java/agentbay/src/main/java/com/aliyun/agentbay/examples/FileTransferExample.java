@@ -71,13 +71,10 @@ public class FileTransferExample {
 
             UploadResult uploadResult = session.getFileSystem().uploadFile(
                 localFilePath,
-                remotePath,
-                null,
-                true,
-                60.0f,
-                1.5f,
-                null
+                remotePath
             );
+
+            System.out.println(session.info().getSessionInfo().getResourceUrl());
 
             if (uploadResult.isSuccess()) {
                 System.out.println("✅ Upload successful!");
@@ -114,12 +111,7 @@ public class FileTransferExample {
             System.out.println("\n📥 Downloading file from " + remotePath + "...");
             DownloadResult downloadResult = session.getFileSystem().downloadFile(
                 remotePath,
-                downloadFilePath,
-                true,
-                true,
-                60.0f,
-                1.5f,
-                null
+                downloadFilePath
             );
 
             if (downloadResult.isSuccess()) {

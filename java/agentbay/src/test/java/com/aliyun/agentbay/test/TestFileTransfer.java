@@ -321,7 +321,6 @@ public class TestFileTransfer {
         new File(localDownloadPath).delete();
     }
 
-
     /**
      * Test 5: Upload with progress callback
      */
@@ -454,8 +453,6 @@ public class TestFileTransfer {
             localFile.delete();
         }
     }
-
-
 
     /**
      * Test 9: File transfer context path verification

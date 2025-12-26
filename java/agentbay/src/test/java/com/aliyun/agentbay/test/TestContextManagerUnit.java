@@ -7,9 +7,6 @@ import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import org.junit.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -23,8 +20,6 @@ import static org.junit.Assert.*;
  * This test is equivalent to Python's test_context_manager.py
  */
 public class TestContextManagerUnit {
-    private static final Logger logger = LoggerFactory.getLogger(TestContextManagerUnit.class);
-    
     private static AgentBay agentBay;
     private static Context context;
     private static Session session;
@@ -53,8 +48,6 @@ public class TestContextManagerUnit {
         }
 
         context = contextResult.getContext();
-        logger.info("Created context: {} (ID: {})", context.getName(), context.getId());
-
         // Create a session for all tests
         CreateSessionParams params = new CreateSessionParams();
         ContextSync contextSync = ContextSync.create(
@@ -71,8 +64,6 @@ public class TestContextManagerUnit {
         }
 
         session = sessionResult.getSession();
-        logger.info("Created session: {}", session.getSessionId());
-
         // Wait a bit for session to be ready
         try {
             Thread.sleep(3000);
@@ -87,9 +78,7 @@ public class TestContextManagerUnit {
         if (session != null && agentBay != null) {
             try {
                 agentBay.delete(session, false);
-                logger.info("Session deleted: {}", session.getSessionId());
             } catch (Exception e) {
-                logger.warn("Warning: Failed to delete session: {}", e.getMessage());
             }
         }
 
@@ -97,9 +86,7 @@ public class TestContextManagerUnit {
         if (context != null && agentBay != null) {
             try {
                 agentBay.getContext().delete(context);
-                logger.info("Context deleted: {}", context.getId());
             } catch (Exception e) {
-                logger.warn("Warning: Failed to delete context: {}", e.getMessage());
             }
         }
     }
@@ -110,8 +97,6 @@ public class TestContextManagerUnit {
      */
     @Test
     public void testContextInfoReturnsStatusData() {
-        logger.info("Test: context.info() returns context status data");
-        
         // Get context info
         ContextInfoResult infoResult = session.getContext().info();
         
@@ -120,18 +105,10 @@ public class TestContextManagerUnit {
         assertNotEquals("Request ID should not be empty", "", infoResult.getRequestId());
         
         // Log the context status data
-        logger.info("Context status data count: {}", infoResult.getContextStatusData().size());
         for (int i = 0; i < infoResult.getContextStatusData().size(); i++) {
             ContextStatusData data = infoResult.getContextStatusData().get(i);
-            logger.info("Status data {}:", i);
-            logger.info("  Context ID: {}", data.getContextId());
-            logger.info("  Path: {}", data.getPath());
-            logger.info("  Status: {}", data.getStatus());
-            logger.info("  Task Type: {}", data.getTaskType());
-            logger.info("  Start Time: {}", data.getStartTime());
-            logger.info("  Finish Time: {}", data.getFinishTime());
+
             if (data.getErrorMessage() != null && !data.getErrorMessage().isEmpty()) {
-                logger.info("  Error: {}", data.getErrorMessage());
             }
         }
         
@@ -143,8 +120,6 @@ public class TestContextManagerUnit {
             assertNotNull("Status should not be null", data.getStatus());
             assertNotNull("Task Type should not be null", data.getTaskType());
         }
-        
-        logger.info("✅ Test passed: context.info() returns valid context status data");
     }
     
     /**
@@ -152,8 +127,6 @@ public class TestContextManagerUnit {
      */
     @Test
     public void testContextInfoWithParameters() {
-        logger.info("Test: context.info() with parameters");
-        
         // Get context info with parameters
         ContextInfoResult infoResult = session.getContext().info(
             context.getId(),
@@ -165,14 +138,9 @@ public class TestContextManagerUnit {
         assertNotNull("Request ID should not be null", infoResult.getRequestId());
         
         // Log the filtered context status data
-        logger.info("Filtered context status data count: {}", infoResult.getContextStatusData().size());
         for (int i = 0; i < infoResult.getContextStatusData().size(); i++) {
             ContextStatusData data = infoResult.getContextStatusData().get(i);
-            logger.info("Status data {}:", i);
-            logger.info("  Context ID: {}", data.getContextId());
-            logger.info("  Path: {}", data.getPath());
-            logger.info("  Status: {}", data.getStatus());
-            logger.info("  Task Type: {}", data.getTaskType());
+
         }
         
         // If we have status data, verify it matches our filters
@@ -181,8 +149,6 @@ public class TestContextManagerUnit {
                 assertEquals("Path should match filter", "/home/wuying/test", data.getPath());
             }
         }
-        
-        logger.info("✅ Test passed: context.info() with parameters filters correctly");
     }
     
     /**
@@ -190,8 +156,6 @@ public class TestContextManagerUnit {
      */
     @Test
     public void testContextSyncBasic() {
-        logger.info("Test: Basic context sync (trigger only)");
-        
         // Trigger a sync
         ContextSyncResult syncResult = session.getContext().sync();
         
@@ -199,9 +163,7 @@ public class TestContextManagerUnit {
         assertTrue("Sync should be successful", syncResult.isSuccess());
         assertNotNull("Request ID should not be null", syncResult.getRequestId());
         assertNotEquals("Request ID should not be empty", "", syncResult.getRequestId());
-        
-        logger.info("Sync triggered successfully with request ID: {}", syncResult.getRequestId());
-        logger.info("✅ Test passed: Basic context sync works");
+
     }
     
     /**
@@ -209,32 +171,24 @@ public class TestContextManagerUnit {
      */
     @Test
     public void testContextSyncWithCallback() throws Exception {
-        logger.info("Test: Context sync with callback");
-        
         // Create a CompletableFuture to wait for callback
         CompletableFuture<Boolean> callbackFuture = new CompletableFuture<>();
         
         // Trigger sync with callback
         ContextSyncResult syncResult = session.getContext().sync(success -> {
-            logger.info("Callback received: {}", success ? "SUCCESS" : "FAILED");
             callbackFuture.complete(success);
         });
         
         // Verify initial sync trigger was successful
         assertTrue("Sync trigger should be successful", syncResult.isSuccess());
         assertNotNull("Request ID should not be null", syncResult.getRequestId());
-        
-        logger.info("Sync triggered with callback, request ID: {}", syncResult.getRequestId());
-        logger.info("Waiting for callback completion...");
-        
+
         // Wait for callback (max 5 minutes)
         Boolean callbackSuccess = callbackFuture.get(5, TimeUnit.MINUTES);
         
         // Verify callback result
         assertNotNull("Callback should have been called", callbackSuccess);
         assertTrue("Callback should report success", callbackSuccess);
-        
-        logger.info("✅ Test passed: Context sync with callback works correctly");
     }
     
     /**
@@ -242,8 +196,6 @@ public class TestContextManagerUnit {
      */
     @Test
     public void testContextSyncAndWait() {
-        logger.info("Test: Context syncAndWait (blocking)");
-        
         long startTime = System.currentTimeMillis();
         
         // Call syncAndWait - this should block until sync completes
@@ -254,9 +206,7 @@ public class TestContextManagerUnit {
         // Verify sync result
         assertTrue("Sync should be successful", syncResult.isSuccess());
         assertNotNull("Request ID should not be null", syncResult.getRequestId());
-        
-        logger.info("Sync completed in {} ms with request ID: {}", duration, syncResult.getRequestId());
-        logger.info("✅ Test passed: syncAndWait works correctly");
+
     }
     
     /**
@@ -264,8 +214,6 @@ public class TestContextManagerUnit {
      */
     @Test
     public void testContextSyncWithParameters() {
-        logger.info("Test: Context sync with custom parameters");
-        
         // Trigger sync with custom parameters
         ContextSyncResult syncResult = session.getContext().sync(
             context.getId(),
@@ -276,9 +224,7 @@ public class TestContextManagerUnit {
         // Verify sync result
         assertTrue("Sync should be successful", syncResult.isSuccess());
         assertNotNull("Request ID should not be null", syncResult.getRequestId());
-        
-        logger.info("Sync triggered with custom parameters, request ID: {}", syncResult.getRequestId());
-        logger.info("✅ Test passed: Context sync with parameters works");
+
     }
     
     /**
@@ -286,13 +232,9 @@ public class TestContextManagerUnit {
      */
     @Test
     public void testSyncThenCheckInfo() throws InterruptedException {
-        logger.info("Test: Sync context and then check info");
-        
         // First trigger a sync
         ContextSyncResult syncResult = session.getContext().sync();
         assertTrue("Sync should be successful", syncResult.isSuccess());
-        
-        logger.info("Sync triggered, waiting a bit before checking info...");
         Thread.sleep(3000);
         
         // Then get info
@@ -301,14 +243,9 @@ public class TestContextManagerUnit {
         assertNotNull("Request ID should not be null", infoResult.getRequestId());
         
         // Log context status data
-        logger.info("Context status data after sync, count: {}", infoResult.getContextStatusData().size());
         for (int i = 0; i < infoResult.getContextStatusData().size(); i++) {
             ContextStatusData data = infoResult.getContextStatusData().get(i);
-            logger.info("Status data {}:", i);
-            logger.info("  Context ID: {}", data.getContextId());
-            logger.info("  Path: {}", data.getPath());
-            logger.info("  Status: {}", data.getStatus());
-            logger.info("  Task Type: {}", data.getTaskType());
+
         }
         
         // Check if we have status data for our context
@@ -327,10 +264,7 @@ public class TestContextManagerUnit {
         // We should have found our context in the status data
         // But this might be flaky, so just log a warning if not found
         if (!foundContext) {
-            logger.warn("Warning: Could not find context {} in status data", context.getId());
         }
-        
-        logger.info("✅ Test passed: Sync and check info works correctly");
     }
 }
 

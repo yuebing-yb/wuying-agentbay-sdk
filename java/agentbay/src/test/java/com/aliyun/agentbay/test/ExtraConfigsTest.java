@@ -5,17 +5,14 @@ import com.aliyun.agentbay.mobile.MobileExtraConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateMode;
 import com.aliyun.agentbay.model.ExtraConfigs;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
-/**
- * Unit tests for ExtraConfigs and related configuration classes.
- */
 public class ExtraConfigsTest {
 
     @Test
@@ -59,8 +56,12 @@ public class ExtraConfigsTest {
         validConfig.setLockResolution(true);
         
         ExtraConfigs extraConfigs = new ExtraConfigs(validConfig);
-        
-        assertDoesNotThrow(() -> extraConfigs.validate());
+
+        try {
+            extraConfigs.validate();
+        } catch (Exception e) {
+            fail("Validation should not throw exception: " + e.getMessage());
+        }
     }
 
     @Test
@@ -121,23 +122,39 @@ public class ExtraConfigsTest {
         // Valid configuration
         MobileExtraConfig validConfig = new MobileExtraConfig();
         validConfig.setLockResolution(true);
-        assertDoesNotThrow(() -> validConfig.validate());
+        try {
+            validConfig.validate();
+        } catch (Exception e) {
+            fail("Validation should not throw exception: " + e.getMessage());
+        }
         
         // Invalid configuration - empty package name in blacklist
         MobileExtraConfig invalidConfig = new MobileExtraConfig();
         invalidConfig.setUninstallBlacklist(Arrays.asList("com.valid.app", ""));
-        assertThrows(IllegalArgumentException.class, () -> invalidConfig.validate());
+        try {
+            invalidConfig.validate();
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     @Test
     public void testAppManagerRuleValidation() {
         // Valid rule
         AppManagerRule validRule = new AppManagerRule("White", Arrays.asList("com.test.app"));
-        assertDoesNotThrow(() -> validRule.validate());
+        try {
+            validRule.validate();
+        } catch (Exception e) {
+            fail("Validation should not throw exception: " + e.getMessage());
+        }
         
         // Invalid rule - empty package name
         AppManagerRule invalidRule = new AppManagerRule("White", Arrays.asList("com.valid.app", ""));
-        assertThrows(IllegalArgumentException.class, () -> invalidRule.validate());
+        try {
+            invalidRule.validate();
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     @Test
@@ -168,13 +185,21 @@ public class ExtraConfigsTest {
             MobileSimulateMode.PROPERTIES_ONLY,
             "ctx-123"
         );
-        assertDoesNotThrow(() -> validConfig.validate());
+        try {
+            validConfig.validate();
+        } catch (Exception e) {
+            fail("Validation should not throw exception: " + e.getMessage());
+        }
         
         // Invalid configuration - simulate enabled but no path
         MobileSimulateConfig invalidConfig = new MobileSimulateConfig();
         invalidConfig.setSimulate(true);
         invalidConfig.setSimulatePath(null);
-        assertThrows(IllegalArgumentException.class, () -> invalidConfig.validate());
+        try {
+            invalidConfig.validate();
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     @Test
@@ -206,11 +231,12 @@ public class ExtraConfigsTest {
         // Test fromValue
         assertEquals(MobileSimulateMode.ALL, MobileSimulateMode.fromValue("All"));
         assertEquals(MobileSimulateMode.PROPERTIES_ONLY, MobileSimulateMode.fromValue("PropertiesOnly"));
-        
-        // Test invalid value
-        assertThrows(IllegalArgumentException.class, () -> 
-            MobileSimulateMode.fromValue("InvalidMode")
-        );
+
+        try {
+            MobileSimulateMode.fromValue("InvalidMode");
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     @Test

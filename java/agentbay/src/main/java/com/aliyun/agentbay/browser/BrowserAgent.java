@@ -12,9 +12,6 @@ import com.google.gson.JsonObject;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.CDPSession;
 import com.microsoft.playwright.Page;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.*;
 
 /**
@@ -22,7 +19,6 @@ import java.util.*;
  * Matches Python BrowserAgent functionality completely
  */
 public class BrowserAgent extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(BrowserAgent.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final Browser browser;
@@ -117,10 +113,8 @@ public class BrowserAgent extends BaseService {
         try {
             OperationResult response = callMcpToolTimeout("page_use_close_session", new HashMap<>());
             if (response.isSuccess()) {
-                logger.info("Session close status: {}", response.getData());
                 return true;
             } else {
-                logger.warn("Failed to close session: {}", response.getErrorMessage());
                 return false;
             }
         } catch (Exception e) {
@@ -163,7 +157,6 @@ public class BrowserAgent extends BaseService {
      */
     private String executeScreenshot(int contextId, String pageId, boolean fullPage, int quality,
                                      Map<String, Double> clip, Integer timeout) {
-        logger.debug("Screenshot page_id: {}, context_id: {}", pageId, contextId);
         Map<String, Object> args = new HashMap<>();
         args.put("context_id", contextId);
         if (pageId != null) args.put("page_id", pageId);
@@ -280,7 +273,6 @@ public class BrowserAgent extends BaseService {
      * Internal method to execute act with either sync or async tool
      */
     private ActResult executeActInternal(Object actionInput, int contextId, String pageId, boolean useAsync) throws BrowserException {
-        logger.debug("Acting page_id: {}, context_id: {}, async: {}", pageId, contextId, useAsync);
         Map<String, Object> args = new HashMap<>();
         args.put("context_id", contextId);
         if (pageId != null) args.put("page_id", pageId);
@@ -310,8 +302,6 @@ public class BrowserAgent extends BaseService {
 
         // Remove null values
         args.values().removeIf(java.util.Objects::isNull);
-        logger.info("{}", taskName);
-
         String toolName = useAsync ? "page_use_act_async" : "page_use_act";
         OperationResult response = callMcpToolTimeout(toolName, args);
         if (!response.isSuccess()) {
@@ -329,7 +319,6 @@ public class BrowserAgent extends BaseService {
                     Object steps = responseData.get("steps");
                     boolean success = Boolean.TRUE.equals(responseData.get("success"));
                     String taskStatus = steps instanceof String ? (String) steps : objectMapper.writeValueAsString(steps);
-                    logger.info("Task {} completed immediately. Success: {}", taskName, success);
                     return new ActResult(success, taskStatus, taskName);
                 }
                 throw new BrowserException("No task_id in response: " + responseData);
@@ -346,10 +335,7 @@ public class BrowserAgent extends BaseService {
 
                 if (result.isSuccess() && result.getData() != null) {
                     Map<String, Object> data = parseJsonResponse(result.getData());
-                    logger.debug("Act result data type: {}, data: {}", data.getClass(), data);
-
                     if (!(data instanceof Map)) {
-                        logger.warn("Received non-map data for act result, skipping this iteration");
                         maxRetries--;
                         continue;
                     }
@@ -366,12 +352,10 @@ public class BrowserAgent extends BaseService {
                         } else {
                             taskStatus = noActionMsg;
                         }
-                        logger.info("Task {}:{} is done. Success: {}. {}", taskId, taskName, success, taskStatus);
                         return new ActResult(success, taskStatus, taskName);
                     }
 
                     String taskStatus = steps != null ? "steps done. Details: " + steps : noActionMsg;
-                    logger.info("Task {}:{} in progress. {}", taskId, taskName, taskStatus);
                 }
                 maxRetries--;
             }
@@ -418,7 +402,6 @@ public class BrowserAgent extends BaseService {
             OperationResult result = callMcpTool("page_use_observe", args);
             return parseObserveResult(result);
         } catch (Exception e) {
-            logger.error("Failed to observe elements", e);
             return new ObserveResultTuple(false, new ArrayList<>());
         }
     }
@@ -446,7 +429,6 @@ public class BrowserAgent extends BaseService {
                     try {
                         arguments = objectMapper.readValue(argumentsStr, new TypeReference<Map<String, Object>>(){});
                     } catch (Exception e) {
-                        logger.warn("Could not parse arguments as JSON: {}", argumentsStr);
                         arguments = new HashMap<>();
                     }
 
@@ -456,7 +438,6 @@ public class BrowserAgent extends BaseService {
 
             return new ObserveResultTuple(true, results);
         } catch (Exception e) {
-            logger.warn("Failed to parse observe result", e);
             return new ObserveResultTuple(false, new ArrayList<>());
         }
     }
@@ -618,7 +599,6 @@ public class BrowserAgent extends BaseService {
             if (taskId == null) {
                 // Extraction completed immediately
                 try {
-                    logger.info("Extract completed immediately, validating response");
                     T extractedObject = objectMapper.convertValue(responseData, options.getSchema());
                     return new ExtractResultTuple<>(true, extractedObject);
                 } catch (Exception e) {
@@ -641,7 +621,6 @@ public class BrowserAgent extends BaseService {
                     return new ExtractResultTuple<>(true, extractedObject);
                 }
                 maxRetries--;
-                logger.debug("Task {}: No extract result yet (attempt {}/20)", taskId, 20 - maxRetries);
             }
             throw new BrowserException("Task " + taskId + ": Extract timed out");
         } catch (InterruptedException e) {

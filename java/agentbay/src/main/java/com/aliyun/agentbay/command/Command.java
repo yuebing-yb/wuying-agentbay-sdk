@@ -4,14 +4,10 @@ import com.aliyun.agentbay.model.CommandResult;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Command extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(Command.class);
-
     public Command(Session session) {
         super(session);
     }
@@ -30,9 +26,6 @@ public class Command extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("command", command);
             args.put("timeout_ms", timeoutMs);
-
-            logger.debug("Executing command: {} with timeout: {}ms", command, timeoutMs);
-
             OperationResult result = callMcpTool("shell", args);
 
             if (result.isSuccess()) {
@@ -42,7 +35,6 @@ public class Command extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Unexpected error during command execution", e);
             return new CommandResult("", false, "", "Unexpected error: " + e.getMessage(), 1);
         }
     }

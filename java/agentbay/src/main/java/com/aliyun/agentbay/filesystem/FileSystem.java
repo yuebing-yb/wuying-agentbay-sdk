@@ -7,15 +7,12 @@ import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
  * File system operations for a session
  */
 public class FileSystem extends BaseService {
-    private static final Logger logger = LoggerFactory.getLogger(FileSystem.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final int DEFAULT_CHUNK_SIZE = 50 * 1024;
@@ -53,7 +50,6 @@ public class FileSystem extends BaseService {
      * @throws AgentBayException if reading fails
      */
     public String read(String path) throws AgentBayException {
-        logger.debug("Reading file: {}", path);
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
         OperationResult result = callMcpTool("read_file", args);
@@ -73,7 +69,6 @@ public class FileSystem extends BaseService {
      * @throws AgentBayException if writing fails
      */
     public String write(String path, String content) throws AgentBayException {
-        logger.debug("Writing file: {}", path);
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
         args.put("content", content);
@@ -93,7 +88,6 @@ public class FileSystem extends BaseService {
      * @throws AgentBayException if listing fails
      */
     public String list(String path) throws AgentBayException {
-        logger.debug("Listing directory: {}", path);
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
         OperationResult result = callMcpTool("list_directory", args);
@@ -118,7 +112,6 @@ public class FileSystem extends BaseService {
             OperationResult result = callMcpTool("shell", args);
             return result.isSuccess() && result.getData() != null && result.getData().trim().equals("exists");
         } catch (Exception e) {
-            logger.warn("Failed to check if path exists: {}", path, e);
             return false;
         }
     }
@@ -131,7 +124,6 @@ public class FileSystem extends BaseService {
      * @throws AgentBayException if creation fails
      */
     public String mkdir(String path) throws AgentBayException {
-        logger.debug("Creating directory: {}", path);
         Map<String, Object> args = new HashMap<>();
         args.put("command", "mkdir -p \"" + path + "\"");
         OperationResult result = callMcpTool("shell", args);
@@ -150,7 +142,6 @@ public class FileSystem extends BaseService {
      * @throws AgentBayException if removal fails
      */
     public String remove(String path) throws AgentBayException {
-        logger.debug("Removing path: {}", path);
         Map<String, Object> args = new HashMap<>();
         args.put("command", "rm -rf \"" + path + "\"");
         OperationResult result = callMcpTool("shell", args);
@@ -170,7 +161,6 @@ public class FileSystem extends BaseService {
      * @throws AgentBayException if copy fails
      */
     public String copy(String source, String destination) throws AgentBayException {
-        logger.debug("Copying from {} to {}", source, destination);
         Map<String, Object> args = new HashMap<>();
         args.put("command", "cp -r \"" + source + "\" \"" + destination + "\"");
         OperationResult result = callMcpTool("shell", args);
@@ -190,7 +180,6 @@ public class FileSystem extends BaseService {
      * @throws AgentBayException if move fails
      */
     public String move(String source, String destination) throws AgentBayException {
-        logger.debug("Moving from {} to {}", source, destination);
         Map<String, Object> args = new HashMap<>();
         args.put("command", "mv \"" + source + "\" \"" + destination + "\"");
         OperationResult result = callMcpTool("shell", args);
@@ -209,7 +198,6 @@ public class FileSystem extends BaseService {
      * @throws AgentBayException if getting info fails
      */
     public String getInfo(String path) throws AgentBayException {
-        logger.debug("Getting file info: {}", path);
         Map<String, Object> args = new HashMap<>();
         args.put("command", "ls -la \"" + path + "\"");
         OperationResult result = callMcpTool("shell", args);
@@ -232,7 +220,6 @@ public class FileSystem extends BaseService {
      */
     public BoolResult writeFile(String path, String content, String mode, boolean createParentDir) {
         int contentLength = content.getBytes().length;
-        logger.debug("Writing file: {} (size: {} bytes, mode: {}, createParentDir: {})", path, contentLength, mode, createParentDir);
         int chunkSize = DEFAULT_CHUNK_SIZE;
         if (session.isVpcEnabled()) {
             chunkSize =DEFAULT_VPC_CHUNK_SIZE;
@@ -265,7 +252,6 @@ public class FileSystem extends BaseService {
             return new BoolResult(result.getRequestId(), true, true, "");
 
         } catch (Exception e) {
-            logger.error("Failed to write file: {}", path, e);
             return new BoolResult("", false, false, "Failed to write file: " + e.getMessage());
         }
     }
@@ -310,8 +296,6 @@ public class FileSystem extends BaseService {
 
         try {
             OperationResult result = callMcpTool("write_file", args);
-            logger.debug("write_file response: {}", result);
-
             if (result.isSuccess()) {
                 return new BoolResult(result.getRequestId(), true, true, "");
             } else {
@@ -319,7 +303,6 @@ public class FileSystem extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to write file chunk: {}", path, e);
             return new BoolResult("", false, false, "Failed to write file chunk: " + e.getMessage());
         }
     }
@@ -333,8 +316,6 @@ public class FileSystem extends BaseService {
 
         try {
             OperationResult result = callMcpTool("read_file", args);
-            logger.debug("read_file response: {}", result);
-
             if (result.isSuccess()) {
                 return new FileContentResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -342,7 +323,6 @@ public class FileSystem extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to read file: {}", path, e);
             return new FileContentResult("", false, "", "Failed to read file: " + e.getMessage());
         }
     }
@@ -424,8 +404,6 @@ public class FileSystem extends BaseService {
 
         try {
             OperationResult result = callMcpTool("create_directory", args);
-            logger.debug("create_directory response: {}", result);
-
             if (result.isSuccess()) {
                 return new BoolResult(result.getRequestId(), true, true, "");
             } else {
@@ -433,7 +411,6 @@ public class FileSystem extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to create directory: {}", path, e);
             return new BoolResult("", false, false, "Failed to create directory: " + e.getMessage());
         }
     }
@@ -496,8 +473,6 @@ public class FileSystem extends BaseService {
 
         try {
             OperationResult result = callMcpTool("edit_file", args);
-            logger.debug("edit_file response: {}", result);
-
             if (result.isSuccess()) {
                 return new BoolResult(result.getRequestId(), true, true, "");
             } else {
@@ -505,7 +480,6 @@ public class FileSystem extends BaseService {
             }
 
         } catch (Exception e) {
-            logger.error("Failed to edit file: {}", path, e);
             return new BoolResult("", false, false, "Failed to edit file: " + e.getMessage());
         }
     }

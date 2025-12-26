@@ -5,16 +5,13 @@ import com.aliyun.agentbay.mobile.MobileSimulateConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateMode;
 import com.aliyun.agentbay.model.ExtraConfigs;
 import com.aliyun.agentbay.session.CreateSessionParams;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
-/**
- * Unit tests for CreateSessionParams with new parameters.
- */
 public class CreateSessionParamsTest {
 
     @Test
@@ -101,18 +98,17 @@ public class CreateSessionParamsTest {
 
     @Test
     public void testMobileExtraConfigBackwardCompatibility() {
-        // Test old constructor still works (without simulate_config)
         MobileExtraConfig oldStyleConfig = new MobileExtraConfig(
-            true,    // lockResolution
-            null,    // appManagerRule
-            false,   // hideNavigationBar
-            null     // uninstallBlacklist
+            true,
+            null,
+            false,
+            null
         );
-        
+
         assertNotNull(oldStyleConfig);
         assertTrue(oldStyleConfig.getLockResolution());
         assertFalse(oldStyleConfig.getHideNavigationBar());
-        assertNull(oldStyleConfig.getSimulateConfig());  // Should be null
+        assertNull(oldStyleConfig.getSimulateConfig());
     }
 
     @Test
@@ -142,12 +138,11 @@ public class CreateSessionParamsTest {
     public void testCreateSessionParamsDefaults() {
         CreateSessionParams params = new CreateSessionParams();
 
-        // Test default values
         assertNull(params.getPolicyId());
         assertNull(params.getEnableBrowserReplay());
         assertNull(params.getExtraConfigs());
         assertNull(params.getNetworkId());
-        assertNotNull(params.getContextSyncs());  // Should be empty list, not null
+        assertNotNull(params.getContextSyncs());
         assertTrue(params.getContextSyncs().isEmpty());
     }
 

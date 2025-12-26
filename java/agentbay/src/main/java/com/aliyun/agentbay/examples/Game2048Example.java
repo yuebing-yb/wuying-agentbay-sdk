@@ -11,9 +11,6 @@ import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.microsoft.playwright.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.*;
 
 /**
@@ -23,8 +20,6 @@ import java.util.*;
  * Focus: Extract combined with strategy; keyboard actions
  */
 public class Game2048Example {
-    private static final Logger logger = LoggerFactory.getLogger(Game2048Example.class);
-
     public static class GameState {
         @JsonProperty("score")
         private Integer score;
@@ -210,7 +205,6 @@ public class Game2048Example {
 
                     } catch (Exception error) {
                         System.err.println("❌ Error in game loop: " + error.getMessage());
-                        logger.error("Error in game loop", error);
                     }
                 } else {
                     System.err.println("Failed to initialize browser");
@@ -221,10 +215,8 @@ public class Game2048Example {
             }
 
         } catch (AgentBayException e) {
-            logger.error("AgentBay error occurred", e);
             System.err.println("AgentBay error: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Unexpected error occurred", e);
             System.err.println("Unexpected error: " + e.getMessage());
         }
     }
