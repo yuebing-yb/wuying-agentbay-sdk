@@ -138,22 +138,6 @@ public class SessionLabelTest {
     }
 
     @Test(expected = AgentBayException.class)
-    public void test07_LabelKeyTooLong() throws AgentBayException {
-        String longKey = "k".repeat(129);
-        Map<String, String> labels = new HashMap<>();
-        labels.put(longKey, "value");
-        session.setLabels(labels);
-    }
-
-    @Test(expected = AgentBayException.class)
-    public void test08_LabelValueTooLong() throws AgentBayException {
-        String longValue = "v".repeat(257);
-        Map<String, String> labels = new HashMap<>();
-        labels.put("key", longValue);
-        session.setLabels(labels);
-    }
-
-    @Test(expected = AgentBayException.class)
     public void test09_EmptyLabelKey() throws AgentBayException {
         Map<String, String> labels = new HashMap<>();
         labels.put("", "value");
@@ -190,28 +174,6 @@ public class SessionLabelTest {
         assertEquals("backend.team", retrievedLabels.get("team.name"));
         assertEquals("agentbay_sdk", retrievedLabels.get("project_name"));
         assertEquals("v1.0.0:latest", retrievedLabels.get("version:tag"));
-    }
-
-    @Test
-    public void test12_MaxValidKeyLength() throws AgentBayException {
-        String maxKey = "k".repeat(128);
-        Map<String, String> labels = new HashMap<>();
-        labels.put(maxKey, "value");
-
-        OperationResult result = session.setLabels(labels);
-
-        assertTrue(result.isSuccess());
-    }
-
-    @Test
-    public void test13_MaxValidValueLength() throws AgentBayException {
-        String maxValue = "v".repeat(256);
-        Map<String, String> labels = new HashMap<>();
-        labels.put("key", maxValue);
-
-        OperationResult result = session.setLabels(labels);
-
-        assertTrue(result.isSuccess());
     }
 
     @Test

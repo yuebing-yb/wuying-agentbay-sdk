@@ -22,10 +22,30 @@ public class Command extends BaseService {
     }
 
     public CommandResult executeCommand(String command, int timeoutMs) {
+        return executeCommand(command, timeoutMs, null, null);
+    }
+
+    public CommandResult executeCommand(String command, int timeoutMs, String cwd, Map<String, String> envs) {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("command", command);
             args.put("timeout_ms", timeoutMs);
+
+            if (cwd != null) {
+                args.put("cwd", cwd);
+            }
+
+            if (envs != null) {
+                for (Map.Entry<String, String> entry : envs.entrySet()) {
+                    if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof String)) {
+                        throw new IllegalArgumentException(
+                            "Invalid environment variables: all keys and values must be strings."
+                        );
+                    }
+                }
+                args.put("envs", envs);
+            }
+
             OperationResult result = callMcpTool("shell", args);
 
             if (result.isSuccess()) {
