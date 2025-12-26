@@ -281,10 +281,25 @@ public class Code extends BaseService {
 
     public EnhancedCodeExecutionResult runCode(String code, String language, int timeoutS) {
         try {
-            if (!language.equals("python") && !language.equals("javascript")) {
+            String rawLanguage = (language == null) ? "" : language;
+            String normalizedLanguage = rawLanguage.trim().toLowerCase();
+
+            Map<String, String> aliases = new HashMap<>();
+            aliases.put("py", "python");
+            aliases.put("python3", "python");
+            aliases.put("js", "javascript");
+            aliases.put("node", "javascript");
+            aliases.put("nodejs", "javascript");
+
+            String canonicalLanguage = aliases.getOrDefault(normalizedLanguage, normalizedLanguage);
+
+            Set<String> supportedLanguages = new HashSet<>(Arrays.asList("python", "javascript", "r", "java"));
+            if (!supportedLanguages.contains(canonicalLanguage)) {
                 return new EnhancedCodeExecutionResult("", false,
-                    "Unsupported language: " + language + ". Supported languages are 'python' and 'javascript'");
+                    "Unsupported language: " + rawLanguage + ". Supported languages are 'python', 'javascript', 'r', and 'java'");
             }
+
+            language = canonicalLanguage;
 
             Map<String, Object> args = new HashMap<>();
             args.put("code", code);

@@ -165,14 +165,21 @@ Session session = agentBay.create(params).getSession();
 
 ### Code Execution
 ```java
-// Run code in isolated environment
+// Run code in isolated environment (supports python, javascript, r, java)
 CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
 Session session = agentBay.create(params).getSession();
 
+// Python
 CodeExecutionResult result = session.getCode().runCode("print('Hello World')", "python");
 if (result.isSuccess()) {
     System.out.println(result.getResult());  // Hello World
 }
+
+// R
+CodeExecutionResult rResult = session.getCode().runCode("cat('Hello from R')", "r");
+
+// Java
+CodeExecutionResult javaResult = session.getCode().runCode("System.out.println(\"Hello from Java\");", "java");
 ```
 
 ## 🆘 Get Help

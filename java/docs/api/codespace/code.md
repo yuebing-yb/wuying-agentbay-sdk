@@ -6,7 +6,7 @@
 
 ## Overview
 
-The Code module provides capabilities for executing Python and JavaScript code in isolated cloud environments. This is useful for running untrusted code, data processing, testing, and automation tasks.
+The Code module provides capabilities for executing Python, JavaScript, R, and Java code in isolated cloud environments. This is useful for running untrusted code, data processing, testing, and automation tasks.
 
 ## Code
 
@@ -27,8 +27,8 @@ Execute code in the specified language with configurable timeout.
 
 **Parameters:**
 - `code` (String): The source code to execute
-- `language` (String): Programming language - "python" or "javascript"
-- `timeoutS` (int): Execution timeout in seconds (default: 300)
+- `language` (String): Programming language - "python", "javascript", "r", or "java" (case-insensitive, supports aliases like "py", "js", "node")
+- `timeoutS` (int): Execution timeout in seconds (default: 60)
 
 **Returns:**
 - `CodeExecutionResult`: Result containing execution output and status
@@ -66,6 +66,28 @@ String jsCode = """
 CodeExecutionResult jsResult = session.getCode().runCode(jsCode, "javascript");
 if (jsResult.isSuccess()) {
     System.out.println("Output: " + jsResult.getResult());
+}
+
+// Execute R code
+String rCode = """
+    x <- 41
+    cat("Result:", x + 1, "\n")
+    """;
+
+CodeExecutionResult rResult = session.getCode().runCode(rCode, "r");
+if (rResult.isSuccess()) {
+    System.out.println("R Output: " + rResult.getResult());
+}
+
+// Execute Java code
+String javaCode = """
+    int x = 41;
+    System.out.println("Result: " + (x + 1));
+    """;
+
+CodeExecutionResult javaResult = session.getCode().runCode(javaCode, "java");
+if (javaResult.isSuccess()) {
+    System.out.println("Java Output: " + javaResult.getResult());
 }
 
 // With custom timeout (60 seconds)
@@ -121,7 +143,7 @@ Result of code execution operations.
 
 ## Supported Languages
 
-### Python
+### Python (python, py, python3)
 
 - **Version**: Python 3.x
 - **Standard Library**: Full Python standard library available
@@ -145,7 +167,7 @@ String pythonCode = """
 CodeExecutionResult result = session.getCode().runCode(pythonCode, "python");
 ```
 
-### JavaScript
+### JavaScript (javascript, js, node, nodejs)
 
 - **Runtime**: Node.js
 - **Standard Library**: Full Node.js standard library
@@ -164,6 +186,55 @@ String jsCode = """
     """;
 
 CodeExecutionResult result = session.getCode().runCode(jsCode, "javascript");
+```
+
+### R (r, R)
+
+- **Version**: R 4.x
+- **Standard Library**: Full R standard library available
+- **Common Packages**: Base R packages
+- **Context Persistence**: Variables persist across multiple `runCode` calls in the same session (Jupyter-like behavior)
+
+**Example:**
+
+```java
+String rCode = """
+    # Data analysis
+    data <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    mean_val <- mean(data)
+    median_val <- median(data)
+    sd_val <- sd(data)
+
+    cat("Mean:", mean_val, "\n")
+    cat("Median:", median_val, "\n")
+    cat("Standard Deviation:", sd_val, "\n")
+    """;
+
+CodeExecutionResult result = session.getCode().runCode(rCode, "r");
+```
+
+### Java (java, JAVA)
+
+- **Version**: JDK 11+
+- **Standard Library**: Full Java standard library
+- **Execution Model**: JShell-based interactive execution
+- **Context Persistence**: Variables persist across multiple `runCode` calls in the same session (Jupyter-like behavior)
+
+**Example:**
+
+```java
+String javaCode = """
+    import java.util.*;
+
+    List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+    int sum = numbers.stream().mapToInt(Integer::intValue).sum();
+    double average = numbers.stream().mapToInt(Integer::intValue).average().orElse(0.0);
+
+    System.out.println("Sum: " + sum);
+    System.out.println("Average: " + average);
+    """;
+
+CodeExecutionResult result = session.getCode().runCode(javaCode, "java");
 ```
 
 ## Complete Example
@@ -227,7 +298,42 @@ public class CodeExecutionExample {
         } else {
             System.err.println("JavaScript Error: " + jsResult.getErrorMessage());
         }
-        
+
+        // R: Statistical analysis example
+        String rCode = """
+            data <- c(10, 20, 30, 40, 50)
+            mean_val <- mean(data)
+            median_val <- median(data)
+            cat("Mean:", mean_val, "\n")
+            cat("Median:", median_val, "\n")
+            """;
+
+        CodeExecutionResult rResult = session.getCode().runCode(rCode, "r");
+        if (rResult.isSuccess()) {
+            System.out.println("\nR Output:");
+            System.out.println(rResult.getResult());
+        } else {
+            System.err.println("R Error: " + rResult.getErrorMessage());
+        }
+
+        // Java: Object-oriented example
+        String javaCode = """
+            int[] numbers = {1, 2, 3, 4, 5};
+            int sum = 0;
+            for (int num : numbers) {
+                sum += num;
+            }
+            System.out.println("Sum: " + sum);
+            """;
+
+        CodeExecutionResult javaResult = session.getCode().runCode(javaCode, "java");
+        if (javaResult.isSuccess()) {
+            System.out.println("\nJava Output:");
+            System.out.println(javaResult.getResult());
+        } else {
+            System.err.println("Java Error: " + javaResult.getErrorMessage());
+        }
+
         // Clean up
         session.delete();
     }
@@ -319,11 +425,12 @@ CodeExecutionResult result = session.getCode().runCode(testCode, "python");
 
 ## Limitations
 
-- **Execution Time**: Default timeout is 300 seconds (5 minutes)
+- **Execution Time**: Default timeout is 60 seconds (configurable up to 300 seconds)
 - **Memory**: Limited by session environment (contact support for higher limits)
 - **Network Access**: Available within the cloud environment
 - **File System**: Full access to session file system
-- **Supported Languages**: Currently Python and JavaScript only
+- **Supported Languages**: Python, JavaScript, R, and Java
+- **Context Persistence**: R and Java support Jupyter-like context persistence (variables persist across calls)
 
 ## Integration with File System
 

@@ -49,7 +49,33 @@ public class CodeExecutionExample {
                 System.err.println("❌ Failed to execute Python code: " + pythonResult.getErrorMessage());
             }
 
-            // Example 2: Execute JavaScript code
+            // Example 2: Execute R code
+            System.out.println("\n📊 Executing R code...");
+            String rCode = "x <- 41\ncat(\"R result:\", x + 1, \"\\n\")";
+            EnhancedCodeExecutionResult rResult = session.getCode().runCode(rCode, "r");
+
+            if (rResult.isSuccess()) {
+                System.out.println("✅ R code executed successfully!");
+                System.out.println("   Output: " + rResult.getResult());
+                System.out.println("   Request ID: " + rResult.getRequestId());
+            } else {
+                System.err.println("❌ Failed to execute R code: " + rResult.getErrorMessage());
+            }
+
+            // Example 3: Execute Java code
+            System.out.println("\n☕ Executing Java code...");
+            String javaCode = "int x = 41;\nSystem.out.println(\"Java result: \" + (x + 1));";
+            EnhancedCodeExecutionResult javaResult = session.getCode().runCode(javaCode, "java");
+
+            if (javaResult.isSuccess()) {
+                System.out.println("✅ Java code executed successfully!");
+                System.out.println("   Output: " + javaResult.getResult());
+                System.out.println("   Request ID: " + javaResult.getRequestId());
+            } else {
+                System.err.println("❌ Failed to execute Java code: " + javaResult.getErrorMessage());
+            }
+
+            // Example 4: Execute JavaScript code
             System.out.println("\n🟨 Executing JavaScript code...");
             String jsCode = "console.log('Hello from JavaScript!');\nconst result = 5 * 4;\nconsole.log(`5 * 4 = ${result}`);";
             EnhancedCodeExecutionResult jsResult = session.getCode().runCode(jsCode, "javascript");

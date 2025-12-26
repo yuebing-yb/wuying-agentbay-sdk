@@ -376,8 +376,13 @@ public class AgentBayTest {
             testSession.testCommand();
             testSession.testFilesystem();
             testSession.tearDown();
-            
-            // Test delete separately
+        } catch (Exception e) {
+            System.err.println("❌ Test failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Test delete separately with its own session
+        try {
             testSession.setUp();
             testSession.testDelete();
             testSession.tearDown();

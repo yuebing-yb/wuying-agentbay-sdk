@@ -207,12 +207,54 @@ public class TestCodeExecution {
     }
 
     /**
+     * Test R code execution with simple print statement
+     */
+    @Test
+    public void testRCodeExecution() throws SessionException {
+        System.out.println("\n📊 Testing R code execution...");
+
+        String rCode = "x <- 41\ncat(\"R_RESULT:\", x + 1, \"\\n\")";
+        EnhancedCodeExecutionResult result = session.getCode().runCode(rCode, "r");
+
+        assertTrue("R code execution failed: " + result.getErrorMessage(),
+                   result.isSuccess());
+        assertNotNull("Result is null", result.getResult());
+        assertTrue("Output should contain 'R_RESULT: 42'",
+                   result.getResult().contains("R_RESULT: 42"));
+        assertNotNull("Request ID should not be null", result.getRequestId());
+
+        System.out.println("✅ R code executed successfully!");
+        System.out.println("   Output: " + result.getResult());
+    }
+
+    /**
+     * Test Java code execution with simple print statement
+     */
+    @Test
+    public void testJavaCodeExecution() throws SessionException {
+        System.out.println("\n☕ Testing Java code execution...");
+
+        String javaCode = "int x = 41;\nSystem.out.println(\"JAVA_RESULT:\" + (x + 1));";
+        EnhancedCodeExecutionResult result = session.getCode().runCode(javaCode, "java");
+
+        assertTrue("Java code execution failed: " + result.getErrorMessage(),
+                   result.isSuccess());
+        assertNotNull("Result is null", result.getResult());
+        assertTrue("Output should contain 'JAVA_RESULT:42'",
+                   result.getResult().contains("JAVA_RESULT:42"));
+        assertNotNull("Request ID should not be null", result.getRequestId());
+
+        System.out.println("✅ Java code executed successfully!");
+        System.out.println("   Output: " + result.getResult());
+    }
+
+    /**
      * Test JavaScript code execution with array operations
      */
     @Test
     public void testJavaScriptArrayExecution() throws SessionException {
         System.out.println("\n📦 Testing JavaScript array operations...");
-        
+
         String jsCode = "const numbers = [1, 2, 3, 4, 5];\nconst sum = numbers.reduce((a, b) => a + b, 0);\nconsole.log(`Sum: ${sum}`);";
         EnhancedCodeExecutionResult result = session.getCode().runCode(jsCode, "javascript");
 
@@ -300,60 +342,31 @@ public class TestCodeExecution {
      */
     public static void main(String[] args) {
         System.out.println("=== Running Code Execution Tests ===\n");
-        
+
         TestCodeExecution test = new TestCodeExecution();
-        
+
         try {
-            // Test 1: Python execution
             test.setUp();
+
             test.testPythonCodeExecution();
-            test.tearDown();
-            
-            // Test 2: Python math
-            test.setUp();
             test.testPythonMathExecution();
-            test.tearDown();
-            
-            // Test 3: JavaScript execution
-            test.setUp();
             test.testJavaScriptCodeExecution();
-            test.tearDown();
-            
-            // Test 4: JavaScript simple
-            test.setUp();
             test.testJavaScriptSimpleExecution();
-            test.tearDown();
-            
-            // Test 5: Python loop
-            test.setUp();
             test.testPythonLoopExecution();
-            test.tearDown();
-            
-            // Test 6: Python multiline
-            test.setUp();
             test.testPythonMultilineExecution();
-            test.tearDown();
-            
-            // Test 7: JavaScript array
-            test.setUp();
+            test.testRCodeExecution();
+            test.testJavaCodeExecution();
             test.testJavaScriptArrayExecution();
-            test.tearDown();
-            
-            // Test 8: Invalid code
-            test.setUp();
             test.testInvalidPythonCode();
+            test.testSessionCodeInterface();
+
             test.tearDown();
-            
-            // Test 9: Session lifecycle
+
+            // Test session lifecycle separately with its own session
             test.setUp();
             test.testSessionLifecycle();
             test.tearDown();
-            
-            // Test 10: Session interface
-            test.setUp();
-            test.testSessionCodeInterface();
-            test.tearDown();
-            
+
             System.out.println("\n=== ✅ All Code Execution Tests Completed Successfully ===");
         } catch (Exception e) {
             System.err.println("\n=== ❌ Test Failed ===");

@@ -76,8 +76,8 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
 ### Code Execution
 
 - [Code](codespace/code.md) - `com.aliyun.agentbay.code.Code`
-  - Execute Python, JavaScript, and other languages
-  - Methods: `runCode(String code, String language)`
+  - Execute Python, JavaScript, R, Java, and other languages
+  - Methods: `runCode(String code, String language)`, `runCode(String code, String language, int timeout)`, `execute(String code, String language)`
 
 ### Storage and Network
 
