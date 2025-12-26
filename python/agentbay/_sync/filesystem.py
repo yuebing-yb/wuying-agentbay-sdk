@@ -692,8 +692,59 @@ class FileSystem(BaseService):
             file_transfer._ensure_context_id()
         return file_transfer._context_path
 
-    # Default chunk size is 50KB
+    # Default chunk size is 50KB (kept for backward compatibility, not used in write_file)
     DEFAULT_CHUNK_SIZE = 50 * 1024
+
+    # MQTT message size limit and optimal chunk size calculation
+    # Based on first-principles analysis:
+    # - MQTT limit: 63KB = 64512 bytes
+    # - Fixed overhead: ~104 bytes (JSON structure: {"path":"...","content":"...","mode":"..."})
+    # - Escape overhead: ~12% for typical JSON content (quotes, backslashes, newlines)
+    # - Path length: typically 50-100 bytes, max 200 bytes for safety
+    #
+    # Formula: JSON_size = fixed_overhead + content_bytes * (1 + escape_ratio)
+    # Conservative estimate: escape_ratio = 20% (covers most cases)
+    # Max content = (64512 - 200) / 1.20 = 53593 bytes
+    # We use 51KB (52224 bytes) for extra safety margin (~6-8KB)
+    MQTT_SIZE_LIMIT = 63 * 1024  # 63KB = 64512 bytes
+    MAX_CONTENT_BYTES = 51 * 1024  # 51KB = 52224 bytes
+
+    @staticmethod
+    def _split_string_by_bytes(text: str, max_bytes: int) -> str:
+        """
+        Split a UTF-8 string at a safe byte boundary without breaking multi-byte characters.
+
+        Args:
+            text: The string to split
+            max_bytes: Maximum number of bytes for the result
+
+        Returns:
+            A substring that fits within max_bytes when encoded as UTF-8
+        """
+        if not text:
+            return text
+
+        # If the entire text fits, return it
+        encoded = text.encode('utf-8')
+        if len(encoded) <= max_bytes:
+            return text
+
+        # Binary search to find the largest prefix that fits
+        left, right = 0, len(text)
+        result = ""
+
+        while left <= right:
+            mid = (left + right) // 2
+            candidate = text[:mid]
+            candidate_bytes = len(candidate.encode('utf-8'))
+
+            if candidate_bytes <= max_bytes:
+                result = candidate
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return result
 
     def _handle_error(self, e):
         """
@@ -1636,7 +1687,8 @@ class FileSystem(BaseService):
             ```
 
         Note:
-            - Automatically handles large files by writing in chunks (default 50KB per chunk)
+            - Automatically handles large files by writing in chunks
+            - Chunks are split by byte size to ensure MQTT compatibility (63KB limit)
             - Creates parent directories if they don't exist
             - In "overwrite" mode, replaces the entire file content
             - In "append" mode, adds content to the end of the file
@@ -1644,34 +1696,50 @@ class FileSystem(BaseService):
         See Also:
             FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
         """
-        # Use default chunk size
-        chunk_size = self.DEFAULT_CHUNK_SIZE
-        content_len = len(content)
+        # Use pre-calculated safe chunk size based on first-principles analysis
+        max_content_bytes = self.MAX_CONTENT_BYTES
+
+        content_bytes = len(content.encode('utf-8'))
         _log_operation_start(
             f"WriteLargeFile to {path}",
-            f"total size: {content_len} bytes, chunk size: {chunk_size} bytes",
+            f"total size: {content_bytes} bytes (UTF-8), max chunk: {max_content_bytes} bytes",
         )
 
-        # If the content length is less than the chunk size, write it directly
-        if content_len <= chunk_size:
+        # If the content fits in one chunk, write it directly
+        if content_bytes <= max_content_bytes:
             return self._write_file_chunk(path, content, mode)
 
         try:
-            # Write the first chunk (creates or overwrites the file)
-            first_chunk = content[:chunk_size]
-            result = self._write_file_chunk(path, first_chunk, mode)
-            if not result.success:
-                return result
+            # Split content into chunks by byte size
+            remaining_content = content
+            is_first_chunk = True
+            current_mode = mode
 
-            # Write the rest in chunks (appending)
-            offset = chunk_size
-            while offset < content_len:
-                end = min(offset + chunk_size, content_len)
-                current_chunk = content[offset:end]
-                result = self._write_file_chunk(path, current_chunk, "append")
+            while remaining_content:
+                # Get the next chunk that fits within byte limit
+                chunk = self._split_string_by_bytes(remaining_content, max_content_bytes)
+
+                if not chunk:
+                    # This should not happen, but handle edge case
+                    return BoolResult(
+                        request_id="",
+                        success=False,
+                        error_message="Failed to split content into valid chunks"
+                    )
+
+                # Write the chunk
+                result = self._write_file_chunk(path, chunk, current_mode)
                 if not result.success:
                     return result
-                offset = end
+
+                # Update for next iteration
+                chunk_len = len(chunk)
+                remaining_content = remaining_content[chunk_len:]
+
+                # After first chunk, switch to append mode
+                if is_first_chunk:
+                    is_first_chunk = False
+                    current_mode = "append"
 
             return BoolResult(request_id=result.request_id, success=True, data=True)
 
