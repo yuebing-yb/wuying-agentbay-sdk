@@ -13,7 +13,6 @@ log(`CI Environment: ${process.env.CI ? 'Yes' : 'No'}`);
 
 describe("File Transfer Integration", () => {
   let agentBay: AgentBay;
-  let context: { id: string; name: string };
   let sessionId: string;
   let tempDir: string;
   let testContent: string;
@@ -28,21 +27,9 @@ describe("File Transfer Integration", () => {
     log("Creating AgentBay instance...");
     agentBay = new AgentBay({ apiKey });
 
-    const contextName = `file-transfer-test-${Date.now()}`;
-    log(`Creating context: ${contextName}`);
-    const contextResult = await agentBay.context.get(contextName, true);
-    if (!contextResult.success || !contextResult.context) {
-      throw new Error("Failed to create context");
-    }
-
-    context = contextResult.context as any;
-    log(`Context created with ID: ${context.id}`);
-
-    // Create browser session with context for testing
+    // Create session; backend will manage file-transfer context automatically
     const params = new CreateSessionParams();
     params.imageId = "linux_latest"; // Use linux image for stable file transfer testing
-    // Add context sync for the test directory
-    params.contextSync = [new ContextSync(context.id, "/tmp/file_transfer_test/")];
 
     log("Creating session...");
     const sessionResult = await agentBay.create(params);
@@ -64,12 +51,12 @@ describe("File Transfer Integration", () => {
       log("Skipping cleanup due to missing API key or CI environment");
       return;
     }
-    
+
     // Clean up temporary files
     if (tempDir && fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
-    
+
     // Clean up session
     try {
       const listResult = await agentBay.list();
@@ -84,13 +71,6 @@ describe("File Transfer Integration", () => {
       log(`Warning: Error deleting session: ${error}`);
     }
 
-    // Clean up context
-    try {
-      await agentBay.context.delete(context as any);
-      log("Context successfully deleted");
-    } catch (error) {
-      log(`Warning: Error deleting context: ${error}`);
-    }
     log("afterAll completed");
   });
 
@@ -112,11 +92,11 @@ describe("File Transfer Integration", () => {
         // Create test content
     testContent = "This is a test file for AgentBay FileTransfer upload integration test.\n".repeat(10);
     remotePath = "/tmp/file_transfer_test/upload_test.txt";
-    
+
     const tempFilePath = path.join(tempDir, "upload_test.txt");
     fs.writeFileSync(tempFilePath, testContent);
     log(`Created test file at: ${tempFilePath}`);
-    
+
     // Upload the file
     log("Calling uploadFile...");
     const uploadResult = await session.fileSystem.uploadFile(
@@ -140,7 +120,7 @@ describe("File Transfer Integration", () => {
     const dirListResult = await session.fileSystem.listDirectory("/tmp/file_transfer_test/");
     expect(dirListResult.success).toBe(true);
     expect(dirListResult.entries).toBeDefined();
-    
+
     // Check if our uploaded file is in the directory listing
     const fileFound = dirListResult.entries.some((entry: any) => entry.name === 'upload_test.txt');
     expect(fileFound).toBe(true);
@@ -171,12 +151,12 @@ describe("File Transfer Integration", () => {
     // First, create a file in the remote location
     const remotePath = "/tmp/file_transfer_test/download_test.txt";
     const testContent = "This is a test file for AgentBay FileTransfer download integration test.\n".repeat(15);
-    
+
     log("Creating test directory...");
     const createDirResult = await session.fileSystem.createDirectory("/tmp/file_transfer_test/");
     log(`Create directory result: ${createDirResult.success}`);
     expect(createDirResult.success).toBe(true);
-    
+
     const writeResult = await session.fileSystem.writeFile(remotePath, testContent);
     expect(writeResult.success).toBe(true);
 
