@@ -262,11 +262,10 @@ export class FileTransfer {
       }
 
       // 3. Trigger sync to cloud disk (download mode), download from oss to cloud disk
-      const remoteDir = this.remoteDir(remotePath);
       let reqIdSync: string | undefined;
       try {
         logDebug("Triggering sync to cloud disk");
-        reqIdSync = await this.awaitSync("download", remoteDir, this.contextId);
+        reqIdSync = await this.awaitSync("download", remotePath, this.contextId);
       } catch (e: any) {
         return {
           success: false,
@@ -286,7 +285,7 @@ export class FileTransfer {
       if (wait) {
         const { success, error } = await this.waitForTask({
           contextId: this.contextId,
-          remotePath: remoteDir,
+          remotePath,
           taskType: "download",
           timeout: waitTimeout,
           interval: pollInterval
@@ -370,10 +369,9 @@ export class FileTransfer {
       }
 
       // 1. Trigger cloud disk to OSS download sync
-      const remoteDir = this.remoteDir(remotePath);
       let reqIdSync: string | undefined;
       try {
-        reqIdSync = await this.awaitSync("upload", remoteDir, this.contextId);
+        reqIdSync = await this.awaitSync("upload", remotePath, this.contextId);
       } catch (e: any) {
         return {
           success: false,
@@ -389,7 +387,7 @@ export class FileTransfer {
       if (wait) {
         const { success, error } = await this.waitForTask({
           contextId: this.contextId,
-          remotePath: remoteDir,
+          remotePath,
           taskType: "upload",
           timeout: waitTimeout,
           interval: pollInterval
@@ -494,21 +492,6 @@ export class FileTransfer {
   }
 
   // ========== Internal Utilities ==========
-
-  /**
-   * Ensure sync path is a directory: strip filename, keep directory inputs.
-   */
-  private remoteDir(remotePath: string): string {
-    if (!remotePath) return "";
-
-    if (remotePath.endsWith("/")) {
-      const trimmed = remotePath.replace(/\/+$/, "");
-      return trimmed || "/";
-    }
-
-    const dir = path.posix.dirname(remotePath);
-    return dir === "." ? "/" : dir;
-  }
 
   /**
    * Compatibility wrapper for session.context.sync which may be sync or async:

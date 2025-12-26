@@ -253,9 +253,9 @@ class AsyncFileTransfer:
         req_id_sync = None
         try:
             print("Triggering sync to cloud disk")
-            remote_dir = self._remote_dir(remote_path)
-            ctx_id = self._context_id or ""
-            req_id_sync = await self._await_sync("download", remote_dir, ctx_id)
+            req_id_sync = await self._await_sync(
+                "download", remote_path, self._context_id
+            )
         except Exception as e:
             return UploadResult(
                 success=False,
@@ -271,10 +271,9 @@ class AsyncFileTransfer:
         print(f"Sync request ID: {req_id_sync}")
         # 4. Optionally wait for task completion
         if wait:
-            remote_dir = remote_dir or self._remote_dir(remote_path)
             ok, err = await self._wait_for_task(
-                context_id=self._context_id or "",
-                remote_path=remote_dir or "",
+                context_id=self._context_id,
+                remote_path=remote_path,
                 task_type="download",
                 timeout=wait_timeout,
                 interval=poll_interval,
@@ -342,9 +341,9 @@ class AsyncFileTransfer:
         # 1. Trigger cloud disk to OSS download sync
         req_id_sync = None
         try:
-            remote_dir = self._remote_dir(remote_path)
-            ctx_id = self._context_id or ""
-            req_id_sync = await self._await_sync("upload", remote_dir, ctx_id)
+            req_id_sync = await self._await_sync(
+                "upload", remote_path, self._context_id
+            )
         except Exception as e:
             return DownloadResult(
                 success=False,
@@ -359,10 +358,9 @@ class AsyncFileTransfer:
 
         # Optionally wait for task completion (ensure object is ready in OSS)
         if wait:
-            remote_dir = remote_dir or self._remote_dir(remote_path)
             ok, err = await self._wait_for_task(
-                context_id=self._context_id or "",
-                remote_path=remote_dir or "",
+                context_id=self._context_id,
+                remote_path=remote_path,
                 task_type="upload",
                 timeout=wait_timeout,
                 interval=poll_interval,
@@ -472,7 +470,7 @@ class AsyncFileTransfer:
 
         sync_fn = getattr(self._session.context, "sync")
         print(
-            f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id or ''})"
+            f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})"
         )
         # Try as coroutine with mode, path, and context_id parameters
         try:
@@ -522,20 +520,6 @@ class AsyncFileTransfer:
         success = getattr(out, "success", False)
         print(f"   Result: {success}")
         return getattr(out, "request_id", None)
-
-    def _remote_dir(self, remote_path: str) -> Optional[str]:
-        """
-        Ensure sync path is a directory: strip trailing filename, preserve directory inputs.
-        """
-        if not remote_path:
-            return None
-
-        if remote_path.endswith("/"):
-            trimmed = remote_path.rstrip("/")
-            return trimmed or "/"
-
-        directory = os.path.dirname(remote_path)
-        return directory or "/"
 
     async def _wait_for_task(
         self,

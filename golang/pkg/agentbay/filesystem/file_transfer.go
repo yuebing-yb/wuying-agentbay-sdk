@@ -432,8 +432,7 @@ func (ft *FileTransfer) Upload(localPath, remotePath string, opts *FileTransferO
 	// 3. Trigger sync to cloud disk (download mode), download from OSS to cloud disk
 	var reqIDSync string
 	fmt.Println("Triggering sync to cloud disk")
-	remoteDir := ft.remoteDir(remotePath)
-	syncResult, err := ft.awaitSync("download", remoteDir, ft.contextID)
+	syncResult, err := ft.awaitSync("download", remotePath, ft.contextID)
 	if err != nil {
 		return &UploadResult{
 			Success:            false,
@@ -454,7 +453,7 @@ func (ft *FileTransfer) Upload(localPath, remotePath string, opts *FileTransferO
 
 	// 4. Optionally wait for task completion
 	if opts.Wait {
-		ok, errMsg := ft.waitForTask(ft.contextID, remoteDir, "download", opts.WaitTimeout, opts.PollInterval)
+		ok, errMsg := ft.waitForTask(ft.contextID, remotePath, "download", opts.WaitTimeout, opts.PollInterval)
 		if !ok {
 			return &UploadResult{
 				Success:            false,
@@ -526,8 +525,7 @@ func (ft *FileTransfer) Download(remotePath, localPath string, opts *FileTransfe
 
 	// 1. Trigger cloud disk to OSS sync (upload mode)
 	var reqIDSync string
-	remoteDir := ft.remoteDir(remotePath)
-	syncResult, err := ft.awaitSync("upload", remoteDir, ft.contextID)
+	syncResult, err := ft.awaitSync("upload", remotePath, ft.contextID)
 	if err != nil {
 		return &DownloadResult{
 			Success:       false,
@@ -543,7 +541,7 @@ func (ft *FileTransfer) Download(remotePath, localPath string, opts *FileTransfe
 
 	// Wait for task completion (ensure object is ready in OSS)
 	if opts.Wait {
-		ok, errMsg := ft.waitForTask(ft.contextID, remoteDir, "upload", opts.WaitTimeout, opts.PollInterval)
+		ok, errMsg := ft.waitForTask(ft.contextID, remotePath, "upload", opts.WaitTimeout, opts.PollInterval)
 		if !ok {
 			return &DownloadResult{
 				Success:       false,
@@ -644,27 +642,6 @@ func (ft *FileTransfer) Download(remotePath, localPath string, opts *FileTransfe
 		Path:                 remotePath,
 		LocalPath:            localPath,
 	}
-}
-
-// remoteDir ensures the sync path is a directory (strip filename, keep trailing directory).
-func (ft *FileTransfer) remoteDir(remotePath string) string {
-	if remotePath == "" {
-		return ""
-	}
-
-	if strings.HasSuffix(remotePath, "/") {
-		trimmed := strings.TrimRight(remotePath, "/")
-		if trimmed == "" {
-			return "/"
-		}
-		return trimmed
-	}
-
-	dir := filepath.Dir(remotePath)
-	if dir == "." || dir == "" {
-		return "/"
-	}
-	return dir
 }
 
 // awaitSync triggers context synchronization
