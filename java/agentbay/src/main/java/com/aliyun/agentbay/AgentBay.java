@@ -458,6 +458,11 @@ public class AgentBay {
                 framework
             );
             request.setSdkStats(sdkStatsJson);
+
+            // Add LoginRegionId if region_id is set
+            if (this.regionId != null && !this.regionId.isEmpty()) {
+                request.setLoginRegionId(this.regionId);
+            }
             CreateMcpSessionResponse response = client.createMcpSession(request);
 
             if (response == null || response.getBody() == null) {
@@ -470,29 +475,49 @@ public class AgentBay {
             }
 
             SessionResult result = new SessionResult();
+            String requestId = ResponseUtil.extractRequestId(response);
+            result.setRequestId(requestId);
+
+            // Check for API-level errors (body.Success and body.Code)
+            if (response.getBody().getSuccess() != null && !response.getBody().getSuccess()) {
+                String code = response.getBody().getCode() != null ? response.getBody().getCode() : "Unknown";
+                String message = response.getBody().getMessage() != null ? response.getBody().getMessage() : "Unknown error";
+                result.setSuccess(false);
+                result.setErrorMessage(String.format("[%s] %s", code, message));
+                return result;
+            }
+
+            // Check if data exists
+            if (response.getBody().getData() == null) {
+                result.setSuccess(false);
+                result.setErrorMessage("Invalid response format: 'Data' field is missing");
+                return result;
+            }
+
+            // Check for data-level errors (data.Success and data.ErrMsg)
+            if (response.getBody().getData().getSuccess() != null && !response.getBody().getData().getSuccess()) {
+                String errorMsg = response.getBody().getData().getErrMsg() != null ?
+                    response.getBody().getData().getErrMsg() : "Session creation failed";
+                result.setSuccess(false);
+                result.setErrorMessage(errorMsg);
+                return result;
+            }
 
             // Extract session ID from response data
             String sessionId = null;
-            if (response.getBody().getData() != null) {
-                // The getData() returns the session data object, we need to extract SessionId
-                try {
-                    sessionId = response.getBody().getData().getSessionId();
-                } catch (Exception e) {
-                    sessionId = response.getBody().getData().toString();
-                }
+            try {
+                sessionId = response.getBody().getData().getSessionId();
+            } catch (Exception e) {
             }
 
             if (sessionId == null || sessionId.isEmpty()) {
-                String requestId = ResponseUtil.extractRequestId(response);
                 result.setSuccess(false);
                 result.setErrorMessage("SessionId not found in response");
-                result.setRequestId(requestId);
                 return result;
             }
 
             result.setSessionId(sessionId);
             result.setStatus("created");
-            result.setRequestId(ResponseUtil.extractRequestId(response));
             result.setBrowserType(params.getBrowserType());
             result.setSuccess(true);
 
@@ -693,6 +718,182 @@ public class AgentBay {
      */
     public Network getNetwork() {
         return network;
+    }
+
+    /**
+     * Returns paginated list of sessions filtered by labels.
+     *
+     * @param labels Labels to filter sessions (optional)
+     * @param page Page number for pagination starting from 1 (optional)
+     * @param limit Maximum number of items per page (default: 10)
+     * @param status Status to filter sessions: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED (optional)
+     * @return SessionListResult containing paginated list of session information
+     */
+    public com.aliyun.agentbay.model.SessionListResult list(
+            java.util.Map<String, String> labels,
+            Integer page,
+            Integer limit,
+            String status) {
+        try {
+            // Set default values
+            if (limit == null) {
+                limit = 10;
+            }
+
+            // Validate status parameter
+            if (status != null && !com.aliyun.agentbay.enums.SessionStatus.isValid(status)) {
+                return new com.aliyun.agentbay.model.SessionListResult(
+                    "",
+                    false,
+                    "Invalid status '" + status + "'. Must be one of: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED",
+                    new ArrayList<>(),
+                    "",
+                    limit,
+                    0
+                );
+            }
+
+            // Validate page number
+            if (page != null && page < 1) {
+                return new com.aliyun.agentbay.model.SessionListResult(
+                    "",
+                    false,
+                    "Cannot reach page " + page + ": Page number must be >= 1",
+                    new ArrayList<>(),
+                    "",
+                    limit,
+                    0
+                );
+            }
+
+            // Calculate next_token based on page number
+            String nextToken = "";
+            if (page != null && page > 1) {
+                // We need to fetch pages 1 through page-1 to get the next_token
+                int currentPage = 1;
+                while (currentPage < page) {
+                    // Make API call to get next_token
+                    String labelsJson = labels != null ? objectMapper.writeValueAsString(labels) : "{}";
+                    com.aliyun.wuyingai20250506.models.ListSessionRequest request =
+                        new com.aliyun.wuyingai20250506.models.ListSessionRequest();
+                    request.setAuthorization("Bearer " + apiKey);
+                    request.setLabels(labelsJson);
+                    request.setMaxResults(limit);
+                    if (nextToken != null && !nextToken.isEmpty()) {
+                        request.setNextToken(nextToken);
+                    }
+
+                    com.aliyun.wuyingai20250506.models.ListSessionResponse response = client.listSession(request);
+                    String requestId = ResponseUtil.extractRequestId(response);
+                    com.aliyun.wuyingai20250506.models.ListSessionResponseBody body = response.getBody();
+
+                    if (body == null || !body.getSuccess()) {
+                        String errorMessage = body != null ? body.getMessage() : "Unknown error";
+                        return new com.aliyun.agentbay.model.SessionListResult(
+                            requestId,
+                            false,
+                            "Cannot reach page " + page + ": " + errorMessage,
+                            new ArrayList<>(),
+                            "",
+                            limit,
+                            0
+                        );
+                    }
+
+                    nextToken = body.getNextToken();
+                    if (nextToken == null || nextToken.isEmpty()) {
+                        // No more pages available
+                        return new com.aliyun.agentbay.model.SessionListResult(
+                            requestId,
+                            false,
+                            "Cannot reach page " + page + ": No more pages available",
+                            new ArrayList<>(),
+                            "",
+                            limit,
+                            body.getTotalCount() != null ? body.getTotalCount() : 0
+                        );
+                    }
+                    currentPage++;
+                }
+            }
+
+            // Make the actual request for the desired page
+            String labelsJson = labels != null ? objectMapper.writeValueAsString(labels) : "{}";
+            com.aliyun.wuyingai20250506.models.ListSessionRequest request =
+                new com.aliyun.wuyingai20250506.models.ListSessionRequest();
+            request.setAuthorization("Bearer " + apiKey);
+            request.setLabels(labelsJson);
+            request.setMaxResults(limit);
+            if (nextToken != null && !nextToken.isEmpty()) {
+                request.setNextToken(nextToken);
+            }
+
+            com.aliyun.wuyingai20250506.models.ListSessionResponse response = client.listSession(request);
+
+            // Extract request ID
+            String requestId = ResponseUtil.extractRequestId(response);
+            com.aliyun.wuyingai20250506.models.ListSessionResponseBody body = response.getBody();
+
+            // Check for errors in the response
+            if (body == null || !body.getSuccess()) {
+                String errorMessage = body != null ? body.getMessage() : "Unknown error";
+                return new com.aliyun.agentbay.model.SessionListResult(
+                    requestId,
+                    false,
+                    "Failed to list sessions: " + errorMessage,
+                    new ArrayList<>(),
+                    "",
+                    limit,
+                    0
+                );
+            }
+
+            // Extract session data
+            List<com.aliyun.agentbay.model.SessionListResult.SessionInfo> sessionInfos = new ArrayList<>();
+            if (body.getData() != null) {
+                for (com.aliyun.wuyingai20250506.models.ListSessionResponseBody.ListSessionResponseBodyData sessionData : body.getData()) {
+                    String sessionId = sessionData.getSessionId();
+                    String sessionStatus = sessionData.getSessionStatus();
+                    if (sessionId != null) {
+                        sessionInfos.add(new com.aliyun.agentbay.model.SessionListResult.SessionInfo(
+                            sessionId,
+                            sessionStatus != null ? sessionStatus : "UNKNOWN"
+                        ));
+                    }
+                }
+            }
+
+            // Return SessionListResult with request ID and pagination info
+            return new com.aliyun.agentbay.model.SessionListResult(
+                requestId,
+                true,
+                "",
+                sessionInfos,
+                body.getNextToken() != null ? body.getNextToken() : "",
+                body.getMaxResults() != null ? body.getMaxResults() : limit,
+                body.getTotalCount() != null ? body.getTotalCount() : 0
+            );
+
+        } catch (Exception e) {
+            return new com.aliyun.agentbay.model.SessionListResult(
+                "",
+                false,
+                "Failed to list sessions: " + e.getMessage(),
+                new ArrayList<>(),
+                "",
+                limit != null ? limit : 10,
+                0
+            );
+        }
+    }
+
+    /**
+     * Returns paginated list of sessions with default parameters.
+     *
+     * @return SessionListResult containing paginated list of session information
+     */
+    public com.aliyun.agentbay.model.SessionListResult list() {
+        return list(null, null, null, null);
     }
 
     /**

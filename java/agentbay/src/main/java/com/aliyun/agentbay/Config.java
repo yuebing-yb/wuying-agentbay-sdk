@@ -29,7 +29,7 @@ public class Config {
 
     private String loadRegionId() {
         String envValue = System.getenv("AGENTBAY_REGION_ID");
-        return (envValue != null && !envValue.trim().isEmpty()) ? envValue : "cn-shanghai";
+        return (envValue != null && !envValue.trim().isEmpty()) ? envValue : null;
     }
 
     private String loadEndpoint() {
