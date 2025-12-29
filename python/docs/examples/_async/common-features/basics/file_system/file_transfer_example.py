@@ -171,17 +171,6 @@ async def file_transfer_with_progress_example():
     agentbay = AsyncAgentBay(api_key=api_key)
     print("✅ AgentBay client initialized")
 
-    # Create a context for file operations
-    context_name = f"file-transfer-progress-example-{int(time.time())}"
-    context_result = await agentbay.context.get(context_name, create=True)
-    if not context_result.success or not context_result.context:
-        error_msg = getattr(context_result, 'error_message', 'Unknown error')
-        print(f"❌ Failed to create context: {error_msg}")
-        return False
-
-    context = context_result.context
-    print(f"✅ Context created: {context.id}")
-
 
     session_params = CreateSessionParams(
         image_id="browser_latest",  # Use browser image for more comprehensive testing
