@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, MagicMock
 
 import pytest
 
@@ -31,16 +31,16 @@ class DummyAgentBay:
 
 class TestSessionGetStatus(unittest.TestCase):
     @pytest.mark.sync
-    def test_get_status_calls_sync_client_method(self):
+    def test_get_status_calls_async_client_method(self):
         """
-        Regression test: generated _sync/session.py must call client.get_session_detail (sync),
-        NOT client.get_session_detail_async (async).
+        Regression test: generated _async/session.py must call client.get_session_detail_async (async),
+        and the mocked method must be awaitable.
         """
         client = MagicMock()
         client.get_session_detail = MagicMock(return_value=DummyResponse())
 
-        # Deliberately do NOT provide get_session_detail_async on the client.
-        # If generated sync code calls it, this test will fail.
+        # Deliberately do NOT provide get_session_detail (sync) on the client.
+        # If generated async code calls it, this test will fail.
 
         agent_bay = DummyAgentBay(client)
         session = Session(agent_bay, "test_session_id")

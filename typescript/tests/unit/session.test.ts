@@ -137,13 +137,16 @@ describe("TestSession", () => {
 
             mockClient.deleteSessionAsync.resolves(mockResponse as any);
 
-            // Mock _getSession to return NotFound error (indicating session is deleted)
-            mockAgentBay._getSession.resolves({
-                requestId: "get-session-request-id",
-                success: false,
-                code: "InvalidMcpSession.NotFound",
-                errorMessage: "Session not found",
-                httpStatusCode: 400,
+            // Mock GetSessionDetail to return NotFound (indicating session is deleted)
+            mockClient.getSessionDetail.resolves({
+                statusCode: 400,
+                body: {
+                    requestId: "get-session-detail-request-id",
+                    code: "InvalidMcpSession.NotFound",
+                    message: "Session not found",
+                    success: false,
+                    httpStatusCode: 400,
+                },
             } as any);
 
             const result = await mockSession.delete();
@@ -179,13 +182,15 @@ describe("TestSession", () => {
 
             mockClient.deleteSessionAsync.resolves(mockResponse as any);
 
-            // Mock _getSession to return NotFound error (indicating session is deleted)
-            mockAgentBay._getSession.resolves({
-                requestId: "get-session-request-id",
-                success: false,
-                code: "InvalidMcpSession.NotFound",
-                errorMessage: "Session not found",
-                httpStatusCode: 400,
+            mockClient.getSessionDetail.resolves({
+                statusCode: 400,
+                body: {
+                    requestId: "get-session-detail-request-id",
+                    code: "InvalidMcpSession.NotFound",
+                    message: "Session not found",
+                    success: false,
+                    httpStatusCode: 400,
+                },
             } as any);
 
             // Call delete without parameters
@@ -232,13 +237,15 @@ describe("TestSession", () => {
 
             mockClient.deleteSessionAsync.resolves(mockResponse as any);
 
-            // Mock _getSession to return NotFound error (indicating session is deleted)
-            mockAgentBay._getSession.resolves({
-                requestId: "get-session-request-id",
-                success: false,
-                code: "InvalidMcpSession.NotFound",
-                errorMessage: "Session not found",
-                httpStatusCode: 400,
+            mockClient.getSessionDetail.resolves({
+                statusCode: 400,
+                body: {
+                    requestId: "get-session-detail-request-id",
+                    code: "InvalidMcpSession.NotFound",
+                    message: "Session not found",
+                    success: false,
+                    httpStatusCode: 400,
+                },
             } as any);
 
             // Call delete with syncContext=true

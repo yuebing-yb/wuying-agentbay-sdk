@@ -1,9 +1,9 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from agentbay import Session
+from agentbay import AsyncSession
 
 
 class DummyResponse:
@@ -30,24 +30,24 @@ class DummyAgentBay:
 
 
 class TestSessionGetStatus(unittest.TestCase):
-    @pytest.mark.sync
-    def test_get_status_calls_sync_client_method(self):
+    @pytest.mark.asyncio
+    async def test_get_status_calls_async_client_method(self):
         """
-        Regression test: generated _sync/session.py must call client.get_session_detail (sync),
-        NOT client.get_session_detail_async (async).
+        Regression test: generated _async/session.py must call client.get_session_detail_async (async),
+        and the mocked method must be awaitable.
         """
         client = MagicMock()
-        client.get_session_detail = MagicMock(return_value=DummyResponse())
+        client.get_session_detail_async = AsyncMock(return_value=DummyResponse())
 
-        # Deliberately do NOT provide get_session_detail_async on the client.
-        # If generated sync code calls it, this test will fail.
+        # Deliberately do NOT provide get_session_detail (sync) on the client.
+        # If generated async code calls it, this test will fail.
 
         agent_bay = DummyAgentBay(client)
-        session = Session(agent_bay, "test_session_id")
+        session = AsyncSession(agent_bay, "test_session_id")
 
-        result = session.get_status()
+        result = await session.get_status()
 
-        client.get_session_detail.assert_called_once()
+        client.get_session_detail_async.assert_called_once()
         self.assertTrue(result.success)
         self.assertEqual(result.status, "RUNNING")
 

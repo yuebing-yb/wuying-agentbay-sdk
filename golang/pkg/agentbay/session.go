@@ -499,11 +499,11 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		}
 
 		// Get session status
-		sessionResult, err := s.AgentBay.getSession(s.SessionID)
+		statusResult, err := s.GetStatus()
 
 		// Check if session is deleted (NotFound error)
 		if err != nil {
-			// If GetSession returns an error, it might be NotFound
+			// If GetSessionDetail returns an error, it might be NotFound
 			errorStr := err.Error()
 			if strings.Contains(errorStr, "InvalidMcpSession.NotFound") || strings.Contains(errorStr, "NotFound") {
 				// Session is deleted
@@ -514,10 +514,10 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 				LogDebug(fmt.Sprintf("Get session error (will retry): %v", err))
 				// Continue to next poll iteration
 			}
-		} else if !sessionResult.Success {
-			errorCode := sessionResult.Code
-			errorMessage := sessionResult.ErrorMessage
-			httpStatusCode := sessionResult.HttpStatusCode
+		} else if statusResult != nil && !statusResult.Success {
+			errorCode := statusResult.Code
+			errorMessage := statusResult.ErrorMessage
+			httpStatusCode := statusResult.HttpStatusCode
 
 			// Check for InvalidMcpSession.NotFound, 400 with "not found", or error_message containing "not found"
 			isNotFound := errorCode == "InvalidMcpSession.NotFound" ||
@@ -535,9 +535,9 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 				LogDebug(fmt.Sprintf("Get session error (will retry): %s", errorMessage))
 				// Continue to next poll iteration
 			}
-		} else if sessionResult.Data != nil && sessionResult.Data.Status != "" {
+		} else if statusResult != nil && statusResult.Status != "" {
 			// Check session status if we got valid data
-			status := sessionResult.Data.Status
+			status := statusResult.Status
 			LogDebug(fmt.Sprintf("Session status: %s", status))
 			if status == "FINISH" {
 				LogInfo(fmt.Sprintf("Session %s successfully deleted", s.SessionID))

@@ -49,6 +49,7 @@ describe("AgentBay", () => {
     let listSessionStub: sinon.SinonStub;
     let deleteSessionAsyncStub: sinon.SinonStub;
     let getSessionStub: sinon.SinonStub;
+    let getSessionDetailStub: sinon.SinonStub;
     let clientConstructorStub: sinon.SinonStub;
     let contextServiceConstructorStub: sinon.SinonStub;
 
@@ -59,6 +60,7 @@ describe("AgentBay", () => {
             listSession: sinon.stub(),
             deleteSessionAsync: sinon.stub(),
             getSession: sinon.stub(),
+            getSessionDetail: sinon.stub(),
             getContextInfo: sinon.stub(),
         };
 
@@ -67,6 +69,7 @@ describe("AgentBay", () => {
         listSessionStub = mockClient.listSession;
         deleteSessionAsyncStub = mockClient.deleteSessionAsync;
         getSessionStub = mockClient.getSession;
+        getSessionDetailStub = mockClient.getSessionDetail;
 
         // Mock getContextInfo to return successful response with empty context status list
         mockClient.getContextInfo.resolves({
@@ -203,12 +206,11 @@ describe("AgentBay", () => {
             createMcpSessionStub.resolves(createMockResponse);
             deleteSessionAsyncStub.resolves(deleteMockResponse);
 
-            // Mock getSession to return NotFound error (indicating session is deleted)
-            // This is called during the polling phase of delete()
-            getSessionStub.resolves({
+            // Mock GetSessionDetail to return NotFound error (indicating session is deleted)
+            getSessionDetailStub.resolves({
                 statusCode: 400,
                 body: {
-                    requestId: "get-session-request-id",
+                    requestId: "get-session-detail-request-id",
                     code: "InvalidMcpSession.NotFound",
                     message: "Session not found",
                     success: false,

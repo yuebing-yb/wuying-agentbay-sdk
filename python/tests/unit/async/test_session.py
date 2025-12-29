@@ -133,16 +133,15 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
             "body": {"Success": True, "RequestId": "request-123"}
         }
 
-        # Mock _get_session to return NotFound (session deleted)
-        get_session_result = GetSessionResult(
-            request_id="get-session-request-id",
-            success=False,
-            code="InvalidMcpSession.NotFound",
-            error_message="Session not found",
-            http_status_code=400,
+        self.session.get_status = AsyncMock(
+            return_value=MagicMock(
+                success=False,
+                code="",
+                http_status_code=0,
+                status="",
+                error_message="Session test_session_id not found",
+            )
         )
-        # Ensure session.agent_bay is the same as self.agent_bay
-        self.session.agent_bay._get_session = AsyncMock(return_value=get_session_result)
 
         result = await self.session.delete()
         self.assertIsInstance(result, DeleteResult)
@@ -177,16 +176,15 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
             "body": {"Success": True, "RequestId": "request-123"}
         }
 
-        # Mock _get_session to return NotFound (session deleted)
-        get_session_result = GetSessionResult(
-            request_id="get-session-request-id",
-            success=False,
-            code="InvalidMcpSession.NotFound",
-            error_message="Session not found",
-            http_status_code=400,
+        self.session.get_status = AsyncMock(
+            return_value=MagicMock(
+                success=False,
+                code="",
+                http_status_code=0,
+                status="",
+                error_message="Session test_session_id not found",
+            )
         )
-        # Ensure session.agent_bay is the same as self.agent_bay
-        self.session.agent_bay._get_session = AsyncMock(return_value=get_session_result)
 
         # Set up context mock object
         self.session.context = MagicMock()
@@ -228,16 +226,15 @@ class TestAsyncSession(unittest.IsolatedAsyncioTestCase):
             "body": {"Success": True, "RequestId": "request-123"}
         }
 
-        # Mock _get_session to return NotFound (session deleted)
-        get_session_result = GetSessionResult(
-            request_id="get-session-request-id",
-            success=False,
-            code="InvalidMcpSession.NotFound",
-            error_message="Session not found",
-            http_status_code=400,
+        self.session.get_status = AsyncMock(
+            return_value=MagicMock(
+                success=False,
+                code="",
+                http_status_code=0,
+                status="",
+                error_message="Session test_session_id not found",
+            )
         )
-        # Ensure session.agent_bay is the same as self.agent_bay
-        self.session.agent_bay._get_session = AsyncMock(return_value=get_session_result)
 
         # Set up context mock object
         self.session.context = MagicMock()

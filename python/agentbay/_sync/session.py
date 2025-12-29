@@ -400,13 +400,13 @@ class Session:
                     )
 
                 # Get session status
-                session_result = self.agent_bay._get_session(self.session_id)
+                session_result = self.get_status()
 
                 # Check if session is deleted (NotFound error)
                 if not session_result.success:
-                    error_code = session_result.code or ""
+                    error_code = getattr(session_result, "code", "") or ""
                     error_message = session_result.error_message or ""
-                    http_status_code = session_result.http_status_code or 0
+                    http_status_code = getattr(session_result, "http_status_code", 0) or 0
 
                     # Check for InvalidMcpSession.NotFound, 400 with "not found", or error_message containing "not found"
                     is_not_found = (
@@ -429,8 +429,8 @@ class Session:
                         # Continue to next poll iteration
 
                 # Check session status if we got valid data
-                elif session_result.data and session_result.data.status:
-                    status = session_result.data.status
+                elif session_result.status:
+                    status = session_result.status
                     _logger.debug(f"📊 Session status: {status}")
                     if status == "FINISH":
                         _logger.info(f"✅ Session {self.session_id} successfully deleted")

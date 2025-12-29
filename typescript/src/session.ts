@@ -560,7 +560,7 @@ export class Session {
         }
 
         // Get session status
-        const sessionResult = await this.agentBay._getSession(this.sessionId);
+        const sessionResult = await this.getStatus();
 
         // Check if session is deleted (NotFound error)
         if (!sessionResult.success) {
@@ -588,8 +588,8 @@ export class Session {
           }
         }
         // Check session status if we got valid data
-        else if (sessionResult.data && sessionResult.data.status) {
-          const status = sessionResult.data.status;
+        else if (sessionResult.status) {
+          const status = sessionResult.status;
           logDebug(`📊 Session status: ${status}`);
           if (status === "FINISH") {
             logInfo(`✅ Session ${this.sessionId} successfully deleted`);
