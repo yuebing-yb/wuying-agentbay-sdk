@@ -210,7 +210,7 @@ class Agent(BaseService):
                             )
                         elif query.task_status == "failed":
                             return ExecutionResult(
-                                request_id=result.request_id,
+                                request_id=query.request_id,
                                 success=False,
                                 error_message="Failed to execute task.",
                                 task_id=task_id,
@@ -218,7 +218,7 @@ class Agent(BaseService):
                             )
                         elif query.task_status == "unsupported":
                             return ExecutionResult(
-                                request_id=result.request_id,
+                                request_id=query.request_id,
                                 success=False,
                                 error_message="Unsupported task.",
                                 task_id=task_id,
@@ -713,7 +713,7 @@ class Agent(BaseService):
                 elif query.task_status == "failed":
                     error_msg = query.error or "Failed to execute task."
                     return ExecutionResult(
-                        request_id=last_request_id,
+                        request_id=query.request_id,
                         success=False,
                         error_message=error_msg,
                         task_id=task_id,
@@ -722,7 +722,7 @@ class Agent(BaseService):
                 elif query.task_status == "cancelled":
                     error_msg = query.error or "Task was cancelled."
                     return ExecutionResult(
-                        request_id=last_request_id,
+                        request_id=query.request_id,
                         success=False,
                         error_message=error_msg,
                         task_id=task_id,
@@ -731,7 +731,7 @@ class Agent(BaseService):
                 elif query.task_status == "unsupported":
                     error_msg = query.error or "Unsupported task."
                     return ExecutionResult(
-                        request_id=last_request_id,
+                        request_id=query.request_id,
                         success=False,
                         error_message=error_msg,
                         task_id=task_id,
