@@ -59,4 +59,20 @@ public class Command extends BaseService {
         }
     }
 
+    public CommandResult run(String command, int timeoutMs) {
+        return executeCommand(command, timeoutMs);
+    }
+
+    public CommandResult run(String command, int timeoutMs, String cwd, Map<String, String> envs) {
+        return executeCommand(command, timeoutMs, cwd, envs);
+    }
+
+    public CommandResult exec(String command, int timeoutMs) {
+        return executeCommand(command, timeoutMs);
+    }
+
+    public CommandResult exec(String command, int timeoutMs, String cwd, Map<String, String> envs) {
+        return executeCommand(command, timeoutMs, cwd, envs);
+    }
+
 }

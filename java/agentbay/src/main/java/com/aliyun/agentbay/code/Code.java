@@ -350,4 +350,12 @@ public class Code extends BaseService {
     public EnhancedCodeExecutionResult runCode(String code, String language) {
         return runCode(code, language, 60);
     }
+
+    public EnhancedCodeExecutionResult run(String code, String language, int timeoutS) {
+        return runCode(code, language, timeoutS);
+    }
+
+    public EnhancedCodeExecutionResult run(String code, String language) {
+        return runCode(code, language, 60);
+    }
 }

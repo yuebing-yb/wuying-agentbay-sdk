@@ -119,6 +119,18 @@ public class Session {
         return fileSystem;
     }
 
+    public FileSystem fs() {
+        return fileSystem;
+    }
+
+    public FileSystem getFilesystem() {
+        return fileSystem;
+    }
+
+    public FileSystem getFiles() {
+        return fileSystem;
+    }
+
     /**
      * Call an MCP tool
      *

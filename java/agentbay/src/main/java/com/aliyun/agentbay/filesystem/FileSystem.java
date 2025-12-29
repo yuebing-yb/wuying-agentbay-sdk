@@ -814,4 +814,16 @@ public class FileSystem extends BaseService {
     public DownloadResult downloadFileBytes(String remotePath) {
         return downloadFileBytes(remotePath, true, 30.0f, 1.5f, null);
     }
+
+    public DeleteResult delete(String path) {
+        return deleteFile(path);
+    }
+
+    public DeleteResult rm(String path) {
+        return deleteFile(path);
+    }
+
+    public com.aliyun.agentbay.model.DirectoryListResult ls(String path) {
+        return listDirectory(path);
+    }
 }
