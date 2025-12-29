@@ -172,7 +172,7 @@ public class AliasIntegrationTest {
         assertTrue("Alias read should succeed", readAlias.isSuccess());
         assertEquals("Content should match", testContent, readAlias.getContent());
 
-        DeleteResult deleteAlias = session.fs().rm(testFile);
+        BoolResult deleteAlias = session.fs().rm(testFile);
         assertTrue("Alias delete should succeed", deleteAlias.isSuccess());
 
         CommandResult cmdOriginal = session.getCommand().executeCommand("echo 'original'", 5000);

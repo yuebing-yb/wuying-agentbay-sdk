@@ -135,13 +135,15 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Remove a file or directory
+     * Remove a file or directory using shell command
      *
      * @param path Path to remove
      * @return Removal result
      * @throws AgentBayException if removal fails
+     * @deprecated Use {@link #deleteFile(String)} instead. This method uses shell command which may not work in all environments.
      */
-    public String remove(String path) throws AgentBayException {
+    @Deprecated
+    public String removeLegacy(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
         args.put("command", "rm -rf \"" + path + "\"");
         OperationResult result = callMcpTool("shell", args);
@@ -387,14 +389,35 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Delete a file or directory using DeleteResult
+     * Delete a file at the specified path.
+     *
+     * @param path The path of the file to delete
+     * @return BoolResult containing success status and error message if any
+     *
+     * Example:
+     * <pre>
+     * AgentBay agentBay = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
+     * SessionResult result = agentBay.create(new CreateSessionParams());
+     * Session session = result.getSession();
+     * session.getFileSystem().writeFile("/tmp/to_delete.txt", "hello");
+     * BoolResult deleteResult = session.getFileSystem().deleteFile("/tmp/to_delete.txt");
+     * session.delete();
+     * </pre>
      */
-    public DeleteResult deleteFile(String path) {
+    public BoolResult  deleteFile(String path) {
+        Map<String, Object> args = new HashMap<>();
+        args.put("path", path);
+
         try {
-            remove(path);
-            return new DeleteResult("", true, "");
-        } catch (AgentBayException e) {
-            return new DeleteResult("", false, e.getMessage());
+            OperationResult result = callMcpTool("delete_file", args);
+            if (result.isSuccess()) {
+                return new BoolResult(result.getRequestId(), true, true, "");
+            } else {
+                return new BoolResult(result.getRequestId(), false, false, result.getErrorMessage());
+            }
+
+        } catch (Exception e) {
+            return new BoolResult("", false, false, "Failed to delete file: " + e.getMessage());
         }
     }
 
@@ -815,11 +838,15 @@ public class FileSystem extends BaseService {
         return downloadFileBytes(remotePath, true, 30.0f, 1.5f, null);
     }
 
-    public DeleteResult delete(String path) {
+    public BoolResult delete(String path) {
         return deleteFile(path);
     }
 
-    public DeleteResult rm(String path) {
+    public BoolResult remove(String path) {
+        return deleteFile(path);
+    }
+
+    public BoolResult rm(String path) {
         return deleteFile(path);
     }
 

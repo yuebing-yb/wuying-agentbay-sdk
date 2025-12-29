@@ -68,9 +68,10 @@ session.getCommand().run("echo hello", 5000)  // Alias of executeCommand()
 session.getCommand().exec("pwd", 5000)        // Another alias
 
 // FileSystem aliases - Unix-like naming
-session.fs().ls("/tmp")           // Alias of listDirectory()
-session.fs().rm("/tmp/file.txt")  // Alias of deleteFile()
-session.fs().delete("/tmp/file")  // Another alias
+session.fs().ls("/tmp")              // Alias of listDirectory()
+session.fs().rm("/tmp/file.txt")     // Alias of deleteFile()
+session.fs().delete("/tmp/file")     // Another alias
+session.fs().remove("/tmp/old.txt")  // Another alias
 
 // Code execution aliases - concise and clear
 session.getCode().run(code, "python")        // Alias of runCode()

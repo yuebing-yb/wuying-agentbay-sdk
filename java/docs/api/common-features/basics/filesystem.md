@@ -331,21 +331,30 @@ BoolResult result = session.getFileSystem().moveFile("/tmp/old.txt", "/tmp/new.t
 ### deleteFile
 
 ```java
-public DeleteResult deleteFile(String path)
+public BoolResult deleteFile(String path)
 ```
 
-Delete a file or directory.
+Delete a file at the specified path.
 
 **Parameters:**
-- `path` (String): Path to delete
+- `path` (String): The path of the file to delete
 
 **Returns:**
-- `DeleteResult`: Result containing success status
+- `BoolResult`: Result containing success status and error message if any
+
+**Behavior:**
+- Deletes the file at the given path
+- Fails if the file doesn't exist
 
 **Example:**
 
 ```java
-DeleteResult result = session.getFileSystem().deleteFile("/tmp/test.txt");
+AgentBay agentBay = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
+SessionResult result = agentBay.create(new CreateSessionParams());
+Session session = result.getSession();
+session.getFileSystem().writeFile("/tmp/to_delete.txt", "hello");
+BoolResult deleteResult = session.getFileSystem().deleteFile("/tmp/to_delete.txt");
+session.delete();
 ```
 
 ## File Transfer Operations
@@ -413,6 +422,20 @@ DownloadResult result = session.getFileSystem().downloadFile("/tmp/remote.txt");
 DownloadResult customResult = session.getFileSystem().downloadFile("/tmp/data.zip", "/local/data.zip");
 ```
 
+## Ergonomic Aliases
+
+For improved API usability and LLM-generated code success rate, the FileSystem provides familiar Unix-like aliases:
+
+```java
+// All three aliases call deleteFile() and return BoolResult
+session.getFileSystem().delete("/tmp/file.txt");   // Alias of deleteFile()
+session.getFileSystem().remove("/tmp/file.txt");   // Alias of deleteFile()
+session.getFileSystem().rm("/tmp/file.txt");       // Alias of deleteFile()
+
+// Directory listing alias
+session.getFileSystem().ls("/tmp");                // Alias of listDirectory()
+```
+
 ## Legacy Methods (Deprecated)
 
 The following methods are available but use simplified command-based implementations:
@@ -421,7 +444,7 @@ The following methods are available but use simplified command-based implementat
 - `write(String path, String content)` - Use `writeFile()` instead
 - `list(String path)` - Use `listDirectory()` instead
 - `mkdir(String path)` - Use `createDirectory()` instead
-- `remove(String path)` - Use `deleteFile()` instead
+- `removeLegacy(String path)` - Use `deleteFile()` or `delete()`/`remove()`/`rm()` aliases instead
 - `copy(String source, String destination)` - **Note**: This method uses shell command (`cp -r`) for implementation, which may not work in all environments. For reliable file transfer, use `uploadFile()` and `downloadFile()` methods instead, or consider using context synchronization.
 - `move(String source, String destination)` - Use `moveFile()` instead
 - `getInfo(String path)` - Use `getFileInfo()` instead

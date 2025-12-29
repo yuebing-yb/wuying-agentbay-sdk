@@ -122,7 +122,7 @@ public class AliasMethodsTest {
         assertTrue("read() should succeed", readResult.isSuccess());
         assertEquals("read() content should match written content", testContent, readResult.getContent());
 
-        DeleteResult deleteResult = session.fs().delete(testPath);
+        BoolResult deleteResult = session.fs().delete(testPath);
         assertTrue("delete() should succeed", deleteResult.isSuccess());
 
         System.out.println("✅ testFileSystemWriteReadDeleteAliases passed");
@@ -138,7 +138,7 @@ public class AliasMethodsTest {
         BoolResult writeResult = session.fs().writeFile(testPath, testContent);
         assertTrue("write() should succeed", writeResult.isSuccess());
 
-        DeleteResult rmResult = session.fs().rm(testPath);
+        BoolResult rmResult = session.fs().rm(testPath);
         assertTrue("rm() should succeed", rmResult.isSuccess());
 
         System.out.println("✅ testFileSystemRmAlias passed");
