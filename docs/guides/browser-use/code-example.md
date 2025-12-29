@@ -77,6 +77,10 @@
 - [Shop inspector (Sync)](../../../python/docs/examples/_sync/browser-use/browser/shop_inspector.py) - Sync version of shop inspector example
 - [GV quick buy & seating (Async)](../../../python/docs/examples/_async/browser-use/browser/gv_quick_buy_seat.py) - Quick Buy flow on gv.com.sg and select a single seat
 - [GV quick buy & seating (Sync)](../../../python/docs/examples/_sync/browser-use/browser/gv_quick_buy_seat.py) - Sync version of GV quick buy & seating example
+- [Agricultural IoT automation (Async)](../../../python/docs/examples/_async/browser-use/browser/smart_farm.py) - UI navigation, and sensor data extraction from a farm management system
+- [Agricultural IoT automation (Sync)](../../../python/docs/examples/_sync/browser-use/browser/smart_farm.py) - Sync version of Agricultural IoT automation example
+- [News pagination extract (Async)](../../../python/docs/examples/_async/browser-use/browser/news_pagination_extract.py) - Search on Baidu News and extract titles/links with DOM-based auto pagination
+- [News pagination extract (Sync)](../../../python/docs/examples/_sync/browser-use/browser/news_pagination_extract.py) - Sync version of Baidu news pagination extract example
 
 ## 📚 Related Guides
 

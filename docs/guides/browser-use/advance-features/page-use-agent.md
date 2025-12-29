@@ -26,6 +26,7 @@ An AI-powered, natural-language web agent that performs precise, reliable page o
     - [1) Recipe Site (Search + Extract)](#1-recipe-site-search--extract)
     - [2) Apple Purchase Flow (Sequence of Acts)](#2-apple-purchase-flow-sequence-of-acts)
     - [3) Amazon Demo (Observe → Act → Assert)](#3-amazon-demo-observe--act--assert)
+    - [4) Multi-page Extraction (Pagination)](#4-multi-page-extraction-pagination)
   - [Error Handling and Debug](#error-handling-and-debug)
   - [Best Practices](#best-practices)
   - [FAQ](#faq)
@@ -360,6 +361,16 @@ if ok and obs2:
     await agent.act(action_input=obs2[0])
 ```
 
+### 4) Multi-page Extraction (Pagination)
+```python
+ok, data = await agent.extract(
+  options=ExtractOptions(
+    instruction="Extract all news titles and links",
+    schema=NewsList,
+    max_page=6,
+  )
+)
+```
 ---
 
 ## Error Handling and Debug

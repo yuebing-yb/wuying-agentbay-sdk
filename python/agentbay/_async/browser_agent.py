@@ -603,6 +603,7 @@ class AsyncBrowserAgent(BaseService):
             "use_text_extract": options.use_text_extract,
             "use_vision": options.use_vision,
             "selector": options.selector,
+            "max_page": options.max_page,
             "trace_id": trace_id,
         }
         args = {k: v for k, v in args.items() if v is not None}

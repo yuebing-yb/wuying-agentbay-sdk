@@ -79,6 +79,7 @@ class ExtractOptions(Generic[T]):
         use_vision: Optional[bool] = None,
         selector: Optional[str] = None,
         timeout: Optional[int] = None,
+        max_page: Optional[int] = 1,
     ):
         self.instruction = instruction
         self.schema = schema
@@ -86,3 +87,4 @@ class ExtractOptions(Generic[T]):
         self.use_vision = use_vision
         self.selector = selector
         self.timeout = timeout
+        self.max_page = max_page

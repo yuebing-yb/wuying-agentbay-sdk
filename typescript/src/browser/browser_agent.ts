@@ -28,6 +28,7 @@ export interface ExtractOptions<TSchema extends ZodTypeAny = ZodTypeAny> {
   selector?: string;
   use_vision?: boolean;
   timeout?: number;
+  max_page?: number;
 }
 
 export class ActResult {
@@ -429,6 +430,7 @@ export class BrowserAgent {
       use_text_extract: options.use_text_extract,
       use_vision: options.use_vision,
       selector: options.selector,
+      max_page: options.max_page,
     };
     Object.keys(args).forEach((k) => {
       if (args[k] === undefined || args[k] === null) delete args[k];
@@ -466,6 +468,7 @@ export class BrowserAgent {
       use_text_extract: options.use_text_extract,
       use_vision: options.use_vision,
       selector: options.selector,
+      max_page: options.max_page,
     };
     Object.keys(args).forEach((k) => {
       if (args[k] === undefined || args[k] === null) delete args[k];
