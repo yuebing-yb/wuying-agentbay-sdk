@@ -1611,10 +1611,14 @@ export class Session {
         diskUsed: Number((raw as any).disk_used ?? 0),
         memTotal: Number((raw as any).mem_total ?? 0),
         memUsed: Number((raw as any).mem_used ?? 0),
-        rxRateKBps: Number((raw as any).rx_rate_KBps ?? 0),
-        txRateKBps: Number((raw as any).tx_rate_KBps ?? 0),
-        rxUsedKB: Number((raw as any).rx_used_KB ?? 0),
-        txUsedKB: Number((raw as any).tx_used_KB ?? 0),
+        rxRateKbytePerS: Number(
+          (raw as any).rx_rate_kbyte_per_s ?? (raw as any).rx_rate_kbps ?? (raw as any).rx_rate_KBps ?? 0,
+        ),
+        txRateKbytePerS: Number(
+          (raw as any).tx_rate_kbyte_per_s ?? (raw as any).tx_rate_kbps ?? (raw as any).tx_rate_KBps ?? 0,
+        ),
+        rxUsedKbyte: Number((raw as any).rx_used_kbyte ?? (raw as any).rx_used_kb ?? (raw as any).rx_used_KB ?? 0),
+        txUsedKbyte: Number((raw as any).tx_used_kbyte ?? (raw as any).tx_used_kb ?? (raw as any).tx_used_KB ?? 0),
         timestamp: String((raw as any).timestamp ?? ""),
       };
 

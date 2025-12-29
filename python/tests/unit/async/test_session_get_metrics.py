@@ -51,10 +51,10 @@ class TestAsyncSessionGetMetrics(unittest.IsolatedAsyncioTestCase):
             "disk_used": 30269431808,
             "mem_total": 7918718976,
             "mem_used": 2139729920,
-            "rx_rate_KBps": 0.22,
-            "tx_rate_KBps": 0.38,
-            "rx_used_KB": 1247.27,
-            "tx_used_KB": 120.13,
+            "rx_rate_kbyte_per_s": 0.22,
+            "tx_rate_kbyte_per_s": 0.38,
+            "rx_used_kbyte": 1247.27,
+            "tx_used_kbyte": 120.13,
             "timestamp": "2025-12-24T10:54:23+08:00",
         }
 
@@ -75,7 +75,11 @@ class TestAsyncSessionGetMetrics(unittest.IsolatedAsyncioTestCase):
         self.assertAlmostEqual(result.metrics.cpu_used_pct, 1.0, places=6)
         self.assertEqual(result.metrics.mem_total, 7918718976)
         self.assertEqual(result.metrics.disk_total, 105286258688)
+        self.assertAlmostEqual(result.metrics.rx_rate_kbyte_per_s, 0.22, places=6)
+        self.assertAlmostEqual(result.metrics.tx_rate_kbyte_per_s, 0.38, places=6)
         self.assertEqual(result.metrics.timestamp, "2025-12-24T10:54:23+08:00")
+        self.assertIn("rx_rate_kbyte_per_s", result.raw)
+        self.assertIn("tx_rate_kbyte_per_s", result.raw)
 
     @pytest.mark.asyncio
     async def test_get_metrics_invalid_json_returns_error(self):

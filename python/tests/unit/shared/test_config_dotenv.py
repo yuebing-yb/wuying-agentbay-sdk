@@ -89,9 +89,13 @@ class TestDotEnvLoading:
             subdir = tmpdir_path / "subdir"
             subdir.mkdir()
 
-            # No .env file anywhere
-            found_file = _find_dotenv_file(subdir)
-            assert found_file is None
+            # Force "not found" even if the test runs inside a real repo that has a .env in parents.
+            def _exists(_: Path) -> bool:
+                return False
+
+            with patch("pathlib.Path.exists", _exists):
+                found_file = _find_dotenv_file(subdir)
+                assert found_file is None
 
     def test_load_dotenv_with_custom_path(self):
         """Test loading .env file from custom path."""

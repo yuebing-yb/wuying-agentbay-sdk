@@ -907,6 +907,15 @@ class AsyncSession:
             if not isinstance(raw, dict):
                 raise ValueError("get_metrics returned non-object JSON")
 
+            def _float_from_first_key(data: dict, keys: list[str], default: float = 0.0) -> float:
+                for k in keys:
+                    if k in data and data.get(k) is not None:
+                        try:
+                            return float(data.get(k) or 0.0)
+                        except Exception:
+                            pass
+                return float(default)
+
             metrics = SessionMetrics(
                 cpu_count=int(raw.get("cpu_count", 0) or 0),
                 cpu_used_pct=float(raw.get("cpu_used_pct", 0.0) or 0.0),
@@ -914,10 +923,16 @@ class AsyncSession:
                 disk_used=int(raw.get("disk_used", 0) or 0),
                 mem_total=int(raw.get("mem_total", 0) or 0),
                 mem_used=int(raw.get("mem_used", 0) or 0),
-                rx_rate_kbps=float(raw.get("rx_rate_KBps", 0.0) or 0.0),
-                tx_rate_kbps=float(raw.get("tx_rate_KBps", 0.0) or 0.0),
-                rx_used_kb=float(raw.get("rx_used_KB", 0.0) or 0.0),
-                tx_used_kb=float(raw.get("tx_used_KB", 0.0) or 0.0),
+                rx_rate_kbyte_per_s=_float_from_first_key(
+                    raw,
+                    ["rx_rate_kbyte_per_s", "rx_rate_kbps", "rx_rate_KBps"],
+                ),
+                tx_rate_kbyte_per_s=_float_from_first_key(
+                    raw,
+                    ["tx_rate_kbyte_per_s", "tx_rate_kbps", "tx_rate_KBps"],
+                ),
+                rx_used_kbyte=_float_from_first_key(raw, ["rx_used_kbyte", "rx_used_kb", "rx_used_KB"]),
+                tx_used_kbyte=_float_from_first_key(raw, ["tx_used_kbyte", "tx_used_kb", "tx_used_KB"]),
                 timestamp=str(raw.get("timestamp", "") or ""),
             )
             return SessionMetricsResult(

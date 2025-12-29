@@ -32,10 +32,10 @@ describe("Session.getMetrics", () => {
       disk_used: 30269431808,
       mem_total: 7918718976,
       mem_used: 2139729920,
-      rx_rate_KBps: 0.22,
-      tx_rate_KBps: 0.38,
-      rx_used_KB: 1247.27,
-      tx_used_KB: 120.13,
+      rx_rate_kbyte_per_s: 0.22,
+      tx_rate_kbyte_per_s: 0.38,
+      rx_used_kbyte: 1247.27,
+      tx_used_kbyte: 120.13,
       timestamp: "2025-12-24T10:54:23+08:00",
     };
 
@@ -54,8 +54,12 @@ describe("Session.getMetrics", () => {
     expect(result.data.cpuUsedPct).toBeCloseTo(1.0, 6);
     expect(result.data.memTotal).toBe(7918718976);
     expect(result.data.diskTotal).toBe(105286258688);
+    expect(result.data.rxRateKbytePerS).toBeCloseTo(0.22, 6);
+    expect(result.data.txRateKbytePerS).toBeCloseTo(0.38, 6);
     expect(result.data.timestamp).toBe("2025-12-24T10:54:23+08:00");
     expect(result.raw).toBeDefined();
+    expect(result.raw.rx_rate_kbyte_per_s).toBeCloseTo(0.22, 6);
+    expect(result.raw.tx_rate_kbyte_per_s).toBeCloseTo(0.38, 6);
   });
 
   it("should return error when JSON is invalid", async () => {

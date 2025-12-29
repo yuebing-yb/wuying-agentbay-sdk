@@ -456,11 +456,43 @@ def __init__(self, cpu_count: int = 0,
              disk_used: int = 0,
              mem_total: int = 0,
              mem_used: int = 0,
-             rx_rate_kbps: float = 0.0,
-             tx_rate_kbps: float = 0.0,
-             rx_used_kb: float = 0.0,
-             tx_used_kb: float = 0.0,
-             timestamp: str = "")
+             rx_rate_kbyte_per_s: float = 0.0,
+             tx_rate_kbyte_per_s: float = 0.0,
+             rx_used_kbyte: float = 0.0,
+             tx_used_kbyte: float = 0.0,
+             timestamp: str = "",
+             rx_rate_kbps: Optional[float] = None,
+             tx_rate_kbps: Optional[float] = None,
+             rx_used_kb: Optional[float] = None,
+             tx_used_kb: Optional[float] = None)
+```
+
+### rx\_rate\_kbps
+
+```python
+@property
+def rx_rate_kbps() -> float
+```
+
+### tx\_rate\_kbps
+
+```python
+@property
+def tx_rate_kbps() -> float
+```
+
+### rx\_used\_kb
+
+```python
+@property
+def rx_used_kb() -> float
+```
+
+### tx\_used\_kb
+
+```python
+@property
+def tx_used_kb() -> float
 ```
 
 ## SessionMetricsResult

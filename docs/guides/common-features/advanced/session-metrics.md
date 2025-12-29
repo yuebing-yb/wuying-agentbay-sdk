@@ -10,8 +10,8 @@ The current `get_metrics` response contains:
 - `cpu_used_pct`: CPU usage percentage
 - `mem_total`, `mem_used`: memory total/used (bytes)
 - `disk_total`, `disk_used`: disk total/used (bytes)
-- `rx_rate_KBps`, `tx_rate_KBps`: network RX/TX rate (KB/s)
-- `rx_used_KB`, `tx_used_KB`: network RX/TX total used (KB)
+- `rx_rate_kbyte_per_s`, `tx_rate_kbyte_per_s`: network RX/TX rate (kbyte/s)
+- `rx_used_kbyte`, `tx_used_kbyte`: network RX/TX total used (kbyte)
 - `timestamp`: RFC3339-like timestamp string (with timezone offset)
 
 ## Python

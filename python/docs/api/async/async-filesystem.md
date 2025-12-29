@@ -141,6 +141,22 @@ if context_path:
 DEFAULT_CHUNK_SIZE = 50 * 1024
 ```
 
+#### MQTT\_SIZE\_LIMIT
+
+```python
+MQTT_SIZE_LIMIT = 63 * 1024
+```
+
+63KB = 64512 bytes
+
+#### MAX\_CONTENT\_BYTES
+
+```python
+MAX_CONTENT_BYTES = 51 * 1024
+```
+
+51KB = 52224 bytes
+
 ### create\_directory
 
 ```python
@@ -545,7 +561,8 @@ await session.delete()
 
 **Notes**:
 
-- Automatically handles large files by writing in chunks (default 50KB per chunk)
+- Automatically handles large files by writing in chunks
+- Chunks are split by byte size to ensure MQTT compatibility (63KB limit)
 - Creates parent directories if they don't exist
 - In "overwrite" mode, replaces the entire file content
 - In "append" mode, adds content to the end of the file

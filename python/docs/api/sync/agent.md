@@ -191,6 +191,18 @@ print(f"Task result: {result.task_result}")
 session.delete()
 ```
 
+### get\_task\_status
+
+```python
+def get_task_status(task_id: str) -> QueryResult
+```
+
+### terminate\_task
+
+```python
+def terminate_task(task_id: str) -> ExecutionResult
+```
+
 ## See Also
 
 - [Synchronous vs Asynchronous API](../../../docs/guides/async-programming/sync-vs-async.md)

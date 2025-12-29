@@ -126,10 +126,10 @@ export interface SessionMetrics {
   diskUsed: number;
   memTotal: number;
   memUsed: number;
-  rxRateKBps: number;
-  txRateKBps: number;
-  rxUsedKB: number;
-  txUsedKB: number;
+  rxRateKbytePerS: number;
+  txRateKbytePerS: number;
+  rxUsedKbyte: number;
+  txUsedKbyte: number;
   timestamp: string;
 }
 

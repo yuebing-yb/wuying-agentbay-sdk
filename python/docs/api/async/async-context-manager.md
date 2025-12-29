@@ -74,8 +74,9 @@ Synchronize a context with the session asynchronously.
 **Arguments**:
 
     context_id: Optional ID of the context to synchronize
-    path: Optional path where the context should be mounted; not limited to the path
-          specified at session creation (other backend-allowed paths are acceptable)
+    path: Optional path where the context should be mounted; not limited to
+  the path specified when creating the session (other backend-allowed
+  paths are acceptable)
     mode: Optional synchronization mode (e.g., "upload", "download")
     max_retries: Maximum number of retries for polling completion status (default: 150)
     retry_interval: Milliseconds to wait between retries (default: 1500)

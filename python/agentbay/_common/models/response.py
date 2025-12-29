@@ -463,11 +463,16 @@ class SessionMetrics:
         disk_used: int = 0,
         mem_total: int = 0,
         mem_used: int = 0,
-        rx_rate_kbps: float = 0.0,
-        tx_rate_kbps: float = 0.0,
-        rx_used_kb: float = 0.0,
-        tx_used_kb: float = 0.0,
+        rx_rate_kbyte_per_s: float = 0.0,
+        tx_rate_kbyte_per_s: float = 0.0,
+        rx_used_kbyte: float = 0.0,
+        tx_used_kbyte: float = 0.0,
         timestamp: str = "",
+        # Backward-compatible aliases (deprecated):
+        rx_rate_kbps: Optional[float] = None,
+        tx_rate_kbps: Optional[float] = None,
+        rx_used_kb: Optional[float] = None,
+        tx_used_kb: Optional[float] = None,
     ):
         self.cpu_count = cpu_count
         self.cpu_used_pct = cpu_used_pct
@@ -475,11 +480,42 @@ class SessionMetrics:
         self.disk_used = disk_used
         self.mem_total = mem_total
         self.mem_used = mem_used
-        self.rx_rate_kbps = rx_rate_kbps
-        self.tx_rate_kbps = tx_rate_kbps
-        self.rx_used_kb = rx_used_kb
-        self.tx_used_kb = tx_used_kb
+        self.rx_rate_kbyte_per_s = (
+            rx_rate_kbyte_per_s if rx_rate_kbyte_per_s is not None else 0.0
+        )
+        self.tx_rate_kbyte_per_s = (
+            tx_rate_kbyte_per_s if tx_rate_kbyte_per_s is not None else 0.0
+        )
+        self.rx_used_kbyte = rx_used_kbyte if rx_used_kbyte is not None else 0.0
+        self.tx_used_kbyte = tx_used_kbyte if tx_used_kbyte is not None else 0.0
+
+        # Backward-compatible aliases (deprecated): allow old args to fill new fields
+        if rx_rate_kbps is not None and self.rx_rate_kbyte_per_s == 0.0:
+            self.rx_rate_kbyte_per_s = float(rx_rate_kbps)
+        if tx_rate_kbps is not None and self.tx_rate_kbyte_per_s == 0.0:
+            self.tx_rate_kbyte_per_s = float(tx_rate_kbps)
+        if rx_used_kb is not None and self.rx_used_kbyte == 0.0:
+            self.rx_used_kbyte = float(rx_used_kb)
+        if tx_used_kb is not None and self.tx_used_kbyte == 0.0:
+            self.tx_used_kbyte = float(tx_used_kb)
         self.timestamp = timestamp
+
+    # Backward-compatible properties (deprecated)
+    @property
+    def rx_rate_kbps(self) -> float:
+        return float(self.rx_rate_kbyte_per_s)
+
+    @property
+    def tx_rate_kbps(self) -> float:
+        return float(self.tx_rate_kbyte_per_s)
+
+    @property
+    def rx_used_kb(self) -> float:
+        return float(self.rx_used_kbyte)
+
+    @property
+    def tx_used_kb(self) -> float:
+        return float(self.tx_used_kbyte)
 
 
 class SessionMetricsResult(ApiResponse):
