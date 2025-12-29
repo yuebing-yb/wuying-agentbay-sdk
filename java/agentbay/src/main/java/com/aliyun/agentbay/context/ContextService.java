@@ -145,7 +145,7 @@ public class ContextService {
      * @return The ContextResult object containing the Context and request ID.
      */
     public ContextResult get(String name, boolean create) throws AgentBayException {
-        return get(name, create, null);
+        return get(name, create, create ? agentBay.getRegionId() : null);
     }
 
     /**
