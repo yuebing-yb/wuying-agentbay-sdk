@@ -544,7 +544,9 @@ class TestAsyncAgentMobile(unittest.TestCase):
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
-        self.assertEqual(result.error_message, "Task timeout.")
+        self.assertIn("Task execution timed out after 6 seconds", result.error_message)
+        self.assertIn("task-123", result.error_message)
+        self.assertIn("Polled 2 times (max: 2)", result.error_message)
         self.assertEqual(result.task_status, "failed")
 
     @pytest.mark.sync

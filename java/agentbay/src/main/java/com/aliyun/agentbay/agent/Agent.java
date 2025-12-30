@@ -63,6 +63,8 @@ public class Agent extends BaseService {
      * Uses flux_* MCP tools for task execution.
      */
     public static class Computer extends BaseService {
+        private static final Logger logger = LoggerFactory.getLogger(Computer.class);
+
         public Computer(Session session) {
             super(session);
         }
@@ -168,19 +170,27 @@ public class Agent extends BaseService {
                                 query.getTaskProduct()
                             );
                         } else if ("failed".equals(query.getTaskStatus())) {
+                            String errorMsg = query.getErrorMessage();
+                            if (errorMsg == null || errorMsg.isEmpty()) {
+                                errorMsg = "Failed to execute task.";
+                            }
                             return new ExecutionResult(
                                 result.getRequestId(),
                                 false,
-                                "Failed to execute task.",
+                                errorMsg,
                                 taskId,
                                 query.getTaskStatus(),
                                 ""
                             );
                         } else if ("unsupported".equals(query.getTaskStatus())) {
+                            String errorMsg = query.getErrorMessage();
+                            if (errorMsg == null || errorMsg.isEmpty()) {
+                                errorMsg = "Unsupported task.";
+                            }
                             return new ExecutionResult(
                                 result.getRequestId(),
                                 false,
-                                "Unsupported task.",
+                                errorMsg,
                                 taskId,
                                 query.getTaskStatus(),
                                 ""
@@ -189,13 +199,25 @@ public class Agent extends BaseService {
                         Thread.sleep(3000);
                         triedTime++;
                     }
+                    // Automatically terminate the task on timeout
+                    try {
+                        ExecutionResult terminateResult = terminateTask(taskId);
+                        if (terminateResult.isSuccess()) {
+                            logger.info("✅ Task {} terminated successfully after timeout", taskId);
+                        } else {
+                            logger.warn("⚠️ Failed to terminate task {} after timeout: {}", taskId, terminateResult.getErrorMessage());
+                        }
+                    } catch (Exception e) {
+                        logger.warn("⚠️ Exception while terminating task {} after timeout: {}", taskId, e.getMessage());
+                    }
+                    String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
-                        "Task timeout.",
+                        timeoutErrorMsg,
                         taskId,
                         "failed",
-                        "Task timeout."
+                        String.format("Task execution timed out after %d seconds.", timeout)
                     );
                 } else {
                     return new ExecutionResult(
@@ -342,6 +364,8 @@ public class Agent extends BaseService {
      * Still in BETA.
      */
     public static class Browser extends BaseService {
+        private static final Logger logger = LoggerFactory.getLogger(Browser.class);
+
         public Browser(Session session) {
             super(session);
         }
@@ -496,19 +520,27 @@ public class Agent extends BaseService {
                                 query.getTaskProduct()
                             );
                         } else if ("failed".equals(query.getTaskStatus())) {
+                            String errorMsg = query.getErrorMessage();
+                            if (errorMsg == null || errorMsg.isEmpty()) {
+                                errorMsg = "Failed to execute task.";
+                            }
                             return new ExecutionResult(
                                 result.getRequestId(),
                                 false,
-                                "Failed to execute task.",
+                                errorMsg,
                                 taskId,
                                 query.getTaskStatus(),
                                 ""
                             );
                         } else if ("unsupported".equals(query.getTaskStatus())) {
+                            String errorMsg = query.getErrorMessage();
+                            if (errorMsg == null || errorMsg.isEmpty()) {
+                                errorMsg = "Unsupported task.";
+                            }
                             return new ExecutionResult(
                                 result.getRequestId(),
                                 false,
-                                "Unsupported task.",
+                                errorMsg,
                                 taskId,
                                 query.getTaskStatus(),
                                 ""
@@ -517,13 +549,25 @@ public class Agent extends BaseService {
                         Thread.sleep(3000);
                         triedTime++;
                     }
+                    // Automatically terminate the task on timeout
+                    try {
+                        ExecutionResult terminateResult = terminateTask(taskId);
+                        if (terminateResult.isSuccess()) {
+                            logger.info("✅ Task {} terminated successfully after timeout", taskId);
+                        } else {
+                            logger.warn("⚠️ Failed to terminate task {} after timeout: {}", taskId, terminateResult.getErrorMessage());
+                        }
+                    } catch (Exception e) {
+                        logger.warn("⚠️ Exception while terminating task {} after timeout: {}", taskId, e.getMessage());
+                    }
+                    String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
-                        "Task timeout.",
+                        timeoutErrorMsg,
                         taskId,
                         "failed",
-                        "Task timeout."
+                        String.format("Task execution timed out after %d seconds.", timeout)
                     );
                 } else {
                     return new ExecutionResult(
@@ -931,8 +975,13 @@ public class Agent extends BaseService {
                             query.getTaskProduct()
                         );
                     } else if ("failed".equals(taskStatus)) {
-                        String errorMsg = query.getError() != null && !query.getError().isEmpty() 
-                            ? query.getError() : "Failed to execute task.";
+                        String errorMsg = query.getError();
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = query.getErrorMessage();
+                        }
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = "Failed to execute task.";
+                        }
                         return new ExecutionResult(
                             result.getRequestId(),
                             false,
@@ -941,8 +990,13 @@ public class Agent extends BaseService {
                             query.getTaskStatus()
                         );
                     } else if ("cancelled".equals(taskStatus)) {
-                        String errorMsg = query.getError() != null && !query.getError().isEmpty() 
-                            ? query.getError() : "Task was cancelled.";
+                        String errorMsg = query.getError();
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = query.getErrorMessage();
+                        }
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = "Task was cancelled.";
+                        }
                         return new ExecutionResult(
                             result.getRequestId(),
                             false,
@@ -951,8 +1005,13 @@ public class Agent extends BaseService {
                             query.getTaskStatus()
                         );
                     } else if ("unsupported".equals(taskStatus)) {
-                        String errorMsg = query.getError() != null && !query.getError().isEmpty() 
-                            ? query.getError() : "Unsupported task.";
+                        String errorMsg = query.getError();
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = query.getErrorMessage();
+                        }
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = "Unsupported task.";
+                        }
                         return new ExecutionResult(
                             result.getRequestId(),
                             false,
@@ -969,13 +1028,25 @@ public class Agent extends BaseService {
                 }
 
                 logger.warn("⚠️ task execution timeout!");
+                // Automatically terminate the task on timeout
+                try {
+                    ExecutionResult terminateResult = terminateTask(taskId);
+                    if (terminateResult.isSuccess()) {
+                        logger.info("✅ Task {} terminated successfully after timeout", taskId);
+                    } else {
+                        logger.warn("⚠️ Failed to terminate task {} after timeout: {}", taskId, terminateResult.getErrorMessage());
+                    }
+                } catch (Exception e) {
+                    logger.warn("⚠️ Exception while terminating task {} after timeout: {}", taskId, e.getMessage());
+                }
+                String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
                 return new ExecutionResult(
                     result.getRequestId(),
                     false,
-                    "Task timeout.",
+                    timeoutErrorMsg,
                     taskId,
                     "failed",
-                    "Task timeout."
+                    String.format("Task execution timed out after %d seconds.", timeout)
                 );
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -1428,8 +1499,13 @@ public class Agent extends BaseService {
                             query.getTaskProduct()
                         );
                     } else if ("failed".equals(taskStatus)) {
-                        String errorMsg = query.getError() != null && !query.getError().isEmpty() 
-                            ? query.getError() : "Failed to execute task.";
+                        String errorMsg = query.getError();
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = query.getErrorMessage();
+                        }
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = "Failed to execute task.";
+                        }
                         return new ExecutionResult(
                             result.getRequestId(),
                             false,
@@ -1438,8 +1514,13 @@ public class Agent extends BaseService {
                             query.getTaskStatus()
                         );
                     } else if ("cancelled".equals(taskStatus)) {
-                        String errorMsg = query.getError() != null && !query.getError().isEmpty() 
-                            ? query.getError() : "Task was cancelled.";
+                        String errorMsg = query.getError();
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = query.getErrorMessage();
+                        }
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = "Task was cancelled.";
+                        }
                         return new ExecutionResult(
                             result.getRequestId(),
                             false,
@@ -1448,8 +1529,13 @@ public class Agent extends BaseService {
                             query.getTaskStatus()
                         );
                     } else if ("unsupported".equals(taskStatus)) {
-                        String errorMsg = query.getError() != null && !query.getError().isEmpty() 
-                            ? query.getError() : "Unsupported task.";
+                        String errorMsg = query.getError();
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = query.getErrorMessage();
+                        }
+                        if (errorMsg == null || errorMsg.isEmpty()) {
+                            errorMsg = "Unsupported task.";
+                        }
                         return new ExecutionResult(
                             result.getRequestId(),
                             false,
@@ -1466,13 +1552,25 @@ public class Agent extends BaseService {
                 }
 
                 logger.warn("⚠️ task execution timeout!");
+                // Automatically terminate the task on timeout
+                try {
+                    ExecutionResult terminateResult = terminateTask(taskId);
+                    if (terminateResult.isSuccess()) {
+                        logger.info("✅ Task {} terminated successfully after timeout", taskId);
+                    } else {
+                        logger.warn("⚠️ Failed to terminate task {} after timeout: {}", taskId, terminateResult.getErrorMessage());
+                    }
+                } catch (Exception e) {
+                    logger.warn("⚠️ Exception while terminating task {} after timeout: {}", taskId, e.getMessage());
+                }
+                String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
                 return new ExecutionResult(
                     result.getRequestId(),
                     false,
-                    "Task timeout.",
+                    timeoutErrorMsg,
                     taskId,
                     "failed",
-                    "Task timeout."
+                    String.format("Task execution timed out after %d seconds.", timeout)
                 );
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

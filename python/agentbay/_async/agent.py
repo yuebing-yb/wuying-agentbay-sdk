@@ -206,6 +206,7 @@ class AsyncAgent(AsyncBaseService):
                                 task_result=query.task_product,
                             )
                         elif query.task_status == "failed":
+                            error_msg = query.error_message or "Failed to execute task."
                             return ExecutionResult(
                                 request_id=query.request_id,
                                 success=False,
@@ -214,10 +215,11 @@ class AsyncAgent(AsyncBaseService):
                                 task_status=query.task_status,
                             )
                         elif query.task_status == "unsupported":
+                            error_msg = query.error_message or "Unsupported task."
                             return ExecutionResult(
                                 request_id=query.request_id,
                                 success=False,
-                                error_message="Unsupported task.",
+                                error_message=error_msg,
                                 task_id=task_id,
                                 task_status=query.task_status,
                             )
@@ -227,13 +229,23 @@ class AsyncAgent(AsyncBaseService):
                         await asyncio.sleep(poll_interval)
                         tried_time += 1
                     _logger.warning("⚠️ task execution timeout!")
+                    # Automatically terminate the task on timeout
+                    try:
+                        terminate_result = await self.terminate_task(task_id)
+                        if terminate_result.success:
+                            _logger.info(f"✅ Task {task_id} terminated successfully after timeout")
+                        else:
+                            _logger.warning(f"⚠️ Failed to terminate task {task_id} after timeout: {terminate_result.error_message}")
+                    except Exception as e:
+                        _logger.warning(f"⚠️ Exception while terminating task {task_id} after timeout: {e}")
+                    timeout_error_msg = f"Task execution timed out after {timeout} seconds. Task ID: {task_id}. Polled {tried_time} times (max: {max_poll_attempts})."
                     return ExecutionResult(
                         request_id=result.request_id,
                         success=False,
-                        error_message="Task timeout.",
+                        error_message=timeout_error_msg,
                         task_id=task_id,
                         task_status="failed",
-                        task_result="Task timeout.",
+                        task_result=f"Task execution timed out after {timeout} seconds.",
                     )
                 else:
                     _logger.error("❌ Task execution failed")
@@ -708,7 +720,7 @@ class AsyncAgent(AsyncBaseService):
                         task_result=query.task_product,
                     )
                 elif query.task_status == "failed":
-                    error_msg = query.error or "Failed to execute task."
+                    error_msg = query.error or query.error_message or "Failed to execute task."
                     return ExecutionResult(
                         request_id=query.request_id,
                         success=False,
@@ -717,7 +729,7 @@ class AsyncAgent(AsyncBaseService):
                         task_status=query.task_status,
                     )
                 elif query.task_status == "cancelled":
-                    error_msg = query.error or "Task was cancelled."
+                    error_msg = query.error or query.error_message or "Task was cancelled."
                     return ExecutionResult(
                         request_id=query.request_id,
                         success=False,
@@ -726,7 +738,7 @@ class AsyncAgent(AsyncBaseService):
                         task_status=query.task_status,
                     )
                 elif query.task_status == "unsupported":
-                    error_msg = query.error or "Unsupported task."
+                    error_msg = query.error or query.error_message or "Unsupported task."
                     return ExecutionResult(
                         request_id=query.request_id,
                         success=False,
@@ -741,13 +753,23 @@ class AsyncAgent(AsyncBaseService):
                 tried_time += 1
 
             _logger.warning("⚠️ task execution timeout!")
+            # Automatically terminate the task on timeout
+            try:
+                terminate_result = await self.terminate_task(task_id)
+                if terminate_result.success:
+                    _logger.info(f"✅ Task {task_id} terminated successfully after timeout")
+                else:
+                    _logger.warning(f"⚠️ Failed to terminate task {task_id} after timeout: {terminate_result.error_message}")
+            except Exception as e:
+                _logger.warning(f"⚠️ Exception while terminating task {task_id} after timeout: {e}")
+            timeout_error_msg = f"Task execution timed out after {timeout} seconds. Task ID: {task_id}. Polled {tried_time} times (max: {max_poll_attempts})."
             return ExecutionResult(
                 request_id=last_request_id,
                 success=False,
-                error_message="Task timeout.",
+                error_message=timeout_error_msg,
                 task_id=task_id,
                 task_status="failed",
-                task_result="Task timeout.",
+                task_result=f"Task execution timed out after {timeout} seconds.",
             )
 
         async def get_task_status(self, task_id: str) -> QueryResult:

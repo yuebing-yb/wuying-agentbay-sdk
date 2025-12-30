@@ -222,13 +222,26 @@ abstract class BaseTaskAgent {
         triedTime++;
       }
 
+      // Automatically terminate the task on timeout
+      try {
+        const terminateResult = await this.terminateTask(taskId);
+        if (terminateResult.success) {
+          logDebug(`✅ Task ${taskId} terminated successfully after timeout`);
+        } else {
+          logDebug(`⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`);
+        }
+      } catch (e) {
+        logDebug(`⚠️ Exception while terminating task ${taskId} after timeout: ${e}`);
+      }
+
+      const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
       return {
         requestId: result.requestId,
         success: false,
-        errorMessage: 'Task execution timed out',
+        errorMessage: timeoutErrorMsg,
         taskStatus: 'timeout',
         taskId: taskId,
-        taskResult: 'Task Timed Out',
+        taskResult: `Task execution timed out after ${timeout} seconds.`,
       };
   }
 
@@ -644,7 +657,7 @@ export class MobileUseAgent extends BaseTaskAgent {
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.errorMessage || 'Failed to execute task.',
+            errorMessage: query.error || query.errorMessage || 'Failed to execute task.',
             taskId: taskId,
             taskStatus: 'failed',
             taskResult: '',
@@ -653,7 +666,7 @@ export class MobileUseAgent extends BaseTaskAgent {
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.errorMessage || 'Task was cancelled.',
+            errorMessage: query.error || query.errorMessage || 'Task was cancelled.',
             taskId: taskId,
             taskStatus: 'cancelled',
             taskResult: '',
@@ -662,7 +675,7 @@ export class MobileUseAgent extends BaseTaskAgent {
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.errorMessage || 'Unsupported task.',
+            errorMessage: query.error || query.errorMessage || 'Unsupported task.',
             taskId: taskId,
             taskStatus: 'unsupported',
             taskResult: '',
@@ -675,13 +688,25 @@ export class MobileUseAgent extends BaseTaskAgent {
     }
 
     logDebug('⚠️ task execution timeout!');
+    // Automatically terminate the task on timeout
+    try {
+      const terminateResult = await this.terminateTask(taskId);
+      if (terminateResult.success) {
+        logDebug(`✅ Task ${taskId} terminated successfully after timeout`);
+      } else {
+        logDebug(`⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`);
+      }
+    } catch (e) {
+      logDebug(`⚠️ Exception while terminating task ${taskId} after timeout: ${e}`);
+    }
+    const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
     return {
       requestId: result.requestId,
       success: false,
-      errorMessage: 'Task timeout.',
+      errorMessage: timeoutErrorMsg,
       taskStatus: 'failed',
       taskId: taskId,
-      taskResult: 'Task timeout.',
+      taskResult: `Task execution timed out after ${timeout} seconds.`,
     };
   }
 

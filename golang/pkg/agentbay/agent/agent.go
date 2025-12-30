@@ -230,18 +230,26 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 				TaskResult:   query.TaskProduct,
 			}
 		case "failed":
+			errorMsg := query.ErrorMessage
+			if errorMsg == "" {
+				errorMsg = "Failed to execute task."
+			}
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      false,
-				ErrorMessage: "Failed to execute task.",
+				ErrorMessage: errorMsg,
 				TaskID:       taskID,
 				TaskStatus:   taskStatus,
 			}
 		case "unsupported":
+			errorMsg := query.ErrorMessage
+			if errorMsg == "" {
+				errorMsg = "Unsupported task."
+			}
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      false,
-				ErrorMessage: "Unsupported task.",
+				ErrorMessage: errorMsg,
 				TaskID:       taskID,
 				TaskStatus:   taskStatus,
 			}
@@ -253,13 +261,21 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 	}
 
 	fmt.Println("⚠️ task execution timeout!")
+	// Automatically terminate the task on timeout
+	terminateResult := b.terminateTask(taskID)
+	if terminateResult.Success {
+		fmt.Printf("✅ Task %s terminated successfully after timeout\n", taskID)
+	} else {
+		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
+	}
+	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
 	return &ExecutionResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      false,
-		ErrorMessage: "Task timeout.",
+		ErrorMessage: timeoutErrorMsg,
 		TaskStatus:   "failed",
 		TaskID:       taskID,
-		TaskResult:   "Task timeout.",
+		TaskResult:   fmt.Sprintf("Task execution timed out after %d seconds.", timeout),
 	}
 }
 
@@ -883,26 +899,47 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 				TaskResult:   query.TaskProduct,
 			}
 		case "failed":
+			errorMsg := query.Error
+			if errorMsg == "" {
+				errorMsg = query.ErrorMessage
+			}
+			if errorMsg == "" {
+				errorMsg = "Failed to execute task."
+			}
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      false,
-				ErrorMessage: "Failed to execute task.",
+				ErrorMessage: errorMsg,
 				TaskID:       taskID,
 				TaskStatus:   taskStatus,
 			}
 		case "cancelled":
+			errorMsg := query.Error
+			if errorMsg == "" {
+				errorMsg = query.ErrorMessage
+			}
+			if errorMsg == "" {
+				errorMsg = "Task was cancelled."
+			}
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      false,
-				ErrorMessage: "Task was cancelled.",
+				ErrorMessage: errorMsg,
 				TaskID:       taskID,
 				TaskStatus:   taskStatus,
 			}
 		case "unsupported":
+			errorMsg := query.Error
+			if errorMsg == "" {
+				errorMsg = query.ErrorMessage
+			}
+			if errorMsg == "" {
+				errorMsg = "Unsupported task."
+			}
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 				Success:      false,
-				ErrorMessage: "Unsupported task.",
+				ErrorMessage: errorMsg,
 				TaskID:       taskID,
 				TaskStatus:   taskStatus,
 			}
@@ -914,13 +951,21 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 	}
 
 	fmt.Println("⚠️ task execution timeout!")
+	// Automatically terminate the task on timeout
+	terminateResult := a.TerminateTask(taskID)
+	if terminateResult.Success {
+		fmt.Printf("✅ Task %s terminated successfully after timeout\n", taskID)
+	} else {
+		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
+	}
+	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
 	return &ExecutionResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      false,
-		ErrorMessage: "Task timeout.",
+		ErrorMessage: timeoutErrorMsg,
 		TaskStatus:   "failed",
 		TaskID:       taskID,
-		TaskResult:   "Task timeout.",
+		TaskResult:   fmt.Sprintf("Task execution timed out after %d seconds.", timeout),
 	}
 }
 
