@@ -129,7 +129,7 @@ public class TestSessionConfigurationIntegration {
         System.out.println("   Session ID: " + session.getSessionId());
         
         // Verify mobile module is available
-        assertNotNull(session.getMobile());
+        assertNotNull(session.mobile);
     }
 
     @Test

@@ -55,7 +55,7 @@ public class MobileGetAdbUrlExample {
                 
                 // Get ADB URL for the mobile device
                 System.out.println("\nRetrieving ADB connection URL...");
-                AdbUrlResult adbResult = session.getMobile().getAdbUrl(adbkeyPub);
+                AdbUrlResult adbResult = session.mobile.getAdbUrl(adbkeyPub);
                 
                 if (adbResult.isSuccess()) {
                     System.out.println("✅ ADB URL retrieved successfully");

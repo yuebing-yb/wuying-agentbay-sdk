@@ -35,7 +35,7 @@ public class AgentBay {
 
     private String apiKey;
     private String regionId;
-    private Client client;
+    public Client client;
     private ApiClient apiClient;
     private ConcurrentHashMap<String, Session> sessions;
     private MobileSimulate mobileSimulate;
@@ -86,127 +86,11 @@ public class AgentBay {
         }
     }
 
-    /**
-     * Get an existing session by ID from local cache only.
-     * This method only retrieves sessions from the local cache (sessions created by this AgentBay instance).
-     * It does not fetch sessions from the server.
-     *
-     * @param sessionId The session ID
-     * @return Session object if found in cache, null otherwise
-     */
-    public Session getSession(String sessionId) {
-        return sessions.get(sessionId);
-    }
-
-    /**
-     * Get session information by session ID from remote server.
-     * This method retrieves detailed session metadata from the API without creating a Session object.
-     *
-     * @param sessionId The ID of the session to retrieve
-     * @return GetSessionResult containing session information
-     */
-    public GetSessionResult getSessionInfo(String sessionId) {
-        try {
-            com.aliyun.wuyingai20250506.models.GetSessionRequest request = 
-                new com.aliyun.wuyingai20250506.models.GetSessionRequest();
-            request.setAuthorization("Bearer " + apiKey);
-            request.setSessionId(sessionId);
-
-            com.aliyun.wuyingai20250506.models.GetSessionResponse response = client.getSession(request);
-
-            String requestId = ResponseUtil.extractRequestId(response);
-
-            if (response == null || response.getBody() == null) {
-                return new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Invalid response from GetSession API"
-                );
-            }
-
-            com.aliyun.wuyingai20250506.models.GetSessionResponseBody body = response.getBody();
-            Boolean success = body.getSuccess();
-            String code = body.getCode();
-            String message = body.getMessage();
-
-            // Check for API-level errors
-            if (success == null || !success) {
-                String errorMsg = message != null ? message : "Unknown error";
-                if (code != null) {
-                    errorMsg = "[" + code + "] " + errorMsg;
-                }
-                return new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    errorMsg
-                );
-            }
-
-            // Extract session data
-            GetSessionData data = null;
-            if (body.getData() != null) {
-                com.aliyun.wuyingai20250506.models.GetSessionResponseBody.GetSessionResponseBodyData responseData = 
-                    body.getData();
-                data = new GetSessionData(
-                    responseData.getSessionId(),
-                    responseData.getAppInstanceId(),
-                    responseData.getResourceId(),
-                    responseData.getResourceUrl(),
-                    responseData.getVpcResource() != null ? responseData.getVpcResource() : false,
-                    responseData.getNetworkInterfaceIp(),
-                    responseData.getHttpPort(),
-                    responseData.getToken(),
-                    body.getCode() != null ? body.getCode() : ""
-                );
-            }
-
-            return new GetSessionResult(
-                requestId,
-                true,
-                data,
-                ""
-            );
-
-        } catch (com.aliyun.tea.TeaException e) {
-            String errorStr = e.getMessage();
-            String requestId = "";
-            if (e.getData() != null && e.getData().get("RequestId") != null) {
-                requestId = e.getData().get("RequestId").toString();
-            }
-
-            // Check if this is an expected business error (e.g., session not found)
-            if (errorStr != null && (errorStr.contains("InvalidMcpSession.NotFound") || 
-                                     errorStr.contains("NotFound"))) {
-                return new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Session " + sessionId + " not found"
-                );
-            } else {
-                return new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Failed to get session " + sessionId + ": " + errorStr
-                );
-            }
-        } catch (Exception e) {
-            return new GetSessionResult(
-                "",
-                false,
-                null,
-                "Failed to get session " + sessionId + ": " + e.getMessage()
-            );
-        }
-    }
 
     /**
      * Get a session by its ID from remote server.
      * This method calls the GetSession API to retrieve session information and creates a Session object.
-     * Unlike getSession(), this method fetches from the remote server, enabling session recovery scenarios.
+     * This method fetches from the remote server, enabling session recovery scenarios.
      *
      * @param sessionId The ID of the session to retrieve. Must be a non-empty string.
      * @return SessionResult containing the Session instance, request ID, and success status.
@@ -223,7 +107,101 @@ public class AgentBay {
         }
 
         // Call GetSession API
-        GetSessionResult getResult = getSessionInfo(sessionId);
+        GetSessionResult getResult;
+        try {
+            com.aliyun.wuyingai20250506.models.GetSessionRequest request =
+                new com.aliyun.wuyingai20250506.models.GetSessionRequest();
+            request.setAuthorization("Bearer " + apiKey);
+            request.setSessionId(sessionId);
+
+            com.aliyun.wuyingai20250506.models.GetSessionResponse response = client.getSession(request);
+
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response == null || response.getBody() == null) {
+                getResult = new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Invalid response from GetSession API"
+                );
+            } else {
+                com.aliyun.wuyingai20250506.models.GetSessionResponseBody body = response.getBody();
+                Boolean success = body.getSuccess();
+                String code = body.getCode();
+                String message = body.getMessage();
+
+                // Check for API-level errors
+                if (success == null || !success) {
+                    String errorMsg = message != null ? message : "Unknown error";
+                    if (code != null) {
+                        errorMsg = "[" + code + "] " + errorMsg;
+                    }
+                    getResult = new GetSessionResult(
+                        requestId,
+                        false,
+                        null,
+                        errorMsg
+                    );
+                } else {
+                    // Extract session data
+                    GetSessionData data = null;
+                    if (body.getData() != null) {
+                        com.aliyun.wuyingai20250506.models.GetSessionResponseBody.GetSessionResponseBodyData responseData =
+                            body.getData();
+                        data = new GetSessionData(
+                            responseData.getSessionId(),
+                            responseData.getAppInstanceId(),
+                            responseData.getResourceId(),
+                            responseData.getResourceUrl(),
+                            responseData.getVpcResource() != null ? responseData.getVpcResource() : false,
+                            responseData.getNetworkInterfaceIp(),
+                            responseData.getHttpPort(),
+                            responseData.getToken(),
+                            body.getCode() != null ? body.getCode() : ""
+                        );
+                    }
+
+                    getResult = new GetSessionResult(
+                        requestId,
+                        true,
+                        data,
+                        ""
+                    );
+                }
+            }
+        } catch (com.aliyun.tea.TeaException e) {
+            String errorStr = e.getMessage();
+            String requestId = "";
+            if (e.getData() != null && e.getData().get("RequestId") != null) {
+                requestId = e.getData().get("RequestId").toString();
+            }
+
+            // Check if this is an expected business error (e.g., session not found)
+            if (errorStr != null && (errorStr.contains("InvalidMcpSession.NotFound") ||
+                                     errorStr.contains("NotFound"))) {
+                getResult = new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Session " + sessionId + " not found"
+                );
+            } else {
+                getResult = new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Failed to get session " + sessionId + ": " + errorStr
+                );
+            }
+        } catch (Exception e) {
+            getResult = new GetSessionResult(
+                "",
+                false,
+                null,
+                "Failed to get session " + sessionId + ": " + e.getMessage()
+            );
+        }
 
         // Check if the API call was successful
         if (!getResult.isSuccess()) {
@@ -272,23 +250,7 @@ public class AgentBay {
         return result;
     }
 
-    /**
-     * Remove a session from the cache
-     *
-     * @param sessionId The session ID to remove
-     */
-    public void removeSession(String sessionId) {
-        sessions.remove(sessionId);
-    }
 
-    /**
-     * Get the API client
-     *
-     * @return ApiClient instance
-     */
-    public ApiClient getApiClient() {
-        return apiClient;
-    }
 
     /**
      * Get the underlying OpenAPI client
@@ -297,6 +259,33 @@ public class AgentBay {
      */
     public Client getClient() {
         return client;
+    }
+
+    /**
+     * Get the API client (internal use)
+     *
+     * @return ApiClient instance
+     */
+    public ApiClient getApiClient() {
+        return apiClient;
+    }
+
+    /**
+     * Get mobile simulate service for this AgentBay instance
+     *
+     * @return MobileSimulate instance
+     */
+    public MobileSimulate getMobileSimulate() {
+        return mobileSimulate;
+    }
+
+    /**
+     * Get network service for this AgentBay instance
+     *
+     * @return Network instance
+     */
+    public Network getNetwork() {
+        return network;
     }
 
     /**
@@ -446,7 +435,7 @@ public class AgentBay {
 
             // Note: ExtraConfigs is handled automatically by MobileExtraConfig during session creation
             // The mobile configuration will be applied after session is created
-            // See: session.getMobile().configure() call below
+            // See: session.mobile.configure() call below
 
             // Add SDK stats for tracking
             String framework = params.getFramework() != null ? params.getFramework() : "";
@@ -549,7 +538,7 @@ public class AgentBay {
             // Process mobile configuration if provided
             if (params.getExtraConfigs() != null && params.getExtraConfigs().getMobile() != null) {
                 try {
-                    session.getMobile().configure(params.getExtraConfigs().getMobile());
+                    session.mobile.configure(params.getExtraConfigs().getMobile());
                 } catch (Exception e) {
                 }
             }
@@ -702,23 +691,6 @@ public class AgentBay {
         return getContextService();
     }
 
-    /**
-     * Get mobile simulate service for this AgentBay instance
-     *
-     * @return MobileSimulate instance
-     */
-    public MobileSimulate getMobileSimulate() {
-        return mobileSimulate;
-    }
-
-    /**
-     * Get network service for this AgentBay instance
-     *
-     * @return Network instance
-     */
-    public Network getNetwork() {
-        return network;
-    }
 
     /**
      * Returns paginated list of sessions filtered by labels.

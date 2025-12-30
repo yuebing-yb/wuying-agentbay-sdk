@@ -52,7 +52,7 @@ public class MobileSystemExample {
             
             // 1. Get installed applications
             System.out.println("\n1. Getting installed applications...");
-            InstalledAppListResult appsResult = session.getMobile().getInstalledApps(
+            InstalledAppListResult appsResult = session.mobile.getInstalledApps(
                 true,   // startMenu
                 false,  // desktop
                 true    // ignoreSystemApps
@@ -79,7 +79,7 @@ public class MobileSystemExample {
             System.out.println("\n2. Starting an application...");
             // Note: Using system Settings app which is always available
             // Replace with an actual installed app package name for real scenarios
-            ProcessListResult startResult = session.getMobile().startApp(
+            ProcessListResult startResult = session.mobile.startApp(
                 "monkey -p com.android.settings -c android.intent.category.LAUNCHER 1"
             );
             System.out.println("Started Application successfully: " + startResult.isSuccess());
@@ -92,7 +92,7 @@ public class MobileSystemExample {
             // 3. Stop an application
             System.out.println("\n3. Stopping an application...");
             // Note: Stop the Settings app we just started
-            AppOperationResult stopResult = session.getMobile().stopAppByCmd(
+            AppOperationResult stopResult = session.mobile.stopAppByCmd(
                 "am force-stop com.android.settings"
             );
             System.out.println("Application stopped: " + stopResult.isSuccess());
@@ -103,7 +103,7 @@ public class MobileSystemExample {
             
             // 4. Get clickable UI elements
             System.out.println("\n4. Getting clickable UI elements...");
-            UIElementListResult elementsResult = session.getMobile().getClickableUiElements();
+            UIElementListResult elementsResult = session.mobile.getClickableUiElements();
             if (elementsResult.isSuccess()) {
                 System.out.println("Clickable UI Elements count: " + elementsResult.getElements().size());
                 System.out.println("Request ID: " + elementsResult.getRequestId());
@@ -113,7 +113,7 @@ public class MobileSystemExample {
             
             // 5. Get all UI elements
             System.out.println("\n5. Getting all UI elements...");
-            UIElementListResult allElementsResult = session.getMobile().getAllUiElements(3000);
+            UIElementListResult allElementsResult = session.mobile.getAllUiElements(3000);
             if (allElementsResult.isSuccess()) {
                 System.out.println("\nUI Element Tree:");
                 List<Map<String, Object>> elements = allElementsResult.getElements();
@@ -139,19 +139,19 @@ public class MobileSystemExample {
             
             // 6. Send key event
             System.out.println("\n6. Sending key event...");
-            BoolResult keyResult = session.getMobile().sendKey(KeyCode.HOME);
+            BoolResult keyResult = session.mobile.sendKey(KeyCode.HOME);
             System.out.println("Key event sent successfully: " + keyResult.isSuccess());
             System.out.println("Request ID: " + keyResult.getRequestId());
             
             // 7. Input text
             System.out.println("\n7. Input text...");
-            BoolResult inputResult = session.getMobile().inputText("Hello, AgentBay!");
+            BoolResult inputResult = session.mobile.inputText("Hello, AgentBay!");
             System.out.println("Text input successfully: " + inputResult.isSuccess());
             System.out.println("Request ID: " + inputResult.getRequestId());
             
             // 8. Swipe screen
             System.out.println("\n8. Swiping screen...");
-            BoolResult swipeResult = session.getMobile().swipe(
+            BoolResult swipeResult = session.mobile.swipe(
                 100,  // startX
                 800,  // startY
                 900,  // endX
@@ -163,7 +163,7 @@ public class MobileSystemExample {
             
             // 9. Tap event (mobile touch)
             System.out.println("\n9. Tapping screen...");
-            BoolResult tapResult = session.getMobile().tap(
+            BoolResult tapResult = session.mobile.tap(
                 500,  // x
                 800   // y
             );
@@ -172,7 +172,7 @@ public class MobileSystemExample {
             
             // 10. Screenshot
             System.out.println("\n10. Taking screenshot...");
-            OperationResult screenshotResult = session.getMobile().screenshot();
+            OperationResult screenshotResult = session.mobile.screenshot();
             System.out.println("Screenshot taken successfully: " + screenshotResult.isSuccess());
             if (screenshotResult.isSuccess() && screenshotResult.getData() != null) {
                 System.out.println("Screenshot data length: " + screenshotResult.getData().length() + " chars");
@@ -187,7 +187,7 @@ public class MobileSystemExample {
             String appActivity = "com.android.calculator2.Calculator";
             String startCmd = String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", appPackage);
             
-            ProcessListResult startWithActivityResult = session.getMobile().startApp(startCmd, null, appActivity);
+            ProcessListResult startWithActivityResult = session.mobile.startApp(startCmd, null, appActivity);
             System.out.println("Start app with activity success: " + startWithActivityResult.isSuccess());
             if (startWithActivityResult.isSuccess() && startWithActivityResult.getData() != null) {
                 System.out.println("Started processes:");

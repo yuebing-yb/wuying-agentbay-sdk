@@ -42,7 +42,7 @@ public class Session {
     private ContextManager contextManager;
     private Browser browser;
     private Computer computer;
-    private Mobile mobile;
+    public Mobile mobile;
     private String fileTransferContextId;
     private String httpPort;
     private String token;
@@ -308,16 +308,6 @@ public class Session {
     }
 
     /**
-     * Check if the session is active
-     *
-     * @return true if active, false otherwise
-     */
-    public boolean isActive() {
-        // For now, assume session is active if it exists in our cache
-        return agentBay.getSession(sessionId) != null;
-    }
-
-    /**
      * Gets information about this session
      *
      * @return SessionInfoResult containing SessionInfo and request ID
@@ -436,14 +426,6 @@ public class Session {
         return computer;
     }
 
-    /**
-     * Get the mobile service for this session
-     *
-     * @return Mobile instance
-     */
-    public Mobile getMobile() {
-        return mobile;
-    }
 
     /**
      * Get the file transfer context ID for this session

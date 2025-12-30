@@ -92,7 +92,7 @@ public class CreateSessionParamsTest {
         assertNotNull(params.getExtraConfigs().getMobile());
         assertTrue(params.getExtraConfigs().getMobile().getLockResolution());
         assertNotNull(params.getExtraConfigs().getMobile().getSimulateConfig());
-        assertEquals("/tmp/device_info", 
+        assertEquals("/tmp/device_info",
                     params.getExtraConfigs().getMobile().getSimulateConfig().getSimulatePath());
     }
 

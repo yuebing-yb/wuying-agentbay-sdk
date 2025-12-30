@@ -41,7 +41,7 @@ public class MobileIntegrationTest {
             assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
             
             session = result.getSession();
-            mobile = session.getMobile();
+            mobile = session.mobile;
             
             System.out.println("Session created with ID: " + session.getSessionId());
             

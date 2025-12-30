@@ -46,13 +46,13 @@ public class MobileUiAutomationExample {
             
             // Simulate tap (demonstration)
             System.out.println("\n3. Simulating screen tap...");
-            System.out.println("Note: Actual tap would use: session.getMobile().tap(x, y)");
+            System.out.println("Note: Actual tap would use: session.mobile.tap(x, y)");
             result = session.getCommand().execute("input tap 500 500");
             System.out.println("Tap simulated at (500, 500)");
             
             // Simulate swipe (demonstration)
             System.out.println("\n4. Simulating swipe gesture...");
-            System.out.println("Note: Actual swipe would use: session.getMobile().swipe(x1, y1, x2, y2)");
+            System.out.println("Note: Actual swipe would use: session.mobile.swipe(x1, y1, x2, y2)");
             result = session.getCommand().execute("input swipe 500 1000 500 500 300");
             System.out.println("Swipe simulated (upward)");
             

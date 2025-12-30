@@ -27,7 +27,6 @@ import static org.junit.Assert.*;
  * Java SDK:
  *   - create() → caches session in sessions map
  *   - get(session_id) → calls remote GetSession API (does NOT cache)
- *   - getSession(session_id) → queries local cache only
  *   - Purpose: Recover existing sessions after restart or across processes
  * 
  * Tests cover:
@@ -56,76 +55,6 @@ public class TestAgentBayGetIntegration {
         this.agentBayClient = new AgentBay();
     }
 
-    /**
-     * Test GetSessionInfo API to retrieve session metadata.
-     * This is equivalent to Python's get_session() method.
-     * 
-     * This test:
-     * 1. Creates a new session
-     * 2. Retrieves session info using getSessionInfo()
-     * 3. Validates the response structure and data fields
-     * 4. Cleans up by deleting the session
-     */
-    @Test
-    public void testGetSessionInfo() throws AgentBayException {
-        System.out.println("Creating a new session for GetSessionInfo testing...");
-
-        // Create session
-        SessionResult createResult = agentBayClient.create(new CreateSessionParams());
-        assertTrue("Failed to create session: " + createResult.getErrorMessage(), 
-                   createResult.isSuccess());
-        
-        Session createdSession = createResult.getSession();
-        assertNotNull("Created session is null", createdSession);
-        
-        String sessionId = createdSession.getSessionId();
-        assertNotNull("Session ID is null", sessionId);
-        System.out.println("Session created with ID: " + sessionId);
-
-        try {
-            // Test GetSessionInfo API
-            System.out.println("Testing GetSessionInfo API...");
-            GetSessionResult getResult = agentBayClient.getSessionInfo(sessionId);
-            
-            // Validate response
-            assertNotNull("GetSessionInfo returned null result", getResult);
-            assertNotNull("RequestId should not be null", getResult.getRequestId());
-            System.out.println("GetSessionInfo RequestId: " + getResult.getRequestId());
-            
-            assertTrue("Expected success to be true", getResult.isSuccess());
-            
-            // Validate Data field
-            GetSessionData data = getResult.getData();
-            assertNotNull("Data field should not be null", data);
-            assertEquals("Expected SessionID " + sessionId + ", got " + data.getSessionId(),
-                         sessionId, data.getSessionId());
-            
-            assertNotNull("AppInstanceId should not be null", data.getAppInstanceId());
-            assertFalse("AppInstanceId should not be empty", data.getAppInstanceId().isEmpty());
-            System.out.println("AppInstanceId: " + data.getAppInstanceId());
-            
-            assertNotNull("ResourceId should not be null", data.getResourceId());
-            assertFalse("ResourceId should not be empty", data.getResourceId().isEmpty());
-            System.out.println("ResourceId: " + data.getResourceId());
-            
-            // Print additional fields from GetSession response
-            System.out.println("VpcResource: " + data.isVpcResource());
-            System.out.println("HttpPort: " + data.getHttpPort());
-            System.out.println("NetworkInterfaceIp: " + data.getNetworkInterfaceIp());
-            System.out.println("Token: " + (data.getToken() != null ? "***" : ""));
-            System.out.println("ResourceUrl: " + data.getResourceUrl());
-            
-            System.out.println("GetSessionInfo API test passed successfully");
-            
-        } finally {
-            // Cleanup: Delete the session
-            System.out.println("Cleaning up: Deleting the session...");
-            DeleteResult deleteResult = createdSession.delete();
-            assertTrue("Failed to delete session: " + deleteResult.getErrorMessage(), 
-                       deleteResult.isSuccess());
-            System.out.println("Session " + sessionId + " deleted successfully");
-        }
-    }
 
     /**
      * Test Get API with a real session (Session Recovery Scenario).
@@ -164,13 +93,6 @@ public class TestAgentBayGetIntegration {
         System.out.println("Session created with ID: " + sessionId);
 
         try {
-            // First get session info to compare with get() result
-            System.out.println("Getting session info for comparison...");
-            GetSessionResult getInfoResult = agentBayClient.getSessionInfo(sessionId);
-            assertTrue("Failed to get session info", getInfoResult.isSuccess());
-            GetSessionData expectedData = getInfoResult.getData();
-            assertNotNull("GetSessionInfo data is null", expectedData);
-
             // Test Get API
             System.out.println("Testing Get API...");
             SessionResult result = agentBayClient.get(sessionId);
@@ -191,23 +113,9 @@ public class TestAgentBayGetIntegration {
             // Verify session fields are populated from GetSession response
             // Note: resourceUrl may have different authcode on each call, so we only check that it's present
             assertNotNull("Session resourceUrl should not be null", session.getResourceUrl());
-            assertTrue("Session resourceUrl should contain 'resourceId='", 
+            assertTrue("Session resourceUrl should contain 'resourceId='",
                        session.getResourceUrl().contains("resourceId="));
             System.out.println("Session resourceUrl validated");
-            
-            // VPC fields verification (if VPC is enabled)
-            // Note: VPC functionality is temporarily disabled in Java SDK
-            // When enabled, uncomment these verifications:
-            /*
-            if (expectedData.isVpcResource()) {
-                assertEquals("Session httpPort should match", 
-                             expectedData.getHttpPort(), session.getHttpPort());
-                assertEquals("Session networkInterfaceIp should match",
-                             expectedData.getNetworkInterfaceIp(), session.getNetworkInterfaceIp());
-                assertEquals("Session token should match",
-                             expectedData.getToken(), session.getToken());
-            }
-            */
             
             System.out.println("Successfully retrieved session with ID: " + session.getSessionId());
             System.out.println("Get API test passed successfully");
@@ -289,29 +197,6 @@ public class TestAgentBayGetIntegration {
         System.out.println("Get API whitespace session ID test passed successfully");
     }
 
-    /**
-     * Test GetSessionInfo API with a non-existent session ID.
-     * 
-     * This test verifies that attempting to get session info for a non-existent session
-     * returns an appropriate error response.
-     */
-    @Test
-    public void testGetSessionInfoNonExistent() throws AgentBayException {
-        System.out.println("Testing GetSessionInfo API with non-existent session ID...");
-        String nonExistentSessionId = "session-nonexistent-12345";
-
-        GetSessionResult result = agentBayClient.getSessionInfo(nonExistentSessionId);
-        
-        assertFalse("Expected getSessionInfo() to fail for non-existent session", result.isSuccess());
-        assertNotNull("Error message should not be null", result.getErrorMessage());
-        assertTrue("Error message should indicate session not found",
-                   result.getErrorMessage().contains("not found") || 
-                   result.getErrorMessage().contains("Failed to get session"));
-        
-        System.out.println("Correctly received error for non-existent session: " + 
-                           result.getErrorMessage());
-        System.out.println("GetSessionInfo non-existent session test passed successfully");
-    }
 
     /**
      * Main method to run tests manually (for debugging purposes).
@@ -326,23 +211,17 @@ public class TestAgentBayGetIntegration {
         try {
             test.setUp();
             
-            System.out.println("\n--- Test 1: GetSessionInfo API ---");
-            test.testGetSessionInfo();
-            
-            System.out.println("\n--- Test 2: Get API with real session ---");
+            System.out.println("\n--- Test 1: Get API with real session ---");
             test.testGetApi();
-            
-            System.out.println("\n--- Test 3: Get API with non-existent session ---");
+
+            System.out.println("\n--- Test 2: Get API with non-existent session ---");
             test.testGetNonExistentSession();
-            
-            System.out.println("\n--- Test 4: Get API with empty session ID ---");
+
+            System.out.println("\n--- Test 3: Get API with empty session ID ---");
             test.testGetEmptySessionId();
-            
-            System.out.println("\n--- Test 5: Get API with whitespace session ID ---");
+
+            System.out.println("\n--- Test 4: Get API with whitespace session ID ---");
             test.testGetWhitespaceSessionId();
-            
-            System.out.println("\n--- Test 6: GetSessionInfo with non-existent session ---");
-            test.testGetSessionInfoNonExistent();
             
             System.out.println("\n=== All Tests Completed Successfully ===");
         } catch (Exception e) {

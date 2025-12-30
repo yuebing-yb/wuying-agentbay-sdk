@@ -37,7 +37,7 @@ public class MobileAppOperationsExample {
             // Get ADB connection info
             System.out.println("\n1. Getting ADB connection info...");
             System.out.println("ADB connection available through mobile module");
-            System.out.println("Note: Use session.getMobile().getAdbUrl(adbkey_pub) to get connection URL");
+            System.out.println("Note: Use session.mobile.getAdbUrl(adbkey_pub) to get connection URL");
             
             // List installed packages
             System.out.println("\n2. Listing installed packages...");
