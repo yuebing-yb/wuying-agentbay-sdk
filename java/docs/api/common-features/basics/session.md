@@ -334,6 +334,51 @@ if (customLink.isSuccess()) {
 }
 ```
 
+### getMetrics
+
+```java
+public SessionMetricsResult getMetrics()
+```
+
+Get runtime metrics for this session via the MCP get_metrics tool.
+
+The underlying MCP tool returns a JSON string. This method parses it and returns structured metrics.
+
+**Returns:**
+- `SessionMetricsResult`: Result containing structured metrics data
+  - `isSuccess()`: Whether the operation succeeded
+  - `getMetrics()`: SessionMetrics object containing runtime metrics
+  - `getRaw()`: Raw metrics data as Map<String, Object>
+  - `getErrorMessage()`: Error message if operation failed
+
+**SessionMetrics Fields:**
+- `cpuCount`: CPU core count
+- `cpuUsedPct`: CPU usage percentage
+- `memTotal`, `memUsed`: Memory total/used (bytes)
+- `diskTotal`, `diskUsed`: Disk total/used (bytes)
+- `rxRateKBps`, `txRateKBps`: Network RX/TX rate (KB/s)
+- `rxUsedKB`, `txUsedKB`: Network RX/TX total used (KB)
+- `timestamp`: RFC3339-like timestamp string (with timezone offset)
+
+**Example:**
+
+```java
+SessionResult result = agentBay.create(new CreateSessionParams().setImageId("linux_latest"));
+Session session = result.getSession();
+
+SessionMetricsResult metricsResult = session.getMetrics();
+if (metricsResult.isSuccess()) {
+    SessionMetrics metrics = metricsResult.getMetrics();
+    System.out.println("CPU Count: " + metrics.getCpuCount());
+    System.out.println("CPU Usage: " + metrics.getCpuUsedPct() + "%");
+    System.out.println("Memory Used: " + metrics.getMemUsed() + " / " + metrics.getMemTotal());
+    System.out.println("Disk Used: " + metrics.getDiskUsed() + " / " + metrics.getDiskTotal());
+    System.out.println("Timestamp: " + metrics.getTimestamp());
+}
+
+session.delete();
+```
+
 ### Label Management
 
 #### setLabels

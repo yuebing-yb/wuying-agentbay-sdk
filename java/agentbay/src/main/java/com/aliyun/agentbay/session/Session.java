@@ -13,6 +13,8 @@ import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.SessionInfo;
 import com.aliyun.agentbay.model.SessionInfoResult;
 import com.aliyun.agentbay.model.SessionParams;
+import com.aliyun.agentbay.model.SessionMetrics;
+import com.aliyun.agentbay.model.SessionMetricsResult;
 import com.aliyun.agentbay.oss.OSS;
 import com.aliyun.agentbay.code.Code;
 import com.aliyun.agentbay.command.Command;
@@ -162,6 +164,147 @@ public class Session {
             }
         }
         return new java.util.ArrayList<>();
+    }
+
+    /**
+     * Get runtime metrics for this session via the MCP get_metrics tool.
+     *
+     * The underlying MCP tool returns a JSON string. This method parses it and returns structured metrics.
+     *
+     * @return SessionMetricsResult containing structured metrics data
+     */
+    public SessionMetricsResult getMetrics() {
+        try {
+            CallMcpToolResponse toolResponse = callTool("get_metrics", new java.util.HashMap<>());
+
+            if (toolResponse == null || toolResponse.getBody() == null) {
+                return new SessionMetricsResult("", false, null, "No response from get_metrics tool");
+            }
+
+            String requestId = ResponseUtil.extractRequestId(toolResponse);
+            Boolean success = toolResponse.getBody().getSuccess();
+
+            if (success == null || !success) {
+                String errorMessage = toolResponse.getBody().getMessage();
+                return new SessionMetricsResult(requestId, false, null,
+                    errorMessage != null ? errorMessage : "get_metrics tool failed");
+            }
+
+            Object data = toolResponse.getBody().getData();
+            if (data == null) {
+                return new SessionMetricsResult(requestId, false, null, "No data in get_metrics response");
+            }
+
+            String jsonData;
+            if (data instanceof String) {
+                jsonData = (String) data;
+            } else {
+                jsonData = objectMapper.writeValueAsString(data);
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> dataMap = objectMapper.readValue(jsonData, Map.class);
+
+            Boolean isError = (Boolean) dataMap.get("isError");
+            if (isError != null && isError) {
+                String errorMessage = "Tool returned error";
+                Object content = dataMap.get("content");
+                if (content instanceof java.util.List && !((java.util.List<?>) content).isEmpty()) {
+                    Object firstContent = ((java.util.List<?>) content).get(0);
+                    if (firstContent instanceof Map) {
+                        Object text = ((Map<?, ?>) firstContent).get("text");
+                        if (text != null) {
+                            errorMessage = text.toString();
+                        }
+                    }
+                }
+                return new SessionMetricsResult(requestId, false, null, errorMessage);
+            }
+
+            Object content = dataMap.get("content");
+            if (content == null || !(content instanceof java.util.List) || ((java.util.List<?>) content).isEmpty()) {
+                return new SessionMetricsResult(requestId, false, null, "No content in get_metrics response");
+            }
+
+            Object firstContent = ((java.util.List<?>) content).get(0);
+            if (!(firstContent instanceof Map)) {
+                return new SessionMetricsResult(requestId, false, null, "Invalid content format in get_metrics response");
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> contentMap = (Map<String, Object>) firstContent;
+            Object textObj = contentMap.get("text");
+            if (textObj == null) {
+                return new SessionMetricsResult(requestId, false, null, "No text in content");
+            }
+
+            String metricsJson = textObj.toString();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> raw = objectMapper.readValue(metricsJson, Map.class);
+
+            SessionMetrics metrics = new SessionMetrics();
+            metrics.setCpuCount(getIntValue(raw, "cpu_count"));
+            metrics.setCpuUsedPct(getDoubleValue(raw, "cpu_used_pct"));
+            metrics.setDiskTotal(getLongValue(raw, "disk_total"));
+            metrics.setDiskUsed(getLongValue(raw, "disk_used"));
+            metrics.setMemTotal(getLongValue(raw, "mem_total"));
+            metrics.setMemUsed(getLongValue(raw, "mem_used"));
+            metrics.setRxRateKBps(getDoubleValue(raw, "rx_rate_kbyte_per_s"));
+            metrics.setTxRateKBps(getDoubleValue(raw, "tx_rate_kbyte_per_s"));
+            metrics.setRxUsedKB(getDoubleValue(raw, "rx_used_kbyte"));
+            metrics.setTxUsedKB(getDoubleValue(raw, "tx_used_kbyte"));
+            metrics.setTimestamp(getStringValue(raw, "timestamp"));
+
+            return new SessionMetricsResult(requestId, true, metrics, "", raw);
+
+        } catch (Exception e) {
+            return new SessionMetricsResult("", false, null,
+                "Failed to get metrics: " + e.getMessage());
+        }
+    }
+
+    private int getIntValue(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) return 0;
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private long getLongValue(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) return 0L;
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        try {
+            return Long.parseLong(value.toString());
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+    }
+
+    private double getDoubleValue(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        if (value == null) return 0.0;
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        }
+        try {
+            return Double.parseDouble(value.toString());
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    private String getStringValue(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        return value != null ? value.toString() : "";
     }
 
     /**
