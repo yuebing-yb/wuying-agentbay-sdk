@@ -39,46 +39,19 @@ SessionResult result = agentBay.create(params);
 if (result.isSuccess()) {
     Session session = result.getSession();
 
-    // Execute command (using ergonomic alias)
-    CommandResult cmdResult = session.getCommand().run("ls -la", 5000);
+    // Execute command
+    CommandResult cmdResult = session.getCommand().executeCommand("ls -la");
     System.out.println(cmdResult.getOutput());
 
-    // File operations (using ergonomic aliases)
-    session.fs().writeFile("/tmp/test.txt", "Hello World");
-    FileContentResult content = session.fs().readFile("/tmp/test.txt");
+    // File operations
+    session.getFileSystem().writeFile("/tmp/test.txt", "Hello World");
+    FileContentResult content = session.getFileSystem().readFile("/tmp/test.txt");
     System.out.println(content.getContent());  // Hello World
 
     // Clean up
     session.delete();
 }
 ```
-
-### 🎯 Ergonomic Aliases (New!)
-
-AgentBay SDK provides intuitive aliases to improve API usability and LLM-generated code success rate:
-
-```java
-// Session aliases - shorter and more intuitive
-session.fs()           // Alias of session.getFileSystem()
-session.getFilesystem() // Alternative alias
-session.getFiles()      // Another alternative
-
-// Command aliases - familiar to shell users
-session.getCommand().run("echo hello", 5000)  // Alias of executeCommand()
-session.getCommand().exec("pwd", 5000)        // Another alias
-
-// FileSystem aliases - Unix-like naming
-session.fs().ls("/tmp")              // Alias of listDirectory()
-session.fs().rm("/tmp/file.txt")     // Alias of deleteFile()
-session.fs().delete("/tmp/file")     // Another alias
-session.fs().remove("/tmp/old.txt")  // Another alias
-
-// Code execution aliases - concise and clear
-session.getCode().run(code, "python")        // Alias of runCode()
-session.getCode().run(code, "python", 30)    // With timeout
-```
-
-All aliases are **non-breaking** - existing methods continue to work!
 
 ## ⚙️ Configuration
 
@@ -192,21 +165,14 @@ Session session = agentBay.create(params).getSession();
 
 ### Code Execution
 ```java
-// Run code in isolated environment (supports python, javascript, r, java)
+// Run code in isolated environment
 CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
 Session session = agentBay.create(params).getSession();
 
-// Python
 CodeExecutionResult result = session.getCode().runCode("print('Hello World')", "python");
 if (result.isSuccess()) {
     System.out.println(result.getResult());  // Hello World
 }
-
-// R
-CodeExecutionResult rResult = session.getCode().runCode("cat('Hello from R')", "r");
-
-// Java
-CodeExecutionResult javaResult = session.getCode().runCode("System.out.println(\"Hello from Java\");", "java");
 ```
 
 ## 🆘 Get Help

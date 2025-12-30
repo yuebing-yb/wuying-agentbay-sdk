@@ -1,10 +1,28 @@
 # Java SDK Examples
 
-This directory documents the Java examples demonstrating various features and capabilities of the AgentBay SDK.
+This directory provides comprehensive documentation for Java examples demonstrating various features of the AgentBay SDK.
 
-## 📁 Example Files Location
+## 📁 Documentation Structure
 
-All example source files are located in: `agentbay/src/main/java/com/aliyun/agentbay/examples/`
+This examples directory follows the **Python SDK pattern**, where:
+- **Documentation (README files)** are organized by category in subdirectories
+- **Source code** is centralized in `../../agentbay/src/main/java/com/aliyun/agentbay/examples/`
+- Each README references the actual source files and provides usage guidance
+
+### Example Categories
+
+| Category | Description | README |
+|----------|-------------|---------|
+| **Common Features - Basics** | File operations, sessions, contexts | [basics/README.md](common-features/basics/README.md) |
+| **Common Features - Advanced** | Metrics, networking, OSS, agents | [advanced/README.md](common-features/advanced/README.md) |
+| **Browser Use** | Playwright automation, browser contexts | [browser-use/README.md](browser-use/README.md) |
+| **Mobile Use** | Mobile UI automation, device simulation | [mobile-use/README.md](mobile-use/README.md) |
+| **Codespace** | Code execution (Python, JS, Java, R) | [codespace/README.md](codespace/README.md) |
+| **Computer Use** | Desktop application management | [computer-use/README.md](computer-use/README.md) |
+
+## 📁 Example Source Files Location
+
+All runnable example source files are in: `../../agentbay/src/main/java/com/aliyun/agentbay/examples/`
 
 ## 🚀 Quick Start
 

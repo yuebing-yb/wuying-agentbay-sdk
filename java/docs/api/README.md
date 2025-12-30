@@ -14,7 +14,7 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
 | **Computer** | [Computer](computer-use/computer.md) | Windows desktop automation |
 | **Code Execution** | [Code](codespace/code.md) | Execute Python, JavaScript code |
 | **Storage** | [OSS](common-features/advanced/oss.md), [Network](common-features/advanced/network.md) | Object storage and network integration |
-| **Configuration** | [CreateSessionParams](CreateSessionParams.md), [ExtraConfigs](ExtraConfigs.md) | Session and environment configuration |
+| **Configuration** | [Session Params](common-features/basics/session-params.md) | Session configuration parameters |
 
 ## 📚 API Documentation by Category
 
@@ -91,15 +91,9 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
 
 ### Configuration
 
-- [CreateSessionParams](CreateSessionParams.md) - `com.aliyun.agentbay.session.CreateSessionParams`
+- [Session Params](common-features/basics/session-params.md) - `com.aliyun.agentbay.session.CreateSessionParams`
   - Configure session creation parameters
   - Properties: `imageId`, `labels`, `contextSyncs`, `browserContext`, `extraConfigs`, `policyId`, `enableBrowserReplay`
-
-- [Session Configuration Parameters](session-configuration-parameters.md) - Complete reference for all session parameters
-
-- [ExtraConfigs](ExtraConfigs.md) - `com.aliyun.agentbay.model.ExtraConfigs`
-  - Advanced environment configurations (mobile, browser)
-  - See also: [MobileExtraConfig Usage Guide](../examples/mobile-extra-config-usage.md)
 
 ## 🎯 Quick Start by Use Case
 
@@ -194,7 +188,7 @@ com.aliyun.agentbay
 - **Control mobile device** → [Mobile](mobile-use/mobile.md)
 - **Manage desktop apps** → [Computer](computer-use/computer.md)
 - **Run code** → [Code.runCode()](codespace/code.md)
-- **Configure session** → [CreateSessionParams](CreateSessionParams.md)
+- **Configure session** → [Session Params](common-features/basics/session-params.md)
 
 ## 📖 Related Documentation
 
