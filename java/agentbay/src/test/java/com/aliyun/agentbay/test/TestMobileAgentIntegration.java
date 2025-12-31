@@ -24,31 +24,17 @@ public class TestMobileAgentIntegration {
     private static Agent agent;
 
     /**
-     * Get API key for testing
-     */
-    private static String getTestApiKey() {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            apiKey = "akm-xxx"; // Replace with your actual API key for testing
-            System.out.println("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for production use.");
-        }
-        return apiKey;
-    }
-
-    /**
      * Set up the test environment by creating a session and initializing agent.
      */
     @BeforeClass
     public static void setUp() throws AgentBayException, InterruptedException {
         // Ensure a delay to avoid session creation conflicts
         Thread.sleep(3000);
-        
-        String apiKey = getTestApiKey();
-        agentBay = new AgentBay(apiKey);
+        agentBay = new AgentBay();
         
         // Create a session with mobile_latest image
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId("imgc-0aae4rgien5oudgb6"); // mobile_latest image ID
+        params.setImageId("mobile_latest"); // mobile_latest image ID
         
         System.out.println("Creating a new session for mobile agent testing...");
         SessionResult sessionResult = agentBay.create(params);

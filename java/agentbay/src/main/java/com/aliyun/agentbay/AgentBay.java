@@ -231,18 +231,6 @@ public class AgentBay {
             */
         }
 
-        // Create a default context for file transfer operations for the recovered session
-        try {
-            String contextName = "file-transfer-context-" + System.currentTimeMillis() / 1000;
-            com.aliyun.agentbay.context.ContextResult contextResult = 
-                getContextService().get(contextName, true);
-            if (contextResult.isSuccess() && contextResult.getContext() != null) {
-                session.setFileTransferContextId(contextResult.getContext().getContextId());
-            } else {
-            }
-        } catch (Exception e) {
-        }
-
         SessionResult result = new SessionResult();
         result.setRequestId(getResult.getRequestId());
         result.setSuccess(true);

@@ -139,10 +139,9 @@ System.out.println("Network I/O: " + metrics.getNetworkIO());
 
 ## Related Documentation
 
-- [OSS API](../../api/common-features/advanced/oss.md)
-- [Network API](../../api/common-features/advanced/network.md)
-- [Agent API](../../api/common-features/advanced/agent.md)
-- [VPC Guide](../../../../docs/guides/common-features/advanced/vpc-sessions.md)
+- [OSS API](../../../api/common-features/advanced/oss.md)
+- [Network API](../../../api/common-features/advanced/network.md)
+- [Agent API](../../../api/common-features/advanced/agent.md)
 
 ## Troubleshooting
 

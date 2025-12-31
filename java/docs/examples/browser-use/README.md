@@ -189,8 +189,7 @@ Session session = agentBay.create(params).getSession();
 
 ## Related Documentation
 
-- [Browser API](../api/browser-use/browser.md)
-- [Browser Automation Guide](../../../docs/guides/browser-use/browser-automation.md)
+- [Browser API](../../api/browser-use/browser.md)
 - [Playwright Documentation](https://playwright.dev/java/)
 
 ## Troubleshooting

@@ -94,10 +94,9 @@ public class SessionLabelTest {
 
     @Test
     public void test03_UpdateLabels() throws Exception {
-        // Update environment label and add new label
         Map<String, String> labels = new HashMap<>();
-        labels.put("environment", "production");  // Update existing
-        labels.put("version", "v1.0.0");          // Add new
+        labels.put("environment", "production");
+        labels.put("version", "v1.0.0");
 
         OperationResult setResult = session.setLabels(labels);
         assertTrue(setResult.isSuccess());
@@ -108,10 +107,9 @@ public class SessionLabelTest {
         Map<String, String> retrievedLabels = objectMapper.readValue(
             getResult.getData(), new TypeReference<Map<String, String>>() {});
 
+        assertEquals(2, retrievedLabels.size());
         assertEquals("production", retrievedLabels.get("environment"));
         assertEquals("v1.0.0", retrievedLabels.get("version"));
-        assertEquals("qa", retrievedLabels.get("team"));
-        assertEquals("agentbay-sdk", retrievedLabels.get("project"));
     }
 
     @Test

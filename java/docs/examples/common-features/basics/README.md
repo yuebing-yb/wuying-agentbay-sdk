@@ -188,10 +188,9 @@ try {
 
 ## Related Documentation
 
-- [FileSystem API](../../api/common-features/basics/filesystem.md)
-- [Context API](../../api/common-features/basics/context.md)
-- [Session API](../../api/common-features/basics/session.md)
-- [Context Sync Guide](../../../../docs/guides/common-features/basics/context-sync.md)
+- [FileSystem API](../../../api/common-features/basics/filesystem.md)
+- [Context API](../../../api/common-features/basics/context.md)
+- [Session API](../../../api/common-features/basics/session.md)
 
 ## Troubleshooting
 

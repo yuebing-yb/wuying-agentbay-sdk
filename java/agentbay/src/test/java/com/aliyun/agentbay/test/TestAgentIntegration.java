@@ -42,8 +42,7 @@ public class TestAgentIntegration {
     public static void setUp() throws AgentBayException, InterruptedException {
         // Ensure a delay to avoid session creation conflicts
         Thread.sleep(3000);
-        
-        String apiKey = getTestApiKey();
+
         agentBay = new AgentBay();
         
         // Create a session with windows_latest image

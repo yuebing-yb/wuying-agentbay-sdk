@@ -24,24 +24,11 @@ public class TestCodeExecution {
     private static Session session;
 
     /**
-     * Get API key for testing
-     */
-    private static String getTestApiKey() {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            apiKey = "akm-xxx"; // Replace with your test API key
-            System.out.println("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.");
-        }
-        return apiKey;
-    }
-
-    /**
      * Set up before all tests - create AgentBay client and session
      */
     @BeforeClass
     public static void setUp() throws AgentBayException {
         System.out.println("Setting up test environment...");
-        String apiKey = getTestApiKey();
         agentBay = new AgentBay();
 
         // Create a session with Linux image for code execution

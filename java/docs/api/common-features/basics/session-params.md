@@ -354,10 +354,8 @@ try {
 
 ## 参考文档
 
-- [ExtraConfigs API](ExtraConfigs.md)
-- [MobileExtraConfig API](MobileExtraConfig.md)
-- [AgentBay.create() API](common-features/basics/agentbay.md)
-- [会话管理指南](../../../docs/guides/common-features/basics/session-management.md)
+- [AgentBay.create() API](agentbay.md)
+- [会话管理指南](../../../../../docs/guides/common-features/basics/session-management.md)
 
 ## 版本历史
 

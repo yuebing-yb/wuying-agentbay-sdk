@@ -38,20 +38,8 @@ public class TestAgentBayGetIntegration {
 
     private AgentBay agentBayClient;
 
-    /**
-     * Get API key for testing
-     */
-    private static String getTestApiKey() {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            fail("AGENTBAY_API_KEY environment variable is not set");
-        }
-        return apiKey;
-    }
-
     @Before
     public void setUp() throws AgentBayException {
-        String apiKey = getTestApiKey();
         this.agentBayClient = new AgentBay();
     }
 
@@ -80,11 +68,13 @@ public class TestAgentBayGetIntegration {
     public void testGetApi() throws AgentBayException {
         System.out.println("Creating a new session for Get API testing...");
 
-        // Create session
-        SessionResult createResult = agentBayClient.create(new CreateSessionParams());
-        assertTrue("Failed to create session: " + createResult.getErrorMessage(), 
+        CreateSessionParams params = new CreateSessionParams();
+        params.setImageId("linux_latest");
+
+        SessionResult createResult = agentBayClient.create(params);
+        assertTrue("Failed to create session: " + createResult.getErrorMessage(),
                    createResult.isSuccess());
-        
+
         Session createdSession = createResult.getSession();
         assertNotNull("Created session is null", createdSession);
         

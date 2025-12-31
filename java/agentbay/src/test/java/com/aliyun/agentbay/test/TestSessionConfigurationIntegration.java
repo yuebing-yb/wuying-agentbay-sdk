@@ -53,7 +53,7 @@ public class TestSessionConfigurationIntegration {
         
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("linux_latest");
-        params.setPolicyId("test-policy-123");
+        params.setPolicyId("mpg-default-system-policy");
         
         Map<String, String> labels = new HashMap<>();
         labels.put("test", "policy-id");
@@ -187,7 +187,7 @@ public class TestSessionConfigurationIntegration {
         // Create session with all configuration options
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("mobile_latest");
-        params.setPolicyId("comprehensive-policy");
+        params.setPolicyId("mpg-default-system-policy");
         params.setEnableBrowserReplay(false);
         params.setExtraConfigs(extraConfigs);
         params.setFramework("junit-test");

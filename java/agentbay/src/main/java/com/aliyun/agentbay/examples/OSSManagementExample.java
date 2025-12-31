@@ -88,7 +88,7 @@ public class OSSManagementExample {
             // env_init
             System.out.println("\nTesting env_init...");
             OSSCredentials credentials = getOSSCredentials();
-            OSSClientResult clientResult = oss.envInit(
+                OSSClientResult clientResult = oss.envInit(
                 credentials.accessKeyId,
                 credentials.accessKeySecret,
                 credentials.securityToken,
@@ -114,7 +114,7 @@ public class OSSManagementExample {
             // upload
             System.out.println("\nTesting upload...");
             String bucket = System.getenv("OSS_TEST_BUCKET");
-            OSSUploadResult uploadResult = oss.upload(bucket, "test-object.txt", testFilePath);
+                OSSUploadResult uploadResult = oss.upload(bucket, "test-object.txt", testFilePath);
             System.out.println("Upload result: " + uploadResult);
             System.out.println("Request ID: " + uploadResult.getRequestId());
             System.out.println("Success: " + uploadResult.isSuccess());

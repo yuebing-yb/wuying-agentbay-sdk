@@ -23,7 +23,7 @@ Complete guides for using the AgentBay Java SDK effectively.
 
 **Configuration:**
 - [Logging Configuration](../../../docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
-- [Session Configuration](../api/session-configuration-parameters.md) - Complete session parameter reference
+- [Session Configuration](../api/common-features/basics/session-params.md) - Complete session parameter reference
 - [MobileExtraConfig Usage Guide](../examples/mobile-extra-config-usage.md) - Advanced mobile configurations
 
 ### Environment-Specific Guides

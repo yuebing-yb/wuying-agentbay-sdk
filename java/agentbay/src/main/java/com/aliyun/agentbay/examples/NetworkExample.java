@@ -1,6 +1,7 @@
 package com.aliyun.agentbay.examples;
 
 import com.aliyun.agentbay.AgentBay;
+import com.aliyun.agentbay.Config;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.CommandResult;
 import com.aliyun.agentbay.model.DeleteResult;
@@ -29,7 +30,7 @@ public class NetworkExample {
             }
 
             System.out.println("Creating AgentBay client...");
-            AgentBay agentBay = new AgentBay();
+            AgentBay agentBay = new AgentBay(apiKey, new Config("cn-hangzhou", "agentbay.us-east-1.aliyuncs.com", 60000));
 
             System.out.println("\n" + repeat("=", 60));
             System.out.println("Example 1: Create a network");
@@ -44,6 +45,10 @@ public class NetworkExample {
 
             String networkId = networkResult.getNetworkId();
             String networkToken = networkResult.getNetworkToken();
+
+           // CreateSessionParams createSessionParams;
+           // createSessionParams.setImageId("");
+            //agentBay.client
 
             System.out.println("✅ Network created successfully!");
             System.out.println("   Network ID: " + networkId);

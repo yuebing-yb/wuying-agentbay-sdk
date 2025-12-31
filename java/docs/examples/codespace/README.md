@@ -214,9 +214,8 @@ try {
 
 ## Related Documentation
 
-- [Code API](../api/codespace/code.md)
-- [Command API](../api/common-features/basics/command.md)
-- [Code Execution Guide](../../../docs/guides/codespace/code-execution.md)
+- [Code API](../../api/codespace/code.md)
+- [Command API](../../api/common-features/basics/command.md)
 
 ## Troubleshooting
 

@@ -142,7 +142,7 @@ boolean isOnline = status.isOnline();
 ## Related Documentation
 
 - [Network API Reference](../../api/common-features/advanced/network.md)
-- [CreateSessionParams](../../api/CreateSessionParams.md)
+- [CreateSessionParams](../../api/common-features/basics/session-params.md)
 - [Session Management](../../api/common-features/basics/session.md)
 
 ## Example Output

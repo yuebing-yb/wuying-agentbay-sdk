@@ -195,9 +195,7 @@ try {
 
 ## Related Documentation
 
-- [Computer API](../api/computer-use/computer.md)
-- [Desktop Automation Guide](../../../docs/guides/computer-use/desktop-automation.md)
-- [Windows Session Guide](../../../docs/guides/computer-use/windows-sessions.md)
+- [Computer API](../../api/computer-use/computer.md)
 
 ## Troubleshooting
 

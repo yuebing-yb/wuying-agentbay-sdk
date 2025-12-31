@@ -231,10 +231,8 @@ mobileConfig.setAppManagerRule(whitelist);
 
 ## Related Documentation
 
-- [Mobile API](../api/mobile-use/mobile.md)
-- [MobileSimulate API](../api/mobile-use/mobile-simulate.md)
-- [MobileExtraConfig Guide](mobile-extra-config-usage.md)
-- [Mobile Automation Guide](../../../docs/guides/mobile-use/mobile-automation.md)
+- [Mobile API](../../api/mobile-use/mobile.md)
+- [MobileSimulate API](../../api/mobile-use/mobile-simulate.md)
 
 ## Troubleshooting
 

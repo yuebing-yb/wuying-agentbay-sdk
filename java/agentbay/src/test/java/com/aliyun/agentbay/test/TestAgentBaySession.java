@@ -16,24 +16,11 @@ import static org.junit.Assert.*;
 public class TestAgentBaySession {
 
     /**
-     * Get API key for testing
-     */
-    private static String getTestApiKey() {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            apiKey = "akm-xxx"; // Replace with your test API key
-            System.out.println("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.");
-        }
-        return apiKey;
-    }
-
-    /**
      * Test cases for AgentBay session operations - Create, List, Delete
      */
     @Test
     public void testCreateListDelete() throws AgentBayException {
         // Test create, list, and delete methods
-        String apiKey = getTestApiKey();
         AgentBay agentBay = new AgentBay();
 
         // Create a session

@@ -23,22 +23,9 @@ public class TestSession {
     private static Session session;
     private static SessionResult result;
 
-    /**
-     * Get API key for testing
-     */
-    private static String getTestApiKey() {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            apiKey = "akm-xxx"; // Replace with your test API key
-            System.out.println("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.");
-        }
-        return apiKey;
-    }
-
     @BeforeClass
     public static void setUp() throws AgentBayException {
         // Set up test fixtures
-        String apiKey = getTestApiKey();
         agentBay = new AgentBay();
 
         // Create a session with default windows image

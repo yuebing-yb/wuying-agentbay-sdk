@@ -226,6 +226,6 @@ if (!status.isSuccess()) {
 
 ## Related APIs
 
-- [CreateSessionParams](../../CreateSessionParams.md) - Session configuration parameters
+- [CreateSessionParams](../basics/session-params.md) - Session configuration parameters
 - [Session](../basics/session.md) - Session management
 - [Command](../basics/command.md) - Command execution for network operations

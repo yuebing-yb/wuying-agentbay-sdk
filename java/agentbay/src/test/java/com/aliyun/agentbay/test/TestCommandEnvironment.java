@@ -21,19 +21,9 @@ public class TestCommandEnvironment {
     private static AgentBay agentBay;
     private static Session session;
 
-    private static String getTestApiKey() {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            apiKey = "akm-xxx";
-            System.out.println("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.");
-        }
-        return apiKey;
-    }
-
     @BeforeClass
     public static void setUp() throws AgentBayException {
         System.out.println("Setting up test environment...");
-        String apiKey = getTestApiKey();
         agentBay = new AgentBay();
 
         CreateSessionParams params = new CreateSessionParams();

@@ -20,24 +20,11 @@ import static org.junit.Assert.*;
 public class TestAgentBaySdkStats {
 
     /**
-     * Get API key for testing
-     */
-    private static String getTestApiKey() {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        if (apiKey == null || apiKey.trim().isEmpty()) {
-            apiKey = "akm-xxx"; // Replace with your test API key
-            System.out.println("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.");
-        }
-        return apiKey;
-    }
-
-    /**
      * Test that session can be created without framework parameter
      * This verifies that sdkStats is correctly set with empty framework field
      */
     @Test
     public void testCreateSessionWithoutFramework() throws AgentBayException {
-        String apiKey = getTestApiKey();
         AgentBay agentBay = new AgentBay();
 
         // Create session parameters without framework
@@ -72,7 +59,6 @@ public class TestAgentBaySdkStats {
      */
     @Test
     public void testCreateSessionWithFramework() throws AgentBayException {
-        String apiKey = getTestApiKey();
         AgentBay agentBay = new AgentBay();
 
         // Create session parameters with framework
@@ -108,7 +94,6 @@ public class TestAgentBaySdkStats {
      */
     @Test
     public void testCreateSessionWithDifferentFrameworks() throws AgentBayException {
-        String apiKey = getTestApiKey();
         AgentBay agentBay = new AgentBay();
 
         String[] frameworks = {"spring-ai", "langchain4j", ""};
