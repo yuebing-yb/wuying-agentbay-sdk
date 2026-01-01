@@ -1,0 +1,67 @@
+"""
+示例：电商网站自动下单全流程
+功能：自动登录 SauceDemo、将商品加入购物车、填写邮寄信息并完成结账提取
+重点：agent.act (动作编排) + 使用 Vision 视觉辅助 + 结构化提取订单状态
+"""
+
+import asyncio
+import os
+import json
+from typing import Optional
+from pydantic import BaseModel, Field
+from agentbay import AsyncAgentBay as AgentBay
+from agentbay import CreateSessionParams, BrowserOption, ActOptions, ExtractOptions
+
+
+class OrderResult(BaseModel):
+    confirmation_message: str = Field(
+        ..., description="The success message displayed after checkout"
+    )
+    order_id: Optional[str] = Field(None, description="The order identifier if present")
+
+
+async def main():
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    skill_id = os.getenv("AGENTBAY_SKILL_ID")
+
+    agent_bay = AgentBay(api_key=api_key)
+    params = CreateSessionParams(image_id="browser_latest")
+    session_result = await agent_bay.create(params)
+    session = session_result.session
+
+    try:
+        await session.browser.initialize(BrowserOption())
+        operator = session.browser.operator
+
+        await operator.navigate("https://www.saucedemo.com/")
+
+        login_config = json.dumps({"api_key": api_key, "skill_id": skill_id})
+        login_result = await operator.login(login_config=login_config)
+        if not login_result.success:
+            print(f"Login failed: {login_result.message}")
+            return
+
+        await operator.act(ActOptions(action="将 'Sauce Labs Backpack' 加入购物车"))
+        await operator.act(ActOptions(action="点购物车图标", use_vision=True))
+        await operator.act(ActOptions(action="点击 'Checkout' 按钮"))
+        await operator.act(
+            ActOptions(
+                action="填写邮寄信息：First Name 'Test', Last Name 'User', Zip '12345'，点击 'Continue'"
+            )
+        )
+        await operator.act(ActOptions(action="点击 'Finish' 完成下单"))
+
+        ok, extraction = await operator.extract(
+            ExtractOptions(instruction="提取下单完成后的确认信息", schema=OrderResult)
+        )
+
+        if ok:
+            print(f"Order Status: {extraction.confirmation_message}")
+
+    finally:
+        await operator.close()
+        await agent_bay.delete(session)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
