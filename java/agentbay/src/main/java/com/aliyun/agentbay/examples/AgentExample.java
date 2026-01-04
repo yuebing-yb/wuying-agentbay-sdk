@@ -1,15 +1,12 @@
 package com.aliyun.agentbay.examples;
 
 import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.Config;
-import com.aliyun.agentbay.model.AgentOptions;
 import com.aliyun.agentbay.model.ExecutionResult;
-import com.aliyun.agentbay.model.InitializationResult;
 import com.aliyun.agentbay.model.QueryResult;
-import com.aliyun.agentbay.model.SessionInfoResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Example demonstrating Agent module usage in AgentBay Java SDK.
@@ -21,7 +18,18 @@ import com.aliyun.agentbay.session.Session;
  * 4. Monitor task status and get results
  */
 public class AgentExample {
+    public static class OutputSchema {
+        @JsonProperty(required = true)
+        private String listedDate;
 
+        public String getListedDate() {
+            return listedDate;
+        }
+
+        public void setListedDate(String listedDate) {
+            this.listedDate = listedDate;
+        }
+    }
     public static void main(String[] args) throws Exception {
         AgentBay agentBay = new AgentBay();
 
@@ -188,25 +196,13 @@ public class AgentExample {
 
             session = sessionResult.getSession();
             System.out.println("Session created: " + session.getSessionId());
-
-            // Initialize browser agent
-            System.out.println("\nInitializing browser agent...");
-            AgentOptions options = new AgentOptions(false, "");
-            InitializationResult initResult = session.getAgent().getBrowser().initialize(options);
-
-            if (!initResult.isSuccess()) {
-                System.err.println("Failed to initialize browser agent: " + initResult.getErrorMessage());
-                return;
-            }
-
-            System.out.println("✅ Browser agent initialized");
-
+        
             // Execute a browser task synchronously
             String task = "Go to example.com and get the page title";
             System.out.println("\nExecuting task: " + task);
 
             ExecutionResult result = session.getAgent().getBrowser()
-                .executeTaskAndWait(task, 30);
+                .executeTaskAndWait(task, 30, true, OutputSchema.class);
 
             if (result.isSuccess()) {
                 System.out.println("✅ Task completed successfully!");
@@ -249,23 +245,13 @@ public class AgentExample {
             session = sessionResult.getSession();
             System.out.println("Session created: " + session.getSessionId());
 
-            // Initialize browser agent
-            System.out.println("\nInitializing browser agent...");
-            AgentOptions options = new AgentOptions(false, "");
-            InitializationResult initResult = session.getAgent().getBrowser().initialize(options);
-
-            if (!initResult.isSuccess()) {
-                System.err.println("Failed to initialize browser agent: " + initResult.getErrorMessage());
-                return;
-            }
-
-            System.out.println("✅ Browser agent initialized");
-
             // Execute a browser task asynchronously
             String task = "Search 'AgentBay documentation' on Baidu";
             System.out.println("\nExecuting task asynchronously: " + task);
 
-            ExecutionResult result = session.getAgent().getBrowser().executeTask(task);
+            ExecutionResult result =
+                session.getAgent().getBrowser().executeTask(task, true,
+                                                            OutputSchema.class);
 
             if (result.isSuccess()) {
                 System.out.println("✅ Task started!");

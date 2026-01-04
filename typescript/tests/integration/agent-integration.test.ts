@@ -1,6 +1,9 @@
 import { AgentBay, Session } from "../../src";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
+import { zodToJsonSchema } from "zod-to-json-schema";
+const { z } = require('zod');
+
 
 describe("Agent", () => {
   describe("computerExecuteTask", () => {
@@ -48,7 +51,7 @@ describe("Agent", () => {
 
         try {
           log(`Executing computer agent task: ${task}`);
-          const result = await session.agent.computer.executeTask(task, timeout);
+          const result = await session.agent.computer.executeTaskAndWait(task, timeout);
           
           log(`Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`);
           log(`Agent Task RequestId: ${result.requestId || "undefined"}`);
@@ -120,7 +123,10 @@ describe("Agent", () => {
 
         try {
           log(`Executing browser agent task: ${task}`);
-          const result = await session.agent.browser.executeTask(task, timeout);
+          const OutputSchema = z.object({
+            ListedDate: z.string(),
+          });
+          const result = await session.agent.browser.executeTaskAndWait(task, timeout, false, OutputSchema);
           
           log(`Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`);
           log(`Agent Task RequestId: ${result.requestId || "undefined"}`);

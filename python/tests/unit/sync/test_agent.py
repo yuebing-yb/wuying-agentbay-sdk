@@ -11,6 +11,8 @@ from agentbay import ExecutionResult
 
 logger = get_logger("agentbay-unit-test")
 
+from dotenv import load_dotenv
+load_dotenv()
 
 class DummySession:
     def __init__(self):
@@ -36,7 +38,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         self.agent = Agent(self.session)
         timeout = os.environ.get("AGENT_TASK_TIMEOUT")
         if not timeout:
-            timeout = 180
+            timeout = 30
         self.timeout = int(timeout)
 
     @pytest.mark.sync
@@ -226,7 +228,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         self.agent = Agent(self.session)
         timeout = os.environ.get("AGENT_TASK_TIMEOUT")
         if not timeout:
-            timeout = 180
+            timeout = 30
         self.timeout = int(timeout)
 
     @pytest.mark.sync
@@ -417,7 +419,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         self.agent = Agent(self.session)
         timeout = os.environ.get("AGENT_TASK_TIMEOUT")
         if not timeout:
-            timeout = 180
+            timeout = 30
         self.timeout = int(timeout)
 
     @pytest.mark.sync

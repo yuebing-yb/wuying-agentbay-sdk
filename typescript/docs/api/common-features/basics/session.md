@@ -6,6 +6,12 @@
 
 Represents a session in the AgentBay cloud environment.
 
+## Hierarchy
+
+- **`Session`**
+
+  ↳ ``LocalSession``
+
 ## Table of contents
 
 

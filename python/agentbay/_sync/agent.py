@@ -4,15 +4,15 @@ import time
 
 import json
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type
 
 from .._common.exceptions import AgentBayError, AgentError
 from .._common.logger import get_logger
 from .._common.models.agent import (
     ExecutionResult,
     QueryResult,
-    InitializationResult,
-    AgentOptions,
+    DefaultSchema,
+    Schema,
 )
 from .base_service import BaseService
 
@@ -434,65 +434,243 @@ class Agent(BaseService):
         def __init__(self, session: "Session"):
             super().__init__(session, tool_prefix="browser_use")
 
-        def initialize(
-            self, options: AgentOptions = None
-        ) -> InitializationResult:
+        def execute_task(
+            self,
+            task: str,
+            use_vision: bool = False,
+            output_schema: Type[Schema] = None,
+        ) -> ExecutionResult:
             """
-            Initialize the browser agent with options.
+            Execute a task described in human language on a browser without waiting for completion (non-blocking).
+
+            This is a fire-and-return interface that immediately provides a task ID.
+            Call get_task_status to check the task status. You can control the timeout
+            of the task execution in your own code by setting the frequency of calling
+            get_task_status.
 
             Args:
-                options: options for the agent.
+                task: Task description in human language.
+                use_vision: Whether to use vision to performe the task.
+                output_schema: The schema of the structured output.
 
             Returns:
-                InitializationResult: Result object containing success status, and error message if any.
+                ExecutionResult: Result object containing success status, task ID,
+                    task status, and error message if any.
 
             Example:
                 ```python
                 session_result = agent_bay.create()
                 session = session_result.session
-                options:AgentOptions = AgentOptions(use_vision=False, output_schema="")
-                initialize_result = session.agent.browser.initialize(options)
-                print(f"Initialized: {initialize_result.success}")
+                class WeatherSchema(BaseModel):
+                    city:str
+                    weather: str
+                result = session.agent.browser.execute_task(task="Query the weather in Shanghai",use_vision=False, output_schema=WeatherSchema)
+                print(
+                    f"Task ID: {result.task_id}, Status: {result.task_status}")
+                status = session.agent.browser.get_task_status(result.task_id)
+                print(f"Task status: {status.task_status}")
                 session.delete()
                 ```
             """
-            _logger.info("Initialize Browser Use Agent...")
             try:
-                args = {"use_vision": False, "output_schema": {}}
-                if options is not None:
-                    args = {
-                        "use_vision": options.use_vision,
-                        "output_schema": options.output_schema,
-                    }
-
-                result = self.session.call_mcp_tool(
-                    "browser_use_initialize", args
-                )
-                if result.success:
-                    return InitializationResult(
-                        request_id=result.request_id, success=True, error_message=""
+                args = {
+                    "task": task,
+                    "use_vision": use_vision,
+                }
+                if output_schema:
+                    args["output_schema"] = json.dumps(
+                        output_schema.model_json_schema()
                     )
                 else:
-                    return InitializationResult(
+                    args["output_schema"] = json.dumps(
+                        DefaultSchema.model_json_schema()
+                    )
+
+                result = self.session.call_mcp_tool(
+                    self._get_tool_name("execute"), args
+                )
+                if result.success:
+                    content = json.loads(result.data)
+                    task_id = content.get("task_id", "")
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=True,
+                        error_message="",
+                        task_id=task_id,
+                        task_status="running",
+                    )
+                else:
+                    _logger.error("task execute failed")
+                    return ExecutionResult(
                         request_id=result.request_id,
                         success=False,
-                        error_message="Failed to initialize browser use agent",
+                        error_message=result.error_message or "Failed to execute task",
+                        task_status="failed",
+                        task_id="",
                     )
             except AgentError as e:
-                _logger.error(f"Failed to initialize: {e}")
                 handled_error = self._handle_error(e)
-                return InitializationResult(
-                    request_id=result.request_id if "result" in locals() else "",
-                    success=False,
-                    error_message=str(handled_error),
+                return ExecutionResult(
+                    request_id="", success=False, error_message=str(handled_error)
                 )
             except Exception as e:
-                _logger.error(f"Failed to initialize: {e}")
                 handled_error = self._handle_error(AgentBayError(str(e)))
-                return InitializationResult(
+                return ExecutionResult(
                     request_id="",
                     success=False,
-                    error_message=f"Failed to initialize: {handled_error}",
+                    error_message=f"Failed to execute: {handled_error}",
+                    task_status="failed",
+                    task_id="",
+                )
+
+        def execute_task_and_wait(
+            self,
+            task: str,
+            timeout: int,
+            use_vision: bool = False,
+            output_schema: Type[Schema] = None,
+        ) -> ExecutionResult:
+            """
+            Execute a task described in human language on a browser synchronously.
+
+            This is a synchronous interface that blocks until the task is completed or
+            an error occurs, or timeout happens. The default polling interval is 3 seconds.
+
+            Args:
+                task: Task description in human language.
+                timeout: Maximum time to wait for task completion in seconds.
+                    Used to control how long to wait for task completion.
+                use_vision: Whether to use vision to performe the task.
+                output_schema: The schema of the structured output.
+
+            Returns:
+                ExecutionResult: Result object containing success status, task ID,
+                    task status, and error message if any.
+
+            Example:
+                ```python
+                session_result = agent_bay.create()
+                session = session_result.session
+                class WeatherSchema(BaseModel):
+                    city:str
+                    weather: str
+                result = session.agent.computer.execute_task_and_wait(task="Query the weather in Shanghai",timeout=60, use_vision=False, output_schema=WeatherSchema)
+                print(f"Task result: {result.task_result}")
+                session.delete()
+                ```
+            """
+            poll_interval = 3
+            max_poll_attempts = timeout // poll_interval
+
+            try:
+                args = {
+                    "task": task,
+                    "use_vision": use_vision,
+                }
+                if output_schema:
+                    args["output_schema"] = json.dumps(
+                        output_schema.model_json_schema()
+                    )
+                else:
+                    args["output_schema"] = json.dumps(
+                        DefaultSchema.model_json_schema()
+                    )
+
+                result = self.session.call_mcp_tool(
+                    self._get_tool_name("execute"), args
+                )
+                if result.success:
+                    content = json.loads(result.data)
+                    task_id = content.get("task_id", "")
+                    tried_time: int = 0
+                    while tried_time < max_poll_attempts:
+                        query = self.get_task_status(task_id)
+                        if query.task_status == "finished":
+                            return ExecutionResult(
+                                request_id=result.request_id,
+                                success=True,
+                                error_message="",
+                                task_id=task_id,
+                                task_status=query.task_status,
+                                task_result=query.task_product,
+                            )
+                        elif query.task_status == "failed":
+                            error_msg = query.error_message or "Failed to execute task."
+                            return ExecutionResult(
+                                request_id=query.request_id,
+                                success=False,
+                                error_message="Failed to execute task.",
+                                task_id=task_id,
+                                task_status=query.task_status,
+                            )
+                        elif query.task_status == "unsupported":
+                            error_msg = query.error_message or "Unsupported task."
+                            return ExecutionResult(
+                                request_id=query.request_id,
+                                success=False,
+                                error_message=error_msg,
+                                task_id=task_id,
+                                task_status=query.task_status,
+                            )
+                        _logger.info(
+                            f"⏳ Task {task_id} running 🚀: {query.task_action}."
+                        )
+                        time.sleep(poll_interval)
+                        tried_time += 1
+                    _logger.warning("⚠️ task execution timeout!")
+                    # Automatically terminate the task on timeout
+                    try:
+                        terminate_result = self.terminate_task(task_id)
+                        if terminate_result.success:
+                            _logger.info(
+                                f"✅ Task {task_id} terminated successfully after timeout"
+                            )
+                        else:
+                            _logger.warning(
+                                f"⚠️ Failed to terminate task {task_id} after timeout: {terminate_result.error_message}"
+                            )
+                    except Exception as e:
+                        _logger.warning(
+                            f"⚠️ Exception while terminating task {task_id} after timeout: {e}"
+                        )
+                    timeout_error_msg = f"Task execution timed out after {timeout} seconds. Task ID: {task_id}. Polled {tried_time} times (max: {max_poll_attempts})."
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=False,
+                        error_message=timeout_error_msg,
+                        task_id=task_id,
+                        task_status="failed",
+                        task_result=f"Task execution timed out after {timeout} seconds.",
+                    )
+                else:
+                    _logger.error("❌ Task execution failed")
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=False,
+                        error_message=result.error_message or "Failed to execute task",
+                        task_status="failed",
+                        task_id="",
+                        task_result="Task Failed",
+                    )
+            except AgentError as e:
+                handled_error = self._handle_error(e)
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=str(handled_error),
+                    task_status="failed",
+                    task_id="",
+                    task_result="Task Failed",
+                )
+            except Exception as e:
+                handled_error = self._handle_error(AgentBayError(str(e)))
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Failed to execute: {handled_error}",
+                    task_status="failed",
+                    task_id="",
+                    task_result="Task Failed",
                 )
 
     class Mobile(_BaseTaskAgent):
@@ -658,7 +836,7 @@ class Agent(BaseService):
 
                 content = json.loads(result.data)
                 task_id = content.get("taskId") or content.get("task_id", "")
-                
+
                 if not task_id:
                     _logger.error("Failed to get task_id from response")
                     return ExecutionResult(
@@ -697,7 +875,7 @@ class Agent(BaseService):
             processed_timestamps = set()  # Track processed stream fragments by timestamp_ms
             while tried_time < max_poll_attempts:
                 query = self.get_task_status(task_id)
-                
+
                 # Process new stream fragments for real-time output
                 if query.stream:
                     for stream_item in query.stream:
@@ -706,7 +884,7 @@ class Agent(BaseService):
                             # Use timestamp_ms to identify new fragments (handles backend returning snapshots)
                             if timestamp is not None and timestamp not in processed_timestamps:
                                 processed_timestamps.add(timestamp)  # Mark as processed immediately
-                                
+
                                 # Output immediately for true streaming effect
                                 content = stream_item.get("content", "")
                                 reasoning = stream_item.get("reasoning", "")
@@ -716,11 +894,11 @@ class Agent(BaseService):
                                     sys.stdout.flush()  # Flush immediately for real-time display
                                 if reasoning:
                                     _logger.debug(f"💭 {reasoning}")
-                
+
                 # Check for error field
                 if query.error:
                     _logger.warning(f"⚠️ Task error: {query.error}")
-                
+
                 if query.task_status == "completed":
                     return ExecutionResult(
                         request_id=last_request_id,
@@ -793,14 +971,14 @@ class Agent(BaseService):
                     content = json.loads(result.data)
                     content_task_id = content.get("taskId") or content.get("task_id", task_id)
                     task_product = content.get("result") or content.get("product", "")
-                    
+
                     stream = content.get("stream", [])
                     if not isinstance(stream, list):
                         _logger.warning(f"⚠️ Stream is not a list (type: {type(stream)}), converting to empty list")
                         stream = []
-                    
+
                     error = content.get("error", "")
-                    
+
                     return QueryResult(
                         success=True,
                         request_id=result.request_id,

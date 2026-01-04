@@ -20,9 +20,8 @@ Session
     │   └── terminateTask(String taskId)
     │
     └── getBrowser() → Agent.Browser
-        ├── initialize(AgentOptions options)
-        ├── executeTask(String task)
-        ├── executeTaskAndWait(String task, int timeout)
+        ├── executeTask(String task, bool use_vision, Class<?>output_schema)
+        ├── executeTaskAndWait(String task, int timeout,bool use_vision, Class<?>output_schema)
         ├── getTaskStatus(String taskId)
         └── terminateTask(String taskId)
 ```
@@ -168,33 +167,6 @@ Browser automation agent using natural language instructions. Uses `browser_use_
 
 ⚠️ **Status: BETA** - This feature is still in beta and may have limitations.
 
-### initialize
-
-Initialize the browser agent before use.
-
-```java
-public InitializationResult initialize(AgentOptions options)
-```
-
-**Parameters:**
-- `options` (AgentOptions) - Configuration options (can be null for defaults)
-  - `useVision` (boolean) - Enable vision-based interaction
-  - `outputSchema` (String) - Custom output schema
-
-**Returns:**
-- `InitializationResult` - Contains success status
-
-**Example:**
-```java
-AgentOptions options = new AgentOptions(false, "");
-InitializationResult result = session.getAgent().getBrowser()
-    .initialize(options);
-
-if (result.isSuccess()) {
-    System.out.println("Browser agent initialized");
-}
-```
-
 ---
 
 ### executeTask
@@ -202,19 +174,33 @@ if (result.isSuccess()) {
 Execute a browser task asynchronously without waiting for completion.
 
 ```java
-public ExecutionResult executeTask(String task)
+public ExecutionResult executeTask(String task, boolean use_vision, Class<?>output_schema)
 ```
 
 **Parameters:**
 - `task` (String) - Browser task description in human language
+- `use_vision` (boolean) - Whether use vision when running the task.
+- `output_schema` (Class<?>) - The schema of structured result of the task.
 
 **Returns:**
 - `ExecutionResult` - Contains success status, task ID, and initial status
 
 **Example:**
 ```java
+public static class OutputSchema {
+    @JsonProperty(value = "listedDate", required = true)
+    private String listedDate;
+
+    public String getListedDate() {
+        return listedDate;
+    }
+
+    public void setListedDate(String listedDate) {
+        this.listedDate = listedDate;
+    }
+}
 ExecutionResult result = session.getAgent().getBrowser()
-    .executeTask("Search for 'AgentBay' on Google");
+    .executeTask("Search for 'AgentBay' on Google", true, OutputSchema.class);
 
 System.out.println("Task ID: " + result.getTaskId());
 ```
@@ -226,12 +212,14 @@ System.out.println("Task ID: " + result.getTaskId());
 Execute a browser task synchronously, blocking until completion.
 
 ```java
-public ExecutionResult executeTaskAndWait(String task, int timeout)
+public ExecutionResult executeTaskAndWait(String task, int timeout, boolean use_vision, Class<?>output_schema)
 ```
 
 **Parameters:**
 - `task` (String) - Browser task description in human language
 - `timeout` (int) - Maximum time to wait for task completion in seconds (default polling interval is 3 seconds)
+- `use_vision` (boolean) - Whether use vision when running the task.
+- `output_schema` (Class<?>) - The schema of structured result of the task.
 
 **Returns:**
 - `ExecutionResult` - Contains success status, task ID, status, and result
@@ -326,34 +314,6 @@ Result object returned from status query operations.
 
 ---
 
-### InitializationResult
-
-Result object returned from initialization operations.
-
-**Fields:**
-- `requestId` (String) - API request identifier
-- `success` (boolean) - Whether initialization succeeded
-- `errorMessage` (String) - Error description if failed
-
----
-
-### AgentOptions
-
-Configuration options for browser agent initialization.
-
-**Fields:**
-- `useVision` (boolean) - Enable vision-based page interaction
-- `outputSchema` (String) - Custom JSON schema for output format
-
-**Example:**
-```java
-AgentOptions options = new AgentOptions();
-options.setUseVision(false);
-options.setOutputSchema("");
-```
-
----
-
 ## Complete Examples
 
 ### Example 1: Computer Agent - Sync Execution
@@ -420,18 +380,26 @@ agentBay.delete(session, false);
 
 ```java
 // Create browser session
+public static class OutputSchema {
+    @JsonProperty(value = "listedDate", required = true)
+    private String listedDate;
+
+    public String getListedDate() {
+        return listedDate;
+    }
+
+    public void setListedDate(String listedDate) {
+        this.listedDate = listedDate;
+    }
+} 
 CreateSessionParams params = new CreateSessionParams();
 params.setImageId("browser_latest");
 Session session = agentBay.create(params).getSession();
 
-// Initialize browser agent
-AgentOptions options = new AgentOptions(false, "");
-session.getAgent().getBrowser().initialize(options);
-
 // Execute browser task
 String task = "Go to example.com and extract the page title";
 ExecutionResult result = session.getAgent().getBrowser()
-    .executeTaskAndWait(task, 180);
+    .executeTaskAndWait(task, 180, true, OutputSchema.class);
 
 if (result.isSuccess()) {
     System.out.println("✅ Result: " + result.getTaskResult());

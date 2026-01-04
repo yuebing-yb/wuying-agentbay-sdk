@@ -9,7 +9,7 @@ import pytest_asyncio
 from agentbay import AsyncAgentBay
 from agentbay import get_logger
 from agentbay import CreateSessionParams
-from agentbay  import AgentOptions
+from pydantic import BaseModel
 
 from dotenv import load_dotenv
 
@@ -142,6 +142,10 @@ async def test_computer_execute_task_success(computer_agent_session):
     assert retry_times < max_poll_attempts
     logger.info(f"✅ result {query_result.task_product}")
 
+class OutputSchema(BaseModel):
+    """Schema for query test."""
+
+    ListedDate: str
 
 @pytest.mark.asyncio
 async def test_browser_execute_task_and_wait_success(browser_agent_session):
@@ -154,15 +158,21 @@ async def test_browser_execute_task_and_wait_success(browser_agent_session):
         timeout = 180
     timeout = int(timeout)
     logger.info("🚀 task of Query the date when Alibaba listed in the U.S")
-    options: AgentOptions = AgentOptions(use_vision=False, output_schema="text")
-    result = await agent.browser.initialize(options)
-    assert result.success
-    result = await agent.browser.execute_task_and_wait(task, timeout)
+
+    result = await agent.browser.execute_task_and_wait(
+        task, timeout, use_vision=False, output_schema=OutputSchema
+    )
     assert result.success
     assert result.request_id != ""
     assert result.error_message == ""
     logger.info(f"✅ result {result.task_result}")
 
+
+class WeatherSchema(BaseModel):
+    """Schema for weather query test."""
+
+    Weather: str
+    City: str
 
 @pytest.mark.asyncio
 async def test_browser_execute_task_success(browser_agent_session):
@@ -176,7 +186,9 @@ async def test_browser_execute_task_success(browser_agent_session):
     timeout = int(timeout)
     max_poll_attempts = timeout // 3
     logger.info("🚀 async task Query the weather in Shanghai.")
-    result = await agent.browser.execute_task(task)
+    result = await agent.browser.execute_task(
+        task, use_vision=False, output_schema=WeatherSchema
+    )
     assert result.success
     assert result.request_id != ""
     assert result.error_message == ""

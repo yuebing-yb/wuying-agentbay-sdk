@@ -18,7 +18,6 @@
 
 - [executeTask](#executetask)
 - [executeTaskAndWait](#executetaskandwait)
-- [initialize](#initialize)
 - [terminateTask](#terminatetask)
 
 ## Properties
@@ -45,22 +44,49 @@ BaseTaskAgent.toolPrefix
 
 ### executeTask
 
-▸ **executeTask**(`task`, `timeout?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTask**\<`TSchema`\>(`task`, `use_vision?`, `output_schema?`): `Promise`\<``ExecutionResult``\>
 
-Execute a specific task described in human language.
+Execute a task described in human language on a browser without waiting for completion
+(non-blocking). This is a fire-and-return interface that immediately
+provides a task ID. Call getTaskStatus to check the task status.
 
-#### Parameters
+#### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `task` | `string` |
-| `timeout?` | `number` |
+| `TSchema` | extends `ZodType`\<`any`, `any`, `any`, `TSchema`\> |
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `task` | `string` | `undefined` | Task description in human language. |
+| `use_vision` | `boolean` | `true` | Whether to use vision in the task. |
+| `output_schema?` | `TSchema` | `undefined` | Optional Zod schema for a structured task output if you need. |
 
 #### Returns
 
 `Promise`\<``ExecutionResult``\>
 
-#### Inherited from
+ExecutionResult containing success status, task ID, task status,
+    and error message if any.
+
+**`Example`**
+
+```typescript
+const WeatherSchema = z.object({city: z.string(), weather:z.string()});
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const result = await agentBay.create({ imageId: 'linux_latest' });
+if (result.success) {
+  const execResult = await result.session.agent.browser.executeTask(
+    'Query the weather in Shanghai', false, WeatherSchema
+  );
+  console.log(`Task ID: ${execResult.taskId}`);
+  await result.session.delete();
+}
+```
+
+#### Overrides
 
 BaseTaskAgent.executeTask
 
@@ -68,60 +94,64 @@ ___
 
 ### executeTaskAndWait
 
-▸ **executeTaskAndWait**(`task`, `timeout`): `Promise`\<``ExecutionResult``\>
+▸ **executeTaskAndWait**\<`TSchema`\>(`task`, `timeout`, `use_vision?`, `output_schema?`): `Promise`\<``ExecutionResult``\>
 
-Execute a specific task described in human language synchronously.
+Execute a task described in human language on a browser synchronously.
 This is a synchronous interface that blocks until the task is completed or
 an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
-#### Parameters
+#### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `task` | `string` |
-| `timeout` | `number` |
+| `TSchema` | extends `ZodType`\<`any`, `any`, `any`, `TSchema`\> |
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `task` | `string` | `undefined` | Task description in human language. |
+| `timeout` | `number` | `undefined` | Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion. |
+| `use_vision` | `boolean` | `true` | Whether to use vision in the task. |
+| `output_schema?` | `TSchema` | `undefined` | Optional Zod schema for a structured task output if you need. |
 
 #### Returns
 
 `Promise`\<``ExecutionResult``\>
 
-#### Inherited from
-
-BaseTaskAgent.executeTaskAndWait
-
-### initialize
-
-▸ **initialize**(`options`): `Promise`\<``InitializationResult``\>
-
-Initialize the browser agent with specific options.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `options` | ``AgentOptions`` | agent initialization options |
-
-#### Returns
-
-`Promise`\<``InitializationResult``\>
-
-InitializationResult containing success status, task output,
+ExecutionResult containing success status, task ID, task status,
     and error message if any.
 
 **`Example`**
 
 ```typescript
+const WeatherSchema = z.object({city: z.string(), weather:z.string()});
 const agentBay = new AgentBay({ apiKey: 'your_api_key' });
 const result = await agentBay.create({ imageId: 'linux_latest' });
 if (result.success) {
-  options:AgentOptions = new AgentOptions(use_vision=False,
-output_schema=""); const initResult = await
-result.session.agent.browser.initialize(options); console.log(`Initialize
-success: ${initResult.success}`); await result.session.delete();
+  const execResult = await result.session.agent.browser.executeTask(
+    'Query the weather in Shanghai', false, WeatherSchema
+  );
+  console.log(`Task ID: ${execResult.taskId}`);
+  const pollInterval = 3;
+  const timeout = 180;
+  const maxPollAttempts = Math.floor(timeout / pollInterval);
+  let triedTime = 0;
+  while(triedTime < maxPollAttempts) {
+    const queryResult = await result.session.agent.browser.getTaskStatus(execResult.taskId);
+    if (queryResult.taskStatus === 'finished') {
+      console.log(`Task ${execResult.taskId} finished with result: ${queryResult.taskResult}`);
+      break;
+    }
+    triedTime++;
+  }
+  await result.session.delete();
 }
 ```
 
-___
+#### Overrides
+
+BaseTaskAgent.executeTaskAndWait
 
 ### terminateTask
 

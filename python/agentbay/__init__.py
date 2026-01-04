@@ -119,7 +119,6 @@ from ._sync.oss import Oss, OSSClientResult, OSSDownloadResult, OSSUploadResult
 from ._sync.context_manager import ContextManager
 from ._common.models.context import ContextInfoResult, ContextSyncResult
 from ._common.models.context import ContextStatusData
-from ._common.models.agent import AgentOptions
 from ._sync.context import (
     ContextListParams,
     Context,
