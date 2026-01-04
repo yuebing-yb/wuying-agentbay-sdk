@@ -283,7 +283,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"\nStep 3: Waiting for session to pause...")
         time.sleep(2)
 
-        print(f"  ✓ Session status for resumed")
+        print(f"  ✓ Checking session status before resuming")
         session.resume()
         print(f"  ✓ Session resumed")
 
