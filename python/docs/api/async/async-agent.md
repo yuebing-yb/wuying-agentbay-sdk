@@ -18,6 +18,8 @@ class AsyncAgent(AsyncBaseService)
 
 An Agent to manipulate applications to complete specific tasks.
 
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+
 ### \_\_init\_\_
 
 ```python
@@ -32,6 +34,8 @@ class Computer(_BaseTaskAgent)
 
 An Agent to perform tasks on the computer.
 
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+
 ### \_\_init\_\_
 
 ```python
@@ -45,6 +49,8 @@ class Browser(_BaseTaskAgent)
 ```
 
 An Agent(⚠️ Still in BETA) to perform tasks on the browser
+
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ### \_\_init\_\_
 
@@ -88,6 +94,8 @@ class Mobile(_BaseTaskAgent)
 ```
 
 An Agent to perform tasks on mobile devices.
+
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ### \_\_init\_\_
 

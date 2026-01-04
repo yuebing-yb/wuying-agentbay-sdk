@@ -50,6 +50,9 @@ type Session struct {
 
 Session represents a session in the AgentBay cloud environment.
 
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and
+MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+
 ### Methods
 
 ### Delete

@@ -26,6 +26,8 @@ T = TypeVar("T", bound=BaseModel)
 class BrowserAgent(BaseService):
     """
     BrowserAgent handles browser automation and agent logic.
+
+    > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
     """
 
     def __init__(self, session, browser):

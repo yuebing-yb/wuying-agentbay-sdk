@@ -387,6 +387,8 @@ type SessionInterface interface {
 }
 
 // Browser provides browser-related operations for the session
+//
+// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 type Browser struct {
 	session     SessionInterface
 	endpointURL string

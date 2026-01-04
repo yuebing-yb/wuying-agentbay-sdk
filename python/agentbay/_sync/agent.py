@@ -26,6 +26,8 @@ _logger = get_logger("agent")
 class Agent(BaseService):
     """
     An Agent to manipulate applications to complete specific tasks.
+
+    > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
     """
 
     def __init__(self, session: "Session"):
@@ -415,6 +417,8 @@ class Agent(BaseService):
     class Computer(_BaseTaskAgent):
         """
         An Agent to perform tasks on the computer.
+
+        > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
 
         def __init__(self, session: "Session"):
@@ -423,6 +427,8 @@ class Agent(BaseService):
     class Browser(_BaseTaskAgent):
         """
         An Agent(⚠️ Still in BETA) to perform tasks on the browser
+
+        > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
 
         def __init__(self, session: "Session"):
@@ -492,6 +498,8 @@ class Agent(BaseService):
     class Mobile(_BaseTaskAgent):
         """
         An Agent to perform tasks on mobile devices.
+
+        > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
 
         def __init__(self, session: "Session"):

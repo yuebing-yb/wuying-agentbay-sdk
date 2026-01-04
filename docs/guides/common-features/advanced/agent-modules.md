@@ -16,6 +16,8 @@ The ComputerUseAgent module is designed for tasks that involve multiple applicat
 
 The agents are capable of understanding user instructions, planning task execution steps, operating various applications, and managing files and folders on the computer or mobile devices.
 
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+
 ## System Image Support
 
 Agent Module functionality is currently only available on specific system images:
