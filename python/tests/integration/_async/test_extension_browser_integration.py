@@ -677,7 +677,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
             # Phase 4: Comprehensive Extension Verification using Real IDs
             print("\nPhase 4: Extension Verification with Real IDs")
             verification_results = await self._comprehensive_browser_extension_verification_with_real_ids(session, extension_ids, real_extension_ids)
-
+            print(f"  ✅ Verification results: {verification_results}")
             # Validate verification results
             assert verification_results["file_system_check"], "Extension files not found in file system"
             assert verification_results["real_id_extraction"], "Real extension ID extraction failed"

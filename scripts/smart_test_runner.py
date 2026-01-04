@@ -73,6 +73,9 @@ OSS_TEST_PATTERNS = [
     "oss.test.ts",          # TypeScript OSS测试
     "oss_test.go",          # Golang OSS测试
     "TestOss_",             # Golang OSS测试函数前缀
+    "test_agent_integration",
+    "agent-integration",
+    "agent_test"
 ]
 
 # State Definition

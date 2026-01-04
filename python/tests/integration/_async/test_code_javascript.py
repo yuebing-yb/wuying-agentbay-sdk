@@ -119,8 +119,8 @@ async def test_js_error_handling(session):
             "Error" in result.error_message or "error" in result.error_message.lower()
         )
     else:
-        print(f"Error in output: {result.result}")
-        assert "Error" in result.result
+        print(f"Error in output: {result.logs.stderr}")
+        assert "Test error" in result.logs.stderr
 
 
 @pytest.mark.asyncio
