@@ -281,7 +281,7 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"\nStep 3: Waiting for session to pause...")
         await asyncio.sleep(2)
 
-        print(f"  ✓ Session status for resumed")
+        print(f"  ✓ Checking session status before resuming")
         await session.resume()
         print(f"  ✓ Session resumed")
 
