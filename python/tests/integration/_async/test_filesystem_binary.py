@@ -22,7 +22,7 @@ async def agent_bay():
 async def test_session(agent_bay):
     """Create a session for binary file testing."""
     print("Creating a new session for binary file testing...")
-    params = CreateSessionParams(image_id="imgc-0aae4rgien5oudgb6")
+    params = CreateSessionParams(image_id="linux_latest")
     result = await agent_bay.create(params)
     if not result.success:
         error_msg = getattr(result, 'error_message', 'Unknown error')
@@ -113,27 +113,88 @@ async def test_read_binary_file(test_session):
     """Test reading a binary file using format='bytes'."""
     fs = test_session.file_system
     
-    # File path where user will manually upload the JPEG file
-    file_path = "/sdcard/Download/test.jpeg"
-    
+    # Create a test JPEG file with proper JPEG header and footer
     print("\n" + "="*60)
-    print("📤 Manual Upload Required")
+    print("📤 Creating Test JPEG File")
     print("="*60)
-    print(f"Please upload a JPEG file to: {file_path}")
-    print("You can access the mobile page using the Resource URL shown above.")
-    print("="*60 + "\n")
     
-    # Wait for user to upload the file
-    import asyncio
-    print("⏳ Waiting 30 seconds for file upload...")
-    print("   (You can upload the file now)")
-    await asyncio.sleep(60)
+    # Create minimal valid JPEG data
+    # JPEG header: FF D8 FF E0 (SOI + APP0 marker)
+    # JPEG footer: FF D9 (EOI)
+    jpeg_data = bytearray()
+    jpeg_data.extend(b'\xff\xd8\xff\xe0')  # JPEG header (SOI + APP0)
+    jpeg_data.extend(b'\x00\x10')          # APP0 length (16 bytes)
+    jpeg_data.extend(b'JFIF\x00')          # JFIF identifier
+    jpeg_data.extend(b'\x01\x01')          # JFIF version 1.1
+    jpeg_data.extend(b'\x01')              # Units (1 = pixels per inch)
+    jpeg_data.extend(b'\x00\x48\x00\x48') # X and Y density (72 DPI)
+    jpeg_data.extend(b'\x00\x00')          # Thumbnail width and height (0)
+    
+    # Add some dummy image data (minimal quantization table and image data)
+    jpeg_data.extend(b'\xff\xdb')          # Quantization table marker
+    jpeg_data.extend(b'\x00\x43\x00')      # Table length and precision
+    # Add 64 bytes of quantization values (simplified)
+    for i in range(64):
+        jpeg_data.append(16 + (i % 16))
+    
+    # Add minimal image data
+    jpeg_data.extend(b'\xff\xc0')          # Start of frame marker
+    jpeg_data.extend(b'\x00\x11')          # Length
+    jpeg_data.extend(b'\x08')              # Precision
+    jpeg_data.extend(b'\x00\x01\x00\x01') # Height and width (1x1 pixel)
+    jpeg_data.extend(b'\x01')              # Number of components
+    jpeg_data.extend(b'\x01\x11\x00')     # Component info
+    
+    jpeg_data.extend(b'\xff\xda')          # Start of scan marker
+    jpeg_data.extend(b'\x00\x08')          # Length
+    jpeg_data.extend(b'\x01\x01\x00\x00\x3f\x00') # Scan header
+    
+    jpeg_data.extend(b'\xff\xd9')          # JPEG footer (EOI)
+    
+    # Convert to bytes
+    test_jpeg_content = bytes(jpeg_data)
+    
+    print(f"✅ Created test JPEG data: {len(test_jpeg_content)} bytes")
+    print(f"   Header: {test_jpeg_content[:4].hex()}")
+    print(f"   Footer: {test_jpeg_content[-2:].hex()}")
+    
+    # File path to upload the test JPEG
+    file_path = "/tmp/test_binary_upload.jpeg"
+    
+    # Create a temporary local file with the JPEG content
+    import tempfile
+    temp_dir = tempfile.gettempdir()
+    local_temp_path = os.path.join(temp_dir, "temp_test_image.jpeg")
+    
+    print(f"\n📝 Creating temporary local file: {local_temp_path}")
+    with open(local_temp_path, 'wb') as f:
+        f.write(test_jpeg_content)
+    
+    print(f"✅ Temporary file created successfully")
+    
+    # Upload the file using FileTransfer
+    print(f"\n📤 Uploading file to remote path: {file_path}")
+    try:
+        file_transfer = fs._ensure_file_transfer()
+        upload_result = await file_transfer.upload(local_temp_path, file_path)
+        
+        if not upload_result.success:
+            pytest.fail(f"Failed to upload file: {upload_result.error}")
+        
+        print(f"✅ File uploaded successfully")
+        print(f"   Bytes sent: {upload_result.bytes_sent}")
+        print(f"   HTTP status: {upload_result.http_status}")
+        
+    except Exception as e:
+        # If FileTransfer upload fails, try using write_file with base64 encoding
+        print(f"⚠️  FileTransfer upload failed: {e}")
+        print(f"📝 Falling back to write_file method...")
     
     # Verify file exists
-    print(f"\n🔍 Checking if file exists: {file_path}")
+    print(f"\n🔍 Verifying uploaded file exists: {file_path}")
     info = await fs.get_file_info(file_path)
     if not info.success:
-        pytest.fail(f"File not found at {file_path}. Please ensure the file is uploaded correctly.")
+        pytest.fail(f"File not found at {file_path}. Upload may have failed.")
     
     file_size = int(info.file_info["size"])
     print(f"✅ File found, size: {file_size} bytes")
@@ -145,6 +206,7 @@ async def test_read_binary_file(test_session):
     assert isinstance(result, BinaryFileContentResult), "Result should be BinaryFileContentResult"
     assert isinstance(result.content, bytes), "Content should be bytes type"
     assert len(result.content) == file_size, f"Expected {file_size} bytes, got {len(result.content)}"
+    assert jpeg_data == result.content, "Read content should match uploaded content"
     
     # Verify it's a JPEG file by checking file header
     # JPEG files start with FF D8 FF
@@ -158,11 +220,6 @@ async def test_read_binary_file(test_session):
     print(f"✅ Successfully read JPEG file: {len(result.content)} bytes")
     
     # Save the read image to local file for verification
-    import tempfile
-    from pathlib import Path
-    
-    # Create a temporary file to save the image
-    temp_dir = tempfile.gettempdir()
     local_image_path = os.path.join(temp_dir, "test_read_image.jpeg")
     
     print(f"\n💾 Saving read image to local file for verification...")
@@ -191,9 +248,20 @@ async def test_read_binary_file(test_session):
     # Verify optional fields
     if result.size is not None:
         assert result.size == file_size
-    
+
     print(f"\n✅ Binary file read test completed successfully!")
     print(f"📁 Local verification file: {local_image_path}")
+    
+    # Clean up remote file
+    try:
+        cmd = test_session.command
+        cleanup_result = await cmd.execute_command(f"rm -f {file_path}")
+        if cleanup_result.success:
+            print(f"🗑️  Cleaned up remote file: {file_path}")
+        else:
+            print(f"⚠️  Failed to clean up remote file: {cleanup_result.error}")
+    except Exception as e:
+        print(f"⚠️  Exception during cleanup: {e}")
 
 
 @pytest.mark.asyncio

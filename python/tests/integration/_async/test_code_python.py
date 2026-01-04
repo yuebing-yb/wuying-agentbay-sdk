@@ -124,8 +124,8 @@ async def test_python_error_handling(session):
             or "division" in result.error_message.lower()
         )
     else:
-        print(f"Error in output: {result.result}")
-        assert "ZeroDivisionError" in result.result or "Error" in result.result
+        print(f"Error in output: {result.logs.stderr}")
+        assert "division by zero" in result.logs.stderr or "Error" in result.logs.stderr
 
 @pytest.mark.asyncio
 async def test_python_with_timeout(session):

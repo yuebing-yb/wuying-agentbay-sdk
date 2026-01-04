@@ -54,11 +54,12 @@ def test_get_nonexistent_session(agent_bay):
 @pytest.mark.sync
 def test_list_sessions(agent_bay):
     """Test listing sessions."""
+    params = CreateSessionParams(image_id="linux_latest")
     # Create a session
-    create_result = agent_bay.create()
+    create_result = agent_bay.create(params)
     assert create_result.success
     session = create_result.session
-    session_id = create_result.session.session_id
+    session_id = session.session_id
 
     # List sessions
     list_result = agent_bay.list()
@@ -67,7 +68,8 @@ def test_list_sessions(agent_bay):
     assert len(list_result.session_ids) > 0
 
     # Check if our session is in the list
-    assert session_id in list_result.session_ids
+    session_ids = [session['sessionId'] for session in list_result.session_ids]
+    assert session_id in session_ids
     print(f"Found {len(list_result.session_ids)} sessions")
 
     # Clean up

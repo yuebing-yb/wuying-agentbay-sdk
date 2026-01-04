@@ -64,8 +64,9 @@ async def test_list_sessions(agent_bay):
     assert len(list_result.session_ids) > 0
 
     # Check if our session is in the list
-    assert session_id in list_result.session_ids
-    print(f"Found {len(list_result.session_ids)} sessions")
+    session_ids = [item['sessionId'] for item in list_result.session_ids]
+    assert session_id in session_ids
+    print(f"Found {len(session_ids)} sessions")
 
     # Clean up
     await session.delete()

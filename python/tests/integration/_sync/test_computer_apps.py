@@ -88,14 +88,14 @@ def test_start_app_with_params(session):
 
     # Act - Try to start cmd.exe
     # Note: 'activity' is for mobile, so we test work_directory here
-    result = session.computer.start_app("cmd.exe", work_directory="C:\\")
+    result = session.computer.start_app("notepad.exe", work_directory="C:\\")
 
     # Assert
     assert result.success, f"Start app with params failed: {result.error_message}"
     assert len(result.data) > 0, "Should have started at least one process"
 
     # Cleanup
-    session.computer.stop_app_by_pname("cmd.exe")
+    session.computer.stop_app_by_pname("notepad.exe")
 
 
 @pytest.mark.sync

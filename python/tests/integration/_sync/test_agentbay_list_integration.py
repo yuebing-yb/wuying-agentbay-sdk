@@ -165,9 +165,16 @@ def test_list_with_single_label(setup_sessions):
     # Verify all returned sessions have the expected label
     session_ids = [s.session_id for s in sessions]
     found_count = 0
-    for session_id in result.session_ids:
-        if session_id in session_ids:
-            found_count += 1
+    for item in result.session_ids:
+        # Handle both string and dict formats
+        if isinstance(item, dict):
+            session_id = item.get('sessionId')
+            if session_id in session_ids:
+                found_count += 1
+        else:
+            # Handle case where item is just a string session ID
+            if item in session_ids:
+                found_count += 1
 
     assert found_count == 3, "Should find exactly 3 test sessions"
 
@@ -196,11 +203,23 @@ def test_list_with_multiple_labels(setup_sessions):
 
     # Verify the dev session is in the results
     dev_session_id = sessions[0].session_id
+    print(f"Dev session ID: {dev_session_id}")
+    print(f"Total matching sessions: {result.session_ids}")
     found = False
-    for session_id in result.session_ids:
-        if session_id == dev_session_id:
-            found = True
-            break
+    for item in result.session_ids:
+        # Handle both string and dict formats
+        if isinstance(item, dict):
+            session_id = item.get('sessionId')
+            print(f"Session ID from dict: {session_id}")
+            if session_id == dev_session_id:
+                found = True
+                break
+        else:
+            # Handle case where item is just a string session ID
+            print(f"Session ID as string: {item}")
+            if item == dev_session_id:
+                found = True
+                break
 
     assert found, "Dev session should be in the results"
 
