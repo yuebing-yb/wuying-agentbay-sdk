@@ -39,7 +39,7 @@ session = result.session
 init_result = session.oss.env_init(
     access_key_id="your-oss-access-key-id",
     access_key_secret="your-oss-access-key-secret",
-    securityToken="your-security-token",  # Required when using temporary credentials (STS)
+    security_token="your-security-token",  # Required when using temporary credentials (STS)
     endpoint="https://oss-cn-hangzhou.aliyuncs.com",  # Optional: defaults to OSS endpoint
     region="cn-hangzhou"  # Optional: defaults to OSS region
 )
@@ -54,7 +54,7 @@ else:
 **Parameters:**
 - `access_key_id` (required): Your Alibaba Cloud Access Key ID from STS
 - `access_key_secret` (required): Your Alibaba Cloud Access Key Secret from STS
-- `securityToken` (required): Security token from [STS temporary credentials](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss). **For security reasons, only temporary credentials are supported.**
+- `security_token` (required): Security token from [STS temporary credentials](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss). **For security reasons, only temporary credentials are supported.**
 - `endpoint` (optional): OSS service endpoint (e.g., `https://oss-cn-hangzhou.aliyuncs.com`)
 - `region` (optional): OSS region (e.g., `cn-hangzhou`)
 
@@ -201,7 +201,7 @@ try:
     init_result = session.oss.env_init(
         access_key_id="your-sts-access-key-id",
         access_key_secret="your-sts-access-key-secret",
-        securityToken="your-sts-security-token",  # Required for STS credentials
+        security_token="your-sts-security-token",  # Required for STS credentials
         endpoint="https://oss-cn-hangzhou.aliyuncs.com",
         region="cn-hangzhou"
     )
@@ -346,7 +346,7 @@ session.command.execute_command("unzip /home/wuying/dataset.zip -d /home/wuying/
 ## Best Practices
 
 1. **Use STS Temporary Credentials**: Always use STS temporary credentials with limited validity and minimal permissions
-2. **Always Initialize First**: Call `env_init()` with all three required credentials (`access_key_id`, `access_key_secret`, `securityToken`) before any other OSS operations
+2. **Always Initialize First**: Call `env_init()` with all three required credentials (`access_key_id`, `access_key_secret`, `security_token`) before any other OSS operations
 3. **Handle Errors**: Check `success` field and handle `error_message` appropriately
 4. **Use Absolute Paths**: Use absolute paths for file operations (e.g., `/home/wuying/file.txt`)
 5. **Secure Credentials**: Never hardcode credentials; use environment variables or secure vaults
@@ -356,7 +356,7 @@ session.command.execute_command("unzip /home/wuying/dataset.zip -d /home/wuying/
 
 ## Security Considerations
 
-- **Mandatory Temporary Credentials**: For security reasons, AgentBay OSS integration **only supports STS temporary credentials**. You must provide a valid `securityToken` when calling `env_init()`.
+- **Mandatory Temporary Credentials**: For security reasons, AgentBay OSS integration **only supports STS temporary credentials**. You must provide a valid `security_token` when calling `env_init()`.
 - **Credential Management**: Store STS credentials securely (environment variables, secrets manager). Never hardcode credentials in source code.
 - **Credential Lifecycle**: STS tokens have limited validity. Ensure you obtain fresh temporary credentials before they expire. Refer to [Alibaba Cloud STS documentation](https://help.aliyun.com/zh/oss/developer-reference/use-temporary-access-credentials-provided-by-sts-to-access-oss) for details.
 - **Minimal Permissions**: Configure STS policies to grant only the minimum required OSS permissions (e.g., read-only for downloads, write-only for uploads)
@@ -368,7 +368,7 @@ session.command.execute_command("unzip /home/wuying/dataset.zip -d /home/wuying/
 
 1. **Session Requirement**: OSS operations require an active session
 2. **STS Credentials Only**: Only STS temporary credentials are supported; permanent credentials are not allowed
-3. **Initialization Required**: `env_init()` must be called with `securityToken` before upload/download operations
+3. **Initialization Required**: `env_init()` must be called with `security_token` before upload/download operations
 4. **Path Restrictions**: File paths must be within the session filesystem
 5. **Image Compatibility**: Works best with `code_latest` image
 
