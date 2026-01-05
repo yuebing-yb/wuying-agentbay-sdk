@@ -266,12 +266,12 @@ describe("Session Labels", () => {
 
         // Check if our session is in the results
         const foundSession = listResponse.sessionIds.some(
-          (sessionId: string) => sessionId === session.sessionId
+          (sessionId) => sessionId.sessionId === session.sessionId
         );
         expect(foundSession).toBe(true);
 
-        listResponse.sessionIds.forEach((sessionId: string) => {
-          expect(sessionId).toBeTruthy();
+        listResponse.sessionIds.forEach((sessionId) => {
+          expect(sessionId.sessionId).toBeTruthy();
         });
 
         // Demonstrate pagination if there's a next token
@@ -316,7 +316,7 @@ describe("Session Labels", () => {
         // There might be some sessions with these labels, but our session shouldn't be among them
         if (listResponse.sessionIds.length > 0) {
           const foundOurSession = listResponse.sessionIds.some(
-            (sessionId: string) => sessionId === session.sessionId
+            (sessionId) => sessionId.sessionId === session.sessionId
           );
           expect(foundOurSession).toBe(false);
         }

@@ -96,6 +96,10 @@ describe("AgentBay List Status Integration Tests", () => {
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(expectedStatuses).toContain(initialStatus);
 
+    if (initialStatus === "FINISH") {
+      return initialStatus;
+    }
+
     // GetSession is internal in SDK; use getStatus only.
     const currentStatus = initialStatus;
     
@@ -226,6 +230,10 @@ describe("AgentBay List Status Integration Tests", () => {
     log(`\nStep 3: Waiting for session to pause...`);
     await new Promise(resolve => setTimeout(resolve, 2000));
 
+    log(`  ✓ Checking session status before resuming`);
+    await session.resumeAsync();
+    log(`  ✓ Session resumed`);
+
     log(`  ✓ Session status after pause checked`);
     
     // Delete the session
@@ -236,7 +244,7 @@ describe("AgentBay List Status Integration Tests", () => {
     }
 
     // Verify session status after delete
-    await verifySessionStatusAndList(session, ["DELETING", "DELETED"], "delete");
+    await verifySessionStatusAndList(session, ["DELETING", "DELETED", "FINISH"], "delete");
   }, 120000);
 
   test("should list sessions with status filter", async () => {

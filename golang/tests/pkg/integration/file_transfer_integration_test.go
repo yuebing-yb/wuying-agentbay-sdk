@@ -116,7 +116,7 @@ func TestFileDownloadIntegration(t *testing.T) {
 
 	// Create session
 	params := agentbay.NewCreateSessionParams()
-	params.ImageId = "browser_latest"
+	params.ImageId = "linux_latest"
 	result, err := ab.Create(params)
 	require.NoError(t, err, "Failed to create session")
 	require.NotNil(t, result.Session, "Session should not be nil")
@@ -139,27 +139,34 @@ func TestFileDownloadIntegration(t *testing.T) {
 	timestamp := time.Now().UnixNano()
 	testContent := fmt.Sprintf("Test file content for download at %d.\nLine 2: This is a multi-line test file.\nLine 3: Testing file transfer functionality.", timestamp)
 	remotePath := fmt.Sprintf("/tmp/file-transfer/download_test_%d.txt", timestamp)
+	// Create a temporary local file to upload first
+	tempDir := os.TempDir()
+	tempUploadPath := filepath.Join(tempDir, fmt.Sprintf("upload_for_download_%d.txt", timestamp))
+	err = os.WriteFile(tempUploadPath, []byte(testContent), 0644)
+	require.NoError(t, err, "Failed to create temp upload file")
+	t.Logf("Created temp upload file: %s", tempUploadPath)
 
-	// Create directory first
-	_, err = session.FileSystem.CreateDirectory("/tmp/file-transfer/")
-	if err != nil {
-		t.Logf("Warning: Failed to create directory (may already exist): %v", err)
+	// Cleanup temp upload file
+	defer func() {
+		if err := os.Remove(tempUploadPath); err != nil && !os.IsNotExist(err) {
+			t.Logf("Warning: Failed to remove temp upload file: %v", err)
+		}
+	}()
+
+	// Upload the file first using UploadFile method
+	t.Logf("Uploading %s to %s", tempUploadPath, remotePath)
+	uploadResult := session.FileSystem.UploadFile(tempUploadPath, remotePath, nil)
+	
+	// Verify upload result
+	if !uploadResult.Success {
+		t.Logf("Upload failed: %s", uploadResult.Error)
+		t.Logf("Request ID (Upload URL): %s", uploadResult.RequestIDUploadURL)
+		t.Logf("Request ID (Sync): %s", uploadResult.RequestIDSync)
 	}
-
-	// Write test file to remote
-	writeResult, err := session.FileSystem.WriteFile(remotePath, testContent, "overwrite")
-	require.NoError(t, err, "Failed to write test file to remote")
-	require.True(t, writeResult.Success, "Failed to write test file to remote")
-	t.Logf("Created test file on remote: %s", remotePath)
-
-	// Verify file exists
-	lsResult, err := session.Command.ExecuteCommand("ls -la /tmp/file-transfer/")
-	if err == nil && lsResult.Success {
-		t.Logf("Remote directory listing:\n%s", lsResult.Output)
-	}
+	require.True(t, uploadResult.Success, "Upload failed: %s", uploadResult.Error)
+	t.Logf("Upload successful: %d bytes sent", uploadResult.BytesSent)
 
 	// Download the file
-	tempDir := os.TempDir()
 	localPath := filepath.Join(tempDir, fmt.Sprintf("download_test_%d.txt", timestamp))
 	t.Logf("Downloading %s to %s", remotePath, localPath)
 
@@ -173,9 +180,10 @@ func TestFileDownloadIntegration(t *testing.T) {
 	// Set longer timeout for download
 	opts := filesystem.DefaultFileTransferOptions()
 	opts.WaitTimeout = 300 * time.Second
-
+	
+	
 	downloadResult := session.FileSystem.DownloadFile(remotePath, localPath, opts)
-
+	
 	// Verify download result
 	if !downloadResult.Success {
 		t.Logf("Download failed: %s", downloadResult.Error)

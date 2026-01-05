@@ -138,7 +138,7 @@ describe("AgentBay.list() Integration Tests", () => {
     // Verify all returned sessions have the expected label
     const sessionIds = testSessions.map((s) => s.sessionId);
     const foundCount = result.sessionIds.filter((sid) =>
-      sessionIds.includes(sid)
+      sessionIds.includes(sid.sessionId)
     ).length;
 
     expect(foundCount).toBe(3);
@@ -164,7 +164,10 @@ describe("AgentBay.list() Integration Tests", () => {
 
     // Verify the dev session is in the results
     const devSessionId = testSessions[0].sessionId;
-    const found = result.sessionIds.includes(devSessionId);
+    const fileterSessionIds = result.sessionIds.filter((sid) =>
+      sid.sessionId == devSessionId
+    );
+    const found = fileterSessionIds.length > 0;
 
     expect(found).toBe(true);
 
@@ -225,7 +228,7 @@ describe("AgentBay.list() Integration Tests", () => {
     // Verify our test sessions are NOT in the results
     const sessionIds = testSessions.map((s) => s.sessionId);
     const foundCount = result.sessionIds.filter((sid) =>
-      sessionIds.includes(sid)
+      sessionIds.includes(sid.sessionId)
     ).length;
 
     expect(foundCount).toBe(0);
@@ -320,7 +323,7 @@ describe("AgentBay.list() Integration Tests", () => {
   test("should traverse all pages and verify pagination completeness", async () => {
     log("\\n=== Testing list() pagination completeness ===");
 
-    const allSessionIds: string[] = [];
+    const allSessionIds: Array<{sessionId: string; sessionStatus: string}> = [];
     let page = 1;
     const limit = 2;
     let totalCountFromApi = 0;
@@ -371,7 +374,7 @@ describe("AgentBay.list() Integration Tests", () => {
     // Verify our test sessions are in the collected IDs
     const testSessionIds = testSessions.map((s) => s.sessionId);
     const foundCount = allSessionIds.filter((sid) =>
-      testSessionIds.includes(sid)
+      testSessionIds.includes(sid.sessionId)
     ).length;
     expect(foundCount).toBe(3);
 
@@ -416,7 +419,7 @@ describe("AgentBay.list() Integration Tests", () => {
     // Test 3: Verify total_count matches actual sessions when collecting all pages
     log("\\nTest 3: total_count should match actual session count across all pages");
 
-    const allSessionIds: string[] = [];
+    const allSessionIds: Array<{sessionId: string; sessionStatus: string}> = [];
     let page = 1;
     const limit = 2;
     let expectedTotalCount = 0;

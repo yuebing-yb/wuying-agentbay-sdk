@@ -70,7 +70,7 @@ describe("ContextSyncIntegration", () => {
       if (sessionId) {
         // Find the session in the sessions map
         const sessionListResult = await agentBay.list();
-        const sessionIdFound = sessionListResult.sessionIds.find(id => id === sessionId);
+        const sessionIdFound = sessionListResult.sessionIds.find(sid => sid.sessionId === sessionId);
         if (sessionIdFound) {
           const session = await agentBay._getSession(sessionId);
           if (session.success && session.data) {
@@ -107,7 +107,7 @@ describe("ContextSyncIntegration", () => {
     
     // Get the session
     const sessionListResult = await agentBay.list();
-    const sessionIdFound = sessionListResult.sessionIds.find(id => id === sessionId);
+    const sessionIdFound = sessionListResult.sessionIds.find(sid => sid.sessionId === sessionId);
     if (!sessionIdFound) {
       throw new Error(`Session ${sessionId} not found`);
     }
@@ -162,7 +162,7 @@ describe("ContextSyncIntegration", () => {
     
     // Get the session
     const sessionListResult = await agentBay.list();
-    const sessionIdFound = sessionListResult.sessionIds.find(id => id === sessionId);
+    const sessionIdFound = sessionListResult.sessionIds.find(sid => sid.sessionId === sessionId);
     if (!sessionIdFound) {
       throw new Error(`Session ${sessionId} not found`);
     }
@@ -233,7 +233,7 @@ describe("ContextSyncIntegration", () => {
     // Get the session
     const sessionListResult = await agentBay.list();
     
-    const sessionIdFound = sessionListResult.sessionIds.find(id => id == sessionId);
+    const sessionIdFound = sessionListResult.sessionIds.find(sid => sid.sessionId == sessionId);
     if (!sessionIdFound) {
       throw new Error(`Session ${sessionId} not found`);
     }
