@@ -1,5 +1,6 @@
 package com.aliyun.agentbay;
 
+import com.aliyun.agentbay.agent.Agent;
 import com.aliyun.agentbay.browser.BrowserContext;
 import com.aliyun.agentbay.client.ApiClient;
 import com.aliyun.agentbay.context.*;
@@ -22,16 +23,22 @@ import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.wuyingai20250506.Client;
 import com.aliyun.wuyingai20250506.models.CreateMcpSessionRequest;
 import com.aliyun.wuyingai20250506.models.CreateMcpSessionResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 /**
  * Main client for interacting with the AgentBay cloud runtime environment
  */
+
 public class AgentBay {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(AgentBay.class);
 
     private String apiKey;
     private String regionId;
@@ -519,6 +526,24 @@ public class AgentBay {
                     }
                 }
             }*/
+            if (response.getBody().getData() != null) {
+                boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
+                if (vpcResource) {
+                    session.setHttpPort(response.getBody().getData().getHttpPort());
+                    if (response.getBody().getData().getLinkUrl() != null) {
+                        session.setVpcLinkUrl(response.getBody().getData().getLinkUrl());
+                        session.setVpcLinkUrlTimestamp(System.currentTimeMillis());
+                    }
+                    session.setToken(response.getBody().getData().getToken());
+                    logger.info("session created with http Port: {}", session.getHttpPort());
+                    try {
+                        session.updateMcpTools(response.getBody().getData().getToolList());
+                        logger.info("Successfully update MCP tools for VPC session");
+                    } catch (Exception e) {
+                        logger.warn("Failed to fetch MCP tools for VPC session: {}", e.getMessage());
+                    }
+                }
+            }
 
             sessions.put(result.getSessionId(), session);
             result.setSession(session);

@@ -18,6 +18,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okio.Buffer;
+
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,7 +52,7 @@ public class BaseService {
      */
     protected OperationResult callMcpTool(String toolName, Object args) {
         try {
-            if (session.isVpcEnabled()) {
+            if (isNotEmpty(session.getVpcLinkUrl()) && isNotEmpty(session.getToken())) {
                 return callMcpToolVpc(toolName, args);
             } else {
                 return callMcpToolApi(toolName, args);
@@ -57,6 +60,13 @@ public class BaseService {
         } catch (Exception e) {
             return new OperationResult("", false, "", "Unexpected error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Check if a string is not null and not empty
+     */
+    private boolean isNotEmpty(String str) {
+        return str != null && !str.isEmpty();
     }
 
     /**
@@ -99,27 +109,29 @@ public class BaseService {
         try {
             //
             String server = findServerForTool(toolName);
-            if (server == null || server.isEmpty()) {
+            if (!isNotEmpty(server)) {
                 return new OperationResult("", false, "", "Server not found for tool: " + toolName);
             }
 
-            String requestId = String.format("vpc-%d-%09d",
-                System.currentTimeMillis(), random.nextInt(1000000000));
+//            String requestId = String.format("vpc-%d-%09d",
+//                System.currentTimeMillis(), random.nextInt(1000000000));
+            String requestId = UUID.randomUUID().toString();
 
             String vpcLinkUrl = session.getVpcLinkUrl();
-            if (vpcLinkUrl == null || vpcLinkUrl.isEmpty()) {
+            if (!isNotEmpty(vpcLinkUrl)) {
                 return new OperationResult("", false, "",
                     "VPC link URL not available. Ensure session VPC configuration is complete.");
             }
 
             String url = vpcLinkUrl + "/callTool";
 
+            String token = session.getToken();
             Map<String, Object> bodyParams = new HashMap<>();
             bodyParams.put("args", args);
             bodyParams.put("server", server);
             bodyParams.put("requestId", requestId);
             bodyParams.put("tool", toolName);
-            bodyParams.put("token", session.getToken() != null ? session.getToken() : "");
+            bodyParams.put("token", token);
             String bodyJson = objectMapper.writeValueAsString(bodyParams);
 
             String curlCommand = String.format("curl -X POST \"%s/callTool\" -H \"Content-Type: application/json\" -d '%s' -w \"\\n总耗时: %%{time_total}s\\n\"",
@@ -128,9 +140,36 @@ public class BaseService {
             );
             //
             RequestBody requestBody = RequestBody.create(bodyJson, MediaType.parse("application/json"));
+//
+//            // 读取并打印 RequestBody 内容用于验证
+//            try {
+//                Buffer buffer = new Buffer();
+//                requestBody.writeTo(buffer);
+//                String requestBodyContent = buffer.readUtf8();
+//
+//                System.out.println("=== RequestBody Validation ===");
+//                System.out.println("Tool: " + toolName);
+//                System.out.println("RequestId: " + requestId);
+//                System.out.println("RequestBody Content:");
+//                System.out.println(requestBodyContent);
+//                System.out.println("RequestBody ContentType: " + requestBody.contentType());
+//                System.out.println("RequestBody ContentLength: " + requestBody.contentLength());
+//                System.out.println("=============================");
+//
+//                // 重新创建 RequestBody，因为已经被读取过了
+//                requestBody = RequestBody.create(requestBodyContent, MediaType.parse("application/json"));
+//
+//                // 如果只想验证 RequestBody 而不发送请求，可以取消下面这行注释
+//                // return new OperationResult(requestId, true, "RequestBody validation only - not sent", "");
+//
+//            } catch (IOException e) {
+//                System.err.println("Failed to read RequestBody: " + e.getMessage());
+//            }
+//
             Request request = new Request.Builder()
                 .url(url)
                 .header("Content-Type", "application/json")
+                .header("X-Access-Token", token)
                 .post(requestBody)
                 .build();
 

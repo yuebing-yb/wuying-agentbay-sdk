@@ -21,7 +21,11 @@ import com.aliyun.agentbay.command.Command;
 import com.aliyun.agentbay.mcp.McpToolsResult;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +34,7 @@ import java.util.Map;
  */
 public class Session {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
     private final String sessionId;
     private final AgentBay agentBay;
@@ -708,6 +713,14 @@ public class Session {
         return vpcLinkUrl;
     }
 
+    public void setVpcLinkUrl(String linkUrl) {
+        this.vpcLinkUrl = linkUrl;
+    }
+
+    public void setVpcLinkUrlTimestamp(Long vpcLinkUrlTimestamp) {
+        this.vpcLinkUrlTimestamp = vpcLinkUrlTimestamp;
+    }
+
     /**
      * Update the cached VPC link URL based on current networkInterfaceIp and httpPort
      */
@@ -722,6 +735,57 @@ public class Session {
                 }
             } catch (Exception e) {
             }
+        }
+    }
+
+    /**
+     * Update MCP tools for this session
+     *
+     */
+    public void updateMcpTools(String dataJson) {
+        try {
+            List<Object> toolsData = objectMapper.readValue(dataJson, List.class);
+
+            java.util.List<com.aliyun.agentbay.mcp.McpTool> tools = new java.util.ArrayList<>();
+            if (toolsData != null) {
+                for (Object toolData : toolsData) {
+                    try {
+                        if (toolData instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> toolMap = (Map<String, Object>) toolData;
+
+                            com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
+                            tool.setName((String) toolMap.get("name"));
+                            tool.setDescription((String) toolMap.get("description"));
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> inputSchema = (Map<String, Object>) toolMap.get("inputSchema");
+                            tool.setInputSchema(inputSchema);
+                            tool.setServer((String) toolMap.get("server"));
+                            tool.setTool((String) toolMap.get("tool"));
+                            tools.add(tool);
+                        } else if (toolData instanceof String) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> toolMap = objectMapper.readValue((String) toolData, Map.class);
+
+                            com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
+                            tool.setName((String) toolMap.get("name"));
+                            tool.setDescription((String) toolMap.get("description"));
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> inputSchema = (Map<String, Object>) toolMap.get("inputSchema");
+                            tool.setInputSchema(inputSchema);
+                            tool.setServer((String) toolMap.get("server"));
+                            tool.setTool((String) toolMap.get("tool"));
+                            tools.add(tool);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Failed to parse tool data: {}", toolData, e);
+                    }
+                }
+            }
+
+            this.mcpTools = tools;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 
