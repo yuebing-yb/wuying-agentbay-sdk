@@ -57,6 +57,11 @@ export class ObserveResult {
   }
 }
 
+/**
+ * BrowserAgent to perform tasks on the browser.
+ *
+ * > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+ */
 export class BrowserAgent {
   private session: Session;
   private browser: Browser;

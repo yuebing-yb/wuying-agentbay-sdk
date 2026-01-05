@@ -67,6 +67,9 @@ Computer handles computer UI automation operations in the AgentBay cloud environ
 comprehensive desktop automation capabilities including mouse, keyboard, window management,
 application management, and screen operations.
 
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and
+MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+
 ### Methods
 
 ### ActivateWindow

@@ -60,6 +60,8 @@ export interface McpSession {
 /**
  * Base class for task execution agents.
  * Provides common functionality for ComputerUseAgent and BrowserUseAgent.
+ *
+ * > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
  */
 abstract class BaseTaskAgent {
   protected session: McpSession;

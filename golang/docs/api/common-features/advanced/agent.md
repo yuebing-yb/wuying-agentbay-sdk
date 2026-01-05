@@ -16,6 +16,9 @@ type Agent struct {
 
 Agent represents an agent to manipulate applications to complete specific tasks
 
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and
+MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+
 ### Related Functions
 
 ### NewAgent
@@ -44,6 +47,9 @@ type BrowserUseAgent struct {
 ```
 
 BrowserUseAgent represents an agent to manipulate a browser to complete specific tasks
+
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and
+MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ### Methods
 
@@ -150,6 +156,9 @@ type ComputerUseAgent struct {
 ```
 
 ComputerUseAgent represents an agent to manipulate a browser to complete specific tasks
+
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and
+MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ### Methods
 
@@ -286,6 +295,9 @@ type MobileUseAgent struct {
 ```
 
 MobileUseAgent represents an agent to perform tasks on mobile devices
+
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and
+MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ### Methods
 

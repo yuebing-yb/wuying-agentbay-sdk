@@ -460,21 +460,29 @@ func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
 }
 
 // ComputerUseAgent represents an agent to manipulate a browser to complete specific tasks
+//
+// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 type ComputerUseAgent struct {
 	*baseTaskAgent
 }
 
 // BrowserUseAgent represents an agent to manipulate a browser to complete specific tasks
+//
+// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 type BrowserUseAgent struct {
 	*baseTaskAgent
 }
 
 // MobileUseAgent represents an agent to perform tasks on mobile devices
+//
+// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 type MobileUseAgent struct {
 	*baseTaskAgent
 }
 
 // Agent represents an agent to manipulate applications to complete specific tasks
+//
+// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 type Agent struct {
 	Browser  *BrowserUseAgent
 	Computer *ComputerUseAgent

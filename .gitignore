@@ -33,6 +33,7 @@ venv_*/
 !venv_bailian_test/
 !venv_cookbook_test/
 *.log
+.aone_copilot/
 
 # TypeScript
 node_modules/

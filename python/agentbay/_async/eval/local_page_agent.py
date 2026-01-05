@@ -236,8 +236,12 @@ class LocalBrowser(Browser):
                                 f"browser_user_data_{os.getpid()}_{uuid.uuid4().hex}",
                             )
 
+                            # Read env variable HEADLESS_MODE
+                            headless_mode = os.environ.get("HEADLESS", "false")
+                            headless = headless_mode.lower() == "true"
+
                             self._browser = await p.chromium.launch_persistent_context(
-                                headless=False,
+                                headless=headless,
                                 viewport={"width": 1280, "height": 1200},
                                 args=[
                                     f"--remote-debugging-port={self._cdp_port}",
