@@ -468,7 +468,7 @@ export interface OSSClientResult extends ApiResponse {
   /** Whether the operation was successful */
   success: boolean;
   /** OSS client configuration */
-  clientConfig: Record<string, any>;
+  clientConfig: string;
   /** Optional error message if the operation failed */
   errorMessage?: string;
 }

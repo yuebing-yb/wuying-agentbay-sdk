@@ -75,39 +75,46 @@ export class Oss {
         region: region || "",
       };
       const result = await this.session.callMcpTool("oss_env_init", args);
-
-      if (!result.success) {
+      
+      if (result.success) {
+        if (result.data) {
+          const clientConfigRaw = result.data;
+          // Check if data contains "failed" field
+          if (typeof clientConfigRaw === 'string' && clientConfigRaw.toLowerCase().includes('failed')) {
+            return {
+              requestId: result.requestId,
+              success: false,
+              clientConfig: "",
+              errorMessage: `OSS environment initialization failed: ${clientConfigRaw}`,
+            };
+          }
+          return {
+            requestId: result.requestId,
+            success: true,
+            clientConfig: clientConfigRaw,
+            errorMessage: "",
+          };
+        } else {
+          return {
+            requestId: result.requestId,
+            success: false,
+            clientConfig: "",
+            errorMessage: "Failed to initialize OSS environment",
+          };
+        }
+      } else {
         return {
           requestId: result.requestId,
           success: false,
-          clientConfig: {},
-          errorMessage: result.errorMessage,
+          clientConfig: "",
+          errorMessage: result.errorMessage || "Failed to initialize OSS environment",
         };
       }
-
-      let clientConfig: Record<string, any> = {};
-      try {
-        clientConfig = JSON.parse(result.data);
-      } catch (err) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          clientConfig: {},
-          errorMessage: `Failed to parse client config: ${err}`,
-        };
-      }
-
-      return {
-        requestId: result.requestId,
-        success: true,
-        clientConfig,
-        errorMessage: "",
-      };
     } catch (error) {
       return {
         requestId: "",
         success: false,
-        clientConfig: {},
+        clientConfig: "",
         errorMessage: `Failed to initialize OSS environment: ${error}`,
       };
     }
