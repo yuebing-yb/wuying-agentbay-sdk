@@ -10,8 +10,8 @@ public class SessionState {
     private String fileTransferContextId;
     private String httpPort;
     private String token;
-    private String vpcLinkUrl;
-    private long vpcLinkUrlTimestamp;
+    private String linkUrl;
+    private long linkUrlTimestamp;
     private List<McpTool> mcpTools;
 
     public SessionState() {
@@ -49,20 +49,20 @@ public class SessionState {
         this.token = token;
     }
 
-    public String getVpcLinkUrl() {
-        return vpcLinkUrl;
+    public String getLinkUrl() {
+        return linkUrl;
     }
 
-    public void setVpcLinkUrl(String vpcLinkUrl) {
-        this.vpcLinkUrl = vpcLinkUrl;
+    public void setLinkUrl(String linkUrl) {
+        this.linkUrl = linkUrl;
     }
 
-    public long getVpcLinkUrlTimestamp() {
-        return vpcLinkUrlTimestamp;
+    public long getLinkUrlTimestamp() {
+        return linkUrlTimestamp;
     }
 
-    public void setVpcLinkUrlTimestamp(long vpcLinkUrlTimestamp) {
-        this.vpcLinkUrlTimestamp = vpcLinkUrlTimestamp;
+    public void setLinkUrlTimestamp(long linkUrlTimestamp) {
+        this.linkUrlTimestamp = linkUrlTimestamp;
     }
 
     public List<McpTool> getMcpTools() {

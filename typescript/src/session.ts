@@ -158,6 +158,7 @@ export class Session {
   public networkInterfaceIp = ""; // Network interface IP for VPC sessions
   public httpPort = ""; // HTTP port for VPC sessions
   public token = ""; // Token for VPC sessions
+  public linkUrl = ""; // LinkUrl for LinkUrl-based VPC route
 
   // Resource URL for accessing the session
   public resourceUrl = "";
@@ -402,8 +403,12 @@ export class Session {
    * @returns The token string for VPC sessions
    * @internal
    */
-  private getToken(): string {
+  public getToken(): string {
     return this.token;
+  }
+
+  public getLinkUrl(): string {
+    return this.linkUrl;
   }
 
   /**
@@ -1358,6 +1363,11 @@ export class Session {
 
       const argsJSON = JSON.stringify(args);
 
+      // Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
+      if (this.getLinkUrl() && this.getToken()) {
+        return await this.callMcpToolLinkUrl(toolName, args);
+      }
+
       // Check if this is a VPC session
       if (this.isVpcEnabled()) {
         // VPC mode: Use HTTP request to the VPC endpoint
@@ -1563,6 +1573,153 @@ export class Session {
         requestId: "",
       };
     }
+  }
+
+  private async callMcpToolLinkUrl(
+    toolName: string,
+    args: any
+  ): Promise<import("./agent/agent").McpToolResult> {
+    const server = this.findServerForTool(toolName);
+    if (!server) {
+      return {
+        success: false,
+        data: "",
+        errorMessage: `Server not found for tool: ${toolName}`,
+        requestId: "",
+      };
+    }
+
+    const requestId = `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const linkUrl = this.getLinkUrl().replace(/\/+$/, "");
+    const token = this.getToken();
+    const argsLength = JSON.stringify(args).length;
+
+    logAPICall("CallMcpTool(LinkUrl)", "");
+    logAPIResponseWithDetails(
+      "CallMcpTool(LinkUrl) Request",
+      requestId,
+      true,
+      {
+        tool_name: toolName,
+        command:
+          typeof args?.command === "string"
+            ? args.command
+            : JSON.stringify(args).slice(0, 500) +
+              (JSON.stringify(args).length > 500 ? "...(truncated)" : ""),
+      },
+      ""
+    );
+
+    const payload = {
+      args,
+      server,
+      requestId,
+      tool: toolName,
+      token,
+    };
+
+    const response = await fetch(`${linkUrl}/callTool`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Access-Token": token,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      logAPIResponseWithDetails(
+        "CallMcpTool(LinkUrl) Response",
+        requestId,
+        false,
+        {
+          http_status: response.status,
+          tool_name: toolName,
+        },
+        ""
+      );
+      return {
+        success: false,
+        data: "",
+        errorMessage: `VPC request failed with code: ${response.status}`,
+        requestId,
+      };
+    }
+
+    const outer = (await response.json()) as any;
+    const dataField = outer?.data;
+    if (dataField === undefined || dataField === null) {
+      return {
+        success: false,
+        data: "",
+        errorMessage: "No data field in LinkUrl response",
+        requestId,
+      };
+    }
+
+    let parsedData: any = dataField;
+    if (typeof dataField === "string") {
+      try {
+        parsedData = JSON.parse(dataField);
+      } catch (err) {
+        return {
+          success: false,
+          data: "",
+          errorMessage: `Invalid data field JSON in LinkUrl response: ${err}`,
+          requestId,
+        };
+      }
+    }
+
+    const result = parsedData?.result;
+    if (!result) {
+      return {
+        success: false,
+        data: "",
+        errorMessage: "No result field in LinkUrl response data",
+        requestId,
+      };
+    }
+
+    const isError = result.isError === true;
+    let textContent = "";
+    if (Array.isArray(result.content) && result.content.length > 0) {
+      const contentItem = result.content[0];
+      if (contentItem && contentItem.text) {
+        textContent = contentItem.text;
+      }
+    }
+
+    logAPIResponseWithDetails(
+      "CallMcpTool(LinkUrl) Response",
+      requestId,
+      !isError,
+      {
+        http_status: response.status,
+        tool_name: toolName,
+        output:
+          textContent.length > 800
+            ? textContent.slice(0, 800) + "...(truncated)"
+            : textContent,
+      },
+      ""
+    );
+
+    if (isError) {
+      return {
+        success: false,
+        data: "",
+        errorMessage: textContent,
+        requestId,
+      };
+    }
+
+    return {
+      success: true,
+      data: textContent || JSON.stringify(result),
+      errorMessage: "",
+      requestId,
+    };
   }
 
   /**

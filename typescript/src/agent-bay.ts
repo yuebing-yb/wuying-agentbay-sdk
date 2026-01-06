@@ -5,6 +5,7 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
+import type { McpTool } from "./session";
 import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
@@ -504,6 +505,9 @@ export class AgentBay {
       if (data.token) {
         session.token = data.token;
       }
+      if (data.linkUrl) {
+        session.linkUrl = data.linkUrl;
+      }
 
       // Set ResourceUrl
       session.resourceUrl = resourceUrl;
@@ -531,12 +535,38 @@ export class AgentBay {
         }
       }
 
-      // For VPC sessions, automatically fetch MCP tools information
-      if (paramsCopy.isVpc) {
+      // Prefer MCP tools list from CreateMcpSession response (toolList) when present,
+      // then fall back to ListMcpTools for backward compatibility.
+      const toolListStr = data.toolList;
+      if (toolListStr) {
+        try {
+          const toolsData: unknown = JSON.parse(toolListStr);
+          const tools: McpTool[] = [];
+          if (Array.isArray(toolsData)) {
+            for (const toolData of toolsData as Array<Record<string, unknown>>) {
+              tools.push({
+                name: (toolData["name"] as string) || "",
+                description: (toolData["description"] as string) || "",
+                inputSchema: (toolData["inputSchema"] as Record<string, any>) || {},
+                server: (toolData["server"] as string) || "",
+                tool: (toolData["tool"] as string) || "",
+              });
+            }
+          }
+          session.mcpTools = tools;
+        } catch (error) {
+          logError(`Warning: Failed to parse toolList from CreateMcpSession: ${error}`);
+        }
+      }
+
+      // Backward compatibility: if isVpc=true but tool list is still empty, fall back to ListMcpTools.
+      if (paramsCopy.isVpc && session.mcpTools.length === 0) {
         logDebug("VPC session detected, automatically fetching MCP tools...");
         try {
           const toolsResult = await session.listMcpTools();
-          logDebug(`Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`);
+          logDebug(
+            `Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`
+          );
         } catch (error) {
           logError(`Warning: Failed to fetch MCP tools for VPC session: ${error}`);
           // Continue with session creation even if tools fetch fails

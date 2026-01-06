@@ -118,6 +118,7 @@ class Session:
         self.network_interface_ip = ""  # Network interface IP for VPC sessions
         self.http_port = ""  # HTTP port for VPC sessions
         self.token = ""
+        self.link_url = ""
 
         # Resource URL for accessing the session
         self.resource_url = ""
@@ -291,6 +292,27 @@ class Session:
     def _get_token(self) -> str:
         """Internal method to get the token for VPC sessions."""
         return self.token
+
+    def _get_link_url(self) -> str:
+        """Internal method to get the LinkUrl for LinkUrl-based VPC sessions."""
+        return self.link_url
+
+    def get_token(self) -> str:
+        """Get the token associated with this session."""
+        return self.token
+
+    def get_link_url(self) -> str:
+        """Get the LinkUrl associated with this session."""
+        return self.link_url
+
+    # CamelCase aliases for cross-SDK consistency
+    def getToken(self) -> str:
+        """Alias of get_token()."""
+        return self.get_token()
+
+    def getLinkUrl(self) -> str:
+        """Alias of get_link_url()."""
+        return self.get_link_url()
 
     def _find_server_for_tool(self, tool_name: str) -> str:
         """Internal method to find the server that provides the given MCP tool."""
@@ -855,7 +877,11 @@ class Session:
 
             args_json = json.dumps(args, ensure_ascii=False)
 
-            # Check if this is a VPC session
+            # Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
+            if self._get_link_url() and self._get_token():
+                return self._call_mcp_tool_link_url(tool_name, args)
+
+            # Legacy VPC route (ip:port).
             if self._is_vpc_enabled():
                 return self._call_mcp_tool_vpc(tool_name, args_json)
 
@@ -871,6 +897,154 @@ class Session:
                 success=False,
                 data="",
                 error_message=f"Failed to call MCP tool: {e}",
+            )
+
+    def _call_mcp_tool_link_url(self, tool_name: str, args: Dict[str, Any]):
+        """
+        Handle LinkUrl-based MCP tool calls using HTTP POST JSON, matching Java BaseService.callMcpToolVpc.
+        """
+        import random
+        import time
+
+        import httpx
+
+        args_json = json.dumps(args, ensure_ascii=False)
+        command = args.get("command") if isinstance(args, dict) else None
+        if not isinstance(command, str):
+            command = args_json[:500] + ("...(truncated)" if len(args_json) > 500 else "")
+
+        _log_api_call("CallMcpTool(LinkUrl)", "")
+
+        server = self._find_server_for_tool(tool_name)
+        if not server:
+            _log_operation_error(
+                "CallMcpTool(LinkUrl)",
+                f"server not found for tool: {tool_name}",
+                False,
+            )
+            return McpToolResult(
+                request_id="",
+                success=False,
+                data="",
+                error_message=f"server not found for tool: {tool_name}",
+            )
+
+        link_url = self._get_link_url().rstrip("/")
+        token = self._get_token()
+        if not link_url or not token:
+            return McpToolResult(
+                request_id="",
+                success=False,
+                data="",
+                error_message="LinkUrl/token not available",
+            )
+
+        request_id = f"link-{int(time.time() * 1000)}-{random.randint(0, 999999999):09d}"
+
+        _log_api_response_with_details(
+            api_name="CallMcpTool(LinkUrl) Request",
+            request_id=request_id,
+            success=True,
+            key_fields={
+                "tool_name": tool_name,
+                "command": command,
+            },
+        )
+        payload = {
+            "args": args,
+            "server": server,
+            "requestId": request_id,
+            "tool": tool_name,
+            "token": token,
+        }
+
+        headers = {"Content-Type": "application/json", "X-Access-Token": token}
+
+        try:
+            with httpx.Client(timeout=120) as client:
+                resp = client.post(f"{link_url}/callTool", json=payload, headers=headers)
+                resp.raise_for_status()
+                outer = resp.json()
+
+            data_field = outer.get("data")
+            if data_field is None:
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message="No data field in LinkUrl response",
+                )
+
+            parsed_data = None
+            if isinstance(data_field, str):
+                parsed_data = json.loads(data_field)
+            elif isinstance(data_field, dict):
+                parsed_data = data_field
+            else:
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message="Invalid data field type in LinkUrl response",
+                )
+
+            result = parsed_data.get("result")
+            if not isinstance(result, dict):
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message="No result field in LinkUrl response data",
+                )
+
+            is_error = bool(result.get("isError", False))
+            content = result.get("content", [])
+            text_content = ""
+            if isinstance(content, list) and content:
+                first_content = content[0]
+                if isinstance(first_content, dict):
+                    text_content = first_content.get("text", "")
+
+            _log_api_response_with_details(
+                api_name="CallMcpTool(LinkUrl) Response",
+                request_id=request_id,
+                success=not is_error,
+                key_fields={
+                    "http_status": int(resp.status_code),
+                    "tool_name": tool_name,
+                    "output": (text_content[:800] + "...(truncated)") if len(text_content) > 800 else text_content,
+                },
+            )
+
+            if is_error:
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message=text_content,
+                )
+
+            return McpToolResult(
+                request_id=request_id,
+                success=True,
+                data=text_content or json.dumps(result, ensure_ascii=False),
+                error_message="",
+            )
+        except httpx.RequestError as e:
+            _log_operation_error("CallMcpTool(LinkUrl)", f"HTTP request failed: {e}", True)
+            return McpToolResult(
+                request_id=request_id,
+                success=False,
+                data="",
+                error_message=f"HTTP request failed: {e}",
+            )
+        except Exception as e:
+            _log_operation_error("CallMcpTool(LinkUrl)", f"Unexpected error: {e}", True)
+            return McpToolResult(
+                request_id=request_id,
+                success=False,
+                data="",
+                error_message=f"Unexpected error: {e}",
             )
 
     def get_metrics(

@@ -163,6 +163,32 @@ class AsyncAgentBay:
             session.http_port = response_data["HttpPort"]
         if response_data.get("Token"):
             session.token = response_data["Token"]
+        if response_data.get("LinkUrl"):
+            session.link_url = response_data["LinkUrl"]
+
+        tool_list = response_data.get("ToolList")
+        if tool_list:
+            try:
+                tools_data = json.loads(tool_list) if isinstance(tool_list, str) else tool_list
+                tools = []
+                if isinstance(tools_data, list):
+                    from .._common.models.mcp_tool import McpTool
+
+                    for tool_data in tools_data:
+                        if not isinstance(tool_data, dict):
+                            continue
+                        tools.append(
+                            McpTool(
+                                name=tool_data.get("name", "") or "",
+                                description=tool_data.get("description", "") or "",
+                                input_schema=tool_data.get("inputSchema", {}) or {},
+                                server=tool_data.get("server", "") or "",
+                                tool=tool_data.get("tool", "") or "",
+                            )
+                        )
+                session.mcp_tools = tools
+            except Exception as e:
+                _log_warning(f"Failed to parse ToolList from create session response: {e}")
 
         # Set ResourceUrl
         session.resource_url = resource_url
@@ -631,8 +657,8 @@ class AsyncAgentBay:
             # Build Session object from response data
             session = await self._build_session_from_response(data, params)
 
-            # For VPC sessions, automatically fetch MCP tools information
-            if params.is_vpc:
+            # Backward compatibility: if is_vpc=true but tool list is still empty, fall back to ListMcpTools.
+            if params.is_vpc and not session.mcp_tools:
                 await self._fetch_mcp_tools_for_vpc_session(session)
 
             # If we have persistence data, wait for context synchronization

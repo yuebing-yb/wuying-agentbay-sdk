@@ -51,8 +51,8 @@ public class Session {
     private String fileTransferContextId;
     private String httpPort;
     private String token;
-    private String vpcLinkUrl;
-    private long vpcLinkUrlTimestamp;
+    private String linkUrl;
+    private long linkUrlTimestamp;
     private String resourceUrl;
     private String networkInterfaceIp;
     private java.util.List<com.aliyun.agentbay.mcp.McpTool> mcpTools;
@@ -701,37 +701,37 @@ public class Session {
      *
      * @return Cached VPC link URL or null if not available
      */
-    public String getVpcLinkUrl() {
-        if (vpcLinkUrl != null) {
+    public String getLinkUrl() {
+        if (linkUrl != null) {
             long currentTime = System.currentTimeMillis();
-            long elapsedMinutes = (currentTime - vpcLinkUrlTimestamp) / (60 * 1000);
+            long elapsedMinutes = (currentTime - linkUrlTimestamp) / (60 * 1000);
 
             if (elapsedMinutes >= 1) {
-                updateVpcLinkUrl();
+                updateLinkUrl();
             }
         }
-        return vpcLinkUrl;
+        return linkUrl;
     }
 
-    public void setVpcLinkUrl(String linkUrl) {
-        this.vpcLinkUrl = linkUrl;
+    public void setLinkUrl(String linkUrl) {
+        this.linkUrl = linkUrl;
     }
 
-    public void setVpcLinkUrlTimestamp(Long vpcLinkUrlTimestamp) {
-        this.vpcLinkUrlTimestamp = vpcLinkUrlTimestamp;
+    public void setLinkUrlTimestamp(Long linkUrlTimestamp) {
+        this.linkUrlTimestamp = linkUrlTimestamp;
     }
 
     /**
      * Update the cached VPC link URL based on current networkInterfaceIp and httpPort
      */
-    public void updateVpcLinkUrl() {
+    public void updateLinkUrl() {
         if (httpPort != null) {
             try {
                 Integer port = Integer.parseInt(httpPort);
                 OperationResult linkResult = getLink("https", port);
                 if (linkResult.isSuccess() && linkResult.getData() != null) {
-                    this.vpcLinkUrl = linkResult.getData();
-                    this.vpcLinkUrlTimestamp = System.currentTimeMillis();
+                    this.linkUrl = linkResult.getData();
+                    this.linkUrlTimestamp = System.currentTimeMillis();
                 }
             } catch (Exception e) {
             }
@@ -846,8 +846,8 @@ public class Session {
             state.setFileTransferContextId(this.fileTransferContextId);
             state.setHttpPort(this.httpPort);
             state.setToken(this.token);
-            state.setVpcLinkUrl(this.vpcLinkUrl);
-            state.setVpcLinkUrlTimestamp(this.vpcLinkUrlTimestamp);
+            state.setLinkUrl(this.linkUrl);
+            state.setLinkUrlTimestamp(this.linkUrlTimestamp);
             state.setMcpTools(this.mcpTools);
 
             return objectMapper.writeValueAsString(state);
@@ -874,8 +874,8 @@ public class Session {
             session.setHttpPort(state.getHttpPort());
             session.setToken(state.getToken());
             session.setMcpTools(state.getMcpTools());
-            session.vpcLinkUrl = state.getVpcLinkUrl();
-            session.vpcLinkUrlTimestamp = state.getVpcLinkUrlTimestamp();
+            session.linkUrl = state.getLinkUrl();
+            session.linkUrlTimestamp = state.getLinkUrlTimestamp();
             return session;
         } catch (Exception e) {
             throw new AgentBayException("Failed to restore session state: " + e.getMessage(), e);

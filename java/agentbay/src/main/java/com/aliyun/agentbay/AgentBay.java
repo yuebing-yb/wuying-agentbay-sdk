@@ -1,6 +1,5 @@
 package com.aliyun.agentbay;
 
-import com.aliyun.agentbay.agent.Agent;
 import com.aliyun.agentbay.browser.BrowserContext;
 import com.aliyun.agentbay.client.ApiClient;
 import com.aliyun.agentbay.context.*;
@@ -391,11 +390,6 @@ public class AgentBay {
                     request.setPersistenceDataList(new ArrayList<>());
                 }
                 request.getPersistenceDataList().add(browserContextSync);
-                for (int i = 0; i < request.getPersistenceDataList().size(); i++) {
-                    CreateMcpSessionRequest.CreateMcpSessionRequestPersistenceDataList item = 
-                        request.getPersistenceDataList().get(i);
-
-                }
             }
 
             // Set image ID if provided
@@ -518,7 +512,7 @@ public class AgentBay {
                 boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
                 if (vpcResource) {
                     session.setHttpPort(response.getBody().getData().getHttpPort());
-                    session.updateVpcLinkUrl();
+                    session.updateLinkUrl();
                     session.setToken(response.getBody().getData().getToken());
                     try {
                         session.listMcpTools();
@@ -527,20 +521,39 @@ public class AgentBay {
                 }
             }*/
             if (response.getBody().getData() != null) {
+                // Case 1 (regionalized endpoint): LinkUrl/Token/ToolList may be returned regardless of is_vpc.
+                if (response.getBody().getData().getToken() != null) {
+                    session.setToken(response.getBody().getData().getToken());
+                }
+                if (response.getBody().getData().getLinkUrl() != null) {
+                    session.setLinkUrl(response.getBody().getData().getLinkUrl());
+                    session.setLinkUrlTimestamp(System.currentTimeMillis());
+                }
+                if (response.getBody().getData().getToolList() != null) {
+                    try {
+                        session.updateMcpTools(response.getBody().getData().getToolList());
+                        logger.info("Successfully update MCP tools from CreateSession response");
+                    } catch (Exception e) {
+                        logger.warn("Failed to update MCP tools from CreateSession response: {}", e.getMessage());
+                    }
+                }
+
+                // Case 2 (non-regionalized endpoint + is_vpc=true): fall back to legacy VPC info and tool listing.
                 boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
                 if (vpcResource) {
                     session.setHttpPort(response.getBody().getData().getHttpPort());
-                    if (response.getBody().getData().getLinkUrl() != null) {
-                        session.setVpcLinkUrl(response.getBody().getData().getLinkUrl());
-                        session.setVpcLinkUrlTimestamp(System.currentTimeMillis());
-                    }
-                    session.setToken(response.getBody().getData().getToken());
                     logger.info("session created with http Port: {}", session.getHttpPort());
-                    try {
-                        session.updateMcpTools(response.getBody().getData().getToolList());
-                        logger.info("Successfully update MCP tools for VPC session");
-                    } catch (Exception e) {
-                        logger.warn("Failed to fetch MCP tools for VPC session: {}", e.getMessage());
+                    // If LinkUrl is not provided by server, derive it using GetLink.
+                    if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
+                        session.updateLinkUrl();
+                    }
+                    // If tool list is still empty, fall back to ListMcpTools.
+                    if (session.getMcpTools() == null || session.getMcpTools().isEmpty()) {
+                        try {
+                            session.listMcpTools();
+                        } catch (Exception e) {
+                            logger.warn("Failed to fetch MCP tools for VPC session: {}", e.getMessage());
+                        }
                     }
                 }
             }
@@ -604,7 +617,6 @@ public class AgentBay {
         }
         
         try {
-            long startTime = System.currentTimeMillis();
             String devInfoFilePath = mobileSimPath + "/dev_info.json";
             String wyaApplyOption = "";
             
@@ -624,11 +636,7 @@ public class AgentBay {
                                           mobileSimPath, wyaApplyOption, devInfoFilePath).trim();
             com.aliyun.agentbay.model.CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
             if (cmdResult.isSuccess()) {
-                long endTime = System.currentTimeMillis();
-                double consumeTime = (endTime - startTime) / 1000.0;
-                String modeStr = mobileSimMode != null ? mobileSimMode.getValue() : "PropertiesOnly";
-                if (cmdResult.getOutput() != null && !cmdResult.getOutput().isEmpty()) {
-                }
+                // no-op
             } else {
             }
         } catch (Exception e) {

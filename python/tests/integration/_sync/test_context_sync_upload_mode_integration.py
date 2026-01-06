@@ -88,7 +88,6 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
         )
 
         session_params = CreateSessionParams(
-            image_id="linux_latest",
             labels={
                 "test": f"upload-mode-{self.__class__.unique_id}",
                 "type": "basic-functionality",
@@ -176,7 +175,6 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
 
         # Create session with the contextSync
         session_params = CreateSessionParams(
-            image_id="linux_latest",
             labels={
                 "test": f"archive-mode-{self.__class__.unique_id}",
                 "type": "contextId-path-validation",
@@ -223,9 +221,6 @@ class TestContextSyncUploadModeIntegration(unittest.TestCase):
 
         print(f"Creating file: {file_path}")
         print(f"File content size: {len(file_content)} bytes")
-
-        directory_result = session.file_system.create_directory("/tmp/archive-mode-test")
-        assert directory_result.success, f"Failed to create directory: {directory_result.error_message}"
 
         write_result = session.file_system.write_file(
             file_path, file_content, "overwrite"

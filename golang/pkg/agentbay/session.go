@@ -1,8 +1,10 @@
 package agentbay
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -116,6 +118,7 @@ type Session struct {
 	NetworkInterfaceIP string // Network interface IP for VPC sessions
 	HttpPortNumber     string // HTTP port for VPC sessions
 	Token              string // Token for VPC sessions
+	LinkUrl            string // LinkUrl for LinkUrl-based VPC route
 
 	// Resource URL for accessing the session
 	ResourceUrl string
@@ -192,6 +195,10 @@ func (s *Session) GetStatus() (*SessionStatusResult, error) {
 	requestID := models.ExtractRequestID(response)
 	if requestID == "" && response != nil && response.Body != nil && response.Body.RequestId != nil {
 		requestID = tea.StringValue(response.Body.RequestId)
+	}
+	if requestID == "" {
+		// Some backends may omit RequestId for GetSessionDetail; keep it non-empty for diagnostics.
+		requestID = fmt.Sprintf("get-session-detail-%d-%d", time.Now().UnixMilli(), rand.Intn(1000000000))
 	}
 	result := &SessionStatusResult{
 		ApiResponse: models.ApiResponse{
@@ -457,6 +464,13 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 
 	// Extract RequestID
 	requestID := models.ExtractRequestID(response)
+	if requestID == "" && response != nil && response.Body != nil && response.Body.RequestId != nil {
+		requestID = tea.StringValue(response.Body.RequestId)
+	}
+	if requestID == "" {
+		// Last resort: keep it non-empty for diagnostics even if server didn't provide it.
+		requestID = fmt.Sprintf("delete-%d-%d", time.Now().UnixMilli(), rand.Intn(1000000000))
+	}
 
 	// Check if the response is success
 	if response.Body != nil {
@@ -480,12 +494,14 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 	}
 
 	// Poll for session deletion status
-	LogInfo(fmt.Sprintf("Waiting for session %s to be deleted...", s.SessionID))
+	LogInfo(fmt.Sprintf("Waiting for session %s to be deleted... (DeleteRequestId=%s)", s.SessionID, requestID))
 	pollTimeout := 5 * time.Minute  // 5 minutes timeout
 	pollInterval := 1 * time.Second // Poll every 1 second
 	pollStartTime := time.Now()
+	pollCount := 0
 
 	for {
+		pollCount++
 		// Check timeout
 		elapsedTime := time.Since(pollStartTime)
 		if elapsedTime >= pollTimeout {
@@ -540,10 +556,16 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 		} else if statusResult != nil && statusResult.Status != "" {
 			// Check session status if we got valid data
 			status := statusResult.Status
-			LogDebug(fmt.Sprintf("Session status: %s", status))
-			if status == "FINISH" {
-				LogInfo(fmt.Sprintf("Session %s successfully deleted", s.SessionID))
+			// Print at info level so users can see progress even if debug logs are disabled.
+			LogInfo(fmt.Sprintf("Session status: %s (DeleteRequestId=%s, GetStatusRequestId=%s)", status, requestID, statusResult.RequestID))
+			// Treat DELETED as terminal too. Some backends never return FINISH for delete.
+			if status == "FINISH" || status == "DELETED" {
+				LogInfo(fmt.Sprintf("Session %s successfully deleted (status=%s, DeleteRequestId=%s)", s.SessionID, status, requestID))
 				break
+			}
+			// Additional hint if stuck in DELETING for a long time.
+			if status == "DELETING" && pollCount%30 == 0 {
+				LogInfo(fmt.Sprintf("Session still deleting... (elapsed=%v, DeleteRequestId=%s)", elapsedTime.Truncate(time.Second), requestID))
 			}
 		}
 
@@ -1091,6 +1113,11 @@ func (s *Session) GetToken() string {
 	return s.Token
 }
 
+// GetLinkUrl returns the LinkUrl for LinkUrl-based VPC sessions.
+func (s *Session) GetLinkUrl() string {
+	return s.LinkUrl
+}
+
 // GetMcpTools returns the MCP tools available for this session
 func (s *Session) GetMcpTools() []interface{} {
 	result := make([]interface{}, len(s.McpTools))
@@ -1195,13 +1222,274 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession 
 		autoGen = autoGenSession[0]
 	}
 
-	// Check if this is a VPC session
+	// Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
+	if s.GetLinkUrl() != "" && s.GetToken() != "" {
+		return s.callMcpToolLinkUrl(toolName, args)
+	}
+
+	// Legacy VPC mode: use ip:port direct route.
 	if s.IsVpc() {
 		return s.callMcpToolVPC(toolName, string(argsJSON))
 	}
 
 	// Non-VPC mode: use traditional API call
 	return s.callMcpToolAPI(toolName, string(argsJSON), autoGen)
+}
+
+// callMcpToolLinkUrl handles MCP tool calls via LinkUrl direct connection (POST JSON),
+// matching Java BaseService.callMcpToolVpc behavior.
+func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}) (*models.McpToolResult, error) {
+	// Generate requestId early so it is always visible in logs even on failures.
+	requestID := fmt.Sprintf("link-%d-%d", time.Now().UnixMilli(), rand.Intn(1000000000))
+
+	// Marshal args for logging/transport.
+	argsJSON, argsMarshalErr := json.Marshal(args)
+	argsLen := 0
+	if argsMarshalErr == nil {
+		argsLen = len(argsJSON)
+	}
+
+	requestParams := fmt.Sprintf("Tool=%s, ArgsLength=%d, RequestId=%s", toolName, argsLen, requestID)
+	logAPICall("CallMcpTool(LinkUrl)", requestParams)
+
+	server := s.FindServerForTool(toolName)
+	if server == "" {
+		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("server not found for tool: %s", toolName), false)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: fmt.Sprintf("server not found for tool: %s", toolName),
+			RequestID:    "",
+		}, nil
+	}
+
+	linkUrl := s.GetLinkUrl()
+	if linkUrl == "" || s.GetToken() == "" {
+		logOperationError("CallMcpTool(LinkUrl)", "linkUrl/token not available", false)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: "linkUrl/token not available",
+			RequestID:    "",
+		}, nil
+	}
+
+	payload := map[string]interface{}{
+		"args":      args,
+		"server":    server,
+		"requestId": requestID,
+		"tool":      toolName,
+		"token":     s.GetToken(),
+	}
+
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("failed to marshal payload: %v", err), true)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: fmt.Sprintf("failed to marshal payload: %v", err),
+			RequestID:    requestID,
+		}, nil
+	}
+
+	req, err := http.NewRequest("POST", strings.TrimRight(linkUrl, "/")+"/callTool", bytes.NewReader(bodyBytes))
+	if err != nil {
+		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("failed to create request: %v", err), true)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: fmt.Sprintf("failed to create request: %v", err),
+			RequestID:    requestID,
+		}, nil
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Access-Token", s.GetToken())
+
+	logAPIResponseWithDetails(
+		"CallMcpTool(LinkUrl) Request",
+		requestID,
+		true,
+		map[string]interface{}{
+			"tool_name": toolName,
+			"command":   extractCommandPreview(args),
+		},
+		"",
+	)
+
+	httpClient := &http.Client{Timeout: 120 * time.Second}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("HTTP request failed: %v", err), true)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: fmt.Sprintf("HTTP request failed: %v", err),
+			RequestID:    requestID,
+		}, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		b, _ := io.ReadAll(resp.Body)
+		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("HTTP request failed with code: %d, body length: %d", resp.StatusCode, len(b)), false)
+		logAPIResponseWithDetails(
+			"CallMcpTool(LinkUrl) Response",
+			requestID,
+			false,
+			map[string]interface{}{
+				"http_status": resp.StatusCode,
+				"tool_name":   toolName,
+			},
+			"",
+		)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: fmt.Sprintf("HTTP request failed with code: %d", resp.StatusCode),
+			RequestID:    requestID,
+		}, nil
+	}
+
+	var outer map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&outer); err != nil {
+		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("failed to decode response: %v", err), true)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: fmt.Sprintf("failed to decode response: %v", err),
+			RequestID:    requestID,
+		}, nil
+	}
+
+	dataField, ok := outer["data"]
+	if !ok || dataField == nil {
+		logAPIResponseWithDetails(
+			"CallMcpTool(LinkUrl) Response",
+			requestID,
+			false,
+			map[string]interface{}{
+				"http_status": resp.StatusCode,
+				"tool_name":   toolName,
+			},
+			"",
+		)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: "No data field in LinkUrl response",
+			RequestID:    requestID,
+		}, nil
+	}
+
+	var parsedData map[string]interface{}
+	switch v := dataField.(type) {
+	case string:
+		if err := json.Unmarshal([]byte(v), &parsedData); err != nil {
+			return &models.McpToolResult{
+				Success:      false,
+				Data:         "",
+				ErrorMessage: fmt.Sprintf("failed to parse data field JSON: %v", err),
+				RequestID:    requestID,
+			}, nil
+		}
+	case map[string]interface{}:
+		parsedData = v
+	default:
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: "Invalid data field type in LinkUrl response",
+			RequestID:    requestID,
+		}, nil
+	}
+
+	resultField, ok := parsedData["result"].(map[string]interface{})
+	if !ok || resultField == nil {
+		logAPIResponseWithDetails(
+			"CallMcpTool(LinkUrl) Response",
+			requestID,
+			false,
+			map[string]interface{}{
+				"http_status": resp.StatusCode,
+				"tool_name":   toolName,
+			},
+			"",
+		)
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: "No result field in LinkUrl response data",
+			RequestID:    requestID,
+		}, nil
+	}
+
+	isError := false
+	if v, exists := resultField["isError"]; exists {
+		if b, ok := v.(bool); ok {
+			isError = b
+		}
+	}
+
+	textContent := s.extractTextContentFromResponse(resultField)
+	logAPIResponseWithDetails(
+		"CallMcpTool(LinkUrl) Response",
+		requestID,
+		!isError,
+		map[string]interface{}{
+			"http_status": resp.StatusCode,
+			"tool_name":   toolName,
+			"output":      truncateForLog(textContent, 800),
+		},
+		"",
+	)
+
+	if isError {
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: textContent,
+			RequestID:    requestID,
+		}, nil
+	}
+
+	return &models.McpToolResult{
+		Success:      true,
+		Data:         textContent,
+		ErrorMessage: "",
+		RequestID:    requestID,
+	}, nil
+}
+
+func extractCommandPreview(args interface{}) string {
+	// Best-effort: common command fields used by shell/command tools.
+	switch m := args.(type) {
+	case map[string]interface{}:
+		if v, ok := m["command"]; ok {
+			if s, ok := v.(string); ok {
+				return truncateForLog(s, 500)
+			}
+		}
+		if v, ok := m["cmd"]; ok {
+			if s, ok := v.(string); ok {
+				return truncateForLog(s, 500)
+			}
+		}
+	}
+
+	// Fallback to JSON snippet.
+	b, err := json.Marshal(args)
+	if err != nil {
+		return ""
+	}
+	return truncateForLog(string(b), 500)
+}
+
+func truncateForLog(s string, max int) string {
+	if max <= 0 || len(s) <= max {
+		return s
+	}
+	return s[:max] + "...(truncated)"
 }
 
 // GetMetrics retrieves runtime metrics for this session.

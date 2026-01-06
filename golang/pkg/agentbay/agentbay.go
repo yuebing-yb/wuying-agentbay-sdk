@@ -419,6 +419,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if response.Body.Data.Token != nil {
 		session.Token = *response.Body.Data.Token
 	}
+	if response.Body.Data.LinkUrl != nil {
+		session.LinkUrl = *response.Body.Data.LinkUrl
+	}
 
 	// Set ResourceUrl
 	if response.Body.Data.ResourceUrl != nil {
@@ -444,8 +447,39 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 	}
 
-	// For VPC sessions, automatically fetch MCP tools information
-	if params.IsVpc {
+	// Prefer MCP tools list from CreateMcpSession response (ToolList) when present,
+	// regardless of is_vpc (regionalized endpoint behavior).
+	if response.Body.Data.ToolList != nil && *response.Body.Data.ToolList != "" {
+		var toolsData []map[string]interface{}
+		if err := json.Unmarshal([]byte(*response.Body.Data.ToolList), &toolsData); err != nil {
+			logOperationError("ParseToolList", fmt.Sprintf("Error unmarshaling toolList: %v", err), false)
+		} else {
+			var tools []McpTool
+			for _, toolData := range toolsData {
+				tool := McpTool{}
+				if name, ok := toolData["name"].(string); ok {
+					tool.Name = name
+				}
+				if description, ok := toolData["description"].(string); ok {
+					tool.Description = description
+				}
+				if inputSchema, ok := toolData["inputSchema"].(map[string]interface{}); ok {
+					tool.InputSchema = inputSchema
+				}
+				if server, ok := toolData["server"].(string); ok {
+					tool.Server = server
+				}
+				if toolIdentifier, ok := toolData["tool"].(string); ok {
+					tool.Tool = toolIdentifier
+				}
+				tools = append(tools, tool)
+			}
+			session.McpTools = tools
+		}
+	}
+
+	// Backward compatibility: if is_vpc=true but tool list is still empty, fall back to ListMcpTools.
+	if params.IsVpc && len(session.McpTools) == 0 {
 		toolsResult, err := session.ListMcpTools()
 		if err != nil {
 			logOperationError("FetchMCPTools", err.Error(), false)

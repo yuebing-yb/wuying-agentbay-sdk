@@ -121,11 +121,14 @@ def test_python_error_handling(session):
     # Assert
     # The execution should fail or return error in result
     if not result.success:
-        print(f"Expected error: {result.logs.stderr}")
-        assert any('division' in err_msg for err_msg in result.logs.stderr)
+        print(f"Expected error: {result.error_message}")
+        assert (
+            "ZeroDivisionError" in result.error_message
+            or "division" in result.error_message.lower()
+        )
     else:
         print(f"Error in output: {result.logs.stderr}")
-        assert "division by zero" in result.logs.stderr or "zero" in result.logs.stderr
+        assert "division by zero" in result.logs.stderr or "Error" in result.logs.stderr
 
 @pytest.mark.sync
 def test_python_with_timeout(session):

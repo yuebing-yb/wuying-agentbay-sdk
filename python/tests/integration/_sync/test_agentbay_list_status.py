@@ -55,6 +55,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test sessions after each test method."""
+        # 检查是否跳过清理
         if getattr(self, '_skip_teardown', False):
             print("Skipping tearDown for this test")
             return
@@ -132,7 +133,6 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         if(initial_status == "FINISH"):
             return
         # Then call _get_session for detailed information
-
         session_info = self.agent_bay._get_session(session.session_id)
         self.assertTrue(session_info.success, f"Failed to get session info: {session_info.error_message}")
 
