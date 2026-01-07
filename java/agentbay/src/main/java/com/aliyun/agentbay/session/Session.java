@@ -702,14 +702,6 @@ public class Session {
      * @return Cached VPC link URL or null if not available
      */
     public String getLinkUrl() {
-        if (linkUrl != null) {
-            long currentTime = System.currentTimeMillis();
-            long elapsedMinutes = (currentTime - linkUrlTimestamp) / (60 * 1000);
-
-            if (elapsedMinutes >= 1) {
-                updateLinkUrl();
-            }
-        }
         return linkUrl;
     }
 
