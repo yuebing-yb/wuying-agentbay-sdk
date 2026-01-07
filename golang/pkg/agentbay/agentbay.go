@@ -86,6 +86,7 @@ type AgentBay struct {
 	Context        *ContextService
 	MobileSimulate *MobileSimulateService
 	Network        *NetworkService
+	BetaVolume     *BetaVolumeService
 	config         Config
 }
 
@@ -128,16 +129,18 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create AgentBay instance
 	agentBay := &AgentBay{
-		APIKey:  apiKey,
-		Client:  client,
-		Context: nil, // Will be initialized after creation
-		Network: nil, // Will be initialized after creation
-		config:  config,
+		APIKey:     apiKey,
+		Client:     client,
+		Context:    nil, // Will be initialized after creation
+		Network:    nil, // Will be initialized after creation
+		BetaVolume: nil, // Will be initialized after creation
+		config:     config,
 	}
 
 	// Initialize context service
 	agentBay.Context = &ContextService{AgentBay: agentBay}
 	agentBay.Network = &NetworkService{AgentBay: agentBay}
+	agentBay.BetaVolume = &BetaVolumeService{AgentBay: agentBay}
 
 	return agentBay, nil
 }
@@ -240,6 +243,13 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	// Add image_id if provided
 	if params.ImageId != "" {
 		createSessionRequest.ImageId = tea.String(params.ImageId)
+	}
+
+	// Add VolumeId if provided (beta)
+	if params.Volume != nil && params.Volume.ID != "" {
+		createSessionRequest.VolumeId = tea.String(params.Volume.ID)
+	} else if params.VolumeId != "" {
+		createSessionRequest.VolumeId = tea.String(params.VolumeId)
 	}
 
 	// Add VPC resource if specified
@@ -1309,6 +1319,7 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 		NetworkId:           params.NetworkId,
 		Framework:           params.Framework,
 		EnableBrowserReplay: params.EnableBrowserReplay,
+		VolumeId:            params.VolumeId,
 	}
 
 	// Deep copy Labels map
@@ -1341,6 +1352,9 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 
 	// Copy BrowserContext (shallow copy is sufficient as it is immutable in typical usage)
 	copy.BrowserContext = params.BrowserContext
+
+	// Copy Volume (shallow copy is sufficient for immutable Volume objects)
+	copy.Volume = params.Volume
 
 	return copy
 }

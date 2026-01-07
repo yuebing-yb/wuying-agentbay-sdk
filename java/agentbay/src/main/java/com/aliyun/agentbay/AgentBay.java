@@ -17,6 +17,7 @@ import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.agentbay.util.Version;
+import com.aliyun.agentbay.volume.BetaVolumeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.wuyingai20250506.Client;
@@ -46,6 +47,7 @@ public class AgentBay {
     private ConcurrentHashMap<String, Session> sessions;
     private MobileSimulate mobileSimulate;
     private Network network;
+    private BetaVolumeService betaVolume;
 
     public AgentBay() throws AgentBayException {
         this(null, null);
@@ -87,6 +89,7 @@ public class AgentBay {
             this.apiClient = new ApiClient(this.client, apiKey);
             this.mobileSimulate = new MobileSimulate(this);
             this.network = new Network(this);
+            this.betaVolume = new BetaVolumeService(this);
         } catch (Exception e) {
             throw new AgentBayException("Failed to initialize AgentBay client", e);
         }
@@ -283,6 +286,15 @@ public class AgentBay {
     }
 
     /**
+     * Get beta volume service (trial feature).
+     *
+     * @return BetaVolumeService instance
+     */
+    public BetaVolumeService getBetaVolume() {
+        return betaVolume;
+    }
+
+    /**
      * Get the API key
      *
      * @return The API key
@@ -395,6 +407,13 @@ public class AgentBay {
             // Set image ID if provided
             if (params.getImageId() != null) {
                 request.setImageId(params.getImageId());
+            }
+
+            // Beta: mount volume during session creation (static mount only)
+            if (params.getVolume() != null && params.getVolume().getId() != null && !params.getVolume().getId().isEmpty()) {
+                request.setVolumeId(params.getVolume().getId());
+            } else if (params.getVolumeId() != null && !params.getVolumeId().isEmpty()) {
+                request.setVolumeId(params.getVolumeId());
             }
             
             // Set labels if provided

@@ -1958,4 +1958,165 @@ export class Client extends OpenApi {
     const runtime = new $dara.RuntimeOptions({});
     return await this.getAdbLinkWithOptions(request, runtime);
   }
+
+  /**
+   * Delete volume
+   *
+   * @param request - DeleteVolumeRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns DeleteVolumeResponse
+   */
+  async deleteVolumeWithOptions(request: $_model.DeleteVolumeRequest, runtime: $dara.RuntimeOptions): Promise<$_model.DeleteVolumeResponse> {
+    request.validate();
+    const body : {[key: string ]: any} = { };
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.volumeId)) {
+      body["VolumeId"] = request.volumeId;
+    }
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "DeleteVolume",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.DeleteVolumeResponse>(
+      await this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime),
+      new $_model.DeleteVolumeResponse({})
+    );
+  }
+
+  /**
+   * Delete volume
+   *
+   * @param request - DeleteVolumeRequest
+   * @returns DeleteVolumeResponse
+   */
+  async deleteVolume(request: $_model.DeleteVolumeRequest): Promise<$_model.DeleteVolumeResponse> {
+    const runtime = new $dara.RuntimeOptions({ });
+    return await this.deleteVolumeWithOptions(request, runtime);
+  }
+
+  /**
+   * Create or get volume
+   *
+   * @param request - GetVolumeRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns GetVolumeResponse
+   */
+  async getVolumeWithOptions(request: $_model.GetVolumeRequest, runtime: $dara.RuntimeOptions): Promise<$_model.GetVolumeResponse> {
+    request.validate();
+    const body : {[key: string ]: any} = { };
+    if (!$dara.isNull(request.allowCreate)) {
+      body["AllowCreate"] = request.allowCreate;
+    }
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.imageId)) {
+      body["ImageId"] = request.imageId;
+    }
+    if (!$dara.isNull(request.volumeName)) {
+      body["VolumeName"] = request.volumeName;
+    }
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "GetVolume",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.GetVolumeResponse>(
+      await this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime),
+      new $_model.GetVolumeResponse({})
+    );
+  }
+
+  /**
+   * Create or get volume
+   *
+   * @param request - GetVolumeRequest
+   * @returns GetVolumeResponse
+   */
+  async getVolume(request: $_model.GetVolumeRequest): Promise<$_model.GetVolumeResponse> {
+    const runtime = new $dara.RuntimeOptions({ });
+    return await this.getVolumeWithOptions(request, runtime);
+  }
+
+  /**
+   * List volumes
+   *
+   * @param request - ListVolumesRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns ListVolumesResponse
+   */
+  async listVolumesWithOptions(request: $_model.ListVolumesRequest, runtime: $dara.RuntimeOptions): Promise<$_model.ListVolumesResponse> {
+    request.validate();
+    const query: { [key: string]: any } = { };
+    if (!$dara.isNull(request.nextToken)) {
+      query["NextToken"] = request.nextToken;
+    }
+    const body : {[key: string ]: any} = { };
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.imageId)) {
+      body["ImageId"] = request.imageId;
+    }
+    if (!$dara.isNull(request.maxResults)) {
+      body["MaxResults"] = request.maxResults;
+    }
+    if (!$dara.isNull(request.volumeIds)) {
+      body["VolumeIds"] = request.volumeIds;
+    }
+    if (!$dara.isNull(request.volumeName)) {
+      body["VolumeName"] = request.volumeName;
+    }
+    const req = new $OpenApiUtil.OpenApiRequest({
+      query: OpenApiUtil.query(query),
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "ListVolumes",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.ListVolumesResponse>(
+      await this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime),
+      new $_model.ListVolumesResponse({})
+    );
+  }
+
+  /**
+   * List volumes
+   *
+   * @param request - ListVolumesRequest
+   * @returns ListVolumesResponse
+   */
+  async listVolumes(request: $_model.ListVolumesRequest): Promise<$_model.ListVolumesResponse> {
+    const runtime = new $dara.RuntimeOptions({ });
+    return await this.listVolumesWithOptions(request, runtime);
+  }
 }

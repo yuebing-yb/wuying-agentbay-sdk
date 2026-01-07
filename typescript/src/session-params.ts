@@ -2,6 +2,7 @@ import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecycleP
 import { ExtensionOption } from "./extension";
 import { BrowserFingerprintContext } from "./browser";
 import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
+import type { Volume } from "./beta-volume";
 
 // Browser fingerprint persistent path constant (moved from config.ts)
 const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
@@ -284,6 +285,16 @@ export class BrowserContext {
 export interface CreateSessionParamsConfig {
   labels: Record<string, string>;
   imageId?: string;
+  /**
+   * Beta: mount a volume during session creation (static mount).
+   * Accepts a volume id string or a Volume object.
+   */
+  volume?: string | Volume;
+  /**
+   * Beta: explicit volume id mount during session creation.
+   * If both volume and volumeId are provided, volume takes precedence.
+   */
+  volumeId?: string;
   contextSync: ContextSync[];
   /** Optional configuration for browser data synchronization */
   browserContext?: BrowserContext;
@@ -311,6 +322,12 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
 
   /** Image ID to use for the session. */
   public imageId?: string;
+
+  /** Beta: volume object or volume id string to mount during session creation. */
+  public volume?: string | Volume;
+
+  /** Beta: explicit volume id to mount during session creation. */
+  public volumeId?: string;
 
   /**
    * List of context synchronization configurations.
@@ -361,6 +378,22 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   withImageId(imageId: string): CreateSessionParams {
     this.imageId = imageId;
+    return this;
+  }
+
+  /**
+   * WithVolumeId sets the volume id for mounting when creating the session (beta).
+   */
+  withVolumeId(volumeId: string): CreateSessionParams {
+    this.volumeId = volumeId;
+    return this;
+  }
+
+  /**
+   * WithVolume sets the volume (or volume id string) for mounting when creating the session (beta).
+   */
+  withVolume(volume: string | Volume): CreateSessionParams {
+    this.volume = volume;
     return this;
   }
 
@@ -549,6 +582,8 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     return {
       labels: this.labels,
       imageId: this.imageId,
+      volume: this.volume,
+      volumeId: this.volumeId,
       contextSync: allContextSyncs,
       browserContext: this.browserContext,
       isVpc: this.isVpc,
@@ -566,6 +601,8 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     const params = new CreateSessionParams();
     params.labels = config.labels || {};
     params.imageId = config.imageId;
+    params.volume = config.volume;
+    params.volumeId = config.volumeId;
     params.contextSync = config.contextSync || [];
 
     // Handle browser context - convert to BrowserContext class if needed

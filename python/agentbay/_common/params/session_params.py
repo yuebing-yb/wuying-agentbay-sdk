@@ -289,6 +289,7 @@ class CreateSessionParams:
         self,
         labels: Optional[Dict[str, str]] = None,
         image_id: Optional[str] = None,
+        volume: Optional[object] = None,
         context_syncs: Optional[List[ContextSync]] = None,
         browser_context: Optional[BrowserContext] = None,
         is_vpc: Optional[bool] = None,
@@ -326,6 +327,8 @@ class CreateSessionParams:
         """
         self.labels = labels or {}
         self.image_id = image_id
+        # Beta: volume mounting during session creation (static mount only)
+        self.volume = volume
 
         # Start with provided context_syncs
         all_context_syncs = list(context_syncs or [])
