@@ -835,11 +835,12 @@ class AsyncAgent(AsyncBaseService):
                 task_id = content.get("taskId") or content.get("task_id", "")
 
                 if not task_id:
-                    _logger.error("Failed to get task_id from response")
+                    error_message = content.get("error") or "Failed to get task_id from response"
+                    _logger.error(f"Failed to get task_id from response: {error_message}")
                     return ExecutionResult(
                         request_id=result.request_id,
                         success=False,
-                        error_message="Failed to get task_id from response",
+                        error_message=error_message,
                         task_status="failed",
                         task_id="",
                         task_result="Task Failed",
@@ -939,15 +940,40 @@ class AsyncAgent(AsyncBaseService):
                 tried_time += 1
 
             _logger.warning("⚠️ task execution timeout!")
-            # Automatically terminate the task on timeout
             try:
                 terminate_result = await self.terminate_task(task_id)
                 if terminate_result.success:
-                    _logger.info(f"✅ Task {task_id} terminated successfully after timeout")
+                    _logger.info(f"✅ Terminate request sent for task {task_id} after timeout")
                 else:
                     _logger.warning(f"⚠️ Failed to terminate task {task_id} after timeout: {terminate_result.error_message}")
             except Exception as e:
                 _logger.warning(f"⚠️ Exception while terminating task {task_id} after timeout: {e}")
+            
+            _logger.info(f"⏳ Waiting for task {task_id} to be fully terminated...")
+            terminate_poll_interval = 1
+            max_terminate_poll_attempts = 30
+            terminate_tried_time = 0
+            task_terminated_confirmed = False
+            
+            while terminate_tried_time < max_terminate_poll_attempts:
+                try:
+                    status_query = await self.get_task_status(task_id)
+                    if not status_query.success:
+                        error_msg = status_query.error_message or ""
+                        if error_msg.startswith("Task not found or already finished"):
+                            _logger.info(f"✅ Task {task_id} confirmed terminated (not found or finished)")
+                            task_terminated_confirmed = True
+                            break
+                    await asyncio.sleep(terminate_poll_interval)
+                    terminate_tried_time += 1
+                except Exception as e:
+                    _logger.warning(f"⚠️ Exception while polling task status during termination: {e}")
+                    await asyncio.sleep(terminate_poll_interval)
+                    terminate_tried_time += 1
+            
+            if not task_terminated_confirmed:
+                _logger.warning(f"⚠️ Timeout waiting for task {task_id} to be fully terminated")
+            
             timeout_error_msg = f"Task execution timed out after {timeout} seconds. Task ID: {task_id}. Polled {tried_time} times (max: {max_poll_attempts})."
             return ExecutionResult(
                 request_id=last_request_id,

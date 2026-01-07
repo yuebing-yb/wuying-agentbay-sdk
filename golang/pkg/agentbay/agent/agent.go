@@ -3,6 +3,7 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
@@ -132,10 +133,16 @@ func (b *baseTaskAgent) executeTask(task string) *ExecutionResult {
 
 	taskID, ok := content["task_id"].(string)
 	if !ok {
+		errorMessage := "Task ID not found in response"
+		if errorVal, exists := content["error"]; exists {
+			if errorStr, ok := errorVal.(string); ok {
+				errorMessage = errorStr
+			}
+		}
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
-			ErrorMessage: "Task ID not found in response",
+			ErrorMessage: errorMessage,
 			TaskStatus:   "failed",
 			TaskID:       "",
 		}
@@ -199,10 +206,17 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 
 	taskID, ok := content["task_id"].(string)
 	if !ok {
+		// 从后端返回的content中提取error信息
+		errorMessage := "Task ID not found in response"
+		if errorVal, exists := content["error"]; exists {
+			if errorStr, ok := errorVal.(string); ok {
+				errorMessage = errorStr
+			}
+		}
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
-			ErrorMessage: "Task ID not found in response",
+			ErrorMessage: errorMessage,
 			TaskStatus:   "failed",
 			TaskID:       "",
 			TaskResult:   "Invalid task ID.",
@@ -268,13 +282,37 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 	}
 
 	fmt.Println("⚠️ task execution timeout!")
-	// Automatically terminate the task on timeout
 	terminateResult := b.terminateTask(taskID)
 	if terminateResult.Success {
-		fmt.Printf("✅ Task %s terminated successfully after timeout\n", taskID)
+		fmt.Printf("✅ Terminate request sent for task %s after timeout\n", taskID)
 	} else {
 		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
 	}
+
+	fmt.Printf("⏳ Waiting for task %s to be fully terminated...\n", taskID)
+	terminatePollInterval := 1
+	maxTerminatePollAttempts := 30
+	terminateTriedTime := 0
+	taskTerminatedConfirmed := false
+
+	for terminateTriedTime < maxTerminatePollAttempts {
+		statusQuery := b.getTaskStatus(taskID)
+		if !statusQuery.Success {
+			errorMsg := statusQuery.ErrorMessage
+			if errorMsg != "" && strings.HasPrefix(errorMsg, "Task not found or already finished") {
+				fmt.Printf("✅ Task %s confirmed terminated (not found or finished)\n", taskID)
+				taskTerminatedConfirmed = true
+				break
+			}
+		}
+		time.Sleep(time.Duration(terminatePollInterval) * time.Second)
+		terminateTriedTime++
+	}
+
+	if !taskTerminatedConfirmed {
+		fmt.Printf("⚠️ Timeout waiting for task %s to be fully terminated\n", taskID)
+	}
+
 	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
 	return &ExecutionResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -935,10 +973,17 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
 		taskID, ok = content["task_id"].(string)
 	}
 	if !ok {
+		// 从后端返回的content中提取error信息
+		errorMessage := "Task ID not found in response"
+		if errorVal, exists := content["error"]; exists {
+			if errorStr, ok := errorVal.(string); ok {
+				errorMessage = errorStr
+			}
+		}
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
-			ErrorMessage: "Task ID not found in response",
+			ErrorMessage: errorMessage,
 			TaskStatus:   "failed",
 			TaskID:       "",
 		}
@@ -1012,10 +1057,16 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 		taskID, ok = content["task_id"].(string)
 	}
 	if !ok {
+		errorMessage := "Task ID not found in response"
+		if errorVal, exists := content["error"]; exists {
+			if errorStr, ok := errorVal.(string); ok {
+				errorMessage = errorStr
+			}
+		}
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
-			ErrorMessage: "Task ID not found in response",
+			ErrorMessage: errorMessage,
 			TaskStatus:   "failed",
 			TaskID:       "",
 			TaskResult:   "Invalid task ID.",
@@ -1128,13 +1179,37 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 	}
 
 	fmt.Println("⚠️ task execution timeout!")
-	// Automatically terminate the task on timeout
 	terminateResult := a.TerminateTask(taskID)
 	if terminateResult.Success {
-		fmt.Printf("✅ Task %s terminated successfully after timeout\n", taskID)
+		fmt.Printf("✅ Terminate request sent for task %s after timeout\n", taskID)
 	} else {
 		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
 	}
+
+	fmt.Printf("⏳ Waiting for task %s to be fully terminated...\n", taskID)
+	terminatePollInterval := 1
+	maxTerminatePollAttempts := 30
+	terminateTriedTime := 0
+	taskTerminatedConfirmed := false
+
+	for terminateTriedTime < maxTerminatePollAttempts {
+		statusQuery := a.GetTaskStatus(taskID)
+		if !statusQuery.Success {
+			errorMsg := statusQuery.ErrorMessage
+			if errorMsg != "" && strings.HasPrefix(errorMsg, "Task not found or already finished") {
+				fmt.Printf("✅ Task %s confirmed terminated (not found or finished)\n", taskID)
+				taskTerminatedConfirmed = true
+				break
+			}
+		}
+		time.Sleep(time.Duration(terminatePollInterval) * time.Second)
+		terminateTriedTime++
+	}
+
+	if !taskTerminatedConfirmed {
+		fmt.Printf("⚠️ Timeout waiting for task %s to be fully terminated\n", taskID)
+	}
+
 	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
 	return &ExecutionResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},

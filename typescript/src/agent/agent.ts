@@ -115,10 +115,12 @@ abstract class BaseTaskAgent {
 
       const taskId = content.task_id || '';
       if (!taskId) {
+        // 从后端返回的content中提取error信息
+        const errorMessage = content.error || 'Task ID not found in response';
         return {
           requestId: result.requestId,
           success: false,
-          errorMessage: 'Task ID not found in response',
+          errorMessage: errorMessage,
           taskStatus: 'failed',
           taskId: '',
           taskResult: 'Invalid task ID.',
@@ -210,16 +212,45 @@ abstract class BaseTaskAgent {
         triedTime++;
       }
 
-      // Automatically terminate the task on timeout
       try {
         const terminateResult = await this.terminateTask(taskId);
         if (terminateResult.success) {
-          logDebug(`✅ Task ${taskId} terminated successfully after timeout`);
+          logDebug(`✅ Terminate request sent for task ${taskId} after timeout`);
         } else {
           logDebug(`⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`);
         }
       } catch (e) {
         logDebug(`⚠️ Exception while terminating task ${taskId} after timeout: ${e}`);
+      }
+      
+      logDebug(`⏳ Waiting for task ${taskId} to be fully terminated...`);
+      const terminatePollInterval = 1;
+      const maxTerminatePollAttempts = 30;
+      let terminateTriedTime = 0;
+      let taskTerminatedConfirmed = false;
+      
+      while (terminateTriedTime < maxTerminatePollAttempts) {
+        try {
+          const statusQuery = await this.getTaskStatus(taskId);
+          if (!statusQuery.success) {
+            const errorMsg = statusQuery.errorMessage || '';
+            if (errorMsg.startsWith('Task not found or already finished')) {
+              logDebug(`✅ Task ${taskId} confirmed terminated (not found or finished)`);
+              taskTerminatedConfirmed = true;
+              break;
+            }
+          }
+          await new Promise((resolve) => setTimeout(resolve, terminatePollInterval * 1000));
+          terminateTriedTime++;
+        } catch (e) {
+          logDebug(`⚠️ Exception while polling task status during termination: ${e}`);
+          await new Promise((resolve) => setTimeout(resolve, terminatePollInterval * 1000));
+          terminateTriedTime++;
+        }
+      }
+      
+      if (!taskTerminatedConfirmed) {
+        logDebug(`⚠️ Timeout waiting for task ${taskId} to be fully terminated`);
       }
 
       const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
@@ -658,10 +689,12 @@ export class MobileUseAgent extends BaseTaskAgent {
 
       const taskId = content.taskId || content.task_id;
           if (!taskId) {
+            // 从后端返回的content中提取error信息
+            const errorMessage = content.error || 'Task ID not found in response';
             return {
               requestId: result.requestId,
               success: false,
-              errorMessage: 'Task ID not found in response',
+              errorMessage: errorMessage,
               taskStatus: 'failed',
               taskId: '',
               taskResult: 'Invalid task ID.',
@@ -756,10 +789,12 @@ export class MobileUseAgent extends BaseTaskAgent {
 
     const taskId = content.taskId || content.task_id;
           if (!taskId) {
+            // 从后端返回的content中提取error信息
+            const errorMessage = content.error || 'Task ID not found in response';
             return {
               requestId: result.requestId,
               success: false,
-              errorMessage: 'Task ID not found in response',
+              errorMessage: errorMessage,
               taskStatus: 'failed',
               taskId: '',
               taskResult: 'Invalid task ID.',
@@ -857,17 +892,47 @@ export class MobileUseAgent extends BaseTaskAgent {
     }
 
     logDebug('⚠️ task execution timeout!');
-    // Automatically terminate the task on timeout
     try {
       const terminateResult = await this.terminateTask(taskId);
       if (terminateResult.success) {
-        logDebug(`✅ Task ${taskId} terminated successfully after timeout`);
+        logDebug(`✅ Terminate request sent for task ${taskId} after timeout`);
       } else {
         logDebug(`⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`);
       }
     } catch (e) {
       logDebug(`⚠️ Exception while terminating task ${taskId} after timeout: ${e}`);
     }
+    
+    logDebug(`⏳ Waiting for task ${taskId} to be fully terminated...`);
+    const terminatePollInterval = 1;
+    const maxTerminatePollAttempts = 30;
+    let terminateTriedTime = 0;
+    let taskTerminatedConfirmed = false;
+    
+    while (terminateTriedTime < maxTerminatePollAttempts) {
+      try {
+        const statusQuery = await this.getTaskStatus(taskId);
+        if (!statusQuery.success) {
+          const errorMsg = statusQuery.errorMessage || '';
+          if (errorMsg.startsWith('Task not found or already finished')) {
+            logDebug(`✅ Task ${taskId} confirmed terminated (not found or finished)`);
+            taskTerminatedConfirmed = true;
+            break;
+          }
+        }
+        await new Promise((resolve) => setTimeout(resolve, terminatePollInterval * 1000));
+        terminateTriedTime++;
+      } catch (e) {
+        logDebug(`⚠️ Exception while polling task status during termination: ${e}`);
+        await new Promise((resolve) => setTimeout(resolve, terminatePollInterval * 1000));
+        terminateTriedTime++;
+      }
+    }
+    
+    if (!taskTerminatedConfirmed) {
+      logDebug(`⚠️ Timeout waiting for task ${taskId} to be fully terminated`);
+    }
+    
     const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
     return {
       requestId: result.requestId,
