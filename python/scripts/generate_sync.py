@@ -97,6 +97,7 @@ def generate_sync():
         "AsyncFileSystem": "FileSystem",
         "AsyncContextManager": "ContextManager",
         "AsyncContextService": "ContextService",
+        "AsyncNetwork": "Network",
         "AsyncComputer": "Computer",
         "AsyncMobile": "Mobile",
         "AsyncFileTransfer": "FileTransfer",

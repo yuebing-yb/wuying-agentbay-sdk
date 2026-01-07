@@ -25,6 +25,9 @@ type CreateSessionParams struct {
 	// PolicyId specifies the policy ID to apply when creating the session.
 	PolicyId string
 
+	// NetworkId specifies the network ID to bind this session to.
+	NetworkId string
+
 	// ExtraConfigs contains extra configuration settings for different session types
 	ExtraConfigs *models.ExtraConfigs
 
@@ -70,6 +73,12 @@ func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams {
 // WithPolicyId sets the policy ID for the session parameters and returns the updated parameters.
 func (p *CreateSessionParams) WithPolicyId(policyId string) *CreateSessionParams {
 	p.PolicyId = policyId
+	return p
+}
+
+// WithNetworkId sets the network ID for the session parameters and returns the updated parameters.
+func (p *CreateSessionParams) WithNetworkId(networkId string) *CreateSessionParams {
+	p.NetworkId = networkId
 	return p
 }
 

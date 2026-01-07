@@ -8,11 +8,11 @@ public class Network {
         this.agentBay = agentBay;
     }
 
-    public NetworkResult create() {
-        return create(null);
+    public NetworkResult getNetworkBindToken() {
+        return getNetworkBindToken(null);
     }
 
-    public NetworkResult create(String networkId) {
+    public NetworkResult getNetworkBindToken(String networkId) {
         try {
             com.aliyun.wuyingai20250506.models.CreateNetworkRequest request =
                 new com.aliyun.wuyingai20250506.models.CreateNetworkRequest();
@@ -94,6 +94,20 @@ public class Network {
                 "Failed to create network: " + e.getMessage()
             );
         }
+    }
+
+    /**
+     * Deprecated: use getNetworkBindToken().
+     */
+    public NetworkResult create() {
+        return getNetworkBindToken();
+    }
+
+    /**
+     * Deprecated: use getNetworkBindToken(String).
+     */
+    public NetworkResult create(String networkId) {
+        return getNetworkBindToken(networkId);
     }
 
     public NetworkStatusResult describe(String networkId) {

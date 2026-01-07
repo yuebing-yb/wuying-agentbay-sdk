@@ -17,6 +17,7 @@ type Session struct {
 	NetworkInterfaceIP	string	// Network interface IP for VPC sessions
 	HttpPortNumber		string	// HTTP port for VPC sessions
 	Token			string	// Token for VPC sessions
+	LinkUrl			string	// LinkUrl for LinkUrl-based VPC route
 
 	// Resource URL for accessing the session
 	ResourceUrl	string
@@ -175,6 +176,14 @@ defer result.Session.Delete()
 port := int32(30100)
 linkResult, _ := result.Session.GetLink(nil, &port, nil)
 ```
+
+### GetLinkUrl
+
+```go
+func (s *Session) GetLinkUrl() string
+```
+
+GetLinkUrl returns the LinkUrl for LinkUrl-based VPC sessions.
 
 ### GetMetrics
 
@@ -396,6 +405,9 @@ type CreateSessionParams struct {
 	// PolicyId specifies the policy ID to apply when creating the session.
 	PolicyId	string
 
+	// NetworkId specifies the network ID to bind this session to.
+	NetworkId	string
+
 	// ExtraConfigs contains extra configuration settings for different session types
 	ExtraConfigs	*models.ExtraConfigs
 
@@ -506,6 +518,14 @@ func (p *CreateSessionParams) WithLabels(labels map[string]string) *CreateSessio
 ```
 
 WithLabels sets the labels for the session parameters and returns the updated parameters.
+
+### WithNetworkId
+
+```go
+func (p *CreateSessionParams) WithNetworkId(networkId string) *CreateSessionParams
+```
+
+WithNetworkId sets the network ID for the session parameters and returns the updated parameters.
 
 ### WithPolicyId
 

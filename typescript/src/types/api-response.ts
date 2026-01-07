@@ -607,6 +607,36 @@ export interface ContextListResult extends ApiResponse {
 }
 
 /**
+ * Interface for network create operation responses.
+ */
+export interface NetworkResult extends ApiResponse {
+  /** Request identifier for tracking API calls */
+  requestId: string;
+  /** Whether the operation was successful */
+  success: boolean;
+  /** Created/returned network id */
+  networkId: string;
+  /** Network token for the created network */
+  networkToken: string;
+  /** Optional error message if the operation failed */
+  errorMessage?: string;
+}
+
+/**
+ * Interface for network describe operation responses.
+ */
+export interface NetworkStatusResult extends ApiResponse {
+  /** Request identifier for tracking API calls */
+  requestId: string;
+  /** Whether the operation was successful */
+  success: boolean;
+  /** Whether network is online */
+  online: boolean;
+  /** Optional error message if the operation failed */
+  errorMessage?: string;
+}
+
+/**
  * Result of a presigned URL request
  */
 export interface FileUrlResult extends ApiResponse {

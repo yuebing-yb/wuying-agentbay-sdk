@@ -12,6 +12,7 @@ from .filesystem import *
 from .mcp_tool import *
 from .mobile import *
 from .mobile_simulate import *
+from .network import *
 from .response import *
 from .extension import *
 

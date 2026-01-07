@@ -227,7 +227,7 @@ public class CreateSessionParams {
      * <p>Multiple sessions can share the same network ID, enabling network communication
      * between sessions and network isolation.</p>
      *
-     * @param networkId Network ID created via Network.create()
+     * @param networkId Network ID created via Network.getNetworkBindToken()
      */
     public void setNetworkId(String networkId) {
         this.networkId = networkId;

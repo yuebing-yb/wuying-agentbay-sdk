@@ -48,6 +48,7 @@ from ..api.models import (
     ResumeSessionAsyncRequest,
 )
 from .context import AsyncContextService
+from .network import AsyncNetwork
 from .session import AsyncSession
 from .._common.params.session_params import CreateSessionParams
 
@@ -100,6 +101,7 @@ class AsyncAgentBay:
 
         # Initialize context service
         self.context = AsyncContextService(self)
+        self.network = AsyncNetwork(self)
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):
@@ -443,6 +445,10 @@ class AsyncAgentBay:
             # Add PolicyId if specified
             if hasattr(params, "policy_id") and params.policy_id:
                 request.mcp_policy_id = params.policy_id
+
+            # Add NetworkId if specified
+            if hasattr(params, "network_id") and params.network_id:
+                request.network_id = params.network_id
 
             # Add VPC resource if specified
             request.vpc_resource = params.is_vpc

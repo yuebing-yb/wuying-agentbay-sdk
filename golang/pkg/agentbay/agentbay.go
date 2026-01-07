@@ -85,6 +85,7 @@ type AgentBay struct {
 	Client         *mcp.Client
 	Context        *ContextService
 	MobileSimulate *MobileSimulateService
+	Network        *NetworkService
 	config         Config
 }
 
@@ -130,11 +131,13 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 		APIKey:  apiKey,
 		Client:  client,
 		Context: nil, // Will be initialized after creation
+		Network: nil, // Will be initialized after creation
 		config:  config,
 	}
 
 	// Initialize context service
 	agentBay.Context = &ContextService{AgentBay: agentBay}
+	agentBay.Network = &NetworkService{AgentBay: agentBay}
 
 	return agentBay, nil
 }
@@ -245,6 +248,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	// Add PolicyId if provided
 	if params.PolicyId != "" {
 		createSessionRequest.McpPolicyId = tea.String(params.PolicyId)
+	}
+
+	// Add NetworkId if provided
+	if params.NetworkId != "" {
+		createSessionRequest.NetworkId = tea.String(params.NetworkId)
 	}
 
 	// Add labels if provided
@@ -1298,6 +1306,7 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 		ImageId:             params.ImageId,
 		IsVpc:               params.IsVpc,
 		PolicyId:            params.PolicyId,
+		NetworkId:           params.NetworkId,
 		Framework:           params.Framework,
 		EnableBrowserReplay: params.EnableBrowserReplay,
 	}

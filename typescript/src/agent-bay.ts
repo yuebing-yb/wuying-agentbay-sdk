@@ -10,6 +10,7 @@ import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
 import { ContextService } from "./context";
+import { NetworkService } from "./network";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
@@ -55,6 +56,7 @@ export interface CreateSeesionWithParams {
   browserContext?: BrowserContext;
   isVpc?: boolean;
   policyId?: string;
+  networkId?: string;
   enableBrowserReplay?: boolean;
   extraConfigs?: ExtraConfigs;
   framework?: string;
@@ -73,6 +75,11 @@ export class AgentBay {
    * Context service for managing persistent contexts.
    */
   context: ContextService;
+
+  /**
+   * Network service for managing networks.
+   */
+  network: NetworkService;
 
   /**
    * Initialize the AgentBay client.
@@ -119,6 +126,7 @@ export class AgentBay {
 
       // Initialize context service
       this.context = new ContextService(this);
+      this.network = new NetworkService(this);
     } catch (error) {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
@@ -300,6 +308,11 @@ export class AgentBay {
       // Add PolicyId if provided
       if (paramsCopy.policyId) {
         request.mcpPolicyId = paramsCopy.policyId;
+      }
+
+      // Add NetworkId if provided
+      if ((paramsCopy as any).networkId) {
+        (request as any).networkId = (paramsCopy as any).networkId;
       }
 
       // Add VPC resource if specified

@@ -291,6 +291,8 @@ export interface CreateSessionParamsConfig {
   isVpc?: boolean;
   /** Policy id to apply when creating the session. */
   policyId?: string;
+  /** Network id to bind this session to. */
+  networkId?: string;
   /** Whether to enable browser recording for the session. Defaults to true. */
   enableBrowserReplay?: boolean;
   /** Extra configuration settings for different session types (e.g., mobile) */
@@ -324,6 +326,9 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
 
   /** Policy id to apply when creating the session. */
   public policyId?: string;
+
+  /** Network id to bind this session to. */
+  public networkId?: string;
 
   /** Whether to enable browser recording for the session. Defaults to true. */
   public enableBrowserReplay?: boolean;
@@ -394,6 +399,14 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   withPolicyId(policyId: string): CreateSessionParams {
     this.policyId = policyId;
+    return this;
+  }
+
+  /**
+   * WithNetworkId sets the network id for the session parameters and returns the updated parameters.
+   */
+  withNetworkId(networkId: string): CreateSessionParams {
+    this.networkId = networkId;
     return this;
   }
 
@@ -540,6 +553,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
       browserContext: this.browserContext,
       isVpc: this.isVpc,
       policyId: this.policyId,
+      networkId: this.networkId,
       enableBrowserReplay: this.enableBrowserReplay,
       extraConfigs: this.extraConfigs,
     };
@@ -573,6 +587,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
 
     params.isVpc = config.isVpc || false;
     params.policyId = config.policyId;
+    params.networkId = config.networkId;
     // Keep undefined if not provided to use default behavior (enabled by default)
     params.enableBrowserReplay = config.enableBrowserReplay;
     params.extraConfigs = config.extraConfigs;

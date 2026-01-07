@@ -82,6 +82,7 @@ ExecutionResult: Result object containing success status, task ID,
 **Example:**
 
 ```go
+```typescript
 client, err := agentbay.NewAgentBay(apiKey)
 if err != nil {
 	fmt.Printf("Error initializing AgentBay client: %v\n", err)
@@ -104,6 +105,7 @@ fmt.Printf(
 status = await session.Agent.Browser.GetTaskStatus(result.task_id)
 fmt.Printf(f"Task status: {status.task_status}")
 await session.delete()
+```
 ```
 
 ### ExecuteTaskAndWait
@@ -143,6 +145,7 @@ Returns:
 **Example:**
 
 ```go
+```typescript
 client, err := agentbay.NewAgentBay(apiKey)
 if err != nil {
 	fmt.Printf("Error initializing AgentBay client: %v\n", err)
@@ -161,6 +164,7 @@ type OutputSchema struct {
 }
 result = await session.Agent.Browser.ExecuteTaskAndWait(task="Query the weather in Shanghai",180, false, &OutputSchema{})
 fmt.Printf("Task status: %s\n", executionResult.TaskStatus)
+```
 ```
 
 ### GetTaskStatus
