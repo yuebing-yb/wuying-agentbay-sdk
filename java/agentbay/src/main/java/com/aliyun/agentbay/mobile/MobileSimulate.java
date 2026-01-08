@@ -298,17 +298,13 @@ public class MobileSimulate {
         String contextName = String.format("mobile_sim_%s_%d", 
             UUID.randomUUID().toString().replace("-", ""), 
             System.currentTimeMillis());
-        
-        try {
-            ContextResult contextResult = contextService.get(contextName, true);
-            if (!contextResult.isSuccess() || contextResult.getContext() == null) {
-                return null;
-            }
 
-            Context context = contextResult.getContext();
-            return context;
-        } catch (AgentBayException e) {
+        ContextResult contextResult = contextService.get(contextName, true);
+        if (!contextResult.isSuccess() || contextResult.getContext() == null) {
             return null;
         }
+
+        Context context = contextResult.getContext();
+        return context;
     }
 }

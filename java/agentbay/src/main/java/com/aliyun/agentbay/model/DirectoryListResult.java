@@ -5,7 +5,6 @@ import java.util.Map;
 
 public class DirectoryListResult extends ApiResponse {
     private boolean success;
-    private List<String> files;
     private List<Map<String, Object>> entries;
     private String errorMessage;
 
@@ -13,10 +12,10 @@ public class DirectoryListResult extends ApiResponse {
         this("", false, null, "");
     }
 
-    public DirectoryListResult(String requestId, boolean success, List<String> files, String errorMessage) {
+    public DirectoryListResult(String requestId, boolean success, List<Map<String, Object>> entries, String errorMessage) {
         super(requestId);
         this.success = success;
-        this.files = files;
+        this.entries = entries;
         this.errorMessage = errorMessage;
     }
 
@@ -28,20 +27,12 @@ public class DirectoryListResult extends ApiResponse {
         this.success = success;
     }
 
-    public List<String> getFiles() {
-        return files;
-    }
-
     public List<Map<String, Object>> getEntries() {
         return entries;
     }
 
     public void setEntries(List<Map<String, Object>> entries) {
         this.entries = entries;
-    }
-
-    public void setFiles(List<String> files) {
-        this.files = files;
     }
 
     public String getErrorMessage() {
