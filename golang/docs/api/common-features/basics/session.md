@@ -405,8 +405,8 @@ type CreateSessionParams struct {
 	// PolicyId specifies the policy ID to apply when creating the session.
 	PolicyId	string
 
-	// NetworkId specifies the network ID to bind this session to.
-	NetworkId	string
+	// BetaNetworkId specifies the beta network ID to bind this session to.
+	BetaNetworkId	string
 
 	// ExtraConfigs contains extra configuration settings for different session types
 	ExtraConfigs	*models.ExtraConfigs
@@ -519,13 +519,13 @@ func (p *CreateSessionParams) WithLabels(labels map[string]string) *CreateSessio
 
 WithLabels sets the labels for the session parameters and returns the updated parameters.
 
-### WithNetworkId
+### WithBetaNetworkId
 
 ```go
-func (p *CreateSessionParams) WithNetworkId(networkId string) *CreateSessionParams
+func (p *CreateSessionParams) WithBetaNetworkId(betaNetworkId string) *CreateSessionParams
 ```
 
-WithNetworkId sets the network ID for the session parameters and returns the updated parameters.
+WithBetaNetworkId sets the beta network ID for the session parameters and returns the updated parameters.
 
 ### WithPolicyId
 

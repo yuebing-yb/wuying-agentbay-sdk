@@ -16,18 +16,18 @@ def test_network_create_describe_and_bind_session():
 
     agent_bay = AgentBay(api_key=api_key)
 
-    net_result = agent_bay.network.get_network_bind_token()
+    net_result = agent_bay.beta_network.get_network_bind_token()
     assert net_result.success, net_result.error_message
     assert net_result.network_id != ""
     assert net_result.network_token != ""
 
-    status_result = agent_bay.network.describe(net_result.network_id)
+    status_result = agent_bay.beta_network.describe(net_result.network_id)
     assert status_result.success, status_result.error_message
 
     params = CreateSessionParams(
         image_id="imgc-0ab5takhjgjky7htu",
         labels={"test-type": "network-integration"},
-        network_id=net_result.network_id,
+        beta_network_id=net_result.network_id,
     )
 
     create_result = agent_bay.create(params)

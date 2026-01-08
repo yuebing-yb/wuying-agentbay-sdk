@@ -23,7 +23,7 @@ type AgentBay struct {
 	Client		*mcp.Client
 	Context		*ContextService
 	MobileSimulate	*MobileSimulateService
-	Network		*NetworkService
+	BetaNetwork	*BetaNetworkService
 	config		Config
 }
 ```

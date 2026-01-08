@@ -12,7 +12,7 @@ export * from "./browser";
 export { Code } from "./code";
 export * from "./command";
 export { Context, ContextService } from "./context";
-export { NetworkService } from "./network";
+export { BetaNetworkService } from "./beta-network";
 export { Computer } from "./computer";
 export * from "./exceptions";
 export * from "./extension";

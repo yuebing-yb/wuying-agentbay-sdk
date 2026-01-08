@@ -1,13 +1,14 @@
 import { AgentBay } from "./agent-bay";
 import * as $_client from "./api";
 import { APIError } from "./exceptions";
-import { extractRequestId, type NetworkResult, type NetworkStatusResult } from "./types/api-response";
+import { extractRequestId } from "./types/api-response";
+import type { NetworkResult, NetworkStatusResult } from "./types/api-response";
 import { logAPICall, logAPIResponseWithDetails, logDebug } from "./utils/logger";
 
 /**
- * Provides methods to manage networks in the AgentBay cloud environment.
+ * Beta network service (trial feature).
  */
-export class NetworkService {
+export class BetaNetworkService {
   private agentBay: AgentBay;
 
   constructor(agentBay: AgentBay) {
@@ -24,7 +25,7 @@ export class NetworkService {
           networkId,
         });
 
-        logAPICall("CreateNetwork");
+        logAPICall("CreateNetwork(beta)");
         if (networkId) {
           logDebug(`Request: NetworkId=${networkId}`);
         }
@@ -33,7 +34,7 @@ export class NetworkService {
         const requestId = extractRequestId(response) || "";
 
         if (!response.body || typeof response.body !== "object") {
-          logAPIResponseWithDetails("CreateNetwork", requestId, false, undefined, "Invalid response format");
+          logAPIResponseWithDetails("CreateNetwork(beta)", requestId, false, undefined, "Invalid response format");
           return {
             requestId,
             success: false,
@@ -79,10 +80,10 @@ export class NetworkService {
           delayMs *= 2;
           continue;
         }
-        throw new APIError(`CreateNetwork failed: ${msg}`);
+        throw new APIError(`CreateNetwork(beta) failed: ${msg}`);
       }
     }
-    throw new APIError("CreateNetwork failed: exhausted retries");
+    throw new APIError("CreateNetwork(beta) failed: exhausted retries");
   }
 
   /**
@@ -111,14 +112,14 @@ export class NetworkService {
           networkId,
         });
 
-        logAPICall("DescribeNetwork");
+        logAPICall("DescribeNetwork(beta)");
         logDebug(`Request: NetworkId=${networkId}`);
 
         const response = await this.agentBay.getClient().describeNetwork(request);
         const requestId = extractRequestId(response) || "";
 
         if (!response.body || typeof response.body !== "object") {
-          logAPIResponseWithDetails("DescribeNetwork", requestId, false, undefined, "Invalid response format");
+          logAPIResponseWithDetails("DescribeNetwork(beta)", requestId, false, undefined, "Invalid response format");
           return {
             requestId,
             success: false,
@@ -151,10 +152,10 @@ export class NetworkService {
           delayMs *= 2;
           continue;
         }
-        throw new APIError(`DescribeNetwork failed: ${msg}`);
+        throw new APIError(`DescribeNetwork(beta) failed: ${msg}`);
       }
     }
-    throw new APIError("DescribeNetwork failed: exhausted retries");
+    throw new APIError("DescribeNetwork(beta) failed: exhausted retries");
   }
 }
 

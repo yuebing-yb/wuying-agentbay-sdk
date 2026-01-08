@@ -36,7 +36,7 @@ public class NetworkExample {
             System.out.println("Example 1: Create a network");
             System.out.println(repeat("=", 60));
 
-            NetworkResult networkResult = agentBay.getNetwork().create();
+            NetworkResult networkResult = agentBay.getBetaNetwork().betaGetNetworkBindToken();
 
             if (!networkResult.isSuccess()) {
                 System.err.println("Failed to create network: " + networkResult.getErrorMessage());
@@ -59,7 +59,7 @@ public class NetworkExample {
             System.out.println("Example 2: Check network status");
             System.out.println(repeat("=", 60));
 
-            NetworkStatusResult statusResult = agentBay.getNetwork().describe(networkId);
+            NetworkStatusResult statusResult = agentBay.getBetaNetwork().betaDescribe(networkId);
 
             if (statusResult.isSuccess()) {
                 System.out.println("✅ Network status retrieved successfully!");
@@ -76,7 +76,7 @@ public class NetworkExample {
 
             CreateSessionParams params1 = new CreateSessionParams();
             params1.setImageId("linux_latest");
-            params1.setNetworkId(networkId);
+            params1.setBetaNetworkId(networkId);
 
             System.out.println("\nCreating session 1...");
             SessionResult sessionResult1 = agentBay.create(params1);
@@ -93,7 +93,7 @@ public class NetworkExample {
 
             CreateSessionParams params2 = new CreateSessionParams();
             params2.setImageId("linux_latest");
-            params2.setNetworkId(networkId);
+            params2.setBetaNetworkId(networkId);
 
             System.out.println("\nCreating session 2...");
             SessionResult sessionResult2 = agentBay.create(params2);
@@ -151,7 +151,7 @@ public class NetworkExample {
             System.out.println(repeat("=", 60));
 
             System.out.println("\n🔒 Creating session 3 on a different network...");
-            NetworkResult network2Result = agentBay.getNetwork().create();
+            NetworkResult network2Result = agentBay.getBetaNetwork().betaGetNetworkBindToken();
 
             if (!network2Result.isSuccess()) {
                 System.err.println("Failed to create second network: " + network2Result.getErrorMessage());
@@ -165,7 +165,7 @@ public class NetworkExample {
 
             CreateSessionParams params3 = new CreateSessionParams();
             params3.setImageId("linux_latest");
-            params3.setNetworkId(networkId2);
+            params3.setBetaNetworkId(networkId2);
 
             SessionResult sessionResult3 = agentBay.create(params3);
 

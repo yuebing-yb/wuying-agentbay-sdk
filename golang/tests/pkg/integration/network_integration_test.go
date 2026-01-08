@@ -15,16 +15,16 @@ func TestNetworkCreateDescribeAndBindSession(t *testing.T) {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	if client.Network == nil {
-		t.Fatalf("client.Network is nil")
+	if client.BetaNetwork == nil {
+		t.Fatalf("client.BetaNetwork is nil")
 	}
 
-	networkResult, err := client.Network.GetNetworkBindToken("")
+	networkResult, err := client.BetaNetwork.BetaGetNetworkBindToken("")
 	if err != nil {
-		t.Fatalf("Network.Create failed: %v", err)
+		t.Fatalf("BetaGetNetworkBindToken failed: %v", err)
 	}
 	if !networkResult.Success {
-		t.Fatalf("Network.Create returned success=false: %s", networkResult.ErrorMessage)
+		t.Fatalf("BetaGetNetworkBindToken returned success=false: %s", networkResult.ErrorMessage)
 	}
 	if networkResult.NetworkId == "" {
 		t.Fatalf("expected non-empty networkId")
@@ -33,17 +33,17 @@ func TestNetworkCreateDescribeAndBindSession(t *testing.T) {
 		t.Fatalf("expected non-empty networkToken")
 	}
 
-	statusResult, err := client.Network.Describe(networkResult.NetworkId)
+	statusResult, err := client.BetaNetwork.BetaDescribe(networkResult.NetworkId)
 	if err != nil {
-		t.Fatalf("Network.Describe failed: %v", err)
+		t.Fatalf("BetaDescribe failed: %v", err)
 	}
 	if !statusResult.Success {
-		t.Fatalf("Network.Describe returned success=false: %s", statusResult.ErrorMessage)
+		t.Fatalf("BetaDescribe returned success=false: %s", statusResult.ErrorMessage)
 	}
 
 	params := agentbay.NewCreateSessionParams().
 		WithImageId("imgc-0ab5takhjgjky7htu").
-		WithNetworkId(networkResult.NetworkId).
+		WithBetaNetworkId(networkResult.NetworkId).
 		WithLabels(map[string]string{"test-type": "network-integration"})
 
 	createResult, err := client.Create(params)

@@ -48,7 +48,7 @@ from ..api.models import (
     ResumeSessionAsyncRequest,
 )
 from .context import AsyncContextService
-from .network import AsyncNetwork
+from .beta_network import AsyncBetaNetworkService
 from .beta_volume import AsyncBetaVolumeService
 from .session import AsyncSession
 from .._common.params.session_params import CreateSessionParams
@@ -102,7 +102,7 @@ class AsyncAgentBay:
 
         # Initialize context service
         self.context = AsyncContextService(self)
-        self.network = AsyncNetwork(self)
+        self.beta_network = AsyncBetaNetworkService(self)
         self.beta_volume = AsyncBetaVolumeService(self)
         self._file_transfer_context: Optional[Any] = None
 
@@ -448,9 +448,9 @@ class AsyncAgentBay:
             if hasattr(params, "policy_id") and params.policy_id:
                 request.mcp_policy_id = params.policy_id
 
-            # Add NetworkId if specified
-            if hasattr(params, "network_id") and params.network_id:
-                request.network_id = params.network_id
+            # Beta: Add NetworkId if specified
+            if hasattr(params, "beta_network_id") and params.beta_network_id:
+                request.network_id = params.beta_network_id
 
             # Add VPC resource if specified
             request.vpc_resource = params.is_vpc

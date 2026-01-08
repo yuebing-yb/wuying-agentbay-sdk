@@ -12,7 +12,7 @@ import com.aliyun.agentbay.model.GetSessionData;
 import com.aliyun.agentbay.model.GetSessionResult;
 import com.aliyun.agentbay.model.SessionParams;
 import com.aliyun.agentbay.model.SessionResult;
-import com.aliyun.agentbay.network.Network;
+import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.util.ResponseUtil;
@@ -46,7 +46,7 @@ public class AgentBay {
     private ApiClient apiClient;
     private ConcurrentHashMap<String, Session> sessions;
     private MobileSimulate mobileSimulate;
-    private Network network;
+    private BetaNetworkService betaNetwork;
     private BetaVolumeService betaVolume;
 
     public AgentBay() throws AgentBayException {
@@ -88,7 +88,7 @@ public class AgentBay {
             this.client = new Client(clientConfig);
             this.apiClient = new ApiClient(this.client, apiKey);
             this.mobileSimulate = new MobileSimulate(this);
-            this.network = new Network(this);
+            this.betaNetwork = new BetaNetworkService(this);
             this.betaVolume = new BetaVolumeService(this);
         } catch (Exception e) {
             throw new AgentBayException("Failed to initialize AgentBay client", e);
@@ -277,12 +277,12 @@ public class AgentBay {
     }
 
     /**
-     * Get network service for this AgentBay instance
+     * Get beta network service (trial feature).
      *
-     * @return Network instance
+     * @return BetaNetworkService instance
      */
-    public Network getNetwork() {
-        return network;
+    public BetaNetworkService getBetaNetwork() {
+        return betaNetwork;
     }
 
     /**
@@ -430,9 +430,9 @@ public class AgentBay {
                 request.setMcpPolicyId(params.getPolicyId());
             }
 
-            // Set network ID if provided
-            if (params.getNetworkId() != null && !params.getNetworkId().isEmpty()) {
-                request.setNetworkId(params.getNetworkId());
+            // Beta: Set network ID if provided
+            if (params.getBetaNetworkId() != null && !params.getBetaNetworkId().isEmpty()) {
+                request.setNetworkId(params.getBetaNetworkId());
             }
 
             // Set enable_browser_replay if explicitly set to false

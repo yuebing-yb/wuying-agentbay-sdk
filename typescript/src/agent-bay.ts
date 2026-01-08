@@ -10,7 +10,7 @@ import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
 import { ContextService } from "./context";
-import { NetworkService } from "./network";
+import { BetaNetworkService } from "./beta-network";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
@@ -68,7 +68,8 @@ export interface CreateSeesionWithParams {
   browserContext?: BrowserContext;
   isVpc?: boolean;
   policyId?: string;
-  networkId?: string;
+  betaNetworkId?: string;
+  // Note: networkId is not released; do not expose non-beta alias.
   enableBrowserReplay?: boolean;
   extraConfigs?: ExtraConfigs;
   framework?: string;
@@ -91,7 +92,13 @@ export class AgentBay {
   /**
    * Network service for managing networks.
    */
-  network: NetworkService;
+  /** Deprecated alias: use betaNetwork */
+  network: BetaNetworkService;
+
+  /**
+   * Beta network service for managing networks.
+   */
+  betaNetwork: BetaNetworkService;
 
   /**
    * Beta volume service (trial feature).
@@ -143,8 +150,10 @@ export class AgentBay {
 
       // Initialize context service
       this.context = new ContextService(this);
-      this.network = new NetworkService(this);
       this.betaVolume = new BetaVolumeService(this);
+      this.betaNetwork = new BetaNetworkService(this);
+      // Deprecated alias: network APIs are beta for now
+      this.network = this.betaNetwork as any;
     } catch (error) {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
@@ -342,9 +351,9 @@ export class AgentBay {
         request.mcpPolicyId = paramsCopy.policyId;
       }
 
-      // Add NetworkId if provided
-      if ((paramsCopy as any).networkId) {
-        (request as any).networkId = (paramsCopy as any).networkId;
+      // Beta: Add NetworkId if provided
+      if ((paramsCopy as any).betaNetworkId) {
+        (request as any).networkId = (paramsCopy as any).betaNetworkId;
       }
 
       // Add VPC resource if specified

@@ -10,8 +10,8 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
-// NetworkResult wraps network create result and RequestID.
-type NetworkResult struct {
+// BetaNetworkResult wraps beta network bind token result and RequestID.
+type BetaNetworkResult struct {
 	models.ApiResponse
 	Success      bool
 	NetworkId    string
@@ -19,22 +19,21 @@ type NetworkResult struct {
 	ErrorMessage string
 }
 
-// NetworkStatusResult wraps network status result and RequestID.
-type NetworkStatusResult struct {
+// BetaNetworkStatusResult wraps beta network status result and RequestID.
+type BetaNetworkStatusResult struct {
 	models.ApiResponse
 	Success      bool
 	Online       bool
 	ErrorMessage string
 }
 
-// NetworkService provides methods to manage networks in the AgentBay cloud environment.
-type NetworkService struct {
+// BetaNetworkService provides beta methods to manage networks.
+type BetaNetworkService struct {
 	AgentBay *AgentBay
 }
 
-// GetNetworkBindToken creates a network (or reuses provided networkId) and returns networkId + networkToken.
-// If networkId is empty, a new network will be created.
-func (ns *NetworkService) GetNetworkBindToken(networkId string) (*NetworkResult, error) {
+// BetaGetNetworkBindToken creates a network (or reuses provided networkId) and returns networkId + networkToken.
+func (ns *BetaNetworkService) BetaGetNetworkBindToken(networkId string) (*BetaNetworkResult, error) {
 	request := &mcp.CreateNetworkRequest{
 		Authorization: tea.String("Bearer " + ns.AgentBay.APIKey),
 	}
@@ -60,9 +59,10 @@ func (ns *NetworkService) GetNetworkBindToken(networkId string) (*NetworkResult,
 			}
 		}
 	}
+
 	requestID := models.ExtractRequestID(resp)
 	if err != nil {
-		return &NetworkResult{
+		return &BetaNetworkResult{
 			ApiResponse:  models.ApiResponse{RequestID: requestID},
 			Success:      false,
 			ErrorMessage: fmt.Sprintf("Failed to create network: %v", err),
@@ -70,7 +70,7 @@ func (ns *NetworkService) GetNetworkBindToken(networkId string) (*NetworkResult,
 	}
 
 	if resp == nil || resp.Body == nil {
-		return &NetworkResult{
+		return &BetaNetworkResult{
 			ApiResponse:  models.ApiResponse{RequestID: requestID},
 			Success:      false,
 			ErrorMessage: "Invalid response from CreateNetwork API",
@@ -86,7 +86,7 @@ func (ns *NetworkService) GetNetworkBindToken(networkId string) (*NetworkResult,
 		if body.Code != nil {
 			errorMsg = fmt.Sprintf("[%s] %s", *body.Code, errorMsg)
 		}
-		return &NetworkResult{
+		return &BetaNetworkResult{
 			ApiResponse:  models.ApiResponse{RequestID: requestID},
 			Success:      false,
 			ErrorMessage: errorMsg,
@@ -94,7 +94,7 @@ func (ns *NetworkService) GetNetworkBindToken(networkId string) (*NetworkResult,
 	}
 
 	if body.Data == nil {
-		return &NetworkResult{
+		return &BetaNetworkResult{
 			ApiResponse:  models.ApiResponse{RequestID: requestID},
 			Success:      false,
 			ErrorMessage: "Network data not found in response",
@@ -110,7 +110,7 @@ func (ns *NetworkService) GetNetworkBindToken(networkId string) (*NetworkResult,
 		networkToken = *body.Data.NetworkToken
 	}
 
-	return &NetworkResult{
+	return &BetaNetworkResult{
 		ApiResponse:  models.ApiResponse{RequestID: requestID},
 		Success:      true,
 		NetworkId:    createdNetworkID,
@@ -119,15 +119,10 @@ func (ns *NetworkService) GetNetworkBindToken(networkId string) (*NetworkResult,
 	}, nil
 }
 
-// Create is kept for backward compatibility. Prefer GetNetworkBindToken.
-func (ns *NetworkService) Create(networkId string) (*NetworkResult, error) {
-	return ns.GetNetworkBindToken(networkId)
-}
-
-// Describe queries network status (online/offline).
-func (ns *NetworkService) Describe(networkId string) (*NetworkStatusResult, error) {
+// BetaDescribe queries beta network status (online/offline).
+func (ns *BetaNetworkService) BetaDescribe(networkId string) (*BetaNetworkStatusResult, error) {
 	if networkId == "" {
-		return &NetworkStatusResult{
+		return &BetaNetworkStatusResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
 			Online:       false,
@@ -158,18 +153,19 @@ func (ns *NetworkService) Describe(networkId string) (*NetworkStatusResult, erro
 			}
 		}
 	}
+
 	requestID := models.ExtractRequestID(resp)
 	if err != nil {
 		errorStr := err.Error()
 		if strings.Contains(errorStr, "NotFound") {
-			return &NetworkStatusResult{
+			return &BetaNetworkStatusResult{
 				ApiResponse:  models.ApiResponse{RequestID: requestID},
 				Success:      false,
 				Online:       false,
 				ErrorMessage: fmt.Sprintf("Network %s not found", networkId),
 			}, nil
 		}
-		return &NetworkStatusResult{
+		return &BetaNetworkStatusResult{
 			ApiResponse:  models.ApiResponse{RequestID: requestID},
 			Success:      false,
 			Online:       false,
@@ -178,7 +174,7 @@ func (ns *NetworkService) Describe(networkId string) (*NetworkStatusResult, erro
 	}
 
 	if resp == nil || resp.Body == nil {
-		return &NetworkStatusResult{
+		return &BetaNetworkStatusResult{
 			ApiResponse:  models.ApiResponse{RequestID: requestID},
 			Success:      false,
 			Online:       false,
@@ -195,7 +191,7 @@ func (ns *NetworkService) Describe(networkId string) (*NetworkStatusResult, erro
 		if body.Code != nil {
 			errorMsg = fmt.Sprintf("[%s] %s", *body.Code, errorMsg)
 		}
-		return &NetworkStatusResult{
+		return &BetaNetworkStatusResult{
 			ApiResponse:  models.ApiResponse{RequestID: requestID},
 			Success:      false,
 			Online:       false,
@@ -207,7 +203,7 @@ func (ns *NetworkService) Describe(networkId string) (*NetworkStatusResult, erro
 	if body.Data != nil && body.Data.Online != nil {
 		online = *body.Data.Online
 	}
-	return &NetworkStatusResult{
+	return &BetaNetworkStatusResult{
 		ApiResponse:  models.ApiResponse{RequestID: requestID},
 		Success:      true,
 		Online:       online,

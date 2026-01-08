@@ -32,7 +32,8 @@ public class CreateSessionParams {
     private String policyId;
     private Boolean enableBrowserReplay;
     private ExtraConfigs extraConfigs;
-    private String networkId;
+    // Beta: network binding during session creation
+    private String betaNetworkId;
 
     // Beta: mount a volume during session creation (static mount only)
     private String volumeId;
@@ -233,25 +234,12 @@ public class CreateSessionParams {
         this.extraConfigs = extraConfigs;
     }
 
-    /**
-     * Get the network ID to bind this session to.
-     *
-     * @return Network ID, or null if not set
-     */
-    public String getNetworkId() {
-        return networkId;
+    public String getBetaNetworkId() {
+        return betaNetworkId;
     }
 
-    /**
-     * Set the network ID to bind this session to.
-     *
-     * <p>Multiple sessions can share the same network ID, enabling network communication
-     * between sessions and network isolation.</p>
-     *
-     * @param networkId Network ID created via Network.getNetworkBindToken()
-     */
-    public void setNetworkId(String networkId) {
-        this.networkId = networkId;
+    public void setBetaNetworkId(String betaNetworkId) {
+        this.betaNetworkId = betaNetworkId;
     }
 
 }

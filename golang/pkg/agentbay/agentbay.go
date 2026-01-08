@@ -85,7 +85,7 @@ type AgentBay struct {
 	Client         *mcp.Client
 	Context        *ContextService
 	MobileSimulate *MobileSimulateService
-	Network        *NetworkService
+	BetaNetwork    *BetaNetworkService
 	BetaVolume     *BetaVolumeService
 	config         Config
 }
@@ -129,17 +129,17 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create AgentBay instance
 	agentBay := &AgentBay{
-		APIKey:     apiKey,
-		Client:     client,
-		Context:    nil, // Will be initialized after creation
-		Network:    nil, // Will be initialized after creation
-		BetaVolume: nil, // Will be initialized after creation
-		config:     config,
+		APIKey:      apiKey,
+		Client:      client,
+		Context:     nil, // Will be initialized after creation
+		BetaNetwork: nil, // Will be initialized after creation
+		BetaVolume:  nil, // Will be initialized after creation
+		config:      config,
 	}
 
 	// Initialize context service
 	agentBay.Context = &ContextService{AgentBay: agentBay}
-	agentBay.Network = &NetworkService{AgentBay: agentBay}
+	agentBay.BetaNetwork = &BetaNetworkService{AgentBay: agentBay}
 	agentBay.BetaVolume = &BetaVolumeService{AgentBay: agentBay}
 
 	return agentBay, nil
@@ -260,9 +260,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		createSessionRequest.McpPolicyId = tea.String(params.PolicyId)
 	}
 
-	// Add NetworkId if provided
-	if params.NetworkId != "" {
-		createSessionRequest.NetworkId = tea.String(params.NetworkId)
+	// Beta: Add NetworkId if provided
+	if params.BetaNetworkId != "" {
+		createSessionRequest.NetworkId = tea.String(params.BetaNetworkId)
 	}
 
 	// Add labels if provided
@@ -1316,7 +1316,7 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 		ImageId:             params.ImageId,
 		IsVpc:               params.IsVpc,
 		PolicyId:            params.PolicyId,
-		NetworkId:           params.NetworkId,
+		BetaNetworkId:       params.BetaNetworkId,
 		Framework:           params.Framework,
 		EnableBrowserReplay: params.EnableBrowserReplay,
 		VolumeId:            params.VolumeId,

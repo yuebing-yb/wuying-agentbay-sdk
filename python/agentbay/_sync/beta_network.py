@@ -9,13 +9,17 @@ from .._common.models.network import NetworkResult, NetworkStatusResult
 from .._common.models.response import extract_request_id
 from ..api.models import CreateNetworkRequest, DescribeNetworkRequest
 
-_logger = get_logger("agentbay.network")
+_logger = get_logger("beta_network")
 
 if TYPE_CHECKING:
     from .agentbay import AgentBay
 
 
-class Network:
+class SyncBetaNetworkService:
+    """
+    Beta network service (trial feature).
+    """
+
     def __init__(self, agent_bay: "AgentBay"):
         self._agent_bay = agent_bay
 
@@ -73,18 +77,12 @@ class Network:
                     time.sleep(delay_s)
                     delay_s *= 2
                     continue
-                _logger.debug(f"CreateNetwork failed: {e}")
+                _logger.debug(f"CreateNetwork(beta) failed: {e}")
                 return NetworkResult(
                     request_id="",
                     success=False,
                     error_message=f"Failed to create network: {e}",
                 )
-
-    def create(self, network_id: Optional[str] = None) -> NetworkResult:
-        """
-        Deprecated: use get_network_bind_token().
-        """
-        return self.get_network_bind_token(network_id=network_id)
 
     def describe(self, network_id: str) -> NetworkStatusResult:
         if not network_id:
@@ -159,5 +157,6 @@ class Network:
                     online=False,
                     error_message=f"Failed to describe network: {e}",
                 )
+
 
 

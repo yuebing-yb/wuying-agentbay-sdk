@@ -302,8 +302,9 @@ export interface CreateSessionParamsConfig {
   isVpc?: boolean;
   /** Policy id to apply when creating the session. */
   policyId?: string;
-  /** Network id to bind this session to. */
-  networkId?: string;
+  /** Beta network id to bind this session to. */
+  betaNetworkId?: string;
+  // Note: networkId is not released; do not expose non-beta alias.
   /** Whether to enable browser recording for the session. Defaults to true. */
   enableBrowserReplay?: boolean;
   /** Extra configuration settings for different session types (e.g., mobile) */
@@ -344,8 +345,10 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
   /** Policy id to apply when creating the session. */
   public policyId?: string;
 
-  /** Network id to bind this session to. */
-  public networkId?: string;
+  /** Beta network id to bind this session to. */
+  public betaNetworkId?: string;
+
+  // Note: networkId is not released; do not expose non-beta alias.
 
   /** Whether to enable browser recording for the session. Defaults to true. */
   public enableBrowserReplay?: boolean;
@@ -436,10 +439,10 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
   }
 
   /**
-   * WithNetworkId sets the network id for the session parameters and returns the updated parameters.
+   * WithBetaNetworkId sets the beta network id for the session parameters and returns the updated parameters.
    */
-  withNetworkId(networkId: string): CreateSessionParams {
-    this.networkId = networkId;
+  withBetaNetworkId(betaNetworkId: string): CreateSessionParams {
+    this.betaNetworkId = betaNetworkId;
     return this;
   }
 
@@ -588,7 +591,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
       browserContext: this.browserContext,
       isVpc: this.isVpc,
       policyId: this.policyId,
-      networkId: this.networkId,
+      betaNetworkId: this.betaNetworkId,
       enableBrowserReplay: this.enableBrowserReplay,
       extraConfigs: this.extraConfigs,
     };
@@ -624,7 +627,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
 
     params.isVpc = config.isVpc || false;
     params.policyId = config.policyId;
-    params.networkId = config.networkId;
+    params.betaNetworkId = config.betaNetworkId;
     // Keep undefined if not provided to use default behavior (enabled by default)
     params.enableBrowserReplay = config.enableBrowserReplay;
     params.extraConfigs = config.extraConfigs;

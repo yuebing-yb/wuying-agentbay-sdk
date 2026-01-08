@@ -141,39 +141,39 @@ public class CreateSessionParamsTest {
         assertNull(params.getPolicyId());
         assertNull(params.getEnableBrowserReplay());
         assertNull(params.getExtraConfigs());
-        assertNull(params.getNetworkId());
+        assertNull(params.getBetaNetworkId());
         assertNotNull(params.getContextSyncs());
         assertTrue(params.getContextSyncs().isEmpty());
     }
 
     @Test
-    public void testCreateSessionParamsWithNetworkId() {
+    public void testCreateSessionParamsWithBetaNetworkId() {
         CreateSessionParams params = new CreateSessionParams();
-        params.setNetworkId("test-network-123");
+        params.setBetaNetworkId("test-network-123");
 
-        assertEquals("test-network-123", params.getNetworkId());
+        assertEquals("test-network-123", params.getBetaNetworkId());
     }
 
     @Test
-    public void testCreateSessionParamsWithNullNetworkId() {
+    public void testCreateSessionParamsWithNullBetaNetworkId() {
         CreateSessionParams params = new CreateSessionParams();
-        params.setNetworkId(null);
+        params.setBetaNetworkId(null);
 
-        assertNull(params.getNetworkId());
+        assertNull(params.getBetaNetworkId());
     }
 
     @Test
-    public void testCreateSessionParamsWithEmptyNetworkId() {
+    public void testCreateSessionParamsWithEmptyBetaNetworkId() {
         CreateSessionParams params = new CreateSessionParams();
-        params.setNetworkId("");
+        params.setBetaNetworkId("");
 
-        assertEquals("", params.getNetworkId());
+        assertEquals("", params.getBetaNetworkId());
     }
 
     @Test
-    public void testCreateSessionParamsWithNetworkIdAndOtherParams() {
+    public void testCreateSessionParamsWithBetaNetworkIdAndOtherParams() {
         CreateSessionParams params = new CreateSessionParams();
-        params.setNetworkId("shared-network");
+        params.setBetaNetworkId("shared-network");
         params.setImageId("linux_latest");
         params.setPolicyId("network-policy");
 
@@ -181,7 +181,7 @@ public class CreateSessionParamsTest {
         labels.put("type", "networked-session");
         params.setLabels(labels);
 
-        assertEquals("shared-network", params.getNetworkId());
+        assertEquals("shared-network", params.getBetaNetworkId());
         assertEquals("linux_latest", params.getImageId());
         assertEquals("network-policy", params.getPolicyId());
         assertNotNull(params.getLabels());
