@@ -117,12 +117,11 @@ public class FileSystemExample {
             System.out.println("\nExample 5: Listing directory contents...");
             DirectoryListResult listResult = fs.listDirectory("/tmp");
             if (listResult.isSuccess()) {
-                List<Map<String, Object>> entries = listResult.getEntries();
+                List<DirectoryEntry> entries = listResult.getEntries();
                 System.out.println("Found " + entries.size() + " entries in /tmp:");
-                for (Map<String, Object> entry : entries) {
-                    Boolean isDirectory = (Boolean) entry.get("isDirectory");
-                    String entryType = (isDirectory != null && isDirectory) ? "Directory" : "File";
-                    System.out.println("  - " + entry.get("name") + " (" + entryType + ")");
+                for (DirectoryEntry entry : entries) {
+                    String entryType = entry.isDirectory() ? "Directory" : "File";
+                    System.out.println("  - " + entry.getName() + " (" + entryType + ")");
                 }
             } else {
                 System.out.println("Error listing directory: " + listResult.getErrorMessage());

@@ -90,8 +90,8 @@ public class FileTransferExample {
             DirectoryListResult listResult = session.getFileSystem().listDirectory(fileTransferContextPath);
             if (listResult.isSuccess()) {
                 boolean fileFound = false;
-                for (java.util.Map<String, Object> entry : listResult.getEntries()) {
-                    if ("upload_test.txt".equals(entry.get("name"))) {
+                for (DirectoryEntry entry : listResult.getEntries()) {
+                    if ("upload_test.txt".equals(entry.getName())) {
                         fileFound = true;
                         break;
                     }
