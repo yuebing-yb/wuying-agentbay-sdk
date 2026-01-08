@@ -638,55 +638,62 @@ func (a *ComputerUseAgent) TerminateTask(taskID string) *ExecutionResult {
 	return a.baseTaskAgent.terminateTask(taskID)
 }
 
-
 /*
-	Execute a task described in human language on a browser without waiting for completion (non-blocking).
+Execute a task described in human language on a browser without waiting for completion (non-blocking).
 
-	This is a fire-and-return interface that immediately provides a task ID.
-	Call get_task_status to check the task status. You can control the timeout
-	of the task execution in your own code by setting the frequency of calling
-	get_task_status.
+This is a fire-and-return interface that immediately provides a task ID.
+Call get_task_status to check the task status. You can control the timeout
+of the task execution in your own code by setting the frequency of calling
+get_task_status.
 
-	Args:
-	task: Task description in human language.
-	use_vision: Whether to use vision to performe the task.
-	output_schema: The schema of the structured output.
+Args:
+task: Task description in human language.
+use_vision: Whether to use vision to performe the task.
+output_schema: The schema of the structured output.
 
-	Returns:
-	ExecutionResult: Result object containing success status, task ID,
-		task status, and error message if any.
+Returns:
+ExecutionResult: Result object containing success status, task ID,
 
-	Example:
-	```typescript
-	client, err := agentbay.NewAgentBay(apiKey)
+	task status, and error message if any.
+
+Example:
+```typescript
+client, err := agentbay.NewAgentBay(apiKey)
+
 	if err != nil {
 		fmt.Printf("Error initializing AgentBay client: %v\n", err)
 		return
 	}
-	sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
-	sessionResult, err := client.Create(sessionParams)
+
+sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+sessionResult, err := client.Create(sessionParams)
+
 	if err != nil {
 		fmt.Printf("Error creating session: %v\n", err)
 		return
 	}
-	session := sessionResult.Session
+
+session := sessionResult.Session
 
 	type OutputSchema struct {
 		City string `json:"City" jsonschema:"required"`
 		Weather string `json:"Weather" jsonschema:"required"`
 	}
-	result = await session.Agent.Browser.ExecuteTask(task="Query the weather in Shanghai",false, &OutputSchema{})
-	fmt.Printf(
-		f"Task ID: {result.task_id}, Status: {result.task_status}")
-	status = await session.Agent.Browser.GetTaskStatus(result.task_id)
-	fmt.Printf(f"Task status: {status.task_status}")
-	await session.delete()
-	```
+
+result = await session.Agent.Browser.ExecuteTask(task="Query the weather in Shanghai",false, &OutputSchema{})
+fmt.Printf(
+
+	f"Task ID: {result.task_id}, Status: {result.task_status}")
+
+status = await session.Agent.Browser.GetTaskStatus(result.task_id)
+fmt.Printf(f"Task status: {status.task_status}")
+await session.delete()
+```
 */
 func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schema interface{}) *ExecutionResult {
 	args := map[string]interface{}{
-		"task": task,
-		"use_vision": use_vision,
+		"task":          task,
+		"use_vision":    use_vision,
 		"output_schema": generateJsonSchema(output_schema),
 	}
 	fmt.Println(args)
@@ -747,44 +754,51 @@ func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schem
 }
 
 /*
-	Execute a task described in human language on a browser synchronously.
+Execute a task described in human language on a browser synchronously.
 
-	This is a synchronous interface that blocks until the task is completed or
-	an error occurs, or timeout happens. The default polling interval is 3 seconds.
+This is a synchronous interface that blocks until the task is completed or
+an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
-	Args:
-		task: Task description in human language.
-		timeout: Maximum time to wait for task completion in seconds.
-			Used to control how long to wait for task completion.
-		use_vision: Whether to use vision to performe the task.
-		output_schema: The schema of the structured output.
+Args:
 
-	Returns:
-		ExecutionResult: Result object containing success status, task ID,
-			task status, and error message if any.
+	task: Task description in human language.
+	timeout: Maximum time to wait for task completion in seconds.
+		Used to control how long to wait for task completion.
+	use_vision: Whether to use vision to performe the task.
+	output_schema: The schema of the structured output.
 
-	Example:
-	```typescript
-	client, err := agentbay.NewAgentBay(apiKey)
+Returns:
+
+	ExecutionResult: Result object containing success status, task ID,
+		task status, and error message if any.
+
+Example:
+```typescript
+client, err := agentbay.NewAgentBay(apiKey)
+
 	if err != nil {
 		fmt.Printf("Error initializing AgentBay client: %v\n", err)
 		return
 	}
-	sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
-	sessionResult, err := client.Create(sessionParams)
+
+sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+sessionResult, err := client.Create(sessionParams)
+
 	if err != nil {
 		fmt.Printf("Error creating session: %v\n", err)
 		return
 	}
-	session := sessionResult.Session
+
+session := sessionResult.Session
 
 	type OutputSchema struct {
 		City string `json:"City" jsonschema:"required"`
 		Weather string `json:"Weather" jsonschema:"required"`
 	}
-	result = await session.Agent.Browser.ExecuteTaskAndWait(task="Query the weather in Shanghai",180, false, &OutputSchema{})
-	fmt.Printf("Task status: %s\n", executionResult.TaskStatus)
-	```
+
+result = await session.Agent.Browser.ExecuteTaskAndWait(task="Query the weather in Shanghai",180, false, &OutputSchema{})
+fmt.Printf("Task status: %s\n", executionResult.TaskStatus)
+```
 */
 func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_vision bool, output_schema interface{}) *ExecutionResult {
 	result := a.ExecuteTask(task, use_vision, output_schema)
@@ -1077,6 +1091,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 	maxPollAttempts := timeout / pollInterval
 	triedTime := 0
 	processedTimestamps := make(map[int64]bool) // Track processed stream fragments by timestamp_ms
+	var lastQuery *QueryResult                  // Save last query status for timeout result
 	for triedTime < maxPollAttempts {
 		query := a.GetTaskStatus(taskID)
 		if !query.Success {
@@ -1087,6 +1102,11 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 				TaskStatus:   "failed",
 				TaskID:       taskID,
 			}
+		}
+
+		// Only update lastQuery if stream is not empty
+		if len(query.Stream) > 0 {
+			lastQuery = query
 		}
 
 		// Process new stream fragments for real-time output
@@ -1211,13 +1231,50 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 	}
 
 	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
+
+	// Build task_result with last query status information
+	taskResultParts := []string{fmt.Sprintf("Task execution timed out after %d seconds.", timeout)}
+
+	if lastQuery != nil {
+		// Concatenate stream content from last query
+		if len(lastQuery.Stream) > 0 {
+			var streamContentParts []string
+			for _, streamItem := range lastQuery.Stream {
+				if streamItem.Content != "" {
+					streamContentParts = append(streamContentParts, streamItem.Content)
+				}
+			}
+
+			if len(streamContentParts) > 0 {
+				streamContent := strings.Join(streamContentParts, "")
+				taskResultParts = append(taskResultParts, fmt.Sprintf("Last task status output: %s", streamContent))
+			}
+		}
+
+		// Also add other status information if available
+		if lastQuery.TaskAction != "" {
+			taskResultParts = append(taskResultParts, fmt.Sprintf("Last action: %s", lastQuery.TaskAction))
+		}
+		if lastQuery.TaskProduct != "" {
+			taskResultParts = append(taskResultParts, fmt.Sprintf("Last result: %s", lastQuery.TaskProduct))
+		}
+		if lastQuery.Error != "" {
+			taskResultParts = append(taskResultParts, fmt.Sprintf("Last error: %s", lastQuery.Error))
+		}
+		if lastQuery.TaskStatus != "" {
+			taskResultParts = append(taskResultParts, fmt.Sprintf("Last status: %s", lastQuery.TaskStatus))
+		}
+	}
+
+	taskResult := strings.Join(taskResultParts, " | ")
+
 	return &ExecutionResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      false,
 		ErrorMessage: timeoutErrorMsg,
 		TaskStatus:   "failed",
 		TaskID:       taskID,
-		TaskResult:   fmt.Sprintf("Task execution timed out after %d seconds.", timeout),
+		TaskResult:   taskResult,
 	}
 }
 

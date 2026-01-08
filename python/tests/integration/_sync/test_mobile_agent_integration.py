@@ -35,6 +35,7 @@ def mobile_agent_session(agent_bay):
     time.sleep(3)
     params = CreateSessionParams(
         image_id="mobile_latest",
+        image_id="mobile_latest",
     )
     session_result = agent_bay.create(params)
     if not session_result.success or not session_result.session:
@@ -423,7 +424,7 @@ def test_mobile_execute_task_and_wait_timeout_termination(mobile_agent_session):
         
         # Execute with a very short timeout to trigger timeout behavior
         # This will test the termination polling logic
-        short_timeout = 5  # 5 seconds timeout
+        short_timeout = 10  # 5 seconds timeout
         logger.info(f"⏱️ Executing task with short timeout ({short_timeout}s) to trigger timeout")
         
         result = agent.mobile.execute_task_and_wait(
@@ -440,6 +441,7 @@ def test_mobile_execute_task_and_wait_timeout_termination(mobile_agent_session):
         print(f"📋 Task Status: {result.task_status}")
         print(f"📋 Success: {result.success}")
         print(f"📋 Error Message: {result.error_message}")
+        print(f"📋 Task Result: {result.task_result}")
         print(f"{'='*60}\n")
         
         # Verify timeout occurred

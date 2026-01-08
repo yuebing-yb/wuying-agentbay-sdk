@@ -805,6 +805,7 @@ export class MobileUseAgent extends BaseTaskAgent {
     const maxPollAttempts = Math.floor(timeout / pollInterval);
     let triedTime = 0;
     const processedTimestamps = new Set<number>(); // Track processed stream fragments by timestamp_ms
+    let lastQuery: QueryResult | null = null; // Save last query status for timeout result
     while (triedTime < maxPollAttempts) {
       const query = await this.getTaskStatus(taskId);
       if (!query.success) {
@@ -816,6 +817,11 @@ export class MobileUseAgent extends BaseTaskAgent {
           taskId: taskId,
           taskResult: '',
         };
+      }
+
+      // Only update lastQuery if stream is not empty
+      if (query.stream && query.stream.length > 0) {
+        lastQuery = query;
       }
 
       // Process new stream fragments for real-time output
@@ -934,13 +940,50 @@ export class MobileUseAgent extends BaseTaskAgent {
     }
     
     const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
+    
+    // Build task_result with last query status information
+    const taskResultParts: string[] = [`Task execution timed out after ${timeout} seconds.`];
+    
+    if (lastQuery) {
+      // Concatenate stream content from last query
+      if (lastQuery.stream && lastQuery.stream.length > 0) {
+        const streamContentParts: string[] = [];
+        for (const streamItem of lastQuery.stream) {
+          if (streamItem.content) {
+            streamContentParts.push(streamItem.content);
+          }
+        }
+        
+        if (streamContentParts.length > 0) {
+          const streamContent = streamContentParts.join('');
+          taskResultParts.push(`Last task status output: ${streamContent}`);
+        }
+      }
+      
+      // Also add other status information if available
+      if (lastQuery.taskAction) {
+        taskResultParts.push(`Last action: ${lastQuery.taskAction}`);
+      }
+      if (lastQuery.taskProduct) {
+        taskResultParts.push(`Last result: ${lastQuery.taskProduct}`);
+      }
+      if (lastQuery.error) {
+        taskResultParts.push(`Last error: ${lastQuery.error}`);
+      }
+      if (lastQuery.taskStatus) {
+        taskResultParts.push(`Last status: ${lastQuery.taskStatus}`);
+      }
+    }
+    
+    const taskResult = taskResultParts.join(' | ');
+    
     return {
       requestId: result.requestId,
       success: false,
       errorMessage: timeoutErrorMsg,
       taskStatus: 'failed',
       taskId: taskId,
-      taskResult: `Task execution timed out after ${timeout} seconds.`,
+      taskResult: taskResult,
     };
   }
 

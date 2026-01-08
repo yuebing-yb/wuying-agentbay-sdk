@@ -871,8 +871,12 @@ class AsyncAgent(AsyncBaseService):
             last_request_id = result.request_id
             tried_time: int = 0
             processed_timestamps = set()  # Track processed stream fragments by timestamp_ms
+            last_query = None  # Save last query status for timeout result
             while tried_time < max_poll_attempts:
                 query = await self.get_task_status(task_id)
+                # Only update last_query if stream is not empty
+                if query.stream:
+                    last_query = query
 
                 # Process new stream fragments for real-time output
                 if query.stream:
@@ -975,13 +979,43 @@ class AsyncAgent(AsyncBaseService):
                 _logger.warning(f"⚠️ Timeout waiting for task {task_id} to be fully terminated")
             
             timeout_error_msg = f"Task execution timed out after {timeout} seconds. Task ID: {task_id}. Polled {tried_time} times (max: {max_poll_attempts})."
+            
+            # Build task_result with last query status information
+            task_result_parts = [f"Task execution timed out after {timeout} seconds."]
+            
+            if last_query:
+                # Concatenate stream content from last query
+                if last_query.stream:
+                    stream_content_parts = []
+                    for stream_item in last_query.stream:
+                        if isinstance(stream_item, dict):
+                            content = stream_item.get("content", "")
+                            if content:
+                                stream_content_parts.append(content)
+                    
+                    if stream_content_parts:
+                        stream_content = "".join(stream_content_parts)
+                        task_result_parts.append(f"Last task status output: {stream_content}")
+                
+                # Also add other status information if available
+                if last_query.task_action:
+                    task_result_parts.append(f"Last action: {last_query.task_action}")
+                if last_query.task_product:
+                    task_result_parts.append(f"Last result: {last_query.task_product}")
+                if last_query.error:
+                    task_result_parts.append(f"Last error: {last_query.error}")
+                if last_query.task_status:
+                    task_result_parts.append(f"Last status: {last_query.task_status}")
+            
+            task_result = " | ".join(task_result_parts)
+            
             return ExecutionResult(
                 request_id=last_request_id,
                 success=False,
                 error_message=timeout_error_msg,
                 task_id=task_id,
                 task_status="failed",
-                task_result=f"Task execution timed out after {timeout} seconds.",
+                task_result=task_result,
             )
 
         async def get_task_status(self, task_id: str) -> QueryResult:

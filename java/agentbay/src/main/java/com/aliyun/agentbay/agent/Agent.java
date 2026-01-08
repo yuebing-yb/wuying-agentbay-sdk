@@ -980,9 +980,15 @@ public class Agent extends BaseService {
                 int maxPollAttempts = timeout / pollInterval;
                 int triedTime = 0;
                 java.util.Set<Long> processedTimestamps = new java.util.HashSet<>();
+                QueryResult lastQuery = null;
 
                 while (triedTime < maxPollAttempts) {
                     QueryResult query = getTaskStatus(taskId);
+
+                    // Only update lastQuery if stream is not empty
+                    if (query.getStream() != null && !query.getStream().isEmpty()) {
+                        lastQuery = query;
+                    }
 
                     // Process new stream fragments for real-time output
                     if (query.getStream() != null && !query.getStream().isEmpty()) {
@@ -1133,13 +1139,57 @@ public class Agent extends BaseService {
                 }
 
                 String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
+                
+                // Build task_result with last query status information
+                java.util.List<String> taskResultParts = new java.util.ArrayList<>();
+                taskResultParts.add(String.format("Task execution timed out after %d seconds.", timeout));
+                
+                if (lastQuery != null) {
+                    // Concatenate stream content from last query
+                    if (lastQuery.getStream() != null && !lastQuery.getStream().isEmpty()) {
+                        java.util.List<String> streamContentParts = new java.util.ArrayList<>();
+                        for (Map<String, Object> streamItem : lastQuery.getStream()) {
+                            if (streamItem != null && streamItem.containsKey("content")) {
+                                Object contentObj = streamItem.get("content");
+                                if (contentObj != null) {
+                                    String streamContentItem = contentObj.toString();
+                                    if (!streamContentItem.isEmpty()) {
+                                        streamContentParts.add(streamContentItem);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (!streamContentParts.isEmpty()) {
+                            String streamContent = String.join("", streamContentParts);
+                            taskResultParts.add("Last task status output: " + streamContent);
+                        }
+                    }
+                    
+                    // Also add other status information if available
+                    if (lastQuery.getTaskAction() != null && !lastQuery.getTaskAction().isEmpty()) {
+                        taskResultParts.add("Last action: " + lastQuery.getTaskAction());
+                    }
+                    if (lastQuery.getTaskProduct() != null && !lastQuery.getTaskProduct().isEmpty()) {
+                        taskResultParts.add("Last result: " + lastQuery.getTaskProduct());
+                    }
+                    if (lastQuery.getError() != null && !lastQuery.getError().isEmpty()) {
+                        taskResultParts.add("Last error: " + lastQuery.getError());
+                    }
+                    if (lastQuery.getTaskStatus() != null && !lastQuery.getTaskStatus().isEmpty()) {
+                        taskResultParts.add("Last status: " + lastQuery.getTaskStatus());
+                    }
+                }
+                
+                String taskResult = String.join(" | ", taskResultParts);
+                
                 return new ExecutionResult(
                     result.getRequestId(),
                     false,
                     timeoutErrorMsg,
                     taskId,
                     "failed",
-                    String.format("Task execution timed out after %d seconds.", timeout)
+                    taskResult
                 );
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
