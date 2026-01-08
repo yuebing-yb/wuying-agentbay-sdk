@@ -130,7 +130,7 @@ from ._sync.context import (
     ClearContextResult,
     ContextService,
 )
-from ._sync.network import Network
+from ._sync.beta_network import SyncBetaNetworkService as BetaNetwork
 from ._sync.code import Code, CodeExecutionResult
 from ._common.models.code import (
     EnhancedCodeExecutionResult,
@@ -157,7 +157,9 @@ from ._async.context import AsyncContextService
 from ._async.extension import AsyncExtensionsService
 from ._async.code import AsyncCode
 from ._async.mobile_simulate import AsyncMobileSimulateService
-from ._async.network import AsyncNetwork
+from ._async.beta_network import AsyncBetaNetworkService as AsyncBetaNetwork
+
+
 
 __all__ = [
     # Core API
@@ -190,8 +192,8 @@ __all__ = [
     "AsyncContextManager",
     "Code",
     "AsyncCode",
-    "Network",
-    "AsyncNetwork",
+    "BetaNetwork",
+    "AsyncBetaNetwork",
     # Shared Components
     "Config",
     "AgentBayError",
