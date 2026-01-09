@@ -1,0 +1,13 @@
+# Mistral Codestral Data Analysis Requirements
+
+# Core dependencies
+wuying-agentbay-sdk>=0.10.0
+mistralai>=0.4.0
+
+# Data analysis (for sample data generation)
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Optional: For enhanced data processing
+# matplotlib>=3.7.0  # Already available in AgentBay code_latest image
+# seaborn>=0.12.0    # Already available in AgentBay code_latest image

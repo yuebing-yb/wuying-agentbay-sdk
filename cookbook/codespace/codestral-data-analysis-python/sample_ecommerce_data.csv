@@ -1,0 +1,1001 @@
+Date,OrderID,ProductID,ProductName,Category,Brand,UnitPrice,Quantity,TotalAmount,CustomerID,CustomerSegment,Region,City,PaymentMethod,ShippingMethod
+2023-01-01,ORD202301010819,PRODHOME019,Home & Garden Product 10,Home & Garden,Brand5,229.46,3,688.38,CUST0020,New,Asia Pacific,Singapore,Digital Wallet,Next Day
+2023-01-02,ORD202301020925,PRODELEC025,Electronics Product 6,Electronics,Brand1,48.11,1,48.11,CUST0126,Premium,Europe,Berlin,PayPal,Standard
+2023-01-04,ORD202301040715,PRODELEC015,Electronics Product 6,Electronics,Brand1,283.59,1,283.59,CUST0116,New,Latin America,Buenos Aires,Bank Transfer,Next Day
+2023-01-06,ORD202301060165,PRODELEC065,Electronics Product 6,Electronics,Brand1,399.52,1,399.52,CUST0166,Regular,Asia Pacific,Tokyo,PayPal,Express
+2023-01-06,ORD202301060832,PRODTOYS032,Toys Product 3,Toys,Brand3,354.5,2,709.0,CUST0033,Premium,North America,Los Angeles,PayPal,Next Day
+2023-01-08,ORD202301080209,PRODELEC009,Electronics Product 10,Electronics,Brand5,10.6,4,42.4,CUST0010,Regular,Latin America,Mexico City,Credit Card,Standard
+2023-01-08,ORD202301080279,PRODHOME079,Home & Garden Product 10,Home & Garden,Brand5,330.21,5,1651.05,CUST0080,Premium,Latin America,Buenos Aires,PayPal,Standard
+2023-01-10,ORD202301100779,PRODTOYS079,Toys Product 10,Toys,Brand5,328.02,3,984.06,CUST0180,Premium,North America,New York,Bank Transfer,Express
+2023-01-11,ORD202301110059,PRODTOYS059,Toys Product 10,Toys,Brand5,414.2,2,828.4,CUST0060,New,North America,Chicago,Digital Wallet,Standard
+2023-01-11,ORD202301110335,PRODCLOT035,Clothing Product 6,Clothing,Brand1,412.07,2,824.14,CUST0136,New,Europe,Berlin,Digital Wallet,Express
+2023-01-11,ORD202301110531,PRODELEC031,Electronics Product 2,Electronics,Brand2,159.29,3,477.87,CUST0132,Premium,Latin America,São Paulo,Credit Card,Next Day
+2023-01-11,ORD202301110707,PRODBOOK007,Books Product 8,Books,Brand3,311.89,1,311.89,CUST0108,Regular,Asia Pacific,Singapore,Digital Wallet,Express
+2023-01-11,ORD202301110909,PRODBOOK009,Books Product 10,Books,Brand5,415.63,1,415.63,CUST0110,New,Latin America,Santiago,Digital Wallet,Next Day
+2023-01-12,ORD202301120565,PRODCLOT065,Clothing Product 6,Clothing,Brand1,66.0,2,132.0,CUST0166,Premium,Europe,Berlin,Digital Wallet,Next Day
+2023-01-12,ORD202301120969,PRODTOYS069,Toys Product 10,Toys,Brand5,187.53,1,187.53,CUST0170,Premium,Latin America,Mexico City,Bank Transfer,Express
+2023-01-13,ORD202301130224,PRODELEC024,Electronics Product 5,Electronics,Brand5,336.83,3,1010.49,CUST0025,New,Europe,Paris,Bank Transfer,Standard
+2023-01-13,ORD202301130225,PRODHOME025,Home & Garden Product 6,Home & Garden,Brand1,415.71,1,415.71,CUST0026,Regular,North America,Los Angeles,Digital Wallet,Next Day
+2023-01-13,ORD202301130252,PRODELEC052,Electronics Product 3,Electronics,Brand3,139.56,5,697.8,CUST0053,New,Asia Pacific,Sydney,Digital Wallet,Next Day
+2023-01-14,ORD202301140290,PRODELEC090,Electronics Product 1,Electronics,Brand1,177.45,5,887.25,CUST0091,Regular,Europe,London,PayPal,Standard
+2023-01-14,ORD202301140873,PRODTOYS073,Toys Product 4,Toys,Brand4,211.64,2,423.28,CUST0074,New,North America,Toronto,Digital Wallet,Standard
+2023-01-15,ORD202301150196,PRODCLOT096,Clothing Product 7,Clothing,Brand2,426.21,4,1704.84,CUST0197,Regular,Europe,Berlin,PayPal,Standard
+2023-01-16,ORD202301160345,PRODBOOK045,Books Product 6,Books,Brand1,430.18,2,860.36,CUST0146,Premium,Europe,Amsterdam,Credit Card,Next Day
+2023-01-16,ORD202301160533,PRODCLOT033,Clothing Product 4,Clothing,Brand4,99.37,4,397.48,CUST0134,Regular,Europe,London,PayPal,Standard
+2023-01-20,ORD202301200217,PRODTOYS017,Toys Product 8,Toys,Brand3,216.06,3,648.18,CUST0018,Premium,Europe,London,Digital Wallet,Express
+2023-01-20,ORD202301200575,PRODELEC075,Electronics Product 6,Electronics,Brand1,418.89,1,418.89,CUST0176,Premium,North America,Toronto,Bank Transfer,Standard
+2023-01-20,ORD202301200946,PRODHOME046,Home & Garden Product 7,Home & Garden,Brand2,423.22,3,1269.66,CUST0147,Regular,Latin America,Santiago,Digital Wallet,Express
+2023-01-21,ORD202301210702,PRODELEC002,Electronics Product 3,Electronics,Brand3,273.05,4,1092.2,CUST0103,Premium,Latin America,São Paulo,Credit Card,Next Day
+2023-01-24,ORD202301240272,PRODSPOR072,Sports Product 3,Sports,Brand3,148.32,1,148.32,CUST0073,Premium,North America,New York,Bank Transfer,Next Day
+2023-01-24,ORD202301240729,PRODELEC029,Electronics Product 10,Electronics,Brand5,383.11,5,1915.55,CUST0130,Premium,Latin America,São Paulo,Bank Transfer,Standard
+2023-01-25,ORD202301250243,PRODCLOT043,Clothing Product 4,Clothing,Brand4,497.46,4,1989.84,CUST0044,Premium,Europe,Amsterdam,Bank Transfer,Next Day
+2023-01-26,ORD202301260765,PRODELEC065,Electronics Product 6,Electronics,Brand1,296.8,5,1484.0,CUST0166,Regular,Europe,London,Credit Card,Standard
+2023-01-26,ORD202301260958,PRODCLOT058,Clothing Product 9,Clothing,Brand4,177.9,3,533.7,CUST0159,New,North America,New York,PayPal,Express
+2023-01-29,ORD202301290200,PRODHOME000,Home & Garden Product 1,Home & Garden,Brand1,259.8,1,259.8,CUST0001,New,North America,Toronto,Digital Wallet,Express
+2023-01-29,ORD202301290303,PRODTOYS003,Toys Product 4,Toys,Brand4,221.06,5,1105.3,CUST0104,Regular,North America,Los Angeles,Credit Card,Standard
+2023-01-29,ORD202301290716,PRODBOOK016,Books Product 7,Books,Brand2,445.43,5,2227.15,CUST0117,Premium,Asia Pacific,Tokyo,Digital Wallet,Express
+2023-01-30,ORD202301300326,PRODELEC026,Electronics Product 7,Electronics,Brand2,51.6,2,103.2,CUST0127,New,Europe,Amsterdam,Digital Wallet,Next Day
+2023-01-31,ORD202301310518,PRODTOYS018,Toys Product 9,Toys,Brand4,208.38,1,208.38,CUST0119,New,Asia Pacific,Singapore,PayPal,Standard
+2023-02-01,ORD202302010308,PRODSPOR008,Sports Product 9,Sports,Brand4,44.73,4,178.92,CUST0109,Regular,Europe,Amsterdam,PayPal,Next Day
+2023-02-01,ORD202302010480,PRODCLOT080,Clothing Product 1,Clothing,Brand1,418.4,1,418.4,CUST0081,Premium,Asia Pacific,Sydney,Credit Card,Standard
+2023-02-03,ORD202302030609,PRODCLOT009,Clothing Product 10,Clothing,Brand5,257.11,3,771.33,CUST0010,New,Asia Pacific,Tokyo,Digital Wallet,Next Day
+2023-02-03,ORD202302030923,PRODHOME023,Home & Garden Product 4,Home & Garden,Brand4,79.87,3,239.61,CUST0124,Premium,North America,Toronto,Credit Card,Next Day
+2023-02-04,ORD202302040148,PRODELEC048,Electronics Product 9,Electronics,Brand4,89.63,3,268.89,CUST0149,New,North America,Los Angeles,Credit Card,Express
+2023-02-04,ORD202302040670,PRODSPOR070,Sports Product 1,Sports,Brand1,435.87,5,2179.35,CUST0071,Regular,Latin America,Mexico City,Digital Wallet,Express
+2023-02-04,ORD202302040725,PRODTOYS025,Toys Product 6,Toys,Brand1,161.35,3,484.05,CUST0126,Premium,Latin America,São Paulo,Digital Wallet,Standard
+2023-02-05,ORD202302050005,PRODELEC005,Electronics Product 6,Electronics,Brand1,222.05,1,222.05,CUST0006,New,Asia Pacific,Hong Kong,Credit Card,Express
+2023-02-06,ORD202302060094,PRODELEC094,Electronics Product 5,Electronics,Brand5,202.22,1,202.22,CUST0095,Regular,North America,New York,Bank Transfer,Standard
+2023-02-07,ORD202302070992,PRODCLOT092,Clothing Product 3,Clothing,Brand3,362.86,4,1451.44,CUST0193,New,Europe,Amsterdam,PayPal,Standard
+2023-02-09,ORD202302090109,PRODTOYS009,Toys Product 10,Toys,Brand5,178.0,1,178.0,CUST0110,Regular,Latin America,São Paulo,Credit Card,Next Day
+2023-02-09,ORD202302090455,PRODSPOR055,Sports Product 6,Sports,Brand1,270.28,1,270.28,CUST0056,Regular,Asia Pacific,Singapore,Digital Wallet,Express
+2023-02-12,ORD202302120043,PRODTOYS043,Toys Product 4,Toys,Brand4,237.7,2,475.4,CUST0044,Regular,Europe,Amsterdam,Bank Transfer,Express
+2023-02-13,ORD202302130197,PRODTOYS097,Toys Product 8,Toys,Brand3,80.91,1,80.91,CUST0198,New,North America,Chicago,Digital Wallet,Express
+2023-02-15,ORD202302150223,PRODCLOT023,Clothing Product 4,Clothing,Brand4,364.45,3,1093.35,CUST0024,New,Latin America,Santiago,PayPal,Next Day
+2023-02-15,ORD202302150467,PRODSPOR067,Sports Product 8,Sports,Brand3,52.11,2,104.22,CUST0068,Regular,Europe,London,Credit Card,Next Day
+2023-02-15,ORD202302150868,PRODSPOR068,Sports Product 9,Sports,Brand4,407.16,3,1221.48,CUST0069,Regular,Latin America,Buenos Aires,Credit Card,Next Day
+2023-02-15,ORD202302150869,PRODTOYS069,Toys Product 10,Toys,Brand5,26.28,3,78.84,CUST0070,New,North America,Los Angeles,PayPal,Next Day
+2023-02-16,ORD202302160343,PRODBOOK043,Books Product 4,Books,Brand4,153.24,5,766.2,CUST0144,New,North America,New York,Digital Wallet,Next Day
+2023-02-17,ORD202302170246,PRODHOME046,Home & Garden Product 7,Home & Garden,Brand2,124.38,2,248.76,CUST0047,Regular,Latin America,Mexico City,Credit Card,Next Day
+2023-02-17,ORD202302170426,PRODCLOT026,Clothing Product 7,Clothing,Brand2,229.13,2,458.26,CUST0027,Regular,Asia Pacific,Singapore,Bank Transfer,Next Day
+2023-02-17,ORD202302170428,PRODHOME028,Home & Garden Product 9,Home & Garden,Brand4,81.46,2,162.92,CUST0029,Premium,Europe,Paris,Digital Wallet,Standard
+2023-02-17,ORD202302170491,PRODSPOR091,Sports Product 2,Sports,Brand2,292.75,4,1171.0,CUST0092,Regular,Europe,Berlin,Credit Card,Express
+2023-02-17,ORD202302170820,PRODBOOK020,Books Product 1,Books,Brand1,86.11,3,258.33,CUST0021,New,North America,Toronto,Credit Card,Standard
+2023-02-18,ORD202302180528,PRODSPOR028,Sports Product 9,Sports,Brand4,214.4,2,428.8,CUST0129,Premium,North America,New York,PayPal,Standard
+2023-02-19,ORD202302190904,PRODHOME004,Home & Garden Product 5,Home & Garden,Brand5,233.9,4,935.6,CUST0105,Regular,Asia Pacific,Sydney,Credit Card,Express
+2023-02-22,ORD202302220247,PRODCLOT047,Clothing Product 8,Clothing,Brand3,447.24,1,447.24,CUST0048,New,Europe,Amsterdam,Credit Card,Standard
+2023-02-22,ORD202302220477,PRODHOME077,Home & Garden Product 8,Home & Garden,Brand3,370.41,5,1852.05,CUST0078,New,Asia Pacific,Singapore,PayPal,Express
+2023-02-22,ORD202302220988,PRODELEC088,Electronics Product 9,Electronics,Brand4,120.4,4,481.6,CUST0189,New,Asia Pacific,Singapore,Credit Card,Next Day
+2023-02-23,ORD202302230815,PRODELEC015,Electronics Product 6,Electronics,Brand1,447.58,3,1342.74,CUST0016,New,Latin America,Buenos Aires,Digital Wallet,Next Day
+2023-02-24,ORD202302240031,PRODTOYS031,Toys Product 2,Toys,Brand2,141.27,5,706.35,CUST0032,Regular,Latin America,Buenos Aires,Credit Card,Next Day
+2023-02-24,ORD202302240668,PRODELEC068,Electronics Product 9,Electronics,Brand4,340.75,2,681.5,CUST0069,Premium,Asia Pacific,Tokyo,Credit Card,Standard
+2023-02-24,ORD202302240692,PRODTOYS092,Toys Product 3,Toys,Brand3,70.02,2,140.04,CUST0093,Premium,North America,Chicago,PayPal,Next Day
+2023-02-25,ORD202302250240,PRODHOME040,Home & Garden Product 1,Home & Garden,Brand1,26.77,3,80.31,CUST0041,Premium,Asia Pacific,Hong Kong,Digital Wallet,Express
+2023-02-25,ORD202302250391,PRODCLOT091,Clothing Product 2,Clothing,Brand2,471.64,4,1886.56,CUST0192,Premium,Asia Pacific,Tokyo,Bank Transfer,Standard
+2023-02-25,ORD202302250662,PRODHOME062,Home & Garden Product 3,Home & Garden,Brand3,341.32,4,1365.28,CUST0063,New,Europe,Paris,PayPal,Express
+2023-02-25,ORD202302250833,PRODCLOT033,Clothing Product 4,Clothing,Brand4,313.09,3,939.27,CUST0034,Premium,North America,Los Angeles,Bank Transfer,Express
+2023-02-27,ORD202302270288,PRODELEC088,Electronics Product 9,Electronics,Brand4,82.6,5,413.0,CUST0089,New,Asia Pacific,Hong Kong,Credit Card,Express
+2023-02-27,ORD202302270449,PRODHOME049,Home & Garden Product 10,Home & Garden,Brand5,124.21,2,248.42,CUST0050,Regular,Asia Pacific,Sydney,Digital Wallet,Next Day
+2023-03-03,ORD202303030052,PRODTOYS052,Toys Product 3,Toys,Brand3,333.53,1,333.53,CUST0053,Premium,Asia Pacific,Singapore,PayPal,Standard
+2023-03-04,ORD202303040028,PRODBOOK028,Books Product 9,Books,Brand4,245.16,3,735.48,CUST0029,New,North America,Chicago,Bank Transfer,Next Day
+2023-03-04,ORD202303040064,PRODTOYS064,Toys Product 5,Toys,Brand5,205.54,3,616.62,CUST0065,Regular,North America,New York,PayPal,Express
+2023-03-04,ORD202303040866,PRODBOOK066,Books Product 7,Books,Brand2,143.17,1,143.17,CUST0067,New,North America,Chicago,Digital Wallet,Standard
+2023-03-05,ORD202303050248,PRODELEC048,Electronics Product 9,Electronics,Brand4,51.06,1,51.06,CUST0049,New,Latin America,Santiago,PayPal,Standard
+2023-03-05,ORD202303050283,PRODBOOK083,Books Product 4,Books,Brand4,385.67,3,1157.01,CUST0084,New,North America,New York,Credit Card,Next Day
+2023-03-05,ORD202303050675,PRODELEC075,Electronics Product 6,Electronics,Brand1,117.79,3,353.37,CUST0076,Premium,Asia Pacific,Sydney,Bank Transfer,Next Day
+2023-03-05,ORD202303050996,PRODHOME096,Home & Garden Product 7,Home & Garden,Brand2,330.85,1,330.85,CUST0197,Premium,Latin America,Mexico City,PayPal,Standard
+2023-03-06,ORD202303060104,PRODCLOT004,Clothing Product 5,Clothing,Brand5,36.08,3,108.24,CUST0105,Regular,North America,Toronto,Credit Card,Express
+2023-03-06,ORD202303060202,PRODSPOR002,Sports Product 3,Sports,Brand3,358.43,1,358.43,CUST0003,Premium,Asia Pacific,Sydney,Credit Card,Standard
+2023-03-06,ORD202303060204,PRODTOYS004,Toys Product 5,Toys,Brand5,358.06,2,716.12,CUST0005,New,North America,Chicago,PayPal,Next Day
+2023-03-06,ORD202303060355,PRODTOYS055,Toys Product 6,Toys,Brand1,149.81,2,299.62,CUST0156,Regular,Latin America,Mexico City,Digital Wallet,Next Day
+2023-03-06,ORD202303060644,PRODCLOT044,Clothing Product 5,Clothing,Brand5,19.44,2,38.88,CUST0045,Regular,Latin America,São Paulo,Digital Wallet,Express
+2023-03-06,ORD202303060898,PRODCLOT098,Clothing Product 9,Clothing,Brand4,31.56,4,126.24,CUST0099,Premium,Europe,Paris,Credit Card,Standard
+2023-03-07,ORD202303070338,PRODHOME038,Home & Garden Product 9,Home & Garden,Brand4,339.86,1,339.86,CUST0139,Premium,North America,Toronto,PayPal,Standard
+2023-03-07,ORD202303070717,PRODBOOK017,Books Product 8,Books,Brand3,371.3,3,1113.9,CUST0118,Premium,Europe,Amsterdam,Bank Transfer,Next Day
+2023-03-07,ORD202303070973,PRODBOOK073,Books Product 4,Books,Brand4,478.82,2,957.64,CUST0174,Regular,Latin America,Buenos Aires,Digital Wallet,Standard
+2023-03-08,ORD202303080917,PRODTOYS017,Toys Product 8,Toys,Brand3,46.48,2,92.96,CUST0118,Premium,Asia Pacific,Sydney,Bank Transfer,Next Day
+2023-03-09,ORD202303090010,PRODELEC010,Electronics Product 1,Electronics,Brand1,420.85,5,2104.25,CUST0011,New,Europe,Berlin,Credit Card,Express
+2023-03-11,ORD202303110415,PRODHOME015,Home & Garden Product 6,Home & Garden,Brand1,42.57,5,212.85,CUST0016,Regular,North America,Chicago,PayPal,Standard
+2023-03-11,ORD202303110856,PRODBOOK056,Books Product 7,Books,Brand2,491.8,2,983.6,CUST0057,Premium,Asia Pacific,Tokyo,Digital Wallet,Standard
+2023-03-12,ORD202303120867,PRODHOME067,Home & Garden Product 8,Home & Garden,Brand3,496.01,1,496.01,CUST0068,Premium,North America,Toronto,Bank Transfer,Express
+2023-03-13,ORD202303130713,PRODELEC013,Electronics Product 4,Electronics,Brand4,194.54,5,972.7,CUST0114,Regular,Latin America,São Paulo,Bank Transfer,Express
+2023-03-13,ORD202303130889,PRODELEC089,Electronics Product 10,Electronics,Brand5,143.12,2,286.24,CUST0090,New,Latin America,Mexico City,Bank Transfer,Standard
+2023-03-14,ORD202303140013,PRODSPOR013,Sports Product 4,Sports,Brand4,438.15,3,1314.45,CUST0014,New,North America,Los Angeles,Bank Transfer,Next Day
+2023-03-15,ORD202303150861,PRODHOME061,Home & Garden Product 2,Home & Garden,Brand2,44.83,4,179.32,CUST0062,Premium,Latin America,Buenos Aires,Digital Wallet,Express
+2023-03-16,ORD202303160336,PRODBOOK036,Books Product 7,Books,Brand2,105.18,5,525.9,CUST0137,New,Asia Pacific,Sydney,Credit Card,Express
+2023-03-17,ORD202303170365,PRODCLOT065,Clothing Product 6,Clothing,Brand1,295.35,2,590.7,CUST0166,New,North America,Chicago,Bank Transfer,Next Day
+2023-03-17,ORD202303170903,PRODHOME003,Home & Garden Product 4,Home & Garden,Brand4,379.26,2,758.52,CUST0104,New,Europe,Paris,Digital Wallet,Standard
+2023-03-18,ORD202303180037,PRODELEC037,Electronics Product 8,Electronics,Brand3,197.76,4,791.04,CUST0038,Premium,Asia Pacific,Tokyo,Credit Card,Express
+2023-03-19,ORD202303190461,PRODELEC061,Electronics Product 2,Electronics,Brand2,305.08,1,305.08,CUST0062,Premium,Asia Pacific,Singapore,Credit Card,Next Day
+2023-03-21,ORD202303210124,PRODBOOK024,Books Product 5,Books,Brand5,251.63,5,1258.15,CUST0125,Premium,Latin America,São Paulo,PayPal,Standard
+2023-03-21,ORD202303210660,PRODBOOK060,Books Product 1,Books,Brand1,367.54,4,1470.16,CUST0061,Premium,Latin America,São Paulo,Digital Wallet,Next Day
+2023-03-21,ORD202303210818,PRODELEC018,Electronics Product 9,Electronics,Brand4,148.61,4,594.44,CUST0019,Regular,Asia Pacific,Sydney,PayPal,Standard
+2023-03-24,ORD202303240118,PRODSPOR018,Sports Product 9,Sports,Brand4,166.26,3,498.78,CUST0119,New,Latin America,Mexico City,Digital Wallet,Express
+2023-03-24,ORD202303240446,PRODCLOT046,Clothing Product 7,Clothing,Brand2,123.19,5,615.95,CUST0047,Premium,North America,Chicago,Digital Wallet,Next Day
+2023-03-24,ORD202303240653,PRODSPOR053,Sports Product 4,Sports,Brand4,435.22,1,435.22,CUST0054,Premium,North America,New York,Credit Card,Next Day
+2023-03-25,ORD202303250128,PRODTOYS028,Toys Product 9,Toys,Brand4,408.85,1,408.85,CUST0129,Regular,Europe,Amsterdam,Bank Transfer,Express
+2023-03-28,ORD202303280047,PRODSPOR047,Sports Product 8,Sports,Brand3,33.4,5,167.0,CUST0048,Regular,Asia Pacific,Sydney,Digital Wallet,Next Day
+2023-03-28,ORD202303280437,PRODTOYS037,Toys Product 8,Toys,Brand3,226.29,2,452.58,CUST0038,Regular,Latin America,Santiago,Credit Card,Next Day
+2023-03-28,ORD202303280755,PRODCLOT055,Clothing Product 6,Clothing,Brand1,100.28,5,501.4,CUST0156,Premium,Europe,Paris,PayPal,Standard
+2023-03-29,ORD202303290182,PRODCLOT082,Clothing Product 3,Clothing,Brand3,319.26,1,319.26,CUST0183,Regular,Europe,Paris,Credit Card,Express
+2023-03-31,ORD202303310810,PRODELEC010,Electronics Product 1,Electronics,Brand1,225.68,5,1128.4,CUST0011,Regular,North America,New York,Bank Transfer,Standard
+2023-03-31,ORD202303310982,PRODSPOR082,Sports Product 3,Sports,Brand3,44.15,3,132.45,CUST0183,Regular,Latin America,Buenos Aires,Bank Transfer,Express
+2023-04-01,ORD202304010169,PRODSPOR069,Sports Product 10,Sports,Brand5,28.55,2,57.1,CUST0170,Regular,Asia Pacific,Singapore,Bank Transfer,Standard
+2023-04-01,ORD202304010274,PRODTOYS074,Toys Product 5,Toys,Brand5,133.58,3,400.74,CUST0075,Premium,North America,Toronto,Credit Card,Express
+2023-04-02,ORD202304020063,PRODBOOK063,Books Product 4,Books,Brand4,213.18,2,426.36,CUST0064,Premium,Latin America,Mexico City,PayPal,Next Day
+2023-04-03,ORD202304030218,PRODHOME018,Home & Garden Product 9,Home & Garden,Brand4,330.42,1,330.42,CUST0019,New,Europe,Berlin,PayPal,Next Day
+2023-04-05,ORD202304050388,PRODTOYS088,Toys Product 9,Toys,Brand4,124.77,2,249.54,CUST0189,Premium,Europe,London,Digital Wallet,Standard
+2023-04-06,ORD202304060181,PRODCLOT081,Clothing Product 2,Clothing,Brand2,395.75,1,395.75,CUST0182,Regular,North America,New York,PayPal,Express
+2023-04-08,ORD202304080888,PRODHOME088,Home & Garden Product 9,Home & Garden,Brand4,181.25,3,543.75,CUST0089,New,North America,Los Angeles,PayPal,Express
+2023-04-09,ORD202304090666,PRODCLOT066,Clothing Product 7,Clothing,Brand2,469.6,3,1408.8,CUST0067,Regular,Europe,London,Credit Card,Standard
+2023-04-09,ORD202304090776,PRODBOOK076,Books Product 7,Books,Brand2,106.64,2,213.28,CUST0177,Premium,Asia Pacific,Tokyo,PayPal,Standard
+2023-04-09,ORD202304090836,PRODBOOK036,Books Product 7,Books,Brand2,47.4,4,189.6,CUST0037,Premium,North America,Chicago,PayPal,Express
+2023-04-10,ORD202304100183,PRODSPOR083,Sports Product 4,Sports,Brand4,296.08,5,1480.4,CUST0184,New,Europe,London,Credit Card,Next Day
+2023-04-10,ORD202304100651,PRODHOME051,Home & Garden Product 2,Home & Garden,Brand2,321.83,3,965.49,CUST0052,Regular,North America,Los Angeles,Bank Transfer,Express
+2023-04-10,ORD202304100826,PRODSPOR026,Sports Product 7,Sports,Brand2,50.03,3,150.09,CUST0027,New,North America,Chicago,Credit Card,Standard
+2023-04-11,ORD202304110073,PRODHOME073,Home & Garden Product 4,Home & Garden,Brand4,367.9,4,1471.6,CUST0074,Regular,North America,Los Angeles,PayPal,Next Day
+2023-04-11,ORD202304110408,PRODBOOK008,Books Product 9,Books,Brand4,203.3,2,406.6,CUST0009,Regular,Latin America,Buenos Aires,Credit Card,Next Day
+2023-04-13,ORD202304130410,PRODHOME010,Home & Garden Product 1,Home & Garden,Brand1,57.21,1,57.21,CUST0011,Premium,North America,Los Angeles,Digital Wallet,Standard
+2023-04-13,ORD202304130652,PRODHOME052,Home & Garden Product 3,Home & Garden,Brand3,391.7,4,1566.8,CUST0053,New,Europe,Amsterdam,Bank Transfer,Standard
+2023-04-13,ORD202304130805,PRODHOME005,Home & Garden Product 6,Home & Garden,Brand1,170.55,1,170.55,CUST0006,Regular,Latin America,Santiago,PayPal,Standard
+2023-04-14,ORD202304140067,PRODTOYS067,Toys Product 8,Toys,Brand3,288.5,3,865.5,CUST0068,Premium,Asia Pacific,Sydney,PayPal,Standard
+2023-04-14,ORD202304140309,PRODTOYS009,Toys Product 10,Toys,Brand5,55.48,2,110.96,CUST0110,Premium,Asia Pacific,Sydney,PayPal,Express
+2023-04-15,ORD202304150368,PRODELEC068,Electronics Product 9,Electronics,Brand4,152.62,5,763.1,CUST0169,Premium,Europe,Paris,Credit Card,Express
+2023-04-15,ORD202304150673,PRODCLOT073,Clothing Product 4,Clothing,Brand4,306.23,3,918.69,CUST0074,New,Latin America,Buenos Aires,Bank Transfer,Express
+2023-04-16,ORD202304160783,PRODHOME083,Home & Garden Product 4,Home & Garden,Brand4,102.64,5,513.2,CUST0184,New,Latin America,Buenos Aires,PayPal,Express
+2023-04-16,ORD202304160849,PRODHOME049,Home & Garden Product 10,Home & Garden,Brand5,490.21,3,1470.63,CUST0050,New,Latin America,Santiago,Credit Card,Next Day
+2023-04-16,ORD202304160944,PRODSPOR044,Sports Product 5,Sports,Brand5,290.08,5,1450.4,CUST0145,Premium,North America,Los Angeles,Bank Transfer,Next Day
+2023-04-17,ORD202304170088,PRODTOYS088,Toys Product 9,Toys,Brand4,359.43,3,1078.29,CUST0089,Regular,Latin America,São Paulo,Credit Card,Standard
+2023-04-17,ORD202304170929,PRODTOYS029,Toys Product 10,Toys,Brand5,287.99,1,287.99,CUST0130,Premium,Latin America,Buenos Aires,Digital Wallet,Express
+2023-04-18,ORD202304180001,PRODCLOT001,Clothing Product 2,Clothing,Brand2,309.03,4,1236.12,CUST0002,Premium,Asia Pacific,Tokyo,PayPal,Express
+2023-04-19,ORD202304190203,PRODHOME003,Home & Garden Product 4,Home & Garden,Brand4,144.6,2,289.2,CUST0004,Regular,Asia Pacific,Hong Kong,Bank Transfer,Express
+2023-04-20,ORD202304200770,PRODSPOR070,Sports Product 1,Sports,Brand1,209.43,5,1047.15,CUST0171,Premium,Asia Pacific,Singapore,Credit Card,Express
+2023-04-22,ORD202304220611,PRODELEC011,Electronics Product 2,Electronics,Brand2,377.31,5,1886.55,CUST0012,Premium,North America,Chicago,Credit Card,Standard
+2023-04-23,ORD202304230261,PRODELEC061,Electronics Product 2,Electronics,Brand2,330.54,5,1652.7,CUST0062,Regular,North America,New York,Digital Wallet,Standard
+2023-04-23,ORD202304230302,PRODELEC002,Electronics Product 3,Electronics,Brand3,281.64,5,1408.2,CUST0103,New,Europe,London,Bank Transfer,Next Day
+2023-04-23,ORD202304230511,PRODCLOT011,Clothing Product 2,Clothing,Brand2,269.32,1,269.32,CUST0112,Regular,Europe,Amsterdam,Digital Wallet,Express
+2023-04-24,ORD202304240093,PRODHOME093,Home & Garden Product 4,Home & Garden,Brand4,50.67,1,50.67,CUST0094,New,Asia Pacific,Sydney,Credit Card,Next Day
+2023-04-24,ORD202304240436,PRODTOYS036,Toys Product 7,Toys,Brand2,194.36,2,388.72,CUST0037,Regular,Asia Pacific,Tokyo,Bank Transfer,Standard
+2023-04-24,ORD202304240475,PRODELEC075,Electronics Product 6,Electronics,Brand1,320.38,2,640.76,CUST0076,Premium,Europe,Paris,PayPal,Next Day
+2023-04-24,ORD202304240585,PRODCLOT085,Clothing Product 6,Clothing,Brand1,285.26,1,285.26,CUST0186,Regular,Asia Pacific,Singapore,PayPal,Standard
+2023-04-24,ORD202304240647,PRODTOYS047,Toys Product 8,Toys,Brand3,102.73,4,410.92,CUST0048,Premium,Asia Pacific,Tokyo,PayPal,Next Day
+2023-04-24,ORD202304240886,PRODBOOK086,Books Product 7,Books,Brand2,439.31,4,1757.24,CUST0087,Regular,Asia Pacific,Sydney,Bank Transfer,Express
+2023-04-25,ORD202304250860,PRODHOME060,Home & Garden Product 1,Home & Garden,Brand1,337.82,1,337.82,CUST0061,Regular,Latin America,São Paulo,Bank Transfer,Standard
+2023-04-26,ORD202304260464,PRODSPOR064,Sports Product 5,Sports,Brand5,309.82,3,929.46,CUST0065,Regular,North America,New York,PayPal,Standard
+2023-04-26,ORD202304260616,PRODTOYS016,Toys Product 7,Toys,Brand2,84.05,2,168.1,CUST0017,Premium,North America,Chicago,PayPal,Standard
+2023-04-27,ORD202304270632,PRODHOME032,Home & Garden Product 3,Home & Garden,Brand3,332.16,3,996.48,CUST0033,Premium,North America,New York,Digital Wallet,Express
+2023-04-29,ORD202304290720,PRODTOYS020,Toys Product 1,Toys,Brand1,374.77,2,749.54,CUST0121,New,North America,Los Angeles,Credit Card,Next Day
+2023-05-01,ORD202305010249,PRODSPOR049,Sports Product 10,Sports,Brand5,413.62,4,1654.48,CUST0050,New,Latin America,São Paulo,PayPal,Standard
+2023-05-02,ORD202305020273,PRODTOYS073,Toys Product 4,Toys,Brand4,18.1,1,18.1,CUST0074,Premium,North America,Chicago,PayPal,Standard
+2023-05-03,ORD202305030588,PRODCLOT088,Clothing Product 9,Clothing,Brand4,201.88,3,605.64,CUST0189,New,North America,New York,Bank Transfer,Standard
+2023-05-03,ORD202305030619,PRODELEC019,Electronics Product 10,Electronics,Brand5,195.41,4,781.64,CUST0020,Regular,North America,Los Angeles,Credit Card,Next Day
+2023-05-04,ORD202305040850,PRODSPOR050,Sports Product 1,Sports,Brand1,467.0,5,2335.0,CUST0051,Premium,Latin America,São Paulo,Digital Wallet,Standard
+2023-05-05,ORD202305050991,PRODSPOR091,Sports Product 2,Sports,Brand2,225.8,1,225.8,CUST0192,New,North America,New York,Digital Wallet,Standard
+2023-05-06,ORD202305060170,PRODTOYS070,Toys Product 1,Toys,Brand1,422.7,5,2113.5,CUST0171,Regular,Europe,London,Bank Transfer,Next Day
+2023-05-08,ORD202305080036,PRODBOOK036,Books Product 7,Books,Brand2,272.59,4,1090.36,CUST0037,New,Latin America,Buenos Aires,PayPal,Next Day
+2023-05-08,ORD202305080070,PRODHOME070,Home & Garden Product 1,Home & Garden,Brand1,220.65,5,1103.25,CUST0071,New,Europe,Paris,Credit Card,Next Day
+2023-05-09,ORD202305090373,PRODCLOT073,Clothing Product 4,Clothing,Brand4,451.13,1,451.13,CUST0174,New,North America,Los Angeles,Digital Wallet,Express
+2023-05-12,ORD202305120664,PRODHOME064,Home & Garden Product 5,Home & Garden,Brand5,111.7,4,446.8,CUST0065,Premium,Asia Pacific,Tokyo,Bank Transfer,Standard
+2023-05-12,ORD202305120686,PRODSPOR086,Sports Product 7,Sports,Brand2,228.53,4,914.12,CUST0087,Premium,Europe,London,Credit Card,Standard
+2023-05-13,ORD202305130897,PRODCLOT097,Clothing Product 8,Clothing,Brand3,70.19,2,140.38,CUST0098,Premium,Europe,Paris,Digital Wallet,Next Day
+2023-05-13,ORD202305130907,PRODELEC007,Electronics Product 8,Electronics,Brand3,471.58,1,471.58,CUST0108,New,Latin America,São Paulo,Credit Card,Next Day
+2023-05-14,ORD202305140995,PRODTOYS095,Toys Product 6,Toys,Brand1,135.66,1,135.66,CUST0196,Regular,North America,New York,PayPal,Next Day
+2023-05-15,ORD202305150364,PRODTOYS064,Toys Product 5,Toys,Brand5,276.08,1,276.08,CUST0165,Regular,Europe,Amsterdam,Bank Transfer,Standard
+2023-05-15,ORD202305150762,PRODTOYS062,Toys Product 3,Toys,Brand3,460.92,4,1843.68,CUST0163,Premium,North America,Chicago,Credit Card,Next Day
+2023-05-16,ORD202305160236,PRODBOOK036,Books Product 7,Books,Brand2,102.3,4,409.2,CUST0037,Regular,Asia Pacific,Hong Kong,PayPal,Express
+2023-05-16,ORD202305160906,PRODCLOT006,Clothing Product 7,Clothing,Brand2,255.12,4,1020.48,CUST0107,Regular,North America,Toronto,Digital Wallet,Standard
+2023-05-17,ORD202305170613,PRODSPOR013,Sports Product 4,Sports,Brand4,449.35,5,2246.75,CUST0014,Premium,Latin America,São Paulo,Credit Card,Standard
+2023-05-18,ORD202305180235,PRODELEC035,Electronics Product 6,Electronics,Brand1,167.28,3,501.84,CUST0036,Premium,Latin America,São Paulo,PayPal,Standard
+2023-05-18,ORD202305180344,PRODHOME044,Home & Garden Product 5,Home & Garden,Brand5,246.42,5,1232.1,CUST0145,Regular,North America,Los Angeles,Digital Wallet,Express
+2023-05-18,ORD202305180945,PRODSPOR045,Sports Product 6,Sports,Brand1,123.97,4,495.88,CUST0146,Regular,Europe,Amsterdam,PayPal,Next Day
+2023-05-19,ORD202305190594,PRODELEC094,Electronics Product 5,Electronics,Brand5,436.49,4,1745.96,CUST0195,Premium,Asia Pacific,Sydney,PayPal,Express
+2023-05-19,ORD202305190757,PRODELEC057,Electronics Product 8,Electronics,Brand3,497.91,4,1991.64,CUST0158,New,North America,New York,PayPal,Next Day
+2023-05-20,ORD202305200380,PRODHOME080,Home & Garden Product 1,Home & Garden,Brand1,358.45,1,358.45,CUST0181,Premium,North America,New York,PayPal,Next Day
+2023-05-20,ORD202305200823,PRODBOOK023,Books Product 4,Books,Brand4,339.62,2,679.24,CUST0024,Regular,Asia Pacific,Hong Kong,Credit Card,Express
+2023-05-21,ORD202305210074,PRODTOYS074,Toys Product 5,Toys,Brand5,440.28,1,440.28,CUST0075,New,Latin America,Buenos Aires,Credit Card,Standard
+2023-05-21,ORD202305210289,PRODBOOK089,Books Product 10,Books,Brand5,160.34,2,320.68,CUST0090,New,Asia Pacific,Tokyo,Credit Card,Express
+2023-05-21,ORD202305210503,PRODELEC003,Electronics Product 4,Electronics,Brand4,42.88,5,214.4,CUST0104,New,Latin America,Mexico City,Credit Card,Standard
+2023-05-23,ORD202305230177,PRODTOYS077,Toys Product 8,Toys,Brand3,367.42,4,1469.68,CUST0178,Premium,Europe,Paris,Digital Wallet,Next Day
+2023-05-24,ORD202305240161,PRODTOYS061,Toys Product 2,Toys,Brand2,229.28,3,687.84,CUST0162,Premium,Asia Pacific,Singapore,Digital Wallet,Express
+2023-05-25,ORD202305250634,PRODBOOK034,Books Product 5,Books,Brand5,493.08,5,2465.4,CUST0035,Premium,Asia Pacific,Hong Kong,Credit Card,Next Day
+2023-05-25,ORD202305250885,PRODSPOR085,Sports Product 6,Sports,Brand1,319.45,1,319.45,CUST0086,Premium,Asia Pacific,Singapore,PayPal,Express
+2023-05-28,ORD202305280017,PRODBOOK017,Books Product 8,Books,Brand3,84.13,5,420.65,CUST0018,Premium,Latin America,Mexico City,Credit Card,Express
+2023-05-28,ORD202305280392,PRODCLOT092,Clothing Product 3,Clothing,Brand3,281.96,1,281.96,CUST0193,Regular,North America,New York,PayPal,Standard
+2023-05-28,ORD202305280878,PRODBOOK078,Books Product 9,Books,Brand4,23.01,4,92.04,CUST0079,Premium,Europe,Amsterdam,Digital Wallet,Express
+2023-05-31,ORD202305310079,PRODCLOT079,Clothing Product 10,Clothing,Brand5,142.27,3,426.81,CUST0080,Regular,North America,Chicago,Bank Transfer,Express
+2023-05-31,ORD202305310734,PRODSPOR034,Sports Product 5,Sports,Brand5,32.64,5,163.2,CUST0135,New,Asia Pacific,Singapore,Credit Card,Express
+2023-06-01,ORD202306010060,PRODHOME060,Home & Garden Product 1,Home & Garden,Brand1,455.75,5,2278.75,CUST0061,New,Europe,Paris,Credit Card,Express
+2023-06-01,ORD202306010766,PRODELEC066,Electronics Product 7,Electronics,Brand2,124.12,4,496.48,CUST0167,New,Europe,Berlin,Credit Card,Express
+2023-06-02,ORD202306020175,PRODSPOR075,Sports Product 6,Sports,Brand1,494.48,3,1483.44,CUST0176,New,North America,Toronto,PayPal,Next Day
+2023-06-02,ORD202306020708,PRODELEC008,Electronics Product 9,Electronics,Brand4,392.47,4,1569.88,CUST0109,New,Latin America,Mexico City,Credit Card,Standard
+2023-06-03,ORD202306030006,PRODCLOT006,Clothing Product 7,Clothing,Brand2,242.7,1,242.7,CUST0007,Regular,North America,New York,Digital Wallet,Standard
+2023-06-03,ORD202306030683,PRODCLOT083,Clothing Product 4,Clothing,Brand4,420.59,3,1261.77,CUST0084,Premium,North America,Chicago,Credit Card,Express
+2023-06-06,ORD202306060034,PRODELEC034,Electronics Product 5,Electronics,Brand5,112.8,3,338.4,CUST0035,New,North America,Los Angeles,Bank Transfer,Express
+2023-06-06,ORD202306060285,PRODSPOR085,Sports Product 6,Sports,Brand1,131.52,1,131.52,CUST0086,New,North America,Los Angeles,PayPal,Standard
+2023-06-07,ORD202306070269,PRODSPOR069,Sports Product 10,Sports,Brand5,407.93,3,1223.79,CUST0070,New,Europe,London,PayPal,Standard
+2023-06-08,ORD202306080457,PRODBOOK057,Books Product 8,Books,Brand3,84.92,2,169.84,CUST0058,Premium,Asia Pacific,Singapore,PayPal,Express
+2023-06-09,ORD202306090357,PRODHOME057,Home & Garden Product 8,Home & Garden,Brand3,432.96,2,865.92,CUST0158,Regular,Latin America,Mexico City,Credit Card,Standard
+2023-06-09,ORD202306090712,PRODSPOR012,Sports Product 3,Sports,Brand3,231.13,1,231.13,CUST0113,Premium,Europe,Berlin,Credit Card,Next Day
+2023-06-09,ORD202306090726,PRODHOME026,Home & Garden Product 7,Home & Garden,Brand2,459.55,3,1378.65,CUST0127,Premium,Europe,London,Bank Transfer,Next Day
+2023-06-11,ORD202306110135,PRODTOYS035,Toys Product 6,Toys,Brand1,470.42,5,2352.1,CUST0136,Premium,Europe,Amsterdam,Bank Transfer,Express
+2023-06-11,ORD202306110583,PRODTOYS083,Toys Product 4,Toys,Brand4,19.23,3,57.69,CUST0184,New,Latin America,Mexico City,PayPal,Standard
+2023-06-11,ORD202306110756,PRODBOOK056,Books Product 7,Books,Brand2,448.54,2,897.08,CUST0157,New,Asia Pacific,Tokyo,PayPal,Express
+2023-06-14,ORD202306140194,PRODTOYS094,Toys Product 5,Toys,Brand5,472.42,5,2362.1,CUST0195,New,North America,Toronto,Bank Transfer,Next Day
+2023-06-15,ORD202306150164,PRODBOOK064,Books Product 5,Books,Brand5,114.93,2,229.86,CUST0165,Regular,Asia Pacific,Tokyo,Credit Card,Express
+2023-06-16,ORD202306160155,PRODSPOR055,Sports Product 6,Sports,Brand1,45.36,2,90.72,CUST0156,New,Asia Pacific,Sydney,Digital Wallet,Standard
+2023-06-16,ORD202306160251,PRODCLOT051,Clothing Product 2,Clothing,Brand2,386.0,1,386.0,CUST0052,Regular,Latin America,Mexico City,PayPal,Standard
+2023-06-16,ORD202306160698,PRODHOME098,Home & Garden Product 9,Home & Garden,Brand4,104.93,5,524.65,CUST0099,Regular,Latin America,Mexico City,PayPal,Next Day
+2023-06-17,ORD202306170584,PRODHOME084,Home & Garden Product 5,Home & Garden,Brand5,426.16,1,426.16,CUST0185,New,Latin America,Mexico City,Credit Card,Express
+2023-06-20,ORD202306200853,PRODBOOK053,Books Product 4,Books,Brand4,355.11,3,1065.33,CUST0054,New,North America,Los Angeles,Digital Wallet,Standard
+2023-06-21,ORD202306210033,PRODHOME033,Home & Garden Product 4,Home & Garden,Brand4,418.87,4,1675.48,CUST0034,Premium,Latin America,São Paulo,Bank Transfer,Express
+2023-06-22,ORD202306220229,PRODBOOK029,Books Product 10,Books,Brand5,70.81,4,283.24,CUST0030,Premium,North America,Los Angeles,Digital Wallet,Express
+2023-06-22,ORD202306220509,PRODHOME009,Home & Garden Product 10,Home & Garden,Brand5,135.07,2,270.14,CUST0110,Regular,North America,Chicago,Credit Card,Next Day
+2023-06-22,ORD202306220589,PRODBOOK089,Books Product 10,Books,Brand5,464.4,3,1393.2,CUST0190,Premium,Latin America,Mexico City,Credit Card,Express
+2023-06-23,ORD202306230186,PRODBOOK086,Books Product 7,Books,Brand2,480.18,2,960.36,CUST0187,Premium,Asia Pacific,Tokyo,Bank Transfer,Express
+2023-06-25,ORD202306250214,PRODBOOK014,Books Product 5,Books,Brand5,120.3,5,601.5,CUST0015,Regular,North America,Toronto,Credit Card,Standard
+2023-06-25,ORD202306250407,PRODELEC007,Electronics Product 8,Electronics,Brand3,385.61,4,1542.44,CUST0008,New,Europe,Paris,Bank Transfer,Standard
+2023-06-25,ORD202306250409,PRODTOYS009,Toys Product 10,Toys,Brand5,313.82,4,1255.28,CUST0010,Premium,Europe,London,PayPal,Standard
+2023-06-25,ORD202306250899,PRODCLOT099,Clothing Product 10,Clothing,Brand5,139.0,5,695.0,CUST0100,New,Asia Pacific,Tokyo,Bank Transfer,Express
+2023-06-28,ORD202306280448,PRODBOOK048,Books Product 9,Books,Brand4,103.25,1,103.25,CUST0049,New,Latin America,Mexico City,Digital Wallet,Next Day
+2023-06-29,ORD202306290484,PRODELEC084,Electronics Product 5,Electronics,Brand5,323.22,1,323.22,CUST0085,Regular,Europe,Berlin,Digital Wallet,Next Day
+2023-07-01,ORD202307010654,PRODBOOK054,Books Product 5,Books,Brand5,395.78,5,1978.9,CUST0055,Premium,Europe,Amsterdam,PayPal,Next Day
+2023-07-01,ORD202307010680,PRODHOME080,Home & Garden Product 1,Home & Garden,Brand1,261.82,5,1309.1,CUST0081,Regular,Asia Pacific,Singapore,Bank Transfer,Next Day
+2023-07-02,ORD202307020472,PRODBOOK072,Books Product 3,Books,Brand3,43.23,3,129.69,CUST0073,Premium,Latin America,Santiago,Bank Transfer,Express
+2023-07-02,ORD202307020928,PRODHOME028,Home & Garden Product 9,Home & Garden,Brand4,293.75,3,881.25,CUST0129,New,North America,Toronto,Bank Transfer,Next Day
+2023-07-03,ORD202307030187,PRODELEC087,Electronics Product 8,Electronics,Brand3,223.16,5,1115.8,CUST0188,New,Latin America,Mexico City,Credit Card,Standard
+2023-07-03,ORD202307030339,PRODCLOT039,Clothing Product 10,Clothing,Brand5,75.79,4,303.16,CUST0140,Regular,Europe,London,Credit Card,Next Day
+2023-07-04,ORD202307040146,PRODTOYS046,Toys Product 7,Toys,Brand2,147.03,1,147.03,CUST0147,New,North America,Chicago,Bank Transfer,Standard
+2023-07-04,ORD202307040299,PRODSPOR099,Sports Product 10,Sports,Brand5,462.53,5,2312.65,CUST0100,Regular,Europe,Berlin,PayPal,Next Day
+2023-07-05,ORD202307050429,PRODHOME029,Home & Garden Product 10,Home & Garden,Brand5,57.4,2,114.8,CUST0030,Regular,Latin America,Mexico City,Digital Wallet,Next Day
+2023-07-05,ORD202307050595,PRODHOME095,Home & Garden Product 6,Home & Garden,Brand1,120.75,3,362.25,CUST0196,Premium,Europe,London,Digital Wallet,Standard
+2023-07-05,ORD202307050900,PRODTOYS000,Toys Product 1,Toys,Brand1,77.2,5,386.0,CUST0101,Regular,Europe,Amsterdam,Credit Card,Next Day
+2023-07-06,ORD202307060312,PRODHOME012,Home & Garden Product 3,Home & Garden,Brand3,185.99,2,371.98,CUST0113,New,Latin America,Buenos Aires,Credit Card,Next Day
+2023-07-06,ORD202307060912,PRODELEC012,Electronics Product 3,Electronics,Brand3,411.4,4,1645.6,CUST0113,New,Latin America,São Paulo,Bank Transfer,Express
+2023-07-06,ORD202307060930,PRODSPOR030,Sports Product 1,Sports,Brand1,328.49,1,328.49,CUST0131,Premium,Europe,Amsterdam,Digital Wallet,Express
+2023-07-07,ORD202307070171,PRODSPOR071,Sports Product 2,Sports,Brand2,360.95,3,1082.85,CUST0172,New,Latin America,Mexico City,PayPal,Standard
+2023-07-07,ORD202307070379,PRODCLOT079,Clothing Product 10,Clothing,Brand5,320.27,1,320.27,CUST0180,New,Latin America,Santiago,Digital Wallet,Next Day
+2023-07-07,ORD202307070952,PRODHOME052,Home & Garden Product 3,Home & Garden,Brand3,75.29,2,150.58,CUST0153,Premium,Latin America,Buenos Aires,Bank Transfer,Express
+2023-07-09,ORD202307090065,PRODCLOT065,Clothing Product 6,Clothing,Brand1,388.84,5,1944.2,CUST0066,Premium,North America,Toronto,Bank Transfer,Standard
+2023-07-09,ORD202307090697,PRODCLOT097,Clothing Product 8,Clothing,Brand3,82.71,3,248.13,CUST0098,New,North America,New York,PayPal,Express
+2023-07-09,ORD202307090971,PRODHOME071,Home & Garden Product 2,Home & Garden,Brand2,384.22,3,1152.66,CUST0172,New,Latin America,Mexico City,Bank Transfer,Standard
+2023-07-11,ORD202307110682,PRODBOOK082,Books Product 3,Books,Brand3,205.22,2,410.44,CUST0083,Premium,Asia Pacific,Sydney,Digital Wallet,Next Day
+2023-07-12,ORD202307120418,PRODTOYS018,Toys Product 9,Toys,Brand4,446.69,2,893.38,CUST0019,New,Latin America,Santiago,Bank Transfer,Standard
+2023-07-12,ORD202307120914,PRODHOME014,Home & Garden Product 5,Home & Garden,Brand5,319.79,2,639.58,CUST0115,Regular,Asia Pacific,Hong Kong,Digital Wallet,Express
+2023-07-13,ORD202307130972,PRODBOOK072,Books Product 3,Books,Brand3,256.38,1,256.38,CUST0173,New,Europe,Berlin,Bank Transfer,Next Day
+2023-07-14,ORD202307140689,PRODBOOK089,Books Product 10,Books,Brand5,339.95,3,1019.85,CUST0090,Premium,Latin America,Mexico City,Bank Transfer,Express
+2023-07-15,ORD202307150857,PRODTOYS057,Toys Product 8,Toys,Brand3,107.47,2,214.94,CUST0058,Premium,Asia Pacific,Sydney,Bank Transfer,Next Day
+2023-07-15,ORD202307150981,PRODHOME081,Home & Garden Product 2,Home & Garden,Brand2,473.05,3,1419.15,CUST0182,Premium,Latin America,Santiago,Bank Transfer,Standard
+2023-07-18,ORD202307180450,PRODSPOR050,Sports Product 1,Sports,Brand1,414.64,5,2073.2,CUST0051,New,Asia Pacific,Singapore,Credit Card,Express
+2023-07-19,ORD202307190596,PRODSPOR096,Sports Product 7,Sports,Brand2,200.09,2,400.18,CUST0197,Premium,Europe,London,PayPal,Standard
+2023-07-20,ORD202307200341,PRODCLOT041,Clothing Product 2,Clothing,Brand2,163.86,1,163.86,CUST0142,New,Latin America,Mexico City,Bank Transfer,Express
+2023-07-20,ORD202307200891,PRODSPOR091,Sports Product 2,Sports,Brand2,246.17,4,984.68,CUST0092,Premium,Asia Pacific,Sydney,Credit Card,Standard
+2023-07-20,ORD202307200896,PRODCLOT096,Clothing Product 7,Clothing,Brand2,345.35,1,345.35,CUST0097,New,Europe,Berlin,Credit Card,Express
+2023-07-21,ORD202307210488,PRODBOOK088,Books Product 9,Books,Brand4,153.25,2,306.5,CUST0089,Regular,Asia Pacific,Singapore,Bank Transfer,Next Day
+2023-07-22,ORD202307220650,PRODELEC050,Electronics Product 1,Electronics,Brand1,346.59,4,1386.36,CUST0051,Regular,Asia Pacific,Sydney,Bank Transfer,Express
+2023-07-23,ORD202307230125,PRODCLOT025,Clothing Product 6,Clothing,Brand1,268.81,2,537.62,CUST0126,New,North America,New York,Digital Wallet,Standard
+2023-07-24,ORD202307240375,PRODSPOR075,Sports Product 6,Sports,Brand1,30.7,1,30.7,CUST0176,Premium,Asia Pacific,Tokyo,PayPal,Express
+2023-07-25,ORD202307250441,PRODHOME041,Home & Garden Product 2,Home & Garden,Brand2,54.62,2,109.24,CUST0042,Regular,Asia Pacific,Hong Kong,Credit Card,Standard
+2023-07-25,ORD202307250874,PRODCLOT074,Clothing Product 5,Clothing,Brand5,488.2,2,976.4,CUST0075,New,Europe,London,Bank Transfer,Standard
+2023-07-26,ORD202307260790,PRODHOME090,Home & Garden Product 1,Home & Garden,Brand1,352.37,4,1409.48,CUST0191,Premium,North America,Toronto,Digital Wallet,Next Day
+2023-07-27,ORD202307270038,PRODCLOT038,Clothing Product 9,Clothing,Brand4,144.74,1,144.74,CUST0039,Regular,Europe,Paris,Bank Transfer,Express
+2023-07-27,ORD202307270637,PRODELEC037,Electronics Product 8,Electronics,Brand3,97.13,5,485.65,CUST0038,Premium,Asia Pacific,Singapore,PayPal,Standard
+2023-07-27,ORD202307270918,PRODELEC018,Electronics Product 9,Electronics,Brand4,112.1,3,336.3,CUST0119,Premium,North America,Los Angeles,Credit Card,Next Day
+2023-07-29,ORD202307290949,PRODCLOT049,Clothing Product 10,Clothing,Brand5,289.88,5,1449.4,CUST0150,Regular,Asia Pacific,Hong Kong,Bank Transfer,Standard
+2023-07-31,ORD202307310524,PRODSPOR024,Sports Product 5,Sports,Brand5,40.41,3,121.23,CUST0125,Premium,North America,Toronto,PayPal,Express
+2023-07-31,ORD202307310845,PRODBOOK045,Books Product 6,Books,Brand1,485.18,1,485.18,CUST0046,New,Europe,Paris,Bank Transfer,Standard
+2023-08-01,ORD202308010370,PRODSPOR070,Sports Product 1,Sports,Brand1,362.68,5,1813.4,CUST0171,Premium,Asia Pacific,Singapore,Credit Card,Next Day
+2023-08-01,ORD202308010803,PRODBOOK003,Books Product 4,Books,Brand4,143.01,3,429.03,CUST0004,Regular,Latin America,Buenos Aires,Bank Transfer,Express
+2023-08-01,ORD202308010911,PRODCLOT011,Clothing Product 2,Clothing,Brand2,237.45,2,474.9,CUST0112,Regular,North America,New York,PayPal,Next Day
+2023-08-03,ORD202308030847,PRODSPOR047,Sports Product 8,Sports,Brand3,280.33,1,280.33,CUST0048,Premium,Latin America,Buenos Aires,Credit Card,Standard
+2023-08-04,ORD202308040153,PRODELEC053,Electronics Product 4,Electronics,Brand4,154.32,2,308.64,CUST0154,Regular,Europe,London,PayPal,Express
+2023-08-04,ORD202308040215,PRODBOOK015,Books Product 6,Books,Brand1,486.95,5,2434.75,CUST0016,Regular,Latin America,Mexico City,PayPal,Standard
+2023-08-04,ORD202308040786,PRODBOOK086,Books Product 7,Books,Brand2,206.52,1,206.52,CUST0187,New,Asia Pacific,Tokyo,Credit Card,Standard
+2023-08-06,ORD202308060207,PRODSPOR007,Sports Product 8,Sports,Brand3,354.23,4,1416.92,CUST0008,Regular,Asia Pacific,Singapore,Bank Transfer,Next Day
+2023-08-06,ORD202308060259,PRODTOYS059,Toys Product 10,Toys,Brand5,86.02,4,344.08,CUST0060,New,North America,Toronto,Credit Card,Express
+2023-08-06,ORD202308060597,PRODSPOR097,Sports Product 8,Sports,Brand3,109.24,3,327.72,CUST0198,New,Latin America,Mexico City,Credit Card,Express
+2023-08-09,ORD202308090831,PRODCLOT031,Clothing Product 2,Clothing,Brand2,482.36,1,482.36,CUST0032,Premium,Asia Pacific,Sydney,Digital Wallet,Next Day
+2023-08-09,ORD202308090890,PRODTOYS090,Toys Product 1,Toys,Brand1,276.9,5,1384.5,CUST0091,Premium,Latin America,Buenos Aires,PayPal,Express
+2023-08-10,ORD202308100123,PRODELEC023,Electronics Product 4,Electronics,Brand4,378.22,4,1512.88,CUST0124,Regular,North America,Los Angeles,Credit Card,Express
+2023-08-11,ORD202308110098,PRODHOME098,Home & Garden Product 9,Home & Garden,Brand4,224.46,5,1122.3,CUST0099,New,Asia Pacific,Tokyo,PayPal,Next Day
+2023-08-11,ORD202308110763,PRODTOYS063,Toys Product 4,Toys,Brand4,292.84,4,1171.36,CUST0164,Regular,North America,New York,Credit Card,Express
+2023-08-15,ORD202308150420,PRODBOOK020,Books Product 1,Books,Brand1,146.66,2,293.32,CUST0021,Regular,North America,New York,Bank Transfer,Next Day
+2023-08-15,ORD202308150753,PRODCLOT053,Clothing Product 4,Clothing,Brand4,257.59,3,772.77,CUST0154,New,Latin America,Santiago,Bank Transfer,Next Day
+2023-08-16,ORD202308160147,PRODCLOT047,Clothing Product 8,Clothing,Brand3,191.7,4,766.8,CUST0148,Premium,Asia Pacific,Hong Kong,Digital Wallet,Next Day
+2023-08-16,ORD202308160599,PRODELEC099,Electronics Product 10,Electronics,Brand5,114.78,1,114.78,CUST0200,New,North America,Toronto,Digital Wallet,Express
+2023-08-16,ORD202308160747,PRODHOME047,Home & Garden Product 8,Home & Garden,Brand3,160.03,1,160.03,CUST0148,Regular,Asia Pacific,Singapore,PayPal,Next Day
+2023-08-17,ORD202308170002,PRODBOOK002,Books Product 3,Books,Brand3,343.75,4,1375.0,CUST0003,New,Latin America,Buenos Aires,PayPal,Next Day
+2023-08-17,ORD202308170507,PRODSPOR007,Sports Product 8,Sports,Brand3,254.34,4,1017.36,CUST0108,Premium,Latin America,Mexico City,PayPal,Express
+2023-08-17,ORD202308170974,PRODBOOK074,Books Product 5,Books,Brand5,115.85,5,579.25,CUST0175,New,Europe,Paris,PayPal,Express
+2023-08-18,ORD202308180268,PRODBOOK068,Books Product 9,Books,Brand4,289.55,5,1447.75,CUST0069,New,North America,Los Angeles,Credit Card,Standard
+2023-08-18,ORD202308180401,PRODHOME001,Home & Garden Product 2,Home & Garden,Brand2,136.26,2,272.52,CUST0002,New,Asia Pacific,Hong Kong,Bank Transfer,Next Day
+2023-08-19,ORD202308190838,PRODELEC038,Electronics Product 9,Electronics,Brand4,179.81,4,719.24,CUST0039,New,North America,Toronto,PayPal,Standard
+2023-08-21,ORD202308210985,PRODELEC085,Electronics Product 6,Electronics,Brand1,297.25,2,594.5,CUST0186,Premium,North America,Toronto,PayPal,Next Day
+2023-08-22,ORD202308220439,PRODHOME039,Home & Garden Product 10,Home & Garden,Brand5,484.82,3,1454.46,CUST0040,New,Europe,Amsterdam,Digital Wallet,Next Day
+2023-08-23,ORD202308230160,PRODCLOT060,Clothing Product 1,Clothing,Brand1,300.12,3,900.36,CUST0161,Regular,Latin America,São Paulo,Bank Transfer,Next Day
+2023-08-23,ORD202308230602,PRODBOOK002,Books Product 3,Books,Brand3,143.26,1,143.26,CUST0003,Regular,Asia Pacific,Sydney,PayPal,Standard
+2023-08-23,ORD202308230837,PRODSPOR037,Sports Product 8,Sports,Brand3,231.22,4,924.88,CUST0038,New,Latin America,Santiago,Credit Card,Express
+2023-08-24,ORD202308240035,PRODSPOR035,Sports Product 6,Sports,Brand1,100.57,5,502.85,CUST0036,Premium,Latin America,Santiago,Credit Card,Standard
+2023-08-24,ORD202308240610,PRODTOYS010,Toys Product 1,Toys,Brand1,330.7,1,330.7,CUST0011,Premium,Asia Pacific,Singapore,Credit Card,Express
+2023-08-28,ORD202308280879,PRODELEC079,Electronics Product 10,Electronics,Brand5,400.46,1,400.46,CUST0080,Premium,Asia Pacific,Sydney,Digital Wallet,Standard
+2023-08-29,ORD202308290298,PRODSPOR098,Sports Product 9,Sports,Brand4,247.98,5,1239.9,CUST0099,Premium,Asia Pacific,Sydney,Digital Wallet,Next Day
+2023-08-29,ORD202308290469,PRODTOYS069,Toys Product 10,Toys,Brand5,42.24,4,168.96,CUST0070,New,Asia Pacific,Singapore,PayPal,Next Day
+2023-08-29,ORD202308290603,PRODSPOR003,Sports Product 4,Sports,Brand4,486.48,4,1945.92,CUST0004,New,Latin America,São Paulo,Bank Transfer,Standard
+2023-08-31,ORD202308310422,PRODTOYS022,Toys Product 3,Toys,Brand3,106.73,1,106.73,CUST0023,Regular,Asia Pacific,Hong Kong,Credit Card,Standard
+2023-09-01,ORD202309010629,PRODSPOR029,Sports Product 10,Sports,Brand5,125.55,2,251.1,CUST0030,Regular,Latin America,Buenos Aires,Digital Wallet,Next Day
+2023-09-01,ORD202309010999,PRODCLOT099,Clothing Product 10,Clothing,Brand5,66.66,4,266.64,CUST0200,Premium,Asia Pacific,Singapore,Credit Card,Express
+2023-09-02,ORD202309020576,PRODTOYS076,Toys Product 7,Toys,Brand2,106.76,1,106.76,CUST0177,Regular,Asia Pacific,Singapore,Credit Card,Standard
+2023-09-03,ORD202309030071,PRODHOME071,Home & Garden Product 2,Home & Garden,Brand2,193.22,4,772.88,CUST0072,Premium,North America,Toronto,Credit Card,Express
+2023-09-03,ORD202309030474,PRODHOME074,Home & Garden Product 5,Home & Garden,Brand5,451.57,5,2257.85,CUST0075,New,Latin America,Mexico City,PayPal,Next Day
+2023-09-04,ORD202309040774,PRODHOME074,Home & Garden Product 5,Home & Garden,Brand5,246.28,1,246.28,CUST0175,Regular,Asia Pacific,Tokyo,Digital Wallet,Express
+2023-09-06,ORD202309060587,PRODHOME087,Home & Garden Product 8,Home & Garden,Brand3,281.33,1,281.33,CUST0188,New,North America,Chicago,PayPal,Standard
+2023-09-07,ORD202309070642,PRODHOME042,Home & Garden Product 3,Home & Garden,Brand3,71.85,1,71.85,CUST0043,New,Asia Pacific,Tokyo,PayPal,Next Day
+2023-09-08,ORD202309080140,PRODBOOK040,Books Product 1,Books,Brand1,60.56,5,302.8,CUST0141,Regular,Europe,London,Digital Wallet,Next Day
+2023-09-08,ORD202309080263,PRODHOME063,Home & Garden Product 4,Home & Garden,Brand4,402.48,3,1207.44,CUST0064,New,Europe,Berlin,Digital Wallet,Next Day
+2023-09-09,ORD202309090667,PRODTOYS067,Toys Product 8,Toys,Brand3,337.86,4,1351.44,CUST0068,New,Asia Pacific,Sydney,PayPal,Standard
+2023-09-09,ORD202309090733,PRODHOME033,Home & Garden Product 4,Home & Garden,Brand4,370.87,2,741.74,CUST0134,Regular,Latin America,Buenos Aires,Digital Wallet,Express
+2023-09-10,ORD202309100404,PRODCLOT004,Clothing Product 5,Clothing,Brand5,40.79,5,203.95,CUST0005,Regular,Asia Pacific,Sydney,Bank Transfer,Express
+2023-09-10,ORD202309100412,PRODSPOR012,Sports Product 3,Sports,Brand3,429.8,5,2149.0,CUST0013,Regular,North America,Toronto,Digital Wallet,Express
+2023-09-10,ORD202309100540,PRODCLOT040,Clothing Product 1,Clothing,Brand1,296.14,3,888.42,CUST0141,Regular,North America,Chicago,Bank Transfer,Next Day
+2023-09-10,ORD202309100661,PRODBOOK061,Books Product 2,Books,Brand2,128.86,2,257.72,CUST0062,New,Latin America,São Paulo,PayPal,Next Day
+2023-09-10,ORD202309100865,PRODBOOK065,Books Product 6,Books,Brand1,436.8,1,436.8,CUST0066,New,North America,New York,Credit Card,Next Day
+2023-09-11,ORD202309110913,PRODCLOT013,Clothing Product 4,Clothing,Brand4,461.47,3,1384.41,CUST0114,Regular,Europe,Amsterdam,Bank Transfer,Next Day
+2023-09-12,ORD202309120016,PRODSPOR016,Sports Product 7,Sports,Brand2,161.01,5,805.05,CUST0017,Premium,Europe,London,Credit Card,Next Day
+2023-09-14,ORD202309140129,PRODCLOT029,Clothing Product 10,Clothing,Brand5,115.44,5,577.2,CUST0130,Premium,North America,Toronto,Credit Card,Next Day
+2023-09-15,ORD202309150304,PRODSPOR004,Sports Product 5,Sports,Brand5,332.43,1,332.43,CUST0105,New,Europe,Paris,PayPal,Next Day
+2023-09-15,ORD202309150331,PRODHOME031,Home & Garden Product 2,Home & Garden,Brand2,180.12,1,180.12,CUST0132,New,Latin America,Mexico City,Digital Wallet,Express
+2023-09-15,ORD202309150512,PRODTOYS012,Toys Product 3,Toys,Brand3,36.4,4,145.6,CUST0113,Regular,Latin America,São Paulo,Credit Card,Next Day
+2023-09-15,ORD202309150548,PRODELEC048,Electronics Product 9,Electronics,Brand4,107.98,4,431.92,CUST0149,New,North America,Chicago,Credit Card,Express
+2023-09-15,ORD202309150727,PRODHOME027,Home & Garden Product 8,Home & Garden,Brand3,406.91,1,406.91,CUST0128,Regular,Asia Pacific,Sydney,Credit Card,Express
+2023-09-15,ORD202309150731,PRODELEC031,Electronics Product 2,Electronics,Brand2,177.43,5,887.15,CUST0132,Regular,Latin America,Mexico City,PayPal,Standard
+2023-09-15,ORD202309150843,PRODCLOT043,Clothing Product 4,Clothing,Brand4,100.61,5,503.05,CUST0044,Premium,Latin America,Buenos Aires,PayPal,Express
+2023-09-16,ORD202309160432,PRODSPOR032,Sports Product 3,Sports,Brand3,163.32,4,653.28,CUST0033,New,North America,New York,Digital Wallet,Next Day
+2023-09-16,ORD202309160549,PRODCLOT049,Clothing Product 10,Clothing,Brand5,371.15,3,1113.45,CUST0150,Regular,Europe,Paris,Bank Transfer,Standard
+2023-09-17,ORD202309170111,PRODHOME011,Home & Garden Product 2,Home & Garden,Brand2,401.95,1,401.95,CUST0112,New,Asia Pacific,Hong Kong,Digital Wallet,Next Day
+2023-09-18,ORD202309180643,PRODHOME043,Home & Garden Product 4,Home & Garden,Brand4,127.25,3,381.75,CUST0044,New,Europe,London,Bank Transfer,Express
+2023-09-18,ORD202309180767,PRODTOYS067,Toys Product 8,Toys,Brand3,45.48,3,136.44,CUST0168,Premium,North America,Chicago,PayPal,Express
+2023-09-19,ORD202309190219,PRODBOOK019,Books Product 10,Books,Brand5,86.68,3,260.04,CUST0020,New,Europe,Berlin,Credit Card,Express
+2023-09-20,ORD202309200581,PRODHOME081,Home & Garden Product 2,Home & Garden,Brand2,245.46,4,981.84,CUST0182,Premium,Latin America,Santiago,PayPal,Next Day
+2023-09-20,ORD202309200704,PRODHOME004,Home & Garden Product 5,Home & Garden,Brand5,424.79,2,849.58,CUST0105,New,North America,New York,Credit Card,Next Day
+2023-09-22,ORD202309220526,PRODSPOR026,Sports Product 7,Sports,Brand2,131.91,5,659.55,CUST0127,Premium,Asia Pacific,Sydney,Credit Card,Standard
+2023-09-22,ORD202309220754,PRODSPOR054,Sports Product 5,Sports,Brand5,471.16,1,471.16,CUST0155,Premium,Asia Pacific,Hong Kong,PayPal,Standard
+2023-09-23,ORD202309230046,PRODBOOK046,Books Product 7,Books,Brand2,258.53,1,258.53,CUST0047,Premium,Latin America,Buenos Aires,Digital Wallet,Standard
+2023-09-25,ORD202309250781,PRODTOYS081,Toys Product 2,Toys,Brand2,495.25,5,2476.25,CUST0182,New,Asia Pacific,Tokyo,Bank Transfer,Next Day
+2023-09-26,ORD202309260403,PRODSPOR003,Sports Product 4,Sports,Brand4,117.65,4,470.6,CUST0004,New,Europe,Paris,Credit Card,Next Day
+2023-09-27,ORD202309270539,PRODTOYS039,Toys Product 10,Toys,Brand5,433.13,2,866.26,CUST0140,Regular,Latin America,São Paulo,Digital Wallet,Next Day
+2023-09-27,ORD202309270854,PRODCLOT054,Clothing Product 5,Clothing,Brand5,488.14,5,2440.7,CUST0055,Regular,Europe,London,Credit Card,Next Day
+2023-09-29,ORD202309290502,PRODELEC002,Electronics Product 3,Electronics,Brand3,488.77,5,2443.85,CUST0103,Regular,Latin America,São Paulo,Credit Card,Express
+2023-09-29,ORD202309290687,PRODTOYS087,Toys Product 8,Toys,Brand3,18.99,3,56.97,CUST0088,New,Latin America,São Paulo,Credit Card,Next Day
+2023-09-30,ORD202309300471,PRODHOME071,Home & Garden Product 2,Home & Garden,Brand2,478.28,4,1913.12,CUST0072,Regular,Latin America,Mexico City,Digital Wallet,Express
+2023-10-02,ORD202310020517,PRODHOME017,Home & Garden Product 8,Home & Garden,Brand3,46.54,4,186.16,CUST0118,Regular,Asia Pacific,Singapore,PayPal,Standard
+2023-10-03,ORD202310030267,PRODELEC067,Electronics Product 8,Electronics,Brand3,495.7,2,991.4,CUST0068,Regular,Europe,Paris,PayPal,Next Day
+2023-10-03,ORD202310030690,PRODHOME090,Home & Garden Product 1,Home & Garden,Brand1,472.39,4,1889.56,CUST0091,New,Europe,Paris,Digital Wallet,Next Day
+2023-10-05,ORD202310050022,PRODBOOK022,Books Product 3,Books,Brand3,226.79,3,680.37,CUST0023,Premium,Asia Pacific,Hong Kong,Credit Card,Express
+2023-10-05,ORD202310050592,PRODTOYS092,Toys Product 3,Toys,Brand3,293.62,5,1468.1,CUST0193,Regular,North America,Chicago,Digital Wallet,Standard
+2023-10-06,ORD202310060023,PRODTOYS023,Toys Product 4,Toys,Brand4,212.56,5,1062.8,CUST0024,New,North America,Toronto,Bank Transfer,Next Day
+2023-10-06,ORD202310060454,PRODHOME054,Home & Garden Product 5,Home & Garden,Brand5,359.24,2,718.48,CUST0055,Regular,North America,Chicago,Digital Wallet,Express
+2023-10-06,ORD202310060498,PRODCLOT098,Clothing Product 9,Clothing,Brand4,382.17,2,764.34,CUST0099,Regular,Asia Pacific,Tokyo,Bank Transfer,Next Day
+2023-10-08,ORD202310080049,PRODELEC049,Electronics Product 10,Electronics,Brand5,301.11,5,1505.55,CUST0050,New,Asia Pacific,Hong Kong,Bank Transfer,Express
+2023-10-08,ORD202310080800,PRODHOME000,Home & Garden Product 1,Home & Garden,Brand1,30.52,5,152.6,CUST0001,New,Latin America,São Paulo,PayPal,Standard
+2023-10-09,ORD202310090875,PRODELEC075,Electronics Product 6,Electronics,Brand1,154.39,2,308.78,CUST0076,Premium,North America,Toronto,Credit Card,Express
+2023-10-10,ORD202310100040,PRODSPOR040,Sports Product 1,Sports,Brand1,159.49,2,318.98,CUST0041,Premium,Latin America,Buenos Aires,Credit Card,Express
+2023-10-10,ORD202310100102,PRODTOYS002,Toys Product 3,Toys,Brand3,204.32,5,1021.6,CUST0103,Regular,North America,New York,Digital Wallet,Next Day
+2023-10-10,ORD202310100319,PRODHOME019,Home & Garden Product 10,Home & Garden,Brand5,262.88,1,262.88,CUST0120,Regular,Latin America,Mexico City,Digital Wallet,Express
+2023-10-12,ORD202310120617,PRODBOOK017,Books Product 8,Books,Brand3,496.97,5,2484.85,CUST0018,Premium,Europe,Paris,Digital Wallet,Standard
+2023-10-12,ORD202310120645,PRODBOOK045,Books Product 6,Books,Brand1,238.03,2,476.06,CUST0046,New,Europe,Berlin,PayPal,Standard
+2023-10-13,ORD202310130424,PRODTOYS024,Toys Product 5,Toys,Brand5,59.11,3,177.33,CUST0025,New,Asia Pacific,Hong Kong,Digital Wallet,Next Day
+2023-10-14,ORD202310140481,PRODHOME081,Home & Garden Product 2,Home & Garden,Brand2,490.82,4,1963.28,CUST0082,New,Europe,Berlin,Credit Card,Express
+2023-10-14,ORD202310140893,PRODTOYS093,Toys Product 4,Toys,Brand4,125.1,2,250.2,CUST0094,Premium,North America,Toronto,Credit Card,Standard
+2023-10-15,ORD202310150544,PRODBOOK044,Books Product 5,Books,Brand5,279.5,2,559.0,CUST0145,Premium,Europe,Amsterdam,Bank Transfer,Standard
+2023-10-15,ORD202310150714,PRODCLOT014,Clothing Product 5,Clothing,Brand5,93.31,4,373.24,CUST0115,Regular,North America,Chicago,Digital Wallet,Next Day
+2023-10-17,ORD202310170761,PRODSPOR061,Sports Product 2,Sports,Brand2,25.41,5,127.05,CUST0162,Regular,North America,Chicago,PayPal,Standard
+2023-10-20,ORD202310200110,PRODSPOR010,Sports Product 1,Sports,Brand1,338.81,5,1694.05,CUST0111,Premium,North America,Los Angeles,PayPal,Next Day
+2023-10-20,ORD202310200806,PRODTOYS006,Toys Product 7,Toys,Brand2,102.04,4,408.16,CUST0007,New,North America,New York,Digital Wallet,Standard
+2023-10-21,ORD202310210924,PRODELEC024,Electronics Product 5,Electronics,Brand5,96.45,2,192.9,CUST0125,New,Asia Pacific,Singapore,Bank Transfer,Express
+2023-10-22,ORD202310220149,PRODSPOR049,Sports Product 10,Sports,Brand5,157.42,4,629.68,CUST0150,Premium,Asia Pacific,Sydney,Credit Card,Next Day
+2023-10-22,ORD202310220828,PRODSPOR028,Sports Product 9,Sports,Brand4,467.31,5,2336.55,CUST0029,Premium,Asia Pacific,Singapore,PayPal,Standard
+2023-10-23,ORD202310230100,PRODELEC000,Electronics Product 1,Electronics,Brand1,313.15,5,1565.75,CUST0101,Regular,Europe,Amsterdam,Digital Wallet,Standard
+2023-10-23,ORD202310230772,PRODBOOK072,Books Product 3,Books,Brand3,445.0,5,2225.0,CUST0173,Regular,North America,Toronto,Bank Transfer,Express
+2023-10-24,ORD202310240000,PRODSPOR000,Sports Product 1,Sports,Brand1,193.73,2,387.46,CUST0001,Regular,North America,Chicago,Bank Transfer,Standard
+2023-10-25,ORD202310250842,PRODHOME042,Home & Garden Product 3,Home & Garden,Brand3,275.48,5,1377.4,CUST0043,Premium,Europe,Paris,Bank Transfer,Next Day
+2023-10-29,ORD202310290694,PRODHOME094,Home & Garden Product 5,Home & Garden,Brand5,236.71,5,1183.55,CUST0095,Premium,North America,Chicago,PayPal,Next Day
+2023-10-29,ORD202310290813,PRODHOME013,Home & Garden Product 4,Home & Garden,Brand4,352.68,4,1410.72,CUST0014,Regular,Asia Pacific,Tokyo,Credit Card,Next Day
+2023-10-30,ORD202310300078,PRODHOME078,Home & Garden Product 9,Home & Garden,Brand4,365.98,3,1097.94,CUST0079,Premium,Europe,London,PayPal,Standard
+2023-10-30,ORD202310300793,PRODELEC093,Electronics Product 4,Electronics,Brand4,416.02,4,1664.08,CUST0194,Premium,Asia Pacific,Sydney,Credit Card,Next Day
+2023-10-31,ORD202310310130,PRODCLOT030,Clothing Product 1,Clothing,Brand1,205.17,1,205.17,CUST0131,Premium,Europe,London,PayPal,Express
+2023-10-31,ORD202310310722,PRODHOME022,Home & Garden Product 3,Home & Garden,Brand3,141.94,5,709.7,CUST0123,Regular,Asia Pacific,Singapore,Bank Transfer,Standard
+2023-11-01,ORD202311010706,PRODSPOR006,Sports Product 7,Sports,Brand2,90.09,5,450.45,CUST0107,New,Latin America,Santiago,Credit Card,Express
+2023-11-01,ORD202311010824,PRODBOOK024,Books Product 5,Books,Brand5,427.0,1,427.0,CUST0025,Regular,Europe,Paris,Digital Wallet,Standard
+2023-11-01,ORD202311010954,PRODHOME054,Home & Garden Product 5,Home & Garden,Brand5,25.9,3,77.7,CUST0155,Regular,Latin America,São Paulo,Bank Transfer,Express
+2023-11-01,ORD202311010964,PRODHOME064,Home & Garden Product 5,Home & Garden,Brand5,243.15,3,729.45,CUST0165,Regular,Europe,Paris,PayPal,Express
+2023-11-03,ORD202311030487,PRODSPOR087,Sports Product 8,Sports,Brand3,26.5,4,106.0,CUST0088,Regular,North America,Toronto,Bank Transfer,Express
+2023-11-04,ORD202311040411,PRODSPOR011,Sports Product 2,Sports,Brand2,266.62,3,799.86,CUST0012,Regular,Asia Pacific,Tokyo,PayPal,Express
+2023-11-04,ORD202311040577,PRODCLOT077,Clothing Product 8,Clothing,Brand3,201.72,1,201.72,CUST0178,New,North America,Toronto,Digital Wallet,Next Day
+2023-11-05,ORD202311050206,PRODSPOR006,Sports Product 7,Sports,Brand2,257.93,5,1289.65,CUST0007,New,Latin America,São Paulo,Credit Card,Express
+2023-11-05,ORD202311050363,PRODHOME063,Home & Garden Product 4,Home & Garden,Brand4,223.18,3,669.54,CUST0164,New,Latin America,Mexico City,PayPal,Next Day
+2023-11-05,ORD202311050527,PRODTOYS027,Toys Product 8,Toys,Brand3,381.83,3,1145.49,CUST0128,Regular,North America,Los Angeles,Digital Wallet,Next Day
+2023-11-06,ORD202311060095,PRODHOME095,Home & Garden Product 6,Home & Garden,Brand1,229.59,3,688.77,CUST0096,New,Latin America,Mexico City,Bank Transfer,Express
+2023-11-06,ORD202311060494,PRODCLOT094,Clothing Product 5,Clothing,Brand5,364.54,4,1458.16,CUST0095,New,Asia Pacific,Hong Kong,Bank Transfer,Express
+2023-11-08,ORD202311080510,PRODTOYS010,Toys Product 1,Toys,Brand1,342.8,3,1028.4,CUST0111,Premium,Latin America,Santiago,Credit Card,Standard
+2023-11-08,ORD202311080987,PRODBOOK087,Books Product 8,Books,Brand3,148.89,4,595.56,CUST0188,New,North America,Chicago,PayPal,Next Day
+2023-11-12,ORD202311120598,PRODCLOT098,Clothing Product 9,Clothing,Brand4,26.02,5,130.1,CUST0199,Regular,Asia Pacific,Hong Kong,Credit Card,Express
+2023-11-13,ORD202311130084,PRODHOME084,Home & Garden Product 5,Home & Garden,Brand5,51.52,3,154.56,CUST0085,Premium,Europe,Paris,Digital Wallet,Next Day
+2023-11-13,ORD202311130132,PRODTOYS032,Toys Product 3,Toys,Brand3,323.41,2,646.82,CUST0133,Premium,Latin America,Mexico City,PayPal,Express
+2023-11-13,ORD202311130211,PRODSPOR011,Sports Product 2,Sports,Brand2,258.92,4,1035.68,CUST0012,Premium,North America,Los Angeles,PayPal,Express
+2023-11-14,ORD202311140416,PRODBOOK016,Books Product 7,Books,Brand2,457.76,5,2288.8,CUST0017,New,Europe,London,Bank Transfer,Express
+2023-11-14,ORD202311140479,PRODBOOK079,Books Product 10,Books,Brand5,218.71,2,437.42,CUST0080,New,Europe,London,Bank Transfer,Standard
+2023-11-16,ORD202311160465,PRODELEC065,Electronics Product 6,Electronics,Brand1,376.17,3,1128.51,CUST0066,New,Europe,Berlin,Credit Card,Standard
+2023-11-16,ORD202311160676,PRODHOME076,Home & Garden Product 7,Home & Garden,Brand2,276.56,3,829.68,CUST0077,Premium,Europe,Paris,PayPal,Express
+2023-11-16,ORD202311160743,PRODHOME043,Home & Garden Product 4,Home & Garden,Brand4,145.26,1,145.26,CUST0144,Premium,North America,Chicago,Digital Wallet,Next Day
+2023-11-19,ORD202311190601,PRODHOME001,Home & Garden Product 2,Home & Garden,Brand2,215.43,4,861.72,CUST0002,New,Asia Pacific,Hong Kong,Bank Transfer,Next Day
+2023-11-21,ORD202311210630,PRODCLOT030,Clothing Product 1,Clothing,Brand1,496.45,2,992.9,CUST0031,Regular,Europe,London,Digital Wallet,Standard
+2023-11-22,ORD202311220145,PRODHOME045,Home & Garden Product 6,Home & Garden,Brand1,343.62,4,1374.48,CUST0146,New,Asia Pacific,Hong Kong,Digital Wallet,Next Day
+2023-11-22,ORD202311220371,PRODTOYS071,Toys Product 2,Toys,Brand2,197.16,2,394.32,CUST0172,Premium,Europe,London,PayPal,Standard
+2023-11-22,ORD202311220760,PRODHOME060,Home & Garden Product 1,Home & Garden,Brand1,351.42,3,1054.26,CUST0161,New,North America,New York,Credit Card,Standard
+2023-11-24,ORD202311240306,PRODTOYS006,Toys Product 7,Toys,Brand2,85.59,2,171.18,CUST0107,Premium,North America,Chicago,Bank Transfer,Express
+2023-11-25,ORD202311250178,PRODCLOT078,Clothing Product 9,Clothing,Brand4,171.41,5,857.05,CUST0179,Premium,Latin America,Santiago,Digital Wallet,Standard
+2023-11-25,ORD202311250840,PRODSPOR040,Sports Product 1,Sports,Brand1,44.9,4,179.6,CUST0041,Premium,North America,Toronto,Digital Wallet,Next Day
+2023-11-25,ORD202311250961,PRODSPOR061,Sports Product 2,Sports,Brand2,184.34,1,184.34,CUST0162,New,Europe,London,Bank Transfer,Standard
+2023-11-26,ORD202311260994,PRODELEC094,Electronics Product 5,Electronics,Brand5,361.06,3,1083.18,CUST0195,Premium,North America,Toronto,Digital Wallet,Next Day
+2023-11-27,ORD202311270050,PRODHOME050,Home & Garden Product 1,Home & Garden,Brand1,213.2,4,852.8,CUST0051,New,Europe,Berlin,Credit Card,Standard
+2023-11-27,ORD202311270902,PRODHOME002,Home & Garden Product 3,Home & Garden,Brand3,384.64,4,1538.56,CUST0103,New,Latin America,Buenos Aires,Credit Card,Standard
+2023-11-28,ORD202311280423,PRODELEC023,Electronics Product 4,Electronics,Brand4,380.12,3,1140.36,CUST0024,Premium,Europe,Amsterdam,Credit Card,Next Day
+2023-12-02,ORD202312020113,PRODELEC013,Electronics Product 4,Electronics,Brand4,255.36,2,510.72,CUST0114,Premium,Asia Pacific,Hong Kong,Credit Card,Express
+2023-12-02,ORD202312020848,PRODBOOK048,Books Product 9,Books,Brand4,423.59,5,2117.95,CUST0049,Regular,North America,Toronto,Credit Card,Standard
+2023-12-03,ORD202312030320,PRODELEC020,Electronics Product 1,Electronics,Brand1,192.87,3,578.61,CUST0121,Regular,Europe,London,Credit Card,Next Day
+2023-12-03,ORD202312030570,PRODHOME070,Home & Garden Product 1,Home & Garden,Brand1,120.3,5,601.5,CUST0171,New,North America,Toronto,Credit Card,Standard
+2023-12-05,ORD202312050167,PRODELEC067,Electronics Product 8,Electronics,Brand3,289.18,5,1445.9,CUST0168,Premium,Europe,Berlin,Bank Transfer,Express
+2023-12-05,ORD202312050189,PRODHOME089,Home & Garden Product 10,Home & Garden,Brand5,66.82,3,200.46,CUST0190,Premium,Asia Pacific,Tokyo,Digital Wallet,Standard
+2023-12-05,ORD202312050513,PRODCLOT013,Clothing Product 4,Clothing,Brand4,306.46,3,919.38,CUST0114,Regular,Europe,Berlin,PayPal,Standard
+2023-12-05,ORD202312050989,PRODHOME089,Home & Garden Product 10,Home & Garden,Brand5,278.6,2,557.2,CUST0190,New,Asia Pacific,Sydney,Bank Transfer,Standard
+2023-12-07,ORD202312070369,PRODELEC069,Electronics Product 10,Electronics,Brand5,333.64,2,667.28,CUST0170,New,North America,Chicago,Digital Wallet,Standard
+2023-12-08,ORD202312080108,PRODELEC008,Electronics Product 9,Electronics,Brand4,376.05,3,1128.15,CUST0109,Premium,Latin America,Santiago,Bank Transfer,Next Day
+2023-12-08,ORD202312080543,PRODBOOK043,Books Product 4,Books,Brand4,458.71,5,2293.55,CUST0144,New,Europe,Amsterdam,Digital Wallet,Standard
+2023-12-09,ORD202312090801,PRODHOME001,Home & Garden Product 2,Home & Garden,Brand2,132.14,5,660.7,CUST0002,New,North America,Chicago,Digital Wallet,Next Day
+2023-12-10,ORD202312100293,PRODELEC093,Electronics Product 4,Electronics,Brand4,138.93,5,694.65,CUST0094,Premium,North America,Toronto,PayPal,Standard
+2023-12-10,ORD202312100328,PRODELEC028,Electronics Product 9,Electronics,Brand4,345.88,5,1729.4,CUST0129,Premium,Asia Pacific,Hong Kong,Credit Card,Standard
+2023-12-11,ORD202312110056,PRODSPOR056,Sports Product 7,Sports,Brand2,320.74,5,1603.7,CUST0057,Regular,Asia Pacific,Tokyo,Credit Card,Next Day
+2023-12-12,ORD202312120522,PRODELEC022,Electronics Product 3,Electronics,Brand3,228.28,2,456.56,CUST0123,Regular,Latin America,Buenos Aires,PayPal,Standard
+2023-12-13,ORD202312130496,PRODCLOT096,Clothing Product 7,Clothing,Brand2,286.61,3,859.83,CUST0097,Premium,North America,Chicago,Credit Card,Express
+2023-12-13,ORD202312130536,PRODCLOT036,Clothing Product 7,Clothing,Brand2,397.25,5,1986.25,CUST0137,New,Asia Pacific,Sydney,Credit Card,Next Day
+2023-12-13,ORD202312130640,PRODHOME040,Home & Garden Product 1,Home & Garden,Brand1,307.15,4,1228.6,CUST0041,Premium,Asia Pacific,Tokyo,PayPal,Express
+2023-12-14,ORD202312140434,PRODHOME034,Home & Garden Product 5,Home & Garden,Brand5,230.72,4,922.88,CUST0035,Premium,Asia Pacific,Singapore,Credit Card,Express
+2023-12-15,ORD202312150699,PRODCLOT099,Clothing Product 10,Clothing,Brand5,375.06,4,1500.24,CUST0100,New,North America,Toronto,Bank Transfer,Next Day
+2023-12-16,ORD202312160649,PRODSPOR049,Sports Product 10,Sports,Brand5,153.51,3,460.53,CUST0050,Premium,North America,Toronto,PayPal,Next Day
+2023-12-16,ORD202312160937,PRODSPOR037,Sports Product 8,Sports,Brand3,15.75,4,63.0,CUST0138,Regular,North America,New York,Digital Wallet,Standard
+2023-12-16,ORD202312160939,PRODSPOR039,Sports Product 10,Sports,Brand5,416.71,5,2083.55,CUST0140,Regular,Latin America,São Paulo,Digital Wallet,Next Day
+2023-12-17,ORD202312170058,PRODTOYS058,Toys Product 9,Toys,Brand4,59.29,4,237.16,CUST0059,Premium,Asia Pacific,Tokyo,PayPal,Express
+2023-12-17,ORD202312170740,PRODELEC040,Electronics Product 1,Electronics,Brand1,313.11,4,1252.44,CUST0141,Premium,Latin America,Buenos Aires,Digital Wallet,Standard
+2023-12-20,ORD202312200054,PRODBOOK054,Books Product 5,Books,Brand5,414.92,3,1244.76,CUST0055,New,Latin America,Buenos Aires,Bank Transfer,Next Day
+2023-12-20,ORD202312200250,PRODTOYS050,Toys Product 1,Toys,Brand1,228.1,2,456.2,CUST0051,New,Latin America,São Paulo,PayPal,Express
+2023-12-21,ORD202312210162,PRODCLOT062,Clothing Product 3,Clothing,Brand3,385.15,4,1540.6,CUST0163,Premium,North America,New York,Credit Card,Next Day
+2023-12-22,ORD202312220131,PRODELEC031,Electronics Product 2,Electronics,Brand2,66.55,2,133.1,CUST0132,Regular,Asia Pacific,Tokyo,PayPal,Next Day
+2023-12-22,ORD202312220292,PRODBOOK092,Books Product 3,Books,Brand3,479.19,3,1437.57,CUST0093,Regular,Europe,Paris,Credit Card,Next Day
+2023-12-22,ORD202312220327,PRODHOME027,Home & Garden Product 8,Home & Garden,Brand3,259.94,5,1299.7,CUST0128,Premium,Europe,Paris,Digital Wallet,Express
+2023-12-23,ORD202312230732,PRODBOOK032,Books Product 3,Books,Brand3,66.49,2,132.98,CUST0133,Premium,North America,Toronto,Bank Transfer,Standard
+2023-12-23,ORD202312230986,PRODSPOR086,Sports Product 7,Sports,Brand2,103.99,2,207.98,CUST0187,New,Asia Pacific,Singapore,Credit Card,Standard
+2023-12-24,ORD202312240076,PRODHOME076,Home & Garden Product 7,Home & Garden,Brand2,385.64,5,1928.2,CUST0077,Premium,Asia Pacific,Hong Kong,Credit Card,Standard
+2023-12-24,ORD202312240905,PRODSPOR005,Sports Product 6,Sports,Brand1,304.02,5,1520.1,CUST0106,New,Latin America,Santiago,Credit Card,Next Day
+2023-12-26,ORD202312260696,PRODSPOR096,Sports Product 7,Sports,Brand2,455.52,5,2277.6,CUST0097,Premium,Latin America,São Paulo,Digital Wallet,Standard
+2023-12-27,ORD202312270501,PRODELEC001,Electronics Product 2,Electronics,Brand2,439.32,3,1317.96,CUST0102,Premium,Latin America,São Paulo,PayPal,Standard
+2023-12-27,ORD202312270877,PRODELEC077,Electronics Product 8,Electronics,Brand3,336.78,3,1010.34,CUST0078,New,Latin America,Mexico City,PayPal,Express
+2023-12-27,ORD202312270951,PRODTOYS051,Toys Product 2,Toys,Brand2,490.44,1,490.44,CUST0152,New,Latin America,São Paulo,Credit Card,Next Day
+2023-12-30,ORD202312300173,PRODELEC073,Electronics Product 4,Electronics,Brand4,371.65,1,371.65,CUST0174,New,North America,Chicago,PayPal,Next Day
+2023-12-30,ORD202312300310,PRODELEC010,Electronics Product 1,Electronics,Brand1,15.48,5,77.4,CUST0111,Regular,Latin America,São Paulo,PayPal,Next Day
+2023-12-30,ORD202312300638,PRODELEC038,Electronics Product 9,Electronics,Brand4,363.5,2,727.0,CUST0039,New,Europe,Amsterdam,Digital Wallet,Next Day
+2024-01-02,ORD202401020233,PRODCLOT033,Clothing Product 4,Clothing,Brand4,483.38,3,1450.14,CUST0034,Premium,Latin America,Buenos Aires,Digital Wallet,Express
+2024-01-02,ORD202401020711,PRODTOYS011,Toys Product 2,Toys,Brand2,463.91,2,927.82,CUST0112,Premium,Latin America,Mexico City,Digital Wallet,Standard
+2024-01-03,ORD202401030284,PRODSPOR084,Sports Product 5,Sports,Brand5,221.17,2,442.34,CUST0085,New,Latin America,Mexico City,PayPal,Next Day
+2024-01-04,ORD202401040266,PRODCLOT066,Clothing Product 7,Clothing,Brand2,52.38,2,104.76,CUST0067,Premium,Latin America,Santiago,Bank Transfer,Standard
+2024-01-05,ORD202401050821,PRODTOYS021,Toys Product 2,Toys,Brand2,14.41,4,57.64,CUST0022,New,Asia Pacific,Sydney,PayPal,Standard
+2024-01-06,ORD202401060188,PRODHOME088,Home & Garden Product 9,Home & Garden,Brand4,138.83,1,138.83,CUST0189,New,North America,New York,PayPal,Standard
+2024-01-06,ORD202401060387,PRODBOOK087,Books Product 8,Books,Brand3,306.26,5,1531.3,CUST0188,Regular,Europe,Amsterdam,Digital Wallet,Standard
+2024-01-07,ORD202401070096,PRODELEC096,Electronics Product 7,Electronics,Brand2,79.42,5,397.1,CUST0097,New,Europe,Amsterdam,Credit Card,Standard
+2024-01-07,ORD202401070383,PRODELEC083,Electronics Product 4,Electronics,Brand4,277.42,4,1109.68,CUST0184,Regular,North America,Toronto,Digital Wallet,Next Day
+2024-01-07,ORD202401070604,PRODSPOR004,Sports Product 5,Sports,Brand5,300.95,2,601.9,CUST0005,Regular,North America,Toronto,PayPal,Standard
+2024-01-07,ORD202401070814,PRODBOOK014,Books Product 5,Books,Brand5,157.79,4,631.16,CUST0015,Regular,Asia Pacific,Hong Kong,PayPal,Express
+2024-01-08,ORD202401080846,PRODBOOK046,Books Product 7,Books,Brand2,412.23,3,1236.69,CUST0047,Premium,Latin America,Buenos Aires,Bank Transfer,Standard
+2024-01-09,ORD202401090730,PRODHOME030,Home & Garden Product 1,Home & Garden,Brand1,400.5,1,400.5,CUST0131,New,Europe,Amsterdam,PayPal,Next Day
+2024-01-09,ORD202401090947,PRODBOOK047,Books Product 8,Books,Brand3,214.66,4,858.64,CUST0148,Regular,Europe,London,Digital Wallet,Express
+2024-01-10,ORD202401100684,PRODHOME084,Home & Garden Product 5,Home & Garden,Brand5,198.63,4,794.52,CUST0085,Regular,North America,New York,Digital Wallet,Next Day
+2024-01-11,ORD202401110159,PRODBOOK059,Books Product 10,Books,Brand5,305.5,1,305.5,CUST0160,Regular,Europe,Berlin,Digital Wallet,Next Day
+2024-01-12,ORD202401120322,PRODCLOT022,Clothing Product 3,Clothing,Brand3,148.06,4,592.24,CUST0123,Premium,Latin America,Mexico City,Credit Card,Express
+2024-01-12,ORD202401120671,PRODSPOR071,Sports Product 2,Sports,Brand2,208.77,4,835.08,CUST0072,Regular,North America,Toronto,Credit Card,Express
+2024-01-13,ORD202401130459,PRODBOOK059,Books Product 10,Books,Brand5,13.71,4,54.84,CUST0060,Premium,Asia Pacific,Tokyo,PayPal,Express
+2024-01-13,ORD202401130752,PRODCLOT052,Clothing Product 3,Clothing,Brand3,146.5,3,439.5,CUST0153,Regular,Asia Pacific,Hong Kong,Bank Transfer,Express
+2024-01-14,ORD202401140198,PRODELEC098,Electronics Product 9,Electronics,Brand4,29.13,1,29.13,CUST0199,Premium,North America,Toronto,PayPal,Express
+2024-01-14,ORD202401140256,PRODTOYS056,Toys Product 7,Toys,Brand2,196.41,5,982.05,CUST0057,Regular,Asia Pacific,Hong Kong,Bank Transfer,Standard
+2024-01-14,ORD202401140552,PRODCLOT052,Clothing Product 3,Clothing,Brand3,46.44,1,46.44,CUST0153,New,North America,Chicago,Bank Transfer,Next Day
+2024-01-16,ORD202401160351,PRODSPOR051,Sports Product 2,Sports,Brand2,90.53,1,90.53,CUST0152,New,Latin America,São Paulo,PayPal,Standard
+2024-01-17,ORD202401170376,PRODHOME076,Home & Garden Product 7,Home & Garden,Brand2,486.22,3,1458.66,CUST0177,Premium,Asia Pacific,Sydney,PayPal,Next Day
+2024-01-17,ORD202401170785,PRODBOOK085,Books Product 6,Books,Brand1,429.56,1,429.56,CUST0186,Regular,Europe,Amsterdam,PayPal,Standard
+2024-01-19,ORD202401190386,PRODBOOK086,Books Product 7,Books,Brand2,186.62,4,746.48,CUST0187,New,Europe,Amsterdam,Bank Transfer,Standard
+2024-01-21,ORD202401210106,PRODBOOK006,Books Product 7,Books,Brand2,115.7,3,347.1,CUST0107,New,Latin America,Santiago,Credit Card,Next Day
+2024-01-21,ORD202401210393,PRODCLOT093,Clothing Product 4,Clothing,Brand4,308.96,2,617.92,CUST0194,Regular,Asia Pacific,Singapore,Bank Transfer,Express
+2024-01-21,ORD202401210808,PRODBOOK008,Books Product 9,Books,Brand4,179.86,4,719.44,CUST0009,New,Europe,Amsterdam,Digital Wallet,Standard
+2024-01-21,ORD202401210809,PRODSPOR009,Sports Product 10,Sports,Brand5,176.12,5,880.6,CUST0010,Premium,Latin America,Mexico City,Digital Wallet,Standard
+2024-01-22,ORD202401220004,PRODTOYS004,Toys Product 5,Toys,Brand5,208.65,5,1043.25,CUST0005,Premium,Latin America,São Paulo,Credit Card,Standard
+2024-01-22,ORD202401220265,PRODCLOT065,Clothing Product 6,Clothing,Brand1,34.09,5,170.45,CUST0066,New,Latin America,Mexico City,Credit Card,Express
+2024-01-22,ORD202401220385,PRODBOOK085,Books Product 6,Books,Brand1,423.87,1,423.87,CUST0186,New,Europe,London,Digital Wallet,Express
+2024-01-22,ORD202401220816,PRODELEC016,Electronics Product 7,Electronics,Brand2,334.52,5,1672.6,CUST0017,Regular,Europe,Berlin,Bank Transfer,Standard
+2024-01-23,ORD202401230152,PRODSPOR052,Sports Product 3,Sports,Brand3,161.26,5,806.3,CUST0153,Regular,Asia Pacific,Singapore,Credit Card,Express
+2024-01-25,ORD202401250359,PRODCLOT059,Clothing Product 10,Clothing,Brand5,412.13,2,824.26,CUST0160,Regular,Latin America,Mexico City,Bank Transfer,Standard
+2024-01-25,ORD202401250608,PRODHOME008,Home & Garden Product 9,Home & Garden,Brand4,175.5,4,702.0,CUST0009,Premium,Europe,London,Credit Card,Standard
+2024-01-26,ORD202401260115,PRODCLOT015,Clothing Product 6,Clothing,Brand1,15.21,1,15.21,CUST0116,New,Latin America,Santiago,Credit Card,Next Day
+2024-01-26,ORD202401260270,PRODELEC070,Electronics Product 1,Electronics,Brand1,60.19,3,180.57,CUST0071,New,North America,New York,Digital Wallet,Next Day
+2024-01-29,ORD202401290242,PRODBOOK042,Books Product 3,Books,Brand3,176.89,5,884.45,CUST0043,Premium,Europe,Berlin,Bank Transfer,Standard
+2024-01-31,ORD202401310751,PRODELEC051,Electronics Product 2,Electronics,Brand2,427.69,5,2138.45,CUST0152,Regular,Latin America,São Paulo,PayPal,Express
+2024-01-31,ORD202401310884,PRODTOYS084,Toys Product 5,Toys,Brand5,245.3,1,245.3,CUST0085,Premium,Asia Pacific,Tokyo,Bank Transfer,Express
+2024-02-01,ORD202402010551,PRODSPOR051,Sports Product 2,Sports,Brand2,76.49,3,229.47,CUST0152,Regular,Asia Pacific,Tokyo,Digital Wallet,Express
+2024-02-02,ORD202402020546,PRODHOME046,Home & Garden Product 7,Home & Garden,Brand2,442.0,3,1326.0,CUST0147,New,Latin America,Santiago,Digital Wallet,Standard
+2024-02-03,ORD202402030466,PRODELEC066,Electronics Product 7,Electronics,Brand2,486.16,5,2430.8,CUST0067,New,Europe,Paris,PayPal,Express
+2024-02-03,ORD202402030523,PRODSPOR023,Sports Product 4,Sports,Brand4,305.37,5,1526.85,CUST0124,Regular,Asia Pacific,Singapore,Bank Transfer,Express
+2024-02-09,ORD202402090276,PRODSPOR076,Sports Product 7,Sports,Brand2,215.71,2,431.42,CUST0077,New,Europe,London,PayPal,Next Day
+2024-02-09,ORD202402090574,PRODHOME074,Home & Garden Product 5,Home & Garden,Brand5,196.17,2,392.34,CUST0175,New,Asia Pacific,Tokyo,Digital Wallet,Next Day
+2024-02-09,ORD202402090705,PRODELEC005,Electronics Product 6,Electronics,Brand1,23.2,3,69.6,CUST0106,New,Europe,London,Credit Card,Express
+2024-02-10,ORD202402100244,PRODELEC044,Electronics Product 5,Electronics,Brand5,191.74,4,766.96,CUST0045,Regular,Asia Pacific,Hong Kong,Digital Wallet,Standard
+2024-02-10,ORD202402100490,PRODSPOR090,Sports Product 1,Sports,Brand1,210.67,1,210.67,CUST0091,New,Asia Pacific,Tokyo,Credit Card,Standard
+2024-02-10,ORD202402100998,PRODTOYS098,Toys Product 9,Toys,Brand4,445.75,5,2228.75,CUST0199,Premium,Europe,London,Digital Wallet,Standard
+2024-02-11,ORD202402110606,PRODCLOT006,Clothing Product 7,Clothing,Brand2,486.1,2,972.2,CUST0007,Regular,North America,New York,Digital Wallet,Standard
+2024-02-12,ORD202402120354,PRODBOOK054,Books Product 5,Books,Brand5,36.13,1,36.13,CUST0155,Regular,Latin America,Mexico City,Digital Wallet,Next Day
+2024-02-12,ORD202402120919,PRODSPOR019,Sports Product 10,Sports,Brand5,247.18,2,494.36,CUST0120,Regular,Asia Pacific,Sydney,Digital Wallet,Standard
+2024-02-13,ORD202402130788,PRODBOOK088,Books Product 9,Books,Brand4,19.15,5,95.75,CUST0189,Regular,Asia Pacific,Singapore,Bank Transfer,Standard
+2024-02-14,ORD202402140090,PRODCLOT090,Clothing Product 1,Clothing,Brand1,164.06,1,164.06,CUST0091,Premium,Europe,Paris,PayPal,Next Day
+2024-02-14,ORD202402140829,PRODTOYS029,Toys Product 10,Toys,Brand5,109.94,1,109.94,CUST0030,New,Asia Pacific,Sydney,Digital Wallet,Standard
+2024-02-15,ORD202402150931,PRODTOYS031,Toys Product 2,Toys,Brand2,476.48,3,1429.44,CUST0132,Premium,Latin America,Mexico City,PayPal,Standard
+2024-02-16,ORD202402160255,PRODCLOT055,Clothing Product 6,Clothing,Brand1,425.49,5,2127.45,CUST0056,Regular,Latin America,Mexico City,Digital Wallet,Standard
+2024-02-16,ORD202402160419,PRODSPOR019,Sports Product 10,Sports,Brand5,350.78,2,701.56,CUST0020,Premium,Latin America,Mexico City,Bank Transfer,Standard
+2024-02-18,ORD202402180185,PRODTOYS085,Toys Product 6,Toys,Brand1,441.59,3,1324.77,CUST0186,Premium,Asia Pacific,Hong Kong,Bank Transfer,Express
+2024-02-18,ORD202402180254,PRODHOME054,Home & Garden Product 5,Home & Garden,Brand5,314.45,3,943.35,CUST0055,Regular,North America,Los Angeles,PayPal,Express
+2024-02-18,ORD202402180794,PRODHOME094,Home & Garden Product 5,Home & Garden,Brand5,12.85,5,64.25,CUST0195,New,Latin America,Buenos Aires,Digital Wallet,Next Day
+2024-02-20,ORD202402200176,PRODELEC076,Electronics Product 7,Electronics,Brand2,86.93,3,260.79,CUST0177,New,North America,New York,PayPal,Standard
+2024-02-20,ORD202402200881,PRODHOME081,Home & Garden Product 2,Home & Garden,Brand2,483.25,4,1933.0,CUST0082,Premium,Asia Pacific,Hong Kong,Digital Wallet,Express
+2024-02-20,ORD202402200921,PRODCLOT021,Clothing Product 2,Clothing,Brand2,290.09,4,1160.36,CUST0122,Regular,Europe,London,Digital Wallet,Express
+2024-02-21,ORD202402210405,PRODCLOT005,Clothing Product 6,Clothing,Brand1,248.81,3,746.43,CUST0006,New,Latin America,São Paulo,Credit Card,Next Day
+2024-02-22,ORD202402220012,PRODHOME012,Home & Garden Product 3,Home & Garden,Brand3,50.51,5,252.55,CUST0013,Regular,Latin America,Buenos Aires,Digital Wallet,Next Day
+2024-02-22,ORD202402220397,PRODBOOK097,Books Product 8,Books,Brand3,27.84,1,27.84,CUST0198,Regular,Europe,Amsterdam,Credit Card,Standard
+2024-02-24,ORD202402240962,PRODHOME062,Home & Garden Product 3,Home & Garden,Brand3,402.4,2,804.8,CUST0163,Regular,Asia Pacific,Tokyo,Digital Wallet,Express
+2024-02-25,ORD202402250083,PRODELEC083,Electronics Product 4,Electronics,Brand4,410.97,4,1643.88,CUST0084,New,Latin America,Santiago,Bank Transfer,Express
+2024-02-25,ORD202402250144,PRODBOOK044,Books Product 5,Books,Brand5,463.22,5,2316.1,CUST0145,Premium,Latin America,Buenos Aires,Credit Card,Express
+2024-02-25,ORD202402250563,PRODCLOT063,Clothing Product 4,Clothing,Brand4,177.78,5,888.9,CUST0164,New,North America,New York,Digital Wallet,Express
+2024-02-25,ORD202402250573,PRODELEC073,Electronics Product 4,Electronics,Brand4,430.69,1,430.69,CUST0174,Premium,North America,Toronto,PayPal,Express
+2024-02-26,ORD202402260703,PRODCLOT003,Clothing Product 4,Clothing,Brand4,94.32,3,282.96,CUST0104,Premium,Asia Pacific,Singapore,Digital Wallet,Standard
+2024-03-01,ORD202403010077,PRODBOOK077,Books Product 8,Books,Brand3,118.22,1,118.22,CUST0078,New,North America,Chicago,PayPal,Next Day
+2024-03-01,ORD202403010097,PRODSPOR097,Sports Product 8,Sports,Brand3,298.08,1,298.08,CUST0098,New,North America,Los Angeles,Bank Transfer,Next Day
+2024-03-01,ORD202403010417,PRODCLOT017,Clothing Product 8,Clothing,Brand3,68.32,3,204.96,CUST0018,Premium,Asia Pacific,Hong Kong,Digital Wallet,Next Day
+2024-03-02,ORD202403020777,PRODSPOR077,Sports Product 8,Sports,Brand3,162.76,5,813.8,CUST0178,New,Latin America,São Paulo,Credit Card,Next Day
+2024-03-04,ORD202403040066,PRODSPOR066,Sports Product 7,Sports,Brand2,440.64,5,2203.2,CUST0067,Regular,North America,Chicago,Bank Transfer,Standard
+2024-03-04,ORD202403040348,PRODELEC048,Electronics Product 9,Electronics,Brand4,27.98,5,139.9,CUST0149,Regular,Asia Pacific,Singapore,PayPal,Next Day
+2024-03-05,ORD202403050226,PRODTOYS026,Toys Product 7,Toys,Brand2,76.95,4,307.8,CUST0027,New,Latin America,São Paulo,PayPal,Express
+2024-03-05,ORD202403050830,PRODELEC030,Electronics Product 1,Electronics,Brand1,15.31,4,61.24,CUST0031,Regular,Asia Pacific,Hong Kong,Digital Wallet,Express
+2024-03-06,ORD202403060032,PRODELEC032,Electronics Product 3,Electronics,Brand3,200.34,5,1001.7,CUST0033,New,Latin America,São Paulo,PayPal,Next Day
+2024-03-07,ORD202403070112,PRODHOME012,Home & Garden Product 3,Home & Garden,Brand3,98.39,5,491.95,CUST0113,Premium,Asia Pacific,Hong Kong,Digital Wallet,Standard
+2024-03-07,ORD202403070311,PRODBOOK011,Books Product 2,Books,Brand2,392.35,3,1177.05,CUST0112,Regular,North America,Los Angeles,Digital Wallet,Next Day
+2024-03-07,ORD202403070400,PRODHOME000,Home & Garden Product 1,Home & Garden,Brand1,252.34,3,757.02,CUST0001,Premium,Europe,Paris,Digital Wallet,Express
+2024-03-07,ORD202403070421,PRODHOME021,Home & Garden Product 2,Home & Garden,Brand2,43.92,3,131.76,CUST0022,New,North America,Los Angeles,PayPal,Express
+2024-03-08,ORD202403080438,PRODTOYS038,Toys Product 9,Toys,Brand4,169.03,4,676.12,CUST0039,Regular,Asia Pacific,Tokyo,Credit Card,Next Day
+2024-03-08,ORD202403080802,PRODCLOT002,Clothing Product 3,Clothing,Brand3,486.81,1,486.81,CUST0003,Premium,Latin America,Mexico City,PayPal,Express
+2024-03-09,ORD202403090105,PRODCLOT005,Clothing Product 6,Clothing,Brand1,302.76,1,302.76,CUST0106,Regular,Latin America,Mexico City,Digital Wallet,Next Day
+2024-03-09,ORD202403090744,PRODELEC044,Electronics Product 5,Electronics,Brand5,382.87,5,1914.35,CUST0145,New,Europe,Paris,Digital Wallet,Express
+2024-03-09,ORD202403090975,PRODSPOR075,Sports Product 6,Sports,Brand1,499.76,1,499.76,CUST0176,New,Latin America,São Paulo,Bank Transfer,Next Day
+2024-03-11,ORD202403110406,PRODBOOK006,Books Product 7,Books,Brand2,38.75,3,116.25,CUST0007,New,Europe,London,Digital Wallet,Next Day
+2024-03-11,ORD202403110495,PRODHOME095,Home & Garden Product 6,Home & Garden,Brand1,330.99,2,661.98,CUST0096,New,North America,Toronto,Bank Transfer,Next Day
+2024-03-12,ORD202403120431,PRODHOME031,Home & Garden Product 2,Home & Garden,Brand2,23.26,3,69.78,CUST0032,Premium,Latin America,Mexico City,PayPal,Standard
+2024-03-12,ORD202403120742,PRODCLOT042,Clothing Product 3,Clothing,Brand3,440.63,5,2203.15,CUST0143,New,Latin America,Santiago,Credit Card,Express
+2024-03-13,ORD202403130579,PRODHOME079,Home & Garden Product 10,Home & Garden,Brand5,249.19,4,996.76,CUST0180,Regular,Europe,Paris,Bank Transfer,Next Day
+2024-03-13,ORD202403130700,PRODBOOK000,Books Product 1,Books,Brand1,85.72,3,257.16,CUST0101,Premium,North America,Los Angeles,Bank Transfer,Next Day
+2024-03-14,ORD202403140237,PRODELEC037,Electronics Product 8,Electronics,Brand3,211.84,3,635.52,CUST0038,Premium,Latin America,Mexico City,Digital Wallet,Standard
+2024-03-15,ORD202403150193,PRODTOYS093,Toys Product 4,Toys,Brand4,126.49,1,126.49,CUST0194,New,Latin America,Mexico City,Digital Wallet,Next Day
+2024-03-15,ORD202403150195,PRODHOME095,Home & Garden Product 6,Home & Garden,Brand1,498.28,2,996.56,CUST0196,Premium,North America,Chicago,Credit Card,Standard
+2024-03-15,ORD202403150346,PRODSPOR046,Sports Product 7,Sports,Brand2,200.13,4,800.52,CUST0147,Premium,North America,Chicago,PayPal,Express
+2024-03-16,ORD202403160384,PRODHOME084,Home & Garden Product 5,Home & Garden,Brand5,480.54,5,2402.7,CUST0185,New,Europe,Amsterdam,Digital Wallet,Standard
+2024-03-16,ORD202403160542,PRODELEC042,Electronics Product 3,Electronics,Brand3,399.42,2,798.84,CUST0143,New,Asia Pacific,Tokyo,Credit Card,Express
+2024-03-19,ORD202403190569,PRODBOOK069,Books Product 10,Books,Brand5,179.76,4,719.04,CUST0170,Premium,Europe,Paris,Digital Wallet,Next Day
+2024-03-19,ORD202403190669,PRODTOYS069,Toys Product 10,Toys,Brand5,169.75,3,509.25,CUST0070,Premium,Asia Pacific,Hong Kong,Digital Wallet,Standard
+2024-03-20,ORD202403200172,PRODCLOT072,Clothing Product 3,Clothing,Brand3,380.15,1,380.15,CUST0173,Premium,Europe,Berlin,PayPal,Standard
+2024-03-22,ORD202403220180,PRODELEC080,Electronics Product 1,Electronics,Brand1,373.87,3,1121.61,CUST0181,Premium,Europe,Berlin,Digital Wallet,Next Day
+2024-03-22,ORD202403220648,PRODHOME048,Home & Garden Product 9,Home & Garden,Brand4,250.47,5,1252.35,CUST0049,Premium,North America,Los Angeles,Bank Transfer,Next Day
+2024-03-23,ORD202403230478,PRODHOME078,Home & Garden Product 9,Home & Garden,Brand4,66.23,3,198.69,CUST0079,New,Europe,Berlin,Bank Transfer,Next Day
+2024-03-23,ORD202403230578,PRODTOYS078,Toys Product 9,Toys,Brand4,183.96,2,367.92,CUST0179,Regular,Latin America,Santiago,Digital Wallet,Standard
+2024-03-24,ORD202403240361,PRODCLOT061,Clothing Product 2,Clothing,Brand2,37.14,5,185.7,CUST0162,Regular,Europe,London,Digital Wallet,Express
+2024-03-25,ORD202403250452,PRODCLOT052,Clothing Product 3,Clothing,Brand3,118.58,4,474.32,CUST0053,Regular,Latin America,Santiago,Credit Card,Next Day
+2024-03-25,ORD202403250622,PRODSPOR022,Sports Product 3,Sports,Brand3,352.18,2,704.36,CUST0023,Regular,Asia Pacific,Hong Kong,Digital Wallet,Next Day
+2024-03-25,ORD202403250901,PRODHOME001,Home & Garden Product 2,Home & Garden,Brand2,255.13,1,255.13,CUST0102,New,North America,Los Angeles,Digital Wallet,Express
+2024-03-26,ORD202403260773,PRODTOYS073,Toys Product 4,Toys,Brand4,80.08,4,320.32,CUST0174,Regular,Asia Pacific,Hong Kong,PayPal,Next Day
+2024-03-28,ORD202403280739,PRODCLOT039,Clothing Product 10,Clothing,Brand5,336.13,4,1344.52,CUST0140,Premium,Asia Pacific,Singapore,PayPal,Next Day
+2024-03-29,ORD202403290679,PRODELEC079,Electronics Product 10,Electronics,Brand5,274.15,5,1370.75,CUST0080,Premium,North America,New York,Digital Wallet,Express
+2024-03-30,ORD202403300458,PRODSPOR058,Sports Product 9,Sports,Brand4,257.35,5,1286.75,CUST0059,Regular,Latin America,Mexico City,Bank Transfer,Express
+2024-03-30,ORD202403300678,PRODTOYS078,Toys Product 9,Toys,Brand4,276.67,3,830.01,CUST0079,Premium,Latin America,Santiago,Credit Card,Standard
+2024-03-31,ORD202403310264,PRODCLOT064,Clothing Product 5,Clothing,Brand5,381.12,1,381.12,CUST0065,Regular,Latin America,Buenos Aires,PayPal,Next Day
+2024-03-31,ORD202403310390,PRODHOME090,Home & Garden Product 1,Home & Garden,Brand1,249.46,2,498.92,CUST0191,New,Latin America,Buenos Aires,Bank Transfer,Next Day
+2024-04-01,ORD202404010119,PRODTOYS019,Toys Product 10,Toys,Brand5,357.53,2,715.06,CUST0120,New,North America,New York,PayPal,Standard
+2024-04-01,ORD202404010927,PRODCLOT027,Clothing Product 8,Clothing,Brand3,432.74,1,432.74,CUST0128,New,Europe,London,Credit Card,Standard
+2024-04-02,ORD202404020506,PRODSPOR006,Sports Product 7,Sports,Brand2,486.58,2,973.16,CUST0107,Regular,Latin America,São Paulo,PayPal,Next Day
+2024-04-03,ORD202404030208,PRODHOME008,Home & Garden Product 9,Home & Garden,Brand4,65.05,2,130.1,CUST0009,Premium,North America,New York,Bank Transfer,Next Day
+2024-04-03,ORD202404030232,PRODCLOT032,Clothing Product 3,Clothing,Brand3,404.79,1,404.79,CUST0033,Regular,Europe,Paris,Bank Transfer,Express
+2024-04-03,ORD202404030307,PRODELEC007,Electronics Product 8,Electronics,Brand3,320.38,5,1601.9,CUST0108,New,North America,Toronto,Bank Transfer,Next Day
+2024-04-03,ORD202404030908,PRODCLOT008,Clothing Product 9,Clothing,Brand4,112.88,2,225.76,CUST0109,New,Latin America,Buenos Aires,Digital Wallet,Standard
+2024-04-05,ORD202404050614,PRODBOOK014,Books Product 5,Books,Brand5,411.38,2,822.76,CUST0015,New,North America,New York,Bank Transfer,Next Day
+2024-04-06,ORD202404060315,PRODELEC015,Electronics Product 6,Electronics,Brand1,251.69,4,1006.76,CUST0116,Regular,Asia Pacific,Singapore,Credit Card,Next Day
+2024-04-06,ORD202404060532,PRODTOYS032,Toys Product 3,Toys,Brand3,113.05,5,565.25,CUST0133,New,Europe,London,Bank Transfer,Express
+2024-04-09,ORD202404090872,PRODBOOK072,Books Product 3,Books,Brand3,423.07,3,1269.21,CUST0073,Premium,Asia Pacific,Tokyo,Bank Transfer,Next Day
+2024-04-10,ORD202404100485,PRODCLOT085,Clothing Product 6,Clothing,Brand1,86.36,1,86.36,CUST0086,New,Latin America,Mexico City,Bank Transfer,Standard
+2024-04-10,ORD202404100655,PRODTOYS055,Toys Product 6,Toys,Brand1,475.96,4,1903.84,CUST0056,New,Europe,Paris,Credit Card,Standard
+2024-04-11,ORD202404110433,PRODSPOR033,Sports Product 4,Sports,Brand4,421.39,4,1685.56,CUST0034,New,Latin America,Buenos Aires,Bank Transfer,Express
+2024-04-11,ORD202404110658,PRODTOYS058,Toys Product 9,Toys,Brand4,279.38,2,558.76,CUST0059,Regular,Europe,Amsterdam,Credit Card,Next Day
+2024-04-11,ORD202404110892,PRODSPOR092,Sports Product 3,Sports,Brand3,182.05,2,364.1,CUST0093,Regular,Asia Pacific,Sydney,Bank Transfer,Standard
+2024-04-12,ORD202404120262,PRODCLOT062,Clothing Product 3,Clothing,Brand3,79.56,1,79.56,CUST0063,New,Europe,London,Credit Card,Standard
+2024-04-15,ORD202404150402,PRODBOOK002,Books Product 3,Books,Brand3,372.48,2,744.96,CUST0003,Premium,North America,Los Angeles,PayPal,Express
+2024-04-16,ORD202404160515,PRODHOME015,Home & Garden Product 6,Home & Garden,Brand1,331.86,4,1327.44,CUST0116,Premium,Latin America,Santiago,Bank Transfer,Next Day
+2024-04-16,ORD202404160769,PRODCLOT069,Clothing Product 10,Clothing,Brand5,331.03,4,1324.12,CUST0170,New,Europe,Berlin,PayPal,Express
+2024-04-16,ORD202404160822,PRODELEC022,Electronics Product 3,Electronics,Brand3,201.7,2,403.4,CUST0023,Premium,Asia Pacific,Tokyo,Credit Card,Standard
+2024-04-18,ORD202404180053,PRODELEC053,Electronics Product 4,Electronics,Brand4,415.83,5,2079.15,CUST0054,New,North America,New York,Credit Card,Express
+2024-04-18,ORD202404180114,PRODTOYS014,Toys Product 5,Toys,Brand5,94.34,3,283.02,CUST0115,New,North America,Chicago,PayPal,Standard
+2024-04-18,ORD202404180993,PRODELEC093,Electronics Product 4,Electronics,Brand4,101.08,4,404.32,CUST0194,New,Latin America,Buenos Aires,Credit Card,Standard
+2024-04-19,ORD202404190184,PRODHOME084,Home & Garden Product 5,Home & Garden,Brand5,60.09,2,120.18,CUST0185,New,Latin America,Buenos Aires,Credit Card,Express
+2024-04-20,ORD202404200534,PRODELEC034,Electronics Product 5,Electronics,Brand5,449.1,3,1347.3,CUST0135,Regular,North America,Los Angeles,Digital Wallet,Express
+2024-04-20,ORD202404200586,PRODSPOR086,Sports Product 7,Sports,Brand2,160.89,2,321.78,CUST0187,Premium,Europe,Paris,Credit Card,Next Day
+2024-04-21,ORD202404210442,PRODHOME042,Home & Garden Product 3,Home & Garden,Brand3,157.99,2,315.98,CUST0043,New,Europe,Berlin,Bank Transfer,Next Day
+2024-04-22,ORD202404220174,PRODCLOT074,Clothing Product 5,Clothing,Brand5,300.11,5,1500.55,CUST0175,New,North America,Los Angeles,Bank Transfer,Next Day
+2024-04-22,ORD202404220228,PRODBOOK028,Books Product 9,Books,Brand4,243.28,1,243.28,CUST0029,New,Europe,Paris,Digital Wallet,Next Day
+2024-04-23,ORD202404230859,PRODSPOR059,Sports Product 10,Sports,Brand5,199.94,4,799.76,CUST0060,Regular,North America,Los Angeles,Digital Wallet,Next Day
+2024-04-24,ORD202404240347,PRODCLOT047,Clothing Product 8,Clothing,Brand3,447.68,1,447.68,CUST0148,Premium,North America,New York,PayPal,Express
+2024-04-24,ORD202404240844,PRODSPOR044,Sports Product 5,Sports,Brand5,222.24,3,666.72,CUST0045,Regular,North America,Chicago,Bank Transfer,Next Day
+2024-04-25,ORD202404250741,PRODCLOT041,Clothing Product 2,Clothing,Brand2,235.99,3,707.97,CUST0142,Regular,Europe,Amsterdam,PayPal,Next Day
+2024-04-26,ORD202404260007,PRODHOME007,Home & Garden Product 8,Home & Garden,Brand3,142.95,3,428.85,CUST0008,Regular,Latin America,São Paulo,PayPal,Standard
+2024-04-26,ORD202404260812,PRODCLOT012,Clothing Product 3,Clothing,Brand3,312.76,4,1251.04,CUST0013,New,Europe,Paris,Bank Transfer,Next Day
+2024-04-28,ORD202404280541,PRODBOOK041,Books Product 2,Books,Brand2,275.5,5,1377.5,CUST0142,Premium,Latin America,Mexico City,PayPal,Express
+2024-04-30,ORD202404300127,PRODTOYS027,Toys Product 8,Toys,Brand3,147.83,4,591.32,CUST0128,Regular,North America,Chicago,PayPal,Next Day
+2024-04-30,ORD202404300567,PRODBOOK067,Books Product 8,Books,Brand3,325.46,2,650.92,CUST0168,New,Asia Pacific,Sydney,Digital Wallet,Next Day
+2024-04-30,ORD202404300718,PRODELEC018,Electronics Product 9,Electronics,Brand4,499.72,5,2498.6,CUST0119,Premium,Latin America,Mexico City,Bank Transfer,Next Day
+2024-04-30,ORD202404300789,PRODELEC089,Electronics Product 10,Electronics,Brand5,312.16,5,1560.8,CUST0190,Regular,Europe,London,PayPal,Next Day
+2024-05-01,ORD202405010681,PRODELEC081,Electronics Product 2,Electronics,Brand2,498.35,1,498.35,CUST0082,New,Europe,Berlin,Bank Transfer,Standard
+2024-05-02,ORD202405020870,PRODTOYS070,Toys Product 1,Toys,Brand1,86.11,1,86.11,CUST0071,New,Asia Pacific,Hong Kong,Bank Transfer,Standard
+2024-05-03,ORD202405030554,PRODELEC054,Electronics Product 5,Electronics,Brand5,210.33,4,841.32,CUST0155,Premium,North America,Los Angeles,Credit Card,Standard
+2024-05-04,ORD202405040296,PRODSPOR096,Sports Product 7,Sports,Brand2,483.39,1,483.39,CUST0097,Premium,Europe,London,Credit Card,Express
+2024-05-05,ORD202405050600,PRODELEC000,Electronics Product 1,Electronics,Brand1,286.54,5,1432.7,CUST0001,Premium,North America,Los Angeles,Bank Transfer,Express
+2024-05-08,ORD202405080340,PRODHOME040,Home & Garden Product 1,Home & Garden,Brand1,116.27,5,581.35,CUST0141,Regular,Latin America,Santiago,Credit Card,Standard
+2024-05-08,ORD202405080615,PRODCLOT015,Clothing Product 6,Clothing,Brand1,397.06,4,1588.24,CUST0016,Regular,North America,New York,Bank Transfer,Next Day
+2024-05-08,ORD202405080871,PRODELEC071,Electronics Product 2,Electronics,Brand2,274.62,2,549.24,CUST0072,Premium,North America,New York,Bank Transfer,Express
+2024-05-09,ORD202405090936,PRODCLOT036,Clothing Product 7,Clothing,Brand2,47.72,3,143.16,CUST0137,Premium,Europe,Berlin,PayPal,Standard
+2024-05-11,ORD202405110009,PRODCLOT009,Clothing Product 10,Clothing,Brand5,12.01,5,60.05,CUST0010,Regular,Asia Pacific,Hong Kong,Bank Transfer,Standard
+2024-05-12,ORD202405120399,PRODELEC099,Electronics Product 10,Electronics,Brand5,409.4,4,1637.6,CUST0200,New,Asia Pacific,Singapore,Digital Wallet,Express
+2024-05-13,ORD202405130723,PRODELEC023,Electronics Product 4,Electronics,Brand4,440.74,4,1762.96,CUST0124,Premium,North America,New York,Bank Transfer,Next Day
+2024-05-14,ORD202405140190,PRODELEC090,Electronics Product 1,Electronics,Brand1,271.35,5,1356.75,CUST0191,New,Asia Pacific,Hong Kong,Bank Transfer,Express
+2024-05-15,ORD202405150045,PRODTOYS045,Toys Product 6,Toys,Brand1,405.25,3,1215.75,CUST0046,New,North America,New York,Credit Card,Next Day
+2024-05-15,ORD202405150092,PRODBOOK092,Books Product 3,Books,Brand3,17.45,5,87.25,CUST0093,Premium,Asia Pacific,Singapore,Credit Card,Express
+2024-05-15,ORD202405150508,PRODTOYS008,Toys Product 9,Toys,Brand4,484.95,3,1454.85,CUST0109,Premium,Europe,London,Bank Transfer,Standard
+2024-05-15,ORD202405150710,PRODELEC010,Electronics Product 1,Electronics,Brand1,237.75,2,475.5,CUST0111,Regular,Latin America,Mexico City,Digital Wallet,Standard
+2024-05-16,ORD202405160451,PRODTOYS051,Toys Product 2,Toys,Brand2,280.45,2,560.9,CUST0052,Premium,Asia Pacific,Hong Kong,PayPal,Standard
+2024-05-16,ORD202405160795,PRODHOME095,Home & Garden Product 6,Home & Garden,Brand1,221.93,5,1109.65,CUST0196,Regular,North America,New York,Credit Card,Express
+2024-05-17,ORD202405170701,PRODCLOT001,Clothing Product 2,Clothing,Brand2,37.88,2,75.76,CUST0102,Premium,North America,Chicago,Credit Card,Next Day
+2024-05-18,ORD202405180880,PRODCLOT080,Clothing Product 1,Clothing,Brand1,443.41,4,1773.64,CUST0081,New,North America,Toronto,Digital Wallet,Next Day
+2024-05-18,ORD202405180980,PRODHOME080,Home & Garden Product 1,Home & Garden,Brand1,418.02,5,2090.1,CUST0181,Premium,Latin America,Mexico City,Bank Transfer,Next Day
+2024-05-19,ORD202405190168,PRODSPOR068,Sports Product 9,Sports,Brand4,380.94,2,761.88,CUST0169,New,Asia Pacific,Hong Kong,Digital Wallet,Express
+2024-05-19,ORD202405190623,PRODELEC023,Electronics Product 4,Electronics,Brand4,116.21,3,348.63,CUST0024,New,North America,Los Angeles,PayPal,Standard
+2024-05-19,ORD202405190631,PRODTOYS031,Toys Product 2,Toys,Brand2,374.29,5,1871.45,CUST0032,Premium,Latin America,São Paulo,Digital Wallet,Express
+2024-05-20,ORD202405200157,PRODBOOK057,Books Product 8,Books,Brand3,252.99,3,758.97,CUST0158,New,North America,Chicago,Credit Card,Express
+2024-05-20,ORD202405200628,PRODBOOK028,Books Product 9,Books,Brand4,303.67,2,607.34,CUST0029,Premium,Asia Pacific,Hong Kong,Digital Wallet,Standard
+2024-05-20,ORD202405200955,PRODELEC055,Electronics Product 6,Electronics,Brand1,73.82,5,369.1,CUST0156,Premium,Asia Pacific,Tokyo,PayPal,Next Day
+2024-05-21,ORD202405210635,PRODELEC035,Electronics Product 6,Electronics,Brand1,347.16,5,1735.8,CUST0036,Regular,North America,Los Angeles,Digital Wallet,Express
+2024-05-22,ORD202405220011,PRODELEC011,Electronics Product 2,Electronics,Brand2,92.2,5,461.0,CUST0012,Regular,Latin America,Mexico City,Digital Wallet,Next Day
+2024-05-22,ORD202405220192,PRODSPOR092,Sports Product 3,Sports,Brand3,183.52,5,917.6,CUST0193,New,North America,Chicago,Credit Card,Express
+2024-05-23,ORD202405230280,PRODSPOR080,Sports Product 1,Sports,Brand1,303.02,4,1212.08,CUST0081,Premium,Latin America,São Paulo,PayPal,Standard
+2024-05-23,ORD202405230378,PRODTOYS078,Toys Product 9,Toys,Brand4,260.49,4,1041.96,CUST0179,Regular,Asia Pacific,Tokyo,PayPal,Next Day
+2024-05-24,ORD202405240636,PRODBOOK036,Books Product 7,Books,Brand2,374.16,5,1870.8,CUST0037,Regular,Europe,London,PayPal,Express
+2024-05-24,ORD202405240728,PRODELEC028,Electronics Product 9,Electronics,Brand4,262.95,5,1314.75,CUST0129,Premium,Asia Pacific,Singapore,Bank Transfer,Standard
+2024-05-24,ORD202405240984,PRODELEC084,Electronics Product 5,Electronics,Brand5,336.45,5,1682.25,CUST0185,Regular,North America,Chicago,Digital Wallet,Express
+2024-05-25,ORD202405250935,PRODHOME035,Home & Garden Product 6,Home & Garden,Brand1,287.77,1,287.77,CUST0136,Regular,Europe,Paris,PayPal,Next Day
+2024-05-26,ORD202405260082,PRODSPOR082,Sports Product 3,Sports,Brand3,232.11,4,928.44,CUST0083,Premium,North America,Los Angeles,Credit Card,Express
+2024-05-26,ORD202405260334,PRODHOME034,Home & Garden Product 5,Home & Garden,Brand5,302.77,2,605.54,CUST0135,Regular,Europe,Berlin,PayPal,Express
+2024-05-27,ORD202405270051,PRODBOOK051,Books Product 2,Books,Brand2,167.81,3,503.43,CUST0052,New,North America,Toronto,Bank Transfer,Standard
+2024-05-28,ORD202405280258,PRODTOYS058,Toys Product 9,Toys,Brand4,145.96,4,583.84,CUST0059,Regular,Asia Pacific,Singapore,PayPal,Next Day
+2024-05-29,ORD202405290462,PRODBOOK062,Books Product 3,Books,Brand3,378.94,2,757.88,CUST0063,New,North America,Toronto,PayPal,Standard
+2024-05-29,ORD202405290593,PRODELEC093,Electronics Product 4,Electronics,Brand4,397.77,4,1591.08,CUST0194,New,Asia Pacific,Tokyo,PayPal,Express
+2024-05-30,ORD202405300332,PRODSPOR032,Sports Product 3,Sports,Brand3,274.57,1,274.57,CUST0133,New,North America,Toronto,Digital Wallet,Standard
+2024-05-30,ORD202405300396,PRODHOME096,Home & Garden Product 7,Home & Garden,Brand2,398.57,3,1195.71,CUST0197,Premium,Latin America,São Paulo,Digital Wallet,Standard
+2024-05-31,ORD202405310166,PRODSPOR066,Sports Product 7,Sports,Brand2,456.18,2,912.36,CUST0167,Regular,North America,Los Angeles,Credit Card,Next Day
+2024-06-02,ORD202406020120,PRODCLOT020,Clothing Product 1,Clothing,Brand1,75.11,1,75.11,CUST0121,Regular,Latin America,Buenos Aires,Digital Wallet,Standard
+2024-06-02,ORD202406020398,PRODHOME098,Home & Garden Product 9,Home & Garden,Brand4,435.25,3,1305.75,CUST0199,Regular,North America,Chicago,PayPal,Next Day
+2024-06-02,ORD202406020413,PRODTOYS013,Toys Product 4,Toys,Brand4,302.88,5,1514.4,CUST0014,New,Asia Pacific,Hong Kong,Digital Wallet,Express
+2024-06-03,ORD202406030295,PRODTOYS095,Toys Product 6,Toys,Brand1,411.04,2,822.08,CUST0096,Premium,North America,New York,PayPal,Express
+2024-06-03,ORD202406030798,PRODCLOT098,Clothing Product 9,Clothing,Brand4,157.92,5,789.6,CUST0199,Premium,Europe,Amsterdam,Digital Wallet,Standard
+2024-06-04,ORD202406040620,PRODHOME020,Home & Garden Product 1,Home & Garden,Brand1,119.79,5,598.95,CUST0021,Regular,Europe,Amsterdam,Credit Card,Next Day
+2024-06-06,ORD202406060572,PRODCLOT072,Clothing Product 3,Clothing,Brand3,370.82,3,1112.46,CUST0173,New,Latin America,Buenos Aires,Credit Card,Next Day
+2024-06-06,ORD202406060916,PRODBOOK016,Books Product 7,Books,Brand2,161.72,4,646.88,CUST0117,Premium,Europe,Amsterdam,Bank Transfer,Next Day
+2024-06-07,ORD202406070287,PRODTOYS087,Toys Product 8,Toys,Brand3,342.23,3,1026.69,CUST0088,Regular,Latin America,Mexico City,Bank Transfer,Next Day
+2024-06-08,ORD202406080444,PRODSPOR044,Sports Product 5,Sports,Brand5,116.16,1,116.16,CUST0045,Regular,Asia Pacific,Hong Kong,Credit Card,Express
+2024-06-08,ORD202406080558,PRODBOOK058,Books Product 9,Books,Brand4,474.62,5,2373.1,CUST0159,New,Latin America,São Paulo,Credit Card,Express
+2024-06-09,ORD202406090210,PRODELEC010,Electronics Product 1,Electronics,Brand1,408.69,1,408.69,CUST0011,Regular,North America,New York,Credit Card,Standard
+2024-06-11,ORD202406110965,PRODHOME065,Home & Garden Product 6,Home & Garden,Brand1,114.24,1,114.24,CUST0166,Regular,Europe,Amsterdam,Digital Wallet,Next Day
+2024-06-12,ORD202406120121,PRODBOOK021,Books Product 2,Books,Brand2,199.11,3,597.33,CUST0122,New,Latin America,Santiago,PayPal,Express
+2024-06-12,ORD202406120221,PRODBOOK021,Books Product 2,Books,Brand2,257.05,5,1285.25,CUST0022,New,North America,Chicago,Digital Wallet,Next Day
+2024-06-12,ORD202406120932,PRODCLOT032,Clothing Product 3,Clothing,Brand3,312.61,5,1563.05,CUST0133,Regular,Latin America,São Paulo,Digital Wallet,Express
+2024-06-13,ORD202406130358,PRODTOYS058,Toys Product 9,Toys,Brand4,417.51,3,1252.53,CUST0159,Premium,North America,Toronto,Bank Transfer,Next Day
+2024-06-13,ORD202406130709,PRODSPOR009,Sports Product 10,Sports,Brand5,360.25,5,1801.25,CUST0110,New,Asia Pacific,Sydney,Credit Card,Express
+2024-06-13,ORD202406130895,PRODSPOR095,Sports Product 6,Sports,Brand1,37.23,2,74.46,CUST0096,New,Asia Pacific,Tokyo,Bank Transfer,Next Day
+2024-06-14,ORD202406140234,PRODTOYS034,Toys Product 5,Toys,Brand5,91.8,5,459.0,CUST0035,Regular,Asia Pacific,Tokyo,Bank Transfer,Express
+2024-06-14,ORD202406140535,PRODCLOT035,Clothing Product 6,Clothing,Brand1,82.95,2,165.9,CUST0136,Premium,Asia Pacific,Tokyo,Digital Wallet,Express
+2024-06-18,ORD202406180366,PRODTOYS066,Toys Product 7,Toys,Brand2,343.9,1,343.9,CUST0167,Premium,North America,Toronto,Credit Card,Standard
+2024-06-18,ORD202406180633,PRODSPOR033,Sports Product 4,Sports,Brand4,50.84,1,50.84,CUST0034,Regular,North America,New York,PayPal,Express
+2024-06-19,ORD202406190758,PRODTOYS058,Toys Product 9,Toys,Brand4,392.46,4,1569.84,CUST0159,New,Europe,Berlin,Credit Card,Next Day
+2024-06-23,ORD202406230525,PRODSPOR025,Sports Product 6,Sports,Brand1,409.92,5,2049.6,CUST0126,Regular,Europe,Amsterdam,PayPal,Next Day
+2024-06-23,ORD202406230685,PRODBOOK085,Books Product 6,Books,Brand1,127.68,5,638.4,CUST0086,Regular,Europe,Amsterdam,Digital Wallet,Standard
+2024-06-25,ORD202406250626,PRODHOME026,Home & Garden Product 7,Home & Garden,Brand2,290.88,3,872.64,CUST0027,New,North America,Toronto,Bank Transfer,Standard
+2024-06-26,ORD202406260693,PRODSPOR093,Sports Product 4,Sports,Brand4,21.04,3,63.12,CUST0094,Premium,North America,Toronto,Credit Card,Standard
+2024-06-26,ORD202406260977,PRODELEC077,Electronics Product 8,Electronics,Brand3,285.86,4,1143.44,CUST0178,New,Europe,London,PayPal,Standard
+2024-06-27,ORD202406270213,PRODCLOT013,Clothing Product 4,Clothing,Brand4,465.02,2,930.04,CUST0014,New,North America,New York,Bank Transfer,Express
+2024-06-28,ORD202406280227,PRODCLOT027,Clothing Product 8,Clothing,Brand3,98.09,4,392.36,CUST0028,New,North America,New York,PayPal,Next Day
+2024-06-28,ORD202406280443,PRODELEC043,Electronics Product 4,Electronics,Brand4,468.67,4,1874.68,CUST0044,Regular,North America,Toronto,Bank Transfer,Standard
+2024-06-28,ORD202406280493,PRODCLOT093,Clothing Product 4,Clothing,Brand4,384.29,3,1152.87,CUST0094,New,Latin America,São Paulo,Credit Card,Next Day
+2024-06-28,ORD202406280505,PRODELEC005,Electronics Product 6,Electronics,Brand1,469.56,1,469.56,CUST0106,New,Latin America,Mexico City,Digital Wallet,Express
+2024-06-28,ORD202406280657,PRODCLOT057,Clothing Product 8,Clothing,Brand3,429.11,4,1716.44,CUST0058,New,Latin America,Santiago,Digital Wallet,Express
+2024-06-29,ORD202406290557,PRODELEC057,Electronics Product 8,Electronics,Brand3,244.42,5,1222.1,CUST0158,New,Asia Pacific,Sydney,Credit Card,Express
+2024-06-29,ORD202406290736,PRODCLOT036,Clothing Product 7,Clothing,Brand2,418.77,4,1675.08,CUST0137,New,Latin America,Santiago,Credit Card,Standard
+2024-06-30,ORD202406300356,PRODHOME056,Home & Garden Product 7,Home & Garden,Brand2,414.95,3,1244.85,CUST0157,Regular,Latin America,Mexico City,Credit Card,Standard
+2024-06-30,ORD202406300942,PRODTOYS042,Toys Product 3,Toys,Brand3,76.27,1,76.27,CUST0143,New,Europe,Berlin,Bank Transfer,Standard
+2024-07-01,ORD202407010545,PRODTOYS045,Toys Product 6,Toys,Brand1,97.64,3,292.92,CUST0146,Premium,North America,New York,Credit Card,Express
+2024-07-02,ORD202407020395,PRODBOOK095,Books Product 6,Books,Brand1,115.37,4,461.48,CUST0196,Premium,Asia Pacific,Tokyo,Digital Wallet,Express
+2024-07-02,ORD202407020863,PRODBOOK063,Books Product 4,Books,Brand4,430.28,1,430.28,CUST0064,Regular,Asia Pacific,Singapore,Bank Transfer,Standard
+2024-07-03,ORD202407030238,PRODHOME038,Home & Garden Product 9,Home & Garden,Brand4,31.9,1,31.9,CUST0039,Premium,Europe,Amsterdam,PayPal,Next Day
+2024-07-03,ORD202407030483,PRODSPOR083,Sports Product 4,Sports,Brand4,254.09,1,254.09,CUST0084,Regular,North America,New York,Digital Wallet,Standard
+2024-07-05,ORD202407050807,PRODCLOT007,Clothing Product 8,Clothing,Brand3,121.53,3,364.59,CUST0008,Premium,North America,Toronto,Credit Card,Next Day
+2024-07-06,ORD202407060179,PRODTOYS079,Toys Product 10,Toys,Brand5,392.86,4,1571.44,CUST0180,Regular,North America,Toronto,PayPal,Express
+2024-07-07,ORD202407070430,PRODTOYS030,Toys Product 1,Toys,Brand1,329.83,2,659.66,CUST0031,Regular,Europe,London,Credit Card,Standard
+2024-07-08,ORD202407080222,PRODHOME022,Home & Garden Product 3,Home & Garden,Brand3,395.32,1,395.32,CUST0023,Regular,Latin America,São Paulo,PayPal,Next Day
+2024-07-08,ORD202407080562,PRODBOOK062,Books Product 3,Books,Brand3,142.14,5,710.7,CUST0163,New,Latin America,Buenos Aires,Digital Wallet,Standard
+2024-07-09,ORD202407090201,PRODBOOK001,Books Product 2,Books,Brand2,373.38,4,1493.52,CUST0002,Premium,North America,Toronto,Bank Transfer,Next Day
+2024-07-09,ORD202407090313,PRODTOYS013,Toys Product 4,Toys,Brand4,88.11,4,352.44,CUST0114,Premium,Asia Pacific,Sydney,PayPal,Standard
+2024-07-10,ORD202407100721,PRODBOOK021,Books Product 2,Books,Brand2,366.26,2,732.52,CUST0122,New,Europe,Berlin,Bank Transfer,Standard
+2024-07-13,ORD202407130026,PRODBOOK026,Books Product 7,Books,Brand2,251.51,4,1006.04,CUST0027,Premium,Asia Pacific,Sydney,PayPal,Express
+2024-07-13,ORD202407130163,PRODBOOK063,Books Product 4,Books,Brand4,111.37,1,111.37,CUST0164,Premium,Latin America,São Paulo,PayPal,Express
+2024-07-13,ORD202407130476,PRODTOYS076,Toys Product 7,Toys,Brand2,313.79,5,1568.95,CUST0077,Premium,Latin America,Santiago,Digital Wallet,Standard
+2024-07-13,ORD202407130834,PRODELEC034,Electronics Product 5,Electronics,Brand5,286.63,2,573.26,CUST0035,Premium,Asia Pacific,Singapore,Credit Card,Express
+2024-07-15,ORD202407150230,PRODHOME030,Home & Garden Product 1,Home & Garden,Brand1,319.21,1,319.21,CUST0031,Premium,North America,Los Angeles,Bank Transfer,Next Day
+2024-07-15,ORD202407150367,PRODHOME067,Home & Garden Product 8,Home & Garden,Brand3,382.56,4,1530.24,CUST0168,Premium,North America,Toronto,Credit Card,Express
+2024-07-15,ORD202407150468,PRODBOOK068,Books Product 9,Books,Brand4,360.32,5,1801.6,CUST0069,Regular,Latin America,Buenos Aires,PayPal,Express
+2024-07-15,ORD202407150568,PRODSPOR068,Sports Product 9,Sports,Brand4,485.96,1,485.96,CUST0169,Regular,Asia Pacific,Singapore,Bank Transfer,Express
+2024-07-16,ORD202407160275,PRODSPOR075,Sports Product 6,Sports,Brand1,22.73,3,68.19,CUST0076,New,Asia Pacific,Tokyo,Digital Wallet,Standard
+2024-07-18,ORD202407180394,PRODHOME094,Home & Garden Product 5,Home & Garden,Brand5,431.67,1,431.67,CUST0195,Premium,Latin America,Santiago,PayPal,Standard
+2024-07-20,ORD202407200749,PRODELEC049,Electronics Product 10,Electronics,Brand5,378.17,2,756.34,CUST0150,Premium,North America,Los Angeles,Credit Card,Next Day
+2024-07-20,ORD202407200933,PRODBOOK033,Books Product 4,Books,Brand4,458.52,5,2292.6,CUST0134,Regular,Latin America,São Paulo,PayPal,Next Day
+2024-07-21,ORD202407210582,PRODBOOK082,Books Product 3,Books,Brand3,181.16,4,724.64,CUST0183,New,Latin America,Mexico City,Bank Transfer,Next Day
+2024-07-22,ORD202407220792,PRODCLOT092,Clothing Product 3,Clothing,Brand3,481.51,2,963.02,CUST0193,Regular,Europe,Paris,Credit Card,Express
+2024-07-23,ORD202407230957,PRODSPOR057,Sports Product 8,Sports,Brand3,284.75,1,284.75,CUST0158,Premium,Europe,Paris,Digital Wallet,Express
+2024-07-24,ORD202407240324,PRODSPOR024,Sports Product 5,Sports,Brand5,480.73,1,480.73,CUST0125,Regular,Asia Pacific,Singapore,Credit Card,Standard
+2024-07-24,ORD202407240553,PRODBOOK053,Books Product 4,Books,Brand4,390.46,5,1952.3,CUST0154,New,Asia Pacific,Sydney,Credit Card,Next Day
+2024-07-26,ORD202407260333,PRODTOYS033,Toys Product 4,Toys,Brand4,179.91,1,179.91,CUST0134,New,North America,Los Angeles,PayPal,Express
+2024-07-26,ORD202407260960,PRODELEC060,Electronics Product 1,Electronics,Brand1,52.1,1,52.1,CUST0161,Regular,North America,Los Angeles,Digital Wallet,Next Day
+2024-07-29,ORD202407290081,PRODSPOR081,Sports Product 2,Sports,Brand2,261.25,1,261.25,CUST0082,Regular,Europe,London,PayPal,Express
+2024-07-29,ORD202407290738,PRODBOOK038,Books Product 9,Books,Brand4,198.93,5,994.65,CUST0139,Premium,Europe,Amsterdam,Bank Transfer,Next Day
+2024-07-30,ORD202407300008,PRODELEC008,Electronics Product 9,Electronics,Brand4,479.78,4,1919.12,CUST0009,Regular,Latin America,Santiago,Bank Transfer,Standard
+2024-07-30,ORD202407300325,PRODBOOK025,Books Product 6,Books,Brand1,54.33,5,271.65,CUST0126,Premium,Asia Pacific,Sydney,Credit Card,Express
+2024-07-30,ORD202407300641,PRODSPOR041,Sports Product 2,Sports,Brand2,365.4,3,1096.2,CUST0042,Regular,North America,Chicago,PayPal,Standard
+2024-07-31,ORD202407310257,PRODBOOK057,Books Product 8,Books,Brand3,62.96,2,125.92,CUST0058,Regular,North America,Los Angeles,PayPal,Standard
+2024-07-31,ORD202407310839,PRODHOME039,Home & Garden Product 10,Home & Garden,Brand5,243.79,1,243.79,CUST0040,Regular,Asia Pacific,Hong Kong,Digital Wallet,Express
+2024-08-01,ORD202408010021,PRODSPOR021,Sports Product 2,Sports,Brand2,281.11,3,843.33,CUST0022,Premium,Europe,Berlin,Bank Transfer,Next Day
+2024-08-01,ORD202408010529,PRODELEC029,Electronics Product 10,Electronics,Brand5,228.26,3,684.78,CUST0130,Premium,Asia Pacific,Sydney,Digital Wallet,Standard
+2024-08-05,ORD202408050605,PRODTOYS005,Toys Product 6,Toys,Brand1,37.57,2,75.14,CUST0006,Premium,Latin America,Buenos Aires,Credit Card,Standard
+2024-08-07,ORD202408070316,PRODHOME016,Home & Garden Product 7,Home & Garden,Brand2,296.72,4,1186.88,CUST0117,Premium,Latin America,Buenos Aires,PayPal,Express
+2024-08-08,ORD202408080470,PRODELEC070,Electronics Product 1,Electronics,Brand1,250.45,2,500.9,CUST0071,New,North America,Chicago,Digital Wallet,Next Day
+2024-08-08,ORD202408080530,PRODELEC030,Electronics Product 1,Electronics,Brand1,198.7,5,993.5,CUST0131,New,North America,Toronto,PayPal,Standard
+2024-08-09,ORD202408090042,PRODELEC042,Electronics Product 3,Electronics,Brand3,97.04,2,194.08,CUST0043,New,North America,Los Angeles,Digital Wallet,Next Day
+2024-08-09,ORD202408090775,PRODSPOR075,Sports Product 6,Sports,Brand1,380.82,3,1142.46,CUST0176,Regular,Europe,Amsterdam,Bank Transfer,Express
+2024-08-10,ORD202408100811,PRODCLOT011,Clothing Product 2,Clothing,Brand2,400.65,2,801.3,CUST0012,New,Asia Pacific,Singapore,PayPal,Express
+2024-08-11,ORD202408110521,PRODELEC021,Electronics Product 2,Electronics,Brand2,431.97,5,2159.85,CUST0122,New,Latin America,Santiago,PayPal,Standard
+2024-08-12,ORD202408120372,PRODSPOR072,Sports Product 3,Sports,Brand3,467.41,2,934.82,CUST0173,New,Europe,Paris,Digital Wallet,Express
+2024-08-12,ORD202408120639,PRODELEC039,Electronics Product 10,Electronics,Brand5,466.13,3,1398.39,CUST0040,New,Europe,London,Bank Transfer,Next Day
+2024-08-13,ORD202408130141,PRODCLOT041,Clothing Product 2,Clothing,Brand2,93.37,5,466.85,CUST0142,Regular,Latin America,Mexico City,Digital Wallet,Next Day
+2024-08-14,ORD202408140627,PRODSPOR027,Sports Product 8,Sports,Brand3,305.02,2,610.04,CUST0028,Premium,Europe,London,Digital Wallet,Standard
+2024-08-14,ORD202408140796,PRODBOOK096,Books Product 7,Books,Brand2,133.07,5,665.35,CUST0197,Regular,Europe,Amsterdam,Bank Transfer,Next Day
+2024-08-15,ORD202408150075,PRODTOYS075,Toys Product 6,Toys,Brand1,401.6,2,803.2,CUST0076,Regular,Europe,London,Bank Transfer,Standard
+2024-08-15,ORD202408150116,PRODTOYS016,Toys Product 7,Toys,Brand2,408.67,4,1634.68,CUST0117,Premium,North America,Chicago,Digital Wallet,Standard
+2024-08-15,ORD202408150271,PRODSPOR071,Sports Product 2,Sports,Brand2,419.18,3,1257.54,CUST0072,New,North America,Toronto,PayPal,Next Day
+2024-08-15,ORD202408150852,PRODBOOK052,Books Product 3,Books,Brand3,209.51,2,419.02,CUST0053,Premium,North America,Los Angeles,Bank Transfer,Next Day
+2024-08-15,ORD202408150959,PRODHOME059,Home & Garden Product 10,Home & Garden,Brand5,291.57,3,874.71,CUST0160,Premium,Europe,Berlin,Digital Wallet,Next Day
+2024-08-16,ORD202408160044,PRODCLOT044,Clothing Product 5,Clothing,Brand5,421.04,1,421.04,CUST0045,New,Latin America,Mexico City,PayPal,Standard
+2024-08-16,ORD202408160427,PRODHOME027,Home & Garden Product 8,Home & Garden,Brand3,366.1,2,732.2,CUST0028,New,Latin America,Buenos Aires,Credit Card,Express
+2024-08-17,ORD202408170855,PRODSPOR055,Sports Product 6,Sports,Brand1,224.46,2,448.92,CUST0056,Regular,Latin America,São Paulo,Digital Wallet,Standard
+2024-08-18,ORD202408180278,PRODSPOR078,Sports Product 9,Sports,Brand4,498.47,3,1495.41,CUST0079,Premium,Latin America,Santiago,Credit Card,Express
+2024-08-20,ORD202408200337,PRODELEC037,Electronics Product 8,Electronics,Brand3,167.34,5,836.7,CUST0138,Regular,North America,Los Angeles,Credit Card,Express
+2024-08-20,ORD202408200514,PRODSPOR014,Sports Product 5,Sports,Brand5,23.21,1,23.21,CUST0115,New,North America,Toronto,Credit Card,Express
+2024-08-23,ORD202408230137,PRODELEC037,Electronics Product 8,Electronics,Brand3,10.85,3,32.55,CUST0138,Premium,Latin America,Santiago,PayPal,Standard
+2024-08-24,ORD202408240456,PRODHOME056,Home & Garden Product 7,Home & Garden,Brand2,317.31,4,1269.24,CUST0057,Premium,Asia Pacific,Hong Kong,PayPal,Next Day
+2024-08-24,ORD202408240555,PRODSPOR055,Sports Product 6,Sports,Brand1,276.41,5,1382.05,CUST0156,New,Europe,Amsterdam,Credit Card,Express
+2024-08-24,ORD202408240938,PRODBOOK038,Books Product 9,Books,Brand4,289.51,3,868.53,CUST0139,Regular,Europe,Paris,PayPal,Express
+2024-08-25,ORD202408250133,PRODCLOT033,Clothing Product 4,Clothing,Brand4,96.8,4,387.2,CUST0134,New,Latin America,Santiago,Bank Transfer,Express
+2024-08-25,ORD202408250143,PRODHOME043,Home & Garden Product 4,Home & Garden,Brand4,245.57,5,1227.85,CUST0144,Premium,Latin America,Santiago,Bank Transfer,Next Day
+2024-08-25,ORD202408250827,PRODBOOK027,Books Product 8,Books,Brand3,283.16,3,849.48,CUST0028,New,Europe,Paris,Digital Wallet,Express
+2024-08-26,ORD202408260797,PRODTOYS097,Toys Product 8,Toys,Brand3,132.11,4,528.44,CUST0198,Premium,Europe,Paris,Bank Transfer,Next Day
+2024-08-27,ORD202408270030,PRODHOME030,Home & Garden Product 1,Home & Garden,Brand1,410.73,1,410.73,CUST0031,Premium,North America,Los Angeles,Bank Transfer,Express
+2024-08-28,ORD202408280003,PRODBOOK003,Books Product 4,Books,Brand4,245.81,5,1229.05,CUST0004,Regular,Asia Pacific,Hong Kong,PayPal,Standard
+2024-08-28,ORD202408280625,PRODHOME025,Home & Garden Product 6,Home & Garden,Brand1,298.52,1,298.52,CUST0026,Regular,Asia Pacific,Sydney,PayPal,Next Day
+2024-08-29,ORD202408290624,PRODELEC024,Electronics Product 5,Electronics,Brand5,124.17,2,248.34,CUST0025,Regular,Latin America,Santiago,Credit Card,Standard
+2024-08-29,ORD202408290746,PRODCLOT046,Clothing Product 7,Clothing,Brand2,361.04,3,1083.12,CUST0147,New,Europe,London,Digital Wallet,Express
+2024-08-30,ORD202408300231,PRODSPOR031,Sports Product 2,Sports,Brand2,135.37,5,676.85,CUST0032,Premium,Latin America,Santiago,Bank Transfer,Next Day
+2024-08-31,ORD202408310851,PRODTOYS051,Toys Product 2,Toys,Brand2,253.3,5,1266.5,CUST0052,Regular,Latin America,São Paulo,PayPal,Express
+2024-09-01,ORD202409010447,PRODBOOK047,Books Product 8,Books,Brand3,115.9,3,347.7,CUST0048,New,Latin America,São Paulo,PayPal,Next Day
+2024-09-02,ORD202409020103,PRODELEC003,Electronics Product 4,Electronics,Brand4,272.13,3,816.39,CUST0104,Regular,Asia Pacific,Hong Kong,Bank Transfer,Next Day
+2024-09-02,ORD202409020646,PRODCLOT046,Clothing Product 7,Clothing,Brand2,493.18,1,493.18,CUST0047,Regular,Europe,Amsterdam,Credit Card,Express
+2024-09-03,ORD202409030976,PRODBOOK076,Books Product 7,Books,Brand2,464.4,5,2322.0,CUST0177,New,Latin America,São Paulo,Credit Card,Next Day
+2024-09-05,ORD202409050019,PRODCLOT019,Clothing Product 10,Clothing,Brand5,150.81,3,452.43,CUST0020,Regular,Europe,London,Credit Card,Standard
+2024-09-05,ORD202409050029,PRODCLOT029,Clothing Product 10,Clothing,Brand5,218.61,4,874.44,CUST0030,New,Asia Pacific,Hong Kong,Credit Card,Next Day
+2024-09-05,ORD202409050967,PRODELEC067,Electronics Product 8,Electronics,Brand3,420.75,4,1683.0,CUST0168,New,North America,New York,Bank Transfer,Next Day
+2024-09-06,ORD202409060691,PRODELEC091,Electronics Product 2,Electronics,Brand2,185.66,2,371.32,CUST0092,New,Europe,Berlin,Credit Card,Standard
+2024-09-06,ORD202409060997,PRODSPOR097,Sports Product 8,Sports,Brand3,480.51,3,1441.53,CUST0198,Regular,Latin America,Mexico City,Bank Transfer,Express
+2024-09-08,ORD202409080321,PRODHOME021,Home & Garden Product 2,Home & Garden,Brand2,455.94,1,455.94,CUST0122,New,Europe,Amsterdam,Bank Transfer,Express
+2024-09-08,ORD202409080519,PRODSPOR019,Sports Product 10,Sports,Brand5,92.85,3,278.55,CUST0120,Regular,Latin America,Mexico City,Bank Transfer,Standard
+2024-09-08,ORD202409080580,PRODCLOT080,Clothing Product 1,Clothing,Brand1,321.54,2,643.08,CUST0181,New,North America,Toronto,Credit Card,Next Day
+2024-09-09,ORD202409090943,PRODCLOT043,Clothing Product 4,Clothing,Brand4,366.94,5,1834.7,CUST0144,Premium,Europe,Berlin,Bank Transfer,Next Day
+2024-09-10,ORD202409100782,PRODTOYS082,Toys Product 3,Toys,Brand3,118.13,2,236.26,CUST0183,Premium,North America,Chicago,Bank Transfer,Express
+2024-09-12,ORD202409120134,PRODHOME034,Home & Garden Product 5,Home & Garden,Brand5,100.78,2,201.56,CUST0135,Regular,North America,Toronto,Bank Transfer,Express
+2024-09-12,ORD202409120547,PRODHOME047,Home & Garden Product 8,Home & Garden,Brand3,488.54,2,977.08,CUST0148,New,North America,Toronto,Credit Card,Express
+2024-09-15,ORD202409150499,PRODTOYS099,Toys Product 10,Toys,Brand5,71.15,3,213.45,CUST0100,New,Asia Pacific,Sydney,PayPal,Next Day
+2024-09-15,ORD202409150858,PRODBOOK058,Books Product 9,Books,Brand4,116.41,5,582.05,CUST0059,New,Latin America,Santiago,PayPal,Express
+2024-09-16,ORD202409160768,PRODELEC068,Electronics Product 9,Electronics,Brand4,467.39,2,934.78,CUST0169,Regular,Europe,Berlin,Digital Wallet,Express
+2024-09-17,ORD202409170440,PRODTOYS040,Toys Product 1,Toys,Brand1,293.96,5,1469.8,CUST0041,New,North America,New York,Credit Card,Express
+2024-09-17,ORD202409170492,PRODCLOT092,Clothing Product 3,Clothing,Brand3,317.35,5,1586.75,CUST0093,Regular,Latin America,Santiago,Credit Card,Express
+2024-09-17,ORD202409170864,PRODCLOT064,Clothing Product 5,Clothing,Brand5,219.86,2,439.72,CUST0065,Premium,Latin America,Santiago,Credit Card,Express
+2024-09-17,ORD202409170948,PRODHOME048,Home & Garden Product 9,Home & Garden,Brand4,324.46,1,324.46,CUST0149,Regular,North America,Toronto,Credit Card,Express
+2024-09-18,ORD202409180695,PRODBOOK095,Books Product 6,Books,Brand1,47.7,5,238.5,CUST0096,Premium,North America,Toronto,Bank Transfer,Express
+2024-09-19,ORD202409190453,PRODHOME053,Home & Garden Product 4,Home & Garden,Brand4,127.18,3,381.54,CUST0054,Premium,Europe,Berlin,Digital Wallet,Express
+2024-09-19,ORD202409190489,PRODBOOK089,Books Product 10,Books,Brand5,159.2,5,796.0,CUST0090,New,North America,Toronto,Bank Transfer,Next Day
+2024-09-20,ORD202409200963,PRODCLOT063,Clothing Product 4,Clothing,Brand4,24.2,4,96.8,CUST0164,Regular,North America,Chicago,PayPal,Next Day
+2024-09-21,ORD202409210048,PRODTOYS048,Toys Product 9,Toys,Brand4,105.28,3,315.84,CUST0049,Regular,North America,New York,PayPal,Express
+2024-09-22,ORD202409220537,PRODELEC037,Electronics Product 8,Electronics,Brand3,352.02,1,352.02,CUST0138,New,Latin America,Mexico City,PayPal,Express
+2024-09-23,ORD202409230835,PRODBOOK035,Books Product 6,Books,Brand1,230.3,2,460.6,CUST0036,Regular,Europe,Paris,Bank Transfer,Express
+2024-09-24,ORD202409240018,PRODBOOK018,Books Product 9,Books,Brand4,208.37,3,625.11,CUST0019,Regular,Asia Pacific,Tokyo,Bank Transfer,Standard
+2024-09-24,ORD202409240282,PRODHOME082,Home & Garden Product 3,Home & Garden,Brand3,90.58,2,181.16,CUST0083,Regular,Latin America,Buenos Aires,Bank Transfer,Express
+2024-09-25,ORD202409250915,PRODSPOR015,Sports Product 6,Sports,Brand1,435.76,2,871.52,CUST0116,New,Latin America,Santiago,Bank Transfer,Standard
+2024-09-26,ORD202409260784,PRODELEC084,Electronics Product 5,Electronics,Brand5,23.38,1,23.38,CUST0185,New,North America,New York,Bank Transfer,Standard
+2024-09-27,ORD202409270883,PRODELEC083,Electronics Product 4,Electronics,Brand4,432.5,3,1297.5,CUST0084,New,Latin America,Mexico City,Bank Transfer,Next Day
+2024-09-29,ORD202409290072,PRODSPOR072,Sports Product 3,Sports,Brand3,12.23,2,24.46,CUST0073,New,North America,Toronto,Digital Wallet,Next Day
+2024-09-29,ORD202409290300,PRODTOYS000,Toys Product 1,Toys,Brand1,59.63,4,238.52,CUST0101,Regular,Latin America,São Paulo,Bank Transfer,Next Day
+2024-10-01,ORD202410010940,PRODSPOR040,Sports Product 1,Sports,Brand1,54.91,3,164.73,CUST0141,Regular,Europe,Paris,Digital Wallet,Express
+2024-10-02,ORD202410020445,PRODELEC045,Electronics Product 6,Electronics,Brand1,296.78,4,1187.12,CUST0046,Regular,Latin America,São Paulo,Digital Wallet,Next Day
+2024-10-02,ORD202410020950,PRODHOME050,Home & Garden Product 1,Home & Garden,Brand1,221.81,4,887.24,CUST0151,Premium,Europe,Amsterdam,Credit Card,Next Day
+2024-10-02,ORD202410020983,PRODELEC083,Electronics Product 4,Electronics,Brand4,358.88,2,717.76,CUST0184,New,Asia Pacific,Tokyo,Credit Card,Express
+2024-10-04,ORD202410040305,PRODHOME005,Home & Garden Product 6,Home & Garden,Brand1,208.28,1,208.28,CUST0106,Regular,Latin America,São Paulo,Credit Card,Next Day
+2024-10-04,ORD202410040389,PRODHOME089,Home & Garden Product 10,Home & Garden,Brand5,76.26,4,305.04,CUST0190,Regular,Europe,Berlin,Credit Card,Next Day
+2024-10-04,ORD202410040500,PRODTOYS000,Toys Product 1,Toys,Brand1,433.63,2,867.26,CUST0101,New,North America,Los Angeles,Digital Wallet,Express
+2024-10-05,ORD202410050799,PRODCLOT099,Clothing Product 10,Clothing,Brand5,70.35,4,281.4,CUST0200,Premium,Asia Pacific,Sydney,Digital Wallet,Next Day
+2024-10-06,ORD202410060286,PRODSPOR086,Sports Product 7,Sports,Brand2,393.53,2,787.06,CUST0087,New,North America,Chicago,Credit Card,Next Day
+2024-10-07,ORD202410070350,PRODBOOK050,Books Product 1,Books,Brand1,28.41,3,85.23,CUST0151,Premium,North America,Toronto,PayPal,Standard
+2024-10-07,ORD202410070560,PRODELEC060,Electronics Product 1,Electronics,Brand1,26.06,5,130.3,CUST0161,Premium,Asia Pacific,Hong Kong,PayPal,Standard
+2024-10-08,ORD202410080138,PRODBOOK038,Books Product 9,Books,Brand4,339.82,3,1019.46,CUST0139,New,North America,Toronto,Bank Transfer,Standard
+2024-10-08,ORD202410080677,PRODHOME077,Home & Garden Product 8,Home & Garden,Brand3,447.77,5,2238.85,CUST0078,Regular,Asia Pacific,Singapore,Bank Transfer,Next Day
+2024-10-11,ORD202410110151,PRODHOME051,Home & Garden Product 2,Home & Garden,Brand2,31.82,3,95.46,CUST0152,New,Asia Pacific,Hong Kong,PayPal,Next Day
+2024-10-11,ORD202410110561,PRODTOYS061,Toys Product 2,Toys,Brand2,499.98,5,2499.9,CUST0162,Regular,Europe,Berlin,Digital Wallet,Express
+2024-10-11,ORD202410110735,PRODTOYS035,Toys Product 6,Toys,Brand1,400.66,5,2003.3,CUST0136,Regular,North America,New York,PayPal,Express
+2024-10-12,ORD202410120085,PRODTOYS085,Toys Product 6,Toys,Brand1,397.2,5,1986.0,CUST0086,Premium,North America,Chicago,Digital Wallet,Express
+2024-10-12,ORD202410120191,PRODBOOK091,Books Product 2,Books,Brand2,303.76,4,1215.04,CUST0192,Regular,North America,Toronto,Credit Card,Express
+2024-10-12,ORD202410120825,PRODSPOR025,Sports Product 6,Sports,Brand1,217.33,5,1086.65,CUST0026,Premium,North America,Chicago,PayPal,Standard
+2024-10-13,ORD202410130099,PRODCLOT099,Clothing Product 10,Clothing,Brand5,328.87,5,1644.35,CUST0100,Regular,North America,Los Angeles,PayPal,Express
+2024-10-13,ORD202410130926,PRODBOOK026,Books Product 7,Books,Brand2,90.76,5,453.8,CUST0127,Premium,North America,New York,Digital Wallet,Standard
+2024-10-14,ORD202410140435,PRODBOOK035,Books Product 6,Books,Brand1,262.86,5,1314.3,CUST0036,New,North America,Chicago,PayPal,Standard
+2024-10-14,ORD202410140968,PRODELEC068,Electronics Product 9,Electronics,Brand4,194.63,3,583.89,CUST0169,New,Latin America,Buenos Aires,Credit Card,Express
+2024-10-17,ORD202410170015,PRODHOME015,Home & Garden Product 6,Home & Garden,Brand1,158.42,1,158.42,CUST0016,Regular,Europe,London,Bank Transfer,Next Day
+2024-10-17,ORD202410170239,PRODCLOT039,Clothing Product 10,Clothing,Brand5,326.04,2,652.08,CUST0040,Premium,North America,Los Angeles,Digital Wallet,Standard
+2024-10-18,ORD202410180281,PRODHOME081,Home & Garden Product 2,Home & Garden,Brand2,395.15,1,395.15,CUST0082,Premium,North America,New York,Bank Transfer,Standard
+2024-10-18,ORD202410180497,PRODCLOT097,Clothing Product 8,Clothing,Brand3,282.46,1,282.46,CUST0098,Premium,Europe,London,Bank Transfer,Next Day
+2024-10-19,ORD202410190381,PRODCLOT081,Clothing Product 2,Clothing,Brand2,441.51,1,441.51,CUST0182,Regular,Asia Pacific,Sydney,Credit Card,Next Day
+2024-10-20,ORD202410200014,PRODELEC014,Electronics Product 5,Electronics,Brand5,80.8,3,242.4,CUST0015,Regular,Latin America,Buenos Aires,Digital Wallet,Express
+2024-10-20,ORD202410200516,PRODTOYS016,Toys Product 7,Toys,Brand2,92.56,2,185.12,CUST0117,New,Latin America,São Paulo,Credit Card,Standard
+2024-10-20,ORD202410200748,PRODBOOK048,Books Product 9,Books,Brand4,241.81,3,725.43,CUST0149,Regular,Europe,London,Digital Wallet,Next Day
+2024-10-21,ORD202410210780,PRODCLOT080,Clothing Product 1,Clothing,Brand1,129.33,1,129.33,CUST0181,New,Europe,London,Bank Transfer,Standard
+2024-10-22,ORD202410220025,PRODCLOT025,Clothing Product 6,Clothing,Brand1,199.29,1,199.29,CUST0026,Premium,North America,Los Angeles,PayPal,Standard
+2024-10-22,ORD202410220352,PRODCLOT052,Clothing Product 3,Clothing,Brand3,269.52,1,269.52,CUST0153,New,North America,New York,Bank Transfer,Standard
+2024-10-23,ORD202410230139,PRODSPOR039,Sports Product 10,Sports,Brand5,197.98,2,395.96,CUST0140,Regular,Europe,London,Digital Wallet,Next Day
+2024-10-23,ORD202410230150,PRODTOYS050,Toys Product 1,Toys,Brand1,160.5,3,481.5,CUST0151,Premium,Asia Pacific,Tokyo,PayPal,Next Day
+2024-10-23,ORD202410230922,PRODBOOK022,Books Product 3,Books,Brand3,279.86,4,1119.44,CUST0123,New,Asia Pacific,Singapore,Bank Transfer,Next Day
+2024-10-23,ORD202410230956,PRODELEC056,Electronics Product 7,Electronics,Brand2,55.46,5,277.3,CUST0157,Regular,Latin America,Buenos Aires,Bank Transfer,Express
+2024-10-24,ORD202410240062,PRODBOOK062,Books Product 3,Books,Brand3,168.78,3,506.34,CUST0063,Regular,Europe,Amsterdam,Credit Card,Standard
+2024-10-24,ORD202410240199,PRODTOYS099,Toys Product 10,Toys,Brand5,446.74,1,446.74,CUST0200,Premium,Latin America,Mexico City,Credit Card,Standard
+2024-10-24,ORD202410240425,PRODTOYS025,Toys Product 6,Toys,Brand1,348.65,3,1045.95,CUST0026,New,Europe,Berlin,Bank Transfer,Next Day
+2024-10-24,ORD202410240486,PRODELEC086,Electronics Product 7,Electronics,Brand2,265.04,4,1060.16,CUST0087,Regular,Asia Pacific,Singapore,Credit Card,Next Day
+2024-10-26,ORD202410260656,PRODSPOR056,Sports Product 7,Sports,Brand2,285.76,2,571.52,CUST0057,Regular,Europe,Amsterdam,Bank Transfer,Standard
+2024-10-28,ORD202410280323,PRODBOOK023,Books Product 4,Books,Brand4,95.43,5,477.15,CUST0124,New,North America,Toronto,PayPal,Express
+2024-10-28,ORD202410280342,PRODHOME042,Home & Garden Product 3,Home & Garden,Brand3,333.62,5,1668.1,CUST0143,Premium,North America,Los Angeles,Credit Card,Next Day
+2024-10-28,ORD202410280612,PRODELEC012,Electronics Product 3,Electronics,Brand3,218.1,1,218.1,CUST0013,Regular,Europe,Paris,Digital Wallet,Express
+2024-10-31,ORD202410310538,PRODCLOT038,Clothing Product 9,Clothing,Brand4,192.82,3,578.46,CUST0139,Regular,Latin America,Santiago,Bank Transfer,Next Day
+2024-11-01,ORD202411010550,PRODBOOK050,Books Product 1,Books,Brand1,90.54,3,271.62,CUST0151,Regular,Latin America,Mexico City,Digital Wallet,Next Day
+2024-11-01,ORD202411010618,PRODBOOK018,Books Product 9,Books,Brand4,12.71,2,25.42,CUST0019,Premium,Asia Pacific,Hong Kong,Bank Transfer,Standard
+2024-11-01,ORD202411010787,PRODHOME087,Home & Garden Product 8,Home & Garden,Brand3,78.79,2,157.58,CUST0188,Regular,Latin America,Buenos Aires,Bank Transfer,Standard
+2024-11-01,ORD202411010941,PRODELEC041,Electronics Product 2,Electronics,Brand2,98.32,4,393.28,CUST0142,New,North America,New York,Bank Transfer,Express
+2024-11-04,ORD202411040291,PRODCLOT091,Clothing Product 2,Clothing,Brand2,169.34,2,338.68,CUST0092,Regular,Asia Pacific,Tokyo,PayPal,Express
+2024-11-04,ORD202411040894,PRODCLOT094,Clothing Product 5,Clothing,Brand5,387.87,1,387.87,CUST0095,Regular,North America,Chicago,PayPal,Next Day
+2024-11-05,ORD202411050216,PRODSPOR016,Sports Product 7,Sports,Brand2,24.86,5,124.3,CUST0017,New,Europe,Amsterdam,Credit Card,Express
+2024-11-06,ORD202411060156,PRODELEC056,Electronics Product 7,Electronics,Brand2,486.4,3,1459.2,CUST0157,Premium,Asia Pacific,Singapore,PayPal,Next Day
+2024-11-06,ORD202411060750,PRODSPOR050,Sports Product 1,Sports,Brand1,152.49,2,304.98,CUST0151,New,North America,Los Angeles,Digital Wallet,Next Day
+2024-11-08,ORD202411080778,PRODHOME078,Home & Garden Product 9,Home & Garden,Brand4,171.35,4,685.4,CUST0179,Premium,Europe,Amsterdam,PayPal,Express
+2024-11-08,ORD202411080920,PRODTOYS020,Toys Product 1,Toys,Brand1,89.74,3,269.22,CUST0121,Premium,Asia Pacific,Sydney,Bank Transfer,Standard
+2024-11-10,ORD202411100041,PRODTOYS041,Toys Product 2,Toys,Brand2,395.61,3,1186.83,CUST0042,Regular,North America,Los Angeles,Credit Card,Standard
+2024-11-10,ORD202411100055,PRODTOYS055,Toys Product 6,Toys,Brand1,416.71,4,1666.84,CUST0056,Regular,Europe,Paris,Bank Transfer,Standard
+2024-11-10,ORD202411100791,PRODSPOR091,Sports Product 2,Sports,Brand2,120.79,4,483.16,CUST0192,Regular,Europe,Berlin,PayPal,Next Day
+2024-11-10,ORD202411100953,PRODCLOT053,Clothing Product 4,Clothing,Brand4,477.57,5,2387.85,CUST0154,Regular,Asia Pacific,Hong Kong,Credit Card,Next Day
+2024-11-11,ORD202411110142,PRODSPOR042,Sports Product 3,Sports,Brand3,400.55,3,1201.65,CUST0143,Premium,Europe,London,PayPal,Standard
+2024-11-11,ORD202411110349,PRODELEC049,Electronics Product 10,Electronics,Brand5,350.52,3,1051.56,CUST0150,New,Asia Pacific,Singapore,Bank Transfer,Express
+2024-11-11,ORD202411110674,PRODTOYS074,Toys Product 5,Toys,Brand5,90.28,4,361.12,CUST0075,Premium,North America,New York,Bank Transfer,Next Day
+2024-11-11,ORD202411110737,PRODBOOK037,Books Product 8,Books,Brand3,271.07,3,813.21,CUST0138,Regular,North America,Chicago,Bank Transfer,Next Day
+2024-11-12,ORD202411120068,PRODHOME068,Home & Garden Product 9,Home & Garden,Brand4,90.29,5,451.45,CUST0069,Regular,Latin America,Santiago,Digital Wallet,Standard
+2024-11-12,ORD202411120329,PRODBOOK029,Books Product 10,Books,Brand5,58.08,1,58.08,CUST0130,Premium,North America,New York,Digital Wallet,Express
+2024-11-12,ORD202411120665,PRODCLOT065,Clothing Product 6,Clothing,Brand1,195.52,4,782.08,CUST0066,Regular,Europe,Paris,Digital Wallet,Standard
+2024-11-13,ORD202411130297,PRODSPOR097,Sports Product 8,Sports,Brand3,338.57,4,1354.28,CUST0098,Regular,Asia Pacific,Singapore,Bank Transfer,Next Day
+2024-11-13,ORD202411130374,PRODTOYS074,Toys Product 5,Toys,Brand5,236.59,5,1182.95,CUST0175,Premium,Latin America,Mexico City,Digital Wallet,Express
+2024-11-13,ORD202411130745,PRODBOOK045,Books Product 6,Books,Brand1,183.81,2,367.62,CUST0146,New,Europe,Amsterdam,Bank Transfer,Next Day
+2024-11-15,ORD202411150473,PRODBOOK073,Books Product 4,Books,Brand4,465.5,4,1862.0,CUST0074,New,North America,New York,Digital Wallet,Standard
+2024-11-15,ORD202411150520,PRODBOOK020,Books Product 1,Books,Brand1,118.49,2,236.98,CUST0121,New,Asia Pacific,Tokyo,PayPal,Standard
+2024-11-16,ORD202411160158,PRODBOOK058,Books Product 9,Books,Brand4,25.49,5,127.45,CUST0159,New,Asia Pacific,Hong Kong,PayPal,Next Day
+2024-11-17,ORD202411170205,PRODTOYS005,Toys Product 6,Toys,Brand1,386.98,3,1160.94,CUST0006,New,North America,Toronto,Digital Wallet,Express
+2024-11-18,ORD202411180245,PRODELEC045,Electronics Product 6,Electronics,Brand1,461.75,1,461.75,CUST0046,Premium,Latin America,Santiago,Credit Card,Standard
+2024-11-18,ORD202411180571,PRODTOYS071,Toys Product 2,Toys,Brand2,445.12,4,1780.48,CUST0172,Regular,Latin America,São Paulo,Credit Card,Express
+2024-11-19,ORD202411190590,PRODSPOR090,Sports Product 1,Sports,Brand1,352.81,5,1764.05,CUST0191,New,Europe,Amsterdam,PayPal,Standard
+2024-11-20,ORD202411200126,PRODELEC026,Electronics Product 7,Electronics,Brand2,495.4,5,2477.0,CUST0127,New,North America,Los Angeles,Digital Wallet,Standard
+2024-11-20,ORD202411200672,PRODCLOT072,Clothing Product 3,Clothing,Brand3,466.35,4,1865.4,CUST0073,Premium,North America,Toronto,Bank Transfer,Standard
+2024-11-20,ORD202411200882,PRODCLOT082,Clothing Product 3,Clothing,Brand3,389.89,3,1169.67,CUST0083,Premium,Europe,London,Digital Wallet,Express
+2024-11-21,ORD202411210764,PRODSPOR064,Sports Product 5,Sports,Brand5,110.68,2,221.36,CUST0165,Regular,Latin America,São Paulo,Credit Card,Express
+2024-11-22,ORD202411220039,PRODTOYS039,Toys Product 10,Toys,Brand5,391.05,1,391.05,CUST0040,Premium,Asia Pacific,Sydney,Credit Card,Next Day
+2024-11-23,ORD202411230212,PRODCLOT012,Clothing Product 3,Clothing,Brand3,84.2,5,421.0,CUST0013,Premium,Asia Pacific,Tokyo,Bank Transfer,Next Day
+2024-11-23,ORD202411230318,PRODBOOK018,Books Product 9,Books,Brand4,360.93,5,1804.65,CUST0119,New,Asia Pacific,Singapore,PayPal,Standard
+2024-11-23,ORD202411230504,PRODBOOK004,Books Product 5,Books,Brand5,36.75,1,36.75,CUST0105,Regular,Asia Pacific,Singapore,PayPal,Next Day
+2024-11-25,ORD202411250069,PRODTOYS069,Toys Product 10,Toys,Brand5,160.41,2,320.82,CUST0070,New,Latin America,Mexico City,Credit Card,Standard
+2024-11-26,ORD202411260862,PRODCLOT062,Clothing Product 3,Clothing,Brand3,425.03,4,1700.12,CUST0063,New,Asia Pacific,Tokyo,Digital Wallet,Express
+2024-11-28,ORD202411280591,PRODCLOT091,Clothing Product 2,Clothing,Brand2,15.46,2,30.92,CUST0192,Premium,Asia Pacific,Sydney,Credit Card,Express
+2024-11-28,ORD202411280621,PRODCLOT021,Clothing Product 2,Clothing,Brand2,16.52,5,82.6,CUST0022,Premium,Asia Pacific,Sydney,Credit Card,Next Day
+2024-11-29,ORD202411290087,PRODELEC087,Electronics Product 8,Electronics,Brand3,183.78,3,551.34,CUST0088,Regular,Europe,Berlin,Credit Card,Express
+2024-11-30,ORD202411300220,PRODELEC020,Electronics Product 1,Electronics,Brand1,126.99,2,253.98,CUST0021,New,Europe,Paris,Bank Transfer,Standard
+2024-11-30,ORD202411300317,PRODTOYS017,Toys Product 8,Toys,Brand3,479.79,4,1919.16,CUST0118,Regular,Latin America,Mexico City,PayPal,Next Day
+2024-12-01,ORD202412010089,PRODTOYS089,Toys Product 10,Toys,Brand5,101.44,5,507.2,CUST0090,Premium,Asia Pacific,Sydney,Credit Card,Express
+2024-12-03,ORD202412030294,PRODBOOK094,Books Product 5,Books,Brand5,83.29,4,333.16,CUST0095,New,Latin America,Santiago,PayPal,Standard
+2024-12-03,ORD202412030566,PRODHOME066,Home & Garden Product 7,Home & Garden,Brand2,114.05,5,570.25,CUST0167,Regular,Latin America,São Paulo,Bank Transfer,Standard
+2024-12-03,ORD202412030724,PRODCLOT024,Clothing Product 5,Clothing,Brand5,169.43,1,169.43,CUST0125,New,Asia Pacific,Hong Kong,PayPal,Standard
+2024-12-05,ORD202412050027,PRODTOYS027,Toys Product 8,Toys,Brand3,160.65,4,642.6,CUST0028,Regular,Asia Pacific,Tokyo,Digital Wallet,Next Day
+2024-12-06,ORD202412060559,PRODBOOK059,Books Product 10,Books,Brand5,204.99,5,1024.95,CUST0160,Premium,Europe,Paris,PayPal,Express
+2024-12-06,ORD202412060564,PRODELEC064,Electronics Product 5,Electronics,Brand5,369.22,3,1107.66,CUST0165,Regular,Europe,Amsterdam,Credit Card,Next Day
+2024-12-06,ORD202412060759,PRODELEC059,Electronics Product 10,Electronics,Brand5,458.19,3,1374.57,CUST0160,Premium,Latin America,Mexico City,PayPal,Express
+2024-12-06,ORD202412060934,PRODELEC034,Electronics Product 5,Electronics,Brand5,110.19,4,440.76,CUST0135,Premium,Latin America,Buenos Aires,Digital Wallet,Standard
+2024-12-09,ORD202412090117,PRODTOYS017,Toys Product 8,Toys,Brand3,299.76,4,1199.04,CUST0118,Premium,Asia Pacific,Hong Kong,Credit Card,Next Day
+2024-12-10,ORD202412100414,PRODHOME014,Home & Garden Product 5,Home & Garden,Brand5,391.04,5,1955.2,CUST0015,New,Europe,Paris,Bank Transfer,Next Day
+2024-12-10,ORD202412100607,PRODTOYS007,Toys Product 8,Toys,Brand3,244.46,2,488.92,CUST0008,New,Europe,Paris,PayPal,Standard
+2024-12-10,ORD202412100887,PRODSPOR087,Sports Product 8,Sports,Brand3,186.47,2,372.94,CUST0088,New,Latin America,Mexico City,Bank Transfer,Next Day
+2024-12-11,ORD202412110122,PRODELEC022,Electronics Product 3,Electronics,Brand3,406.7,1,406.7,CUST0123,Regular,Europe,Paris,Bank Transfer,Express
+2024-12-11,ORD202412110362,PRODHOME062,Home & Garden Product 3,Home & Garden,Brand3,433.91,5,2169.55,CUST0163,Regular,Asia Pacific,Hong Kong,Bank Transfer,Express
+2024-12-11,ORD202412110804,PRODCLOT004,Clothing Product 5,Clothing,Brand5,306.48,3,919.44,CUST0005,Premium,North America,Chicago,PayPal,Standard
+2024-12-13,ORD202412130460,PRODCLOT060,Clothing Product 1,Clothing,Brand1,425.34,5,2126.7,CUST0061,New,Europe,Amsterdam,PayPal,Next Day
+2024-12-13,ORD202412130910,PRODSPOR010,Sports Product 1,Sports,Brand1,244.62,3,733.86,CUST0111,Regular,North America,New York,Credit Card,Standard
+2024-12-13,ORD202412130966,PRODELEC066,Electronics Product 7,Electronics,Brand2,161.04,2,322.08,CUST0167,Premium,Latin America,Santiago,Bank Transfer,Express
+2024-12-15,ORD202412150101,PRODSPOR001,Sports Product 2,Sports,Brand2,359.25,1,359.25,CUST0102,Regular,Latin America,Buenos Aires,Bank Transfer,Express
+2024-12-16,ORD202412160136,PRODELEC036,Electronics Product 7,Electronics,Brand2,272.83,1,272.83,CUST0137,Regular,North America,Los Angeles,PayPal,Next Day
+2024-12-16,ORD202412160817,PRODSPOR017,Sports Product 8,Sports,Brand3,434.94,3,1304.82,CUST0018,Regular,North America,Chicago,PayPal,Next Day
+2024-12-17,ORD202412170080,PRODHOME080,Home & Garden Product 1,Home & Garden,Brand1,441.69,5,2208.45,CUST0081,Regular,Latin America,São Paulo,Credit Card,Standard
+2024-12-17,ORD202412170330,PRODELEC030,Electronics Product 1,Electronics,Brand1,413.74,4,1654.96,CUST0131,Regular,Asia Pacific,Hong Kong,Bank Transfer,Express
+2024-12-18,ORD202412180020,PRODELEC020,Electronics Product 1,Electronics,Brand1,183.45,1,183.45,CUST0021,New,Latin America,Mexico City,Bank Transfer,Express
+2024-12-18,ORD202412180260,PRODTOYS060,Toys Product 1,Toys,Brand1,419.03,2,838.06,CUST0061,New,Europe,Amsterdam,Bank Transfer,Standard
+2024-12-18,ORD202412180719,PRODSPOR019,Sports Product 10,Sports,Brand5,161.72,2,323.44,CUST0120,Premium,North America,Toronto,Digital Wallet,Standard
+2024-12-19,ORD202412190057,PRODCLOT057,Clothing Product 8,Clothing,Brand3,373.7,2,747.4,CUST0058,Premium,North America,New York,Credit Card,Express
+2024-12-19,ORD202412190253,PRODELEC053,Electronics Product 4,Electronics,Brand4,95.85,5,479.25,CUST0054,Regular,Asia Pacific,Hong Kong,Bank Transfer,Standard
+2024-12-19,ORD202412190353,PRODCLOT053,Clothing Product 4,Clothing,Brand4,148.63,2,297.26,CUST0154,New,Latin America,Buenos Aires,Credit Card,Standard
+2024-12-19,ORD202412190482,PRODHOME082,Home & Garden Product 3,Home & Garden,Brand3,123.1,2,246.2,CUST0083,Premium,North America,Los Angeles,Bank Transfer,Express
+2024-12-20,ORD202412200463,PRODHOME063,Home & Garden Product 4,Home & Garden,Brand4,451.0,5,2255.0,CUST0064,Regular,Europe,Berlin,Credit Card,Express
+2024-12-20,ORD202412200876,PRODHOME076,Home & Garden Product 7,Home & Garden,Brand2,112.71,2,225.42,CUST0077,Premium,Europe,Paris,PayPal,Next Day
+2024-12-21,ORD202412210277,PRODBOOK077,Books Product 8,Books,Brand3,386.07,5,1930.35,CUST0078,New,North America,New York,PayPal,Express
+2024-12-21,ORD202412210314,PRODBOOK014,Books Product 5,Books,Brand5,440.89,3,1322.67,CUST0115,New,Latin America,Santiago,Digital Wallet,Express
+2024-12-21,ORD202412210382,PRODCLOT082,Clothing Product 3,Clothing,Brand3,462.9,2,925.8,CUST0183,Regular,Europe,Amsterdam,Digital Wallet,Standard
+2024-12-21,ORD202412210556,PRODTOYS056,Toys Product 7,Toys,Brand2,346.09,4,1384.36,CUST0157,Premium,North America,Toronto,PayPal,Next Day
+2024-12-22,ORD202412220061,PRODHOME061,Home & Garden Product 2,Home & Garden,Brand2,37.47,3,112.41,CUST0062,Premium,North America,New York,PayPal,Next Day
+2024-12-22,ORD202412220241,PRODBOOK041,Books Product 2,Books,Brand2,76.37,4,305.48,CUST0042,Regular,North America,Los Angeles,PayPal,Standard
+2024-12-22,ORD202412220663,PRODELEC063,Electronics Product 4,Electronics,Brand4,201.72,3,605.16,CUST0064,Premium,Asia Pacific,Hong Kong,Credit Card,Express
+2024-12-22,ORD202412220990,PRODHOME090,Home & Garden Product 1,Home & Garden,Brand1,323.74,1,323.74,CUST0191,New,Latin America,Santiago,Bank Transfer,Standard
+2024-12-23,ORD202412230771,PRODELEC071,Electronics Product 2,Electronics,Brand2,11.55,4,46.2,CUST0172,Regular,Asia Pacific,Hong Kong,Credit Card,Standard
+2024-12-23,ORD202412230841,PRODCLOT041,Clothing Product 2,Clothing,Brand2,118.42,1,118.42,CUST0042,Regular,Asia Pacific,Sydney,Credit Card,Standard
+2024-12-24,ORD202412240377,PRODHOME077,Home & Garden Product 8,Home & Garden,Brand3,379.6,3,1138.8,CUST0178,Premium,Asia Pacific,Tokyo,Bank Transfer,Next Day
+2024-12-25,ORD202412250360,PRODELEC060,Electronics Product 1,Electronics,Brand1,301.41,1,301.41,CUST0161,New,Asia Pacific,Singapore,Digital Wallet,Standard
+2024-12-25,ORD202412250970,PRODSPOR070,Sports Product 1,Sports,Brand1,344.32,2,688.64,CUST0171,Regular,Europe,Amsterdam,Digital Wallet,Standard
+2024-12-26,ORD202412260979,PRODTOYS079,Toys Product 10,Toys,Brand5,396.99,5,1984.95,CUST0180,New,North America,Los Angeles,Credit Card,Express
+2024-12-27,ORD202412270086,PRODHOME086,Home & Garden Product 7,Home & Garden,Brand2,382.8,3,1148.4,CUST0087,Regular,Europe,Berlin,Bank Transfer,Express
+2024-12-28,ORD202412280091,PRODCLOT091,Clothing Product 2,Clothing,Brand2,300.74,1,300.74,CUST0092,Premium,Europe,London,Credit Card,Next Day
+2024-12-28,ORD202412280688,PRODHOME088,Home & Garden Product 9,Home & Garden,Brand4,24.25,3,72.75,CUST0089,Regular,North America,New York,Credit Card,Standard
+2024-12-29,ORD202412290024,PRODCLOT024,Clothing Product 5,Clothing,Brand5,189.26,2,378.52,CUST0025,Premium,Europe,Paris,Credit Card,Standard
+2024-12-29,ORD202412290107,PRODELEC007,Electronics Product 8,Electronics,Brand3,314.41,4,1257.64,CUST0108,New,Europe,Paris,Digital Wallet,Next Day
+2024-12-29,ORD202412290978,PRODCLOT078,Clothing Product 9,Clothing,Brand4,268.83,2,537.66,CUST0179,Premium,Europe,Paris,Credit Card,Express
+2024-12-30,ORD202412300154,PRODBOOK054,Books Product 5,Books,Brand5,162.11,1,162.11,CUST0155,New,Asia Pacific,Sydney,Digital Wallet,Express
+2024-12-30,ORD202412300659,PRODSPOR059,Sports Product 10,Sports,Brand5,255.85,1,255.85,CUST0060,Regular,Latin America,Santiago,Credit Card,Next Day
+2024-12-31,ORD202412310301,PRODBOOK001,Books Product 2,Books,Brand2,248.55,1,248.55,CUST0102,Regular,North America,Chicago,PayPal,Standard
