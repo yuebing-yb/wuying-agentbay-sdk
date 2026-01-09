@@ -283,6 +283,8 @@ class Client(OpenApiClient):
             body["NetworkId"] = request.network_id
         if not DaraCore.is_null(request.persistence_data_list_shrink):
             body["PersistenceDataList"] = request.persistence_data_list_shrink
+        if not DaraCore.is_null(request.volume_id):
+            body["VolumeId"] = request.volume_id
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
         if not DaraCore.is_null(request.vpc_resource):
@@ -340,6 +342,8 @@ class Client(OpenApiClient):
             body["NetworkId"] = request.network_id
         if not DaraCore.is_null(request.persistence_data_list_shrink):
             body["PersistenceDataList"] = request.persistence_data_list_shrink
+        if not DaraCore.is_null(request.volume_id):
+            body["VolumeId"] = request.volume_id
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
         if not DaraCore.is_null(request.vpc_resource):
