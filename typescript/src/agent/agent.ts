@@ -1,9 +1,9 @@
-<![CDATA[<![CDATA[import {ApiResponse} from '../types/api-response';
-import {log, logDebug} from '../utils/logger';
+import { ApiResponse } from '../types/api-response';
+import { log, logDebug } from '../utils/logger';
 import { z, ZodTypeAny } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
-const DefaultSchema = z.object({]]>
+const DefaultSchema = z.object({});
 /**
  * Result of task execution.
  */
