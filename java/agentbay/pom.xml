@@ -6,7 +6,7 @@
 
     <groupId>com.aliyun</groupId>
     <artifactId>agentbay-sdk</artifactId>
-    <version>0.0.8</version>
+    <version>0.14.0</version>
     <packaging>jar</packaging>
 
     <name>AgentBay Java SDK</name>
@@ -40,8 +40,8 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>central</id>
-            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+            <id>snapshots</id>
+            <url>http://mvnrepo.alibaba-inc.com/mvn/snapshots</url>
         </snapshotRepository>
         <repository>
             <id>central</id>
