@@ -7,14 +7,16 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
 ### Added
 
 #### ☕ Java SDK
-- **Initial Support**: Introduced comprehensive support for the Java SDK, enabling Java developers to build agentic applications.
+- **Formal Release**: Introduced comprehensive support for the Java SDK, enabling Java developers to build agentic applications.
+- **Four Major Environments**: Full support for Browser, Computer, Mobile, and CodeSpace environments.
 - **Core Capabilities**: Support for session management, file operations (including `delete_file`), and multi-region configuration.
 - **Code Execution**: Enabled `run_code` and `run_command` support within the Java SDK.
 - **Observability**: Integrated session metrics and standardized logging.
 
 #### 📱 Mobile Agent
-- **Multi-Language Support**: Extended Mobile Agent capabilities to Go and TypeScript SDKs.
-- **API Standardization**: Unified Mobile Agent APIs and task status values across Python, TypeScript, and Go.
+- **Formal Launch**: Introduced the Mobile Agent (Natural Language Task Execution) across Python, TypeScript, Go, and Java SDKs.
+- **Natural Language Control**: Support for executing mobile tasks using natural language via `execute_task`.
+- **ADB Connection**: Added support for retrieving ADB connection URLs via `get_adb_url`.
 
 #### 📊 Observability & Metrics
 - **Session Metrics**: Implemented unified session metrics collection across all SDKs (Python, TypeScript, Go, Java).
@@ -22,9 +24,9 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
 #### 🛠️ Core Enhancements
 - **CodeSpace Languages**: Added support for **R** and **Java** language execution in CodeSpace.
+- **Binary Files**: Added comprehensive support for binary file reading (`read_file`) across all SDKs.
 - **Session List Filtering**: Added `status` parameter to `agentbay.list()` for filtering sessions by status (RUNNING, PAUSED, etc.).
 - **Ergonomic Aliases**: Introduced API aliases to improve usability and success rates for LLM interactions.
-- **Binary Files**: Improved binary file reading support in Python and Go SDKs.
 
 ### Changed
 
