@@ -362,7 +362,7 @@ export class FileSystem {
   /**
    * Alias of writeFile().
    */
-  async write(path: string, content: string, mode: string = "overwrite"): Promise<BoolResult> {
+  async write(path: string, content: string, mode = "overwrite"): Promise<BoolResult> {
     return await this.writeFile(path, content, mode);
   }
 

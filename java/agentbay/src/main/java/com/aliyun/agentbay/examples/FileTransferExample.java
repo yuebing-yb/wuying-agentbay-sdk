@@ -90,7 +90,7 @@ public class FileTransferExample {
             DirectoryListResult listResult = session.getFileSystem().listDirectory(fileTransferContextPath);
             if (listResult.isSuccess()) {
                 boolean fileFound = false;
-                for (DirectoryEntry entry : listResult.getEntries()) {
+                for (com.aliyun.agentbay.model.DirectoryEntry entry : listResult.getEntries()) {
                     if ("upload_test.txt".equals(entry.getName())) {
                         fileFound = true;
                         break;

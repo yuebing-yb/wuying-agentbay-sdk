@@ -117,9 +117,9 @@ public class FileSystemExample {
             System.out.println("\nExample 5: Listing directory contents...");
             DirectoryListResult listResult = fs.listDirectory("/tmp");
             if (listResult.isSuccess()) {
-                List<DirectoryEntry> entries = listResult.getEntries();
+                List<com.aliyun.agentbay.model.DirectoryEntry> entries = listResult.getEntries();
                 System.out.println("Found " + entries.size() + " entries in /tmp:");
-                for (DirectoryEntry entry : entries) {
+                for (com.aliyun.agentbay.model.DirectoryEntry entry : entries) {
                     String entryType = entry.isDirectory() ? "Directory" : "File";
                     System.out.println("  - " + entry.getName() + " (" + entryType + ")");
                 }
