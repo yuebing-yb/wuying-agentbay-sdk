@@ -1,5 +1,5 @@
 import {ApiResponse} from '../types/api-response';
-import {log, logDebug} from '../utils/logger';
+import {logDebug} from '../utils/logger';
 
 /**
  * Result of task execution.
@@ -54,7 +54,7 @@ export interface McpToolResult {
 export interface McpSession {
   getAPIKey(): string;
   getSessionId(): string;
-  callMcpTool(toolName: string, args: any): Promise<McpToolResult>;
+  callMcpTool(toolName: string, args: Record<string, any>): Promise<McpToolResult>;
 }
 
 /**
@@ -113,7 +113,7 @@ abstract class BaseTaskAgent {
       }
 
       // Parse task ID from response
-      let content: any;
+      let content: Record<string, any>;
       try {
         content = JSON.parse(result.data);
       } catch (err) {
@@ -267,7 +267,7 @@ abstract class BaseTaskAgent {
           taskStatus: 'failed',
         };
       }
-      let queryResult: any;
+      let queryResult: Record<string, any>;
       try {
         queryResult = JSON.parse(result.data);
         return {
@@ -314,7 +314,7 @@ abstract class BaseTaskAgent {
       const result = await this.session.callMcpTool(
           this.getToolName('terminate'), args);
 
-      let content: any;
+      let content: Record<string, any>;
       try {
         content = JSON.parse(result.data);
       } catch (err) {
@@ -453,7 +453,7 @@ export class MobileUseAgent extends BaseTaskAgent {
    */
   async executeTask(
       task: string,
-      maxSteps: number = 50): Promise<ExecutionResult> {
+      maxSteps = 50): Promise<ExecutionResult> {
     const args = {
       task,
       max_steps: maxSteps,
@@ -475,7 +475,7 @@ export class MobileUseAgent extends BaseTaskAgent {
         };
       }
 
-          let content: any;
+          let content: Record<string, any>;
           try {
             content = JSON.parse(result.data);
           } catch (err) {
@@ -552,7 +552,7 @@ export class MobileUseAgent extends BaseTaskAgent {
   async executeTaskAndWait(
       task: string,
       timeout: number,
-      maxSteps: number = 50): Promise<ExecutionResult> {
+      maxSteps = 50): Promise<ExecutionResult> {
     const args = {
       task,
       max_steps: maxSteps,
@@ -573,7 +573,7 @@ export class MobileUseAgent extends BaseTaskAgent {
       };
     }
 
-          let content: any;
+          let content: Record<string, any>;
           try {
             content = JSON.parse(result.data);
           } catch (err) {
@@ -732,7 +732,7 @@ export class MobileUseAgent extends BaseTaskAgent {
           taskStatus: 'failed',
         };
       }
-      let queryResult: any;
+      let queryResult: Record<string, any>;
       try {
         queryResult = JSON.parse(result.data);
         const contentTaskId = queryResult.taskId || queryResult.task_id || taskId;
@@ -785,7 +785,7 @@ export class MobileUseAgent extends BaseTaskAgent {
       const result = await this.session.callMcpTool(
           this.getToolName('terminate'), args);
 
-      let content: any;
+      let content: Record<string, any>;
       try {
         content = JSON.parse(result.data);
       } catch (err) {
