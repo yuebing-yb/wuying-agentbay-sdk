@@ -12,12 +12,15 @@ in the AgentBay cloud environment.
 
 ### Properties
 
+- [betaNetworkId](#betanetworkid)
 - [browserContext](#browsercontext)
 - [enableBrowserReplay](#enablebrowserreplay)
 - [extraConfigs](#extraconfigs)
 - [framework](#framework)
 - [imageId](#imageid)
 - [policyId](#policyid)
+- [volume](#volume)
+- [volumeId](#volumeid)
 
 ### Methods
 
@@ -25,6 +28,7 @@ in the AgentBay cloud environment.
 - [addContextSyncConfig](#addcontextsyncconfig)
 - [fromJSON](#fromjson)
 - [toJSON](#tojson)
+- [withBetaNetworkId](#withbetanetworkid)
 - [withBrowserContext](#withbrowsercontext)
 - [withContextSync](#withcontextsync)
 - [withEnableBrowserReplay](#withenablebrowserreplay)
@@ -35,6 +39,8 @@ in the AgentBay cloud environment.
 - [withIsVpc](#withisvpc)
 - [withLabels](#withlabels)
 - [withPolicyId](#withpolicyid)
+- [withVolume](#withvolume)
+- [withVolumeId](#withvolumeid)
 
 ## Properties
 
@@ -44,6 +50,18 @@ isVpc: `boolean`
 labels: `Record`<`string`, `string`>
 ```
 
+
+### betaNetworkId
+
+• `Optional` **betaNetworkId**: `string`
+
+Beta network id to bind this session to.
+
+#### Implementation of
+
+`CreateSessionParamsConfig`.`betaNetworkId`
+
+___
 
 ### browserContext
 
@@ -133,6 +151,30 @@ Policy id to apply when creating the session.
 
 `CreateSessionParamsConfig`.`policyId`
 
+___
+
+### volume
+
+• `Optional` **volume**: `string` \| ``Volume``
+
+Beta: volume object or volume id string to mount during session creation.
+
+#### Implementation of
+
+`CreateSessionParamsConfig`.`volume`
+
+___
+
+### volumeId
+
+• `Optional` **volumeId**: `string`
+
+Beta: explicit volume id to mount during session creation.
+
+#### Implementation of
+
+`CreateSessionParamsConfig`.`volumeId`
+
 ## Methods
 
 ### addContextSync
@@ -200,6 +242,24 @@ Convert to plain object for JSON serialization
 #### Returns
 
 ``CreateSessionParamsConfig``
+
+___
+
+### withBetaNetworkId
+
+▸ **withBetaNetworkId**(`betaNetworkId`): [`CreateSessionParams`](session-params.md)
+
+WithBetaNetworkId sets the beta network id for the session parameters and returns the updated parameters.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `betaNetworkId` | `string` |
+
+#### Returns
+
+[`CreateSessionParams`](session-params.md)
 
 ___
 
@@ -376,6 +436,42 @@ WithPolicyId sets the policy id for the session parameters and returns the updat
 | Name | Type |
 | :------ | :------ |
 | `policyId` | `string` |
+
+#### Returns
+
+[`CreateSessionParams`](session-params.md)
+
+___
+
+### withVolume
+
+▸ **withVolume**(`volume`): [`CreateSessionParams`](session-params.md)
+
+WithVolume sets the volume (or volume id string) for mounting when creating the session (beta).
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `volume` | `string` \| ``Volume`` |
+
+#### Returns
+
+[`CreateSessionParams`](session-params.md)
+
+___
+
+### withVolumeId
+
+▸ **withVolumeId**(`volumeId`): [`CreateSessionParams`](session-params.md)
+
+WithVolumeId sets the volume id for mounting when creating the session (beta).
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `volumeId` | `string` |
 
 #### Returns
 

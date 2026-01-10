@@ -53,60 +53,60 @@ func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schem
 Execute a task described in human language on a browser without waiting for completion
 (non-blocking).
 
+This is a fire-and-return interface that immediately provides a task ID. Call get_task_status to
+check the task status. You can control the timeout of the task execution in your own code by setting
+the frequency of calling get_task_status.
 
-This is a fire-and-return interface that immediately provides a task ID.
+Args: task: Task description in human language. use_vision: Whether to use vision to performe the
+task. output_schema: The schema of the structured output.
 
-Call get_task_status to check the task status. You can control the timeout
-
-of the task execution in your own code by setting the frequency of calling
-
-get_task_status.
-
-
-Args:
-
-task: Task description in human language.
-
-use_vision: Whether to use vision to performe the task.
-
-output_schema: The schema of the structured output.
+Returns: ExecutionResult: Result object containing success status, task ID,
 
 
-Returns:
+task status, and error message if any.
 
-ExecutionResult: Result object containing success status, task ID,
-
-	task status, and error message if any.
+Example: ```typescript client, err := agentbay.NewAgentBay(apiKey)
 
 
-**Example:**
-
-```go
-```typescript
-client, err := agentbay.NewAgentBay(apiKey)
 if err != nil {
+
 	fmt.Printf("Error initializing AgentBay client: %v\n", err)
+
 	return
+
 }
-sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
-sessionResult, err := client.Create(sessionParams)
+
+sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest") sessionResult,
+err := client.Create(sessionParams)
+
+
 if err != nil {
+
 	fmt.Printf("Error creating session: %v\n", err)
+
 	return
+
 }
+
 session := sessionResult.Session
+
+
 type OutputSchema struct {
+
 	City string `json:"City" jsonschema:"required"`
+
 	Weather string `json:"Weather" jsonschema:"required"`
+
 }
-result = await session.Agent.Browser.ExecuteTask(task="Query the weather in Shanghai",false, &OutputSchema{})
-fmt.Printf(
-	f"Task ID: {result.task_id}, Status: {result.task_status}")
-status = await session.Agent.Browser.GetTaskStatus(result.task_id)
-fmt.Printf(f"Task status: {status.task_status}")
-await session.delete()
-```
-```
+
+result = await session.Agent.Browser.ExecuteTask(task="Query the weather in Shanghai",false,
+&OutputSchema{}) fmt.Printf(
+
+
+f"Task ID: {result.task_id}, Status: {result.task_status}")
+
+status = await session.Agent.Browser.GetTaskStatus(result.task_id) fmt.Printf(f"Task status:
+{status.task_status}") await session.delete() ```
 
 ### ExecuteTaskAndWait
 
@@ -116,56 +116,65 @@ func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_visio
 
 Execute a task described in human language on a browser synchronously.
 
-
-This is a synchronous interface that blocks until the task is completed or
-
-an error occurs, or timeout happens. The default polling interval is 3 seconds.
-
+This is a synchronous interface that blocks until the task is completed or an error occurs,
+or timeout happens. The default polling interval is 3 seconds.
 
 Args:
 
-	task: Task description in human language.
 
-	timeout: Maximum time to wait for task completion in seconds.
+task: Task description in human language.
 
-		Used to control how long to wait for task completion.
+timeout: Maximum time to wait for task completion in seconds.
 
-	use_vision: Whether to use vision to performe the task.
+	Used to control how long to wait for task completion.
 
-	output_schema: The schema of the structured output.
+use_vision: Whether to use vision to performe the task.
 
+output_schema: The schema of the structured output.
 
 Returns:
 
-	ExecutionResult: Result object containing success status, task ID,
 
-		task status, and error message if any.
+ExecutionResult: Result object containing success status, task ID,
+
+	task status, and error message if any.
+
+Example: ```typescript client, err := agentbay.NewAgentBay(apiKey)
 
 
-**Example:**
-
-```go
-```typescript
-client, err := agentbay.NewAgentBay(apiKey)
 if err != nil {
+
 	fmt.Printf("Error initializing AgentBay client: %v\n", err)
+
 	return
+
 }
-sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
-sessionResult, err := client.Create(sessionParams)
+
+sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest") sessionResult,
+err := client.Create(sessionParams)
+
+
 if err != nil {
+
 	fmt.Printf("Error creating session: %v\n", err)
+
 	return
+
 }
+
 session := sessionResult.Session
+
+
 type OutputSchema struct {
+
 	City string `json:"City" jsonschema:"required"`
+
 	Weather string `json:"Weather" jsonschema:"required"`
+
 }
-result = await session.Agent.Browser.ExecuteTaskAndWait(task="Query the weather in Shanghai",180, false, &OutputSchema{})
-fmt.Printf("Task status: %s\n", executionResult.TaskStatus)
-```
-```
+
+result = await session.Agent.Browser.ExecuteTaskAndWait(task="Query the weather in Shanghai",180,
+false, &OutputSchema{}) fmt.Printf("Task status: %s\n", executionResult.TaskStatus) ```
 
 ### GetTaskStatus
 

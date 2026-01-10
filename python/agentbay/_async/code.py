@@ -267,6 +267,31 @@ class AsyncCode(AsyncBaseService):
                 await result.session.delete()
         """
         try:
+            def _normalize_tool_data_to_response_data(data: Any) -> Dict[str, Any]:
+                """
+                Normalize tool output into a dict shape consumable by _parse_response_body().
+
+                Session.call_mcp_tool may return either:
+                - dict (already structured response data), or
+                - str (plain text, or JSON string with rich output).
+                """
+                if isinstance(data, dict):
+                    return data
+
+                if isinstance(data, str):
+                    text = data
+                    stripped = text.strip()
+                    if stripped:
+                        try:
+                            parsed = json.loads(stripped)
+                            if isinstance(parsed, dict):
+                                return parsed
+                        except json.JSONDecodeError:
+                            pass
+                    return {"content": [{"text": text}]}
+
+                return {"content": [{"text": "" if data is None else str(data)}]}
+
             # Normalize and validate language (case-insensitive)
             raw_language = "" if language is None else str(language)
             normalized_language = raw_language.strip().lower()
@@ -297,27 +322,29 @@ class AsyncCode(AsyncBaseService):
             result = await self._call_mcp_tool("run_code", args)
             _logger.debug(f"Run code response: {result}")
 
-            if result.success:
-                if isinstance(result.data, EnhancedCodeExecutionResult):
-                    result.data.request_id = result.request_id
-                    # If success is not set by parse (e.g. legacy path sets it to True), keep it
-                    # Logic in _parse_response_body sets success based on data
-                    return result.data
-                else:
-                    # Should not happen if _parse_response_body works correctly for both cases,
-                    # but as a safety net:
-                    return EnhancedCodeExecutionResult(
-                        request_id=result.request_id,
-                        success=True,
-                        results=[ExecutionResult(text=str(result.data), is_main_result=True)],
-                        logs=ExecutionLogs(stdout=[str(result.data)])
-                    )
-            else:
+            if not result.success:
                 return EnhancedCodeExecutionResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=result.error_message or "Failed to run code",
                 )
+
+            if isinstance(result.data, EnhancedCodeExecutionResult):
+                result.data.request_id = result.request_id
+                return result.data
+
+            response_data = _normalize_tool_data_to_response_data(result.data)
+            parsed = self._parse_response_body({"Data": response_data})
+            if isinstance(parsed, EnhancedCodeExecutionResult):
+                parsed.request_id = result.request_id
+                return parsed
+
+            return EnhancedCodeExecutionResult(
+                request_id=result.request_id,
+                success=True,
+                results=[ExecutionResult(text=str(result.data), is_main_result=True)],
+                logs=ExecutionLogs(stdout=[str(result.data)]),
+            )
         except AgentBayError as e:
             # Handle AgentBayError specifically - these are SDK-level errors
             handled_error = self._handle_error(e)

@@ -95,6 +95,38 @@ Get basic session status asynchronously.
 
     SessionStatusResult: Result containing session status only.
 
+### get\_token
+
+```python
+def get_token() -> str
+```
+
+Get the token associated with this session.
+
+### get\_link\_url
+
+```python
+def get_link_url() -> str
+```
+
+Get the LinkUrl associated with this session.
+
+### getToken
+
+```python
+def getToken() -> str
+```
+
+Alias of get_token().
+
+### getLinkUrl
+
+```python
+def getLinkUrl() -> str
+```
+
+Alias of get_link_url().
+
 ### delete
 
 ```python

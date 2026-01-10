@@ -29,7 +29,7 @@ class DummyAgentBay:
         return self.client
 
 
-class TestSessionGetStatus(unittest.TestCase):
+class TestSessionGetStatus(unittest.IsolatedAsyncioTestCase):
     @pytest.mark.asyncio
     async def test_get_status_calls_async_client_method(self):
         """

@@ -35,7 +35,6 @@ def mobile_agent_session(agent_bay):
     time.sleep(3)
     params = CreateSessionParams(
         image_id="mobile_latest",
-        image_id="mobile_latest",
     )
     session_result = agent_bay.create(params)
     if not session_result.success or not session_result.session:
