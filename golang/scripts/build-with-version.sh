@@ -31,7 +31,7 @@ if git rev-parse --git-dir > /dev/null 2>&1; then
     fi
 else
     # Not in a git repository, use default
-    VERSION="0.14.0"
+    VERSION="0.15.0"
     echo -e "${YELLOW}⚠${NC} Not in git repository, using default version: ${YELLOW}${VERSION}${NC}"
 fi
 
