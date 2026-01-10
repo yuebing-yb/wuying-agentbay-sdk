@@ -440,8 +440,13 @@ print("Hello"
 """.strip()
 
         bad_result = code.run_code(bad_python_code, "python")
-        assert bad_result.success
-        assert bad_result.error_message is not None
+        assert not bad_result.success
+        assert bad_result.error_message is not None and bad_result.error_message != ""
+        assert (
+            "incomplete input" in bad_result.error_message
+            or "SyntaxError" in bad_result.error_message
+            or "traceId" in bad_result.error_message
+        )
 
         # Test code with runtime error
         runtime_error_code = """
@@ -450,8 +455,12 @@ print(undefined_variable)
 """.strip()
 
         runtime_result = code.run_code(runtime_error_code, "python")
-        assert runtime_result.success
-        assert "name 'nonexistent_variable' is not defined" in runtime_result.logs.stderr
+        assert not runtime_result.success
+        stderr_text = "".join(runtime_result.logs.stderr) if runtime_result.logs.stderr else ""
+        assert (
+            "name 'nonexistent_variable' is not defined" in stderr_text
+            or "name 'nonexistent_variable' is not defined" in runtime_result.error_message
+        )
     finally:
         # Cleanup session
         session.delete()
