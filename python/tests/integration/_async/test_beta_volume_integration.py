@@ -320,7 +320,7 @@ async def test_beta_volume_multiple_sessions_same_volume():
         await session.delete()
         session = None
 
-        await asyncio.sleep(20)
+        await asyncio.sleep(5)
 
         params2 = CreateSessionParams(image_id=IMAGE_ID, volume=volume_id)
         result2 = await agent_bay.create(params2)
@@ -338,7 +338,7 @@ async def test_beta_volume_multiple_sessions_same_volume():
         await session.delete()
         session = None
 
-        await asyncio.sleep(20)
+        await asyncio.sleep(5)
 
         params3 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
         result3 = await agent_bay.create(params3)
