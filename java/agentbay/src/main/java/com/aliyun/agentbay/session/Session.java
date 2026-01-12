@@ -520,9 +520,11 @@ public class Session {
                             com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
                             tool.setName((String) toolMap.get("name"));
                             tool.setDescription((String) toolMap.get("description"));
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> inputSchema = (Map<String, Object>) toolMap.get("inputSchema");
+                            
+                            // Handle inputSchema - it can be a Map, String, or null
+                            Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
                             tool.setInputSchema(inputSchema);
+                            
                             tool.setServer((String) toolMap.get("server"));
                             tool.setTool((String) toolMap.get("tool"));
                             tools.add(tool);
@@ -533,9 +535,11 @@ public class Session {
                             com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
                             tool.setName((String) toolMap.get("name"));
                             tool.setDescription((String) toolMap.get("description"));
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> inputSchema = (Map<String, Object>) toolMap.get("inputSchema");
+                            
+                            // Handle inputSchema - it can be a Map, String, or null
+                            Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
                             tool.setInputSchema(inputSchema);
+                            
                             tool.setServer((String) toolMap.get("server"));
                             tool.setTool((String) toolMap.get("tool"));
                             tools.add(tool);
@@ -731,6 +735,45 @@ public class Session {
     }
 
     /**
+     * Helper method to parse inputSchema which can be a Map, String, or null
+     *
+     * @param inputSchemaObj The inputSchema object from the tool data
+     * @return A Map representing the inputSchema, or an empty Map if parsing fails
+     */
+    private Map<String, Object> parseInputSchema(Object inputSchemaObj) {
+        if (inputSchemaObj == null) {
+            return new java.util.HashMap<>();
+        }
+        
+        // If it's already a Map, return it
+        if (inputSchemaObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> schemaMap = (Map<String, Object>) inputSchemaObj;
+            return schemaMap;
+        }
+        
+        // If it's a String, try to parse it as JSON
+        if (inputSchemaObj instanceof String) {
+            String schemaStr = (String) inputSchemaObj;
+            if (schemaStr.isEmpty()) {
+                return new java.util.HashMap<>();
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> schemaMap = objectMapper.readValue(schemaStr, Map.class);
+                return schemaMap;
+            } catch (JsonProcessingException e) {
+                logger.warn("Failed to parse inputSchema string as JSON: {}", schemaStr, e);
+                return new java.util.HashMap<>();
+            }
+        }
+        
+        // For any other type, return empty map
+        logger.warn("Unexpected inputSchema type: {}", inputSchemaObj.getClass().getName());
+        return new java.util.HashMap<>();
+    }
+
+    /**
      * Update MCP tools for this session
      *
      */
@@ -749,9 +792,11 @@ public class Session {
                             com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
                             tool.setName((String) toolMap.get("name"));
                             tool.setDescription((String) toolMap.get("description"));
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> inputSchema = (Map<String, Object>) toolMap.get("inputSchema");
+                            
+                            // Handle inputSchema - it can be a Map, String, or null
+                            Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
                             tool.setInputSchema(inputSchema);
+                            
                             tool.setServer((String) toolMap.get("server"));
                             tool.setTool((String) toolMap.get("tool"));
                             tools.add(tool);
@@ -762,9 +807,11 @@ public class Session {
                             com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
                             tool.setName((String) toolMap.get("name"));
                             tool.setDescription((String) toolMap.get("description"));
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> inputSchema = (Map<String, Object>) toolMap.get("inputSchema");
+                            
+                            // Handle inputSchema - it can be a Map, String, or null
+                            Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
                             tool.setInputSchema(inputSchema);
+                            
                             tool.setServer((String) toolMap.get("server"));
                             tool.setTool((String) toolMap.get("tool"));
                             tools.add(tool);

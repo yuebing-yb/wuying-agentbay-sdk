@@ -67,13 +67,6 @@ public class CodeExecutionExample {
             System.out.println("   Session ID: " + session.getSessionId());
             System.out.println("   Request ID: " + sessionResult.getRequestId());
 
-//            SessionInfoResult result = session.info();
-
-//            if (result.isSuccess()) {
-//                String desktopUrl = result.getSessionInfo().getResourceUrl();
-//                System.out.println("Session URL: " + desktopUrl);
-//            }
-//
             FileSystem fs = session.getFileSystem();
 //
 //            // ===== BASIC FILE OPERATIONS =====
@@ -130,11 +123,11 @@ public class CodeExecutionExample {
             }
 
             // Clean up - delete the session
-//            DeleteResult deleteResult = session.delete();
-//            if (!deleteResult.isSuccess()) {
-//                System.err.println("Failed to delete session: " + deleteResult.getErrorMessage());
-//            }
-//            System.out.println("   Session deleted successfully!");
+            DeleteResult deleteResult = session.delete();
+            if (!deleteResult.isSuccess()) {
+                System.err.println("Failed to delete session: " + deleteResult.getErrorMessage());
+            }
+            System.out.println("   Session deleted successfully!");
 
 
         } catch (SessionException e) {
@@ -157,15 +150,3 @@ public class CodeExecutionExample {
         return (value != null && !value.trim().isEmpty()) ? value : defaultValue;
     }
 }
-// mvn clean package -DskipTests
-
-//export AGENTBAY_API_KEY="your-api-key" (必填字段)
-//export AGENTBAY_REGION="cn-hangzhou"
-//export AGENTBAY_ENDPOINT="agentbay-pre.cn-hangzhou.aliyuncs.com"
-//export AGENTBAY_IMAGE_ID="imgc-0ab5takhgtk8fxpo4"
-//export AGENTBAY_TIMEOUT="90000"
-//export AGENTBAY_IS_VPC="true"
-//
-//# 运行
-//java -cp agentbay-0.0.29-with-dependencies.jar \
-//com.aliyun.agentbay.examples.CodeExecutionExample
