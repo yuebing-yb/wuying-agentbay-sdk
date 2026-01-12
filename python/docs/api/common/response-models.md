@@ -31,6 +31,18 @@ def get_request_id() -> str
 
 Returns the unique identifier for the API request.
 
+## BaseResult
+
+```python
+@dataclass
+class BaseResult(ApiResponse)
+```
+
+Base result model for new typed APIs.
+
+This is a lightweight dataclass wrapper around ApiResponse for APIs that
+prefer returning structured results instead of generic OperationResult.
+
 ## SessionPauseResult
 
 ```python

@@ -205,7 +205,8 @@ session.delete()
 ### get\_all\_ui\_elements
 
 ```python
-def get_all_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
+def get_all_ui_elements(timeout_ms: int = 2000,
+                        format: str = "json") -> UIElementListResult
 ```
 
 Retrieves all UI elements within the specified timeout.
@@ -213,6 +214,8 @@ Retrieves all UI elements within the specified timeout.
 **Arguments**:
 
 - `timeout_ms` _int, optional_ - Timeout in milliseconds. Defaults to 2000.
+- `format` _str, optional_ - Output format of the underlying MCP tool.
+  Supported values: "json", "xml". Defaults to "json".
   
 
 **Returns**:
@@ -347,6 +350,53 @@ result = session.mobile.screenshot()
 print(f"Screenshot URL: {result.data}")
 session.delete()
 ```
+
+### beta\_take\_screenshot
+
+```python
+def beta_take_screenshot()
+```
+
+Takes a screenshot of the mobile device (beta).
+
+This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+binary image data.
+
+**Returns**:
+
+    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+  
+
+**Raises**:
+
+    AgentBayError: If screenshot fails or response cannot be decoded.
+
+### beta\_take\_long\_screenshot
+
+```python
+def beta_take_long_screenshot(max_screens: int = 4,
+                              format: str = "png",
+                              quality: Optional[int] = None)
+```
+
+Takes a long screenshot (scroll + stitch) of the mobile device (beta).
+
+**Arguments**:
+
+    max_screens: Maximum number of screens to capture. Backend schema: 2..10.
+    format: The desired image format (e.g. "png", "jpeg").
+    quality: JPEG quality level (1..100). Only applicable when format is JPEG.
+  
+
+**Returns**:
+
+    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+  
+
+**Raises**:
+
+    AgentBayError: If screenshot fails or response cannot be decoded.
+    ValueError: If arguments are invalid.
 
 ### configure
 

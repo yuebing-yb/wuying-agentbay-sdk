@@ -511,6 +511,32 @@ session.delete()
 
 get_screen_size
 
+### beta\_take\_screenshot
+
+```python
+def beta_take_screenshot(format: str = "png") -> ScreenshotResult
+```
+
+Takes a screenshot of the Computer.
+
+This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+binary image data.
+
+**Arguments**:
+
+    format: The desired image format (default: "png"). Supported: "png", "jpeg", "jpg".
+  
+
+**Returns**:
+
+    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+  
+
+**Raises**:
+
+    AgentBayError: If screenshot fails or response cannot be decoded.
+    ValueError: If `format` is invalid.
+
 ### list\_root\_windows
 
 ```python

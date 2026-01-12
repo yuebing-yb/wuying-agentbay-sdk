@@ -122,7 +122,7 @@ adbResult := result.Session.Mobile.GetAdbUrl(string(adbPubKey))
 ### GetAllUIElements
 
 ```go
-func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult
+func (m *Mobile) GetAllUIElements(timeoutMs int, formats ...string) *UIElementsResult
 ```
 
 GetAllUIElements retrieves all UI elements within the specified timeout
@@ -488,6 +488,8 @@ UIElement represents a UI element structure
 type UIElementsResult struct {
 	models.ApiResponse
 	Elements	[]*UIElement	`json:"elements"`
+	Raw		string		`json:"raw"`
+	Format		string		`json:"format"`
 	ErrorMessage	string		`json:"error_message"`
 }
 ```

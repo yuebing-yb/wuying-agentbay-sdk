@@ -163,7 +163,7 @@ Retrieve all UI elements in the current screen hierarchy:
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
 
-result = session.mobile.get_all_ui_elements(timeout_ms=2000)
+result = session.mobile.get_all_ui_elements(timeout_ms=2000, format="json")
 if result.success:
     print(f"Found {len(result.elements)} UI elements")  # Output: Found 2172 UI elements
     for element in result.elements:
@@ -181,6 +181,19 @@ agent_bay.delete(session)
 
 **Parameters:**
 - `timeout_ms`: Timeout in milliseconds to wait for UI elements (default: 2000)
+- `format`: Output format of the underlying MCP tool. Supported values: `"json"`, `"xml"` (default: `"json"`)
+
+#### Get UI Elements as XML
+
+If you need the raw UI hierarchy XML instead of parsed elements:
+
+```python
+result = session.mobile.get_all_ui_elements(timeout_ms=10000, format="xml")
+if result.success:
+    print(result.raw[:200])  # Raw XML prefix
+else:
+    print(f"Failed: {result.error_message}")
+```
 
 ### Get Clickable UI Elements
 
@@ -229,6 +242,13 @@ else:
 
 agent_bay.delete(session)
 ```
+
+### Long Screenshot Supported Resolutions
+
+Long screenshot capture only supports the following screen resolutions:
+
+- **720p**: `720x1280`, `800x1280`
+- **1080p**: `1080x1920`, `1080x2160`, `1080x2280`, `1080x2340`, `1080x2400`
 
 <a id="best-practices"></a>
 ## 💡 Best Practices
