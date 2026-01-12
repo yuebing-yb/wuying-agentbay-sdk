@@ -450,10 +450,7 @@ public class FileSystem extends BaseService {
                 String directoryResponse = result.getData();
                 List<Map<String, Object>> entries = parseDirectoryListing(directoryResponse);
 
-                com.aliyun.agentbay.model.DirectoryListResult dirResult =
-                    new com.aliyun.agentbay.model.DirectoryListResult(result.getRequestId(), true, null, "");
-                dirResult.setEntries(entries);
-                return dirResult;
+                return new com.aliyun.agentbay.model.DirectoryListResult(result.getRequestId(), true, entries, "");
             } else {
                 return new com.aliyun.agentbay.model.DirectoryListResult(result.getRequestId(), false, null, result.getErrorMessage());
             }

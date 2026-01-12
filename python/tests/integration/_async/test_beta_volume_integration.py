@@ -1,3 +1,4 @@
+import asyncio
 import os
 import time
 
@@ -6,38 +7,356 @@ import pytest
 from agentbay import AsyncAgentBay, CreateSessionParams
 
 
-@pytest.mark.asyncio
-async def test_beta_volume_create_list_mount_and_delete():
+IMAGE_ID = os.getenv("AGENTBAY_VOLUME_TEST_IMAGE_ID") or "imgc-0ab5ta4mgqs15qxjf"
+# Default mount path aligns with MobileUse image integration in Go SDK.
+MOUNT_PATH = os.getenv("AGENTBAY_VOLUME_MOUNT_PATH") or "/data/local/tmp"
+
+
+def _require_api_key() -> str:
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         pytest.fail("AGENTBAY_API_KEY environment variable is not set")
+    return api_key
 
+
+async def _assert_volume_exists(
+    agent_bay: AsyncAgentBay,
+    *,
+    image_id: str,
+    volume_name: str,
+    volume_id: str,
+    retries: int = 6,
+    sleep_seconds: float = 2.0,
+) -> None:
+    """
+    Assert the volume exists in list results.
+
+    Note: This uses retries to tolerate eventual consistency in the backend.
+    """
+    for _ in range(retries):
+        list_result = await agent_bay.beta_volume.list(
+            image_id=image_id,
+            max_results=10,
+            volume_name=volume_name,
+        )
+        assert list_result.success, list_result.error_message
+        if any(v.id == volume_id for v in list_result.volumes):
+            return
+        await asyncio.sleep(sleep_seconds)
+    pytest.fail(f"Volume {volume_id} not found in list after {retries} retries")
+
+
+async def _assert_mount_writable(session, *, mount_path: str) -> None:
+    """
+    Assert the mount path exists and is writable by writing/reading a file.
+    """
+    tools = await session.list_mcp_tools(image_id=getattr(session, "image_id", None))
+    tool_names = {t.name for t in tools.tools}
+    assert "write_file" in tool_names, f"write_file tool is not available: {sorted(tool_names)}"
+    assert "read_file" in tool_names, f"read_file tool is not available: {sorted(tool_names)}"
+
+    probe_file = f"{mount_path}/agentbay_volume_probe.txt"
+    content = f"probe-{int(time.time() * 1000)}"
+    write_result = await session.file_system.write_file(probe_file, content, mode="overwrite")
+    assert write_result.success, write_result.error_message
+    read_result = await session.file_system.read_file(probe_file)
+    assert read_result.success, read_result.error_message
+    assert content in (read_result.content or ""), f"Probe content mismatch: {read_result.content!r}"
+
+
+@pytest.mark.asyncio
+async def test_beta_volume_new_user_write_data():
+    """
+    Case 1: Create a new volume, create session with volume, write/read data successfully,
+    then delete session and verify the volume still exists.
+    """
+    import asyncio
+
+    api_key = _require_api_key()
     agent_bay = AsyncAgentBay(api_key=api_key)
-    image_id = "imgc-0ab5ta4mgqs15qxjf"
-    volume_name = f"beta-volume-it-{int(time.time() * 1000)}"
 
-    vol_result = await agent_bay.beta_volume.create(name=volume_name, image_id=image_id)
+    volume_name = f"beta-volume-new-user-{int(time.time() * 1000)}"
+    vol_result = await agent_bay.beta_volume.create(name=volume_name, image_id=IMAGE_ID)
     assert vol_result.success, vol_result.error_message
     assert vol_result.volume is not None
     assert vol_result.volume.id
 
-    volume_id = vol_result.volume.id
-
+    volume = vol_result.volume
+    volume_id = volume.id
+    session = None
     try:
-        list_result = await agent_bay.beta_volume.list(
-            image_id=image_id, max_results=10, volume_name=volume_name
-        )
-        assert list_result.success, list_result.error_message
-        assert any(v.id == volume_id for v in list_result.volumes)
-
-        params = CreateSessionParams(image_id=image_id, volume=vol_result.volume)
+        params = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
         create_result = await agent_bay.create(params)
         assert create_result.success, create_result.error_message
         assert create_result.session is not None
         assert create_result.session.token
 
-        await create_result.session.delete()
+        session = create_result.session
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+
+        await session.delete()
+        session = None
+
+        await _assert_volume_exists(
+            agent_bay,
+            image_id=IMAGE_ID,
+            volume_name=volume_name,
+            volume_id=volume_id,
+        )
     finally:
+        if session is not None:
+            await session.delete()
+        del_result = await agent_bay.beta_volume.delete(volume_id=volume_id)
+        assert del_result.success, del_result.error_message
+
+
+@pytest.mark.asyncio
+async def test_beta_volume_returning_user_data_persistence():
+    """
+    Case 2: Write data in session-1, delete session-1, then create session-2 with the same
+    volume and verify the data persists.
+    """
+    import asyncio
+
+    api_key = _require_api_key()
+    agent_bay = AsyncAgentBay(api_key=api_key)
+
+    volume_name = f"beta-volume-returning-user-{int(time.time() * 1000)}"
+    vol_result = await agent_bay.beta_volume.create(name=volume_name, image_id=IMAGE_ID)
+    assert vol_result.success, vol_result.error_message
+    assert vol_result.volume is not None
+    assert vol_result.volume.id
+
+    volume = vol_result.volume
+    volume_id = volume.id
+    session = None
+    test_file = f"{MOUNT_PATH}/returning_user_test.txt"
+    test_content = f"Returning user content {int(time.time())}"
+    try:
+        params1 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        result1 = await agent_bay.create(params1)
+        assert result1.success, result1.error_message
+        session = result1.session
+        assert session is not None
+
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+        write_result = await session.file_system.write_file(
+            test_file, test_content, mode="overwrite"
+        )
+        assert write_result.success, write_result.error_message
+
+        await session.delete()
+        session = None
+        await asyncio.sleep(20)
+
+        params2 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        result2 = await agent_bay.create(params2)
+        assert result2.success, result2.error_message
+        session = result2.session
+        assert session is not None
+
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+        read_result = await session.file_system.read_file(test_file)
+        assert read_result.success, read_result.error_message
+        assert test_content in (read_result.content or ""), f"Expected {test_content!r}, got {read_result.content!r}"
+    finally:
+        if session is not None:
+            await session.delete()
+        del_result = await agent_bay.beta_volume.delete(volume_id=volume_id)
+        assert del_result.success, del_result.error_message
+
+
+@pytest.mark.asyncio
+async def test_beta_volume_not_destroyed_after_session_disconnect():
+    """
+    Case 3: After deleting the session, the volume should not be destroyed. Then create a new
+    session with the same volume and verify the data still exists.
+    """
+    import asyncio
+
+    api_key = _require_api_key()
+    agent_bay = AsyncAgentBay(api_key=api_key)
+
+    volume_name = f"beta-volume-disconnect-{int(time.time() * 1000)}"
+    vol_result = await agent_bay.beta_volume.create(name=volume_name, image_id=IMAGE_ID)
+    assert vol_result.success, vol_result.error_message
+    assert vol_result.volume is not None
+    assert vol_result.volume.id
+
+    volume = vol_result.volume
+    volume_id = volume.id
+    session = None
+    test_file = f"{MOUNT_PATH}/disconnect_test.txt"
+    test_content = f"Disconnect content {int(time.time())}"
+    try:
+        params1 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        result1 = await agent_bay.create(params1)
+        assert result1.success, result1.error_message
+        session = result1.session
+        assert session is not None
+
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+        write_result = await session.file_system.write_file(
+            test_file, test_content, mode="overwrite"
+        )
+        assert write_result.success, write_result.error_message
+
+        await session.delete()
+        session = None
+        await asyncio.sleep(20)
+
+        await _assert_volume_exists(
+            agent_bay,
+            image_id=IMAGE_ID,
+            volume_name=volume_name,
+            volume_id=volume_id,
+        )
+
+        params2 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        result2 = await agent_bay.create(params2)
+        assert result2.success, result2.error_message
+        session = result2.session
+        assert session is not None
+
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+        read_result = await session.file_system.read_file(test_file)
+        assert read_result.success, read_result.error_message
+        assert test_content in (read_result.content or ""), f"Expected {test_content!r}, got {read_result.content!r}"
+    finally:
+        if session is not None:
+            await session.delete()
+        del_result = await agent_bay.beta_volume.delete(volume_id=volume_id)
+        assert del_result.success, del_result.error_message
+
+
+@pytest.mark.asyncio
+async def test_beta_volume_create_list_mount_and_delete():
+    """
+    Case 4: Full lifecycle: create volume -> list -> create session with volume -> verify mount
+    -> delete session -> delete volume -> verify volume deleted.
+    """
+    api_key = _require_api_key()
+    agent_bay = AsyncAgentBay(api_key=api_key)
+    volume_name = f"beta-volume-lifecycle-{int(time.time() * 1000)}"
+
+    vol_result = await agent_bay.beta_volume.create(name=volume_name, image_id=IMAGE_ID)
+    assert vol_result.success, vol_result.error_message
+    assert vol_result.volume is not None
+    assert vol_result.volume.id
+
+    volume = vol_result.volume
+    volume_id = volume.id
+    session = None
+    try:
+        list_result = await agent_bay.beta_volume.list(
+            image_id=IMAGE_ID, max_results=10, volume_name=volume_name
+        )
+        assert list_result.success, list_result.error_message
+        assert any(v.id == volume_id for v in list_result.volumes)
+
+        params = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        create_result = await agent_bay.create(params)
+        assert create_result.success, create_result.error_message
+        assert create_result.session is not None
+        assert create_result.session.token
+
+        session = create_result.session
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+
+        await session.delete()
+        session = None
+
+        del_result = await agent_bay.beta_volume.delete(volume_id=volume_id)
+        assert del_result.success, del_result.error_message
+
+        list_result2 = await agent_bay.beta_volume.list(
+            image_id=IMAGE_ID, max_results=10, volume_name=volume_name
+        )
+        assert list_result2.success, list_result2.error_message
+        assert not any(v.id == volume_id for v in list_result2.volumes)
+    finally:
+        if session is not None:
+            await session.delete()
+        list_result = await agent_bay.beta_volume.list(
+            image_id=IMAGE_ID, max_results=10, volume_name=volume_name
+        )
+        if list_result.success and any(v.id == volume_id for v in list_result.volumes):
+            await agent_bay.beta_volume.delete(volume_id=volume_id)
+
+
+@pytest.mark.asyncio
+async def test_beta_volume_multiple_sessions_same_volume():
+    """
+    Case 5: Multiple sessions sequentially use the same volume and data persists across sessions.
+    """
+    import asyncio
+
+    api_key = _require_api_key()
+    agent_bay = AsyncAgentBay(api_key=api_key)
+
+    volume_name = f"beta-volume-multi-session-{int(time.time() * 1000)}"
+    vol_result = await agent_bay.beta_volume.create(name=volume_name, image_id=IMAGE_ID)
+    assert vol_result.success, vol_result.error_message
+    assert vol_result.volume is not None
+    assert vol_result.volume.id
+
+    volume = vol_result.volume
+    volume_id = volume.id
+    session = None
+    file_a = f"{MOUNT_PATH}/data_a.txt"
+    file_b = f"{MOUNT_PATH}/data_b.txt"
+    content_a = f"Data A {int(time.time())}"
+    content_b = f"Data B {int(time.time())}"
+    try:
+        params1 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        result1 = await agent_bay.create(params1)
+        assert result1.success, result1.error_message
+        session = result1.session
+        assert session is not None
+
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+        write_a = await session.file_system.write_file(file_a, content_a, mode="overwrite")
+        assert write_a.success, write_a.error_message
+        await session.delete()
+        session = None
+
+        await asyncio.sleep(5)
+
+        params2 = CreateSessionParams(image_id=IMAGE_ID, volume=volume_id)
+        result2 = await agent_bay.create(params2)
+        assert result2.success, result2.error_message
+        session = result2.session
+        assert session is not None
+
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+        read_a = await session.file_system.read_file(file_a)
+        assert read_a.success, read_a.error_message
+        assert content_a in (read_a.content or ""), f"Expected {content_a!r}, got {read_a.content!r}"
+
+        write_b = await session.file_system.write_file(file_b, content_b, mode="overwrite")
+        assert write_b.success, write_b.error_message
+        await session.delete()
+        session = None
+
+        await asyncio.sleep(5)
+
+        params3 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        result3 = await agent_bay.create(params3)
+        assert result3.success, result3.error_message
+        session = result3.session
+        assert session is not None
+
+        await _assert_mount_writable(session, mount_path=MOUNT_PATH)
+        read_a2 = await session.file_system.read_file(file_a)
+        assert read_a2.success, read_a2.error_message
+        assert content_a in (read_a2.content or ""), f"Expected {content_a!r}, got {read_a2.content!r}"
+
+        read_b = await session.file_system.read_file(file_b)
+        assert read_b.success, read_b.error_message
+        assert content_b in (read_b.content or ""), f"Expected {content_b!r}, got {read_b.content!r}"
+    finally:
+        if session is not None:
+            await session.delete()
         del_result = await agent_bay.beta_volume.delete(volume_id=volume_id)
         assert del_result.success, del_result.error_message
 

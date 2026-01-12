@@ -89,7 +89,7 @@ public class ContextService {
      * @param regionId The region ID for the request.
      * @return The ContextResult object containing the Context and request ID.
      */
-    public ContextResult get(String name, boolean create, String regionId) throws AgentBayException {
+    public ContextResult get(String name, boolean create, String regionId) {
         try {
             GetContextRequest request = new GetContextRequest();
             request.setName(name);
@@ -133,7 +133,8 @@ public class ContextService {
             );
 
         } catch (Exception e) {
-            throw new AgentBayException("Failed to get context " + name + ": " + e.getMessage(), e);
+            return new ContextResult("", false, "", null,
+                "Failed to get context " + name + ": " + e.getMessage());
         }
     }
 
@@ -144,7 +145,7 @@ public class ContextService {
      * @param create Whether to create the context if it doesn't exist.
      * @return The ContextResult object containing the Context and request ID.
      */
-    public ContextResult get(String name, boolean create) throws AgentBayException {
+    public ContextResult get(String name, boolean create) {
         return get(name, create, create ? agentBay.getRegionId() : null);
     }
 
@@ -154,7 +155,7 @@ public class ContextService {
      * @param name The name of the context to get.
      * @return The ContextResult object containing the Context and request ID.
      */
-    public ContextResult get(String name) throws AgentBayException {
+    public ContextResult get(String name) {
         return get(name, false, null);
     }
 
@@ -164,7 +165,7 @@ public class ContextService {
      * @param name The name for the new context.
      * @return The created ContextResult object with request ID.
      */
-    public ContextResult create(String name) throws AgentBayException {
+    public ContextResult create(String name) {
         return get(name, true);
     }
 

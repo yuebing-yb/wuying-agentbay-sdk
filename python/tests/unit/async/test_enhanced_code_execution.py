@@ -1,8 +1,8 @@
 import unittest
 import pytest
-from unittest.mock import AsyncMock, Mock, MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
-from agentbay import AsyncCode
+from agentbay import AsyncCode, McpToolResult
 from agentbay import (
     EnhancedCodeExecutionResult,
     CodeExecutionResult as ExecutionResult,
@@ -21,9 +21,7 @@ class TestEnhancedCodeExecution(unittest.IsolatedAsyncioTestCase):
         self.mock_session._get_api_key.return_value = "test-api-key"
         self.mock_session._get_session_id.return_value = "test-session-id"
         self.mock_session._is_vpc_enabled.return_value = False
-        
-        self.mock_client = AsyncMock()
-        self.mock_session._get_client.return_value = self.mock_client
+        self.mock_session.call_mcp_tool = AsyncMock()
         
         self.code = AsyncCode(self.mock_session)
 
@@ -112,10 +110,12 @@ class TestEnhancedCodeExecution(unittest.IsolatedAsyncioTestCase):
             },
             "RequestId": "test-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool_async.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         result = await self.code.run_code("print('Hello World'); 42", "python")
 
@@ -163,10 +163,12 @@ class TestEnhancedCodeExecution(unittest.IsolatedAsyncioTestCase):
             },
             "RequestId": "chart-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool_async.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = """
 import matplotlib.pyplot as plt
@@ -206,10 +208,12 @@ plt.show()
             },
             "RequestId": "dataframe-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool_async.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = """
 import pandas as pd
@@ -249,10 +253,12 @@ df.to_html()
             },
             "RequestId": "multi-output-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool_async.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = """
 from IPython.display import display, HTML
@@ -296,10 +302,12 @@ print('This is standard output')
             },
             "RequestId": "error-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool_async.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         result = await self.code.run_code("print(undefined_var)", "python")
 
@@ -329,10 +337,12 @@ print('This is standard output')
             },
             "RequestId": "json-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool_async.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = """
 import json
@@ -369,10 +379,12 @@ json.dumps(data)
             },
             "RequestId": "latex-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool_async.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = r"""
 from IPython.display import Latex
