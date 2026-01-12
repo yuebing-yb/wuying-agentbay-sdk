@@ -7,6 +7,7 @@ import com.aliyun.agentbay.session.Session;
 import com.aliyun.wuyingai20250506.models.*;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -150,6 +151,8 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertFalse(result.getElements().isEmpty());
+        assertEquals("json", result.getFormat());
+        assertEquals(jsonData, result.getRaw());
         verify(mockSession).callTool(eq("get_clickable_ui_elements"), any());
     }
     
@@ -166,7 +169,39 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertFalse(result.getElements().isEmpty());
-        verify(mockSession).callTool(eq("get_all_ui_elements"), any());
+        assertEquals("json", result.getFormat());
+        assertEquals(jsonData, result.getRaw());
+
+        ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(mockSession).callTool(eq("get_all_ui_elements"), argsCaptor.capture());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
+        assertEquals(2000, args.get("timeout_ms"));
+        assertEquals("json", args.get("format"));
+    }
+
+    @Test
+    public void testGetAllUiElementsXmlSuccess() throws Exception {
+        // Arrange
+        String xmlData = "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation=\"0\"></hierarchy>";
+        CallMcpToolResponse mockResponse = createMockResponse(true, xmlData, "test-xml-123");
+        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+
+        // Act
+        UIElementListResult result = mobile.getAllUiElements(5000, "xml");
+
+        // Assert
+        assertTrue(result.isSuccess());
+        assertEquals("xml", result.getFormat());
+        assertTrue(result.getRaw().startsWith("<?xml"));
+        assertTrue(result.getElements().isEmpty());
+
+        ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(mockSession).callTool(eq("get_all_ui_elements"), argsCaptor.capture());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
+        assertEquals(5000, args.get("timeout_ms"));
+        assertEquals("xml", args.get("format"));
     }
     
     // ==================== Application Management Tests ====================

@@ -92,6 +92,8 @@ type UIBounds struct {
 type UIElementsResult struct {
 	models.ApiResponse
 	Elements     []*UIElement `json:"elements"`
+	Raw          string       `json:"raw"`
+	Format       string       `json:"format"`
 	ErrorMessage string       `json:"error_message"`
 }
 
@@ -400,9 +402,20 @@ func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult {
 //	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
 //	defer result.Session.Delete()
 //	elementsResult := result.Session.Mobile.GetAllUIElements(5000)
-func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
+func (m *Mobile) GetAllUIElements(timeoutMs int, formats ...string) *UIElementsResult {
+	formatNorm := "json"
+	formatArg := ""
+	if len(formats) > 0 {
+		formatArg = formats[0]
+		formatNorm = strings.TrimSpace(strings.ToLower(formatArg))
+	}
+	if formatNorm == "" {
+		formatNorm = "json"
+	}
+
 	args := map[string]interface{}{
 		"timeout_ms": timeoutMs,
+		"format":     formatNorm,
 	}
 
 	result, err := m.Session.CallMcpTool("get_all_ui_elements", args)
@@ -411,6 +424,8 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
 			},
+			Raw:          "",
+			Format:       formatNorm,
 			ErrorMessage: fmt.Sprintf("failed to call get_all_ui_elements: %v", err),
 		}
 	}
@@ -420,7 +435,33 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 			ApiResponse: models.ApiResponse{
 				RequestID: result.RequestID,
 			},
+			Raw:          result.Data,
+			Format:       formatNorm,
 			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	if formatNorm == "xml" {
+		return &UIElementsResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			Elements:     []*UIElement{},
+			Raw:          result.Data,
+			Format:       "xml",
+			ErrorMessage: "",
+		}
+	}
+
+	if formatNorm != "json" {
+		return &UIElementsResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			Elements:     []*UIElement{},
+			Raw:          result.Data,
+			Format:       formatNorm,
+			ErrorMessage: fmt.Sprintf("unsupported UI elements format: %q. Supported values: \"json\", \"xml\".", formatArg),
 		}
 	}
 
@@ -431,6 +472,8 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 			ApiResponse: models.ApiResponse{
 				RequestID: result.RequestID,
 			},
+			Raw:          result.Data,
+			Format:       "json",
 			ErrorMessage: fmt.Sprintf("failed to parse UI elements: %v", err),
 		}
 	}
@@ -440,6 +483,8 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 			RequestID: result.RequestID,
 		},
 		Elements:     elements,
+		Raw:          result.Data,
+		Format:       "json",
 		ErrorMessage: result.ErrorMessage,
 	}
 }

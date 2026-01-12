@@ -223,6 +223,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     false,
                     new ArrayList<>(),
+                    result.getData() == null ? "" : result.getData(),
+                    "json",
                     result.getErrorMessage()
                 );
             }
@@ -234,6 +236,8 @@ public class Mobile extends BaseService {
                         result.getRequestId(),
                         true,
                         new ArrayList<>(),
+                        "",
+                        "json",
                         ""
                     );
                 }
@@ -247,6 +251,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     true,
                     elements,
+                    data,
+                    "json",
                     ""
                 );
             } catch (Exception e) {
@@ -254,6 +260,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     false,
                     new ArrayList<>(),
+                    result.getData() == null ? "" : result.getData(),
+                    "json",
                     "Failed to parse clickable UI elements data: " + e.getMessage()
                 );
             }
@@ -262,6 +270,8 @@ public class Mobile extends BaseService {
                 "",
                 false,
                 new ArrayList<>(),
+                "",
+                "json",
                 "Failed to get clickable UI elements: " + e.getMessage()
             );
         }
@@ -283,9 +293,30 @@ public class Mobile extends BaseService {
      * @return UIElementListResult containing UI elements and error message if any
      */
     public UIElementListResult getAllUiElements(int timeoutMs) {
+        return getAllUiElements(timeoutMs, "json");
+    }
+
+    /**
+     * Retrieves all UI elements within the specified timeout.
+     *
+     * Supported formats:
+     * - "json": parse and return elements
+     * - "xml": return raw XML and an empty elements list
+     *
+     * @param timeoutMs Timeout in milliseconds
+     * @param format Output format of the underlying MCP tool ("json" or "xml")
+     * @return UIElementListResult containing UI elements or raw XML
+     */
+    public UIElementListResult getAllUiElements(int timeoutMs, String format) {
         try {
+            String formatNorm = format == null ? "json" : format.trim().toLowerCase();
+            if (formatNorm.isEmpty()) {
+                formatNorm = "json";
+            }
+
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
+            args.put("format", formatNorm);
             OperationResult result = callMcpTool("get_all_ui_elements", args);
 
             if (!result.isSuccess()) {
@@ -293,6 +324,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     false,
                     new ArrayList<>(),
+                    result.getData() == null ? "" : result.getData(),
+                    formatNorm,
                     result.getErrorMessage()
                 );
             }
@@ -304,7 +337,31 @@ public class Mobile extends BaseService {
                         result.getRequestId(),
                         true,
                         new ArrayList<>(),
+                        "",
+                        formatNorm,
                         ""
+                    );
+                }
+
+                if ("xml".equals(formatNorm)) {
+                    return new UIElementListResult(
+                        result.getRequestId(),
+                        true,
+                        new ArrayList<>(),
+                        data,
+                        "xml",
+                        ""
+                    );
+                }
+
+                if (!"json".equals(formatNorm)) {
+                    return new UIElementListResult(
+                        result.getRequestId(),
+                        false,
+                        new ArrayList<>(),
+                        data,
+                        formatNorm,
+                        "Unsupported UI elements format: " + format + ". Supported values: 'json', 'xml'."
                     );
                 }
 
@@ -322,6 +379,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     true,
                     parsedElements,
+                    data,
+                    "json",
                     ""
                 );
             } catch (Exception e) {
@@ -329,6 +388,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     false,
                     new ArrayList<>(),
+                    result.getData() == null ? "" : result.getData(),
+                    formatNorm,
                     "Failed to parse UI elements data: " + e.getMessage()
                 );
             }
@@ -337,6 +398,8 @@ public class Mobile extends BaseService {
                 "",
                 false,
                 new ArrayList<>(),
+                "",
+                "json",
                 "Failed to get all UI elements: " + e.getMessage()
             );
         }

@@ -27,6 +27,8 @@ export interface UIElement {
 
 export interface UIElementsResult extends OperationResult {
   elements: UIElement[];
+  raw: string;
+  format: 'json' | 'xml';
 }
 
 export interface InstalledApp {
@@ -277,7 +279,9 @@ export class Mobile {
           success: false,
           requestId: result.requestId || '',
           errorMessage: result.errorMessage || 'Failed to get clickable UI elements',
-          elements: []
+          elements: [],
+          raw: result.data || '',
+          format: 'json'
         };
       }
 
@@ -286,7 +290,9 @@ export class Mobile {
           success: true,
           requestId: result.requestId || '',
           errorMessage: '',
-          elements: []
+          elements: [],
+          raw: '',
+          format: 'json'
         };
       }
 
@@ -298,14 +304,18 @@ export class Mobile {
           success: true,
           requestId: result.requestId || '',
           errorMessage: '',
-          elements: normalizedElements
+          elements: normalizedElements,
+          raw: result.data || '',
+          format: 'json'
         };
       } catch (parseError) {
         return {
           success: false,
           requestId: result.requestId || '',
           errorMessage: `Failed to parse UI elements: ${parseError}`,
-          elements: []
+          elements: [],
+          raw: result.data || '',
+          format: 'json'
         };
       }
     } catch (error) {
@@ -313,7 +323,9 @@ export class Mobile {
         success: false,
         requestId: '',
         errorMessage: `Failed to get clickable UI elements: ${error instanceof Error ? error.message : String(error)}`,
-        elements: []
+        elements: [],
+        raw: '',
+        format: 'json'
       };
     }
   }
@@ -321,8 +333,9 @@ export class Mobile {
   /**
    * Get all UI elements.
    */
-  async getAllUIElements(timeoutMs = 3000): Promise<UIElementsResult> {
-    const args = { timeout_ms: timeoutMs };
+  async getAllUIElements(timeoutMs = 3000, format: 'json' | 'xml' = 'json'): Promise<UIElementsResult> {
+    const formatNorm = ((format || 'json') as string).trim().toLowerCase() || 'json';
+    const args = { timeout_ms: timeoutMs, format: formatNorm };
     try {
       const result = await this.session.callMcpTool('get_all_ui_elements', args);
 
@@ -331,7 +344,9 @@ export class Mobile {
           success: false,
           requestId: result.requestId || '',
           errorMessage: result.errorMessage || 'Failed to get all UI elements',
-          elements: []
+          elements: [],
+          raw: result.data || '',
+          format: (formatNorm === 'xml' ? 'xml' : 'json')
         };
       }
 
@@ -340,7 +355,31 @@ export class Mobile {
           success: true,
           requestId: result.requestId || '',
           errorMessage: '',
-          elements: []
+          elements: [],
+          raw: '',
+          format: (formatNorm === 'xml' ? 'xml' : 'json')
+        };
+      }
+
+      if (formatNorm === 'xml') {
+        return {
+          success: true,
+          requestId: result.requestId || '',
+          errorMessage: '',
+          elements: [],
+          raw: result.data || '',
+          format: 'xml'
+        };
+      }
+
+      if (formatNorm !== 'json') {
+        return {
+          success: false,
+          requestId: result.requestId || '',
+          errorMessage: `Unsupported UI elements format: ${JSON.stringify(format)}. Supported values: "json", "xml".`,
+          elements: [],
+          raw: result.data || '',
+          format: 'json'
         };
       }
 
@@ -352,14 +391,18 @@ export class Mobile {
           success: true,
           requestId: result.requestId || '',
           errorMessage: '',
-          elements: normalizedElements
+          elements: normalizedElements,
+          raw: result.data || '',
+          format: 'json'
         };
       } catch (parseError) {
         return {
           success: false,
           requestId: result.requestId || '',
           errorMessage: `Failed to parse UI elements: ${parseError}`,
-          elements: []
+          elements: [],
+          raw: result.data || '',
+          format: 'json'
         };
       }
     } catch (error) {
@@ -367,7 +410,9 @@ export class Mobile {
         success: false,
         requestId: '',
         errorMessage: `Failed to get all UI elements: ${error instanceof Error ? error.message : String(error)}`,
-        elements: []
+        elements: [],
+        raw: '',
+        format: (formatNorm === 'xml' ? 'xml' : 'json')
       };
     }
   }

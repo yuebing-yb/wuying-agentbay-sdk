@@ -322,7 +322,7 @@ def test_beta_volume_multiple_sessions_same_volume():
         session.delete()
         session = None
 
-        time.sleep(20)
+        time.sleep(5)
 
         params2 = CreateSessionParams(image_id=IMAGE_ID, volume=volume_id)
         result2 = agent_bay.create(params2)
@@ -340,7 +340,7 @@ def test_beta_volume_multiple_sessions_same_volume():
         session.delete()
         session = None
 
-        time.sleep(20)
+        time.sleep(5)
 
         params3 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
         result3 = agent_bay.create(params3)

@@ -1341,7 +1341,10 @@ class AsyncSession:
 
             if is_error:
                 _log_operation_error(
-                    "CallMcpTool", f"Tool returned error: {text_content}", False
+                    "CallMcpTool",
+                    f"Tool returned error: {text_content}",
+                    False,
+                    request_id=request_id,
                 )
                 return McpToolResult(
                     request_id=request_id,

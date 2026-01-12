@@ -155,6 +155,43 @@ public class MobileIntegrationTest {
         assertNotNull("Elements list should not be null", result.getElements());
         System.out.println("Found " + result.getElements().size() + " UI elements");
     }
+
+    @Test
+    public void test08b_GetAllUiElementsXmlFormatContract() {
+        System.out.println("\nTest: Getting all UI elements in XML format...");
+
+        Session xmlSession = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("imgc-0ab5takhnlaixj11v");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            xmlSession = result.getSession();
+            Thread.sleep(15000);
+
+            UIElementListResult ui = xmlSession.mobile.getAllUiElements(10000, "xml");
+            assertTrue("Get all UI elements (xml) failed: " + ui.getErrorMessage(), ui.isSuccess());
+            assertEquals("xml", ui.getFormat());
+            assertNotNull(ui.getRaw());
+            assertTrue(ui.getRaw().trim().startsWith("<?xml"));
+            assertTrue(ui.getRaw().contains("<hierarchy"));
+            assertNotNull(ui.getElements());
+            assertTrue(ui.getElements().isEmpty());
+        } catch (Exception e) {
+            fail("XML format contract test failed: " + e.getMessage());
+        } finally {
+            if (xmlSession != null) {
+                try {
+                    agentBay.delete(xmlSession, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting XML session: " + e.getMessage());
+                }
+            }
+        }
+    }
     
     // ==================== Screenshot Operations Tests ====================
     

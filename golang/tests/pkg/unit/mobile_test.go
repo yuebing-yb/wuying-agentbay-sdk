@@ -1,6 +1,7 @@
 package agentbay_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/mobile"
@@ -260,6 +261,7 @@ func (suite *MobileTestSuite) TestGetAllUIElements_Success() {
 
 	suite.mockSession.On("CallMcpTool", "get_all_ui_elements", map[string]interface{}{
 		"timeout_ms": 3000,
+		"format":     "json",
 	}).Return(expectedResult, nil)
 
 	// Act
@@ -270,6 +272,33 @@ func (suite *MobileTestSuite) TestGetAllUIElements_Success() {
 	assert.Len(suite.T(), result.Elements, 1)
 	assert.Equal(suite.T(), "Label", result.Elements[0].Text)
 	assert.Equal(suite.T(), "TextView", result.Elements[0].ClassName)
+	assert.Equal(suite.T(), "json", result.Format)
+	assert.Contains(suite.T(), result.Raw, `"className"`)
+}
+
+func (suite *MobileTestSuite) TestGetAllUIElements_XMLFormatSuccess() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-all-elements-xml",
+		Data:         "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation=\"0\"></hierarchy>",
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "get_all_ui_elements", map[string]interface{}{
+		"timeout_ms": 3000,
+		"format":     "xml",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.mobile.GetAllUIElements(3000, "xml")
+
+	// Assert
+	assert.Equal(suite.T(), "test-all-elements-xml", result.RequestID)
+	assert.Equal(suite.T(), "xml", result.Format)
+	assert.True(suite.T(), strings.HasPrefix(result.Raw, "<?xml"))
+	assert.Equal(suite.T(), 0, len(result.Elements))
+	assert.Empty(suite.T(), result.ErrorMessage)
 }
 
 // Test GetInstalledApps functionality

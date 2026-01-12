@@ -45,6 +45,7 @@ from ._common.params.session_params import (
 )
 from ._common.models.response import (
     ApiResponse,
+    BaseResult,
     OperationResult,
     SessionResult,
     SessionListResult,
@@ -95,6 +96,8 @@ from ._sync.computer import (
     ProcessListResult,
     AppOperationResult,
 )
+from ._common.models.computer import ScreenshotMode
+from ._common.models.screenshot import ScreenshotResult
 from ._sync.mobile import Mobile
 from ._common.models.mobile import KeyCode, UIElementListResult
 from ._sync.mobile_simulate import MobileSimulateService
@@ -263,6 +266,7 @@ __all__ = [
     "ObserveOptions",
     # Browser Agent types END
     "ApiResponse",
+    "BaseResult",
     "OperationResult",
     "SessionResult",
     "SessionListResult",
@@ -294,6 +298,8 @@ __all__ = [
     # Computer/Mobile related
     "MouseButton",
     "ScrollDirection",
+    "ScreenshotMode",
+    "ScreenshotResult",
     "KeyCode",
     "InstalledAppListResult",
     "ProcessListResult",

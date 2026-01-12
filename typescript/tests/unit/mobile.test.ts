@@ -176,10 +176,38 @@ describe('Mobile', () => {
 
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_all_ui_elements', {
-        timeout_ms: 3000
+        timeout_ms: 3000,
+        format: 'json'
       });
+      expect(result.format).toBe('json');
+      expect(typeof result.raw).toBe('string');
+      expect(result.raw).toContain('android.widget.TextView');
       expect(result.elements).toHaveLength(1);
       expect(result.elements[0].className).toBe('android.widget.TextView');
+    });
+
+    test('getAllUIElements should support XML format and return raw', async () => {
+      // Arrange
+      const xml = "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation=\"0\"></hierarchy>";
+      const mockResult = {
+        success: true,
+        requestId: 'test-xml-123',
+        data: xml
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await mobile.getAllUIElements(3000, 'xml');
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_all_ui_elements', {
+        timeout_ms: 3000,
+        format: 'xml'
+      });
+      expect(result.success).toBe(true);
+      expect(result.format).toBe('xml');
+      expect(result.raw.startsWith('<?xml')).toBe(true);
+      expect(result.elements).toEqual([]);
     });
   });
 
