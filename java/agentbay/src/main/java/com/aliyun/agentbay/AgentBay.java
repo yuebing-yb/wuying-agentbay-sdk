@@ -522,6 +522,9 @@ public class AgentBay {
             SessionParams sessionParams = new SessionParams();
             sessionParams.setBrowserType(params.getBrowserType());
             Session session = new Session(result.getSessionId(), this, sessionParams);
+            if (params.getImageId() != null) {
+                session.setImageId(params.getImageId());
+            }
 
             // Set browser recording state (default to True if not explicitly set to False)
             session.setEnableBrowserReplay(params.getEnableBrowserReplay() != null ? params.getEnableBrowserReplay() : true);

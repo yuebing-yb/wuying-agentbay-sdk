@@ -54,6 +54,11 @@ export interface ScreenshotResult extends OperationResult {
   data: string; // Screenshot URL
 }
 
+export interface BetaScreenshotResult extends OperationResult {
+  data: Uint8Array;
+  format: string;
+}
+
 export interface AdbUrlResult extends OperationResult {
   data?: string; // ADB connection URL (e.g., "adb connect xx.xx.xx.xx:xxxxx")
   url?: string; // Alternative field name for compatibility
@@ -103,6 +108,155 @@ function normalizeUIElement(element: any): UIElement {
   }
 
   return element;
+}
+
+const PNG_MAGIC = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const JPEG_MAGIC = new Uint8Array([0xff, 0xd8, 0xff]);
+
+function normalizeImageFormat(format: string, defaultValue: string): string {
+  const f = String(format || "").trim().toLowerCase();
+  if (!f) {
+    return defaultValue;
+  }
+  if (f === "jpg") {
+    return "jpeg";
+  }
+  return f;
+}
+
+function stripDataUrlPrefix(b64: string): string {
+  const s = String(b64 || "").trim();
+  const idx = s.indexOf("base64,");
+  if (idx >= 0) {
+    return s.slice(idx + "base64,".length).trim();
+  }
+  return s;
+}
+
+function indexOfSubarray(haystack: Uint8Array, needle: Uint8Array, maxSearch: number): number {
+  if (needle.length === 0 || haystack.length < needle.length) {
+    return -1;
+  }
+  const limit = Math.min(haystack.length, Math.max(0, maxSearch));
+  for (let i = 0; i + needle.length <= limit; i++) {
+    let ok = true;
+    for (let j = 0; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function base64ToUint8Array(input: string): Uint8Array {
+  let s = stripDataUrlPrefix(input)
+    .replace(/[\r\n\t ]+/g, "")
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+  const mod = s.length % 4;
+  if (mod !== 0) {
+    s += "=".repeat(4 - mod);
+  }
+
+  if (typeof Buffer !== "undefined") {
+    return new Uint8Array(Buffer.from(s, "base64"));
+  }
+
+  const binary = atob(s);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    out[i] = binary.charCodeAt(i);
+  }
+  return out;
+}
+
+function decodeBase64Image(input: string, expectedFormat: string): { bytes: Uint8Array; format: string } {
+  const b64 = extractBase64FromMcpPayload(input);
+  const raw = base64ToUint8Array(b64);
+
+  // Some backends prepend non-image prefix; strip until magic bytes.
+  let b = raw;
+  const pngIdx = indexOfSubarray(b, PNG_MAGIC, 128);
+  if (pngIdx > 0) {
+    b = b.slice(pngIdx);
+  }
+  const jpgIdx = indexOfSubarray(b, JPEG_MAGIC, 128);
+  if (jpgIdx > 0) {
+    b = b.slice(jpgIdx);
+  }
+
+  const fmt =
+    indexOfSubarray(b, PNG_MAGIC, PNG_MAGIC.length) === 0
+      ? "png"
+      : indexOfSubarray(b, JPEG_MAGIC, JPEG_MAGIC.length) === 0
+        ? "jpeg"
+        : expectedFormat;
+
+  return { bytes: b, format: fmt };
+}
+
+function extractBase64FromMcpPayload(input: string): string {
+  const s = String(input || "").trim();
+  if (!(s.startsWith("{") || s.startsWith("["))) {
+    return s;
+  }
+  try {
+    const obj = JSON.parse(s);
+    const b64 = extractBase64FromAny(obj);
+    return b64 || s;
+  } catch {
+    return s;
+  }
+}
+
+function extractBase64FromAny(v: any): string {
+  if (!v) {
+    return "";
+  }
+  if (typeof v === "string") {
+    return v;
+  }
+  if (Array.isArray(v)) {
+    return v.length > 0 ? extractBase64FromAny(v[0]) : "";
+  }
+  if (typeof v === "object") {
+    if (typeof (v as any).data === "string" && (v as any).data) {
+      return (v as any).data;
+    }
+    const content = (v as any).content;
+    if (Array.isArray(content) && content.length > 0 && typeof content[0] === "object" && content[0]) {
+      const c0: any = content[0];
+      if (typeof c0.blob === "string" && c0.blob) {
+        return c0.blob;
+      }
+      if (typeof c0.data === "string" && c0.data) {
+        return c0.data;
+      }
+      if (typeof c0.text === "string" && c0.text) {
+        return c0.text;
+      }
+      if (c0.blob && typeof c0.blob === "object") {
+        if (typeof c0.blob.data === "string" && c0.blob.data) {
+          return c0.blob.data;
+        }
+      }
+      if (c0.image && typeof c0.image === "object" && typeof c0.image.data === "string" && c0.image.data) {
+        return c0.image.data;
+      }
+      if (c0.source && typeof c0.source === "object" && typeof c0.source.data === "string" && c0.source.data) {
+        return c0.source.data;
+      }
+    }
+    if ((v as any).result) {
+      return extractBase64FromAny((v as any).result);
+    }
+  }
+  return "";
 }
 
 export class Mobile {
@@ -616,6 +770,126 @@ export class Mobile {
         requestId: '',
         errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
         data: ''
+      };
+    }
+  }
+
+  /**
+   * Capture the current screen as a PNG image and return raw image bytes.
+   *
+   * @returns Promise resolving to BetaScreenshotResult containing PNG bytes
+   */
+  async betaTakeScreenshot(): Promise<BetaScreenshotResult> {
+    try {
+      const result = await this.session.callMcpTool("screenshot", { format: "png" });
+      const requestId = result.requestId || "";
+      if (!result.success) {
+        return {
+          success: false,
+          requestId,
+          errorMessage: result.errorMessage || "Failed to take screenshot",
+          data: new Uint8Array(),
+          format: "png",
+        };
+      }
+      const decoded = decodeBase64Image(String(result.data || ""), "png");
+      return {
+        success: true,
+        requestId,
+        errorMessage: "",
+        data: decoded.bytes,
+        format: decoded.format || "png",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
+        data: new Uint8Array(),
+        format: "png",
+      };
+    }
+  }
+
+  /**
+   * Capture a long screenshot and return raw image bytes.
+   *
+   * @param maxScreens - Number of screens to stitch (range: [2, 10])
+   * @param format - Output image format ("png", "jpeg", or "jpg"). Default is "png"
+   * @param quality - JPEG quality (range: [1, 100])
+   */
+  async betaTakeLongScreenshot(
+    maxScreens = 4,
+    format: string = "png",
+    quality?: number
+  ): Promise<BetaScreenshotResult> {
+    const formatNorm = normalizeImageFormat(format, "png");
+    if (!Number.isInteger(maxScreens) || maxScreens < 2 || maxScreens > 10) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: "Invalid maxScreens: must be an integer in the range [2, 10]",
+        data: new Uint8Array(),
+        format: formatNorm,
+      };
+    }
+    if (formatNorm !== "png" && formatNorm !== "jpeg") {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
+        data: new Uint8Array(),
+        format: formatNorm,
+      };
+    }
+    if (quality !== undefined) {
+      if (!Number.isInteger(quality) || quality < 1 || quality > 100) {
+        return {
+          success: false,
+          requestId: "",
+          errorMessage: "Invalid quality: must be an integer in the range [1, 100]",
+          data: new Uint8Array(),
+          format: formatNorm,
+        };
+      }
+    }
+
+    try {
+      const args: Record<string, any> = {
+        max_screens: maxScreens,
+        format: formatNorm,
+      };
+      if (quality !== undefined) {
+        args.quality = quality;
+      }
+
+      const result = await this.session.callMcpTool("long_screenshot", args);
+      const requestId = result.requestId || "";
+      if (!result.success) {
+        return {
+          success: false,
+          requestId,
+          errorMessage: result.errorMessage || "Failed to take long screenshot",
+          data: new Uint8Array(),
+          format: formatNorm,
+        };
+      }
+
+      const decoded = decodeBase64Image(String(result.data || ""), formatNorm);
+      return {
+        success: true,
+        requestId,
+        errorMessage: "",
+        data: decoded.bytes,
+        format: decoded.format || formatNorm,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Failed to take long screenshot: ${error instanceof Error ? error.message : String(error)}`,
+        data: new Uint8Array(),
+        format: formatNorm,
       };
     }
   }

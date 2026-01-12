@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.*;
+import java.util.Base64;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -54,6 +55,16 @@ public class MobileTest {
         // Setup mock chain
         when(response.getBody()).thenReturn(body);
         when(body.getRequestId()).thenReturn(requestId);
+
+        // ResponseUtil.extractRequestId uses response.toMap() and reads body.RequestId.
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("RequestId", requestId);
+        Map<String, Object> map = new HashMap<>();
+        map.put("body", bodyMap);
+        try {
+            when(response.toMap()).thenReturn(map);
+        } catch (Exception e) {
+        }
         
         // Setup content structure - this is what parseResponseBody expects
         Map<String, Object> contentItem = new HashMap<>();
@@ -267,6 +278,72 @@ public class MobileTest {
         assertTrue(result.isSuccess());
         assertNotNull(result.getData());
         verify(mockSession).callTool(eq("system_screenshot"), any());
+    }
+
+    @Test
+    public void testBetaTakeScreenshotSuccessPng() throws Exception {
+        // Arrange
+        byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+        byte[] payload = new byte[pngHeader.length + 4];
+        System.arraycopy(pngHeader, 0, payload, 0, pngHeader.length);
+        System.arraycopy("test".getBytes(), 0, payload, pngHeader.length, 4);
+        String b64 = Base64.getEncoder().encodeToString(payload);
+
+        CallMcpToolResponse mockResponse = createMockResponse(true, b64, "beta-req-1");
+        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+
+        // Act
+        ScreenshotBytesResult result = mobile.betaTakeScreenshot();
+
+        // Assert
+        assertTrue(result.isSuccess());
+        assertEquals("beta-req-1", result.getRequestId());
+        assertEquals("png", result.getFormat());
+        assertNotNull(result.getData());
+        assertTrue("PNG magic bytes missing", result.getData().length >= 8);
+
+        ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(mockSession).callTool(eq("screenshot"), argsCaptor.capture());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
+        assertEquals("png", args.get("format"));
+    }
+
+    @Test
+    public void testBetaTakeLongScreenshotSuccessPng() throws Exception {
+        // Arrange
+        byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+        byte[] payload = new byte[pngHeader.length + 4];
+        System.arraycopy(pngHeader, 0, payload, 0, pngHeader.length);
+        System.arraycopy("long".getBytes(), 0, payload, pngHeader.length, 4);
+        String b64 = Base64.getEncoder().encodeToString(payload);
+
+        CallMcpToolResponse mockResponse = createMockResponse(true, b64, "beta-req-2");
+        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+
+        // Act
+        ScreenshotBytesResult result = mobile.betaTakeLongScreenshot(2, "png");
+
+        // Assert
+        assertTrue(result.isSuccess());
+        assertEquals("beta-req-2", result.getRequestId());
+        assertEquals("png", result.getFormat());
+        assertNotNull(result.getData());
+        assertTrue("PNG magic bytes missing", result.getData().length >= 8);
+
+        ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(mockSession).callTool(eq("long_screenshot"), argsCaptor.capture());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
+        assertEquals(2, args.get("max_screens"));
+        assertEquals("png", args.get("format"));
+    }
+
+    @Test
+    public void testBetaTakeLongScreenshotInvalidMaxScreens() {
+        ScreenshotBytesResult result = mobile.betaTakeLongScreenshot(1, "png");
+        assertFalse(result.isSuccess());
+        assertTrue(result.getErrorMessage().toLowerCase().contains("maxscreens"));
     }
     
     // ==================== ADB URL Tests ====================

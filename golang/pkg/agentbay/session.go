@@ -1764,10 +1764,14 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 		if content, exists := dataMap["content"]; exists {
 			if contentArray, isArray := content.([]interface{}); isArray && len(contentArray) > 0 {
 				if contentItem, isMap := contentArray[0].(map[string]interface{}); isMap {
-					if text, textExists := contentItem["text"]; textExists {
-						if textStr, isString := text.(string); isString {
-							return textStr
-						}
+					if v, ok := contentItem["text"].(string); ok && v != "" {
+						return v
+					}
+					if v, ok := contentItem["blob"].(string); ok && v != "" {
+						return v
+					}
+					if v, ok := contentItem["data"].(string); ok && v != "" {
+						return v
 					}
 				}
 			}
@@ -1779,10 +1783,14 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 				if content, contentExists := resultMap["content"]; contentExists {
 					if contentArray, isArray := content.([]interface{}); isArray && len(contentArray) > 0 {
 						if contentItem, isMap := contentArray[0].(map[string]interface{}); isMap {
-							if text, textExists := contentItem["text"]; textExists {
-								if textStr, isString := text.(string); isString {
-									return textStr
-								}
+							if v, ok := contentItem["text"].(string); ok && v != "" {
+								return v
+							}
+							if v, ok := contentItem["blob"].(string); ok && v != "" {
+								return v
+							}
+							if v, ok := contentItem["data"].(string); ok && v != "" {
+								return v
 							}
 						}
 					}

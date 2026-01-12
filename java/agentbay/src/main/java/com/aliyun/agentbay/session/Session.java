@@ -57,6 +57,7 @@ public class Session {
     private String networkInterfaceIp;
     private java.util.List<com.aliyun.agentbay.mcp.McpTool> mcpTools;
     private Boolean enableBrowserReplay;
+    private String imageId;
 
     public Session(String sessionId, AgentBay agentBay, SessionParams params) {
         this.sessionId = sessionId;
@@ -72,6 +73,7 @@ public class Session {
         this.computer = new Computer(this);
         this.mobile = new Mobile(this);
         this.mcpTools = new java.util.ArrayList<>();
+        this.imageId = "";
     }
 
     /**
@@ -157,7 +159,11 @@ public class Session {
      * @throws AgentBayException if the call fails
      */
     public List<Object> listTools() throws AgentBayException {
-        ListMcpToolsResponse response = agentBay.getApiClient().listMcpTools(sessionId);
+        String img = imageId;
+        if (img == null || img.isEmpty()) {
+            img = "linux_latest";
+        }
+        ListMcpToolsResponse response = agentBay.getApiClient().listMcpTools(img);
 
         if (response != null && response.getBody() != null && response.getBody().getData() != null) {
             try {
@@ -565,7 +571,11 @@ public class Session {
      * Set image ID for this session (placeholder method)
      */
     public void setImageId(String imageId) {
-        // TODO: Implement set image ID
+        this.imageId = imageId;
+    }
+
+    public String getImageId() {
+        return imageId;
     }
 
     /**

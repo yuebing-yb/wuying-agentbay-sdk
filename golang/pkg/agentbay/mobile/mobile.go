@@ -1,6 +1,7 @@
 package mobile
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -145,6 +146,15 @@ type BoolResult struct {
 type ScreenshotResult struct {
 	models.ApiResponse
 	Data         string `json:"data"`
+	ErrorMessage string `json:"error_message"`
+}
+
+// BetaScreenshotResult represents the result of a beta screenshot operation (binary image bytes).
+type BetaScreenshotResult struct {
+	models.ApiResponse
+	Success      bool   `json:"success"`
+	Data         []byte `json:"data"`
+	Format       string `json:"format"`
 	ErrorMessage string `json:"error_message"`
 }
 
@@ -658,6 +668,344 @@ func (m *Mobile) Screenshot() *ScreenshotResult {
 		Data:         result.Data,
 		ErrorMessage: result.ErrorMessage,
 	}
+}
+
+// BetaTakeScreenshot captures the current screen as a PNG image and returns raw image bytes.
+//
+// It calls the MCP tool "screenshot" with format="png".
+func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
+	args := map[string]interface{}{
+		"format": "png",
+	}
+
+	result, err := m.Session.CallMcpTool("screenshot", args)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       "png",
+			ErrorMessage: fmt.Sprintf("failed to call screenshot: %v", err),
+		}
+	}
+
+	if !result.Success {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       "png",
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	img, fmtNorm, err := decodeBase64Image(result.Data, "png")
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       "png",
+			ErrorMessage: fmt.Sprintf("failed to decode screenshot data: %v", err),
+		}
+	}
+
+	return &BetaScreenshotResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      true,
+		Data:         img,
+		Format:       fmtNorm,
+		ErrorMessage: "",
+	}
+}
+
+// BetaTakeLongScreenshot captures a long screenshot and returns raw image bytes.
+//
+// Supported formats:
+// - "png"
+// - "jpeg" (or "jpg")
+func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality ...int) *BetaScreenshotResult {
+	if maxScreens < 2 || maxScreens > 10 {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       "",
+			ErrorMessage: "invalid maxScreens: must be in range [2, 10]",
+		}
+	}
+
+	formatNorm := normalizeImageFormat(format, "png")
+	if formatNorm != "png" && formatNorm != "jpeg" {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       formatNorm,
+			ErrorMessage: fmt.Sprintf("unsupported format: %q. Supported values: \"png\", \"jpeg\".", format),
+		}
+	}
+
+	args := map[string]interface{}{
+		"max_screens": maxScreens,
+		"format":      formatNorm,
+	}
+	if len(quality) > 0 {
+		q := quality[0]
+		if q < 1 || q > 100 {
+			return &BetaScreenshotResult{
+				ApiResponse:  models.ApiResponse{RequestID: ""},
+				Success:      false,
+				Data:         nil,
+				Format:       formatNorm,
+				ErrorMessage: "invalid quality: must be in range [1, 100]",
+			}
+		}
+		args["quality"] = q
+	}
+
+	result, err := m.Session.CallMcpTool("long_screenshot", args)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       formatNorm,
+			ErrorMessage: fmt.Sprintf("failed to call long_screenshot: %v", err),
+		}
+	}
+
+	if !result.Success {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       formatNorm,
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	img, fmtDetected, err := decodeBase64Image(result.Data, formatNorm)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       formatNorm,
+			ErrorMessage: fmt.Sprintf("failed to decode long screenshot data: %v", err),
+		}
+	}
+
+	return &BetaScreenshotResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      true,
+		Data:         img,
+		Format:       fmtDetected,
+		ErrorMessage: "",
+	}
+}
+
+var (
+	pngMagic  = []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	jpegMagic = []byte{0xff, 0xd8, 0xff}
+)
+
+func normalizeImageFormat(format string, defaultValue string) string {
+	f := strings.TrimSpace(strings.ToLower(format))
+	if f == "" {
+		return defaultValue
+	}
+	if f == "jpg" {
+		return "jpeg"
+	}
+	return f
+}
+
+func decodeBase64Image(text string, expectedFormat string) ([]byte, string, error) {
+	s := strings.TrimSpace(text)
+	if s == "" {
+		return nil, expectedFormat, fmt.Errorf("empty image data")
+	}
+
+	s = extractBase64FromMcpPayload(s)
+
+	// Strip data URL prefix if present.
+	if idx := strings.Index(s, "base64,"); idx >= 0 {
+		s = s[idx+len("base64,"):]
+	}
+
+	// Remove whitespace/newlines.
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	s = strings.ReplaceAll(s, "\t", "")
+	s = strings.ReplaceAll(s, " ", "")
+
+	// Normalize urlsafe base64 and padding.
+	s = strings.ReplaceAll(s, "-", "+")
+	s = strings.ReplaceAll(s, "_", "/")
+	if m := len(s) % 4; m != 0 {
+		s += strings.Repeat("=", 4-m)
+	}
+
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return nil, expectedFormat, err
+	}
+
+	// Some backends prepend non-image prefix; strip until magic bytes.
+	if len(b) >= len(pngMagic) {
+		if idx := indexBytes(b, pngMagic, 128); idx > 0 {
+			b = b[idx:]
+		}
+	}
+	if len(b) >= len(jpegMagic) {
+		if idx := indexBytes(b, jpegMagic, 128); idx > 0 {
+			b = b[idx:]
+		}
+	}
+
+	// Detect format by magic bytes.
+	if len(b) >= len(pngMagic) && string(b[:len(pngMagic)]) == string(pngMagic) {
+		return b, "png", nil
+	}
+	if len(b) >= len(jpegMagic) && string(b[:len(jpegMagic)]) == string(jpegMagic) {
+		return b, "jpeg", nil
+	}
+
+	return b, expectedFormat, nil
+}
+
+func extractBase64FromMcpPayload(s string) string {
+	trimmed := strings.TrimSpace(s)
+	if trimmed == "" {
+		return s
+	}
+	if !(strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[")) {
+		return s
+	}
+
+	var obj interface{}
+	if err := json.Unmarshal([]byte(trimmed), &obj); err != nil {
+		return s
+	}
+
+	// Try common MCP response shapes:
+	// - { "content": [ { "blob": "..."} ] }
+	// - { "content": [ { "data": "..."} ] }
+	// - { "result": { "content": [ ... ] } }
+	if b64 := extractBase64FromAny(obj); b64 != "" {
+		return b64
+	}
+	return s
+}
+
+func extractBase64FromAny(v interface{}) string {
+	switch m := v.(type) {
+	case map[string]interface{}:
+		if s, ok := m["data"].(string); ok && strings.TrimSpace(s) != "" {
+			return s
+		}
+		if content, ok := m["content"].([]interface{}); ok && len(content) > 0 {
+			if item, ok := content[0].(map[string]interface{}); ok {
+				if s, ok := item["blob"].(string); ok && strings.TrimSpace(s) != "" {
+					return s
+				}
+				if mm, ok := item["blob"].(map[string]interface{}); ok {
+					if s, ok := mm["data"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+					if s, ok := mm["blob"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+					if s, ok := mm["base64"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+				}
+				if s, ok := item["data"].(string); ok && strings.TrimSpace(s) != "" {
+					return s
+				}
+				if mm, ok := item["data"].(map[string]interface{}); ok {
+					if s, ok := mm["data"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+					if s, ok := mm["base64"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+				}
+				if s, ok := item["text"].(string); ok && strings.TrimSpace(s) != "" {
+					return s
+				}
+				// Nested image/source object (best-effort).
+				if nested, ok := item["image"].(map[string]interface{}); ok {
+					if s, ok := nested["data"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+					if s, ok := nested["blob"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+					if mm, ok := nested["blob"].(map[string]interface{}); ok {
+						if s, ok := mm["data"].(string); ok && strings.TrimSpace(s) != "" {
+							return s
+						}
+					}
+					if s, ok := nested["base64"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+				}
+				if nested, ok := item["source"].(map[string]interface{}); ok {
+					if s, ok := nested["data"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+					if s, ok := nested["blob"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+					if mm, ok := nested["blob"].(map[string]interface{}); ok {
+						if s, ok := mm["data"].(string); ok && strings.TrimSpace(s) != "" {
+							return s
+						}
+					}
+					if s, ok := nested["base64"].(string); ok && strings.TrimSpace(s) != "" {
+						return s
+					}
+				}
+			}
+		}
+		if r, ok := m["result"]; ok {
+			if b64 := extractBase64FromAny(r); b64 != "" {
+				return b64
+			}
+		}
+	case []interface{}:
+		if len(m) > 0 {
+			if b64 := extractBase64FromAny(m[0]); b64 != "" {
+				return b64
+			}
+		}
+	}
+	return ""
+}
+
+func indexBytes(haystack []byte, needle []byte, maxSearch int) int {
+	if len(needle) == 0 || len(haystack) < len(needle) {
+		return -1
+	}
+	limit := len(haystack)
+	if maxSearch > 0 && maxSearch < limit {
+		limit = maxSearch
+	}
+	for i := 0; i+len(needle) <= limit; i++ {
+		match := true
+		for j := 0; j < len(needle); j++ {
+			if haystack[i+j] != needle[j] {
+				match = false
+				break
+			}
+		}
+		if match {
+			return i
+		}
+	}
+	return -1
 }
 
 // Configure configures mobile settings from MobileExtraConfig

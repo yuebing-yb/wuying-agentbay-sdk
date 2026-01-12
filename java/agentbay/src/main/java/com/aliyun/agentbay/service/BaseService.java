@@ -110,6 +110,13 @@ public class BaseService {
             //
             String server = findServerForTool(toolName);
             if (!isNotEmpty(server)) {
+                try {
+                    session.listMcpTools();
+                } catch (Exception e) {
+                }
+                server = findServerForTool(toolName);
+            }
+            if (!isNotEmpty(server)) {
                 return new OperationResult("", false, "", "Server not found for tool: " + toolName);
             }
 
@@ -281,8 +288,16 @@ public class BaseService {
                             @SuppressWarnings("unchecked")
                             Map<String, Object> contentItem = (Map<String, Object>) content.get(0);
                             Object text = contentItem.get("text");
+                            Object blob = contentItem.get("blob");
+                            Object data = contentItem.get("data");
                             if (text != null) {
                                 throw new RuntimeException("MCP tool execution error: " + text.toString());
+                            }
+                            if (blob != null) {
+                                throw new RuntimeException("MCP tool execution error: " + blob.toString());
+                            }
+                            if (data != null) {
+                                throw new RuntimeException("MCP tool execution error: " + data.toString());
                             }
                         }
                     }
@@ -301,11 +316,27 @@ public class BaseService {
                         if (text != null) {
                             return text.toString();
                         }
+                        Object blob = contentItem.get("blob");
+                        if (blob != null) {
+                            return blob.toString();
+                        }
+                        Object data = contentItem.get("data");
+                        if (data != null) {
+                            return data.toString();
+                        }
                     }
                 }
             }
 
-            // Fallback to toString if parsing fails
+            // Fallback to JSON representation if possible
+            try {
+                if (responseData instanceof Map || responseData instanceof java.util.List) {
+                    return objectMapper.writeValueAsString(responseData);
+                }
+            } catch (Exception e) {
+            }
+
+            // Final fallback
             return responseData.toString();
 
         } catch (RuntimeException e) {

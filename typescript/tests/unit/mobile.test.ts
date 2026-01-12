@@ -303,6 +303,68 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('system_screenshot', {});
       expect(result.data).toBe('https://example.com/mobile-screenshot.png');
     });
+
+    test('betaTakeScreenshot should call MCP tool and return PNG bytes', async () => {
+      // Arrange
+      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
+      const mockResult = {
+        success: true,
+        requestId: 'test-beta-123',
+        data: payload,
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await mobile.betaTakeScreenshot();
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'png' });
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe('test-beta-123');
+      expect(result.format).toBe('png');
+      expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
+    });
+
+    test('betaTakeLongScreenshot should validate maxScreens and format', async () => {
+      // Act
+      const invalidMax = await mobile.betaTakeLongScreenshot(1, 'png');
+      const invalidFmt = await mobile.betaTakeLongScreenshot(2, 'gif' as any);
+
+      // Assert
+      expect(invalidMax.success).toBe(false);
+      expect(invalidMax.errorMessage).toContain('maxScreens');
+      expect(invalidFmt.success).toBe(false);
+      expect(invalidFmt.errorMessage).toContain('Unsupported format');
+    });
+
+    test('betaTakeLongScreenshot should call MCP tool and normalize jpg to jpeg', async () => {
+      // Arrange
+      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const payload = Buffer.concat([pngHeader, Buffer.from('long')]).toString('base64');
+      const mockResult = {
+        success: true,
+        requestId: 'test-long-123',
+        data: payload,
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await mobile.betaTakeLongScreenshot(2, 'jpg', 80);
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('long_screenshot', {
+        max_screens: 2,
+        format: 'jpeg',
+        quality: 80,
+      });
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe('test-long-123');
+      expect(result.format).toBe('png');
+      expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
+    });
   });
 
   describe('Error Handling', () => {

@@ -1443,8 +1443,14 @@ export class Session {
           actualResult.content.length > 0
         ) {
           const contentItem = actualResult.content[0];
-          if (contentItem && contentItem.text) {
-            textContent = contentItem.text;
+          if (contentItem) {
+            if (typeof contentItem.text === "string" && contentItem.text) {
+              textContent = contentItem.text;
+            } else if (typeof contentItem.blob === "string" && contentItem.blob) {
+              textContent = contentItem.blob;
+            } else if (typeof contentItem.data === "string" && contentItem.data) {
+              textContent = contentItem.data;
+            }
           }
         }
 
@@ -1554,13 +1560,20 @@ export class Session {
         // Extract text content from content array
         const content = data.content || [];
         let textContent = "";
-        if (content.length > 0 && content[0].text !== undefined) {
-          textContent = content[0].text;
+        if (content.length > 0) {
+          const c0 = content[0] || {};
+          if (typeof c0.text === "string" && c0.text) {
+            textContent = c0.text;
+          } else if (typeof c0.blob === "string" && c0.blob) {
+            textContent = c0.blob;
+          } else if (typeof c0.data === "string" && c0.data) {
+            textContent = c0.data;
+          }
         }
 
         return {
           success: true,
-          data: textContent,
+          data: textContent || JSON.stringify(data),
           errorMessage: "",
           requestId: reqId,
         };
@@ -1685,8 +1698,14 @@ export class Session {
     let textContent = "";
     if (Array.isArray(result.content) && result.content.length > 0) {
       const contentItem = result.content[0];
-      if (contentItem && contentItem.text) {
-        textContent = contentItem.text;
+      if (contentItem) {
+        if (typeof contentItem.text === "string" && contentItem.text) {
+          textContent = contentItem.text;
+        } else if (typeof contentItem.blob === "string" && contentItem.blob) {
+          textContent = contentItem.blob;
+        } else if (typeof contentItem.data === "string" && contentItem.data) {
+          textContent = contentItem.data;
+        }
       }
     }
 
