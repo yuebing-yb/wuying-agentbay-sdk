@@ -12,16 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func firstN(s string, n int) string {
-	if n <= 0 {
-		return ""
-	}
-	if len(s) <= n {
-		return s
-	}
-	return s[:n]
-}
-
 func TestMobileBetaScreenshotPNG(t *testing.T) {
 	apiKey := os.Getenv("AGENTBAY_API_KEY")
 	if apiKey == "" {
@@ -62,11 +52,7 @@ func TestMobileBetaScreenshotPNG(t *testing.T) {
 
 	s := session.Mobile.BetaTakeScreenshot()
 	assert.NotEmpty(t, s.RequestID)
-	if !s.Success {
-		raw, _ := session.CallMcpTool("screenshot", map[string]interface{}{"format": "png"})
-		t.Fatalf("beta screenshot failed: %s raw_success=%v raw_len=%d raw_prefix=%q raw_err=%q", s.ErrorMessage, raw.Success, len(raw.Data), firstN(raw.Data, 300), raw.ErrorMessage)
-	}
-	assert.True(t, s.Success)
+	assert.True(t, s.Success, "beta screenshot failed: %s", s.ErrorMessage)
 	assert.Equal(t, "png", s.Format)
 	assert.True(t, bytes.HasPrefix(s.Data, []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}))
 	assert.Greater(t, len(s.Data), 8)
@@ -81,4 +67,3 @@ func TestMobileBetaScreenshotPNG(t *testing.T) {
 	assert.True(t, bytes.HasPrefix(ls.Data, []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}))
 	assert.Greater(t, len(ls.Data), 8)
 }
-
