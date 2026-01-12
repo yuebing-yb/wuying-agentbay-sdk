@@ -243,6 +243,61 @@ else:
 agent_bay.delete(session)
 ```
 
+### Beta Take Screenshot (PNG Bytes)
+
+Capture a screenshot and get the raw PNG bytes:
+
+```python
+import os
+import time
+
+from agentbay import AgentBay, CreateSessionParams
+
+
+def _prepare_for_screenshots(session) -> None:
+    session.command.execute_command("wm size 720x1280", timeout_ms=10000)
+    session.command.execute_command("wm density 160", timeout_ms=10000)
+    start = session.mobile.start_app("monkey -p com.android.settings 1")
+    if not start.success:
+        raise RuntimeError(f"Failed to start Settings: {start.error_message}")
+    time.sleep(2)
+
+
+agent_bay = AgentBay()
+session = agent_bay.create(CreateSessionParams(image_id="imgc-0ab5takhnlaixj11v")).session
+try:
+    _prepare_for_screenshots(session)
+    result = session.mobile.beta_take_screenshot()
+    if result.success:
+        os.makedirs("./tmp", exist_ok=True)
+        with open("./tmp/mobile_beta_screenshot.png", "wb") as f:
+            f.write(result.data)
+        print(f"Saved ./tmp/mobile_beta_screenshot.png ({len(result.data)} bytes)")
+    else:
+        print(f"Screenshot failed: {result.error_message}")
+finally:
+    agent_bay.delete(session)
+```
+
+### Beta Take Long Screenshot (PNG/JPEG Bytes)
+
+Capture a long screenshot and get the raw image bytes:
+
+```python
+result = session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
+if result.success:
+    with open("./tmp/mobile_beta_long_screenshot.png", "wb") as f:
+        f.write(result.data)
+    print(f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(result.data)} bytes)")
+else:
+    print(f"Long screenshot failed: {result.error_message}")
+```
+
+**Parameters:**
+- `max_screens`: Number of screens to stitch (range: [2, 10])
+- `format`: Output image format. Supported values: `"png"`, `"jpeg"` (or `"jpg"`)
+- `quality`: JPEG quality (range: [1, 100]). Only used when `format="jpeg"`
+
 ### Long Screenshot Supported Resolutions
 
 Long screenshot capture only supports the following screen resolutions:
