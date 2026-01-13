@@ -204,10 +204,12 @@ except Exception as e:
             
             # Execute script with detected Python command, set environment variables and execute in same command
             print(f"🚀 Executing Python script (with environment variables)...")
-            result = await self.session.command.execute_command(
-                f"cd /workspace/qwen-output && DASHSCOPE_API_KEY='{self.dashscope_api_key}' {python_cmd} generate_code.py"
-            )
             
+            # Use env parameter to add environment variables to cloud environment (recommended approach)
+            result = await self.session.command.execute_command(
+                f"cd /workspace/qwen-output && {python_cmd} generate_code.py",
+                envs={"DASHSCOPE_API_KEY": self.dashscope_api_key}
+            )            
             print(f"Code generation execution result:")
             print(f"  success: {result.success}")
             print(f"  exit_code: {result.exit_code}")
