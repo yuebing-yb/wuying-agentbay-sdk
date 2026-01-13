@@ -62,7 +62,7 @@ Key Features:
     # extension_context_syncs will be None
     ```
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, 
@@ -134,7 +134,7 @@ Initialize BrowserContext with optional extension support.
     # extension_context_syncs will be None
     ```
 
-### get\_extension\_context\_syncs
+### get_extension_context_syncs
 
 ```python
 def get_extension_context_syncs() -> List[ContextSync]
@@ -147,7 +147,7 @@ Get context syncs for extensions.
     List[ContextSync]: Context sync configurations for extensions.
   Returns empty list if no extensions configured.
 
-### get\_fingerprint\_context\_sync
+### get_fingerprint_context_sync
 
 ```python
 def get_fingerprint_context_sync() -> ContextSync
@@ -182,7 +182,7 @@ Parameters for creating a new session in the AgentBay cloud environment.
 - `framework` _Optional[str]_ - Framework name for tracking (e.g., "langchain"). Defaults to empty string (direct call).
 - `beta_network_id` _Optional[str]_ - Beta network ID to bind this session to.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, labels: Optional[Dict[str, str]] = None,
@@ -238,7 +238,7 @@ Parameters for listing sessions with pagination support.
 - `next_token` _str_ - Token for the next page.
 - `labels` _Dict[str, str]_ - Labels to filter by.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, max_results: int = 10,

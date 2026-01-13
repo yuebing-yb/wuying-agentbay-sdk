@@ -25,7 +25,7 @@ Async command execution service for session shells in the AgentBay cloud environ
 Use this class for non-blocking command execution; for blocking/synchronous usage,
 refer to the `Command` service in the sync API.
 
-### execute\_command
+### execute_command
 
 ```python
 def execute_command(command: str,

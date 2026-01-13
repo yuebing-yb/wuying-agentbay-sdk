@@ -16,7 +16,7 @@ class SessionStatusResult(ApiResponse)
 
 Result of Session.get_status() (status only).
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -27,7 +27,7 @@ def __init__(self, request_id: str = "",
              error_message: str = "")
 ```
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session_id: str = "",
@@ -48,7 +48,7 @@ class Session()
 
 Session represents a session in the AgentBay cloud environment.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, agent_bay: "AgentBay", session_id: str)
@@ -81,7 +81,7 @@ def files() -> FileSystem
 
 Alias of file_system.
 
-### get\_status
+### get_status
 
 ```python
 def get_status() -> "SessionStatusResult"
@@ -93,7 +93,7 @@ Get basic session status asynchronously.
 
     SessionStatusResult: Result containing session status only.
 
-### get\_token
+### get_token
 
 ```python
 def get_token() -> str
@@ -101,7 +101,7 @@ def get_token() -> str
 
 Get the token associated with this session.
 
-### get\_link\_url
+### get_link_url
 
 ```python
 def get_link_url() -> str
@@ -151,7 +151,7 @@ Delete this session and release all associated resources.
 
     SessionError: If the deletion request fails or the response is invalid.
 
-### set\_labels
+### set_labels
 
 ```python
 def set_labels(labels: Dict[str, str]) -> OperationResult
@@ -159,7 +159,7 @@ def set_labels(labels: Dict[str, str]) -> OperationResult
 
 Sets the labels for this session asynchronously.
 
-### get\_labels
+### get_labels
 
 ```python
 def get_labels() -> OperationResult
@@ -175,7 +175,7 @@ def info() -> OperationResult
 
 Get detailed information about this session asynchronously.
 
-### get\_link
+### get_link
 
 ```python
 def get_link(protocol_type: Optional[str] = None,
@@ -185,7 +185,7 @@ def get_link(protocol_type: Optional[str] = None,
 
 Asynchronously get a link associated with the current session.
 
-### list\_mcp\_tools
+### list_mcp_tools
 
 ```python
 def list_mcp_tools(image_id: Optional[str] = None)
@@ -193,7 +193,7 @@ def list_mcp_tools(image_id: Optional[str] = None)
 
 List MCP tools available for this session asynchronously.
 
-### call\_mcp\_tool
+### call_mcp_tool
 
 ```python
 def call_mcp_tool(tool_name: str,
@@ -205,7 +205,7 @@ def call_mcp_tool(tool_name: str,
 
 Call an MCP tool directly asynchronously.
 
-### get\_metrics
+### get_metrics
 
 ```python
 def get_metrics(read_timeout: Optional[int] = None,
@@ -227,7 +227,7 @@ def pause(timeout: int = 600,
 Asynchronously pause this session, putting it into a dormant state.
 This method waits until the session enters the PAUSED state.
 
-### pause\_async
+### pause_async
 
 ```python
 def pause_async() -> SessionPauseResult
@@ -245,7 +245,7 @@ def resume(timeout: int = 600,
 Asynchronously resume this session from a paused state.
 This method waits until the session enters the RUNNING state.
 
-### resume\_async
+### resume_async
 
 ```python
 def resume_async() -> SessionResumeResult

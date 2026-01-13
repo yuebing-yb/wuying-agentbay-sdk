@@ -2,7 +2,8 @@
 
 ## Overview
 
-The Network module provides network isolation and session communication capabilities. By creating a network and binding multiple sessions to it, you can enable communication between sessions while maintaining network isolation from other sessions.
+The Network module provides **network redirection** between your local environment and the AgentBay cloud runtime.
+It allows a cloud session to use your local network egress, which can help reduce risk-control issues in certain websites or mobile apps.
 
 ## BetaNetworkService
 
@@ -10,7 +11,7 @@ The Network module provides network isolation and session communication capabili
 public class BetaNetworkService
 ```
 
-Service for managing networks that can be shared across sessions.
+Service for managing networks used for redirection.
 
 ### betaGetNetworkBindToken
 
@@ -26,6 +27,14 @@ Create a new network. If `networkId` is not provided, a unique ID will be genera
 
 **Returns:**
 - `NetworkResult`: Result containing the created network ID and network token
+
+**Next Step (Local Binding):**
+
+Bind the returned token in your local environment:
+
+```bash
+./rick-cli -m bind -t <network-token>
+```
 
 **Example:**
 
@@ -51,7 +60,7 @@ if (result.isSuccess()) {
 public NetworkStatusResult betaDescribe(String networkId)
 ```
 
-Get the status of a network.
+Query the network status and configuration.
 
 **Parameters:**
 - `networkId` (String): The network ID to query
@@ -105,86 +114,26 @@ Result object returned by network status queries.
 
 ## Binding Sessions to Network
 
-To bind a session to a network, set the `betaNetworkId` in `CreateSessionParams`:
+To bind a session to a network for redirection, set the `betaNetworkId` in `CreateSessionParams`:
 
 ```java
 // Create a network
 NetworkResult networkResult = agentBay.getBetaNetwork().betaGetNetworkBindToken();
 String networkId = networkResult.getNetworkId();
 
-// Create sessions bound to the same network
+// Create a session bound to the same network (for redirection)
 CreateSessionParams params1 = new CreateSessionParams();
 params1.setBetaNetworkId(networkId);
-params1.setImageId("linux_latest");
+params1.setImageId("imgc-12345678");
 
 SessionResult session1 = agentBay.create(params1);
-
-CreateSessionParams params2 = new CreateSessionParams();
-params2.setBetaNetworkId(networkId);
-params2.setImageId("linux_latest");
-
-SessionResult session2 = agentBay.create(params2);
-
-// Now session1 and session2 can communicate with each other
 ```
 
 ## Use Cases
 
-### 1. Multi-Session Communication
+### Network readiness check
 
-Enable communication between multiple sessions for distributed workflows:
-
-```java
-// Create a shared network
-NetworkResult networkResult = agentBay.getBetaNetwork().betaGetNetworkBindToken();
-String networkId = networkResult.getNetworkId();
-
-// Create multiple sessions on the same network
-CreateSessionParams params1 = new CreateSessionParams();
-params1.setBetaNetworkId(networkId);
-params1.setImageId("linux_latest");
-SessionResult session1 = agentBay.create(params1);
-
-CreateSessionParams params2 = new CreateSessionParams();
-params2.setBetaNetworkId(networkId);
-params2.setImageId("linux_latest");
-SessionResult session2 = agentBay.create(params2);
-
-// Sessions can now communicate via network
-// For example, session1 starts a web server
-CommandResult result1 = session1.getSession().getCommand()
-    .executeCommand("python3 -m http.server 8080");
-
-// Session2 can access the server
-CommandResult result2 = session2.getSession().getCommand()
-    .executeCommand("curl http://localhost:8080");
-```
-
-### 2. Network Isolation
-
-Isolate different projects or tenants using separate networks:
-
-```java
-// Project A network
-NetworkResult networkA = agentBay.getBetaNetwork().betaGetNetworkBindToken("project-a-network");
-
-CreateSessionParams paramsA = new CreateSessionParams();
-paramsA.setBetaNetworkId(networkA.getNetworkId());
-SessionResult sessionA = agentBay.create(paramsA);
-
-// Project B network (isolated from A)
-NetworkResult networkB = agentBay.getBetaNetwork().betaGetNetworkBindToken("project-b-network");
-
-CreateSessionParams paramsB = new CreateSessionParams();
-paramsB.setBetaNetworkId(networkB.getNetworkId());
-SessionResult sessionB = agentBay.create(paramsB);
-
-// Sessions in different networks cannot communicate with each other
-```
-
-### 3. Network Status Monitoring
-
-Monitor network status before creating sessions:
+Check network status before creating sessions:
 
 ```java
 String networkId = "my-network";
@@ -203,11 +152,10 @@ if (status.isSuccess() && status.isOnline()) {
 
 ## Best Practices
 
-1. **Reuse Networks**: Create one network and bind multiple sessions to it for better resource utilization
-2. **Custom Network IDs**: Use meaningful network IDs (e.g., "project-name-network") for easier management
-3. **Status Checking**: Check network status before binding sessions to avoid connection issues
-4. **Network Token**: Store the network token securely if needed for authentication
-5. **Cleanup**: Networks are automatically cleaned up when all bound sessions are deleted
+1. **Token security**: Keep the network token secure and never commit it to source control
+2. **Local binding**: Ensure the local binding process stays running and reachable while the session is active
+3. **Status checking**: Check network status before binding sessions to avoid connection issues
+4. **Custom image**: Use a dedicated custom image when required by your environment policy
 
 ## Error Handling
 

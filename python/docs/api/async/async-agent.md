@@ -20,7 +20,7 @@ An Agent to manipulate applications to complete specific tasks.
 
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session: "AsyncSession")
@@ -36,7 +36,7 @@ An Agent to perform tasks on the computer.
 
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session: "AsyncSession")
@@ -52,13 +52,13 @@ An Agent(⚠️ Still in BETA) to perform tasks on the browser
 
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session: "AsyncSession")
 ```
 
-### execute\_task
+### execute_task
 
 ```python
 async def execute_task(task: str,
@@ -102,7 +102,7 @@ print(f"Task status: {status.task_status}")
 await session.delete()
 ```
 
-### execute\_task\_and\_wait
+### execute_task_and_wait
 
 ```python
 async def execute_task_and_wait(
@@ -155,13 +155,13 @@ An Agent to perform tasks on mobile devices.
 
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session: "AsyncSession")
 ```
 
-### execute\_task
+### execute_task
 
 ```python
 async def execute_task(task: str, max_steps: int = 50) -> ExecutionResult
@@ -203,7 +203,7 @@ print(f"Task status: {status.task_status}")
 await session.delete()
 ```
 
-### execute\_task\_and\_wait
+### execute_task_and_wait
 
 ```python
 async def execute_task_and_wait(task: str,
@@ -247,13 +247,13 @@ print(f"Task result: {result.task_result}")
 await session.delete()
 ```
 
-### get\_task\_status
+### get_task_status
 
 ```python
 async def get_task_status(task_id: str) -> QueryResult
 ```
 
-### terminate\_task
+### terminate_task
 
 ```python
 async def terminate_task(task_id: str) -> ExecutionResult

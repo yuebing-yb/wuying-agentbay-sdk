@@ -13,7 +13,7 @@ Browser fingerprint generator class.
     headless: Whether to run browser in headless mode.
     use_chrome_channel: Whether to launch via the Chrome channel.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, headless: bool = False, use_chrome_channel: bool = True)
@@ -26,7 +26,7 @@ Initialize the fingerprint generator.
     headless: Whether to run browser in headless mode
     use_chrome_channel: Whether to use Chrome channel
 
-### generate\_fingerprint
+### generate_fingerprint
 
 ```python
 async def generate_fingerprint() -> Optional[FingerprintFormat]
@@ -46,7 +46,7 @@ fingerprint = await generator.generate_fingerprint()
 if fingerprint:
 print(fingerprint.headers.get("user-agent"))
 
-### generate\_fingerprint\_to\_file
+### generate_fingerprint_to_file
 
 ```python
 async def generate_fingerprint_to_file(

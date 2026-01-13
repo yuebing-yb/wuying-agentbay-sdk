@@ -16,7 +16,7 @@ BrowserAgent handles browser automation and agent logic.
 
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session, browser)

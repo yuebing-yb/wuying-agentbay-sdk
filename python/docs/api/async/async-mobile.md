@@ -35,7 +35,7 @@ Provides comprehensive mobile automation capabilities including touch operations
 UI element interactions, application management, screenshot capabilities,
 and mobile environment configuration operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session)
@@ -114,7 +114,7 @@ await session.mobile.swipe(100, 1000, 100, 200, duration_ms=500)
 await session.delete()
 ```
 
-### input\_text
+### input_text
 
 ```python
 async def input_text(text: str) -> BoolResult
@@ -140,7 +140,7 @@ await session.mobile.input_text("Hello Mobile!")
 await session.delete()
 ```
 
-### send\_key
+### send_key
 
 ```python
 async def send_key(key: int) -> BoolResult
@@ -172,7 +172,7 @@ await session.mobile.send_key(4)  # Press BACK button
 await session.delete()
 ```
 
-### get\_clickable\_ui\_elements
+### get_clickable_ui_elements
 
 ```python
 async def get_clickable_ui_elements(
@@ -205,7 +205,7 @@ print(f"Found {len(result.elements)} clickable elements")
 await session.delete()
 ```
 
-### get\_all\_ui\_elements
+### get_all_ui_elements
 
 ```python
 async def get_all_ui_elements(timeout_ms: int = 2000,
@@ -240,7 +240,7 @@ print(f"Found {len(result.elements)} UI elements")
 await session.delete()
 ```
 
-### get\_installed\_apps
+### get_installed_apps
 
 ```python
 async def get_installed_apps(
@@ -272,7 +272,7 @@ print(f"Found {len(apps.data)} apps")
 await session.delete()
 ```
 
-### start\_app
+### start_app
 
 ```python
 async def start_app(start_cmd: str,
@@ -305,7 +305,7 @@ print(f"Started {len(processes.data)} process(es)")
 await session.delete()
 ```
 
-### stop\_app\_by\_cmd
+### stop_app_by_cmd
 
 ```python
 async def stop_app_by_cmd(stop_cmd: str) -> AppOperationResult
@@ -355,7 +355,7 @@ print(f"Screenshot URL: {result.data}")
 await session.delete()
 ```
 
-### beta\_take\_screenshot
+### beta_take_screenshot
 
 ```python
 async def beta_take_screenshot()
@@ -375,7 +375,7 @@ binary image data.
 
     AgentBayError: If screenshot fails or response cannot be decoded.
 
-### beta\_take\_long\_screenshot
+### beta_take_long_screenshot
 
 ```python
 async def beta_take_long_screenshot(max_screens: int = 4,
@@ -450,7 +450,7 @@ await agent_bay.delete(session)
 set_resolution_lock, set_app_whitelist, set_app_blacklist,
 set_navigation_bar_visibility, set_uninstall_blacklist
 
-### set\_resolution\_lock
+### set_resolution_lock
 
 ```python
 async def set_resolution_lock(enable: bool)
@@ -472,7 +472,7 @@ await session.mobile.set_resolution_lock(False)
 await session.delete()
 ```
 
-### set\_app\_whitelist
+### set_app_whitelist
 
 ```python
 async def set_app_whitelist(package_names: List[str])
@@ -501,7 +501,7 @@ await session.delete()
 - System apps may be affected depending on the configuration
 - Whitelist takes precedence over blacklist if both are set
 
-### set\_app\_blacklist
+### set_app_blacklist
 
 ```python
 async def set_app_blacklist(package_names: List[str])
@@ -529,7 +529,7 @@ await session.delete()
 - Apps in the blacklist will be blocked from running
 - Whitelist takes precedence over blacklist if both are set
 
-### set\_navigation\_bar\_visibility
+### set_navigation_bar_visibility
 
 ```python
 async def set_navigation_bar_visibility(hide: bool)
@@ -557,7 +557,7 @@ await session.delete()
 - Hiding the navigation bar provides a fullscreen experience
 - The navigation bar can still be accessed by swiping from the edge
 
-### set\_uninstall\_blacklist
+### set_uninstall_blacklist
 
 ```python
 async def set_uninstall_blacklist(package_names: List[str])
@@ -586,7 +586,7 @@ await session.delete()
 - This is useful for protecting critical applications
 - The protection persists for the session lifetime
 
-### get\_adb\_url
+### get_adb_url
 
 ```python
 async def get_adb_url(adbkey_pub: str) -> AdbUrlResult

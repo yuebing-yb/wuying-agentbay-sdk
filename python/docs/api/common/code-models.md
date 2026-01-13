@@ -101,7 +101,7 @@ class CodeExecutionResult(ApiResponse)
 
 Result of code execution operations. Kept for backward compatibility but users should transition to EnhancedCodeExecutionResult.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
