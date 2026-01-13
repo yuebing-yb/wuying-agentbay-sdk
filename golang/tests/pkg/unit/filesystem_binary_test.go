@@ -12,7 +12,7 @@ import (
 
 // MockSessionForBinaryTest is a mock session for testing binary file operations
 type MockSessionForBinaryTest struct {
-	CallMcpToolFunc func(toolName string, args interface{}) (*models.McpToolResult, error)
+	CallMcpToolFunc func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 }
 
 func (m *MockSessionForBinaryTest) GetAPIKey() string {
@@ -39,13 +39,9 @@ func (m *MockSessionForBinaryTest) HttpPort() string {
 	return ""
 }
 
-func (m *MockSessionForBinaryTest) FindServerForTool(toolName string) string {
-	return ""
-}
-
-func (m *MockSessionForBinaryTest) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+func (m *MockSessionForBinaryTest) CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
 	if m.CallMcpToolFunc != nil {
-		return m.CallMcpToolFunc(toolName, args)
+		return m.CallMcpToolFunc(toolName, args, extra...)
 	}
 	return nil, nil
 }
@@ -55,7 +51,8 @@ func TestFileSystem_ReadFileBinaryFormatSuccess(t *testing.T) {
 	mockSession := &MockSessionForBinaryTest{}
 
 	// Mock GetFileInfo call
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",
@@ -101,7 +98,8 @@ func TestFileSystem_ReadFileBinaryFormatLargeFile(t *testing.T) {
 	chunkCount := 0
 
 	// Mock GetFileInfo call
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",
@@ -161,7 +159,8 @@ func TestFileSystem_ReadFileBinaryFormatGetInfoError(t *testing.T) {
 	mockSession := &MockSessionForBinaryTest{}
 
 	// Mock GetFileInfo call to fail
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",
@@ -190,7 +189,8 @@ func TestFileSystem_ReadFileBinaryFormatChunkError(t *testing.T) {
 	mockSession := &MockSessionForBinaryTest{}
 
 	// Mock GetFileInfo call
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",
@@ -229,7 +229,8 @@ func TestFileSystem_ReadFileBinaryFormatEmptyFile(t *testing.T) {
 	mockSession := &MockSessionForBinaryTest{}
 
 	// Mock GetFileInfo call for empty file
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",
@@ -258,7 +259,8 @@ func TestFileSystem_ReadFileTextFormatExplicit(t *testing.T) {
 	mockSession := &MockSessionForBinaryTest{}
 
 	// Mock GetFileInfo call
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",
@@ -296,7 +298,8 @@ func TestFileSystem_ReadFileChunkBinaryFormat(t *testing.T) {
 	mockSession := &MockSessionForBinaryTest{}
 
 	// Mock read_file call with binary format
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "read_file" {
 			// Verify format parameter is set to "binary"
 			argsMap := args.(map[string]interface{})
@@ -324,7 +327,8 @@ func TestFileSystem_ReadFileChunkBinaryFormat(t *testing.T) {
 	fs := filesystem.NewFileSystem(mockSession)
 
 	// Mock GetFileInfo as well
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",
@@ -373,7 +377,8 @@ func TestFileSystem_ReadFileChunkBinaryFormatBase64DecodeError(t *testing.T) {
 	mockSession := &MockSessionForBinaryTest{}
 
 	// Mock GetFileInfo and read_file calls
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",
@@ -408,7 +413,8 @@ func TestFileSystem_ReadFileChunkTextFormatNoFormatParam(t *testing.T) {
 	mockSession := &MockSessionForBinaryTest{}
 
 	// Mock GetFileInfo and read_file calls
-	mockSession.CallMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockSession.CallMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		if toolName == "get_file_info" {
 			return &models.McpToolResult{
 				RequestID:    "test-request-id",

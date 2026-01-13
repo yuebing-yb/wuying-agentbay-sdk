@@ -40,7 +40,7 @@ func (suite *MobileTestSuite) TestTap_Success() {
 	suite.mockSession.On("CallMcpTool", "tap", map[string]interface{}{
 		"x": 100,
 		"y": 200,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.Tap(100, 200)
@@ -62,7 +62,7 @@ func (suite *MobileTestSuite) TestTap_McpToolError() {
 	suite.mockSession.On("CallMcpTool", "tap", map[string]interface{}{
 		"x": 100,
 		"y": 200,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.Tap(100, 200)
@@ -88,7 +88,7 @@ func (suite *MobileTestSuite) TestSwipe_Success() {
 		"end_x":       300,
 		"end_y":       400,
 		"duration_ms": 500,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.Swipe(100, 200, 300, 400, 500)
@@ -112,7 +112,7 @@ func (suite *MobileTestSuite) TestSwipe_QuickSwipe() {
 		"end_x":       150,
 		"end_y":       100,
 		"duration_ms": 200,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.Swipe(50, 100, 150, 100, 200)
@@ -133,7 +133,7 @@ func (suite *MobileTestSuite) TestInputText_Success() {
 
 	suite.mockSession.On("CallMcpTool", "input_text", map[string]interface{}{
 		"text": "Hello Mobile",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.InputText("Hello Mobile")
@@ -153,7 +153,7 @@ func (suite *MobileTestSuite) TestInputText_EmptyText() {
 
 	suite.mockSession.On("CallMcpTool", "input_text", map[string]interface{}{
 		"text": "",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.InputText("")
@@ -174,7 +174,7 @@ func (suite *MobileTestSuite) TestSendKey_BackKey() {
 
 	suite.mockSession.On("CallMcpTool", "send_key", map[string]interface{}{
 		"key": 4, // BACK key
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.SendKey(4)
@@ -194,7 +194,7 @@ func (suite *MobileTestSuite) TestSendKey_HomeKey() {
 
 	suite.mockSession.On("CallMcpTool", "send_key", map[string]interface{}{
 		"key": 3, // HOME key
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.SendKey(3)
@@ -216,7 +216,7 @@ func (suite *MobileTestSuite) TestGetClickableUIElements_Success() {
 
 	suite.mockSession.On("CallMcpTool", "get_clickable_ui_elements", map[string]interface{}{
 		"timeout_ms": 2000,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.GetClickableUIElements(2000)
@@ -241,7 +241,7 @@ func (suite *MobileTestSuite) TestGetClickableUIElements_InvalidJSON() {
 
 	suite.mockSession.On("CallMcpTool", "get_clickable_ui_elements", map[string]interface{}{
 		"timeout_ms": 2000,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.GetClickableUIElements(2000)
@@ -264,7 +264,7 @@ func (suite *MobileTestSuite) TestGetAllUIElements_Success() {
 	suite.mockSession.On("CallMcpTool", "get_all_ui_elements", map[string]interface{}{
 		"timeout_ms": 3000,
 		"format":     "json",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.GetAllUIElements(3000)
@@ -290,7 +290,7 @@ func (suite *MobileTestSuite) TestGetAllUIElements_XMLFormatSuccess() {
 	suite.mockSession.On("CallMcpTool", "get_all_ui_elements", map[string]interface{}{
 		"timeout_ms": 3000,
 		"format":     "xml",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.GetAllUIElements(3000, "xml")
@@ -317,7 +317,7 @@ func (suite *MobileTestSuite) TestGetInstalledApps_Success() {
 		"start_menu":         false,
 		"desktop":            true,
 		"ignore_system_apps": true,
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.GetInstalledApps(false, true, true)
@@ -344,7 +344,7 @@ func (suite *MobileTestSuite) TestStartApp_Success() {
 		"start_cmd":      "com.android.calculator2",
 		"work_directory": "",
 		"activity":       ".MainActivity",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.StartApp("com.android.calculator2", "", ".MainActivity")
@@ -369,7 +369,7 @@ func (suite *MobileTestSuite) TestStartApp_WithWorkDirectory() {
 		"start_cmd":      "com.example.myapp",
 		"work_directory": "/data/app",
 		"activity":       ".SplashActivity",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.StartApp("com.example.myapp", "/data/app", ".SplashActivity")
@@ -391,7 +391,7 @@ func (suite *MobileTestSuite) TestStopAppByCmd_Success() {
 
 	suite.mockSession.On("CallMcpTool", "stop_app_by_cmd", map[string]interface{}{
 		"stop_cmd": "am force-stop com.android.calculator2",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.StopAppByCmd("am force-stop com.android.calculator2")
@@ -411,7 +411,7 @@ func (suite *MobileTestSuite) TestStopAppByCmd_AppNotFound() {
 
 	suite.mockSession.On("CallMcpTool", "stop_app_by_cmd", map[string]interface{}{
 		"stop_cmd": "am force-stop com.example.nonexistent",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.StopAppByCmd("am force-stop com.example.nonexistent")
@@ -432,7 +432,7 @@ func (suite *MobileTestSuite) TestScreenshot_Success() {
 		ErrorMessage: "",
 	}
 
-	suite.mockSession.On("CallMcpTool", "system_screenshot", map[string]interface{}{}).Return(expectedResult, nil)
+	suite.mockSession.On("CallMcpTool", "system_screenshot", map[string]interface{}{}, "mcp-server").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.Screenshot()
@@ -458,7 +458,7 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 
 	suite.mockSession.On("CallMcpTool", "screenshot", map[string]interface{}{
 		"format": "png",
-	}).Return(expectedResult, nil)
+	}, "wuying_capture").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.BetaTakeScreenshot()
@@ -487,7 +487,7 @@ func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_SuccessPng() {
 	suite.mockSession.On("CallMcpTool", "long_screenshot", map[string]interface{}{
 		"max_screens": 2,
 		"format":      "png",
-	}).Return(expectedResult, nil)
+	}, "wuying_capture").Return(expectedResult, nil)
 
 	// Act
 	result := suite.mobile.BetaTakeLongScreenshot(2, "png")
@@ -525,7 +525,7 @@ func (suite *MobileTestSuite) TestCompleteUserFlow() {
 	suite.mockSession.On("CallMcpTool", "tap", map[string]interface{}{
 		"x": 100,
 		"y": 200,
-	}).Return(&models.McpToolResult{
+	}, "wuying_ui").Return(&models.McpToolResult{
 		Success:   true,
 		RequestID: "flow-tap",
 	}, nil)
@@ -533,7 +533,7 @@ func (suite *MobileTestSuite) TestCompleteUserFlow() {
 	// Step 2: Input text
 	suite.mockSession.On("CallMcpTool", "input_text", map[string]interface{}{
 		"text": "Test Input",
-	}).Return(&models.McpToolResult{
+	}, "wuying_ui").Return(&models.McpToolResult{
 		Success:   true,
 		RequestID: "flow-input",
 	}, nil)
@@ -545,13 +545,13 @@ func (suite *MobileTestSuite) TestCompleteUserFlow() {
 		"end_x":       100,
 		"end_y":       200,
 		"duration_ms": 300,
-	}).Return(&models.McpToolResult{
+	}, "wuying_ui").Return(&models.McpToolResult{
 		Success:   true,
 		RequestID: "flow-swipe",
 	}, nil)
 
 	// Step 4: Take screenshot
-	suite.mockSession.On("CallMcpTool", "system_screenshot", map[string]interface{}{}).Return(&models.McpToolResult{
+	suite.mockSession.On("CallMcpTool", "system_screenshot", map[string]interface{}{}, "mcp-server").Return(&models.McpToolResult{
 		Success:   true,
 		RequestID: "flow-screenshot",
 		Data:      "https://example.com/flow-screenshot.png",

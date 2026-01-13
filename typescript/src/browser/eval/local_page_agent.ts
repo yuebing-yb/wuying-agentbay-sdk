@@ -522,7 +522,8 @@ export class LocalSession extends Session {
   async callMcpTool(
     toolName: string,
     args: any,
-    autoGenSession = false
+    autoGenSession = false,
+    serverName?: string
   ): Promise<McpToolResult> {
     /**
      * Async stub for local mode. Keeps call signature compatible with the base

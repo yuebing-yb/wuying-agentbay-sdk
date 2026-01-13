@@ -59,7 +59,9 @@ print(x)
           code: pythonCode,
           language: "python",
           timeout_s: 60,
-        }
+        },
+        false,
+        "wuying_codespace"
       )).to.be.true;
     });
 
@@ -96,7 +98,9 @@ console.log(x);
           code: jsCode,
           language: "javascript",
           timeout_s: customTimeout,
-        }
+        },
+        false,
+        "wuying_codespace"
       )).to.be.true;
     });
 
@@ -130,6 +134,7 @@ console.log(x);
       expect(callMcpToolStub.calledOnce).to.be.true;
       expect(callMcpToolStub.firstCall.args[0]).to.equal("run_code");
       expect(callMcpToolStub.firstCall.args[1].language).to.equal("python");
+      expect(callMcpToolStub.firstCall.args[3]).to.equal("wuying_codespace");
     });
 
     it("should support R and Java languages", async () => {
@@ -144,12 +149,14 @@ console.log(x);
       const rRes = await code.runCode('cat("OK\\n")', "R");
       expect(rRes.success).to.be.true;
       expect(callMcpToolStub.firstCall.args[1].language).to.equal("r");
+      expect(callMcpToolStub.firstCall.args[3]).to.equal("wuying_codespace");
 
       callMcpToolStub.resetHistory();
       callMcpToolStub.resolves(mockResult);
       const javaRes = await code.runCode('System.out.println("OK");', "Java");
       expect(javaRes.success).to.be.true;
       expect(callMcpToolStub.firstCall.args[1].language).to.equal("java");
+      expect(callMcpToolStub.firstCall.args[3]).to.equal("wuying_codespace");
     });
 
     it("should handle code execution failure", async () => {

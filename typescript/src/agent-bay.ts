@@ -589,43 +589,8 @@ export class AgentBay {
         }
       }
 
-      // Prefer MCP tools list from CreateMcpSession response (toolList) when present,
-      // then fall back to ListMcpTools for backward compatibility.
-      const toolListStr = data.toolList;
-      if (toolListStr) {
-        try {
-          const toolsData: unknown = JSON.parse(toolListStr);
-          const tools: McpTool[] = [];
-          if (Array.isArray(toolsData)) {
-            for (const toolData of toolsData as Array<Record<string, unknown>>) {
-              tools.push({
-                name: (toolData["name"] as string) || "",
-                description: (toolData["description"] as string) || "",
-                inputSchema: (toolData["inputSchema"] as Record<string, any>) || {},
-                server: (toolData["server"] as string) || "",
-                tool: (toolData["tool"] as string) || "",
-              });
-            }
-          }
-          session.mcpTools = tools;
-        } catch (error) {
-          logError(`Warning: Failed to parse toolList from CreateMcpSession: ${error}`);
-        }
-      }
-
-      // Backward compatibility: if isVpc=true but tool list is still empty, fall back to ListMcpTools.
-      if (paramsCopy.isVpc && session.mcpTools.length === 0) {
-        logDebug("VPC session detected, automatically fetching MCP tools...");
-        try {
-          const toolsResult = await session.listMcpTools();
-          logDebug(
-            `Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`
-          );
-        } catch (error) {
-          logError(`Warning: Failed to fetch MCP tools for VPC session: ${error}`);
-          // Continue with session creation even if tools fetch fails
-        }
-      }
+      // NOTE: Do not parse/store ToolList or fetch MCP tool list after create.
+      // ToolList may still exist in the API response, but is expected to be empty.
 
       // If we have persistence data, wait for context synchronization
       if (needsContextSync) {

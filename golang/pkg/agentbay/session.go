@@ -144,9 +144,6 @@ type Session struct {
 
 	// Context management
 	Context *ContextManager
-
-	// MCP tools available for this session
-	McpTools []McpTool
 }
 
 // SessionStatusResult represents the result of Session.GetStatus().
@@ -1003,7 +1000,7 @@ func (s *Session) Info() (*InfoResult, error) {
 // - Uses the ImageId from session creation
 // - Defaults to "linux_latest" if ImageId is empty
 // - Retrieves all available MCP tools for the specified image
-// - Updates the session's McpTools field with the retrieved tools
+// - Does not store tools on the Session (no caching)
 //
 // Example:
 //
@@ -1075,7 +1072,7 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 		}
 	}
 
-	s.McpTools = tools // Update the session's McpTools field
+	// Do not store MCP tool lists in Session.
 
 	// Log successful response
 	keyFields := map[string]interface{}{
@@ -1118,25 +1115,6 @@ func (s *Session) GetLinkUrl() string {
 	return s.LinkUrl
 }
 
-// GetMcpTools returns the MCP tools available for this session
-func (s *Session) GetMcpTools() []interface{} {
-	result := make([]interface{}, len(s.McpTools))
-	for i, tool := range s.McpTools {
-		result[i] = &tool
-	}
-	return result
-}
-
-// FindServerForTool searches for the server that provides the given tool
-func (s *Session) FindServerForTool(toolName string) string {
-	for _, tool := range s.McpTools {
-		if tool.Name == toolName {
-			return tool.Server
-		}
-	}
-	return ""
-}
-
 // CallMcpTool calls the MCP tool and handles both VPC and non-VPC scenarios
 //
 // This is the unified public API for calling MCP tools. All feature modules
@@ -1171,7 +1149,22 @@ func (s *Session) FindServerForTool(toolName string) string {
 //	defer result.Session.Delete()
 //	args := map[string]interface{}{"command": "ls -la"}
 //	toolResult, _ := result.Session.CallMcpTool("execute_command", args)
-func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+func (s *Session) CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+	serverName := ""
+	autoGen := false
+	if len(extra) > 0 {
+		switch v := extra[0].(type) {
+		case string:
+			serverName = v
+			if len(extra) > 1 {
+				if b, ok := extra[1].(bool); ok {
+					autoGen = b
+				}
+			}
+		case bool:
+			autoGen = v
+		}
+	}
 	// Normalize press_keys arguments for better case compatibility
 	if toolName == "press_keys" {
 		// Try to extract and normalize the keys field
@@ -1216,20 +1209,14 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession 
 		}, nil
 	}
 
-	// Extract autoGenSession parameter (default: false)
-	autoGen := false
-	if len(autoGenSession) > 0 {
-		autoGen = autoGenSession[0]
-	}
-
 	// Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
 	if s.GetLinkUrl() != "" && s.GetToken() != "" {
-		return s.callMcpToolLinkUrl(toolName, args)
+		return s.callMcpToolLinkUrl(toolName, args, serverName)
 	}
 
 	// Legacy VPC mode: use ip:port direct route.
 	if s.IsVpc() {
-		return s.callMcpToolVPC(toolName, string(argsJSON))
+		return s.callMcpToolVPC(toolName, string(argsJSON), serverName)
 	}
 
 	// Non-VPC mode: use traditional API call
@@ -1238,7 +1225,7 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, autoGenSession 
 
 // callMcpToolLinkUrl handles MCP tool calls via LinkUrl direct connection (POST JSON),
 // matching Java BaseService.callMcpToolVpc behavior.
-func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}) (*models.McpToolResult, error) {
+func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverName string) (*models.McpToolResult, error) {
 	// Generate requestId early so it is always visible in logs even on failures.
 	requestID := fmt.Sprintf("link-%d-%d", time.Now().UnixMilli(), rand.Intn(1000000000))
 
@@ -1252,7 +1239,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}) (*models
 	requestParams := fmt.Sprintf("Tool=%s, ArgsLength=%d, RequestId=%s", toolName, argsLen, requestID)
 	logAPICall("CallMcpTool(LinkUrl)", requestParams)
 
-	server := s.FindServerForTool(toolName)
+	server := serverName
 	if server == "" {
 		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("server not found for tool: %s", toolName), false)
 		return &models.McpToolResult{
@@ -1496,7 +1483,7 @@ func truncateForLog(s string, max int) string {
 //
 // The underlying service returns a JSON string. This method parses it and returns structured metrics.
 func (s *Session) GetMetrics() (*models.SessionMetricsResult, error) {
-	toolResult, err := s.CallMcpTool("get_metrics", map[string]interface{}{})
+	toolResult, err := s.CallMcpTool("get_metrics", map[string]interface{}{}, "wuying_system")
 	if err != nil {
 		return &models.SessionMetricsResult{
 			Success:      false,
@@ -1510,13 +1497,12 @@ func (s *Session) GetMetrics() (*models.SessionMetricsResult, error) {
 }
 
 // callMcpToolVPC handles VPC-based MCP tool calls
-func (s *Session) callMcpToolVPC(toolName, argsJSON string) (*models.McpToolResult, error) {
+func (s *Session) callMcpToolVPC(toolName, argsJSON string, serverName string) (*models.McpToolResult, error) {
 	// VPC mode: Use HTTP request to the VPC endpoint
 	requestParams := fmt.Sprintf("Tool=%s, ArgsLength=%d", toolName, len(argsJSON))
 	logAPICall("CallMcpTool(VPC)", requestParams)
 
-	// Find server for this tool
-	server := s.FindServerForTool(toolName)
+	server := serverName
 	if server == "" {
 		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("server not found for tool: %s", toolName), false)
 		return &models.McpToolResult{

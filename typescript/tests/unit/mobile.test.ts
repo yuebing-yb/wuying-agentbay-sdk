@@ -42,7 +42,7 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('tap', {
         x: 100,
         y: 200
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-123');
     });
@@ -65,7 +65,7 @@ describe('Mobile', () => {
         end_x: 200,
         end_y: 200,
         duration_ms: 500
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -87,7 +87,7 @@ describe('Mobile', () => {
         end_x: 200,
         end_y: 200,
         duration_ms: 300
-      });
+      }, false, 'wuying_ui');
     });
   });
 
@@ -106,7 +106,7 @@ describe('Mobile', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('input_text', {
         text: 'Hello Mobile'
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -124,7 +124,7 @@ describe('Mobile', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('send_key', {
         key: 4
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
   });
@@ -151,7 +151,7 @@ describe('Mobile', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_clickable_ui_elements', {
         timeout_ms: 5000
-      });
+      }, false, 'wuying_ui');
       expect(result.elements).toHaveLength(1);
       expect(result.elements[0].text).toBe('Button 1');
     });
@@ -178,7 +178,7 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_all_ui_elements', {
         timeout_ms: 3000,
         format: 'json'
-      });
+      }, false, 'wuying_ui');
       expect(result.format).toBe('json');
       expect(typeof result.raw).toBe('string');
       expect(result.raw).toContain('android.widget.TextView');
@@ -203,7 +203,7 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_all_ui_elements', {
         timeout_ms: 3000,
         format: 'xml'
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
       expect(result.format).toBe('xml');
       expect(result.raw.startsWith('<?xml')).toBe(true);
@@ -235,7 +235,7 @@ describe('Mobile', () => {
         start_menu: false,
         desktop: true,
         ignore_system_apps: true
-      });
+      }, false, 'wuying_app');
       expect(result.apps).toHaveLength(1);
       expect(result.apps[0].name).toBe('Calculator');
     });
@@ -262,7 +262,7 @@ describe('Mobile', () => {
         start_cmd: 'com.android.calculator2',
         work_directory: '',
         activity: ''
-      });
+      }, false, 'wuying_app');
       expect(result.processes).toHaveLength(1);
       expect(result.processes[0].pid).toBe(1234);
     });
@@ -281,7 +281,7 @@ describe('Mobile', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_cmd', {
         stop_cmd: 'am force-stop com.android.calculator2'
-      });
+      }, false, 'wuying_app');
       expect(result.success).toBe(true);
     });
   });
@@ -300,7 +300,7 @@ describe('Mobile', () => {
       const result = await mobile.screenshot();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('system_screenshot', {});
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('system_screenshot', {}, false, 'mcp-server');
       expect(result.data).toBe('https://example.com/mobile-screenshot.png');
     });
 
@@ -320,7 +320,7 @@ describe('Mobile', () => {
       const result = await mobile.betaTakeScreenshot();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'png' });
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'png' }, false, 'wuying_capture');
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-beta-123');
       expect(result.format).toBe('png');
@@ -359,7 +359,7 @@ describe('Mobile', () => {
         max_screens: 2,
         format: 'jpeg',
         quality: 80,
-      });
+      }, false, 'wuying_capture');
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-long-123');
       expect(result.format).toBe('png');

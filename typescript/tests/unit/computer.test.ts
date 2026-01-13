@@ -44,7 +44,7 @@ describe('Computer', () => {
         x: 100,
         y: 200,
         button: 'left'
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-123');
     });
@@ -70,7 +70,7 @@ describe('Computer', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('move_mouse', {
         x: 150,
         y: 250
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -92,7 +92,7 @@ describe('Computer', () => {
         to_x: 200,
         to_y: 200,
         button: 'left'
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -113,7 +113,7 @@ describe('Computer', () => {
         y: 200,
         direction: 'up',
         amount: 3
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -139,7 +139,7 @@ describe('Computer', () => {
         x: 100,
         y: 200,
         button: 'right'
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -159,7 +159,7 @@ describe('Computer', () => {
         x: 100,
         y: 200,
         button: 'double_left'
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -181,7 +181,7 @@ describe('Computer', () => {
         to_x: 200,
         to_y: 200,
         button: 'middle'
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -202,7 +202,7 @@ describe('Computer', () => {
         y: 200,
         direction: 'down',
         amount: 5
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
   });
@@ -222,7 +222,7 @@ describe('Computer', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('input_text', {
         text: 'Hello World'
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -241,7 +241,7 @@ describe('Computer', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('press_keys', {
         keys: ['Ctrl', 'C'],
         hold: false
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
 
@@ -259,7 +259,7 @@ describe('Computer', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('release_keys', {
         keys: ['Ctrl', 'C']
-      });
+      }, false, 'wuying_ui');
       expect(result.success).toBe(true);
     });
   });
@@ -278,7 +278,7 @@ describe('Computer', () => {
       const result = await computer.getCursorPosition();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_cursor_position', {});
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_cursor_position', {}, false, 'wuying_ui');
       expect(result.x).toBe(100);
       expect(result.y).toBe(200);
     });
@@ -296,7 +296,7 @@ describe('Computer', () => {
       const result = await computer.getScreenSize();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_screen_size', {});
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_screen_size', {}, false, 'wuying_ui');
       expect(result.width).toBe(1920);
       expect(result.height).toBe(1080);
       expect(result.dpiScalingFactor).toBe(1.0);
@@ -315,7 +315,7 @@ describe('Computer', () => {
       const result = await computer.screenshot();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('system_screenshot', {});
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('system_screenshot', {}, false, 'mcp-server');
       expect(result.data).toBe('https://example.com/screenshot.png');
     });
   });
@@ -374,7 +374,7 @@ describe('Computer', () => {
         start_menu: true,
         desktop: false,
         ignore_system_apps: true
-      });
+      }, false, 'wuying_app');
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);
       expect(result.data[0].name).toBe('App1');
@@ -396,7 +396,7 @@ describe('Computer', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('start_app', {
         start_cmd: 'app1.exe'
-      });
+      }, false, 'wuying_app');
       expect(result.success).toBe(true);
     });
 
@@ -416,7 +416,7 @@ describe('Computer', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_pname', {
         pname: 'app1'
-      });
+      }, false, 'wuying_app');
       expect(result.success).toBe(true);
     });
 
@@ -436,7 +436,7 @@ describe('Computer', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_pid', {
         pid: 1234
-      });
+      }, false, 'wuying_app');
       expect(result.success).toBe(true);
     });
 
@@ -456,7 +456,7 @@ describe('Computer', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_cmd', {
         stop_cmd: 'app1.exe'
-      });
+      }, false, 'wuying_app');
       expect(result.success).toBe(true);
     });
 
@@ -474,7 +474,7 @@ describe('Computer', () => {
       const result = await computer.listVisibleApps();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('list_visible_apps', {});
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('list_visible_apps', {}, false, 'wuying_app');
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
     });

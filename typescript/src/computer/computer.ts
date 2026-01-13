@@ -30,7 +30,12 @@ export enum ScrollDirection {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ComputerSession {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  callMcpTool(toolName: string, args: Record<string, any>): Promise<any>;
+  callMcpTool(
+    toolName: string,
+    args: Record<string, any>,
+    autoGenSession?: boolean,
+    serverName?: string
+  ): Promise<any>;
   sessionId: string;
   getAPIKey(): string;
   getSessionId(): string;
@@ -71,7 +76,7 @@ export class Computer {
 
     const args = { x, y, button: buttonStr };
     try {
-      const result = await this.session.callMcpTool('click_mouse', args);
+      const result = await this.session.callMcpTool('click_mouse', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -110,7 +115,7 @@ export class Computer {
   async moveMouse(x: number, y: number): Promise<OperationResult> {
     const args = { x, y };
     try {
-      const result = await this.session.callMcpTool('move_mouse', args);
+      const result = await this.session.callMcpTool('move_mouse', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -157,7 +162,7 @@ export class Computer {
 
     const args = { from_x: fromX, from_y: fromY, to_x: toX, to_y: toY, button: buttonStr };
     try {
-      const result = await this.session.callMcpTool('drag_mouse', args);
+      const result = await this.session.callMcpTool('drag_mouse', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -202,7 +207,7 @@ export class Computer {
 
     const args = { x, y, direction: directionStr, amount };
     try {
-      const result = await this.session.callMcpTool('scroll', args);
+      const result = await this.session.callMcpTool('scroll', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -238,7 +243,7 @@ export class Computer {
   async inputText(text: string): Promise<OperationResult> {
     const args = { text };
     try {
-      const result = await this.session.callMcpTool('input_text', args);
+      const result = await this.session.callMcpTool('input_text', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -276,7 +281,7 @@ export class Computer {
   async pressKeys(keys: string[], hold = false): Promise<OperationResult> {
     const args = { keys, hold };
     try {
-      const result = await this.session.callMcpTool('press_keys', args);
+      const result = await this.session.callMcpTool('press_keys', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -313,7 +318,7 @@ export class Computer {
   async releaseKeys(keys: string[]): Promise<OperationResult> {
     const args = { keys };
     try {
-      const result = await this.session.callMcpTool('release_keys', args);
+      const result = await this.session.callMcpTool('release_keys', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -348,7 +353,7 @@ export class Computer {
    */
   async getCursorPosition(): Promise<CursorPosition> {
     try {
-      const result = await this.session.callMcpTool('get_cursor_position', {});
+      const result = await this.session.callMcpTool('get_cursor_position', {}, false, 'wuying_ui');
       
       if (!result.success) {
         return {
@@ -419,7 +424,7 @@ export class Computer {
    */
   async getScreenSize(): Promise<ScreenSize> {
     try {
-      const result = await this.session.callMcpTool('get_screen_size', {});
+      const result = await this.session.callMcpTool('get_screen_size', {}, false, 'wuying_ui');
       
       if (!result.success) {
         return {
@@ -495,7 +500,7 @@ export class Computer {
    */
   async screenshot(): Promise<ScreenshotResult> {
     try {
-      const result = await this.session.callMcpTool('system_screenshot', {});
+      const result = await this.session.callMcpTool('system_screenshot', {}, false, 'mcp-server');
       if (!result.success) {
         return {
           success: false,
@@ -549,7 +554,7 @@ export class Computer {
   async listRootWindows(timeoutMs = 3000): Promise<WindowListResult> {
     try {
       const args = { timeout_ms: timeoutMs };
-      const response = await this.session.callMcpTool('list_root_windows', args);
+    const response = await this.session.callMcpTool('list_root_windows', args, false, 'wuying_ui');
 
       if (!response.success) {
         return {
@@ -597,7 +602,7 @@ export class Computer {
   async getActiveWindow(): Promise<WindowInfoResult> {
     try {
       const args = {};
-      const response = await this.session.callMcpTool('get_active_window', args);
+    const response = await this.session.callMcpTool('get_active_window', args, false, 'wuying_ui');
 
       if (!response.success) {
         return {
@@ -646,7 +651,7 @@ export class Computer {
   async activateWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-      const response = await this.session.callMcpTool('activate_window', args);
+    const response = await this.session.callMcpTool('activate_window', args, false, 'wuying_ui');
 
       return {
         requestId: response.requestId,
@@ -683,7 +688,7 @@ export class Computer {
   async closeWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-      const response = await this.session.callMcpTool('close_window', args);
+    const response = await this.session.callMcpTool('close_window', args, false, 'wuying_ui');
 
       return {
         requestId: response.requestId,
@@ -720,7 +725,7 @@ export class Computer {
   async maximizeWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-      const response = await this.session.callMcpTool('maximize_window', args);
+    const response = await this.session.callMcpTool('maximize_window', args, false, 'wuying_ui');
 
       return {
         requestId: response.requestId,
@@ -757,7 +762,7 @@ export class Computer {
   async minimizeWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-      const response = await this.session.callMcpTool('minimize_window', args);
+    const response = await this.session.callMcpTool('minimize_window', args, false, 'wuying_ui');
 
       return {
         requestId: response.requestId,
@@ -795,7 +800,7 @@ export class Computer {
   async restoreWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-      const response = await this.session.callMcpTool('restore_window', args);
+    const response = await this.session.callMcpTool('restore_window', args, false, 'wuying_ui');
 
       return {
         requestId: response.requestId,
@@ -834,7 +839,7 @@ export class Computer {
   async resizeWindow(windowId: number, width: number, height: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId, width, height };
-      const response = await this.session.callMcpTool('resize_window', args);
+    const response = await this.session.callMcpTool('resize_window', args, false, 'wuying_ui');
 
       return {
         requestId: response.requestId,
@@ -871,7 +876,7 @@ export class Computer {
   async fullscreenWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-      const response = await this.session.callMcpTool('fullscreen_window', args);
+    const response = await this.session.callMcpTool('fullscreen_window', args, false, 'wuying_ui');
 
       return {
         requestId: response.requestId,
@@ -907,7 +912,7 @@ export class Computer {
   async focusMode(on: boolean): Promise<WindowBoolResult> {
     try {
       const args = { on };
-      const response = await this.session.callMcpTool('focus_mode', args);
+    const response = await this.session.callMcpTool('focus_mode', args, false, 'wuying_ui');
 
       return {
         requestId: response.requestId,
@@ -952,7 +957,7 @@ export class Computer {
         ignore_system_apps: ignoreSystemApps,
       };
 
-      const response = await this.session.callMcpTool('get_installed_apps', args);
+    const response = await this.session.callMcpTool('get_installed_apps', args, false, 'wuying_app');
 
       if (!response.success) {
         return {
@@ -1005,7 +1010,7 @@ export class Computer {
       if (workDirectory) args.work_directory = workDirectory;
       if (activity) args.activity = activity;
 
-      const response = await this.session.callMcpTool('start_app', args);
+    const response = await this.session.callMcpTool('start_app', args, false, 'wuying_app');
 
       if (!response.success) {
         return {
@@ -1053,7 +1058,7 @@ export class Computer {
   async stopAppByPName(pname: string): Promise<WindowBoolResult> {
     try {
       const args = { pname };
-      const response = await this.session.callMcpTool('stop_app_by_pname', args);
+    const response = await this.session.callMcpTool('stop_app_by_pname', args, false, 'wuying_app');
 
       return {
         requestId: response.requestId,
@@ -1090,7 +1095,7 @@ export class Computer {
   async stopAppByPID(pid: number): Promise<WindowBoolResult> {
     try {
       const args = { pid };
-      const response = await this.session.callMcpTool('stop_app_by_pid', args);
+    const response = await this.session.callMcpTool('stop_app_by_pid', args, false, 'wuying_app');
 
       return {
         requestId: response.requestId,
@@ -1126,7 +1131,7 @@ export class Computer {
   async stopAppByCmd(cmd: string): Promise<WindowBoolResult> {
     try {
       const args = { stop_cmd: cmd };
-      const response = await this.session.callMcpTool('stop_app_by_cmd', args);
+    const response = await this.session.callMcpTool('stop_app_by_cmd', args, false, 'wuying_app');
 
       return {
         requestId: response.requestId,
@@ -1160,7 +1165,7 @@ export class Computer {
    */
   async listVisibleApps(): Promise<ProcessListResult> {
     try {
-      const response = await this.session.callMcpTool('list_visible_apps', {});
+    const response = await this.session.callMcpTool('list_visible_apps', {}, false, 'wuying_app');
 
       if (!response.success) {
         return {

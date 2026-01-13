@@ -29,7 +29,6 @@ def test_link_url_session_mcp_tools_and_call_tool():
     try:
         assert session.get_token() != ""
         assert session.get_link_url() != ""
-        assert len(session.mcp_tools) > 0
 
         # Force using LinkUrl route (not legacy ip:port route)
         session.network_interface_ip = ""
@@ -38,6 +37,14 @@ def test_link_url_session_mcp_tools_and_call_tool():
         cmd_result = session.command.execute_command("echo link-url-route-ok")
         assert cmd_result.success, cmd_result.error_message
         assert "link-url-route-ok" in cmd_result.output
+
+        direct = session.call_mcp_tool(
+            "shell",
+            {"command": "echo direct-link-url-route-ok"},
+            server_name="wuying_shell",
+        )
+        assert direct.success, direct.error_message
+        assert "direct-link-url-route-ok" in direct.data
     finally:
         session.delete()
 

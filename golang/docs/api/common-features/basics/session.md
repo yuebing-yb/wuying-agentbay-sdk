@@ -43,9 +43,6 @@ type Session struct {
 
 	// Context management
 	Context	*ContextManager
-
-	// MCP tools available for this session
-	McpTools	[]McpTool
 }
 ```
 
@@ -255,8 +252,8 @@ Returns:
 Behavior:
 
 - Uses the ImageId from session creation - Defaults to "linux_latest" if ImageId is empty -
-Retrieves all available MCP tools for the specified image - Updates the session's McpTools field
-with the retrieved tools
+Retrieves all available MCP tools for the specified image - Does not store tools on the Session (no
+caching)
 
 **Example:**
 

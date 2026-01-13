@@ -38,7 +38,7 @@ func (suite *ComputerTestSuite) TestClickMouse_Success() {
 		"x":      100,
 		"y":      200,
 		"button": "left",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.ClickMouse(100, 200, computer.MouseButtonLeft)
@@ -74,7 +74,7 @@ func (suite *ComputerTestSuite) TestClickMouse_WithRightButton() {
 		"x":      100,
 		"y":      200,
 		"button": "right",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.ClickMouse(100, 200, computer.MouseButtonRight)
@@ -95,7 +95,7 @@ func (suite *ComputerTestSuite) TestClickMouse_WithDoubleLeft() {
 		"x":      100,
 		"y":      200,
 		"button": "double_left",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.ClickMouse(100, 200, computer.MouseButtonDoubleLeft)
@@ -116,7 +116,7 @@ func (suite *ComputerTestSuite) TestClickMouse_McpToolError() {
 		"x":      100,
 		"y":      200,
 		"button": "left",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.ClickMouse(100, 200, computer.MouseButtonLeft)
@@ -139,7 +139,7 @@ func (suite *ComputerTestSuite) TestMoveMouse_Success() {
 	suite.mockSession.On("CallMcpTool", "move_mouse", map[string]interface{}{
 		"x": 150,
 		"y": 250,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.MoveMouse(150, 250)
@@ -165,7 +165,7 @@ func (suite *ComputerTestSuite) TestDragMouse_Success() {
 		"to_x":   300,
 		"to_y":   400,
 		"button": "left",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.DragMouse(100, 200, 300, 400, computer.MouseButtonLeft)
@@ -198,7 +198,7 @@ func (suite *ComputerTestSuite) TestScroll_Success() {
 		"y":         200,
 		"direction": "up",
 		"amount":    3,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.Scroll(100, 200, computer.ScrollDirectionUp, 3)
@@ -221,7 +221,7 @@ func (suite *ComputerTestSuite) TestScroll_WithDownDirection() {
 		"y":         200,
 		"direction": "down",
 		"amount":    5,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.Scroll(100, 200, computer.ScrollDirectionDown, 5)
@@ -253,7 +253,7 @@ func (suite *ComputerTestSuite) TestGetCursorPosition_Success() {
 		ErrorMessage: "",
 	}
 
-	suite.mockSession.On("CallMcpTool", "get_cursor_position", map[string]interface{}{}).Return(expectedResult, nil)
+	suite.mockSession.On("CallMcpTool", "get_cursor_position", map[string]interface{}{}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.GetCursorPosition()
@@ -274,7 +274,7 @@ func (suite *ComputerTestSuite) TestGetCursorPosition_InvalidJSON() {
 		ErrorMessage: "",
 	}
 
-	suite.mockSession.On("CallMcpTool", "get_cursor_position", map[string]interface{}{}).Return(expectedResult, nil)
+	suite.mockSession.On("CallMcpTool", "get_cursor_position", map[string]interface{}{}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.GetCursorPosition()
@@ -295,7 +295,7 @@ func (suite *ComputerTestSuite) TestInputText_Success() {
 
 	suite.mockSession.On("CallMcpTool", "input_text", map[string]interface{}{
 		"text": "Hello World",
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.InputText("Hello World")
@@ -317,7 +317,7 @@ func (suite *ComputerTestSuite) TestPressKeys_Success() {
 	suite.mockSession.On("CallMcpTool", "press_keys", map[string]interface{}{
 		"keys": []string{"Ctrl", "C"},
 		"hold": false,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.PressKeys([]string{"Ctrl", "C"}, false)
@@ -338,7 +338,7 @@ func (suite *ComputerTestSuite) TestPressKeys_WithHold() {
 	suite.mockSession.On("CallMcpTool", "press_keys", map[string]interface{}{
 		"keys": []string{"Alt", "Tab"},
 		"hold": true,
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.PressKeys([]string{"Alt", "Tab"}, true)
@@ -359,7 +359,7 @@ func (suite *ComputerTestSuite) TestReleaseKeys_Success() {
 
 	suite.mockSession.On("CallMcpTool", "release_keys", map[string]interface{}{
 		"keys": []string{"Ctrl", "C"},
-	}).Return(expectedResult, nil)
+	}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.ReleaseKeys([]string{"Ctrl", "C"})
@@ -379,7 +379,7 @@ func (suite *ComputerTestSuite) TestGetScreenSize_Success() {
 		ErrorMessage: "",
 	}
 
-	suite.mockSession.On("CallMcpTool", "get_screen_size", map[string]interface{}{}).Return(expectedResult, nil)
+	suite.mockSession.On("CallMcpTool", "get_screen_size", map[string]interface{}{}, "wuying_ui").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.GetScreenSize()
@@ -402,7 +402,7 @@ func (suite *ComputerTestSuite) TestScreenshot_Success() {
 		ErrorMessage: "",
 	}
 
-	suite.mockSession.On("CallMcpTool", "system_screenshot", map[string]interface{}{}).Return(expectedResult, nil)
+	suite.mockSession.On("CallMcpTool", "system_screenshot", map[string]interface{}{}, "mcp-server").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.Screenshot()
@@ -425,7 +425,7 @@ func (suite *ComputerTestSuite) TestStartApp_Success() {
 
 	suite.mockSession.On("CallMcpTool", "start_app", map[string]interface{}{
 		"start_cmd": "notepad.exe",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result, err := suite.computer.StartApp("notepad.exe", "", "")
@@ -449,7 +449,7 @@ func (suite *ComputerTestSuite) TestStartApp_McpToolError() {
 
 	suite.mockSession.On("CallMcpTool", "start_app", map[string]interface{}{
 		"start_cmd": "invalid.exe",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result, err := suite.computer.StartApp("invalid.exe", "", "")
@@ -473,7 +473,7 @@ func (suite *ComputerTestSuite) TestStartApp_WithWorkDirAndActivity() {
 		"start_cmd":      "cmd.exe",
 		"work_directory": "C:\\",
 		"activity":       "MainActivity",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result, err := suite.computer.StartApp("cmd.exe", "C:\\", "MainActivity")
@@ -499,7 +499,7 @@ func (suite *ComputerTestSuite) TestGetInstalledApps_Success() {
 		"start_menu":         true,
 		"desktop":            false,
 		"ignore_system_apps": true,
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result, err := suite.computer.GetInstalledApps(true, false, true)
@@ -525,7 +525,7 @@ func (suite *ComputerTestSuite) TestGetInstalledApps_Error() {
 		"start_menu":         true,
 		"desktop":            true,
 		"ignore_system_apps": true,
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result, err := suite.computer.GetInstalledApps(true, true, true)
@@ -546,7 +546,7 @@ func (suite *ComputerTestSuite) TestListVisibleApps_Success() {
 		ErrorMessage: "",
 	}
 
-	suite.mockSession.On("CallMcpTool", "list_visible_apps", map[string]interface{}{}).Return(expectedResult, nil)
+	suite.mockSession.On("CallMcpTool", "list_visible_apps", map[string]interface{}{}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result, err := suite.computer.ListVisibleApps()
@@ -570,7 +570,7 @@ func (suite *ComputerTestSuite) TestStopAppByPName_Success() {
 
 	suite.mockSession.On("CallMcpTool", "stop_app_by_pname", map[string]interface{}{
 		"pname": "notepad.exe",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.StopAppByPName("notepad.exe")
@@ -592,7 +592,7 @@ func (suite *ComputerTestSuite) TestStopAppByPID_Success() {
 
 	suite.mockSession.On("CallMcpTool", "stop_app_by_pid", map[string]interface{}{
 		"pid": 1234,
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.StopAppByPID(1234)
@@ -614,7 +614,7 @@ func (suite *ComputerTestSuite) TestStopAppByCmd_Success() {
 
 	suite.mockSession.On("CallMcpTool", "stop_app_by_cmd", map[string]interface{}{
 		"stop_cmd": "kill notepad",
-	}).Return(expectedResult, nil)
+	}, "wuying_app").Return(expectedResult, nil)
 
 	// Act
 	result := suite.computer.StopAppByCmd("kill notepad")
@@ -650,7 +650,7 @@ func (suite *ComputerTestSuite) TestClickMouse_AllButtonTypes() {
 			"x":      100,
 			"y":      200,
 			"button": tc.buttonStr,
-		}).Return(expectedResult, nil)
+		}, "wuying_ui").Return(expectedResult, nil)
 
 		result := suite.computer.ClickMouse(100, 200, tc.button)
 
@@ -684,7 +684,7 @@ func (suite *ComputerTestSuite) TestScroll_AllDirections() {
 			"y":         200,
 			"direction": tc.directionStr,
 			"amount":    1,
-		}).Return(expectedResult, nil)
+		}, "wuying_ui").Return(expectedResult, nil)
 
 		result := suite.computer.Scroll(100, 200, tc.direction, 1)
 

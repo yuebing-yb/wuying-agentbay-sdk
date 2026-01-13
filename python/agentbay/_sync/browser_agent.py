@@ -478,5 +478,9 @@ class BrowserAgent(BaseService):
         """
         # AsyncBaseService.session.call_mcp_tool is async
         return self.session.call_mcp_tool(
-            name, args, read_timeout=60000, connect_timeout=60000
+            name,
+            args,
+            read_timeout=60000,
+            connect_timeout=60000,
+            server_name="wuying_browseruse",
         )

@@ -172,8 +172,7 @@ type Mobile struct {
 		IsVpc() bool
 		NetworkInterfaceIp() string
 		HttpPort() string
-		FindServerForTool(toolName string) string
-		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	}
 	command *command.Command
 }
@@ -186,8 +185,7 @@ type SessionWithCommand interface {
 	IsVpc() bool
 	NetworkInterfaceIp() string
 	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command
 }
 
@@ -200,8 +198,7 @@ func NewMobile(session interface {
 	IsVpc() bool
 	NetworkInterfaceIp() string
 	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 }) *Mobile {
 	mobile := &Mobile{
 		Session: session,
@@ -229,7 +226,7 @@ func (m *Mobile) Tap(x, y int) *BoolResult {
 		"y": y,
 	}
 
-	result, err := m.Session.CallMcpTool("tap", args)
+	result, err := m.Session.CallMcpTool("tap", args, "wuying_ui")
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -266,7 +263,7 @@ func (m *Mobile) Swipe(startX, startY, endX, endY, durationMs int) *BoolResult {
 		"duration_ms": durationMs,
 	}
 
-	result, err := m.Session.CallMcpTool("swipe", args)
+	result, err := m.Session.CallMcpTool("swipe", args, "wuying_ui")
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -299,7 +296,7 @@ func (m *Mobile) InputText(text string) *BoolResult {
 		"text": text,
 	}
 
-	result, err := m.Session.CallMcpTool("input_text", args)
+	result, err := m.Session.CallMcpTool("input_text", args, "wuying_ui")
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -332,7 +329,7 @@ func (m *Mobile) SendKey(key int) *BoolResult {
 		"key": key,
 	}
 
-	result, err := m.Session.CallMcpTool("send_key", args)
+	result, err := m.Session.CallMcpTool("send_key", args, "wuying_ui")
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -365,7 +362,7 @@ func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult {
 		"timeout_ms": timeoutMs,
 	}
 
-	result, err := m.Session.CallMcpTool("get_clickable_ui_elements", args)
+	result, err := m.Session.CallMcpTool("get_clickable_ui_elements", args, "wuying_ui")
 	if err != nil {
 		return &UIElementsResult{
 			ApiResponse: models.ApiResponse{
@@ -428,7 +425,7 @@ func (m *Mobile) GetAllUIElements(timeoutMs int, formats ...string) *UIElementsR
 		"format":     formatNorm,
 	}
 
-	result, err := m.Session.CallMcpTool("get_all_ui_elements", args)
+	result, err := m.Session.CallMcpTool("get_all_ui_elements", args, "wuying_ui")
 	if err != nil {
 		return &UIElementsResult{
 			ApiResponse: models.ApiResponse{
@@ -514,7 +511,7 @@ func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *In
 		"ignore_system_apps": ignoreSystemApps,
 	}
 
-	result, err := m.Session.CallMcpTool("get_installed_apps", args)
+	result, err := m.Session.CallMcpTool("get_installed_apps", args, "wuying_app")
 	if err != nil {
 		return &InstalledAppListResult{
 			ApiResponse: models.ApiResponse{
@@ -568,7 +565,7 @@ func (m *Mobile) StartApp(startCmd, workDirectory, activity string) *ProcessList
 		"activity":       activity,
 	}
 
-	result, err := m.Session.CallMcpTool("start_app", args)
+	result, err := m.Session.CallMcpTool("start_app", args, "wuying_app")
 	if err != nil {
 		return &ProcessListResult{
 			ApiResponse: models.ApiResponse{
@@ -620,7 +617,7 @@ func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult {
 		"stop_cmd": stopCmd,
 	}
 
-	result, err := m.Session.CallMcpTool("stop_app_by_cmd", args)
+	result, err := m.Session.CallMcpTool("stop_app_by_cmd", args, "wuying_app")
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -651,7 +648,7 @@ func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult {
 func (m *Mobile) Screenshot() *ScreenshotResult {
 	args := map[string]interface{}{}
 
-	result, err := m.Session.CallMcpTool("system_screenshot", args)
+	result, err := m.Session.CallMcpTool("system_screenshot", args, "mcp-server")
 	if err != nil {
 		return &ScreenshotResult{
 			ApiResponse: models.ApiResponse{
@@ -678,7 +675,7 @@ func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
 		"format": "png",
 	}
 
-	result, err := m.Session.CallMcpTool("screenshot", args)
+	result, err := m.Session.CallMcpTool("screenshot", args, "wuying_capture")
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -764,7 +761,7 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 		args["quality"] = q
 	}
 
-	result, err := m.Session.CallMcpTool("long_screenshot", args)
+	result, err := m.Session.CallMcpTool("long_screenshot", args, "wuying_capture")
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},

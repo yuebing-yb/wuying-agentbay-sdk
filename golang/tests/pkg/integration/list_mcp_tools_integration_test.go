@@ -86,17 +86,5 @@ func TestListMcpTools_WindowsLatest(t *testing.T) {
 	}
 	fmt.Println("\n=====================================")
 
-	// Verify that the session's McpTools field is updated
-	if len(session.McpTools) != len(mcpToolsResult.Tools) {
-		t.Errorf("Expected session.McpTools to have %d tools, but got %d",
-			len(mcpToolsResult.Tools), len(session.McpTools))
-	}
-
-	// Verify that the tools are properly stored in session
-	for i, tool := range session.McpTools {
-		if tool.Name != mcpToolsResult.Tools[i].Name {
-			t.Errorf("Expected session.McpTools[%d].Name to be '%s', but got '%s'",
-				i, mcpToolsResult.Tools[i].Name, tool.Name)
-		}
-	}
+	// NOTE: Session must not store MCP tool lists. Only the API result is validated here.
 }

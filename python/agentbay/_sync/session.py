@@ -128,9 +128,6 @@ class Session:
             True  # Whether browser recording is enabled for this session
         )
 
-        # MCP tools available for this session
-        self.mcp_tools = []  # List[McpTool]
-
         # Initialize file system, command and code handlers
         self.file_system = FileSystem(self)
         self.command = Command(self)
@@ -313,13 +310,6 @@ class Session:
     def getLinkUrl(self) -> str:
         """Alias of get_link_url()."""
         return self.get_link_url()
-
-    def _find_server_for_tool(self, tool_name: str) -> str:
-        """Internal method to find the server that provides the given MCP tool."""
-        for tool in self.mcp_tools:
-            if tool.name == tool_name:
-                return tool.server
-        return ""
 
     def delete(self, sync_context: bool = False) -> DeleteResult:
         """
@@ -843,8 +833,6 @@ class Session:
             except json.JSONDecodeError as e:
                 _logger.error(f"❌ Error unmarshaling tools data: {e}")
 
-        self.mcp_tools = tools  # Update the session's mcp_tools field
-
         # Log successful tools retrieval
         _log_api_response_with_details(
             api_name="ListMcpTools",
@@ -862,6 +850,7 @@ class Session:
         read_timeout: Optional[int] = None,
         connect_timeout: Optional[int] = None,
         auto_gen_session: bool = False,
+        server_name: Optional[str] = None,
     ):
         """
         Call an MCP tool directly asynchronously.
@@ -879,11 +868,19 @@ class Session:
 
             # Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
             if self._get_link_url() and self._get_token():
-                return self._call_mcp_tool_link_url(tool_name, args)
+                return self._call_mcp_tool_link_url(
+                    tool_name,
+                    args,
+                    server_name=server_name,
+                )
 
             # Legacy VPC route (ip:port).
             if self._is_vpc_enabled():
-                return self._call_mcp_tool_vpc(tool_name, args_json)
+                return self._call_mcp_tool_vpc(
+                    tool_name,
+                    args_json,
+                    server_name=server_name,
+                )
 
             # Non-VPC mode: use traditional API call
             result_data = self._call_mcp_tool_api(
@@ -899,7 +896,12 @@ class Session:
                 error_message=f"Failed to call MCP tool: {e}",
             )
 
-    def _call_mcp_tool_link_url(self, tool_name: str, args: Dict[str, Any]):
+    def _call_mcp_tool_link_url(
+        self,
+        tool_name: str,
+        args: Dict[str, Any],
+        server_name: Optional[str] = None,
+    ):
         """
         Handle LinkUrl-based MCP tool calls using HTTP POST JSON, matching Java BaseService.callMcpToolVpc.
         """
@@ -915,7 +917,7 @@ class Session:
 
         _log_api_call("CallMcpTool(LinkUrl)", "")
 
-        server = self._find_server_for_tool(tool_name)
+        server = server_name or ""
         if not server:
             _log_operation_error(
                 "CallMcpTool(LinkUrl)",
@@ -1127,7 +1129,12 @@ class Session:
                 raw={},
             )
 
-    def _call_mcp_tool_vpc(self, tool_name: str, args_json: str):
+    def _call_mcp_tool_vpc(
+        self,
+        tool_name: str,
+        args_json: str,
+        server_name: Optional[str] = None,
+    ):
         """
         Handle VPC-based MCP tool calls using HTTP requests asynchronously.
         """
@@ -1139,8 +1146,7 @@ class Session:
 
         _log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
 
-        # Find server for this tool
-        server = self._find_server_for_tool(tool_name)
+        server = server_name or ""
         if not server:
             _log_operation_error(
                 "CallMcpTool(VPC)",

@@ -54,7 +54,11 @@ class TestMobile:
         assert isinstance(result, BoolResult)
         assert result.success is True
         assert result.data is True
-        self.session.call_mcp_tool.assert_called_once_with("tap", {"x": 100, "y": 200})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "tap",
+            {"x": 100, "y": 200},
+            server_name="wuying_ui",
+        )
 
     @pytest.mark.sync
 
@@ -83,6 +87,7 @@ class TestMobile:
                 "end_y": 200,
                 "duration_ms": 300,
             },
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -110,6 +115,7 @@ class TestMobile:
                 "end_y": 200,
                 "duration_ms": 500,
             },
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -131,7 +137,9 @@ class TestMobile:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "input_text", {"text": "Hello Mobile"}
+            "input_text",
+            {"text": "Hello Mobile"},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -152,7 +160,11 @@ class TestMobile:
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
-        self.session.call_mcp_tool.assert_called_once_with("send_key", {"key": 4})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "send_key",
+            {"key": 4},
+            server_name="wuying_ui",
+        )
 
     # UI Elements Tests
     @pytest.mark.sync
@@ -178,7 +190,9 @@ class TestMobile:
         assert "bounds_rect" in result.elements[0]
         assert result.elements[0]["bounds_rect"] is None
         self.session.call_mcp_tool.assert_called_once_with(
-            "get_clickable_ui_elements", {"timeout_ms": 2000}
+            "get_clickable_ui_elements",
+            {"timeout_ms": 2000},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -199,7 +213,9 @@ class TestMobile:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "get_clickable_ui_elements", {"timeout_ms": 5000}
+            "get_clickable_ui_elements",
+            {"timeout_ms": 5000},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -237,7 +253,9 @@ class TestMobile:
         assert result.elements[1]["bounds_rect"] == {"left": 0, "top": 100, "right": 100, "bottom": 200}
         assert result.elements[1]["children"] == []
         self.session.call_mcp_tool.assert_called_once_with(
-            "get_all_ui_elements", {"timeout_ms": 2000, "format": "json"}
+            "get_all_ui_elements",
+            {"timeout_ms": 2000, "format": "json"},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -265,7 +283,9 @@ class TestMobile:
         assert result.raw.startswith("<?xml")
         assert result.elements == []
         self.session.call_mcp_tool.assert_called_once_with(
-            "get_all_ui_elements", {"timeout_ms": 2000, "format": "xml"}
+            "get_all_ui_elements",
+            {"timeout_ms": 2000, "format": "xml"},
+            server_name="wuying_ui",
         )
 
     # Application Management Tests
@@ -292,6 +312,7 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
             {"start_menu": False, "desktop": True, "ignore_system_apps": True},
+            server_name="wuying_app",
         )
 
     @pytest.mark.sync
@@ -316,6 +337,7 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
             {"start_menu": True, "desktop": False, "ignore_system_apps": False},
+            server_name="wuying_app",
         )
 
     @pytest.mark.sync
@@ -338,7 +360,9 @@ class TestMobile:
         assert isinstance(result, ProcessListResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "start_app", {"start_cmd": "com.android.calculator2"}
+            "start_app",
+            {"start_cmd": "com.android.calculator2"},
+            server_name="wuying_app",
         )
 
     @pytest.mark.sync
@@ -363,6 +387,7 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "start_app",
             {"start_cmd": "com.android.settings", "activity": ".MainActivity"},
+            server_name="wuying_app",
         )
 
     @pytest.mark.sync
@@ -385,7 +410,9 @@ class TestMobile:
         assert isinstance(result, AppOperationResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "stop_app_by_cmd", {"stop_cmd": "com.android.calculator2"}
+            "stop_app_by_cmd",
+            {"stop_cmd": "com.android.calculator2"},
+            server_name="wuying_app",
         )
 
     # Screenshot Tests
@@ -408,7 +435,11 @@ class TestMobile:
         assert isinstance(result, OperationResult)
         assert result.success is True
         assert result.data == "/path/to/mobile_screenshot.png"
-        self.session.call_mcp_tool.assert_called_once_with("system_screenshot", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "system_screenshot",
+            {},
+            server_name="mcp-server",
+        )
 
     @pytest.mark.sync
     def test_beta_take_screenshot_success_png(self):
@@ -427,7 +458,11 @@ class TestMobile:
         assert result.success is True
         assert result.format == "png"
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
-        self.session.call_mcp_tool.assert_called_once_with("screenshot", {"format": "png"})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "screenshot",
+            {"format": "png"},
+            server_name="wuying_capture",
+        )
 
     @pytest.mark.sync
     def test_beta_take_long_screenshot_requires_valid_max_screens(self):
@@ -455,7 +490,9 @@ class TestMobile:
         assert result.format == "png"
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
         self.session.call_mcp_tool.assert_called_once_with(
-            "long_screenshot", {"max_screens": 4, "format": "png"}
+            "long_screenshot",
+            {"max_screens": 4, "format": "png"},
+            server_name="wuying_capture",
         )
 
     @pytest.mark.sync
@@ -482,7 +519,9 @@ class TestMobile:
         assert result.format == "jpeg"
         assert result.data.startswith(b"\xff\xd8\xff")
         self.session.call_mcp_tool.assert_called_once_with(
-            "long_screenshot", {"max_screens": 2, "format": "jpeg", "quality": 80}
+            "long_screenshot",
+            {"max_screens": 2, "format": "jpeg", "quality": 80},
+            server_name="wuying_capture",
         )
 
     # ADB URL Tests

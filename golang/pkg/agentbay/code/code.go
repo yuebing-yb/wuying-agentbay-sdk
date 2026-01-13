@@ -63,8 +63,7 @@ type Code struct {
 		IsVpc() bool
 		NetworkInterfaceIp() string
 		HttpPort() string
-		FindServerForTool(toolName string) string
-		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	}
 }
 
@@ -76,8 +75,7 @@ func NewCode(session interface {
 	IsVpc() bool
 	NetworkInterfaceIp() string
 	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 }) *Code {
 	return &Code{
 		Session: session,
@@ -279,7 +277,7 @@ func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResu
 	}
 
 	// Use Session's CallMcpTool method
-	result, err := c.Session.CallMcpTool("run_code", args)
+	result, err := c.Session.CallMcpTool("run_code", args, "wuying_codespace")
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute code: %w", err)
 	}

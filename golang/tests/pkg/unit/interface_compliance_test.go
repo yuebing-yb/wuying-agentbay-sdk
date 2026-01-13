@@ -112,7 +112,6 @@ func (m *MockSessionForCompliance) GetClient() *client.Client                { r
 func (m *MockSessionForCompliance) IsVpc() bool                              { return false }
 func (m *MockSessionForCompliance) NetworkInterfaceIp() string               { return "" }
 func (m *MockSessionForCompliance) HttpPort() string                         { return "" }
-func (m *MockSessionForCompliance) FindServerForTool(toolName string) string { return "" }
 func (m *MockSessionForCompliance) Delete(syncContext ...bool) (*agentbay.DeleteResult, error) {
 	return nil, nil
 }
@@ -127,7 +126,7 @@ func (m *MockSessionForCompliance) GetLink(protocolType *string, port *int32, op
 }
 func (m *MockSessionForCompliance) Info() (*agentbay.InfoResult, error)             { return nil, nil }
 func (m *MockSessionForCompliance) ListMcpTools() (*agentbay.McpToolsResult, error) { return nil, nil }
-func (m *MockSessionForCompliance) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+func (m *MockSessionForCompliance) CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
 	return &models.McpToolResult{
 		Success:      true,
 		Data:         "",

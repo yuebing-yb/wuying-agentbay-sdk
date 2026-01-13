@@ -349,7 +349,7 @@ ExecutionResult represents the result of task execution
 type McpSession interface {
 	GetAPIKey() string
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 }
 ```
 

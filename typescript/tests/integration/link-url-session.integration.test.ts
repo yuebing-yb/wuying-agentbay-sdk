@@ -25,7 +25,6 @@ describe("LinkUrl session integration", () => {
     try {
       expect(session.getToken()).not.toBe("");
       expect(session.getLinkUrl()).not.toBe("");
-      expect(session.mcpTools.length).toBeGreaterThan(0);
 
       // Force using LinkUrl route (not legacy ip:port route)
       (session as any).networkInterfaceIp = "";
@@ -36,6 +35,15 @@ describe("LinkUrl session integration", () => {
       );
       expect(cmdResult.success).toBe(true);
       expect(cmdResult.output).toContain("link-url-route-ok");
+
+      const direct = await session.callMcpTool(
+        "shell",
+        { command: "echo direct-link-url-route-ok" },
+        false,
+        "wuying_shell"
+      );
+      expect(direct.success).toBe(true);
+      expect(direct.data).toContain("direct-link-url-route-ok");
     } finally {
       await session.delete();
     }

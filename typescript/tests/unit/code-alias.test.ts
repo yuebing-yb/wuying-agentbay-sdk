@@ -29,7 +29,7 @@ describe('Code aliases', () => {
       code: "print('OK')",
       language: 'python',
       timeout_s: 10,
-    });
+    }, false, 'wuying_codespace');
   });
 
   it('execute() should call runCode()', async () => {
@@ -47,7 +47,7 @@ describe('Code aliases', () => {
       code: "print('OK')",
       language: 'python',
       timeout_s: 60,
-    });
+    }, false, 'wuying_codespace');
   });
 });
 

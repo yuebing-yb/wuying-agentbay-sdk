@@ -55,7 +55,6 @@ public class Session {
     private long linkUrlTimestamp;
     private String resourceUrl;
     private String networkInterfaceIp;
-    private java.util.List<com.aliyun.agentbay.mcp.McpTool> mcpTools;
     private Boolean enableBrowserReplay;
     private String imageId;
 
@@ -72,7 +71,6 @@ public class Session {
         this.browser = new Browser(this);
         this.computer = new Computer(this);
         this.mobile = new Mobile(this);
-        this.mcpTools = new java.util.ArrayList<>();
         this.imageId = "";
     }
 
@@ -149,7 +147,11 @@ public class Session {
      * @throws AgentBayException if the call fails
      */
     public CallMcpToolResponse callTool(String toolName, Object args) throws AgentBayException {
-        return agentBay.getApiClient().callMcpTool(sessionId, toolName, args);
+        return callTool(toolName, args, null);
+    }
+
+    public CallMcpToolResponse callTool(String toolName, Object args, String serverName) throws AgentBayException {
+        return agentBay.getApiClient().callMcpTool(sessionId, toolName, args, serverName);
     }
 
     /**

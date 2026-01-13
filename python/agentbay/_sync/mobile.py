@@ -133,7 +133,11 @@ class Mobile(BaseService):
         """
         args = {"x": x, "y": y}
         try:
-            result = self.session.call_mcp_tool("tap", args)
+            result = self.session.call_mcp_tool(
+                "tap",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -194,7 +198,11 @@ class Mobile(BaseService):
             "duration_ms": duration_ms,
         }
         try:
-            result = self.session.call_mcp_tool("swipe", args)
+            result = self.session.call_mcp_tool(
+                "swipe",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -237,7 +245,11 @@ class Mobile(BaseService):
         """
         args = {"text": text}
         try:
-            result = self.session.call_mcp_tool("input_text", args)
+            result = self.session.call_mcp_tool(
+                "input_text",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -286,7 +298,11 @@ class Mobile(BaseService):
         """
         args = {"key": key}
         try:
-            result = self.session.call_mcp_tool("send_key", args)
+            result = self.session.call_mcp_tool(
+                "send_key",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -338,7 +354,11 @@ class Mobile(BaseService):
         """
         args = {"timeout_ms": timeout_ms}
         try:
-            result = self.session.call_mcp_tool("get_clickable_ui_elements", args)
+            result = self.session.call_mcp_tool(
+                "get_clickable_ui_elements",
+                args,
+                server_name="wuying_ui",
+            )
             request_id = result.request_id
 
             if not result.success:
@@ -443,7 +463,11 @@ class Mobile(BaseService):
             return parsed
 
         try:
-            result = self.session.call_mcp_tool("get_all_ui_elements", args)
+            result = self.session.call_mcp_tool(
+                "get_all_ui_elements",
+                args,
+                server_name="wuying_ui",
+            )
             request_id = result.request_id
 
             if not result.success:
@@ -540,7 +564,11 @@ class Mobile(BaseService):
                 "ignore_system_apps": ignore_system_apps,
             }
 
-            result = self.session.call_mcp_tool("get_installed_apps", args)
+            result = self.session.call_mcp_tool(
+                "get_installed_apps",
+                args,
+                server_name="wuying_app",
+            )
 
             if not result.success:
                 return InstalledAppListResult(
@@ -604,7 +632,11 @@ class Mobile(BaseService):
             if activity:
                 args["activity"] = activity
 
-            result = self.session.call_mcp_tool("start_app", args)
+            result = self.session.call_mcp_tool(
+                "start_app",
+                args,
+                server_name="wuying_app",
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -655,7 +687,11 @@ class Mobile(BaseService):
         """
         try:
             args = {"stop_cmd": stop_cmd}
-            result = self.session.call_mcp_tool("stop_app_by_cmd", args)
+            result = self.session.call_mcp_tool(
+                "stop_app_by_cmd",
+                args,
+                server_name="wuying_app",
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -684,7 +720,11 @@ class Mobile(BaseService):
         """
         args = {}
         try:
-            result = self.session.call_mcp_tool("system_screenshot", args)
+            result = self.session.call_mcp_tool(
+                "system_screenshot",
+                args,
+                server_name="mcp-server",
+            )
 
             if not result.success:
                 return OperationResult(
@@ -721,7 +761,11 @@ class Mobile(BaseService):
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
         """
-        result = self.session.call_mcp_tool("screenshot", {"format": "png"})
+        result = self.session.call_mcp_tool(
+            "screenshot",
+            {"format": "png"},
+            server_name="wuying_capture",
+        )
         if not result.success:
             raise AgentBayError(f"Failed to take screenshot: {result.error_message}")
 
@@ -768,7 +812,11 @@ class Mobile(BaseService):
             if not isinstance(quality, int) or quality < 1 or quality > 100:
                 raise ValueError("Invalid quality: must be an integer in [1, 100]")
             args["quality"] = quality
-        result = self.session.call_mcp_tool("long_screenshot", args)
+        result = self.session.call_mcp_tool(
+            "long_screenshot",
+            args,
+            server_name="wuying_capture",
+        )
         if not result.success:
             raise AgentBayError(f"Failed to take long screenshot: {result.error_message}")
 

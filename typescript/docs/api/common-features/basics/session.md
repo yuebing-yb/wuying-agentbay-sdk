@@ -52,7 +52,6 @@ fileSystem: [`FileSystem`](filesystem.md)
 httpPort: `string` = `""`
 isVpc: `boolean` = `false`
 linkUrl: `string` = `""`
-mcpTools: `McpTool`[] = `[]`
 mobile: [`Mobile`](../../mobile-use/mobile.md)
 networkInterfaceIp: `string` = `""`
 oss: [`Oss`](../advanced/oss.md)
@@ -102,7 +101,7 @@ Alias of fileSystem.
 
 ### callMcpTool
 
-▸ **callMcpTool**(`toolName`, `args`, `autoGenSession?`): `Promise`\<``McpToolResult``\>
+▸ **callMcpTool**(`toolName`, `args`, `autoGenSession?`, `serverName?`): `Promise`\<``McpToolResult``\>
 
 Call an MCP tool and return the result in a format compatible with Agent.
 
@@ -113,6 +112,7 @@ Call an MCP tool and return the result in a format compatible with Agent.
 | `toolName` | `string` | `undefined` | Name of the MCP tool to call |
 | `args` | `any` | `undefined` | Arguments to pass to the tool |
 | `autoGenSession` | `boolean` | `false` | Whether to automatically generate session if not exists (default: false) |
+| `serverName?` | `string` | `undefined` | - |
 
 #### Returns
 

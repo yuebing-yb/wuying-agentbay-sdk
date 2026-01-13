@@ -89,8 +89,7 @@ type Mobile struct {
 		IsVpc() bool
 		NetworkInterfaceIp() string
 		HttpPort() string
-		FindServerForTool(toolName string) string
-		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	}
 	command	*command.Command
 }
@@ -424,8 +423,7 @@ func NewMobile(session interface {
 	IsVpc() bool
 	NetworkInterfaceIp() string
 	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 }) *Mobile
 ```
 
@@ -477,8 +475,7 @@ type SessionWithCommand interface {
 	IsVpc() bool
 	NetworkInterfaceIp() string
 	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command
 }
 ```

@@ -149,7 +149,7 @@ class BrowserFingerprintGenerator:
                     aac: audio.canPlayType('audio/aac') || ''
                 };
             }
-            
+
             // Helper function to get video codec support
             function getVideoCodecs() {
                 const video = document.createElement('video');
@@ -159,12 +159,12 @@ class BrowserFingerprintGenerator:
                     webm: video.canPlayType('video/webm; codecs="vp8, vorbis"') || ''
                 };
             }
-            
+
             // Helper function to get plugins data
             function getPluginsData() {
                 const plugins = [];
                 const mimeTypes = [];
-                
+
                 for (let i = 0; i < navigator.plugins.length; i++) {
                     const plugin = navigator.plugins[i];
                     const pluginData = {
@@ -173,7 +173,7 @@ class BrowserFingerprintGenerator:
                         filename: plugin.filename,
                         mimeTypes: []
                     };
-                    
+
                     for (let j = 0; j < plugin.length; j++) {
                         const mimeType = plugin[j];
                         pluginData.mimeTypes.push({
@@ -182,16 +182,16 @@ class BrowserFingerprintGenerator:
                             description: mimeType.description,
                             enabledPlugin: plugin.name
                         });
-                        
+
                         mimeTypes.push(`${mimeType.description}~~${mimeType.type}~~${mimeType.suffixes}`);
                     }
-                    
+
                     plugins.push(pluginData);
                 }
-                
+
                 return { plugins, mimeTypes };
             }
-            
+
             // Helper function to get battery info
             async function getBatteryInfo() {
                 try {
@@ -207,7 +207,7 @@ class BrowserFingerprintGenerator:
                 } catch (e) {
                     console.log('Battery API not supported');
                 }
-                
+
                 return {
                     charging: true,
                     chargingTime: 0,
@@ -215,13 +215,13 @@ class BrowserFingerprintGenerator:
                     level: 1
                 };
             }
-            
+
             // Helper function to get WebGL info
             function getWebGLInfo() {
                 try {
                     const canvas = document.createElement('canvas');
                     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                    
+
                     if (gl) {
                         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
                         return {
@@ -232,13 +232,13 @@ class BrowserFingerprintGenerator:
                 } catch (e) {
                     console.log('WebGL not supported');
                 }
-                
+
                 return {
                     renderer: "Adreno (TM) 735",
                     vendor: "Qualcomm"
                 };
             }
-            
+
             // Helper function to get multimedia devices
             async function getMultimediaDevices() {
                 try {
@@ -247,7 +247,7 @@ class BrowserFingerprintGenerator:
                         const speakers = [];
                         const micros = [];
                         const webcams = [];
-                        
+
                         devices.forEach(device => {
                             const deviceInfo = {
                                 deviceId: device.deviceId || '',
@@ -255,7 +255,7 @@ class BrowserFingerprintGenerator:
                                 label: device.label || '',
                                 groupId: device.groupId || ''
                             };
-                            
+
                             if (device.kind === 'audiooutput') {
                                 speakers.push(deviceInfo);
                             } else if (device.kind === 'audioinput') {
@@ -264,20 +264,20 @@ class BrowserFingerprintGenerator:
                                 webcams.push(deviceInfo);
                             }
                         });
-                        
+
                         return { speakers, micros, webcams };
                     }
                 } catch (e) {
                     console.log('Media devices not accessible');
                 }
-                
+
                 return {
                     speakers: [{ deviceId: '', kind: 'audiooutput', label: '', groupId: '' }],
                     micros: [{ deviceId: '', kind: 'audioinput', label: '', groupId: '' }],
                     webcams: []
                 };
             }
-            
+
             // Helper function to get available fonts
             function getFonts() {
                 // This is a simplified version - in practice, font detection is more complex
@@ -286,17 +286,17 @@ class BrowserFingerprintGenerator:
                     'Georgia', 'Palatino', 'Garamond', 'Bookman', 'Comic Sans MS',
                     'Trebuchet MS', 'Arial Black', 'Impact'
                 ];
-                
+
                 const availableFonts = [];
                 const testString = 'mmmmmmmmmmlli';
                 const testSize = '72px';
                 const baseWidth = {};
                 const baseHeight = {};
-                
+
                 // Create a canvas for font testing
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
-                
+
                 // Test with default fonts first
                 const defaultFonts = ['monospace', 'sans-serif', 'serif'];
                 defaultFonts.forEach(font => {
@@ -305,7 +305,7 @@ class BrowserFingerprintGenerator:
                     baseWidth[font] = metrics.width;
                     baseHeight[font] = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
                 });
-                
+
                 // Test each font
                 testFonts.forEach(font => {
                     let detected = false;
@@ -314,26 +314,26 @@ class BrowserFingerprintGenerator:
                         const metrics = context.measureText(testString);
                         const width = metrics.width;
                         const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-                        
+
                         if (width !== baseWidth[baseFont] || height !== baseHeight[baseFont]) {
                             detected = true;
                         }
                     });
-                    
+
                     if (detected) {
                         availableFonts.push(font);
                     }
                 });
-                
+
                 return availableFonts;
             }
-            
+
             // Get battery info
             const batteryInfo = getBatteryInfo();
-            
+
             // Get multimedia devices
             const multimediaDevices = getMultimediaDevices();
-            
+
             // Build the complete fingerprint object
             const fingerprint = {
                 screen: {
@@ -397,7 +397,7 @@ class BrowserFingerprintGenerator:
                 mockWebRTC: false,
                 slim: false
             };
-            
+
             return fingerprint;
         }
         """

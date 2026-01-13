@@ -49,7 +49,9 @@ class TestComputer:
         assert result.success is True
         assert result.data is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "click_mouse", {"x": 100, "y": 200, "button": "left"}
+            "click_mouse",
+            {"x": 100, "y": 200, "button": "left"},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -69,7 +71,9 @@ class TestComputer:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "click_mouse", {"x": 100, "y": 200, "button": "right"}
+            "click_mouse",
+            {"x": 100, "y": 200, "button": "right"},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -99,7 +103,9 @@ class TestComputer:
         # Assert
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "click_mouse", {"x": 100, "y": 200, "button": "right"}
+            "click_mouse",
+            {"x": 100, "y": 200, "button": "right"},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -121,7 +127,9 @@ class TestComputer:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "click_mouse", {"x": 100, "y": 200, "button": "double_left"}
+            "click_mouse",
+            {"x": 100, "y": 200, "button": "double_left"},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -143,7 +151,9 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "move_mouse", {"x": 150, "y": 250}
+            "move_mouse",
+            {"x": 150, "y": 250},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -167,6 +177,7 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "drag_mouse",
             {"from_x": 100, "from_y": 100, "to_x": 200, "to_y": 200, "button": "left"},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -188,7 +199,9 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "scroll", {"x": 300, "y": 300, "direction": "up", "amount": 1}
+            "scroll",
+            {"x": 300, "y": 300, "direction": "up", "amount": 1},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -208,7 +221,9 @@ class TestComputer:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "scroll", {"x": 300, "y": 300, "direction": "down", "amount": 3}
+            "scroll",
+            {"x": 300, "y": 300, "direction": "down", "amount": 3},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -231,7 +246,11 @@ class TestComputer:
         assert isinstance(result, OperationResult)
         assert result.success is True
         assert result.data == {"x": 150, "y": 250}
-        self.session.call_mcp_tool.assert_called_once_with("get_cursor_position", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "get_cursor_position",
+            {},
+            server_name="wuying_ui",
+        )
 
     # Keyboard Operations Tests
     @pytest.mark.sync
@@ -252,7 +271,9 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "input_text", {"text": "Hello World"}
+            "input_text",
+            {"text": "Hello World"},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -274,7 +295,9 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "press_keys", {"keys": ["Ctrl", "a"], "hold": False}
+            "press_keys",
+            {"keys": ["Ctrl", "a"], "hold": False},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -294,7 +317,9 @@ class TestComputer:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "press_keys", {"keys": ["Shift"], "hold": True}
+            "press_keys",
+            {"keys": ["Shift"], "hold": True},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -316,7 +341,9 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "release_keys", {"keys": ["Shift"]}
+            "release_keys",
+            {"keys": ["Shift"]},
+            server_name="wuying_ui",
         )
 
     # Screen Operations Tests
@@ -343,7 +370,11 @@ class TestComputer:
         assert isinstance(result.data, dict)
         assert result.data["width"] == 1920
         assert result.data["height"] == 1080
-        self.session.call_mcp_tool.assert_called_once_with("get_screen_size", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "get_screen_size",
+            {},
+            server_name="wuying_ui",
+        )
 
     @pytest.mark.sync
 
@@ -365,7 +396,11 @@ class TestComputer:
         assert isinstance(result, OperationResult)
         assert result.success is True
         assert result.data == "/path/to/screenshot.png"
-        self.session.call_mcp_tool.assert_called_once_with("system_screenshot", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "system_screenshot",
+            {},
+            server_name="mcp-server",
+        )
 
     @pytest.mark.sync
     def test_take_screenshot_success_with_jpg(self):
@@ -391,7 +426,11 @@ class TestComputer:
         assert result.error_message == ""
         assert result.format == "jpeg"
         assert result.data == payload
-        self.session.call_mcp_tool.assert_called_once_with("screenshot", {"format": "jpeg"})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "screenshot",
+            {"format": "jpeg"},
+            server_name="wuying_capture",
+        )
 
     @pytest.mark.sync
     def test_take_screenshot_strips_prefix_before_magic(self):
@@ -518,7 +557,9 @@ class TestComputer:
         # Assert
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "scroll", {"x": 300, "y": 300, "direction": "down", "amount": 5}
+            "scroll",
+            {"x": 300, "y": 300, "direction": "down", "amount": 5},
+            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -549,6 +590,7 @@ class TestComputer:
                 "to_y": 200,
                 "button": "middle",
             },
+            server_name="wuying_ui",
         )
 
     # Application Management Operations Tests
@@ -567,7 +609,11 @@ class TestComputer:
         assert result.success is True
         assert len(result.data) == 1
         assert result.data[0].pname == "Calculator"
-        self.session.call_mcp_tool.assert_called_once_with("list_visible_apps", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "list_visible_apps",
+            {},
+            server_name="wuying_app",
+        )
 
     @pytest.mark.sync
 

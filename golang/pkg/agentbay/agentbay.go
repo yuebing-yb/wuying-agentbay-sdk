@@ -465,47 +465,8 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 	}
 
-	// Prefer MCP tools list from CreateMcpSession response (ToolList) when present,
-	// regardless of is_vpc (regionalized endpoint behavior).
-	if response.Body.Data.ToolList != nil && *response.Body.Data.ToolList != "" {
-		var toolsData []map[string]interface{}
-		if err := json.Unmarshal([]byte(*response.Body.Data.ToolList), &toolsData); err != nil {
-			logOperationError("ParseToolList", fmt.Sprintf("Error unmarshaling toolList: %v", err), false)
-		} else {
-			var tools []McpTool
-			for _, toolData := range toolsData {
-				tool := McpTool{}
-				if name, ok := toolData["name"].(string); ok {
-					tool.Name = name
-				}
-				if description, ok := toolData["description"].(string); ok {
-					tool.Description = description
-				}
-				if inputSchema, ok := toolData["inputSchema"].(map[string]interface{}); ok {
-					tool.InputSchema = inputSchema
-				}
-				if server, ok := toolData["server"].(string); ok {
-					tool.Server = server
-				}
-				if toolIdentifier, ok := toolData["tool"].(string); ok {
-					tool.Tool = toolIdentifier
-				}
-				tools = append(tools, tool)
-			}
-			session.McpTools = tools
-		}
-	}
-
-	// Backward compatibility: if is_vpc=true but tool list is still empty, fall back to ListMcpTools.
-	if params.IsVpc && len(session.McpTools) == 0 {
-		toolsResult, err := session.ListMcpTools()
-		if err != nil {
-			logOperationError("FetchMCPTools", err.Error(), false)
-		} else if len(toolsResult.Tools) > 0 {
-			fmt.Printf("✅ Successfully fetched %d MCP tools for VPC session (RequestID: %s)\n",
-				len(toolsResult.Tools), toolsResult.RequestID)
-		}
-	}
+	// NOTE: Do not parse/store ToolList or fetch MCP tool list after create.
+	// ToolList may still exist in the API response, but is expected to be empty.
 
 	// If we have persistence data, wait for context synchronization
 	if needsContextSync {

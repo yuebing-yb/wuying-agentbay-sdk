@@ -106,7 +106,11 @@ class Computer(BaseService):
 
         args = {"x": x, "y": y, "button": button_str}
         try:
-            result = self.session.call_mcp_tool("click_mouse", args)
+            result = self.session.call_mcp_tool(
+                "click_mouse",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -160,7 +164,11 @@ class Computer(BaseService):
         """
         args = {"x": x, "y": y}
         try:
-            result = self.session.call_mcp_tool("move_mouse", args)
+            result = self.session.call_mcp_tool(
+                "move_mouse",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -243,7 +251,11 @@ class Computer(BaseService):
             "button": button_str,
         }
         try:
-            result = self.session.call_mcp_tool("drag_mouse", args)
+            result = self.session.call_mcp_tool(
+                "drag_mouse",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -319,7 +331,11 @@ class Computer(BaseService):
 
         args = {"x": x, "y": y, "direction": direction_str, "amount": amount}
         try:
-            result = self.session.call_mcp_tool("scroll", args)
+            result = self.session.call_mcp_tool(
+                "scroll",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -370,7 +386,11 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self.session.call_mcp_tool("get_cursor_position", args)
+            result = self.session.call_mcp_tool(
+                "get_cursor_position",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return OperationResult(
@@ -423,7 +443,11 @@ class Computer(BaseService):
         """
         args = {"text": text}
         try:
-            result = self.session.call_mcp_tool("input_text", args)
+            result = self.session.call_mcp_tool(
+                "input_text",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -477,7 +501,11 @@ class Computer(BaseService):
         """
         args = {"keys": keys, "hold": hold}
         try:
-            result = self.session.call_mcp_tool("press_keys", args)
+            result = self.session.call_mcp_tool(
+                "press_keys",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -530,7 +558,11 @@ class Computer(BaseService):
         """
         args = {"keys": keys}
         try:
-            result = self.session.call_mcp_tool("release_keys", args)
+            result = self.session.call_mcp_tool(
+                "release_keys",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -585,7 +617,11 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self.session.call_mcp_tool("get_screen_size", args)
+            result = self.session.call_mcp_tool(
+                "get_screen_size",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return OperationResult(
@@ -648,7 +684,11 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self.session.call_mcp_tool("system_screenshot", args)
+            result = self.session.call_mcp_tool(
+                "system_screenshot",
+                args,
+                server_name="mcp-server",
+            )
 
             if not result.success:
                 return OperationResult(
@@ -756,7 +796,11 @@ class Computer(BaseService):
             return None
 
         args = {"format": fmt}
-        result = self.session.call_mcp_tool("screenshot", args)
+        result = self.session.call_mcp_tool(
+            "screenshot",
+            args,
+            server_name="wuying_capture",
+        )
 
         if not result.success:
             raise AgentBayError(
@@ -832,7 +876,11 @@ class Computer(BaseService):
         """
         try:
             args = {"timeout_ms": timeout_ms}
-            result = self.session.call_mcp_tool("list_root_windows", args)
+            result = self.session.call_mcp_tool(
+                "list_root_windows",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return WindowListResult(
@@ -888,7 +936,11 @@ class Computer(BaseService):
         """
         try:
             args = {}
-            result = self.session.call_mcp_tool("get_active_window", args)
+            result = self.session.call_mcp_tool(
+                "get_active_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return WindowInfoResult(
@@ -955,7 +1007,11 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("activate_window", args)
+            result = self.session.call_mcp_tool(
+                "activate_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1008,7 +1064,11 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("close_window", args)
+            result = self.session.call_mcp_tool(
+                "close_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1061,7 +1121,11 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("maximize_window", args)
+            result = self.session.call_mcp_tool(
+                "maximize_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1114,7 +1178,11 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("minimize_window", args)
+            result = self.session.call_mcp_tool(
+                "minimize_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1169,7 +1237,11 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("restore_window", args)
+            result = self.session.call_mcp_tool(
+                "restore_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1226,7 +1298,11 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id, "width": width, "height": height}
-            result = self.session.call_mcp_tool("resize_window", args)
+            result = self.session.call_mcp_tool(
+                "resize_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1280,7 +1356,11 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("fullscreen_window", args)
+            result = self.session.call_mcp_tool(
+                "fullscreen_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1332,7 +1412,11 @@ class Computer(BaseService):
         """
         try:
             args = {"on": on}
-            result = self.session.call_mcp_tool("focus_mode", args)
+            result = self.session.call_mcp_tool(
+                "focus_mode",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1399,7 +1483,11 @@ class Computer(BaseService):
                 "ignore_system_apps": ignore_system_apps,
             }
 
-            result = self.session.call_mcp_tool("get_installed_apps", args)
+            result = self.session.call_mcp_tool(
+                "get_installed_apps",
+                args,
+                server_name="wuying_app",
+            )
 
             if not result.success:
                 return InstalledAppListResult(
@@ -1468,7 +1556,11 @@ class Computer(BaseService):
             if activity:
                 args["activity"] = activity
 
-            result = self.session.call_mcp_tool("start_app", args)
+            result = self.session.call_mcp_tool(
+                "start_app",
+                args,
+                server_name="wuying_app",
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -1528,7 +1620,11 @@ class Computer(BaseService):
             get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
         """
         try:
-            result = self.session.call_mcp_tool("list_visible_apps", {})
+            result = self.session.call_mcp_tool(
+                "list_visible_apps",
+                {},
+                server_name="wuying_app",
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -1586,7 +1682,11 @@ class Computer(BaseService):
         """
         try:
             args = {"pname": pname}
-            result = self.session.call_mcp_tool("stop_app_by_pname", args)
+            result = self.session.call_mcp_tool(
+                "stop_app_by_pname",
+                args,
+                server_name="wuying_app",
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1626,7 +1726,11 @@ class Computer(BaseService):
         """
         try:
             args = {"pid": pid}
-            result = self.session.call_mcp_tool("stop_app_by_pid", args)
+            result = self.session.call_mcp_tool(
+                "stop_app_by_pid",
+                args,
+                server_name="wuying_app",
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1666,7 +1770,11 @@ class Computer(BaseService):
         """
         try:
             args = {"stop_cmd": stop_cmd}
-            result = self.session.call_mcp_tool("stop_app_by_cmd", args)
+            result = self.session.call_mcp_tool(
+                "stop_app_by_cmd",
+                args,
+                server_name="wuying_app",
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,

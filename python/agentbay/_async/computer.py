@@ -103,7 +103,11 @@ class AsyncComputer(AsyncBaseService):
 
         args = {"x": x, "y": y, "button": button_str}
         try:
-            result = await self.session.call_mcp_tool("click_mouse", args)
+            result = await self.session.call_mcp_tool(
+                "click_mouse",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -157,7 +161,11 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {"x": x, "y": y}
         try:
-            result = await self.session.call_mcp_tool("move_mouse", args)
+            result = await self.session.call_mcp_tool(
+                "move_mouse",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -240,7 +248,11 @@ class AsyncComputer(AsyncBaseService):
             "button": button_str,
         }
         try:
-            result = await self.session.call_mcp_tool("drag_mouse", args)
+            result = await self.session.call_mcp_tool(
+                "drag_mouse",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -316,7 +328,11 @@ class AsyncComputer(AsyncBaseService):
 
         args = {"x": x, "y": y, "direction": direction_str, "amount": amount}
         try:
-            result = await self.session.call_mcp_tool("scroll", args)
+            result = await self.session.call_mcp_tool(
+                "scroll",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -367,7 +383,11 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {}
         try:
-            result = await self.session.call_mcp_tool("get_cursor_position", args)
+            result = await self.session.call_mcp_tool(
+                "get_cursor_position",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return OperationResult(
@@ -420,7 +440,11 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {"text": text}
         try:
-            result = await self.session.call_mcp_tool("input_text", args)
+            result = await self.session.call_mcp_tool(
+                "input_text",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -474,7 +498,11 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {"keys": keys, "hold": hold}
         try:
-            result = await self.session.call_mcp_tool("press_keys", args)
+            result = await self.session.call_mcp_tool(
+                "press_keys",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -527,7 +555,11 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {"keys": keys}
         try:
-            result = await self.session.call_mcp_tool("release_keys", args)
+            result = await self.session.call_mcp_tool(
+                "release_keys",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -582,7 +614,11 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {}
         try:
-            result = await self.session.call_mcp_tool("get_screen_size", args)
+            result = await self.session.call_mcp_tool(
+                "get_screen_size",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return OperationResult(
@@ -645,7 +681,11 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {}
         try:
-            result = await self.session.call_mcp_tool("system_screenshot", args)
+            result = await self.session.call_mcp_tool(
+                "system_screenshot",
+                args,
+                server_name="mcp-server",
+            )
 
             if not result.success:
                 return OperationResult(
@@ -753,7 +793,11 @@ class AsyncComputer(AsyncBaseService):
             return None
 
         args = {"format": fmt}
-        result = await self.session.call_mcp_tool("screenshot", args)
+        result = await self.session.call_mcp_tool(
+            "screenshot",
+            args,
+            server_name="wuying_capture",
+        )
 
         if not result.success:
             raise AgentBayError(
@@ -829,7 +873,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"timeout_ms": timeout_ms}
-            result = await self.session.call_mcp_tool("list_root_windows", args)
+            result = await self.session.call_mcp_tool(
+                "list_root_windows",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return WindowListResult(
@@ -885,7 +933,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {}
-            result = await self.session.call_mcp_tool("get_active_window", args)
+            result = await self.session.call_mcp_tool(
+                "get_active_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return WindowInfoResult(
@@ -952,7 +1004,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("activate_window", args)
+            result = await self.session.call_mcp_tool(
+                "activate_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1005,7 +1061,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("close_window", args)
+            result = await self.session.call_mcp_tool(
+                "close_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1058,7 +1118,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("maximize_window", args)
+            result = await self.session.call_mcp_tool(
+                "maximize_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1111,7 +1175,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("minimize_window", args)
+            result = await self.session.call_mcp_tool(
+                "minimize_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1166,7 +1234,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("restore_window", args)
+            result = await self.session.call_mcp_tool(
+                "restore_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1223,7 +1295,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id, "width": width, "height": height}
-            result = await self.session.call_mcp_tool("resize_window", args)
+            result = await self.session.call_mcp_tool(
+                "resize_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1277,7 +1353,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("fullscreen_window", args)
+            result = await self.session.call_mcp_tool(
+                "fullscreen_window",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1329,7 +1409,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"on": on}
-            result = await self.session.call_mcp_tool("focus_mode", args)
+            result = await self.session.call_mcp_tool(
+                "focus_mode",
+                args,
+                server_name="wuying_ui",
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1396,7 +1480,11 @@ class AsyncComputer(AsyncBaseService):
                 "ignore_system_apps": ignore_system_apps,
             }
 
-            result = await self.session.call_mcp_tool("get_installed_apps", args)
+            result = await self.session.call_mcp_tool(
+                "get_installed_apps",
+                args,
+                server_name="wuying_app",
+            )
 
             if not result.success:
                 return InstalledAppListResult(
@@ -1465,7 +1553,11 @@ class AsyncComputer(AsyncBaseService):
             if activity:
                 args["activity"] = activity
 
-            result = await self.session.call_mcp_tool("start_app", args)
+            result = await self.session.call_mcp_tool(
+                "start_app",
+                args,
+                server_name="wuying_app",
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -1525,7 +1617,11 @@ class AsyncComputer(AsyncBaseService):
             get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
         """
         try:
-            result = await self.session.call_mcp_tool("list_visible_apps", {})
+            result = await self.session.call_mcp_tool(
+                "list_visible_apps",
+                {},
+                server_name="wuying_app",
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -1583,7 +1679,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"pname": pname}
-            result = await self.session.call_mcp_tool("stop_app_by_pname", args)
+            result = await self.session.call_mcp_tool(
+                "stop_app_by_pname",
+                args,
+                server_name="wuying_app",
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1623,7 +1723,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"pid": pid}
-            result = await self.session.call_mcp_tool("stop_app_by_pid", args)
+            result = await self.session.call_mcp_tool(
+                "stop_app_by_pid",
+                args,
+                server_name="wuying_app",
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1663,7 +1767,11 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"stop_cmd": stop_cmd}
-            result = await self.session.call_mcp_tool("stop_app_by_cmd", args)
+            result = await self.session.call_mcp_tool(
+                "stop_app_by_cmd",
+                args,
+                server_name="wuying_app",
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,

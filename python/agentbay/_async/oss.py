@@ -171,8 +171,12 @@ class AsyncOss(AsyncBaseService):
             if region:
                 args["region"] = region
 
-            result = await self.session.call_mcp_tool("oss_env_init", args)
-            
+            result = await self.session.call_mcp_tool(
+                "oss_env_init",
+                args,
+                server_name="wuying_oss",
+            )
+
             if result.success:
                 if(result.data):
                     client_config_raw = result.data
@@ -242,7 +246,11 @@ class AsyncOss(AsyncBaseService):
         try:
             args = {"bucket": bucket, "object": object, "path": path}
 
-            result = await self.session.call_mcp_tool("oss_upload", args)
+            result = await self.session.call_mcp_tool(
+                "oss_upload",
+                args,
+                server_name="wuying_oss",
+            )
             _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
@@ -292,7 +300,11 @@ class AsyncOss(AsyncBaseService):
         try:
             args = {"url": url, "path": path}
 
-            result = await self.session.call_mcp_tool("oss_upload_annon", args)
+            result = await self.session.call_mcp_tool(
+                "oss_upload_annon",
+                args,
+                server_name="wuying_oss",
+            )
             _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
@@ -349,7 +361,11 @@ class AsyncOss(AsyncBaseService):
         try:
             args = {"bucket": bucket, "object": object, "path": path}
 
-            result = await self.session.call_mcp_tool("oss_download", args)
+            result = await self.session.call_mcp_tool(
+                "oss_download",
+                args,
+                server_name="wuying_oss",
+            )
             _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:
@@ -399,7 +415,11 @@ class AsyncOss(AsyncBaseService):
         try:
             args = {"url": url, "path": path}
 
-            result = await self.session.call_mcp_tool("oss_download_annon", args)
+            result = await self.session.call_mcp_tool(
+                "oss_download_annon",
+                args,
+                server_name="wuying_oss",
+            )
             _logger.debug(f"📥 OSS Response: {result}")
 
             if result.success:

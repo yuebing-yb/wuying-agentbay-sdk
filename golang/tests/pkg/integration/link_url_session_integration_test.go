@@ -8,9 +8,8 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
-// TestLinkUrlSessionMcpToolsAndCallTool verifies that when CreateSession returns LinkUrl/ToolList,
-// the SDK can (1) expose LinkUrl/Token, (2) populate MCP tools without an extra ListMcpTools call,
-// and (3) call tools through the LinkUrl-based VPC route (Java BaseService style).
+	// TestLinkUrlSessionMcpToolsAndCallTool verifies that when CreateSession returns LinkUrl,
+	// the SDK can (1) expose LinkUrl/Token, and (2) call tools through the LinkUrl-based VPC route.
 func TestLinkUrlSessionMcpToolsAndCallTool(t *testing.T) {
 	apiKey := testutil.GetTestAPIKey(t)
 
@@ -41,9 +40,6 @@ func TestLinkUrlSessionMcpToolsAndCallTool(t *testing.T) {
 	if session.GetLinkUrl() == "" {
 		t.Fatalf("expected non-empty linkUrl from create session response")
 	}
-	if len(session.McpTools) == 0 {
-		t.Fatalf("expected non-empty MCP tool list from create session response")
-	}
 
 	// Force the implementation to prefer LinkUrl route (and not the legacy ip:port route)
 	// by clearing ip/port fields.
@@ -60,5 +56,15 @@ func TestLinkUrlSessionMcpToolsAndCallTool(t *testing.T) {
 	}
 	if !strings.Contains(cmdResult.Output, "link-url-route-ok") {
 		t.Fatalf("unexpected command output: %q", cmdResult.Output)
+	}
+
+	direct, err := session.CallMcpTool("shell", map[string]interface{}{
+		"command": "echo direct-link-url-route-ok",
+	}, "wuying_shell")
+	if err != nil {
+		t.Fatalf("CallMcpTool failed: %v", err)
+	}
+	if !direct.Success || !strings.Contains(direct.Data, "direct-link-url-route-ok") {
+		t.Fatalf("unexpected direct tool result: success=%v data=%q err=%q", direct.Success, direct.Data, direct.ErrorMessage)
 	}
 }

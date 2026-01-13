@@ -37,8 +37,7 @@ type Command struct {
 		IsVpc() bool
 		NetworkInterfaceIp() string
 		HttpPort() string
-		FindServerForTool(toolName string) string
-		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	}
 }
 
@@ -50,8 +49,7 @@ func NewCommand(session interface {
 	IsVpc() bool
 	NetworkInterfaceIp() string
 	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 }) *Command {
 	return &Command{
 		Session: session,
@@ -217,7 +215,7 @@ func (c *Command) executeCommandInternal(
 	}
 
 	// Use Session's CallMcpTool method
-	result, err := c.Session.CallMcpTool("shell", args)
+	result, err := c.Session.CallMcpTool("shell", args, "wuying_shell")
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute command: %w", err)
 	}

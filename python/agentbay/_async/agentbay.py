@@ -170,29 +170,8 @@ class AsyncAgentBay:
         if response_data.get("LinkUrl"):
             session.link_url = response_data["LinkUrl"]
 
-        tool_list = response_data.get("ToolList")
-        if tool_list:
-            try:
-                tools_data = json.loads(tool_list) if isinstance(tool_list, str) else tool_list
-                tools = []
-                if isinstance(tools_data, list):
-                    from .._common.models.mcp_tool import McpTool
-
-                    for tool_data in tools_data:
-                        if not isinstance(tool_data, dict):
-                            continue
-                        tools.append(
-                            McpTool(
-                                name=tool_data.get("name", "") or "",
-                                description=tool_data.get("description", "") or "",
-                                input_schema=tool_data.get("inputSchema", {}) or {},
-                                server=tool_data.get("server", "") or "",
-                                tool=tool_data.get("tool", "") or "",
-                            )
-                        )
-                session.mcp_tools = tools
-            except Exception as e:
-                _log_warning(f"Failed to parse ToolList from create session response: {e}")
+        # ToolList (if present) is intentionally ignored.
+        # The server may keep this field for backward compatibility, but clients must not depend on it.
 
         # Set ResourceUrl
         session.resource_url = resource_url
@@ -216,23 +195,7 @@ class AsyncAgentBay:
 
         return session
 
-    async def _fetch_mcp_tools_for_vpc_session(self, session: AsyncSession) -> None:
-        """
-        Fetch MCP tools information for VPC sessions asynchronously.
-
-        Args:
-            session: The session to fetch MCP tools for
-        """
-        _log_operation_start("Fetching MCP tools", "VPC session detected")
-        try:
-            tools_result = await session.list_mcp_tools()
-            _log_operation_success(
-                f"Fetched {len(tools_result.tools)} MCP tools",
-                f"RequestID: {tools_result.request_id}",
-            )
-        except Exception as e:
-            _log_warning(f"Failed to fetch MCP tools for VPC session: {e}")
-            # Continue with session creation even if tools fetch fails
+    # NOTE: Do not fetch MCP tool list automatically for any session.
 
     async def _wait_for_context_synchronization(self, session: AsyncSession) -> None:
         """
@@ -677,10 +640,6 @@ class AsyncAgentBay:
 
             # Build Session object from response data
             session = await self._build_session_from_response(data, params)
-
-            # Backward compatibility: if is_vpc=true but tool list is still empty, fall back to ListMcpTools.
-            if params.is_vpc and not session.mcp_tools:
-                await self._fetch_mcp_tools_for_vpc_session(session)
 
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:

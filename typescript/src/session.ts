@@ -185,8 +185,7 @@ export class Session {
   // Context management (matching Go version)
   public context: ContextManager;
 
-  // MCP tools available for this session
-  public mcpTools: McpTool[] = [];
+  // MCP tools list is intentionally not stored in Session.
 
   /**
    * Initialize a Session object.
@@ -409,22 +408,6 @@ export class Session {
 
   public getLinkUrl(): string {
     return this.linkUrl;
-  }
-
-  /**
-   * Find the server that provides the given tool.
-   *
-   * @param toolName - Name of the tool to find
-   * @returns The server name that provides the tool, or empty string if not found
-   * @internal
-   */
-  private findServerForTool(toolName: string): string {
-    for (const tool of this.mcpTools) {
-      if (tool.name === toolName) {
-        return tool.server;
-      }
-    }
-    return "";
   }
 
   /**
@@ -1299,7 +1282,7 @@ export class Session {
       }
     }
 
-    this.mcpTools = tools; // Update the session's mcpTools field
+    // Do not store MCP tools in Session.
 
     // Log API response with key fields
     const keyFields: Record<string, any> = {
@@ -1350,7 +1333,8 @@ export class Session {
   async callMcpTool(
     toolName: string,
     args: any,
-    autoGenSession = false
+    autoGenSession = false,
+    serverName?: string
   ): Promise<import("./agent/agent").McpToolResult> {
     try {
       // Normalize press_keys arguments for better case compatibility
@@ -1365,13 +1349,13 @@ export class Session {
 
       // Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
       if (this.getLinkUrl() && this.getToken()) {
-        return await this.callMcpToolLinkUrl(toolName, args);
+        return await this.callMcpToolLinkUrl(toolName, args, serverName);
       }
 
       // Check if this is a VPC session
       if (this.isVpcEnabled()) {
         // VPC mode: Use HTTP request to the VPC endpoint
-        const server = this.findServerForTool(toolName);
+        const server = serverName || "";
         if (!server) {
           return {
             success: false,
@@ -1590,9 +1574,10 @@ export class Session {
 
   private async callMcpToolLinkUrl(
     toolName: string,
-    args: any
+    args: any,
+    serverName?: string
   ): Promise<import("./agent/agent").McpToolResult> {
-    const server = this.findServerForTool(toolName);
+    const server = serverName || "";
     if (!server) {
       return {
         success: false,
@@ -1759,7 +1744,7 @@ export class Session {
    * ```
    */
   async getMetrics(): Promise<SessionMetricsResult> {
-    const toolResult = await this.callMcpTool("get_metrics", {});
+    const toolResult = await this.callMcpTool("get_metrics", {}, false, "wuying_system");
     const requestId = toolResult.requestId || "";
 
     if (!toolResult.success) {

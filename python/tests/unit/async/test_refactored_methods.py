@@ -65,38 +65,13 @@ class TestAsyncRefactoredMethods(unittest.IsolatedAsyncioTestCase):
             # Verify result
             self.assertEqual(result, mock_session)
 
-    @pytest.mark.asyncio
+    def test_fetch_mcp_tools_for_vpc_session_removed(self):
+        """
+        _fetch_mcp_tools_for_vpc_session must not exist anymore.
 
-
-    async def test_fetch_mcp_tools_for_vpc_session(self):
-        """Test _fetch_mcp_tools_for_vpc_session method."""
-        # Mock session
-        mock_session = Mock()
-        mock_tools_result = Mock()
-        mock_tools_result.tools = ["tool1", "tool2", "tool3"]
-        mock_tools_result.request_id = "test-request-123"
-        mock_session.list_mcp_tools = AsyncMock(return_value=mock_tools_result)
-
-        # Call the method
-        await self.agent_bay._fetch_mcp_tools_for_vpc_session(mock_session)
-
-        # Verify list_mcp_tools was called
-        mock_session.list_mcp_tools.assert_called_once()
-
-    @pytest.mark.asyncio
-
-
-    async def test_fetch_mcp_tools_for_vpc_session_with_error(self):
-        """Test _fetch_mcp_tools_for_vpc_session method with error."""
-        # Mock session that raises an exception
-        mock_session = Mock()
-        mock_session.list_mcp_tools = AsyncMock(side_effect=Exception("Test error"))
-
-        # Call the method - should not raise an exception
-        await self.agent_bay._fetch_mcp_tools_for_vpc_session(mock_session)
-
-        # Verify list_mcp_tools was called
-        mock_session.list_mcp_tools.assert_called_once()
+        The SDK must not fetch or cache MCP tool lists for any session.
+        """
+        self.assertFalse(hasattr(self.agent_bay, "_fetch_mcp_tools_for_vpc_session"))
 
     @pytest.mark.asyncio
 

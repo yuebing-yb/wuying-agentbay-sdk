@@ -49,9 +49,6 @@ type SessionInterface interface {
 	// HttpPort returns the HTTP port for VPC sessions
 	HttpPort() string
 
-	// FindServerForTool searches for the server that provides the given tool
-	FindServerForTool(toolName string) string
-
 	// Pause synchronously pauses this session
 	Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
 

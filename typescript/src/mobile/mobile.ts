@@ -66,7 +66,12 @@ export interface AdbUrlResult extends OperationResult {
 
 // Session interface for Mobile module
 interface MobileSession {
-  callMcpTool(toolName: string, args: Record<string, any>): Promise<any>;
+  callMcpTool(
+    toolName: string,
+    args: Record<string, any>,
+    autoGenSession?: boolean,
+    serverName?: string
+  ): Promise<any>;
   sessionId: string;
   getAPIKey(): string;
   getAgentBay(): any;
@@ -288,7 +293,7 @@ export class Mobile {
   async tap(x: number, y: number): Promise<BoolResult> {
     const args = { x, y };
     try {
-      const result = await this.session.callMcpTool('tap', args);
+      const result = await this.session.callMcpTool('tap', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -329,7 +334,7 @@ export class Mobile {
   async swipe(startX: number, startY: number, endX: number, endY: number, durationMs = 300): Promise<BoolResult> {
     const args = { start_x: startX, start_y: startY, end_x: endX, end_y: endY, duration_ms: durationMs };
     try {
-      const result = await this.session.callMcpTool('swipe', args);
+      const result = await this.session.callMcpTool('swipe', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -366,7 +371,7 @@ export class Mobile {
   async inputText(text: string): Promise<BoolResult> {
     const args = { text };
     try {
-      const result = await this.session.callMcpTool('input_text', args);
+      const result = await this.session.callMcpTool('input_text', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -403,7 +408,7 @@ export class Mobile {
   async sendKey(key: number): Promise<BoolResult> {
     const args = { key };
     try {
-      const result = await this.session.callMcpTool('send_key', args);
+      const result = await this.session.callMcpTool('send_key', args, false, 'wuying_ui');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -426,7 +431,7 @@ export class Mobile {
   async getClickableUIElements(timeoutMs = 5000): Promise<UIElementsResult> {
     const args = { timeout_ms: timeoutMs };
     try {
-      const result = await this.session.callMcpTool('get_clickable_ui_elements', args);
+      const result = await this.session.callMcpTool('get_clickable_ui_elements', args, false, 'wuying_ui');
 
       if (!result.success) {
         return {
@@ -491,7 +496,7 @@ export class Mobile {
     const formatNorm = ((format || 'json') as string).trim().toLowerCase() || 'json';
     const args = { timeout_ms: timeoutMs, format: formatNorm };
     try {
-      const result = await this.session.callMcpTool('get_all_ui_elements', args);
+      const result = await this.session.callMcpTool('get_all_ui_elements', args, false, 'wuying_ui');
 
       if (!result.success) {
         return {
@@ -577,7 +582,7 @@ export class Mobile {
   async getInstalledApps(startMenu = false, desktop = true, ignoreSystemApps = true): Promise<InstalledAppsResult> {
     const args = { start_menu: startMenu, desktop, ignore_system_apps: ignoreSystemApps };
     try {
-      const result = await this.session.callMcpTool('get_installed_apps', args);
+      const result = await this.session.callMcpTool('get_installed_apps', args, false, 'wuying_app');
       
       if (!result.success) {
         return {
@@ -645,7 +650,7 @@ export class Mobile {
   async startApp(startCmd: string, workDirectory = '', activity = ''): Promise<ProcessResult> {
     const args = { start_cmd: startCmd, work_directory: workDirectory, activity };
     try {
-      const result = await this.session.callMcpTool('start_app', args);
+      const result = await this.session.callMcpTool('start_app', args, false, 'wuying_app');
       
       if (!result.success) {
         return {
@@ -712,7 +717,7 @@ export class Mobile {
   async stopAppByCmd(stopCmd: string): Promise<BoolResult> {
     const args = { stop_cmd: stopCmd };
     try {
-      const result = await this.session.callMcpTool('stop_app_by_cmd', args);
+      const result = await this.session.callMcpTool('stop_app_by_cmd', args, false, 'wuying_app');
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -747,7 +752,7 @@ export class Mobile {
    */
   async screenshot(): Promise<ScreenshotResult> {
     try {
-      const result = await this.session.callMcpTool('system_screenshot', {});
+      const result = await this.session.callMcpTool('system_screenshot', {}, false, 'mcp-server');
       
       if (!result.success) {
         return {
@@ -781,7 +786,7 @@ export class Mobile {
    */
   async betaTakeScreenshot(): Promise<BetaScreenshotResult> {
     try {
-      const result = await this.session.callMcpTool("screenshot", { format: "png" });
+      const result = await this.session.callMcpTool("screenshot", { format: "png" }, false, "wuying_capture");
       const requestId = result.requestId || "";
       if (!result.success) {
         return {
@@ -863,7 +868,7 @@ export class Mobile {
         args.quality = quality;
       }
 
-      const result = await this.session.callMcpTool("long_screenshot", args);
+      const result = await this.session.callMcpTool("long_screenshot", args, false, "wuying_capture");
       const requestId = result.requestId || "";
       if (!result.success) {
         return {

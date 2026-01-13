@@ -10,7 +10,7 @@ This test suite follows TDD principles:
 import json
 import pytest
 import unittest
-from unittest.mock import MagicMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 
 class DummyAgentBay:
@@ -170,11 +170,6 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         self.session.network_interface_ip = "192.168.1.100"
         self.session.http_port = "8080"
         self.session.token = "vpc_token_123"
-        # Create a proper mock tool
-        mock_tool = MagicMock()
-        mock_tool.name = "shell"
-        mock_tool.server = "test_server"
-        self.session.mcp_tools = [mock_tool]
 
         # Mock HTTP response
         mock_response = MagicMock()
@@ -194,7 +189,11 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         mock_client_instance.get = MagicMock(return_value=mock_response)
 
         # Call the method
-        result = self.session.call_mcp_tool("shell", {"command": "pwd"})
+        result = self.session.call_mcp_tool(
+            "shell",
+            {"command": "pwd"},
+            server_name="wuying_shell",
+        )
 
         # Assertions
         self.assertIsNotNone(result)
@@ -206,6 +205,7 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         call_args = mock_client_instance.get.call_args
         self.assertIn("192.168.1.100", call_args[0][0])
         self.assertIn("8080", call_args[0][0])
+        self.assertEqual(call_args[1]["params"]["server"], "wuying_shell")
 
     @pytest.mark.sync
 
@@ -217,7 +217,6 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         self.session.network_interface_ip = "192.168.1.100"
         self.session.http_port = "8080"
         self.session.token = "vpc_token_123"
-        self.session.mcp_tools = []  # No tools available
 
         # Call the method
         result = self.session.call_mcp_tool("nonexistent_tool", {})
@@ -237,19 +236,58 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         self.session.network_interface_ip = ""  # Missing
         self.session.http_port = ""  # Missing
         self.session.token = "vpc_token_123"
-        # Add a tool so it doesn't fail on "server not found" first
-        mock_tool = MagicMock()
-        mock_tool.name = "shell"
-        mock_tool.server = "test_server"
-        self.session.mcp_tools = [mock_tool]
 
         # Call the method
-        result = self.session.call_mcp_tool("shell", {"command": "ls"})
+        result = self.session.call_mcp_tool(
+            "shell",
+            {"command": "ls"},
+            server_name="wuying_shell",
+        )
 
         # Assertions
         self.assertIsNotNone(result)
         self.assertFalse(result.success)
         self.assertIn("network configuration", result.error_message.lower())
+
+    @patch("httpx.Client")
+    @pytest.mark.sync
+    def test_call_mcp_tool_link_url_success_with_server_name(self, mock_httpx_client):
+        """Test LinkUrl mode uses explicit server_name."""
+        self.session.link_url = "http://127.0.0.1:9999/"
+        self.session.token = "link_token_123"
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": json.dumps(
+                {
+                    "result": {
+                        "isError": False,
+                        "content": [{"type": "text", "text": "link output"}],
+                    }
+                }
+            )
+        }
+        mock_resp.raise_for_status = Mock(return_value=None)
+
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__enter__ = MagicMock(
+            return_value=mock_client_instance
+        )
+        mock_httpx_client.return_value.__exit__ = MagicMock(return_value=None)
+        mock_client_instance.post = MagicMock(return_value=mock_resp)
+
+        result = self.session.call_mcp_tool(
+            "shell",
+            {"command": "echo hello"},
+            server_name="wuying_shell",
+        )
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.data, "link output")
+        mock_client_instance.post.assert_called_once()
+        call_kwargs = mock_client_instance.post.call_args[1]
+        self.assertEqual(call_kwargs["json"]["server"], "wuying_shell")
 
     @patch("agentbay._sync.session.CallMcpToolRequest")
     @patch("agentbay._sync.session.extract_request_id")

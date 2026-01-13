@@ -56,6 +56,7 @@ class AsyncBaseService:
         self,
         name: str,
         args: Dict[str, Any],
+        server_name: str = None,
         read_timeout: int = None,
         connect_timeout: int = None,
         auto_gen_session: bool = False,
@@ -67,6 +68,7 @@ class AsyncBaseService:
         Args:
             name (str): The name of the tool to call.
             args (Dict[str, Any]): The arguments to pass to the tool.
+            server_name (str, optional): MCP server name for LinkUrl/VPC routing.
             auto_gen_session (bool): Whether to automatically generate session if not exists.
 
         Returns:
@@ -75,11 +77,12 @@ class AsyncBaseService:
         try:
             # Delegate to session's central call_mcp_tool which handles LinkUrl/VPC/API routing
             mcp_result = await self.session.call_mcp_tool(
-                name, 
-                args, 
-                read_timeout=read_timeout, 
+                name,
+                args,
+                server_name=server_name,
+                read_timeout=read_timeout,
                 connect_timeout=connect_timeout,
-                auto_gen_session=auto_gen_session
+                auto_gen_session=auto_gen_session,
             )
 
             # Convert McpToolResult to OperationResult
@@ -105,9 +108,9 @@ class AsyncBaseService:
         """
         if not error_msg:
             return error_msg
-        
+
         # Mask API keys
         if "Authorization" in error_msg:
             return "Error contains sensitive information (Authorization header)"
-            
+
         return error_msg

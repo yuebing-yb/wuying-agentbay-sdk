@@ -12,7 +12,7 @@ export class Code {
   private session: {
     getAPIKey(): string;
     getSessionId(): string;
-    callMcpTool(toolName: string, args: any): Promise<{
+    callMcpTool(toolName: string, args: any, autoGenSession?: boolean, serverName?: string): Promise<{
       success: boolean;
       data: string;
       errorMessage: string;
@@ -28,7 +28,7 @@ export class Code {
   constructor(session: {
     getAPIKey(): string;
     getSessionId(): string;
-    callMcpTool(toolName: string, args: any): Promise<{
+    callMcpTool(toolName: string, args: any, autoGenSession?: boolean, serverName?: string): Promise<{
       success: boolean;
       data: string;
       errorMessage: string;
@@ -204,7 +204,12 @@ export class Code {
         timeout_s: timeoutS,
       };
 
-      const response = await this.session.callMcpTool("run_code", args);
+      const response = await this.session.callMcpTool(
+        "run_code",
+        args,
+        false,
+        "wuying_codespace"
+      );
 
       let codeResult: CodeExecutionResult;
       
