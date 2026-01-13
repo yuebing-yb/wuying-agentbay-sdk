@@ -1,5 +1,11 @@
 name: "Smart Integration Test"
 
+triggers:
+  schedule:
+  - cron: "0 0 * * *"  # Run every day at 0:00 AM
+    always: true
+    
+
 params:
   test_type:
     name: Test Type
