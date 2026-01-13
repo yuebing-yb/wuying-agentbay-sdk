@@ -3,7 +3,7 @@ name: "Multi-Language Examples Inspection"
 triggers:
   # Manual trigger is implied, remove explicit manual config if it's invalid
   schedule:
-  - cron: "0 0 * * *"  # Run every day at 0:00 AM
+  - cron: "0 3 * * *"  # Run every day at 3:00 AM
     always: true
 
 params:
