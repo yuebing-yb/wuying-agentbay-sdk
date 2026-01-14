@@ -551,15 +551,6 @@ public class AgentBay {
                     session.setLinkUrl(response.getBody().getData().getLinkUrl());
                     session.setLinkUrlTimestamp(System.currentTimeMillis());
                 }
-                if (response.getBody().getData().getToolList() != null) {
-                    try {
-                        session.updateMcpTools(response.getBody().getData().getToolList());
-                        logger.info("Successfully update MCP tools from CreateSession response");
-                    } catch (Exception e) {
-                        logger.warn("Failed to update MCP tools from CreateSession response: {}", e.getMessage());
-                    }
-                }
-
                 // Case 2 (non-regionalized endpoint + is_vpc=true): fall back to legacy VPC info and tool listing.
                 boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
                 if (vpcResource) {
@@ -568,14 +559,6 @@ public class AgentBay {
                     // If LinkUrl is not provided by server, derive it using GetLink.
                     if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
                         session.updateLinkUrl();
-                    }
-                    // If tool list is still empty, fall back to ListMcpTools.
-                    if (session.getMcpTools() == null || session.getMcpTools().isEmpty()) {
-                        try {
-                            session.listMcpTools();
-                        } catch (Exception e) {
-                            logger.warn("Failed to fetch MCP tools for VPC session: {}", e.getMessage());
-                        }
                     }
                 }
             }

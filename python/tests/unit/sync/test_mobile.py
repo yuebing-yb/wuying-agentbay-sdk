@@ -465,6 +465,23 @@ class TestMobile:
         )
 
     @pytest.mark.sync
+    def test_beta_take_screenshot_rejects_json_payload(self):
+        """Test beta_take_screenshot rejects JSON payloads."""
+        import base64
+        import json
+
+        png = b"\x89PNG\r\n\x1a\n" + b"payload"
+        b64 = base64.b64encode(png).decode("ascii")
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "req-json-1"
+        mock_result.data = json.dumps({"content": [{"blob": b64}]})
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+
+        with pytest.raises(AgentBayError, match="Unexpected JSON image data"):
+            self.mobile.beta_take_screenshot()
+
+    @pytest.mark.sync
     def test_beta_take_long_screenshot_requires_valid_max_screens(self):
         """Test beta_take_long_screenshot validates max_screens range."""
         with pytest.raises(ValueError, match="max_screens"):

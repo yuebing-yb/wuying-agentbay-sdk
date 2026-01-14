@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Command extends BaseService {
+    private static final String SERVER_SHELL = "wuying_shell";
+
     public Command(Session session) {
         super(session);
     }
@@ -46,7 +48,7 @@ public class Command extends BaseService {
                 args.put("envs", envs);
             }
 
-            OperationResult result = callMcpTool("shell", args);
+            OperationResult result = callMcpTool("shell", args, SERVER_SHELL);
 
             if (result.isSuccess()) {
                 return new CommandResult(result.getRequestId(), true, result.getData(), "", 0);

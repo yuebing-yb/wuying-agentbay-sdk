@@ -13,6 +13,8 @@ import java.util.Map;
  * Similar to Python's Oss class.
  */
 public class OSS extends BaseService {
+    private static final String SERVER_OSS = "wuying_oss";
+
     public OSS(Session session) {
         super(session);
     }
@@ -42,7 +44,7 @@ public class OSS extends BaseService {
                 args.put("region", region);
             }
 
-            OperationResult result = callMcpTool("oss_env_init", args);
+            OperationResult result = callMcpTool("oss_env_init", args, SERVER_OSS);
             if (result.isSuccess()) {
                 return new OSSClientResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -82,7 +84,7 @@ public class OSS extends BaseService {
             args.put("object", object);
             args.put("path", path);
 
-            OperationResult result = callMcpTool("oss_upload", args);
+            OperationResult result = callMcpTool("oss_upload", args, SERVER_OSS);
             if (result.isSuccess()) {
                 return new OSSUploadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -117,7 +119,7 @@ public class OSS extends BaseService {
             args.put("url", url);
             args.put("path", path);
 
-            OperationResult result = callMcpTool("oss_upload_annon", args);
+            OperationResult result = callMcpTool("oss_upload_annon", args, SERVER_OSS);
             if (result.isSuccess()) {
                 return new OSSUploadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -157,7 +159,7 @@ public class OSS extends BaseService {
             args.put("object", object);
             args.put("path", path);
 
-            OperationResult result = callMcpTool("oss_download", args);
+            OperationResult result = callMcpTool("oss_download", args, SERVER_OSS);
             if (result.isSuccess()) {
                 return new OSSDownloadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -192,7 +194,7 @@ public class OSS extends BaseService {
             args.put("url", url);
             args.put("path", path);
 
-            OperationResult result = callMcpTool("oss_download_annon", args);
+            OperationResult result = callMcpTool("oss_download_annon", args, SERVER_OSS);
             if (result.isSuccess()) {
                 return new OSSDownloadResult(result.getRequestId(), true, result.getData(), "");
             } else {

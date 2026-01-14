@@ -20,6 +20,7 @@ import java.util.*;
  */
 public class BrowserAgent extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SERVER_BROWSER_USE = "wuying_browseruse";
 
     private final Browser browser;
 
@@ -399,7 +400,7 @@ public class BrowserAgent extends BaseService {
             args.put("context_id", indices.contextIndex);
             args.putAll(options.toMap());
 
-            OperationResult result = callMcpTool("page_use_observe", args);
+            OperationResult result = callMcpTool("page_use_observe", args, SERVER_BROWSER_USE);
             return parseObserveResult(result);
         } catch (Exception e) {
             return new ObserveResultTuple(false, new ArrayList<>());

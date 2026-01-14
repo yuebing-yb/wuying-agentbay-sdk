@@ -310,6 +310,29 @@ public class MobileTest {
     }
 
     @Test
+    public void testBetaTakeScreenshotRejectsJsonPayload() throws Exception {
+        // Arrange
+        byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+        byte[] payload = new byte[pngHeader.length + 4];
+        System.arraycopy(pngHeader, 0, payload, 0, pngHeader.length);
+        System.arraycopy("test".getBytes(), 0, payload, pngHeader.length, 4);
+        String b64 = Base64.getEncoder().encodeToString(payload);
+        String jsonPayload = "{\"content\":[{\"blob\":\"" + b64 + "\"}]}";
+
+        CallMcpToolResponse mockResponse = createMockResponse(true, jsonPayload, "beta-json-req-1");
+        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+
+        // Act
+        ScreenshotBytesResult result = mobile.betaTakeScreenshot();
+
+        // Assert
+        assertFalse(result.isSuccess());
+        assertEquals("png", result.getFormat());
+        assertNotNull(result.getErrorMessage());
+        assertTrue(result.getErrorMessage().contains("Unexpected JSON image data"));
+    }
+
+    @Test
     public void testBetaTakeLongScreenshotSuccessPng() throws Exception {
         // Arrange
         byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};

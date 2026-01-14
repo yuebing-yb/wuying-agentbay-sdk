@@ -291,6 +291,44 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         call_kwargs = mock_client_instance.post.call_args[1]
         self.assertEqual(call_kwargs["json"]["server"], "wuying_shell")
 
+    @patch("agentbay._async.session._log_operation_error")
+    @patch("httpx.AsyncClient")
+    @pytest.mark.asyncio
+    async def test_call_mcp_tool_vpc_mode_is_error_logs_request_id(
+        self, mock_httpx_client, mock_log_operation_error
+    ):
+        """Test VPC mode tool error logs RequestId for correlation."""
+        self.session.is_vpc = True
+        self.session.network_interface_ip = "192.168.1.100"
+        self.session.http_port = "8080"
+        self.session.token = "vpc_token_123"
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": [{"type": "text", "text": "Error: boom"}],
+            "isError": True,
+        }
+
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__aenter__ = AsyncMock(
+            return_value=mock_client_instance
+        )
+        mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
+        mock_client_instance.get = AsyncMock(return_value=mock_response)
+
+        result = await self.session.call_mcp_tool(
+            "shell",
+            {"command": "pwd"},
+            server_name="wuying_shell",
+        )
+
+        self.assertFalse(result.success)
+        self.assertNotEqual(result.request_id, "")
+        mock_log_operation_error.assert_called()
+        called_kwargs = mock_log_operation_error.call_args.kwargs
+        self.assertEqual(called_kwargs.get("request_id"), result.request_id)
+
     @patch("agentbay._async.session.CallMcpToolRequest")
     @patch("agentbay._async.session.extract_request_id")
     @pytest.mark.asyncio

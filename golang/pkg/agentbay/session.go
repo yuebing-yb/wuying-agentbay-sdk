@@ -1710,7 +1710,7 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 		}
 
 		if isError {
-			logOperationError("CallMcpTool", fmt.Sprintf("Tool returned error: %s", textContent), false)
+			logOperationError("CallMcpTool", fmt.Sprintf("Tool returned error: %s", textContent), false, requestID)
 			return &models.McpToolResult{
 				Success:      false,
 				Data:         "",

@@ -13,6 +13,10 @@ This directory contains practical use cases and examples for the AgentBay SDK. E
 
 - **[Cross-Platform Data Persistence](cross-platform-persistence.md)** - Enable context data created on one OS to be accessible on another using MappingPolicy
 
+### Environment Patterns
+
+- **[Computer Linux as an All-in-One Sandbox](computer-linux-all-in-one-sandbox-use-cases.md)** - Use `linux_latest` as a single sandbox that supports Computer + Browser + Code APIs
+
 ## How to Use This Directory
 
 Each use case document follows a consistent structure:

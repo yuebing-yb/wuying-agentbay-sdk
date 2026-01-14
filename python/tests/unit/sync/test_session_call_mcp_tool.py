@@ -10,7 +10,7 @@ This test suite follows TDD principles:
 import json
 import pytest
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, MagicMock, Mock, patch
 
 
 class DummyAgentBay:
@@ -251,7 +251,9 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
 
     @patch("httpx.Client")
     @pytest.mark.sync
-    def test_call_mcp_tool_link_url_success_with_server_name(self, mock_httpx_client):
+    def test_call_mcp_tool_link_url_success_with_server_name(
+        self, mock_httpx_client
+    ):
         """Test LinkUrl mode uses explicit server_name."""
         self.session.link_url = "http://127.0.0.1:9999/"
         self.session.token = "link_token_123"
@@ -288,6 +290,44 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         mock_client_instance.post.assert_called_once()
         call_kwargs = mock_client_instance.post.call_args[1]
         self.assertEqual(call_kwargs["json"]["server"], "wuying_shell")
+
+    @patch("agentbay._sync.session._log_operation_error")
+    @patch("httpx.Client")
+    @pytest.mark.sync
+    def test_call_mcp_tool_vpc_mode_is_error_logs_request_id(
+        self, mock_httpx_client, mock_log_operation_error
+    ):
+        """Test VPC mode tool error logs RequestId for correlation."""
+        self.session.is_vpc = True
+        self.session.network_interface_ip = "192.168.1.100"
+        self.session.http_port = "8080"
+        self.session.token = "vpc_token_123"
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "content": [{"type": "text", "text": "Error: boom"}],
+            "isError": True,
+        }
+
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__enter__ = MagicMock(
+            return_value=mock_client_instance
+        )
+        mock_httpx_client.return_value.__exit__ = MagicMock(return_value=None)
+        mock_client_instance.get = MagicMock(return_value=mock_response)
+
+        result = self.session.call_mcp_tool(
+            "shell",
+            {"command": "pwd"},
+            server_name="wuying_shell",
+        )
+
+        self.assertFalse(result.success)
+        self.assertNotEqual(result.request_id, "")
+        mock_log_operation_error.assert_called()
+        called_kwargs = mock_log_operation_error.call_args.kwargs
+        self.assertEqual(called_kwargs.get("request_id"), result.request_id)
 
     @patch("agentbay._sync.session.CallMcpToolRequest")
     @patch("agentbay._sync.session.extract_request_id")

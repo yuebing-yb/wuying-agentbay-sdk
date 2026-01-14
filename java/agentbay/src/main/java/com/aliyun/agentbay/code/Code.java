@@ -9,6 +9,7 @@ import java.util.*;
 
 public class Code extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SERVER_CODESPACE = "wuying_codespace";
 
     public Code(Session session) {
         super(session);
@@ -305,7 +306,7 @@ public class Code extends BaseService {
             args.put("code", code);
             args.put("language", language);
             args.put("timeout_s", timeoutS);
-            OperationResult result = callMcpTool("run_code", args);
+            OperationResult result = callMcpTool("run_code", args, SERVER_CODESPACE);
             if (result.isSuccess()) {
                 try {
                     Map<String, Object> responseData = objectMapper.readValue(result.getData(), Map.class);

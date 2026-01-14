@@ -738,63 +738,6 @@ class Computer(BaseService):
         if fmt not in ("png", "jpeg"):
             raise ValueError("Invalid format: must be 'png', 'jpeg', or 'jpg'")
 
-        def _maybe_extract_base64(text: str) -> str:
-            s = (text or "").strip()
-            if not s:
-                return ""
-            if "base64," in s:
-                s = s.split("base64,", 1)[1]
-            if s.startswith("data:image/"):
-                comma = s.find(",")
-                if comma >= 0:
-                    s = s[comma + 1 :]
-            return "".join(s.split())
-
-        def _decode_base64_any(b64_text: str) -> bytes:
-            s = _maybe_extract_base64(b64_text)
-            if not s:
-                raise ValueError("empty base64 string")
-            pad = (-len(s)) % 4
-            if pad:
-                s = s + ("=" * pad)
-            if "-" in s or "_" in s:
-                return base64.urlsafe_b64decode(s)
-            return base64.b64decode(s, validate=True)
-
-        def _extract_from_json(obj: Any) -> Optional[bytes]:
-            if isinstance(obj, dict):
-                content = obj.get("content")
-                if isinstance(content, list):
-                    for item in content:
-                        if not isinstance(item, dict):
-                            continue
-                        t = str(item.get("type", "") or "").lower()
-                        if t == "image":
-                            for k in ("data", "base64", "b64"):
-                                v = item.get(k)
-                                if isinstance(v, str) and v.strip():
-                                    return _decode_base64_any(v)
-                        if t == "text":
-                            v = item.get("text")
-                            if isinstance(v, str) and v.strip():
-                                try:
-                                    return _decode_base64_any(v)
-                                except Exception:
-                                    pass
-                for k in ("data", "base64", "b64", "image", "Image"):
-                    v = obj.get(k)
-                    if isinstance(v, str) and v.strip():
-                        try:
-                            return _decode_base64_any(v)
-                        except Exception:
-                            pass
-            if isinstance(obj, list):
-                for item in obj:
-                    got = _extract_from_json(item)
-                    if got:
-                        return got
-            return None
-
         args = {"format": fmt}
         result = self.session.call_mcp_tool(
             "screenshot",
@@ -810,41 +753,37 @@ class Computer(BaseService):
         if not isinstance(result.data, str) or not result.data.strip():
             raise AgentBayError("Screenshot tool returned empty data")
 
-        raw: Optional[bytes] = None
         text = result.data.strip()
+        if text.startswith("{") or text.startswith("["):
+            raise AgentBayError("Unexpected JSON image data")
+
+        if text.startswith("data:image/"):
+            comma = text.find(",")
+            if comma < 0:
+                raise AgentBayError("Invalid data URL: missing comma")
+            text = text[comma + 1 :]
+        elif "base64," in text:
+            text = text.split("base64,", 1)[1]
+
+        text = "".join(text.split())
+        pad = (-len(text)) % 4
+        if pad:
+            text = text + ("=" * pad)
         try:
-            raw = _decode_base64_any(text)
-        except Exception:
-            raw = None
+            raw = base64.b64decode(text, validate=True)
+        except Exception as e:
+            raise AgentBayError(f"Failed to decode screenshot data: {e}") from e
 
-        if raw is None:
-            try:
-                parsed = json.loads(text)
-            except Exception:
-                parsed = None
-            if parsed is not None:
-                raw = _extract_from_json(parsed)
-
-        if raw is None:
-            raise AgentBayError(
-                "Failed to decode screenshot data: unsupported response format (not base64 or JSON-with-image)"
-            )
-
-        def _normalize_by_magic(data: bytes, expected_fmt: str) -> bytes:
-            if expected_fmt == "jpeg":
-                magic = b"\xff\xd8\xff"
-            else:
-                magic = b"\x89PNG\r\n\x1a\n"
-            if data.startswith(magic):
-                return data
-            idx = data.find(magic, 0, 64)
+        if fmt == "jpeg":
+            magic = b"\xff\xd8\xff"
+        else:
+            magic = b"\x89PNG\r\n\x1a\n"
+        if not raw.startswith(magic):
+            idx = raw.find(magic, 0, 64)
             if idx > 0:
-                return data[idx:]
-            raise AgentBayError(
-                f"Screenshot data does not match expected format '{expected_fmt}'"
-            )
-
-        raw = _normalize_by_magic(raw, fmt)
+                raw = raw[idx:]
+            else:
+                raise AgentBayError(f"Screenshot data does not match expected format '{fmt}'")
 
         return ScreenshotResult(
             request_id=result.request_id,

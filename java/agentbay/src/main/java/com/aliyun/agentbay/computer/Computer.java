@@ -28,9 +28,24 @@ import java.util.Map;
  */
 public class Computer extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SERVER_UI = "wuying_ui";
+    private static final String SERVER_APP = "wuying_app";
+    private static final String SERVER_SYSTEM_SCREENSHOT = "mcp-server";
 
     public Computer(Session session) {
         super(session);
+    }
+
+    private OperationResult callUiTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args, SERVER_UI);
+    }
+
+    private OperationResult callAppTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args, SERVER_APP);
+    }
+
+    private OperationResult callSystemScreenshotTool() {
+        return callMcpTool("system_screenshot", new HashMap<>(), SERVER_SYSTEM_SCREENSHOT);
     }
 
     /**
@@ -52,7 +67,7 @@ public class Computer extends BaseService {
                 args.put("activity", activity);
             }
 
-            OperationResult result = callMcpTool("start_app", args);
+            OperationResult result = callAppTool("start_app", args);
 
             if (!result.isSuccess()) {
                 return new ProcessListResult(
@@ -154,7 +169,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("pname", pname);
 
-            OperationResult result = callMcpTool("stop_app_by_pname", args);
+            OperationResult result = callAppTool("stop_app_by_pname", args);
 
             return new AppOperationResult(
                 result.getRequestId(),
@@ -181,7 +196,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("pid", pid);
 
-            OperationResult result = callMcpTool("stop_app_by_pid", args);
+            OperationResult result = callAppTool("stop_app_by_pid", args);
 
             return new AppOperationResult(
                 result.getRequestId(),
@@ -208,7 +223,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("stop_cmd", stopCmd);
 
-            OperationResult result = callMcpTool("stop_app_by_cmd", args);
+            OperationResult result = callAppTool("stop_app_by_cmd", args);
 
             return new AppOperationResult(
                 result.getRequestId(),
@@ -232,7 +247,7 @@ public class Computer extends BaseService {
     public ProcessListResult listVisibleApps() {
         try {
 
-            OperationResult result = callMcpTool("list_visible_apps", new HashMap<>());
+            OperationResult result = callAppTool("list_visible_apps", new HashMap<>());
 
             if (!result.isSuccess()) {
                 return new ProcessListResult(
@@ -317,7 +332,7 @@ public class Computer extends BaseService {
             args.put("desktop", desktop);
             args.put("ignore_system_apps", ignoreSystemApps);
 
-            OperationResult result = callMcpTool("get_installed_apps", args);
+            OperationResult result = callAppTool("get_installed_apps", args);
 
             if (!result.isSuccess()) {
                 return new InstalledAppListResult(
@@ -450,7 +465,7 @@ public class Computer extends BaseService {
             args.put("y", y);
             args.put("button", button);
 
-            OperationResult result = callMcpTool("click_mouse", args);
+            OperationResult result = callUiTool("click_mouse", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -490,7 +505,7 @@ public class Computer extends BaseService {
             args.put("x", x);
             args.put("y", y);
 
-            OperationResult result = callMcpTool("move_mouse", args);
+            OperationResult result = callUiTool("move_mouse", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -569,7 +584,7 @@ public class Computer extends BaseService {
             args.put("to_x", toX);
             args.put("to_y", toY);
             args.put("button", button);
-            OperationResult result = callMcpTool("drag_mouse", args);
+            OperationResult result = callUiTool("drag_mouse", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -643,7 +658,7 @@ public class Computer extends BaseService {
             args.put("y", y);
             args.put("direction", direction);
             args.put("amount", amount);
-            OperationResult result = callMcpTool("scroll", args);
+            OperationResult result = callUiTool("scroll", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -677,7 +692,7 @@ public class Computer extends BaseService {
      */
     public OperationResult getCursorPosition() {
         try {
-            OperationResult result = callMcpTool("get_cursor_position", new HashMap<>());
+            OperationResult result = callUiTool("get_cursor_position", new HashMap<>());
 
             if (!result.isSuccess()) {
                 return new OperationResult(
@@ -716,7 +731,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("text", text);
-            OperationResult result = callMcpTool("input_text", args);
+            OperationResult result = callUiTool("input_text", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -755,7 +770,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("keys", keys);
             args.put("hold", hold);
-            OperationResult result = callMcpTool("press_keys", args);
+            OperationResult result = callUiTool("press_keys", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -802,7 +817,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("keys", keys);
-            OperationResult result = callMcpTool("release_keys", args);
+            OperationResult result = callUiTool("release_keys", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -839,7 +854,7 @@ public class Computer extends BaseService {
      */
     public OperationResult getScreenSize() {
         try {
-            OperationResult result = callMcpTool("get_screen_size", new HashMap<>());
+            OperationResult result = callUiTool("get_screen_size", new HashMap<>());
 
             if (!result.isSuccess()) {
                 return new OperationResult(
@@ -873,7 +888,7 @@ public class Computer extends BaseService {
      */
     public OperationResult screenshot() {
         try {
-            OperationResult result = callMcpTool("system_screenshot", new HashMap<>());
+            OperationResult result = callSystemScreenshotTool();
 
             if (!result.isSuccess()) {
                 return new OperationResult(
@@ -912,7 +927,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-            OperationResult result = callMcpTool("list_root_windows", args);
+            OperationResult result = callUiTool("list_root_windows", args);
 
             if (!result.isSuccess()) {
                 return new WindowListResult(
@@ -987,7 +1002,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-            OperationResult result = callMcpTool("get_active_window", args);
+            OperationResult result = callUiTool("get_active_window", args);
 
             if (!result.isSuccess()) {
                 return new WindowInfoResult(
@@ -1113,7 +1128,7 @@ public class Computer extends BaseService {
             args.put("window_id", windowId);
             args.put("width", width);
             args.put("height", height);
-            OperationResult result = callMcpTool("resize_window", args);
+            OperationResult result = callUiTool("resize_window", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -1160,7 +1175,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("on", on);
-            OperationResult result = callMcpTool("focus_mode", args);
+            OperationResult result = callUiTool("focus_mode", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(

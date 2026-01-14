@@ -25,6 +25,8 @@ import java.util.Map;
  */
 public class Agent extends BaseService {
     private static final Gson gson = new Gson();
+    private static final String SERVER_MOBILE_AGENT = "wuying_mobile_agent";
+    private static final String SERVER_BROWSER_USE = "wuying_browseruse";
 
     private final Computer computer;
     private final Browser browser;
@@ -167,7 +169,7 @@ public class Agent extends BaseService {
                 Map<String, Object> args = new HashMap<>();
                 args.put("task", task);
 
-                OperationResult result = callMcpTool("flux_execute_task", args);
+                OperationResult result = callMcpTool("flux_execute_task", args, SERVER_MOBILE_AGENT);
 
                 if (result.isSuccess()) {
                     JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
@@ -222,7 +224,7 @@ public class Agent extends BaseService {
                 Map<String, Object> args = new HashMap<>();
                 args.put("task", task);
 
-                OperationResult result = callMcpTool("flux_execute_task", args);
+                OperationResult result = callMcpTool("flux_execute_task", args, SERVER_MOBILE_AGENT);
 
                 if (result.isSuccess()) {
                     JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
@@ -378,7 +380,7 @@ public class Agent extends BaseService {
                 Map<String, Object> args = new HashMap<>();
                 args.put("task_id", taskId);
 
-                OperationResult result = callMcpTool("flux_get_task_status", args);
+                OperationResult result = callMcpTool("flux_get_task_status", args, SERVER_MOBILE_AGENT);
 
                 if (result.isSuccess()) {
                     JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
@@ -432,7 +434,7 @@ public class Agent extends BaseService {
                 Map<String, Object> args = new HashMap<>();
                 args.put("task_id", taskId);
 
-                OperationResult result = callMcpTool("flux_terminate_task", args);
+                OperationResult result = callMcpTool("flux_terminate_task", args, SERVER_MOBILE_AGENT);
 
                 if (result.isSuccess()) {
                     JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
@@ -521,7 +523,7 @@ public class Agent extends BaseService {
                 args.put("task", task);
                 args.put("use_vision", useVision);
                 args.put("output_schema", schemaJson);
-                OperationResult result = callMcpTool("browser_use_execute_task", args);
+                OperationResult result = callMcpTool("browser_use_execute_task", args, SERVER_BROWSER_USE);
 
                 if (result.isSuccess()) {
                     JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
@@ -669,7 +671,7 @@ public class Agent extends BaseService {
                 Map<String, Object> args = new HashMap<>();
                 args.put("task_id", taskId);
 
-                OperationResult result = callMcpTool("browser_use_get_task_status", args);
+                OperationResult result = callMcpTool("browser_use_get_task_status", args, SERVER_BROWSER_USE);
 
                 if (result.isSuccess()) {
                     JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
@@ -723,7 +725,7 @@ public class Agent extends BaseService {
                 Map<String, Object> args = new HashMap<>();
                 args.put("task_id", taskId);
 
-                OperationResult result = callMcpTool("browser_use_terminate_task", args);
+                OperationResult result = callMcpTool("browser_use_terminate_task", args, SERVER_BROWSER_USE);
 
                 if (result.isSuccess()) {
                     JsonObject content = gson.fromJson(result.getData(), JsonObject.class);

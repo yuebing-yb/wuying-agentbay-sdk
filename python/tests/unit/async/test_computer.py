@@ -472,6 +472,24 @@ class TestComputer:
         assert result.format == "png"
 
     @pytest.mark.asyncio
+    async def test_take_screenshot_rejects_json_payload(self):
+        """Test beta_take_screenshot rejects JSON payloads."""
+        import base64
+        import json
+
+        payload = b"\x89PNG\r\n\x1a\n" + b"x"
+        b64 = base64.b64encode(payload).decode("ascii")
+
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "test-req-json"
+        mock_result.data = json.dumps({"content": [{"blob": b64}]})
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
+
+        with pytest.raises(AgentBayError, match="Unexpected JSON image data"):
+            await self.computer.beta_take_screenshot(format="png")
+
+    @pytest.mark.asyncio
     async def test_take_screenshot_invalid_format_raises(self):
         """Test take_screenshot rejects invalid format."""
         with pytest.raises(ValueError, match="Invalid format"):

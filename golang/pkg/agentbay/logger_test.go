@@ -2,9 +2,36 @@ package agentbay
 
 import (
 	"encoding/json"
+	"io"
+	"os"
 	"strings"
 	"testing"
 )
+
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+
+	orig := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed to create pipe: %v", err)
+	}
+	os.Stdout = w
+
+	done := make(chan string, 1)
+	go func() {
+		b, _ := io.ReadAll(r)
+		done <- string(b)
+	}()
+
+	fn()
+
+	_ = w.Close()
+	os.Stdout = orig
+	out := <-done
+	_ = r.Close()
+	return out
+}
 
 // TestLogAPICall verifies logAPICall produces correct formatted output
 func TestLogAPICall(t *testing.T) {
@@ -76,6 +103,35 @@ func TestLogOperationErrorWithoutStack(t *testing.T) {
 func TestLogOperationErrorWithStack(t *testing.T) {
 	// Verify it doesn't panic
 	logOperationError("DeleteSession", "Permission denied", true)
+}
+
+func TestLogOperationErrorWithRequestID_SLSIncludesRequestId(t *testing.T) {
+	oldFormat := globalLogFormat
+	oldLevel := globalLogLevel
+	oldConsole := consoleLoggingEnabled
+	defer func() {
+		globalLogFormat = oldFormat
+		globalLogLevel = oldLevel
+		consoleLoggingEnabled = oldConsole
+	}()
+
+	globalLogFormat = LogFormatSLS
+	globalLogLevel = LOG_INFO
+	consoleLoggingEnabled = true
+
+	out := captureStdout(t, func() {
+		logOperationError("CallMcpTool", "Tool returned error: boom", false, "req-123")
+	})
+
+	if !strings.Contains(out, "Failed: CallMcpTool") {
+		t.Fatalf("expected operation name in output, got: %q", out)
+	}
+	if !strings.Contains(out, "RequestId=req-123") {
+		t.Fatalf("expected RequestId in output, got: %q", out)
+	}
+	if !strings.Contains(out, "Tool returned error: boom") {
+		t.Fatalf("expected error message in output, got: %q", out)
+	}
 }
 
 // TestMaskSensitiveDataWithMapApiKey verifies API key masking in maps

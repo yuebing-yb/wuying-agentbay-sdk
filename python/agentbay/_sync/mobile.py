@@ -837,86 +837,30 @@ class Mobile(BaseService):
         Supports:
         - plain base64
         - data URL
-        - JSON objects containing base64 fields
-        - base64 with small unexpected prefix (strip by magic)
         """
         if not isinstance(text, str) or not text.strip():
             raise AgentBayError("Screenshot tool returned empty data")
 
-        def _maybe_extract_base64(s: str) -> str:
-            v = (s or "").strip()
-            if not v:
-                return ""
-            if "base64," in v:
-                v = v.split("base64,", 1)[1]
-            if v.startswith("data:image/"):
-                comma = v.find(",")
-                if comma >= 0:
-                    v = v[comma + 1 :]
-            return "".join(v.split())
-
-        def _decode_base64_any(b64_text: str) -> bytes:
-            s = _maybe_extract_base64(b64_text)
-            if not s:
-                raise ValueError("empty base64 string")
-            pad = (-len(s)) % 4
-            if pad:
-                s = s + ("=" * pad)
-            if "-" in s or "_" in s:
-                return base64.urlsafe_b64decode(s)
-            return base64.b64decode(s, validate=True)
-
-        def _extract_from_json(obj: Any) -> Optional[bytes]:
-            if isinstance(obj, dict):
-                content = obj.get("content")
-                if isinstance(content, list):
-                    for item in content:
-                        if not isinstance(item, dict):
-                            continue
-                        t = str(item.get("type", "") or "").lower()
-                        if t == "image":
-                            for k in ("data", "base64", "b64"):
-                                v = item.get(k)
-                                if isinstance(v, str) and v.strip():
-                                    return _decode_base64_any(v)
-                        if t == "text":
-                            v = item.get("text")
-                            if isinstance(v, str) and v.strip():
-                                try:
-                                    return _decode_base64_any(v)
-                                except Exception:
-                                    pass
-                for k in ("data", "base64", "b64", "image", "Image"):
-                    v = obj.get(k)
-                    if isinstance(v, str) and v.strip():
-                        try:
-                            return _decode_base64_any(v)
-                        except Exception:
-                            pass
-            if isinstance(obj, list):
-                for item in obj:
-                    got = _extract_from_json(item)
-                    if got:
-                        return got
-            return None
-
-        raw: Optional[bytes] = None
         s = text.strip()
+        if s.startswith("{") or s.startswith("["):
+            raise AgentBayError("Unexpected JSON image data")
+
+        if s.startswith("data:image/"):
+            comma = s.find(",")
+            if comma < 0:
+                raise AgentBayError("Invalid data URL: missing comma")
+            s = s[comma + 1 :]
+        elif "base64," in s:
+            s = s.split("base64,", 1)[1]
+
+        s = "".join(s.split())
+        pad = (-len(s)) % 4
+        if pad:
+            s = s + ("=" * pad)
         try:
-            raw = _decode_base64_any(s)
-        except Exception:
-            raw = None
-
-        if raw is None:
-            try:
-                parsed = json.loads(s)
-            except Exception:
-                parsed = None
-            if parsed is not None:
-                raw = _extract_from_json(parsed)
-
-        if raw is None:
-            raise AgentBayError("Failed to decode screenshot data")
+            raw = base64.b64decode(s, validate=True)
+        except Exception as e:
+            raise AgentBayError(f"Failed to decode screenshot data: {e}") from e
 
         if expected_format == "png":
             magic = b"\x89PNG\r\n\x1a\n"
@@ -925,9 +869,6 @@ class Mobile(BaseService):
 
         if raw.startswith(magic):
             return raw
-        idx = raw.find(magic, 0, 64)
-        if idx > 0:
-            return raw[idx:]
         raise AgentBayError("Decoded image does not match expected format")
 
     # Mobile Configuration Operations

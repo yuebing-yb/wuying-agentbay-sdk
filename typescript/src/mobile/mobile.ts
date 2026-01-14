@@ -129,44 +129,73 @@ function normalizeImageFormat(format: string, defaultValue: string): string {
   return f;
 }
 
-function stripDataUrlPrefix(b64: string): string {
-  const s = String(b64 || "").trim();
-  const idx = s.indexOf("base64,");
+function parseImageBase64(input: string): { b64: string; formatHint: string } {
+  const s = String(input || "").trim();
+  if (!s) {
+    throw new Error("Empty image data");
+  }
+  if (s.startsWith("{") || s.startsWith("[")) {
+    throw new Error("Unexpected JSON image data");
+  }
+
+  const lower = s.toLowerCase();
+  if (lower.startsWith("data:image/")) {
+    const base64Idx = lower.indexOf("base64,");
+    if (base64Idx < 0) {
+      throw new Error("Invalid data URL: missing base64 marker");
+    }
+
+    const header = lower.slice("data:image/".length, base64Idx);
+    const semi = header.indexOf(";");
+    const mime = (semi >= 0 ? header.slice(0, semi) : header).trim();
+    const formatHint = mime === "png" ? "png" : (mime === "jpeg" || mime === "jpg") ? "jpeg" : "";
+
+    return {
+      b64: s.slice(base64Idx + "base64,".length).trim(),
+      formatHint,
+    };
+  }
+
+  const idx = lower.indexOf("base64,");
   if (idx >= 0) {
-    return s.slice(idx + "base64,".length).trim();
+    return {
+      b64: s.slice(idx + "base64,".length).trim(),
+      formatHint: "",
+    };
   }
-  return s;
+
+  return { b64: s, formatHint: "" };
 }
 
-function indexOfSubarray(haystack: Uint8Array, needle: Uint8Array, maxSearch: number): number {
-  if (needle.length === 0 || haystack.length < needle.length) {
-    return -1;
-  }
-  const limit = Math.min(haystack.length, Math.max(0, maxSearch));
-  for (let i = 0; i + needle.length <= limit; i++) {
-    let ok = true;
-    for (let j = 0; j < needle.length; j++) {
-      if (haystack[i + j] !== needle[j]) {
-        ok = false;
-        break;
-      }
-    }
-    if (ok) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-function base64ToUint8Array(input: string): Uint8Array {
-  let s = stripDataUrlPrefix(input)
-    .replace(/[\r\n\t ]+/g, "")
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
+function normalizeBase64ForDecode(b64: string): string {
+  let s = String(b64 || "").replace(/[\r\n\t ]+/g, "");
   const mod = s.length % 4;
   if (mod !== 0) {
     s += "=".repeat(4 - mod);
   }
+  return s;
+}
+
+function validateBase64String(base64String: string): void {
+  const s = String(base64String || "");
+  if (!s) {
+    throw new Error("Empty base64 string");
+  }
+
+  const base64WithoutPadding = s.replace(/=+$/, "");
+  if (!/^[A-Za-z0-9+/]+$/.test(base64WithoutPadding)) {
+    throw new Error("Invalid base64 string format");
+  }
+
+  const paddingMatch = s.match(/=+$/);
+  if (paddingMatch && paddingMatch[0].length > 2) {
+    throw new Error("Invalid base64 padding format");
+  }
+}
+
+function base64ToUint8ArrayStrict(input: string): Uint8Array {
+  const s = normalizeBase64ForDecode(input);
+  validateBase64String(s);
 
   if (typeof Buffer !== "undefined") {
     return new Uint8Array(Buffer.from(s, "base64"));
@@ -180,88 +209,33 @@ function base64ToUint8Array(input: string): Uint8Array {
   return out;
 }
 
-function decodeBase64Image(input: string, expectedFormat: string): { bytes: Uint8Array; format: string } {
-  const b64 = extractBase64FromMcpPayload(input);
-  const raw = base64ToUint8Array(b64);
-
-  // Some backends prepend non-image prefix; strip until magic bytes.
-  let b = raw;
-  const pngIdx = indexOfSubarray(b, PNG_MAGIC, 128);
-  if (pngIdx > 0) {
-    b = b.slice(pngIdx);
+function startsWithMagic(bytes: Uint8Array, magic: Uint8Array): boolean {
+  if (bytes.length < magic.length) {
+    return false;
   }
-  const jpgIdx = indexOfSubarray(b, JPEG_MAGIC, 128);
-  if (jpgIdx > 0) {
-    b = b.slice(jpgIdx);
+  for (let i = 0; i < magic.length; i++) {
+    if (bytes[i] !== magic[i]) {
+      return false;
+    }
   }
-
-  const fmt =
-    indexOfSubarray(b, PNG_MAGIC, PNG_MAGIC.length) === 0
-      ? "png"
-      : indexOfSubarray(b, JPEG_MAGIC, JPEG_MAGIC.length) === 0
-        ? "jpeg"
-        : expectedFormat;
-
-  return { bytes: b, format: fmt };
+  return true;
 }
 
-function extractBase64FromMcpPayload(input: string): string {
-  const s = String(input || "").trim();
-  if (!(s.startsWith("{") || s.startsWith("["))) {
-    return s;
+function detectImageFormat(bytes: Uint8Array): string {
+  if (startsWithMagic(bytes, PNG_MAGIC)) {
+    return "png";
   }
-  try {
-    const obj = JSON.parse(s);
-    const b64 = extractBase64FromAny(obj);
-    return b64 || s;
-  } catch {
-    return s;
-  }
-}
-
-function extractBase64FromAny(v: any): string {
-  if (!v) {
-    return "";
-  }
-  if (typeof v === "string") {
-    return v;
-  }
-  if (Array.isArray(v)) {
-    return v.length > 0 ? extractBase64FromAny(v[0]) : "";
-  }
-  if (typeof v === "object") {
-    if (typeof (v as any).data === "string" && (v as any).data) {
-      return (v as any).data;
-    }
-    const content = (v as any).content;
-    if (Array.isArray(content) && content.length > 0 && typeof content[0] === "object" && content[0]) {
-      const c0: any = content[0];
-      if (typeof c0.blob === "string" && c0.blob) {
-        return c0.blob;
-      }
-      if (typeof c0.data === "string" && c0.data) {
-        return c0.data;
-      }
-      if (typeof c0.text === "string" && c0.text) {
-        return c0.text;
-      }
-      if (c0.blob && typeof c0.blob === "object") {
-        if (typeof c0.blob.data === "string" && c0.blob.data) {
-          return c0.blob.data;
-        }
-      }
-      if (c0.image && typeof c0.image === "object" && typeof c0.image.data === "string" && c0.image.data) {
-        return c0.image.data;
-      }
-      if (c0.source && typeof c0.source === "object" && typeof c0.source.data === "string" && c0.source.data) {
-        return c0.source.data;
-      }
-    }
-    if ((v as any).result) {
-      return extractBase64FromAny((v as any).result);
-    }
+  if (startsWithMagic(bytes, JPEG_MAGIC)) {
+    return "jpeg";
   }
   return "";
+}
+
+function decodeBase64Image(input: string, expectedFormat: string): { bytes: Uint8Array; format: string } {
+  const { b64, formatHint } = parseImageBase64(input);
+  const bytes = base64ToUint8ArrayStrict(b64);
+  const detected = detectImageFormat(bytes);
+  return { bytes, format: detected || formatHint || expectedFormat };
 }
 
 export class Mobile {

@@ -1385,6 +1385,7 @@ export class Session {
           .toString(36)
           .substr(2, 9)}`;
         url.searchParams.append("requestId", requestId);
+        setRequestId(requestId);
 
         const response = await fetch(url.toString(), {
           method: "GET",
@@ -1398,7 +1399,7 @@ export class Session {
             success: false,
             data: "",
             errorMessage: `VPC request failed: ${response.statusText}`,
-            requestId: "",
+            requestId,
           };
         }
 
@@ -1451,7 +1452,7 @@ export class Session {
             success: true,
             data: dataStr,
             errorMessage: "",
-            requestId: "",
+            requestId,
           };
         }
 
@@ -1459,7 +1460,7 @@ export class Session {
           success: true,
           data: textContent || JSON.stringify(actualResult),
           errorMessage: "",
-          requestId: "",
+          requestId,
         };
       } else {
         // Non-VPC mode: use traditional API call
@@ -1497,6 +1498,9 @@ export class Session {
 
         const data = response.body.data as Record<string, any>;
         const reqId = extractRequestId(response) || "";
+        if (reqId) {
+          setRequestId(reqId);
+        }
 
         // For run_code tool, return raw data to let Code service handle parsing
         if (toolName === "run_code") {

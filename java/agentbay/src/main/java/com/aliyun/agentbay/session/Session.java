@@ -557,8 +557,6 @@ public class Session {
                 }
             }
 
-            this.mcpTools = tools;
-
             result.setTools(tools);
             return result;
         } catch (AgentBayException e) {
@@ -673,42 +671,6 @@ public class Session {
      */
     public void setNetworkInterfaceIp(String networkInterfaceIp) {
         this.networkInterfaceIp = networkInterfaceIp;
-    }
-
-    /**
-     * Get MCP tools list for this session
-     *
-     * @return List of MCP tools
-     */
-    public java.util.List<com.aliyun.agentbay.mcp.McpTool> getMcpTools() {
-        return mcpTools;
-    }
-
-    /**
-     * Set MCP tools list for this session
-     *
-     * @param mcpTools List of MCP tools
-     */
-    public void setMcpTools(java.util.List<com.aliyun.agentbay.mcp.McpTool> mcpTools) {
-        this.mcpTools = mcpTools;
-    }
-
-    /**
-     * Find the server that provides a given tool
-     *
-     * @param toolName Tool name
-     * @return Server name, or empty string if not found
-     */
-    public String findServerForTool(String toolName) {
-        if (mcpTools == null) {
-            return "";
-        }
-        for (com.aliyun.agentbay.mcp.McpTool tool : mcpTools) {
-            if (tool.getName() != null && tool.getName().equals(toolName)) {
-                return tool.getServer() != null ? tool.getServer() : "";
-            }
-        }
-        return "";
     }
 
     /**
@@ -834,7 +796,6 @@ public class Session {
                 }
             }
 
-            this.mcpTools = tools;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -899,8 +860,6 @@ public class Session {
             state.setToken(this.token);
             state.setLinkUrl(this.linkUrl);
             state.setLinkUrlTimestamp(this.linkUrlTimestamp);
-            state.setMcpTools(this.mcpTools);
-
             return objectMapper.writeValueAsString(state);
         } catch (Exception e) {
             throw new AgentBayException("Failed to dump session state: " + e.getMessage(), e);
@@ -924,7 +883,6 @@ public class Session {
             session.setFileTransferContextId(state.getFileTransferContextId());
             session.setHttpPort(state.getHttpPort());
             session.setToken(state.getToken());
-            session.setMcpTools(state.getMcpTools());
             session.linkUrl = state.getLinkUrl();
             session.linkUrlTimestamp = state.getLinkUrlTimestamp();
             return session;

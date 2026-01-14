@@ -51,9 +51,22 @@ public class BaseService {
      * @return OperationResult containing the parsed response
      */
     protected OperationResult callMcpTool(String toolName, Object args) {
+        return callMcpTool(toolName, args, null);
+    }
+
+    /**
+     * Call an MCP tool with an explicit server name.
+     * In LinkUrl mode, serverName is required and will be sent to the link endpoint.
+     *
+     * @param toolName The name of the tool to call
+     * @param args The arguments to pass to the tool
+     * @param serverName The MCP server name (e.g. "wuying_filesystem")
+     * @return OperationResult containing the parsed response
+     */
+    protected OperationResult callMcpTool(String toolName, Object args, String serverName) {
         try {
             if (isNotEmpty(session.getLinkUrl()) && isNotEmpty(session.getToken())) {
-                return callMcpToolLinkUrl(toolName, args);
+                return callMcpToolLinkUrl(toolName, args, serverName);
             } else {
                 return callMcpToolApi(toolName, args);
             }
@@ -89,7 +102,11 @@ public class BaseService {
                 } catch (RuntimeException e) {
                     if (e.getMessage() != null && e.getMessage().startsWith("MCP tool execution error:")) {
                         String errorMsg = e.getMessage().substring("MCP tool execution error: ".length());
-                        return new OperationResult(requestId, false, "", errorMsg);
+                        String errorWithRequestId = errorMsg;
+                        if (requestId != null && !requestId.isEmpty()) {
+                            errorWithRequestId = String.format("RequestId=%s, %s", requestId, errorMsg);
+                        }
+                        return new OperationResult(requestId, false, "", errorWithRequestId);
                     }
                     throw e;
                 }
@@ -105,19 +122,15 @@ public class BaseService {
     /**
      * Call MCP tool via link url connection
      */
-    private OperationResult callMcpToolLinkUrl(String toolName, Object args) {
+    private OperationResult callMcpToolLinkUrl(String toolName, Object args, String serverName) {
         try {
-            //
-            String server = findServerForTool(toolName);
-            if (!isNotEmpty(server)) {
-                try {
-                    session.listMcpTools();
-                } catch (Exception e) {
-                }
-                server = findServerForTool(toolName);
-            }
-            if (!isNotEmpty(server)) {
-                return new OperationResult("", false, "", "Server not found for tool: " + toolName);
+            if (!isNotEmpty(serverName)) {
+                return new OperationResult(
+                    "",
+                    false,
+                    "",
+                    "Server name is required for LinkUrl tool call: " + toolName
+                );
             }
 
             String requestId = String.format("link-%d-%09d", System.currentTimeMillis(), random.nextInt(1000000000));
@@ -159,7 +172,7 @@ public class BaseService {
 
             Map<String, Object> bodyParams = new HashMap<>();
             bodyParams.put("args", args);
-            bodyParams.put("server", server);
+            bodyParams.put("server", serverName);
             bodyParams.put("requestId", requestId);
             bodyParams.put("tool", toolName);
             bodyParams.put("token", token);
@@ -254,13 +267,6 @@ public class BaseService {
         } catch (Exception e) {
             return new OperationResult("", false, "", "Unexpected error: " + e.getMessage());
         }
-    }
-
-    /**
-     * Find server for a given tool name
-     */
-    private String findServerForTool(String toolName) {
-        return session.findServerForTool(toolName);
     }
 
     /**

@@ -1215,6 +1215,7 @@ class Session:
                     "CallMcpTool(VPC)",
                     f"Tool returned error: {text_content}",
                     False,
+                    request_id=request_id,
                 )
                 return McpToolResult(
                     request_id=request_id,

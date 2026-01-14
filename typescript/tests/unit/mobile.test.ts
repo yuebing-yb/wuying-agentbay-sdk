@@ -327,6 +327,28 @@ describe('Mobile', () => {
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
     });
 
+    test('betaTakeScreenshot should reject JSON payloads', async () => {
+      // Arrange
+      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
+      const jsonPayload = JSON.stringify({ content: [{ blob: payload }] });
+      const mockResult = {
+        success: true,
+        requestId: 'test-beta-json-123',
+        data: jsonPayload,
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await mobile.betaTakeScreenshot();
+
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain('Unexpected JSON image data');
+      expect(result.data.length).toBe(0);
+    });
+
     test('betaTakeLongScreenshot should validate maxScreens and format', async () => {
       // Act
       const invalidMax = await mobile.betaTakeLongScreenshot(1, 'png');

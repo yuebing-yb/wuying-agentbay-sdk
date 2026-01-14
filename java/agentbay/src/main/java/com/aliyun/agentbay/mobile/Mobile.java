@@ -23,9 +23,29 @@ public class Mobile extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final byte[] PNG_MAGIC = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
     private static final byte[] JPEG_MAGIC = new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff};
+    private static final String SERVER_UI = "wuying_ui";
+    private static final String SERVER_APP = "wuying_app";
+    private static final String SERVER_CAPTURE = "wuying_capture";
+    private static final String SERVER_SYSTEM_SCREENSHOT = "mcp-server";
 
     public Mobile(Session session) {
         super(session);
+    }
+
+    private OperationResult callUiTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args, SERVER_UI);
+    }
+
+    private OperationResult callAppTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args, SERVER_APP);
+    }
+
+    private OperationResult callCaptureTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args, SERVER_CAPTURE);
+    }
+
+    private OperationResult callSystemScreenshotTool() {
+        return callMcpTool("system_screenshot", new HashMap<>(), SERVER_SYSTEM_SCREENSHOT);
     }
 
     // ==================== Touch Operations ====================
@@ -42,7 +62,7 @@ public class Mobile extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("x", x);
             args.put("y", y);
-            OperationResult result = callMcpTool("tap", args);
+            OperationResult result = callUiTool("tap", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -87,7 +107,7 @@ public class Mobile extends BaseService {
             args.put("end_x", endX);
             args.put("end_y", endY);
             args.put("duration_ms", durationMs);
-            OperationResult result = callMcpTool("swipe", args);
+            OperationResult result = callUiTool("swipe", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -137,7 +157,7 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("text", text);
-            OperationResult result = callMcpTool("input_text", args);
+            OperationResult result = callUiTool("input_text", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -180,7 +200,7 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("key", key);
-            OperationResult result = callMcpTool("send_key", args);
+            OperationResult result = callUiTool("send_key", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -219,7 +239,7 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-            OperationResult result = callMcpTool("get_clickable_ui_elements", args);
+            OperationResult result = callUiTool("get_clickable_ui_elements", args);
 
             if (!result.isSuccess()) {
                 return new UIElementListResult(
@@ -320,7 +340,7 @@ public class Mobile extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
             args.put("format", formatNorm);
-            OperationResult result = callMcpTool("get_all_ui_elements", args);
+            OperationResult result = callUiTool("get_all_ui_elements", args);
 
             if (!result.isSuccess()) {
                 return new UIElementListResult(
@@ -460,7 +480,7 @@ public class Mobile extends BaseService {
             args.put("start_menu", startMenu);
             args.put("desktop", desktop);
             args.put("ignore_system_apps", ignoreSystemApps);
-            OperationResult result = callMcpTool("get_installed_apps", args);
+            OperationResult result = callAppTool("get_installed_apps", args);
 
             if (!result.isSuccess()) {
                 return new InstalledAppListResult(
@@ -562,7 +582,7 @@ public class Mobile extends BaseService {
             if (activity != null && !activity.isEmpty()) {
                 args.put("activity", activity);
             }
-            OperationResult result = callMcpTool("start_app", args);
+            OperationResult result = callAppTool("start_app", args);
 
             if (!result.isSuccess()) {
                 return new ProcessListResult(
@@ -662,7 +682,7 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("stop_cmd", stopCmd);
-            OperationResult result = callMcpTool("stop_app_by_cmd", args);
+            OperationResult result = callAppTool("stop_app_by_cmd", args);
 
             return new AppOperationResult(
                 result.getRequestId(),
@@ -687,7 +707,7 @@ public class Mobile extends BaseService {
      */
     public OperationResult screenshot() {
         try {
-            OperationResult result = callMcpTool("system_screenshot", new HashMap<>());
+            OperationResult result = callSystemScreenshotTool();
 
             if (!result.isSuccess()) {
                 return new OperationResult(
@@ -723,7 +743,7 @@ public class Mobile extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("format", "png");
-            OperationResult result = callMcpTool("screenshot", args);
+            OperationResult result = callCaptureTool("screenshot", args);
 
             if (!result.isSuccess()) {
                 return new ScreenshotBytesResult(
@@ -795,7 +815,7 @@ public class Mobile extends BaseService {
                 args.put("quality", quality);
             }
 
-            OperationResult result = callMcpTool("long_screenshot", args);
+            OperationResult result = callCaptureTool("long_screenshot", args);
             if (!result.isSuccess()) {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
@@ -1113,113 +1133,54 @@ public class Mobile extends BaseService {
             throw new IllegalArgumentException("Empty image data");
         }
 
-        String s = extractBase64FromMcpPayload(data.trim());
-        int idx = s.indexOf("base64,");
+        String s = data.trim();
+        if (s.isEmpty()) {
+            throw new IllegalArgumentException("Empty image data");
+        }
+        // The screenshot tool returns a base64 string (or a data URL). We do not
+        // attempt to parse arbitrary JSON payloads here.
+        if (s.startsWith("{") || s.startsWith("[")) {
+            throw new IllegalArgumentException("Unexpected JSON image data");
+        }
+
+        String lower = s.toLowerCase();
+        String formatHint = "";
+        if (lower.startsWith("data:image/")) {
+            int base64Idx = lower.indexOf("base64,");
+            if (base64Idx < 0) {
+                throw new IllegalArgumentException("Invalid data URL: missing base64 marker");
+            }
+            String header = lower.substring("data:image/".length(), base64Idx);
+            int semi = header.indexOf(";");
+            String mime = (semi >= 0 ? header.substring(0, semi) : header).trim();
+            if ("png".equals(mime)) {
+                formatHint = "png";
+            } else if ("jpeg".equals(mime) || "jpg".equals(mime)) {
+                formatHint = "jpeg";
+            }
+        }
+
+        int idx = lower.indexOf("base64,");
         if (idx >= 0) {
             s = s.substring(idx + "base64,".length()).trim();
         }
         s = s.replace("\n", "").replace("\r", "").replace("\t", "").replace(" ", "");
-        s = s.replace("-", "+").replace("_", "/");
         int mod = s.length() % 4;
         if (mod != 0) {
             s = s + "====".substring(mod);
         }
 
         byte[] decoded = Base64.getDecoder().decode(s);
-        byte[] normalized = decoded;
-
-        int pngIdx = indexOfBytes(normalized, PNG_MAGIC, 128);
-        if (pngIdx > 0) {
-            normalized = slice(normalized, pngIdx);
-        }
-        int jpgIdx = indexOfBytes(normalized, JPEG_MAGIC, 128);
-        if (jpgIdx > 0) {
-            normalized = slice(normalized, jpgIdx);
-        }
 
         String fmt = expectedFormat;
-        if (startsWith(normalized, PNG_MAGIC)) {
+        if (startsWith(decoded, PNG_MAGIC)) {
             fmt = "png";
-        } else if (startsWith(normalized, JPEG_MAGIC)) {
+        } else if (startsWith(decoded, JPEG_MAGIC)) {
             fmt = "jpeg";
+        } else if (!formatHint.isEmpty()) {
+            fmt = formatHint;
         }
-        return new DecodedImage(normalized, fmt);
-    }
-
-    private static String extractBase64FromMcpPayload(String input) {
-        String s = input == null ? "" : input.trim();
-        if (s.isEmpty()) {
-            return s;
-        }
-        if (!(s.startsWith("{") || s.startsWith("["))) {
-            return s;
-        }
-        try {
-            Object obj = objectMapper.readValue(s, Object.class);
-            String b64 = extractBase64FromAny(obj);
-            return b64 == null || b64.isEmpty() ? s : b64;
-        } catch (Exception e) {
-            return s;
-        }
-    }
-
-    private static String extractBase64FromAny(Object v) {
-        if (v == null) {
-            return "";
-        }
-        if (v instanceof String) {
-            return (String) v;
-        }
-        if (v instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<Object> list = (List<Object>) v;
-            if (list.isEmpty()) {
-                return "";
-            }
-            return extractBase64FromAny(list.get(0));
-        }
-        if (v instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = (Map<String, Object>) v;
-            Object data = map.get("data");
-            if (data instanceof String && !((String) data).isEmpty()) {
-                return (String) data;
-            }
-            Object content = map.get("content");
-            if (content instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<Object> list = (List<Object>) content;
-                if (!list.isEmpty() && list.get(0) instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> c0 = (Map<String, Object>) list.get(0);
-                    Object blob = c0.get("blob");
-                    if (blob instanceof String && !((String) blob).isEmpty()) {
-                        return (String) blob;
-                    }
-                    if (blob instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> bm = (Map<String, Object>) blob;
-                        Object d = bm.get("data");
-                        if (d instanceof String && !((String) d).isEmpty()) {
-                            return (String) d;
-                        }
-                    }
-                    Object d0 = c0.get("data");
-                    if (d0 instanceof String && !((String) d0).isEmpty()) {
-                        return (String) d0;
-                    }
-                    Object text = c0.get("text");
-                    if (text instanceof String && !((String) text).isEmpty()) {
-                        return (String) text;
-                    }
-                }
-            }
-            Object result = map.get("result");
-            if (result != null) {
-                return extractBase64FromAny(result);
-            }
-        }
-        return "";
+        return new DecodedImage(decoded, fmt);
     }
 
     private static boolean startsWith(byte[] data, byte[] prefix) {
@@ -1232,37 +1193,5 @@ public class Mobile extends BaseService {
             }
         }
         return true;
-    }
-
-    private static int indexOfBytes(byte[] haystack, byte[] needle, int maxSearch) {
-        if (haystack == null || needle == null || needle.length == 0 || haystack.length < needle.length) {
-            return -1;
-        }
-        int limit = Math.min(haystack.length, Math.max(maxSearch, 0));
-        for (int i = 0; i + needle.length <= limit; i++) {
-            boolean ok = true;
-            for (int j = 0; j < needle.length; j++) {
-                if (haystack[i + j] != needle[j]) {
-                    ok = false;
-                    break;
-                }
-            }
-            if (ok) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private static byte[] slice(byte[] src, int start) {
-        if (start <= 0) {
-            return src;
-        }
-        if (start >= src.length) {
-            return new byte[0];
-        }
-        byte[] out = new byte[src.length - start];
-        System.arraycopy(src, start, out, 0, out.length);
-        return out;
     }
 }
