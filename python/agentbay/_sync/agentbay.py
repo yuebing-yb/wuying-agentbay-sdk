@@ -161,22 +161,17 @@ class AgentBay:
         # Create Session object
         session = Session(self, session_id)
 
-        # Set VPC-related information from response
-        session.is_vpc = params.is_vpc
-        if response_data.get("NetworkInterfaceIp"):
-            session.network_interface_ip = response_data["NetworkInterfaceIp"]
-        if response_data.get("HttpPort"):
-            session.http_port = response_data["HttpPort"]
-        if response_data.get("Token"):
-            session.token = response_data["Token"]
-        if response_data.get("LinkUrl"):
-            session.link_url = response_data["LinkUrl"]
-
         # ToolList (if present) is intentionally ignored.
         # The server may keep this field for backward compatibility, but clients must not depend on it.
 
         # Set ResourceUrl
         session.resource_url = resource_url
+
+        # LinkUrl/token may be returned by the server for direct tool calls.
+        if "Token" in response_data and response_data.get("Token") is not None:
+            session.token = str(response_data.get("Token") or "")
+        if "LinkUrl" in response_data and response_data.get("LinkUrl") is not None:
+            session.link_url = str(response_data.get("LinkUrl") or "")
 
         # Set browser recording state (default to True if not explicitly set to False)
         session.enableBrowserReplay = params.enable_browser_replay if params.enable_browser_replay is not None else True
@@ -416,9 +411,6 @@ class AgentBay:
             # Beta: Add NetworkId if specified
             if hasattr(params, "beta_network_id") and params.beta_network_id:
                 request.network_id = params.beta_network_id
-
-            # Add VPC resource if specified
-            request.vpc_resource = params.is_vpc
 
             # Flag to indicate if we need to wait for context synchronization
             needs_context_sync = False
@@ -1078,12 +1070,8 @@ class AgentBay:
         # Create the Session object
         session = Session(self, session_id)
 
-        # Set VPC-related information and ResourceUrl from GetSession response
+        # Set ResourceUrl from GetSession response
         if get_result.data:
-            session.is_vpc = get_result.data.vpc_resource
-            session.network_interface_ip = get_result.data.network_interface_ip
-            session.http_port = get_result.data.http_port
-            session.token = get_result.data.token
             session.resource_url = get_result.data.resource_url
 
         return SessionResult(

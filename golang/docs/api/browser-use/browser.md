@@ -399,9 +399,6 @@ type SessionInterface interface {
 	GetClient() *client.Client
 	CallMcpToolForBrowser(toolName string, args interface{}) (*McpToolResult, error)
 	GetLinkForBrowser(protocolType *string, port *int32, options *string) (*LinkResult, error)
-	IsVPCEnabled() bool
-	GetNetworkInterfaceIP() string
-	GetHttpPortNumber() string
 }
 ```
 

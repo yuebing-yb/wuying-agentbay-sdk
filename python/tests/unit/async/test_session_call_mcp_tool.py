@@ -203,95 +203,6 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
 
     @patch("httpx.AsyncClient")
     @pytest.mark.asyncio
-
-    async def test_call_mcp_tool_vpc_mode_success(self, mock_httpx_client):
-        """Test successful MCP tool call in VPC mode."""
-        # Setup VPC session
-        self.session.is_vpc = True
-        self.session.network_interface_ip = "192.168.1.100"
-        self.session.http_port = "8080"
-        self.session.token = "vpc_token_123"
-
-        # Mock HTTP response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": [{"type": "text", "text": "vpc output"}],
-            "isError": False,
-        }
-
-        # Setup httpx async client mock
-        # async with httpx.AsyncClient() as client: await client.get(...)
-        mock_client_instance = MagicMock()
-        mock_httpx_client.return_value.__aenter__ = AsyncMock(
-            return_value=mock_client_instance
-        )
-        mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
-
-        # Call the method
-        result = await self.session.call_mcp_tool(
-            "shell",
-            {"command": "pwd"},
-            server_name="wuying_shell",
-        )
-
-        # Assertions
-        self.assertIsNotNone(result)
-        self.assertTrue(result.success)
-        self.assertEqual(result.data, "vpc output")
-
-        # Verify HTTP request was made
-        mock_client_instance.get.assert_called_once()
-        call_args = mock_client_instance.get.call_args
-        self.assertIn("192.168.1.100", call_args[0][0])
-        self.assertIn("8080", call_args[0][0])
-        self.assertEqual(call_args[1]["params"]["server"], "wuying_shell")
-
-    @pytest.mark.asyncio
-
-
-    async def test_call_mcp_tool_vpc_mode_server_not_found(self):
-        """Test VPC mode when server for tool is not found."""
-        # Setup VPC session without matching tool
-        self.session.is_vpc = True
-        self.session.network_interface_ip = "192.168.1.100"
-        self.session.http_port = "8080"
-        self.session.token = "vpc_token_123"
-
-        # Call the method
-        result = await self.session.call_mcp_tool("nonexistent_tool", {})
-
-        # Assertions
-        self.assertIsNotNone(result)
-        self.assertFalse(result.success)
-        self.assertIn("server not found", result.error_message.lower())
-
-    @pytest.mark.asyncio
-
-
-    async def test_call_mcp_tool_vpc_mode_incomplete_config(self):
-        """Test VPC mode with incomplete network configuration."""
-        # Setup VPC session with incomplete config
-        self.session.is_vpc = True
-        self.session.network_interface_ip = ""  # Missing
-        self.session.http_port = ""  # Missing
-        self.session.token = "vpc_token_123"
-
-        # Call the method
-        result = await self.session.call_mcp_tool(
-            "shell",
-            {"command": "ls"},
-            server_name="wuying_shell",
-        )
-
-        # Assertions
-        self.assertIsNotNone(result)
-        self.assertFalse(result.success)
-        self.assertIn("network configuration", result.error_message.lower())
-
-    @patch("httpx.AsyncClient")
-    @pytest.mark.asyncio
     async def test_call_mcp_tool_link_url_success_with_server_name(
         self, mock_httpx_client
     ):
@@ -311,7 +222,7 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
                 }
             )
         }
-        mock_resp.raise_for_status = Mock(return_value=None)
+        mock_resp.text = ""
 
         mock_client_instance = MagicMock()
         mock_httpx_client.return_value.__aenter__ = AsyncMock(
@@ -329,46 +240,23 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.data, "link output")
         mock_client_instance.post.assert_called_once()
-        call_kwargs = mock_client_instance.post.call_args[1]
+        call_kwargs = mock_client_instance.post.call_args.kwargs
         self.assertEqual(call_kwargs["json"]["server"], "wuying_shell")
+        self.assertEqual(call_kwargs["headers"]["X-Access-Token"], "link_token_123")
 
-    @patch("agentbay._async.session._log_operation_error")
-    @patch("httpx.AsyncClient")
     @pytest.mark.asyncio
-    async def test_call_mcp_tool_vpc_mode_is_error_logs_request_id(
-        self, mock_httpx_client, mock_log_operation_error
-    ):
-        """Test VPC mode tool error logs RequestId for correlation."""
-        self.session.is_vpc = True
-        self.session.network_interface_ip = "192.168.1.100"
-        self.session.http_port = "8080"
-        self.session.token = "vpc_token_123"
-
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "content": [{"type": "text", "text": "Error: boom"}],
-            "isError": True,
-        }
-
-        mock_client_instance = MagicMock()
-        mock_httpx_client.return_value.__aenter__ = AsyncMock(
-            return_value=mock_client_instance
-        )
-        mock_httpx_client.return_value.__aexit__ = AsyncMock(return_value=None)
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
+    async def test_call_mcp_tool_link_url_requires_server_name(self):
+        """Test LinkUrl mode requires server_name."""
+        self.session.link_url = "http://127.0.0.1:9999/"
+        self.session.token = "link_token_123"
 
         result = await self.session.call_mcp_tool(
             "shell",
-            {"command": "pwd"},
-            server_name="wuying_shell",
+            {"command": "echo hello"},
         )
 
         self.assertFalse(result.success)
-        self.assertNotEqual(result.request_id, "")
-        mock_log_operation_error.assert_called()
-        called_kwargs = mock_log_operation_error.call_args.kwargs
-        self.assertEqual(called_kwargs.get("request_id"), result.request_id)
+        self.assertIn("server name is required", result.error_message.lower())
 
     @patch("agentbay._async.session.CallMcpToolRequest")
     @patch("agentbay._async.session.extract_request_id")
@@ -530,6 +418,60 @@ class TestAsyncMcpToolResult(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.data, "")
         self.assertEqual(result.error_message, "")
+
+
+class TestAsyncSessionCallMcpToolApiFallback(unittest.IsolatedAsyncioTestCase):
+    """Tests call_mcp_tool falls back to OpenAPI when LinkUrl is absent."""
+
+    def setUp(self):
+        from agentbay import AsyncSession
+
+        self.agent_bay = DummyAgentBay()
+        self.session_id = "test_session_id"
+        self.session = AsyncSession(self.agent_bay, self.session_id)
+
+    @patch("httpx.AsyncClient")
+    @patch("agentbay._async.session.CallMcpToolRequest")
+    @patch("agentbay._async.session.extract_request_id")
+    @pytest.mark.asyncio
+    async def test_call_mcp_tool_does_not_use_link_url_when_absent(
+        self, mock_extract_request_id, MockCallMcpToolRequest, mock_httpx_client
+    ):
+        """
+        When link_url/token are not set, call_mcp_tool must use the OpenAPI route and never use the httpx client.
+        """
+        mock_httpx_client.side_effect = AssertionError(
+            "call_mcp_tool must not use httpx when LinkUrl is absent"
+        )
+
+        mock_request = MagicMock()
+        mock_response = MagicMock()
+        MockCallMcpToolRequest.return_value = mock_request
+        mock_extract_request_id.return_value = "request-123"
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(
+            return_value=mock_response
+        )
+        mock_response.to_map.return_value = {
+            "body": {
+                "Data": json.dumps(
+                    {
+                        "content": [{"type": "text", "text": "api output"}],
+                        "isError": False,
+                    }
+                ),
+                "Success": True,
+            }
+        }
+
+        result = await self.session.call_mcp_tool(
+            "shell",
+            {"command": "ls"},
+            server_name="wuying_shell",
+        )
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.data, "api output")
+        MockCallMcpToolRequest.assert_called_once()
 
 
 if __name__ == "__main__":

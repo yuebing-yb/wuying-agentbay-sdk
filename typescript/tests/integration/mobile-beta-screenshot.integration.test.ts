@@ -33,7 +33,9 @@ describe("Mobile beta screenshot integration tests", () => {
       const cmds = ["wm size 720x1280", "wm density 160"];
       for (const c of cmds) {
         const r = await session.command.executeCommand(c, 10000);
-        expect(r.success).toBe(true);
+        if (!r.success) {
+          throw new Error(`command failed: ${c}, error=${r.errorMessage}, output=${r.output}`);
+        }
       }
 
       const start = await session.mobile.startApp("monkey -p com.android.settings 1");
@@ -67,7 +69,9 @@ describe("Mobile beta screenshot integration tests", () => {
       const cmds = ["wm size 720x1280", "wm density 160"];
       for (const c of cmds) {
         const r = await session.command.executeCommand(c, 10000);
-        expect(r.success).toBe(true);
+        if (!r.success) {
+          throw new Error(`command failed: ${c}, error=${r.errorMessage}, output=${r.output}`);
+        }
       }
 
       const start = await session.mobile.startApp("monkey -p com.android.settings 1");
@@ -75,9 +79,6 @@ describe("Mobile beta screenshot integration tests", () => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const ls = await session.mobile.betaTakeLongScreenshot(2, "png");
-      if (!ls.success && String(ls.errorMessage || "").includes("Failed to capture long screenshot")) {
-        return;
-      }
       expect(ls.success).toBe(true);
       expect(ls.requestId).toBeDefined();
       expect(ls.format).toBe("png");

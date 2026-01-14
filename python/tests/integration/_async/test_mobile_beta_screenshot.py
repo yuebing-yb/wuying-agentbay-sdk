@@ -66,13 +66,7 @@ async def test_mobile_beta_take_screenshot_png(session):
 @pytest.mark.asyncio
 async def test_mobile_beta_take_long_screenshot_png(session):
     await _prepare_for_screenshot_tests(session)
-    try:
-        result = await session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
-    except AgentBayError as e:
-        msg = str(e)
-        if "Failed to capture long screenshot" in msg:
-            pytest.xfail(msg)
-        raise
+    result = await session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
     assert result.success is True
     assert result.format == "png"
     assert isinstance(result.data, (bytes, bytearray))

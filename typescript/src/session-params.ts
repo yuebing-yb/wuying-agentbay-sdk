@@ -298,8 +298,6 @@ export interface CreateSessionParamsConfig {
   contextSync: ContextSync[];
   /** Optional configuration for browser data synchronization */
   browserContext?: BrowserContext;
-  /** Whether to create a VPC-based session. Defaults to false. */
-  isVpc?: boolean;
   /** Policy id to apply when creating the session. */
   policyId?: string;
   /** Beta network id to bind this session to. */
@@ -339,9 +337,6 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
   /** Optional configuration for browser data synchronization. */
   public browserContext?: BrowserContext;
 
-  /** Whether to create a VPC-based session. Defaults to false. */
-  public isVpc: boolean;
-
   /** Policy id to apply when creating the session. */
   public policyId?: string;
 
@@ -362,7 +357,6 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
   constructor() {
     this.labels = {};
     this.contextSync = [];
-    this.isVpc = false;
     // enableBrowserReplay defaults to true
     this.enableBrowserReplay = true;
   }
@@ -419,14 +413,6 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
         logDebug(`Added fingerprint context sync from browser context`);
       }
     }
-    return this;
-  }
-
-  /**
-   * WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
-   */
-  withIsVpc(isVpc: boolean): CreateSessionParams {
-    this.isVpc = isVpc;
     return this;
   }
 
@@ -589,7 +575,6 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
       volumeId: this.volumeId,
       contextSync: allContextSyncs,
       browserContext: this.browserContext,
-      isVpc: this.isVpc,
       policyId: this.policyId,
       betaNetworkId: this.betaNetworkId,
       enableBrowserReplay: this.enableBrowserReplay,
@@ -625,7 +610,6 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
       }
     }
 
-    params.isVpc = config.isVpc || false;
     params.policyId = config.policyId;
     params.betaNetworkId = config.betaNetworkId;
     // Keep undefined if not provided to use default behavior (enabled by default)

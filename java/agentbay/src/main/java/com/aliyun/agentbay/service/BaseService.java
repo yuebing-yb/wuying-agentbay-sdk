@@ -44,7 +44,6 @@ public class BaseService {
 
     /**
      * Call an MCP tool and parse the response similar to Python's _call_mcp_tool method.
-     * Routes to VPC or API call based on session configuration.
      *
      * @param toolName The name of the tool to call
      * @param args     The arguments to pass to the tool
@@ -56,7 +55,7 @@ public class BaseService {
 
     /**
      * Call an MCP tool with an explicit server name.
-     * In LinkUrl mode, serverName is required and will be sent to the link endpoint.
+     * The serverName argument is currently ignored by the OpenAPI route.
      *
      * @param toolName The name of the tool to call
      * @param args The arguments to pass to the tool
@@ -67,17 +66,13 @@ public class BaseService {
         try {
             if (isNotEmpty(session.getLinkUrl()) && isNotEmpty(session.getToken())) {
                 return callMcpToolLinkUrl(toolName, args, serverName);
-            } else {
-                return callMcpToolApi(toolName, args);
             }
+            return callMcpToolApi(toolName, args);
         } catch (Exception e) {
             return new OperationResult("", false, "", "Unexpected error: " + e.getMessage());
         }
     }
 
-    /**
-     * Check if a string is not null and not empty
-     */
     private boolean isNotEmpty(String str) {
         return str != null && !str.isEmpty();
     }
@@ -120,7 +115,7 @@ public class BaseService {
     }
 
     /**
-     * Call MCP tool via link url connection
+     * Call MCP tool via LinkUrl route.
      */
     private OperationResult callMcpToolLinkUrl(String toolName, Object args, String serverName) {
         try {
@@ -134,41 +129,13 @@ public class BaseService {
             }
 
             String requestId = String.format("link-%d-%09d", System.currentTimeMillis(), random.nextInt(1000000000));
-
             String linkUrl = session.getLinkUrl();
-            if (!isNotEmpty(linkUrl)) {
-                return new OperationResult("", false, "",
-                    "Link URL not available. Ensure session VPC configuration is complete.");
-            }
-
-            String url = linkUrl + "/callTool";
-
             String token = session.getToken();
+            if (!isNotEmpty(linkUrl) || !isNotEmpty(token)) {
+                return new OperationResult(requestId, false, "", "LinkUrl/token not available");
+            }
 
-            logger.info("🔗 API Call: CallMcpTool(LinkUrl)");
-            logger.info("✅ API Response: CallMcpTool(LinkUrl) Request, RequestId={}", requestId);
-            logger.info("   └─ tool_name={}", toolName);
-            String command = "";
-            try {
-                if (args instanceof Map) {
-                    Object cmd = ((Map<?, ?>) args).get("command");
-                    if (cmd != null) {
-                        command = cmd.toString();
-                    }
-                }
-            } catch (Exception e) {
-            }
-            if (command == null || command.isEmpty()) {
-                try {
-                    command = objectMapper.writeValueAsString(args);
-                } catch (Exception e) {
-                    command = "";
-                }
-            }
-            if (command != null && command.length() > 500) {
-                command = command.substring(0, 500) + "...(truncated)";
-            }
-            logger.info("   └─ command={}", command);
+            String url = linkUrl.endsWith("/") ? linkUrl + "callTool" : linkUrl + "/callTool";
 
             Map<String, Object> bodyParams = new HashMap<>();
             bodyParams.put("args", args);
@@ -196,32 +163,18 @@ public class BaseService {
                     } catch (Exception ignored) {
                         respBody = "";
                     }
-                    String masked = maskSensitiveDataString(respBody);
-                    masked = truncateStringForLog(masked, 2000);
-                    logApiResponseWithDetails(
-                        "CallMcpTool(LinkUrl) Response",
-                        requestId,
-                        false,
-                        mapOf(
-                            "http_status",
-                            response.code(),
-                            "tool_name",
-                            toolName
-                        ),
-                        masked
-                    );
-                    return new OperationResult(requestId, false, "",
-                        "HTTP request failed with code: " + response.code());
+                    logger.error("❌ API Response Failed: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
+                    logger.error("📥 Response: {}", respBody);
+                    return new OperationResult(requestId, false, "", "HTTP request failed with code: " + response.code());
                 }
 
-                String responseBody = response.body().string();
+                String responseBody = response.body() != null ? response.body().string() : "";
                 @SuppressWarnings("unchecked")
                 Map<String, Object> outerData = objectMapper.readValue(responseBody, Map.class);
 
                 Object dataField = outerData.get("data");
                 if (dataField == null) {
-                    return new OperationResult(requestId, false, "",
-                        "No data field in VPC response");
+                    return new OperationResult(requestId, false, "", "No data field in LinkUrl response");
                 }
 
                 Map<String, Object> parsedData;
@@ -234,14 +187,12 @@ public class BaseService {
                     Map<String, Object> casted = (Map<String, Object>) dataField;
                     parsedData = casted;
                 } else {
-                    return new OperationResult(requestId, false, "",
-                        "Invalid data field type in VPC response");
+                    return new OperationResult(requestId, false, "", "Invalid data field type in LinkUrl response");
                 }
 
                 Object resultField = parsedData.get("result");
-                if (resultField == null || !(resultField instanceof Map)) {
-                    return new OperationResult(requestId, false, "",
-                        "No result field in VPC response data");
+                if (!(resultField instanceof Map)) {
+                    return new OperationResult(requestId, false, "", "No result field in LinkUrl response data");
                 }
 
                 @SuppressWarnings("unchecked")
@@ -255,35 +206,23 @@ public class BaseService {
                     if (!content.isEmpty() && content.get(0) instanceof Map) {
                         Map<?, ?> firstContent = (Map<?, ?>) content.get(0);
                         Object text = firstContent.get("text");
+                        Object blob = firstContent.get("blob");
+                        Object data = firstContent.get("data");
                         if (text != null) {
                             textContent = text.toString();
+                        } else if (blob != null) {
+                            textContent = blob.toString();
+                        } else if (data != null) {
+                            textContent = data.toString();
                         }
                     }
                 }
 
                 if (isError != null && isError) {
-                    logger.info("✅ API Response: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
-                    logger.info("   └─ http_status={}", response.code());
-                    logger.info("   └─ tool_name={}", toolName);
-                    String out = textContent != null ? textContent : "";
-                    if (out.length() > 800) {
-                        out = out.substring(0, 800) + "...(truncated)";
-                    }
-                    logger.info("   └─ output={}", out);
                     return new OperationResult(requestId, false, "", textContent);
                 }
-
-                logger.info("✅ API Response: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
-                logger.info("   └─ http_status={}", response.code());
-                logger.info("   └─ tool_name={}", toolName);
-                String out = textContent != null ? textContent : "";
-                if (out.length() > 800) {
-                    out = out.substring(0, 800) + "...(truncated)";
-                }
-                logger.info("   └─ output={}", out);
                 return new OperationResult(requestId, true, textContent, "");
             }
-
         } catch (IOException e) {
             return new OperationResult("", false, "", "HTTP request failed: " + e.getMessage());
         } catch (Exception e) {
@@ -291,144 +230,6 @@ public class BaseService {
         }
     }
 
-    protected void logApiResponseWithDetails(
-        String apiName,
-        String requestId,
-        boolean success,
-        Map<String, Object> keyFields,
-        String fullResponse
-    ) {
-        if (success) {
-            logger.info("✅ API Response: {}, RequestId={}", apiName, requestId);
-        } else {
-            logger.error("❌ API Response Failed: {}, RequestId={}", apiName, requestId);
-        }
-
-        if (keyFields != null) {
-            for (Map.Entry<String, Object> e : keyFields.entrySet()) {
-                if (success) {
-                    logger.info("   └─ {}={}", e.getKey(), e.getValue());
-                } else {
-                    logger.error("   └─ {}={}", e.getKey(), e.getValue());
-                }
-            }
-        }
-
-        if (fullResponse != null && !fullResponse.isEmpty()) {
-            if (success) {
-                logger.info("📥 Full Response: {}", fullResponse);
-            } else {
-                logger.error("📥 Response: {}", fullResponse);
-            }
-        }
-    }
-
-    private static Map<String, Object> mapOf(Object... kv) {
-        Map<String, Object> m = new HashMap<>();
-        if (kv == null) {
-            return m;
-        }
-        for (int i = 0; i + 1 < kv.length; i += 2) {
-            m.put(String.valueOf(kv[i]), kv[i + 1]);
-        }
-        return m;
-    }
-
-    private static String truncateStringForLog(String s, int max) {
-        if (s == null) {
-            return "";
-        }
-        if (max <= 0 || s.length() <= max) {
-            return s;
-        }
-        return s.substring(0, max) + "...(truncated)";
-    }
-
-    private static String maskSensitiveDataString(String value) {
-        if (value == null || value.isEmpty()) {
-            return "";
-        }
-        try {
-            Object parsed = objectMapper.readValue(value, Object.class);
-            Object masked = maskSensitiveObject(parsed);
-            return objectMapper.writeValueAsString(masked);
-        } catch (Exception ignored) {
-            String out = value;
-            String[] fields = new String[] {
-                "api_key", "apikey", "api-key",
-                "password", "passwd", "pwd",
-                "token", "access_token", "auth_token",
-                "secret", "private_key",
-                "authorization"
-            };
-            for (String f : fields) {
-                out = out.replaceAll(
-                    "(?i)(\"" + java.util.regex.Pattern.quote(f) + "\"\\s*:\\s*\")([^\"]*)(\")",
-                    "$1****$3"
-                );
-            }
-            return out;
-        }
-    }
-
-    private static Object maskSensitiveObject(Object obj) {
-        if (obj instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) obj;
-            Map<String, Object> out = new HashMap<>();
-            for (Map.Entry<?, ?> e : map.entrySet()) {
-                String key = String.valueOf(e.getKey());
-                Object val = e.getValue();
-                if (isSensitiveField(key)) {
-                    out.put(key, maskValue(val));
-                } else {
-                    out.put(key, maskSensitiveObject(val));
-                }
-            }
-            return out;
-        }
-        if (obj instanceof java.util.List) {
-            java.util.List<?> list = (java.util.List<?>) obj;
-            java.util.ArrayList<Object> out = new java.util.ArrayList<>(list.size());
-            for (Object item : list) {
-                out.add(maskSensitiveObject(item));
-            }
-            return out;
-        }
-        return obj;
-    }
-
-    private static boolean isSensitiveField(String fieldName) {
-        if (fieldName == null) {
-            return false;
-        }
-        String n = fieldName.toLowerCase();
-        return n.contains("api_key")
-            || n.contains("apikey")
-            || n.contains("api-key")
-            || n.contains("password")
-            || n.contains("passwd")
-            || n.contains("pwd")
-            || n.contains("token")
-            || n.contains("access_token")
-            || n.contains("auth_token")
-            || n.contains("secret")
-            || n.contains("private_key")
-            || n.contains("authorization");
-    }
-
-    private static Object maskValue(Object v) {
-        if (v == null) {
-            return "****";
-        }
-        if (v instanceof String) {
-            String s = (String) v;
-            if (s.length() > 4) {
-                return s.substring(0, 2) + "****" + s.substring(s.length() - 2);
-            }
-            return "****";
-        }
-        return "****";
-    }
 
     /**
      * Parse MCP tool response body, similar to Python's _parse_response_body method.

@@ -267,29 +267,21 @@ class Browser(BaseService):
                 "Browser is not initialized. Cannot access endpoint URL."
             )
         try:
-            if self.session.is_vpc:
-                _logger.debug(
-                    f"VPC mode, endpoint_router_port: {self.endpoint_router_port}"
-                )
-                self._endpoint_url = f"ws://{self.session.network_interface_ip}:{self.endpoint_router_port}"
-            else:
-                from ..api.models import GetCdpLinkRequest
+            from ..api.models import GetCdpLinkRequest
 
-                request = GetCdpLinkRequest(
-                    authorization=f"Bearer {self.session.agent_bay.api_key}",
-                    session_id=self.session.session_id,
-                )
-                # Async call
-                response = self.session.agent_bay.client.get_cdp_link(
-                    request
-                )
-                if response.body and response.body.success and response.body.data:
-                    self._endpoint_url = response.body.data.url
-                else:
-                    error_msg = (
-                        response.body.message if response.body else "Unknown error"
-                    )
-                    raise BrowserError(f"Failed to get CDP link: {error_msg}")
+            request = GetCdpLinkRequest(
+                authorization=f"Bearer {self.session.agent_bay.api_key}",
+                session_id=self.session.session_id,
+            )
+            # Async call
+            response = self.session.agent_bay.client.get_cdp_link(
+                request
+            )
+            if response.body and response.body.success and response.body.data:
+                self._endpoint_url = response.body.data.url
+            else:
+                error_msg = response.body.message if response.body else "Unknown error"
+                raise BrowserError(f"Failed to get CDP link: {error_msg}")
             return self._endpoint_url
         except Exception as e:
             raise BrowserError(f"Failed to get endpoint URL from session: {e}")

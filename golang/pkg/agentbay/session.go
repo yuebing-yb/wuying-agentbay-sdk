@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -113,15 +112,12 @@ type Session struct {
 	SessionID string
 	ImageId   string // ImageId used when creating this session
 
-	// VPC-related information
-	IsVpcEnabled       bool   // Whether this session uses VPC resources
-	NetworkInterfaceIP string // Network interface IP for VPC sessions
-	HttpPortNumber     string // HTTP port for VPC sessions
-	Token              string // Token for VPC sessions
-	LinkUrl            string // LinkUrl for LinkUrl-based VPC route
-
 	// Resource URL for accessing the session
 	ResourceUrl string
+
+	// LinkUrl-based direct tool call (non-VPC)
+	Token   string
+	LinkUrl string
 
 	// Browser replay enabled flag
 	EnableBrowserReplay bool
@@ -334,28 +330,22 @@ func (s *Session) GetEnableBrowserReplay() bool {
 	return s.EnableBrowserReplay
 }
 
-// IsVPCEnabled returns whether this session uses VPC resources.
-func (s *Session) IsVPCEnabled() bool {
-	return s.IsVpcEnabled
+// GetToken returns the token for LinkUrl-based direct tool calls.
+func (s *Session) GetToken() string {
+	return s.Token
 }
 
-// GetNetworkInterfaceIP returns the network interface IP for VPC sessions.
-func (s *Session) GetNetworkInterfaceIP() string {
-	return s.NetworkInterfaceIP
-}
-
-// GetHttpPortNumber returns the HTTP port for VPC sessions.
-func (s *Session) GetHttpPortNumber() string {
-	return s.HttpPortNumber
+// GetLinkUrl returns the LinkUrl for LinkUrl-based direct tool calls.
+func (s *Session) GetLinkUrl() string {
+	return s.LinkUrl
 }
 
 // Wrapper methods for browser.SessionInterface compatibility
 
 // CallMcpTool is a wrapper that converts the result to browser.McpToolResult
 func (s *Session) CallMcpToolForBrowser(toolName string, args interface{}) (*browser.McpToolResult, error) {
-	// stopChrome must be called with explicit server name.
 	if toolName == "stopChrome" {
-		result, err := s.CallMcpTool(toolName, args, "wuying_cdp_mcp_server")
+		result, err := s.CallMcpTool(toolName, args)
 		if err != nil {
 			return nil, err
 		}
@@ -1103,32 +1093,7 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 	}, nil
 }
 
-// IsVpc returns whether this session uses VPC resources
-func (s *Session) IsVpc() bool {
-	return s.IsVpcEnabled
-}
-
-// NetworkInterfaceIp returns the network interface IP for VPC sessions
-func (s *Session) NetworkInterfaceIp() string {
-	return s.NetworkInterfaceIP
-}
-
-// HttpPort returns the HTTP port for VPC sessions
-func (s *Session) HttpPort() string {
-	return s.HttpPortNumber
-}
-
-// GetToken returns the token for VPC sessions
-func (s *Session) GetToken() string {
-	return s.Token
-}
-
-// GetLinkUrl returns the LinkUrl for LinkUrl-based VPC sessions.
-func (s *Session) GetLinkUrl() string {
-	return s.LinkUrl
-}
-
-// CallMcpTool calls the MCP tool and handles both VPC and non-VPC scenarios
+// CallMcpTool calls an MCP tool using the OpenAPI route.
 //
 // This is the unified public API for calling MCP tools. All feature modules
 // (Command, Code, Agent, etc.) use this method internally.
@@ -1148,9 +1113,7 @@ func (s *Session) GetLinkUrl() string {
 //
 // Behavior:
 //
-// - Automatically detects VPC vs non-VPC mode
-// - In VPC mode, uses HTTP requests to the VPC endpoint
-// - In non-VPC mode, uses traditional API calls
+// - Uses traditional API calls
 // - Parses response data to extract text content from content[0].text
 // - Handles the isError flag in responses
 // - Returns structured error information
@@ -1222,39 +1185,18 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, extra ...interf
 		}, nil
 	}
 
-	// Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
+	// Prefer LinkUrl-based direct tool call when LinkUrl/Token are present.
 	if s.GetLinkUrl() != "" && s.GetToken() != "" {
 		return s.callMcpToolLinkUrl(toolName, args, serverName)
 	}
 
-	// Legacy VPC mode: use ip:port direct route.
-	if s.IsVpc() {
-		return s.callMcpToolVPC(toolName, string(argsJSON), serverName)
-	}
-
-	// Non-VPC mode: use traditional API call
+	// Use traditional API call
 	return s.callMcpToolAPI(toolName, string(argsJSON), autoGen)
 }
 
-// callMcpToolLinkUrl handles MCP tool calls via LinkUrl direct connection (POST JSON),
-// matching Java BaseService.callMcpToolVpc behavior.
+// callMcpToolLinkUrl handles MCP tool calls via LinkUrl direct connection (POST JSON).
 func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverName string) (*models.McpToolResult, error) {
-	// Generate requestId early so it is always visible in logs even on failures.
-	requestID := fmt.Sprintf("link-%d-%d", time.Now().UnixMilli(), rand.Intn(1000000000))
-
-	// Marshal args for logging/transport.
-	argsJSON, argsMarshalErr := json.Marshal(args)
-	argsLen := 0
-	if argsMarshalErr == nil {
-		argsLen = len(argsJSON)
-	}
-
-	requestParams := fmt.Sprintf("Tool=%s, ArgsLength=%d, RequestId=%s", toolName, argsLen, requestID)
-	logAPICall("CallMcpTool(LinkUrl)", requestParams)
-
-	server := serverName
-	if server == "" {
-		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("server not found for tool: %s", toolName), false)
+	if serverName == "" {
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1264,8 +1206,8 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	}
 
 	linkUrl := s.GetLinkUrl()
-	if linkUrl == "" || s.GetToken() == "" {
-		logOperationError("CallMcpTool(LinkUrl)", "linkUrl/token not available", false)
+	token := s.GetToken()
+	if linkUrl == "" || token == "" {
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1274,17 +1216,18 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 		}, nil
 	}
 
+	requestID := fmt.Sprintf("link-%d-%09d", time.Now().UnixMilli(), rand.Intn(1000000000))
+	logAPICall("CallMcpTool(LinkUrl)", fmt.Sprintf("Tool=%s, RequestId=%s", toolName, requestID))
+
 	payload := map[string]interface{}{
 		"args":      args,
-		"server":    server,
+		"server":    serverName,
 		"requestId": requestID,
 		"tool":      toolName,
-		"token":     s.GetToken(),
+		"token":     token,
 	}
-
 	bodyBytes, err := json.Marshal(payload)
 	if err != nil {
-		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("failed to marshal payload: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1295,7 +1238,6 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 
 	req, err := http.NewRequest("POST", strings.TrimRight(linkUrl, "/")+"/callTool", bytes.NewReader(bodyBytes))
 	if err != nil {
-		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("failed to create request: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1304,23 +1246,11 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 		}, nil
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Access-Token", s.GetToken())
-
-	logAPIResponseWithDetails(
-		"CallMcpTool(LinkUrl) Request",
-		requestID,
-		true,
-		map[string]interface{}{
-			"tool_name": toolName,
-			"command":   extractCommandPreview(args),
-		},
-		"",
-	)
+	req.Header.Set("X-Access-Token", token)
 
 	httpClient := &http.Client{Timeout: 120 * time.Second}
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("HTTP request failed: %v", err), true)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1332,8 +1262,6 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 8192))
-		bodyPreview := truncateForLog(string(b), 2000)
-		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("HTTP request failed with code: %d, body length: %d", resp.StatusCode, len(b)), false)
 		logAPIResponseWithDetails(
 			"CallMcpTool(LinkUrl) Response",
 			requestID,
@@ -1342,7 +1270,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 				"http_status": resp.StatusCode,
 				"tool_name":   toolName,
 			},
-			bodyPreview,
+			string(b),
 		)
 		return &models.McpToolResult{
 			Success:      false,
@@ -1354,17 +1282,6 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 
 	var outer map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&outer); err != nil {
-		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("failed to decode response: %v", err), true)
-		logAPIResponseWithDetails(
-			"CallMcpTool(LinkUrl) Response",
-			requestID,
-			false,
-			map[string]interface{}{
-				"http_status": resp.StatusCode,
-				"tool_name":   toolName,
-			},
-			fmt.Sprintf("failed to decode response: %v", err),
-		)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1375,17 +1292,6 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 
 	dataField, ok := outer["data"]
 	if !ok || dataField == nil {
-		outerJSON, _ := json.Marshal(outer)
-		logAPIResponseWithDetails(
-			"CallMcpTool(LinkUrl) Response",
-			requestID,
-			false,
-			map[string]interface{}{
-				"http_status": resp.StatusCode,
-				"tool_name":   toolName,
-			},
-			truncateForLog(string(outerJSON), 2000),
-		)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1398,16 +1304,6 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	switch v := dataField.(type) {
 	case string:
 		if err := json.Unmarshal([]byte(v), &parsedData); err != nil {
-			logAPIResponseWithDetails(
-				"CallMcpTool(LinkUrl) Response",
-				requestID,
-				false,
-				map[string]interface{}{
-					"http_status": resp.StatusCode,
-					"tool_name":   toolName,
-				},
-				truncateForLog(v, 2000),
-			)
 			return &models.McpToolResult{
 				Success:      false,
 				Data:         "",
@@ -1428,16 +1324,14 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 
 	resultField, ok := parsedData["result"].(map[string]interface{})
 	if !ok || resultField == nil {
-		parsedJSON, _ := json.Marshal(parsedData)
 		logAPIResponseWithDetails(
 			"CallMcpTool(LinkUrl) Response",
 			requestID,
 			false,
 			map[string]interface{}{
-				"http_status": resp.StatusCode,
-				"tool_name":   toolName,
+				"tool_name": toolName,
 			},
-			truncateForLog(string(parsedJSON), 2000),
+			"missing result field",
 		)
 		return &models.McpToolResult{
 			Success:      false,
@@ -1455,19 +1349,20 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	}
 
 	textContent := s.extractTextContentFromResponse(resultField)
-	logAPIResponseWithDetails(
-		"CallMcpTool(LinkUrl) Response",
-		requestID,
-		!isError,
-		map[string]interface{}{
-			"http_status": resp.StatusCode,
-			"tool_name":   toolName,
-			"output":      truncateForLog(textContent, 800),
-		},
-		"",
-	)
-
+	keyFields := map[string]interface{}{
+		"tool_name": toolName,
+		"server":    serverName,
+		"is_error":  isError,
+		"data_len":  len(textContent),
+	}
 	if isError {
+		logAPIResponseWithDetails(
+			"CallMcpTool(LinkUrl) Response",
+			requestID,
+			false,
+			keyFields,
+			textContent,
+		)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1476,43 +1371,19 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 		}, nil
 	}
 
+	logAPIResponseWithDetails(
+		"CallMcpTool(LinkUrl) Response",
+		requestID,
+		true,
+		keyFields,
+		"",
+	)
 	return &models.McpToolResult{
 		Success:      true,
 		Data:         textContent,
 		ErrorMessage: "",
 		RequestID:    requestID,
 	}, nil
-}
-
-func extractCommandPreview(args interface{}) string {
-	// Best-effort: common command fields used by shell/command tools.
-	switch m := args.(type) {
-	case map[string]interface{}:
-		if v, ok := m["command"]; ok {
-			if s, ok := v.(string); ok {
-				return truncateForLog(s, 500)
-			}
-		}
-		if v, ok := m["cmd"]; ok {
-			if s, ok := v.(string); ok {
-				return truncateForLog(s, 500)
-			}
-		}
-	}
-
-	// Fallback to JSON snippet.
-	b, err := json.Marshal(args)
-	if err != nil {
-		return ""
-	}
-	return truncateForLog(string(b), 500)
-}
-
-func truncateForLog(s string, max int) string {
-	if max <= 0 || len(s) <= max {
-		return s
-	}
-	return s[:max] + "...(truncated)"
 }
 
 // GetMetrics retrieves runtime metrics for this session.
@@ -1530,109 +1401,6 @@ func (s *Session) GetMetrics() (*models.SessionMetricsResult, error) {
 	}
 
 	return models.ParseSessionMetrics(toolResult), nil
-}
-
-// callMcpToolVPC handles VPC-based MCP tool calls
-func (s *Session) callMcpToolVPC(toolName, argsJSON string, serverName string) (*models.McpToolResult, error) {
-	// VPC mode: Use HTTP request to the VPC endpoint
-	requestParams := fmt.Sprintf("Tool=%s, ArgsLength=%d", toolName, len(argsJSON))
-	logAPICall("CallMcpTool(VPC)", requestParams)
-
-	server := serverName
-	if server == "" {
-		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("server not found for tool: %s", toolName), false)
-		return &models.McpToolResult{
-			Success:      false,
-			Data:         "",
-			ErrorMessage: fmt.Sprintf("server not found for tool: %s", toolName),
-			RequestID:    "",
-		}, nil
-	}
-
-	// Check VPC network configuration
-	if s.NetworkInterfaceIp() == "" || s.HttpPort() == "" {
-		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort()), false)
-		return &models.McpToolResult{
-			Success:      false,
-			Data:         "",
-			ErrorMessage: fmt.Sprintf("VPC network configuration incomplete: networkInterfaceIp=%s, httpPort=%s", s.NetworkInterfaceIp(), s.HttpPort()),
-			RequestID:    "",
-		}, nil
-	}
-
-	// Construct VPC URL with query parameters
-	baseURL := fmt.Sprintf("http://%s:%s/callTool", s.NetworkInterfaceIp(), s.HttpPort())
-	params := url.Values{}
-	params.Add("server", server)
-	params.Add("tool", toolName)
-	params.Add("args", argsJSON)
-	params.Add("token", s.GetToken())
-	// Add requestId for debugging purposes
-	requestID := fmt.Sprintf("vpc-%d-%d", time.Now().UnixMilli(), rand.Intn(1000000000))
-	params.Add("requestId", requestID)
-
-	fullURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
-
-	// Send HTTP request
-	response, err := http.Get(fullURL)
-	if err != nil {
-		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed: %v", err), true)
-		return &models.McpToolResult{
-			Success:      false,
-			Data:         "",
-			ErrorMessage: fmt.Sprintf("VPC request failed: %v", err),
-			RequestID:    "",
-		}, nil
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("VPC request failed with status: %d", response.StatusCode), false)
-		return &models.McpToolResult{
-			Success:      false,
-			Data:         "",
-			ErrorMessage: fmt.Sprintf("VPC request failed with status: %d", response.StatusCode),
-			RequestID:    "",
-		}, nil
-	}
-
-	// Parse response
-	var responseData interface{}
-	if err := json.NewDecoder(response.Body).Decode(&responseData); err != nil {
-		logOperationError("CallMcpTool(VPC)", fmt.Sprintf("Failed to parse VPC response: %v", err), true)
-		return &models.McpToolResult{
-			Success:      false,
-			Data:         "",
-			ErrorMessage: fmt.Sprintf("Failed to parse VPC response: %v", err),
-			RequestID:    "",
-		}, nil
-	}
-
-	// Extract text content from the response
-	textContent := s.extractTextContentFromResponse(responseData)
-
-	// Log successful VPC call
-	keyFields := map[string]interface{}{
-		"tool_name":       toolName,
-		"server":          server,
-		"network_ip":      s.NetworkInterfaceIp(),
-		"port":            s.HttpPort(),
-		"response_length": len(textContent),
-	}
-	responseJSON, _ := json.Marshal(responseData)
-	logAPIResponseWithDetails("CallMcpTool(VPC)", requestID, true, keyFields, string(responseJSON))
-
-	// For run_code tool, extract and log the actual code execution output
-	if toolName == "run_code" && textContent != "" {
-		logCodeExecutionOutput(requestID, textContent)
-	}
-
-	return &models.McpToolResult{
-		Success:      true,
-		Data:         textContent,
-		ErrorMessage: "",
-		RequestID:    requestID, // Include the generated request ID
-	}, nil
 }
 
 // callMcpToolAPI handles traditional API-based MCP tool calls
@@ -1785,6 +1553,9 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 		// Check for content array first
 		if content, exists := dataMap["content"]; exists {
 			if contentArray, isArray := content.([]interface{}); isArray && len(contentArray) > 0 {
+				if v, ok := contentArray[0].(string); ok && v != "" {
+					return v
+				}
 				if contentItem, isMap := contentArray[0].(map[string]interface{}); isMap {
 					if v, ok := contentItem["text"].(string); ok && v != "" {
 						return v
@@ -1804,6 +1575,9 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 			if resultMap, isMap := result.(map[string]interface{}); isMap {
 				if content, contentExists := resultMap["content"]; contentExists {
 					if contentArray, isArray := content.([]interface{}); isArray && len(contentArray) > 0 {
+						if v, ok := contentArray[0].(string); ok && v != "" {
+							return v
+						}
 						if contentItem, isMap := contentArray[0].(map[string]interface{}); isMap {
 							if v, ok := contentItem["text"].(string); ok && v != "" {
 								return v

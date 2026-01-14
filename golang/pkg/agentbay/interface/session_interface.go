@@ -40,15 +40,6 @@ type SessionInterface interface {
 	// GetMetrics retrieves runtime metrics for this session
 	GetMetrics() (*models.SessionMetricsResult, error)
 
-	// IsVpc returns whether this session uses VPC resources
-	IsVpc() bool
-
-	// NetworkInterfaceIp returns the network interface IP for VPC sessions
-	NetworkInterfaceIp() string
-
-	// HttpPort returns the HTTP port for VPC sessions
-	HttpPort() string
-
 	// BetaPause synchronously pauses this session (beta)
 	BetaPause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
 

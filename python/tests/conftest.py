@@ -42,7 +42,7 @@ def pytest_configure(config):
     log_file = os.getenv("AGENTBAY_LOG_FILE")
     if not log_file:
         current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        log_file = os.path.join(current_dir, "agentbay.log")
+        log_file = os.path.join(current_dir, "agentbay_test_log.txt")
 
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 

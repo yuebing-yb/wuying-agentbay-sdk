@@ -311,7 +311,6 @@ except Exception as e:
 ## 📚 Related Guides
 
 - [Session Management](../basics/session-management.md) - Session lifecycle and configuration
-- [VPC Sessions](../advanced/vpc-sessions.md) - Isolated network environments
 
 ## 🆘 Getting Help
 

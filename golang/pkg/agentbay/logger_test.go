@@ -45,7 +45,7 @@ func TestLogAPICall(t *testing.T) {
 		{
 			name:    "basic API call",
 			apiName: "CreateSession",
-			params:  "ImageId=linux_latest, IsVpc=true",
+			params:  "ImageId=linux_latest",
 		},
 		{
 			name:    "empty params",
@@ -67,7 +67,6 @@ func TestLogAPIResponseWithDetailsSuccess(t *testing.T) {
 	keyFields := map[string]interface{}{
 		"session_id":   "sess_123456",
 		"resource_url": "https://example.com/session/sess_123456",
-		"is_vpc":       true,
 	}
 
 	responseBody := map[string]interface{}{
@@ -116,7 +115,7 @@ func TestLogAPIResponseWithDetailsFailure_Pretty_ErrorLevelIncludesKeyFieldsAndR
 
 	out := captureStdout(t, func() {
 		logAPIResponseWithDetails(
-			"CallMcpTool(LinkUrl) Response",
+			"CallMcpTool Response",
 			"link-1",
 			false,
 			keyFields,
@@ -124,7 +123,7 @@ func TestLogAPIResponseWithDetailsFailure_Pretty_ErrorLevelIncludesKeyFieldsAndR
 		)
 	})
 
-	if !strings.Contains(out, "❌ API Response Failed: CallMcpTool(LinkUrl) Response") {
+	if !strings.Contains(out, "❌ API Response Failed: CallMcpTool Response") {
 		t.Fatalf("expected failure main line, got: %q", out)
 	}
 	if !strings.Contains(out, "RequestId=link-1") {
@@ -380,7 +379,6 @@ func TestMaskSensitiveDataPreservesNonSensitive(t *testing.T) {
 		"session_id":   "sess_abc123",
 		"resource_url": "https://example.com",
 		"total_count":  100,
-		"is_vpc":       true,
 	}
 
 	masked := maskSensitiveData(data).(map[string]interface{})
@@ -394,7 +392,6 @@ func TestMaskSensitiveDataPreservesNonSensitive(t *testing.T) {
 		{"session_id", "sess_abc123"},
 		{"resource_url", "https://example.com"},
 		{"total_count", 100},
-		{"is_vpc", true},
 	}
 
 	for _, tt := range tests {

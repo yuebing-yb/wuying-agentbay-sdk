@@ -29,14 +29,10 @@ class TestAsyncRefactoredMethods(unittest.IsolatedAsyncioTestCase):
         response_data = {
             "SessionId": "test-session-123",
             "ResourceUrl": "https://test.example.com",
-            "NetworkInterfaceIp": "192.168.1.1",
-            "HttpPort": 8080,
-            "Token": "test-token",
         }
 
         # Mock params
         params = Mock()
-        params.is_vpc = True
         params.enable_browser_replay = True
         params.image_id = "test-image"
         params.extra_configs = None
@@ -55,12 +51,14 @@ class TestAsyncRefactoredMethods(unittest.IsolatedAsyncioTestCase):
             )
 
             # Verify session properties were set
-            self.assertEqual(mock_session.is_vpc, True)
-            self.assertEqual(mock_session.network_interface_ip, "192.168.1.1")
-            self.assertEqual(mock_session.http_port, 8080)
-            self.assertEqual(mock_session.token, "test-token")
             self.assertEqual(mock_session.resource_url, "https://test.example.com")
             self.assertEqual(mock_session.enableBrowserReplay, True)
+
+            # Verify removed VPC-related fields are not set
+            self.assertNotIn("is_vpc", mock_session.__dict__)
+            self.assertNotIn("network_interface_ip", mock_session.__dict__)
+            self.assertNotIn("http_port", mock_session.__dict__)
+            self.assertNotIn("token", mock_session.__dict__)
 
             # Verify result
             self.assertEqual(result, mock_session)

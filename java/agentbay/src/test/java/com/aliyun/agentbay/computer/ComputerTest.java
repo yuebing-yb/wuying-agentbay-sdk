@@ -37,7 +37,6 @@ public class ComputerTest {
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
         computer = new Computer(mockSession);
-        when(mockSession.isVpcEnabled()).thenReturn(false);
     }
 
     private CallMcpToolResponse createMockResponse(boolean success, String data, String requestId) {

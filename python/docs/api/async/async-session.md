@@ -83,6 +83,30 @@ def files() -> AsyncFileSystem
 
 Alias of file_system.
 
+### get_token
+
+```python
+def get_token() -> str
+```
+
+### get_link_url
+
+```python
+def get_link_url() -> str
+```
+
+### getToken
+
+```python
+def getToken() -> str
+```
+
+### getLinkUrl
+
+```python
+def getLinkUrl() -> str
+```
+
 ### get_status
 
 ```python
@@ -94,38 +118,6 @@ Get basic session status asynchronously.
 **Returns**:
 
     SessionStatusResult: Result containing session status only.
-
-### get_token
-
-```python
-def get_token() -> str
-```
-
-Get the token associated with this session.
-
-### get_link_url
-
-```python
-def get_link_url() -> str
-```
-
-Get the LinkUrl associated with this session.
-
-### getToken
-
-```python
-def getToken() -> str
-```
-
-Alias of get_token().
-
-### getLinkUrl
-
-```python
-def getLinkUrl() -> str
-```
-
-Alias of get_link_url().
 
 ### delete
 

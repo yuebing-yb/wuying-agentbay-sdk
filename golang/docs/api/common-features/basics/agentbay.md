@@ -126,7 +126,6 @@ Parameters:
   - params: Configuration parameters for the session (optional)
   - Labels: Key-value pairs for session metadata
   - ImageId: Custom image ID for the session environment
-  - IsVpc: Whether to create a VPC session
   - PolicyId: Security policy ID
   - ExtraConfigs: Additional configuration options
 

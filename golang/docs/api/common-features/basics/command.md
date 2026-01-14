@@ -32,9 +32,6 @@ type Command struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
-		IsVpc() bool
-		NetworkInterfaceIp() string
-		HttpPort() string
 		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	}
 }
@@ -123,9 +120,6 @@ func NewCommand(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
 	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 }) *Command
 ```

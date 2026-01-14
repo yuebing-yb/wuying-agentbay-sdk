@@ -39,8 +39,6 @@ public class MobileTest {
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
         mobile = new Mobile(mockSession);
-        // Mock VPC disabled by default (use API mode)
-        when(mockSession.isVpcEnabled()).thenReturn(false);
     }
     
     /**

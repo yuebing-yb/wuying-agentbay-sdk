@@ -159,7 +159,6 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 //   - params: Configuration parameters for the session (optional)
 //   - Labels: Key-value pairs for session metadata
 //   - ImageId: Custom image ID for the session environment
-//   - IsVpc: Whether to create a VPC session
 //   - PolicyId: Security policy ID
 //   - ExtraConfigs: Additional configuration options
 //
@@ -251,9 +250,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	} else if params.VolumeId != "" {
 		createSessionRequest.VolumeId = tea.String(params.VolumeId)
 	}
-
-	// Add VPC resource if specified
-	createSessionRequest.VpcResource = tea.Bool(params.IsVpc)
 
 	// Add PolicyId if provided
 	if params.PolicyId != "" {
@@ -354,9 +350,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// Log API request with all set parameters
-	requestParams := fmt.Sprintf("ImageId=%s, IsVpc=%t",
-		tea.StringValue(createSessionRequest.ImageId),
-		tea.BoolValue(createSessionRequest.VpcResource))
+	requestParams := fmt.Sprintf("ImageId=%s", tea.StringValue(createSessionRequest.ImageId))
 
 	// Add PolicyId if set
 	if createSessionRequest.McpPolicyId != nil && *createSessionRequest.McpPolicyId != "" {
@@ -426,24 +420,17 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	session := NewSession(a, *response.Body.Data.SessionId)
 	session.ImageId = params.ImageId
 
-	// Set VPC-related information from response
-	session.IsVpcEnabled = params.IsVpc
-	if response.Body.Data.NetworkInterfaceIp != nil {
-		session.NetworkInterfaceIP = *response.Body.Data.NetworkInterfaceIp
+	// Set ResourceUrl
+	if response.Body.Data.ResourceUrl != nil {
+		session.ResourceUrl = *response.Body.Data.ResourceUrl
 	}
-	if response.Body.Data.HttpPort != nil {
-		session.HttpPortNumber = *response.Body.Data.HttpPort
-	}
+
+	// LinkUrl/token may be returned by the server for direct tool calls.
 	if response.Body.Data.Token != nil {
 		session.Token = *response.Body.Data.Token
 	}
 	if response.Body.Data.LinkUrl != nil {
 		session.LinkUrl = *response.Body.Data.LinkUrl
-	}
-
-	// Set ResourceUrl
-	if response.Body.Data.ResourceUrl != nil {
-		session.ResourceUrl = *response.Body.Data.ResourceUrl
 	}
 
 	// Set browser recording state
@@ -453,7 +440,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	keyFields := map[string]interface{}{
 		"session_id":   session.SessionID,
 		"resource_url": session.ResourceUrl,
-		"is_vpc":       params.IsVpc,
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
 	logAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
@@ -1149,10 +1135,6 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 
 	// Set VPC-related information and ResourceUrl from GetSession response
 	if getResult.Data != nil {
-		session.IsVpcEnabled = getResult.Data.VpcResource
-		session.NetworkInterfaceIP = getResult.Data.NetworkInterfaceIP
-		session.HttpPortNumber = getResult.Data.HttpPort
-		session.Token = getResult.Data.Token
 		session.ResourceUrl = getResult.Data.ResourceUrl
 	}
 
@@ -1162,7 +1144,6 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		"resource_url": session.ResourceUrl,
 	}
 	if getResult.Data != nil {
-		keyFields["vpc_enabled"] = getResult.Data.VpcResource
 		if getResult.Data.ResourceID != "" {
 			keyFields["resource_id"] = getResult.Data.ResourceID
 		}
@@ -1275,7 +1256,6 @@ func (a *AgentBay) GetRegionID() string {
 func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateSessionParams {
 	copy := &CreateSessionParams{
 		ImageId:             params.ImageId,
-		IsVpc:               params.IsVpc,
 		PolicyId:            params.PolicyId,
 		BetaNetworkId:       params.BetaNetworkId,
 		Framework:           params.Framework,

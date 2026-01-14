@@ -150,22 +150,6 @@ async def beta_pause(session: AsyncSession,
 
 Asynchronously pause a session (beta), putting it into a dormant state.
 
-This method internally calls the PauseSessionAsync API and then polls the GetSession API
-to check the session status until it becomes PAUSED or until timeout.
-
-**Arguments**:
-
-- `session` _AsyncSession_ - The session to pause.
-- `timeout` _int, optional_ - Timeout in seconds to wait for the session to pause.
-  Defaults to 600 seconds.
-- `poll_interval` _float, optional_ - Interval in seconds between status polls.
-  Defaults to 2.0 seconds.
-  
-
-**Returns**:
-
-    SessionPauseResult: Result containing the request ID, success status, and final session status.
-
 ### beta_pause_async
 
 ```python
@@ -176,7 +160,7 @@ Fire-and-return pause: trigger PauseSessionAsync without waiting for PAUSED.
 
 This method directly calls the PauseSessionAsync API without waiting for the session
 to reach the PAUSED state. For behavior that waits for the PAUSED state,
-use the beta_pause() method instead.
+use the pause() method instead.
 
 **Arguments**:
 
@@ -197,22 +181,6 @@ async def beta_resume(session: AsyncSession,
 
 Asynchronously resume a session (beta) from a paused state.
 
-This method internally calls the ResumeSessionAsync API and then polls the GetSession API
-to check the session status until it becomes RUNNING or until timeout.
-
-**Arguments**:
-
-- `session` _AsyncSession_ - The session to resume.
-- `timeout` _int, optional_ - Timeout in seconds to wait for the session to resume.
-  Defaults to 600 seconds.
-- `poll_interval` _float, optional_ - Interval in seconds between status polls.
-  Defaults to 2.0 seconds.
-  
-
-**Returns**:
-
-    SessionResumeResult: Result containing the request ID, success status, and final session status.
-
 ### beta_resume_async
 
 ```python
@@ -223,7 +191,7 @@ Fire-and-return resume: trigger ResumeSessionAsync without waiting for RUNNING.
 
 This method directly calls the ResumeSessionAsync API without waiting for the session
 to reach the RUNNING state. For behavior that waits for the RUNNING state,
-use the beta_resume() method instead.
+use the resume() method instead.
 
 **Arguments**:
 

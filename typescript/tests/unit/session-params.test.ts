@@ -265,14 +265,18 @@ describe("Session Parameters", () => {
             const result = params
                 .withLabels({ project: "test", env: "development" })
                 .withImageId("browser_latest")
-                .withEnableRecord(true)
-                .withIsVpc(false);
+                .withEnableRecord(true);
 
             expect(result.labels).toEqual({ project: "test", env: "development" });
             expect(result.imageId).toBe("browser_latest");
             expect(result.enableBrowserReplay).toBe(true);
-            expect(result.isVpc).toBe(false);
             expect(result).toBe(params); // Should return same instance for chaining
+        });
+
+        it("should not expose VPC parameters (withIsVpc/isVpc)", () => {
+            const params = new (require("../../src/session-params").CreateSessionParams)();
+            expect((params as any).withIsVpc).toBeUndefined();
+            expect((params as any).isVpc).toBeUndefined();
         });
 
         it("should include enableBrowserReplay in toJSON output", () => {
@@ -282,6 +286,7 @@ describe("Session Parameters", () => {
             const json = params.toJSON();
 
             expect(json.enableBrowserReplay).toBe(true);
+            expect((json as any).isVpc).toBeUndefined();
         });
 
         it("should handle enableBrowserReplay in fromJSON", () => {
@@ -289,7 +294,6 @@ describe("Session Parameters", () => {
                 labels: { test: "value" },
                 imageId: "test_image",
                 contextSync: [],
-                isVpc: false,
                 enableBrowserReplay: true,
             };
 

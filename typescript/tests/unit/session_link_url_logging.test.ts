@@ -40,13 +40,23 @@ describe("Session LinkUrl logging", () => {
       text: async () => '{"code":"BadGateway","message":"upstream","token":"tok_123456"}',
     });
 
-    const result = await s.callMcpTool("long_screenshot", { format: "png", max_screens: 2 }, false, "android");
+    const result = await s.callMcpTool(
+      "long_screenshot",
+      { format: "png", max_screens: 2 },
+      false,
+      "android"
+    );
     expect(result.success).to.equal(false);
 
-    const calls = logStub.getCalls().filter(c => c.args[0] === "CallMcpTool(LinkUrl) Response");
+    const calls = logStub
+      .getCalls()
+      .filter((c) => c.args[0] === "CallMcpTool(LinkUrl) Response");
     expect(calls.length).to.equal(1);
     expect(calls[0].args[2]).to.equal(false);
-    expect(calls[0].args[3]).to.deep.include({ http_status: 502, tool_name: "long_screenshot" });
+    expect(calls[0].args[3]).to.deep.include({
+      http_status: 502,
+      tool_name: "long_screenshot",
+    });
     expect(String(calls[0].args[4])).to.include("BadGateway");
     expect(String(calls[0].args[4])).to.include("tok_123456");
   });

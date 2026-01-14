@@ -43,7 +43,7 @@ public class BetaVolumeIntegrationTest {
             assertTrue("expected session create success", sessionResult.isSuccess());
             assertNotNull("expected session not null", sessionResult.getSession());
             Session session = sessionResult.getSession();
-            assertNotNull("expected token not null", session.getToken());
+            assertNotNull("expected session id not null", session.getSessionId());
 
             agentBay.delete(session, false);
         } finally {

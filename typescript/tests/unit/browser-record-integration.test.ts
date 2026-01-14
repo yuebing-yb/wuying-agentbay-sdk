@@ -171,12 +171,10 @@ describe("Browser Record Integration (Unit Test)", () => {
     const params = new CreateSessionParams()
       .withLabels({ project: "browser-test", type: "recording" })
       .withImageId("browser_latest")
-      .withEnableRecord(true)
-      .withIsVpc(false);
+      .withEnableRecord(true);
 
     expect(params.labels).toEqual({ project: "browser-test", type: "recording" });
     expect(params.imageId).toBe("browser_latest");
     expect(params.enableBrowserReplay).toBe(true);
-    expect(params.isVpc).toBe(false);
   });
 });

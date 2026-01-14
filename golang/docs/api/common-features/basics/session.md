@@ -12,15 +12,12 @@ type Session struct {
 	SessionID	string
 	ImageId		string	// ImageId used when creating this session
 
-	// VPC-related information
-	IsVpcEnabled		bool	// Whether this session uses VPC resources
-	NetworkInterfaceIP	string	// Network interface IP for VPC sessions
-	HttpPortNumber		string	// HTTP port for VPC sessions
-	Token			string	// Token for VPC sessions
-	LinkUrl			string	// LinkUrl for LinkUrl-based VPC route
-
 	// Resource URL for accessing the session
 	ResourceUrl	string
+
+	// LinkUrl-based direct tool call (non-VPC)
+	Token	string
+	LinkUrl	string
 
 	// Browser replay enabled flag
 	EnableBrowserReplay	bool
@@ -258,7 +255,7 @@ linkResult, _ := result.Session.GetLink(nil, &port, nil)
 func (s *Session) GetLinkUrl() string
 ```
 
-GetLinkUrl returns the LinkUrl for LinkUrl-based VPC sessions.
+GetLinkUrl returns the LinkUrl for LinkUrl-based direct tool calls.
 
 ### GetMetrics
 
@@ -285,7 +282,7 @@ GetSessionDetail API and returns status only.
 func (s *Session) GetToken() string
 ```
 
-GetToken returns the token for VPC sessions
+GetToken returns the token for LinkUrl-based direct tool calls.
 
 ### Info
 
@@ -396,9 +393,6 @@ type CreateSessionParams struct {
 	// ContextSync is a list of context synchronization configurations.
 	// These configurations define how contexts should be synchronized and mounted.
 	ContextSync	[]*ContextSync
-
-	// IsVpc specifies whether to create a VPC-based session. Defaults to false.
-	IsVpc	bool
 
 	// PolicyId specifies the policy ID to apply when creating the session.
 	PolicyId	string
@@ -517,14 +511,6 @@ func (p *CreateSessionParams) WithImageId(imageId string) *CreateSessionParams
 ```
 
 WithImageId sets the image ID for the session parameters and returns the updated parameters.
-
-### WithIsVpc
-
-```go
-func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams
-```
-
-WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
 
 ### WithLabels
 

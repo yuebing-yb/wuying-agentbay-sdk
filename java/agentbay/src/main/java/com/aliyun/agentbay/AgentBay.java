@@ -529,37 +529,13 @@ public class AgentBay {
             // Set browser recording state (default to True if not explicitly set to False)
             session.setEnableBrowserReplay(params.getEnableBrowserReplay() != null ? params.getEnableBrowserReplay() : true);
 
-            // Set VPC-related fields if this is a VPC session
-            /*if (response.getBody().getData() != null) {
-                boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
-                if (vpcResource) {
-                    session.setHttpPort(response.getBody().getData().getHttpPort());
-                    session.updateLinkUrl();
-                    session.setToken(response.getBody().getData().getToken());
-                    try {
-                        session.listMcpTools();
-                    } catch (Exception e) {
-                    }
-                }
-            }*/
+            // LinkUrl/token may be returned by the server for direct tool calls.
             if (response.getBody().getData() != null) {
-                // Case 1 (regionalized endpoint): LinkUrl/Token/ToolList may be returned regardless of is_vpc.
                 if (response.getBody().getData().getToken() != null) {
                     session.setToken(response.getBody().getData().getToken());
                 }
                 if (response.getBody().getData().getLinkUrl() != null) {
                     session.setLinkUrl(response.getBody().getData().getLinkUrl());
-                    session.setLinkUrlTimestamp(System.currentTimeMillis());
-                }
-                // Case 2 (non-regionalized endpoint + is_vpc=true): fall back to legacy VPC info and tool listing.
-                boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
-                if (vpcResource) {
-                    session.setHttpPort(response.getBody().getData().getHttpPort());
-                    logger.info("session created with http Port: {}", session.getHttpPort());
-                    // If LinkUrl is not provided by server, derive it using GetLink.
-                    if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
-                        session.updateLinkUrl();
-                    }
                 }
             }
 

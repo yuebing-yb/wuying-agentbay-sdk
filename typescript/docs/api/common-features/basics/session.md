@@ -49,11 +49,8 @@ computer: [`Computer`](../../computer-use/computer.md)
 context: [`ContextManager`](context-manager.md)
 enableBrowserReplay: `boolean` = `false`
 fileSystem: [`FileSystem`](filesystem.md)
-httpPort: `string` = `""`
-isVpc: `boolean` = `false`
 linkUrl: `string` = `""`
 mobile: [`Mobile`](../../mobile-use/mobile.md)
-networkInterfaceIp: `string` = `""`
 oss: [`Oss`](../advanced/oss.md)
 resourceUrl: `string` = `""`
 sessionId: `string`

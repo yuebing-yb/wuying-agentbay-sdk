@@ -21,7 +21,6 @@ examples/
 │   └── advanced/                  # Advanced features
 │       ├── agent-module-example/  # AI-powered automation
 │       ├── session-metrics/       # Runtime metrics via MCP get_metrics
-│       ├── vpc-session-example/   # Secure isolated network environments
 │       └── archive-upload-mode-example/ # Archive upload mode
 ├── browser-use/                   # Browser automation (browser_latest)
 │   ├── browser/                   # Browser automation examples
@@ -74,7 +73,6 @@ Features available across all environment types (browser, computer, mobile, code
 
 **Advanced:**
 - **Agent Module**: AI-powered task automation with natural language
-- **VPC Sessions**: Secure isolated network environments
 - **Archive Upload**: Archive upload mode configuration
 
 ### [Browser Use](browser-use/browser/README.md)
@@ -274,7 +272,6 @@ await browser.close();
 
 **Advanced Features:**
 - AI Agent: `common-features/advanced/agent-module-example/agent-module-example.ts`
-- VPC sessions: `common-features/advanced/vpc-session-example/vpc-session-example.ts`
 
 ## 🆘 Troubleshooting
 

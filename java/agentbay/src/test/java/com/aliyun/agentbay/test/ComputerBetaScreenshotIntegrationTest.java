@@ -27,7 +27,7 @@ public class ComputerBetaScreenshotIntegrationTest {
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("linux_latest");
         SessionResult create = agentBay.create(params);
-        assertTrue(create.isSuccess());
+        assertTrue(create.getErrorMessage(), create.isSuccess());
         Session session = create.getSession();
         assertNotNull(session);
 

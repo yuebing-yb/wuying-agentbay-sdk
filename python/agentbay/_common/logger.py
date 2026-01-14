@@ -314,7 +314,12 @@ class AgentBayLogger:
 # This provides immediate logging capability without explicit setup
 # Read from environment variable if available, otherwise use INFO
 _env_log_level = os.getenv("AGENTBAY_LOG_LEVEL", "INFO")
-AgentBayLogger.setup(level=_env_log_level)
+try:
+    AgentBayLogger.setup(level=_env_log_level)
+except PermissionError:
+    # Some environments (e.g. sandboxed CI) may block creating log files.
+    # Fall back to console-only logging so the SDK remains usable.
+    AgentBayLogger.setup(level=_env_log_level, enable_file=False)
 
 
 # Export convenience functions for the _logger

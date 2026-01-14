@@ -26,7 +26,6 @@
 #### Advanced
 - [Custom Images](guides/common-features/advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](guides/common-features/advanced/session-link-access.md) - Session connectivity and URL generation
-- [VPC Sessions](guides/common-features/advanced/vpc-sessions.md) - Secure isolated network environments
 - [Agent Modules](guides/common-features/advanced/agent-modules.md) - AI-powered task automation
 - [OSS Integration](guides/common-features/advanced/oss-integration.md) - Object Storage Service integration
 
@@ -143,7 +142,6 @@ Already familiar with browser automation, computer use, or mobile testing? Start
 **What makes AgentBay different:**
 - [Session Link](guides/common-features/advanced/session-link-access.md) - Direct URL access to services running in cloud sessions
 - [Agent Modules](guides/common-features/advanced/agent-modules.md) - AI-powered automation capabilities
-- [VPC Sessions](guides/common-features/advanced/vpc-sessions.md) - Secure isolated network environments
 
 **Need more details?** See [Advanced Features](guides/common-features/advanced/README.md) or language-specific API docs: [Python](../python/README.md) | [TypeScript](../typescript/README.md) | [Golang](../golang/README.md)
 

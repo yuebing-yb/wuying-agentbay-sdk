@@ -49,12 +49,9 @@ public class Session {
     private Computer computer;
     public Mobile mobile;
     private String fileTransferContextId;
-    private String httpPort;
+    private String resourceUrl;
     private String token;
     private String linkUrl;
-    private long linkUrlTimestamp;
-    private String resourceUrl;
-    private String networkInterfaceIp;
     private Boolean enableBrowserReplay;
     private String imageId;
 
@@ -579,51 +576,6 @@ public class Session {
     }
 
     /**
-     * Check if VPC mode is enabled for this session
-     *
-     * @return true if VPC is enabled, false otherwise
-     */
-    public boolean isVpcEnabled() {
-        return httpPort != null && !httpPort.isEmpty();
-    }
-
-    /**
-     * Get the HTTP port for VPC mode
-     *
-     * @return HTTP port
-     */
-    public String getHttpPort() {
-        return httpPort;
-    }
-
-    /**
-     * Set the HTTP port for VPC mode
-     *
-     * @param httpPort HTTP port
-     */
-    public void setHttpPort(String httpPort) {
-        this.httpPort = httpPort;
-    }
-
-    /**
-     * Get the token for VPC mode
-     *
-     * @return Token
-     */
-    public String getToken() {
-        return token;
-    }
-
-    /**
-     * Set the token for VPC mode
-     *
-     * @param token Token
-     */
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    /**
      * Get enableBrowserReplay flag
      */
     public Boolean getEnableBrowserReplay() {
@@ -656,56 +608,31 @@ public class Session {
     }
 
     /**
-     * Get the network interface IP for VPC sessions
-     *
-     * @return Network interface IP
+     * Get the token for LinkUrl tool calls.
      */
-    public String getNetworkInterfaceIp() {
-        return networkInterfaceIp;
+    public String getToken() {
+        return token;
     }
 
     /**
-     * Set the network interface IP for VPC sessions
-     *
-     * @param networkInterfaceIp Network interface IP
+     * Set the token for LinkUrl tool calls.
      */
-    public void setNetworkInterfaceIp(String networkInterfaceIp) {
-        this.networkInterfaceIp = networkInterfaceIp;
+    public void setToken(String token) {
+        this.token = token;
     }
 
     /**
-     * Get the cached VPC link URL for VPC sessions.
-     * Automatically refreshes if older than 9 minutes.
-     *
-     * @return Cached VPC link URL or null if not available
+     * Get the LinkUrl for direct tool calls.
      */
     public String getLinkUrl() {
         return linkUrl;
     }
 
+    /**
+     * Set the LinkUrl for direct tool calls.
+     */
     public void setLinkUrl(String linkUrl) {
         this.linkUrl = linkUrl;
-    }
-
-    public void setLinkUrlTimestamp(Long linkUrlTimestamp) {
-        this.linkUrlTimestamp = linkUrlTimestamp;
-    }
-
-    /**
-     * Update the cached VPC link URL based on current networkInterfaceIp and httpPort
-     */
-    public void updateLinkUrl() {
-        if (httpPort != null) {
-            try {
-                Integer port = Integer.parseInt(httpPort);
-                OperationResult linkResult = getLink("https", port);
-                if (linkResult.isSuccess() && linkResult.getData() != null) {
-                    this.linkUrl = linkResult.getData();
-                    this.linkUrlTimestamp = System.currentTimeMillis();
-                }
-            } catch (Exception e) {
-            }
-        }
     }
 
     /**
@@ -856,10 +783,6 @@ public class Session {
             SessionState state = new SessionState();
             state.setSessionId(this.sessionId);
             state.setFileTransferContextId(this.fileTransferContextId);
-            state.setHttpPort(this.httpPort);
-            state.setToken(this.token);
-            state.setLinkUrl(this.linkUrl);
-            state.setLinkUrlTimestamp(this.linkUrlTimestamp);
             return objectMapper.writeValueAsString(state);
         } catch (Exception e) {
             throw new AgentBayException("Failed to dump session state: " + e.getMessage(), e);
@@ -881,10 +804,6 @@ public class Session {
             Session session = new Session(state.getSessionId(), agentBay, new SessionParams());
 
             session.setFileTransferContextId(state.getFileTransferContextId());
-            session.setHttpPort(state.getHttpPort());
-            session.setToken(state.getToken());
-            session.linkUrl = state.getLinkUrl();
-            session.linkUrlTimestamp = state.getLinkUrlTimestamp();
             return session;
         } catch (Exception e) {
             throw new AgentBayException("Failed to restore session state: " + e.getMessage(), e);

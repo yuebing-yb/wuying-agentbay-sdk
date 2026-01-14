@@ -36,7 +36,6 @@ in the AgentBay cloud environment.
 - [withExtraConfigs](#withextraconfigs)
 - [withFramework](#withframework)
 - [withImageId](#withimageid)
-- [withIsVpc](#withisvpc)
 - [withLabels](#withlabels)
 - [withPolicyId](#withpolicyid)
 - [withVolume](#withvolume)
@@ -46,7 +45,6 @@ in the AgentBay cloud environment.
 
 ```typescript
 contextSync: [`ContextSync`](context-sync.md)[]
-isVpc: `boolean`
 labels: `Record`<`string`, `string`>
 ```
 
@@ -126,12 +124,6 @@ Image ID to use for the session.
 #### Implementation of
 
 `CreateSessionParamsConfig`.`imageId`
-
-___
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`isVpc`
 
 ___
 
@@ -382,24 +374,6 @@ WithImageId sets the image ID for the session parameters and returns the updated
 | Name | Type |
 | :------ | :------ |
 | `imageId` | `string` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withIsVpc
-
-▸ **withIsVpc**(`isVpc`): [`CreateSessionParams`](session-params.md)
-
-WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `isVpc` | `boolean` |
 
 #### Returns
 

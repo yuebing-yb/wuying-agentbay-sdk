@@ -81,6 +81,30 @@ def files() -> FileSystem
 
 Alias of file_system.
 
+### get_token
+
+```python
+def get_token() -> str
+```
+
+### get_link_url
+
+```python
+def get_link_url() -> str
+```
+
+### getToken
+
+```python
+def getToken() -> str
+```
+
+### getLinkUrl
+
+```python
+def getLinkUrl() -> str
+```
+
 ### get_status
 
 ```python
@@ -92,38 +116,6 @@ Get basic session status asynchronously.
 **Returns**:
 
     SessionStatusResult: Result containing session status only.
-
-### get_token
-
-```python
-def get_token() -> str
-```
-
-Get the token associated with this session.
-
-### get_link_url
-
-```python
-def get_link_url() -> str
-```
-
-Get the LinkUrl associated with this session.
-
-### getToken
-
-```python
-def getToken() -> str
-```
-
-Alias of get_token().
-
-### getLinkUrl
-
-```python
-def getLinkUrl() -> str
-```
-
-Alias of get_link_url().
 
 ### delete
 
@@ -225,7 +217,7 @@ def beta_pause(timeout: int = 600,
                poll_interval: float = 2.0) -> SessionPauseResult
 ```
 
-Pause this session (beta), putting it into a dormant state.
+Asynchronously pause this session (beta), putting it into a dormant state.
 This method waits until the session enters the PAUSED state.
 
 ### beta_pause_async
@@ -234,7 +226,7 @@ This method waits until the session enters the PAUSED state.
 def beta_pause_async() -> SessionPauseResult
 ```
 
-Initiate the pause session operation without waiting for completion.
+Asynchronously initiate the pause session operation without waiting for completion.
 
 ### beta_resume
 
@@ -243,7 +235,7 @@ def beta_resume(timeout: int = 600,
                 poll_interval: float = 2.0) -> SessionResumeResult
 ```
 
-Resume this session (beta) from a paused state.
+Asynchronously resume this session (beta) from a paused state.
 This method waits until the session enters the RUNNING state.
 
 ### beta_resume_async
@@ -252,7 +244,7 @@ This method waits until the session enters the RUNNING state.
 def beta_resume_async() -> SessionResumeResult
 ```
 
-Initiate the resume session operation without waiting for completion.
+Asynchronously initiate the resume session operation without waiting for completion.
 
 ## See Also
 

@@ -18,7 +18,6 @@ public class FileSystem extends BaseService {
     private static final String SERVER_SHELL = "wuying_shell";
 
     private static final int DEFAULT_CHUNK_SIZE = 50 * 1024;
-    private static final int DEFAULT_VPC_CHUNK_SIZE = 512 * 1024;
 
     private FileTransfer fileTransfer;
 
@@ -233,9 +232,6 @@ public class FileSystem extends BaseService {
     public BoolResult writeFile(String path, String content, String mode, boolean createParentDir) {
         int contentLength = content.getBytes().length;
         int chunkSize = DEFAULT_CHUNK_SIZE;
-        if (session.isVpcEnabled()) {
-            chunkSize =DEFAULT_VPC_CHUNK_SIZE;
-        }
         // If the content length is less than the chunk size, write it directly
         if (contentLength <= chunkSize) {
             return writeFileChunk(path, content, mode, createParentDir);

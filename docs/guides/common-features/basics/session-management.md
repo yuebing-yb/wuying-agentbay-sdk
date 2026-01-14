@@ -588,7 +588,6 @@ For detailed API documentation, see:
 - [Data Persistence](data-persistence.md) - Persistent data storage across sessions
 - [File Operations](file-operations.md) - File handling and management
 - [Command Execution](command-execution.md) - Execute shell commands
-- [VPC Sessions](../advanced/vpc-sessions.md) - Isolated network environments
 
 ## 🆘 Getting Help
 

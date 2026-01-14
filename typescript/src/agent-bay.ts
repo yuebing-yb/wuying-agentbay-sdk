@@ -66,7 +66,6 @@ export interface CreateSeesionWithParams {
   volumeId?: string;
   contextSync?: ContextSync[];
   browserContext?: BrowserContext;
-  isVpc?: boolean;
   policyId?: string;
   betaNetworkId?: string;
   // Note: networkId is not released; do not expose non-beta alias.
@@ -247,7 +246,6 @@ export class AgentBay {
    *                 - imageId: Custom image ID for the session environment
    *                 - contextSync: Array of context synchronization configurations
    *                 - browserContext: Browser-specific context configuration
-   *                 - isVpc: Whether to create a VPC session
    *                 - policyId: Security policy ID
    *                 - enableBrowserReplay: Enable browser session recording
    *                 - extraConfigs: Additional configuration options
@@ -276,7 +274,6 @@ export class AgentBay {
    * - Creates a new isolated cloud runtime environment
    * - Automatically creates file transfer context if not provided
    * - Waits for context synchronization if contextSync is specified
-   * - For VPC sessions, includes VPC-specific configuration
    * - Browser replay creates a separate recording context
    *
    * @see {@link get}, {@link list}, {@link Session.delete}
@@ -356,9 +353,6 @@ export class AgentBay {
         (request as any).networkId = (paramsCopy as any).betaNetworkId;
       }
 
-      // Add VPC resource if specified
-      request.vpcResource = paramsCopy.isVpc || false;
-
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
 
@@ -434,7 +428,6 @@ export class AgentBay {
         labels: paramsCopy.labels,
         imageId: paramsCopy.imageId,
         policyId: paramsCopy.policyId,
-        isVpc: paramsCopy.isVpc,
         persistenceDataCount: paramsCopy.contextSync ? paramsCopy.contextSync.length : 0,
       });
 
@@ -548,23 +541,12 @@ export class AgentBay {
 
       const session = new Session(this, sessionId);
 
-      // Set VPC-related information from response
-      session.isVpc = paramsCopy.isVpc || false;
-      if (data.networkInterfaceIp) {
-        session.networkInterfaceIp = data.networkInterfaceIp;
-      }
-      if (data.httpPort) {
-        session.httpPort = data.httpPort;
-      }
-      if (data.token) {
-        session.token = data.token;
-      }
-      if (data.linkUrl) {
-        session.linkUrl = data.linkUrl;
-      }
-
       // Set ResourceUrl
       session.resourceUrl = resourceUrl;
+
+      // LinkUrl/token may be returned by the server for direct tool calls.
+      session.token = data.token || "";
+      session.linkUrl = data.linkUrl || "";
 
       // Set browser recording state
       session.enableBrowserReplay = paramsCopy.enableBrowserReplay || false;
@@ -1087,13 +1069,10 @@ export class AgentBay {
     // Create the Session object
     const session = new Session(this, sessionId);
 
-    // Set VPC-related information and ResourceUrl from GetSession response
+    // Set ResourceUrl from GetSession response
     if (getResult.data) {
-      session.isVpc = getResult.data.vpcResource;
-      session.networkInterfaceIp = getResult.data.networkInterfaceIp;
-      session.httpPort = getResult.data.httpPort;
-      session.token = getResult.data.token;
       session.resourceUrl = getResult.data.resourceUrl;
+      session.token = getResult.data.token || "";
     }
 
     return {

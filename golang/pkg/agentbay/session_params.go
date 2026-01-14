@@ -19,9 +19,6 @@ type CreateSessionParams struct {
 	// These configurations define how contexts should be synchronized and mounted.
 	ContextSync []*ContextSync
 
-	// IsVpc specifies whether to create a VPC-based session. Defaults to false.
-	IsVpc bool
-
 	// PolicyId specifies the policy ID to apply when creating the session.
 	PolicyId string
 
@@ -69,12 +66,6 @@ func (p *CreateSessionParams) WithLabels(labels map[string]string) *CreateSessio
 // WithImageId sets the image ID for the session parameters and returns the updated parameters.
 func (p *CreateSessionParams) WithImageId(imageId string) *CreateSessionParams {
 	p.ImageId = imageId
-	return p
-}
-
-// WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
-func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams {
-	p.IsVpc = isVpc
 	return p
 }
 

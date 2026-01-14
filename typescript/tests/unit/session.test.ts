@@ -164,68 +164,6 @@ describe("TestSession", () => {
         });
     });
 
-    describe("test_call_mcp_tool_vpc_request_id_propagation", () => {
-        it("should return non-empty requestId in VPC mode success", async () => {
-            (mockSession as any).isVpc = true;
-            (mockSession as any).networkInterfaceIp = "192.168.1.100";
-            (mockSession as any).httpPort = "8080";
-            (mockSession as any).token = "vpc_token_123";
-
-            if (!(global as any).fetch) {
-                (global as any).fetch = async () => ({ ok: false });
-            }
-            const fetchStub = sinon.stub(global as any, "fetch").resolves({
-                ok: true,
-                statusText: "OK",
-                json: async () => ({
-                    content: [{ type: "text", text: "vpc output" }],
-                    isError: false,
-                }),
-            } as any);
-
-            const result = await mockSession.callMcpTool(
-                "shell",
-                { command: "pwd" },
-                false,
-                "wuying_shell"
-            );
-
-            expect(result.success).toBe(true);
-            expect(result.data).toContain("vpc output");
-            expect(result.requestId).toMatch(/^vpc-/);
-            fetchStub.restore();
-        });
-
-        it("should return non-empty requestId in VPC mode run_code branch", async () => {
-            (mockSession as any).isVpc = true;
-            (mockSession as any).networkInterfaceIp = "192.168.1.100";
-            (mockSession as any).httpPort = "8080";
-            (mockSession as any).token = "vpc_token_123";
-
-            if (!(global as any).fetch) {
-                (global as any).fetch = async () => ({ ok: false });
-            }
-            const fetchStub = sinon.stub(global as any, "fetch").resolves({
-                ok: true,
-                statusText: "OK",
-                json: async () => ({
-                    content: [{ type: "text", text: "{\"content\":[{\"type\":\"text\",\"text\":\"hello\"}]}" }],
-                    isError: false,
-                }),
-            } as any);
-
-            const result = await mockSession.callMcpTool(
-                "run_code",
-                { code: "print('hello')", language: "python" },
-                false,
-                "wuying_code"
-            );
-
-            expect(result.requestId).toMatch(/^vpc-/);
-            fetchStub.restore();
-        });
-    });
-
     describe("test_delete_without_params", () => {
         it("should delete without syncing contexts when no parameters are provided", async () => {
             // Mock context manager

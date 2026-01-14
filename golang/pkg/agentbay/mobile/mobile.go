@@ -170,9 +170,6 @@ type Mobile struct {
 		GetClient() *mcp.Client
 		GetSessionId() string
 		GetImageID() string
-		IsVpc() bool
-		NetworkInterfaceIp() string
-		HttpPort() string
 		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	}
 	command *command.Command
@@ -183,9 +180,6 @@ type SessionWithCommand interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
 	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command
 }
@@ -196,9 +190,6 @@ func NewMobile(session interface {
 	GetClient() *mcp.Client
 	GetSessionId() string
 	GetImageID() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
 	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
 }) *Mobile {
 	mobile := &Mobile{
