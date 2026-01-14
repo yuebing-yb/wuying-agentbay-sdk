@@ -283,7 +283,7 @@ export class BrowserContext {
  * Configuration interface for CreateSessionParams
  */
 export interface CreateSessionParamsConfig {
-  labels: Record<string, string>;
+  labels?: Record<string, string>;
   imageId?: string;
   /**
    * Beta: mount a volume during session creation (static mount).
@@ -295,7 +295,7 @@ export interface CreateSessionParamsConfig {
    * If both volume and volumeId are provided, volume takes precedence.
    */
   volumeId?: string;
-  contextSync: ContextSync[];
+  contextSync?: ContextSync[];
   /** Optional configuration for browser data synchronization */
   browserContext?: BrowserContext;
   /** Whether to create a VPC-based session. Defaults to false. */
@@ -319,7 +319,7 @@ export interface CreateSessionParamsConfig {
  */
 export class CreateSessionParams implements CreateSessionParamsConfig {
   /** Custom labels for the Session. These can be used for organizing and filtering sessions. */
-  public labels: Record<string, string>;
+  public labels?: Record<string, string>;
 
   /** Image ID to use for the session. */
   public imageId?: string;
@@ -334,13 +334,13 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    * List of context synchronization configurations.
    * These configurations define how contexts should be synchronized and mounted.
    */
-  public contextSync: ContextSync[];
+  public contextSync?: ContextSync[];
 
   /** Optional configuration for browser data synchronization. */
   public browserContext?: BrowserContext;
 
   /** Whether to create a VPC-based session. Defaults to false. */
-  public isVpc: boolean;
+  public isVpc?: boolean;
 
   /** Policy id to apply when creating the session. */
   public policyId?: string;
@@ -405,6 +405,12 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   withBrowserContext(browserContext: BrowserContext): CreateSessionParams {
     this.browserContext = browserContext;
+    
+    // Ensure contextSync is initialized
+    if (!this.contextSync) {
+      this.contextSync = [];
+    }
+    
     // Add extension and fingerprint context syncs if browser context has them
     if (this.browserContext && 'getExtensionContextSyncs' in this.browserContext) {
       const contextSyncs = this.browserContext.getExtensionContextSyncs();
@@ -482,7 +488,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    * Returns an object with success status and result/error message to match Go version behavior.
    */
   private getLabelsJSON(): { result: string; error?: string } {
-    if (Object.keys(this.labels).length === 0) {
+    if (this.labels && Object.keys(this.labels).length === 0) {
       return { result: "" };
     }
 
@@ -525,6 +531,9 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     path: string,
     policy?: SyncPolicy
   ): CreateSessionParams {
+    if (!this.contextSync) {
+      this.contextSync = [];
+    }
     const contextSync = new ContextSync(contextId, path, policy);
     this.contextSync.push(contextSync);
     return this;
@@ -534,6 +543,9 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    * AddContextSyncConfig adds a pre-configured context sync to the session parameters.
    */
   addContextSyncConfig(contextSync: ContextSync): CreateSessionParams {
+    if (!this.contextSync) {
+      this.contextSync = [];
+    }
     this.contextSync.push(contextSync);
     return this;
   }
@@ -564,6 +576,9 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    * Convert to plain object for JSON serialization
    */
   toJSON(): CreateSessionParamsConfig {
+    if (!this.contextSync) {
+      this.contextSync = [];
+    }
     // Get base context syncs
     let allContextSyncs = [...this.contextSync];
 

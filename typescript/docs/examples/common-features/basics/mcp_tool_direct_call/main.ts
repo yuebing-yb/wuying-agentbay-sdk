@@ -8,7 +8,7 @@
  * 4. Cleaning up the session
  */
 
-import { AgentBay } from 'wuying-agentbay-sdk';
+import { AgentBay, CreateSeesionWithParams } from 'wuying-agentbay-sdk';
 
 async function main() {
   // Initialize AgentBay client
@@ -17,7 +17,10 @@ async function main() {
 
   // Create a session
   console.log('\n1. Creating session...');
-  const sessionResult = await agentBay.create();
+  const params : CreateSeesionWithParams ={
+    imageId: "linux_latest",
+  };
+  const sessionResult = await agentBay.create(params);
   const session = sessionResult.session;
   console.log('✓ Session created successfully');
   console.log(`  Session ID: ${session.getSessionId()}`);

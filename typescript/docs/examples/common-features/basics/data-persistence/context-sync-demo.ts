@@ -1,4 +1,4 @@
-import { AgentBay, ContextSync, CreateSessionParams, newSyncPolicyWithDefaults } from 'wuying-agentbay-sdk';
+import { AgentBay, ContextSync, CreateSeesionWithParams, newSyncPolicyWithDefaults } from 'wuying-agentbay-sdk';
 
 /**
  * Context Sync Dual-Mode Example for TypeScript SDK
@@ -29,7 +29,7 @@ async function contextSyncWithCallbackDemo(agentBay: AgentBay): Promise<void> {
     syncPolicy
   );
   
-  const params: CreateSessionParams = {
+  const params: CreateSeesionWithParams = {
     contextSync: [contextSync]
   };
   const sessionResult = await agentBay.create(params);
@@ -147,7 +147,7 @@ async function contextSyncDemo(agentBay: AgentBay): Promise<void> {
     syncPolicy
   );
   
-  const params: CreateSessionParams = {
+  const params: CreateSeesionWithParams = {
     contextSync: [contextSync]
   };
   const sessionResult = await agentBay.create(params);

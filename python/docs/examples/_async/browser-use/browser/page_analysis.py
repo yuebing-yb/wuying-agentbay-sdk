@@ -71,8 +71,8 @@ async def main():
             print("Failed to extract page description")
 
         # Navigate to a more complex page
-        print("\n4. Navigating to news.ycombinator.com...")
-        await session.browser.agent.navigate("https://news.ycombinator.com")
+        print("\n4. Navigating to www.baidu.com...")
+        await session.browser.agent.navigate("https://www.baidu.com")
 
         # Extract structured data
         print("\n5. Extracting top 5 story titles...")

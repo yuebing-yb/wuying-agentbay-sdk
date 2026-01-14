@@ -111,10 +111,12 @@ async def main():
 
         # Verify modal is closed
         print("\n8. Verifying modal is closed...")
-        verify_result = await session.browser.agent.extract(
+        suceesss, verify_result = await session.browser.agent.extract(
             ExtractOptions(instruction="Is there a modal dialog visible on the page?", schema=ModalStatus)
         )
-        print(f"Modal status: {verify_result.extracted_content.is_modal_visible}")
+        if not suceesss:
+            raise Exception("Failed to verify modal status")
+        print(f"Modal status: {verify_result}")
 
         # Test new window/tab popup
         print("\n9. Testing new window popup...")
@@ -126,10 +128,12 @@ async def main():
 
         # Check for new windows
         print("\n10. Checking for new windows...")
-        tab_count = await session.browser.agent.extract(
+        success, tab_count = await session.browser.agent.extract(
             ExtractOptions(instruction="How many browser windows or tabs are open?", schema=TabCount)
         )
-        print(f"Open windows: {tab_count.extracted_content}")
+        if not success:
+            raise Exception("Failed to extract tab count")
+        print(f"Open windows: {tab_count}")
 
         print("\n=== Example completed successfully ===")
 
