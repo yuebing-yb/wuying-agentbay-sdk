@@ -107,7 +107,7 @@ def should_skip_oss_test(test_id: str, skip_oss: bool = False) -> bool:
         return False
     
     # 检查测试ID是否包含OSS测试模式
-    for pattern in OSS_TEST_PATTERNS:
+    for pattern in TEST_PATTERNS:
         if pattern in test_id:
             return True
     
