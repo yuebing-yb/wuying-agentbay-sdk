@@ -1035,6 +1035,33 @@ class AsyncSession:
                 data=text_content or json.dumps(result, ensure_ascii=False),
                 error_message="",
             )
+        except httpx.HTTPStatusError as e:
+            status_code = 0
+            body_text = ""
+            try:
+                if e.response is not None:
+                    status_code = int(getattr(e.response, "status_code", 0) or 0)
+                    body_text = getattr(e.response, "text", "") or ""
+            except Exception:
+                status_code = 0
+                body_text = ""
+            body_preview = body_text[:2000] + ("...(truncated)" if len(body_text) > 2000 else "")
+            _log_api_response_with_details(
+                api_name="CallMcpTool(LinkUrl) Response",
+                request_id=request_id,
+                success=False,
+                key_fields={
+                    "http_status": status_code,
+                    "tool_name": tool_name,
+                },
+                full_response=body_preview,
+            )
+            return McpToolResult(
+                request_id=request_id,
+                success=False,
+                data="",
+                error_message=f"HTTP request failed with code: {status_code or 'unknown'}",
+            )
         except httpx.RequestError as e:
             _log_operation_error("CallMcpTool(LinkUrl)", f"HTTP request failed: {e}", True)
             return McpToolResult(
@@ -1395,16 +1422,16 @@ class AsyncSession:
                 error_message=f"API request failed: {e}",
             )
 
-    async def pause(
+    async def beta_pause(
         self, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionPauseResult:
         """
-        Asynchronously pause this session, putting it into a dormant state.
+        Asynchronously pause this session (beta), putting it into a dormant state.
         This method waits until the session enters the PAUSED state.
         """
         try:
             # Call the async initiate method first
-            result = await self.pause_async()
+            result = await self.beta_pause_async()
             if not result.success:
                 return result
 
@@ -1480,7 +1507,7 @@ class AsyncSession:
                 error_message=f"Unexpected error pausing session: {e}",
             )
 
-    async def pause_async(self) -> SessionPauseResult:
+    async def beta_pause_async(self) -> SessionPauseResult:
         """
         Asynchronously initiate the pause session operation without waiting for completion.
         """
@@ -1554,16 +1581,16 @@ class AsyncSession:
                 error_message=f"Unexpected error pausing session: {e}",
             )
 
-    async def resume(
+    async def beta_resume(
         self, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionResumeResult:
         """
-        Asynchronously resume this session from a paused state.
+        Asynchronously resume this session (beta) from a paused state.
         This method waits until the session enters the RUNNING state.
         """
         try:
             # Call the async initiate method first
-            result = await self.resume_async()
+            result = await self.beta_resume_async()
             if not result.success:
                 return result
 
@@ -1637,7 +1664,7 @@ class AsyncSession:
                 error_message=f"Unexpected error resuming session: {e}",
             )
 
-    async def resume_async(self) -> SessionResumeResult:
+    async def beta_resume_async(self) -> SessionResumeResult:
         """
         Asynchronously initiate the resume session operation without waiting for completion.
         """

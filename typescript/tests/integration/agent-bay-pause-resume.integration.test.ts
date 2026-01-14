@@ -7,13 +7,13 @@ import * as path from "path";
 import * as fs from "fs";
 
 
-describe("AgentBay pause and resume integration tests", () => {
+describe("AgentBay beta pause and beta resume integration tests", () => {
   let agentBay: AgentBay;
   let sessionId: string | undefined;
   let sessionCreated = false;
 
   beforeAll(async () => {
-    
+
     const apiKey = process.env.AGENTBAY_API_KEY;
     log(`API Key loaded: ${apiKey ? "YES" : "NO"}`);
     if (!apiKey) {
@@ -59,7 +59,7 @@ describe("AgentBay pause and resume integration tests", () => {
     
     // Pause the session
     log("⏸️  Pausing session...");
-    const pauseResult = await agentBay.pauseAsync(session);
+    const pauseResult = await agentBay.betaPauseAsync(session);
     
     expect(pauseResult).toBeDefined();
     if (pauseResult.success) {
@@ -73,7 +73,7 @@ describe("AgentBay pause and resume integration tests", () => {
     
     // Resume the session
     log("▶️  Resuming session...");
-    const resumeResult = await agentBay.resumeAsync(session);
+    const resumeResult = await agentBay.betaResumeAsync(session);
     
     expect(resumeResult).toBeDefined();
     if (resumeResult.success) {
@@ -91,7 +91,7 @@ describe("AgentBay pause and resume integration tests", () => {
     
     // Try to pause the nonexistent session
     log("⏸️  Attempting to pause nonexistent session...");
-    const pauseResult = await agentBay.pauseAsync(fakeSession);
+    const pauseResult = await agentBay.betaPauseAsync(fakeSession);
     
     expect(pauseResult).toBeDefined();
     expect(pauseResult.success).toBe(false);
@@ -106,7 +106,7 @@ describe("AgentBay pause and resume integration tests", () => {
     
     // Try to resume the nonexistent session
     log("▶️  Attempting to resume nonexistent session...");
-    const resumeResult = await agentBay.resumeAsync(fakeSession);
+    const resumeResult = await agentBay.betaResumeAsync(fakeSession);
     
     expect(resumeResult).toBeDefined();
     expect(resumeResult.success).toBe(false);

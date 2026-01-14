@@ -60,7 +60,7 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 
 	// Pause the session
 	fmt.Println("Step 2: Pausing session...")
-	pauseResult, err := client.Pause(createdSession, 600, 2.0)
+	pauseResult, err := client.BetaPause(createdSession, 600, 2.0)
 	if err != nil {
 		t.Fatalf("Failed to pause session: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestSessionPauseResumeIntegration(t *testing.T) {
 
 	// Resume the session (synchronous)
 	fmt.Println("Step 4: Resuming session...")
-	resumeResult, err := client.Resume(createdSession, 120, 3.0)
+	resumeResult, err := client.BetaResume(createdSession, 120, 3.0)
 	if err != nil {
 		t.Fatalf("Failed to resume session: %v", err)
 	}
@@ -161,7 +161,7 @@ func TestSessionResumeIntegration(t *testing.T) {
 
 	// Pause the session first
 	fmt.Println("Step 1: Pausing session...")
-	pauseResult, err := client.Pause(createdSession, 600, 2.0)
+	pauseResult, err := client.BetaPause(createdSession, 600, 2.0)
 	if err != nil {
 		t.Fatalf("Failed to pause session: %v", err)
 	}
@@ -189,7 +189,7 @@ func TestSessionResumeIntegration(t *testing.T) {
 
 	// Resume the session (synchronous)
 	fmt.Println("Step 3: Resuming session...")
-	resumeResult, err := createdSession.Resume(600, 2.0)
+	resumeResult, err := createdSession.BetaResume(600, 2.0)
 	if err != nil {
 		t.Fatalf("Failed to async resume session: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestSessionPauseNonExistent(t *testing.T) {
 	invalidSession := agentbay.NewSession(client, "non-existent-session-12345")
 
 	// This should return a failed SessionPauseResult
-	pauseResult, err := client.Pause(invalidSession, 600, 2.0)
+	pauseResult, err := client.BetaPause(invalidSession, 600, 2.0)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -272,7 +272,7 @@ func TestSessionResumeNonExistent(t *testing.T) {
 	invalidSession := agentbay.NewSession(client, "non-existent-session-12345")
 
 	// This should return a failed SessionResumeResult
-	resumeResult, err := client.Resume(invalidSession, 600, 2.0)
+	resumeResult, err := client.BetaResume(invalidSession, 600, 2.0)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -326,7 +326,7 @@ func TestSessionPauseAlreadyPaused(t *testing.T) {
 
 	// Pause the session
 	fmt.Println("Step 1: Pausing session...")
-	pauseResult1, err := client.Pause(createdSession, 600, 2.0)
+	pauseResult1, err := client.BetaPause(createdSession, 600, 2.0)
 	if err != nil {
 		t.Fatalf("Failed to pause session: %v", err)
 	}
@@ -354,7 +354,7 @@ func TestSessionPauseAlreadyPaused(t *testing.T) {
 
 	// Try to pause again
 	fmt.Println("Step 3: Attempting to pause already paused session...")
-	pauseResult2, err := client.Pause(createdSession, 600, 2.0)
+	pauseResult2, err := client.BetaPause(createdSession, 600, 2.0)
 	if err != nil {
 		t.Fatalf("Unexpected error on second pause: %v", err)
 	}
@@ -419,7 +419,7 @@ func TestSessionResumeAlreadyRunning(t *testing.T) {
 
 	// Try to resume the already running session
 	fmt.Println("Attempting to resume already running session...")
-	resumeResult, err := client.Resume(createdSession, 30, 2)
+	resumeResult, err := client.BetaResume(createdSession, 30, 2)
 	if err != nil {
 		t.Fatalf("Unexpected error on resume: %v", err)
 	}
@@ -475,7 +475,7 @@ func TestSessionPauseResumeWithCustomParameters(t *testing.T) {
 
 	// Pause with custom parameters (using agent_bay method)
 	fmt.Println("Step 1: Pausing session with custom parameters...")
-	pauseResult, err := client.Pause(createdSession, 5, 0.5)
+	pauseResult, err := client.BetaPause(createdSession, 5, 0.5)
 	if err != nil {
 		t.Fatalf("Failed to pause session with custom params: %v", err)
 	}
@@ -506,7 +506,7 @@ func TestSessionPauseResumeWithCustomParameters(t *testing.T) {
 
 	// Resume with custom parameters
 	fmt.Println("Step 3: Resuming session with custom parameters...")
-	resumeResult, err := client.Resume(createdSession, 300, 3.0)
+	resumeResult, err := client.BetaResume(createdSession, 300, 3.0)
 	if err != nil {
 		t.Fatalf("Failed to resume session with custom params: %v", err)
 	}
@@ -569,7 +569,7 @@ func TestSessionPauseWithShortTimeout(t *testing.T) {
 
 	// Pause with short timeout (using agent_bay method)
 	fmt.Println("Pausing session with short timeout...")
-	pauseResult, err := client.Pause(createdSession, 10, 1.0)
+	pauseResult, err := client.BetaPause(createdSession, 10, 1.0)
 	if err != nil {
 		t.Fatalf("Failed to pause session with short timeout: %v", err)
 	}

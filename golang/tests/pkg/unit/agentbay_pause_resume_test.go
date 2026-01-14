@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestAgentBay_Pause tests AgentBay Pause method
-func TestAgentBay_Pause(t *testing.T) {
+// TestAgentBay_BetaPause tests AgentBay BetaPause method
+func TestAgentBay_BetaPause(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -31,10 +31,10 @@ func TestAgentBay_Pause(t *testing.T) {
 		Success: true,
 		Status:  "PAUSED",
 	}
-	mockAgentBay.EXPECT().Pause(testSession, 600, 2.0).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().BetaPause(testSession, 600, 2.0).Return(expectedResult, nil)
 
 	// Test Pause method call
-	result, err := mockAgentBay.Pause(testSession, 600, 2.0)
+	result, err := mockAgentBay.BetaPause(testSession, 600, 2.0)
 
 	// Verify call success
 	assert.NoError(t, err)
@@ -44,8 +44,8 @@ func TestAgentBay_Pause(t *testing.T) {
 	assert.Equal(t, "test-request-id-agentbay", result.RequestID)
 }
 
-// TestAgentBay_Pause_Error tests error handling in AgentBay Pause method
-func TestAgentBay_Pause_Error(t *testing.T) {
+// TestAgentBay_BetaPause_Error tests error handling in AgentBay BetaPause method
+func TestAgentBay_BetaPause_Error(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -58,10 +58,10 @@ func TestAgentBay_Pause_Error(t *testing.T) {
 
 	// Set expected behavior for error case
 	expectedErr := errors.New("agentbay pause operation failed")
-	mockAgentBay.EXPECT().Pause(testSession, 600, 2.0).Return(nil, expectedErr)
+	mockAgentBay.EXPECT().BetaPause(testSession, 600, 2.0).Return(nil, expectedErr)
 
 	// Test Pause method call with error
-	result, err := mockAgentBay.Pause(testSession, 600, 2.0)
+	result, err := mockAgentBay.BetaPause(testSession, 600, 2.0)
 
 	// Verify error handling
 	assert.Error(t, err)
@@ -69,8 +69,8 @@ func TestAgentBay_Pause_Error(t *testing.T) {
 	assert.Equal(t, expectedErr, err)
 }
 
-// TestAgentBay_Pause_WithCustomParams tests AgentBay Pause method with custom parameters
-func TestAgentBay_Pause_WithCustomParams(t *testing.T) {
+// TestAgentBay_BetaPause_WithCustomParams tests AgentBay BetaPause method with custom parameters
+func TestAgentBay_BetaPause_WithCustomParams(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -89,10 +89,10 @@ func TestAgentBay_Pause_WithCustomParams(t *testing.T) {
 		Success: true,
 		Status:  "PAUSED",
 	}
-	mockAgentBay.EXPECT().Pause(testSession, 300, 1.5).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().BetaPause(testSession, 300, 1.5).Return(expectedResult, nil)
 
 	// Test Pause method call with custom parameters
-	result, err := mockAgentBay.Pause(testSession, 300, 1.5)
+	result, err := mockAgentBay.BetaPause(testSession, 300, 1.5)
 
 	// Verify call success
 	assert.NoError(t, err)
@@ -102,8 +102,8 @@ func TestAgentBay_Pause_WithCustomParams(t *testing.T) {
 	assert.Equal(t, "test-request-id-agentbay-custom", result.RequestID)
 }
 
-// TestAgentBay_Resume tests AgentBay Resume method
-func TestAgentBay_Resume(t *testing.T) {
+// TestAgentBay_BetaResume tests AgentBay BetaResume method
+func TestAgentBay_BetaResume(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -122,10 +122,10 @@ func TestAgentBay_Resume(t *testing.T) {
 		Success: true,
 		Status:  "RUNNING",
 	}
-	mockAgentBay.EXPECT().Resume(testSession, 600, 2.0).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().BetaResume(testSession, 600, 2.0).Return(expectedResult, nil)
 
 	// Test Resume method call
-	result, err := mockAgentBay.Resume(testSession, 600, 2.0)
+	result, err := mockAgentBay.BetaResume(testSession, 600, 2.0)
 
 	// Verify call success
 	assert.NoError(t, err)
@@ -135,8 +135,8 @@ func TestAgentBay_Resume(t *testing.T) {
 	assert.Equal(t, "test-request-id-resume-agentbay", result.RequestID)
 }
 
-// TestAgentBay_Resume_Error tests error handling in AgentBay Resume method
-func TestAgentBay_Resume_Error(t *testing.T) {
+// TestAgentBay_BetaResume_Error tests error handling in AgentBay BetaResume method
+func TestAgentBay_BetaResume_Error(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -149,10 +149,10 @@ func TestAgentBay_Resume_Error(t *testing.T) {
 
 	// Set expected behavior for error case
 	expectedErr := errors.New("agentbay resume operation failed")
-	mockAgentBay.EXPECT().Resume(testSession, 600, 2.0).Return(nil, expectedErr)
+	mockAgentBay.EXPECT().BetaResume(testSession, 600, 2.0).Return(nil, expectedErr)
 
 	// Test Resume method call with error
-	result, err := mockAgentBay.Resume(testSession, 600, 2.0)
+	result, err := mockAgentBay.BetaResume(testSession, 600, 2.0)
 
 	// Verify error handling
 	assert.Error(t, err)
@@ -160,8 +160,8 @@ func TestAgentBay_Resume_Error(t *testing.T) {
 	assert.Equal(t, expectedErr, err)
 }
 
-// TestAgentBay_Resume_WithCustomParams tests AgentBay Resume method with custom parameters
-func TestAgentBay_Resume_WithCustomParams(t *testing.T) {
+// TestAgentBay_BetaResume_WithCustomParams tests AgentBay BetaResume method with custom parameters
+func TestAgentBay_BetaResume_WithCustomParams(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -180,10 +180,10 @@ func TestAgentBay_Resume_WithCustomParams(t *testing.T) {
 		Success: true,
 		Status:  "RUNNING",
 	}
-	mockAgentBay.EXPECT().Resume(testSession, 300, 1.5).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().BetaResume(testSession, 300, 1.5).Return(expectedResult, nil)
 
 	// Test Resume method call with custom parameters
-	result, err := mockAgentBay.Resume(testSession, 300, 1.5)
+	result, err := mockAgentBay.BetaResume(testSession, 300, 1.5)
 
 	// Verify call success
 	assert.NoError(t, err)
@@ -193,8 +193,8 @@ func TestAgentBay_Resume_WithCustomParams(t *testing.T) {
 	assert.Equal(t, "test-request-id-resume-agentbay-custom", result.RequestID)
 }
 
-// TestAgentBay_Pause_UnexpectedStateRunning tests Pause method with unexpected RUNNING state
-func TestAgentBay_Pause_UnexpectedStateRunning(t *testing.T) {
+// TestAgentBay_BetaPause_UnexpectedStateRunning tests BetaPause method with unexpected RUNNING state
+func TestAgentBay_BetaPause_UnexpectedStateRunning(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -214,10 +214,10 @@ func TestAgentBay_Pause_UnexpectedStateRunning(t *testing.T) {
 		ErrorMessage: "Session pause failed: unexpected state 'RUNNING'",
 		Status:       "RUNNING",
 	}
-	mockAgentBay.EXPECT().Pause(testSession, 600, 2.0).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().BetaPause(testSession, 600, 2.0).Return(expectedResult, nil)
 
 	// Test Pause method call
-	result, err := mockAgentBay.Pause(testSession, 600, 2.0)
+	result, err := mockAgentBay.BetaPause(testSession, 600, 2.0)
 
 	// Verify the result
 	assert.NoError(t, err)
@@ -249,10 +249,10 @@ func TestAgentBay_Pause_UnexpectedStateOther(t *testing.T) {
 		ErrorMessage: "Session pause failed: unexpected state 'OTHER'",
 		Status:       "OTHER",
 	}
-	mockAgentBay.EXPECT().Pause(testSession, 600, 2.0).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().BetaPause(testSession, 600, 2.0).Return(expectedResult, nil)
 
 	// Test Pause method call
-	result, err := mockAgentBay.Pause(testSession, 600, 2.0)
+	result, err := mockAgentBay.BetaPause(testSession, 600, 2.0)
 
 	// Verify the result
 	assert.NoError(t, err)
@@ -284,10 +284,10 @@ func TestAgentBay_Resume_UnexpectedStatePaused(t *testing.T) {
 		ErrorMessage: "Session resume failed: unexpected state 'PAUSED'",
 		Status:       "PAUSED",
 	}
-	mockAgentBay.EXPECT().Resume(testSession, 600, 2.0).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().BetaResume(testSession, 600, 2.0).Return(expectedResult, nil)
 
 	// Test Resume method call
-	result, err := mockAgentBay.Resume(testSession, 600, 2.0)
+	result, err := mockAgentBay.BetaResume(testSession, 600, 2.0)
 
 	// Verify the result
 	assert.NoError(t, err)
@@ -319,10 +319,10 @@ func TestAgentBay_Resume_UnexpectedStateUnknown(t *testing.T) {
 		ErrorMessage: "Session resume failed: unexpected state 'UNKNOWN'",
 		Status:       "UNKNOWN",
 	}
-	mockAgentBay.EXPECT().Resume(testSession, 600, 2.0).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().BetaResume(testSession, 600, 2.0).Return(expectedResult, nil)
 
 	// Test Resume method call
-	result, err := mockAgentBay.Resume(testSession, 600, 2.0)
+	result, err := mockAgentBay.BetaResume(testSession, 600, 2.0)
 
 	// Verify the result
 	assert.NoError(t, err)

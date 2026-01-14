@@ -1092,37 +1092,23 @@ class AgentBay:
             session=session,
         )
 
-    def pause(
+    def beta_pause(
         self, session: Session, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionPauseResult:
         """
-        Asynchronously pause a session, putting it into a dormant state.
-
-        This method internally calls the PauseSessionAsync API and then polls the GetSession API
-        to check the session status until it becomes PAUSED or until timeout.
-
-        Args:
-            session (AsyncSession): The session to pause.
-            timeout (int, optional): Timeout in seconds to wait for the session to pause.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionPauseResult: Result containing the request ID, success status, and final session status.
+        Asynchronously pause a session (beta), putting it into a dormant state.
         """
         try:
-            # Call session's pause method
-            return session.pause(timeout, poll_interval)
+            return session.beta_pause(timeout, poll_interval)
         except Exception as e:
-            _log_operation_error("pause_session", str(e), exc_info=True)
+            _log_operation_error("beta_pause_session", str(e), exc_info=True)
             return SessionPauseResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to pause session {session.session_id}: {e}",
             )
 
-    def pause_async(self, session: Session) -> SessionPauseResult:
+    def beta_pause_async(self, session: Session) -> SessionPauseResult:
         """
         Fire-and-return pause: trigger PauseSessionAsync without waiting for PAUSED.
 
@@ -1189,44 +1175,30 @@ class AgentBay:
             return SessionPauseResult(request_id=request_id, success=True)
 
         except Exception as e:
-            _log_operation_error("pause_session_async", str(e), exc_info=True)
+            _log_operation_error("beta_pause_session_async", str(e), exc_info=True)
             return SessionPauseResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to pause session {session.session_id}: {e}",
             )
 
-    def resume(
+    def beta_resume(
         self, session: Session, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionResumeResult:
         """
-        Asynchronously resume a session from a paused state.
-
-        This method internally calls the ResumeSessionAsync API and then polls the GetSession API
-        to check the session status until it becomes RUNNING or until timeout.
-
-        Args:
-            session (AsyncSession): The session to resume.
-            timeout (int, optional): Timeout in seconds to wait for the session to resume.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionResumeResult: Result containing the request ID, success status, and final session status.
+        Asynchronously resume a session (beta) from a paused state.
         """
         try:
-            # Call session's resume method
-            return session.resume(timeout, poll_interval)
+            return session.beta_resume(timeout, poll_interval)
         except Exception as e:
-            _log_operation_error("resume_session", str(e), exc_info=True)
+            _log_operation_error("beta_resume_session", str(e), exc_info=True)
             return SessionResumeResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to resume session {session.session_id}: {e}",
             )
 
-    def resume_async(self, session: Session) -> SessionResumeResult:
+    def beta_resume_async(self, session: Session) -> SessionResumeResult:
         """
         Fire-and-return resume: trigger ResumeSessionAsync without waiting for RUNNING.
 
@@ -1277,7 +1249,7 @@ class AgentBay:
             return SessionResumeResult(request_id=request_id, success=True)
 
         except Exception as e:
-            _log_operation_error("resume_session_async", str(e), exc_info=True)
+            _log_operation_error("beta_resume_session_async", str(e), exc_info=True)
             return SessionResumeResult(
                 request_id="",
                 success=False,

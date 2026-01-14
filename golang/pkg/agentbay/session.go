@@ -353,6 +353,19 @@ func (s *Session) GetHttpPortNumber() string {
 
 // CallMcpTool is a wrapper that converts the result to browser.McpToolResult
 func (s *Session) CallMcpToolForBrowser(toolName string, args interface{}) (*browser.McpToolResult, error) {
+	// stopChrome must be called with explicit server name.
+	if toolName == "stopChrome" {
+		result, err := s.CallMcpTool(toolName, args, "wuying_cdp_mcp_server")
+		if err != nil {
+			return nil, err
+		}
+		return &browser.McpToolResult{
+			Success:      result.Success,
+			Data:         result.Data,
+			ErrorMessage: result.ErrorMessage,
+		}, nil
+	}
+
 	result, err := s.CallMcpTool(toolName, args)
 	if err != nil {
 		return nil, err
@@ -1816,8 +1829,8 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 	return ""
 }
 
-// Pause synchronously pauses this session, putting it into a dormant state to reduce resource usage and costs.
-// Pause puts the session into a PAUSED state where computational resources are significantly reduced.
+// BetaPause synchronously pauses this session (beta), putting it into a dormant state to reduce resource usage and costs.
+// BetaPause puts the session into a PAUSED state where computational resources are significantly reduced.
 // The session state is preserved and can be resumed later to continue work.
 //
 // Parameters:
@@ -1845,8 +1858,8 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
 //	result, _ := client.Create(nil)
 //	defer result.Session.Delete()
-//	pauseResult, _ := result.Session.Pause(300, 2.0)
-func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
+//	pauseResult, _ := result.Session.BetaPause(300, 2.0)
+func (s *Session) BetaPause(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
 	// Set default values if not provided
 	if timeout <= 0 {
 		timeout = 600
@@ -1973,8 +1986,8 @@ func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPause
 	}, nil
 }
 
-// Resume synchronously resumes this session from a paused state to continue work.
-// Resume restores the session from PAUSED state back to RUNNING state.
+// BetaResume synchronously resumes this session (beta) from a paused state to continue work.
+// BetaResume restores the session from PAUSED state back to RUNNING state.
 // All previous session state and data are preserved during resume operation.
 //
 // Parameters:
@@ -2002,9 +2015,9 @@ func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPause
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
 //	result, _ := client.Create(nil)
 //	defer result.Session.Delete()
-//	result.Session.Pause(300, 2.0)
-//	resumeResult, _ := result.Session.Resume(300, 2.0)
-func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
+//	result.Session.BetaPause(300, 2.0)
+//	resumeResult, _ := result.Session.BetaResume(300, 2.0)
+func (s *Session) BetaResume(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
 	// Set default values if not provided
 	if timeout <= 0 {
 		timeout = 600

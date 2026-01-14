@@ -188,6 +188,28 @@ public class BaseService {
 
             try (Response response = httpClient.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
+                    String respBody = "";
+                    try {
+                        if (response.body() != null) {
+                            respBody = response.body().string();
+                        }
+                    } catch (Exception ignored) {
+                        respBody = "";
+                    }
+                    String masked = maskSensitiveDataString(respBody);
+                    masked = truncateStringForLog(masked, 2000);
+                    logApiResponseWithDetails(
+                        "CallMcpTool(LinkUrl) Response",
+                        requestId,
+                        false,
+                        mapOf(
+                            "http_status",
+                            response.code(),
+                            "tool_name",
+                            toolName
+                        ),
+                        masked
+                    );
                     return new OperationResult(requestId, false, "",
                         "HTTP request failed with code: " + response.code());
                 }
@@ -267,6 +289,145 @@ public class BaseService {
         } catch (Exception e) {
             return new OperationResult("", false, "", "Unexpected error: " + e.getMessage());
         }
+    }
+
+    protected void logApiResponseWithDetails(
+        String apiName,
+        String requestId,
+        boolean success,
+        Map<String, Object> keyFields,
+        String fullResponse
+    ) {
+        if (success) {
+            logger.info("✅ API Response: {}, RequestId={}", apiName, requestId);
+        } else {
+            logger.error("❌ API Response Failed: {}, RequestId={}", apiName, requestId);
+        }
+
+        if (keyFields != null) {
+            for (Map.Entry<String, Object> e : keyFields.entrySet()) {
+                if (success) {
+                    logger.info("   └─ {}={}", e.getKey(), e.getValue());
+                } else {
+                    logger.error("   └─ {}={}", e.getKey(), e.getValue());
+                }
+            }
+        }
+
+        if (fullResponse != null && !fullResponse.isEmpty()) {
+            if (success) {
+                logger.info("📥 Full Response: {}", fullResponse);
+            } else {
+                logger.error("📥 Response: {}", fullResponse);
+            }
+        }
+    }
+
+    private static Map<String, Object> mapOf(Object... kv) {
+        Map<String, Object> m = new HashMap<>();
+        if (kv == null) {
+            return m;
+        }
+        for (int i = 0; i + 1 < kv.length; i += 2) {
+            m.put(String.valueOf(kv[i]), kv[i + 1]);
+        }
+        return m;
+    }
+
+    private static String truncateStringForLog(String s, int max) {
+        if (s == null) {
+            return "";
+        }
+        if (max <= 0 || s.length() <= max) {
+            return s;
+        }
+        return s.substring(0, max) + "...(truncated)";
+    }
+
+    private static String maskSensitiveDataString(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        try {
+            Object parsed = objectMapper.readValue(value, Object.class);
+            Object masked = maskSensitiveObject(parsed);
+            return objectMapper.writeValueAsString(masked);
+        } catch (Exception ignored) {
+            String out = value;
+            String[] fields = new String[] {
+                "api_key", "apikey", "api-key",
+                "password", "passwd", "pwd",
+                "token", "access_token", "auth_token",
+                "secret", "private_key",
+                "authorization"
+            };
+            for (String f : fields) {
+                out = out.replaceAll(
+                    "(?i)(\"" + java.util.regex.Pattern.quote(f) + "\"\\s*:\\s*\")([^\"]*)(\")",
+                    "$1****$3"
+                );
+            }
+            return out;
+        }
+    }
+
+    private static Object maskSensitiveObject(Object obj) {
+        if (obj instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) obj;
+            Map<String, Object> out = new HashMap<>();
+            for (Map.Entry<?, ?> e : map.entrySet()) {
+                String key = String.valueOf(e.getKey());
+                Object val = e.getValue();
+                if (isSensitiveField(key)) {
+                    out.put(key, maskValue(val));
+                } else {
+                    out.put(key, maskSensitiveObject(val));
+                }
+            }
+            return out;
+        }
+        if (obj instanceof java.util.List) {
+            java.util.List<?> list = (java.util.List<?>) obj;
+            java.util.ArrayList<Object> out = new java.util.ArrayList<>(list.size());
+            for (Object item : list) {
+                out.add(maskSensitiveObject(item));
+            }
+            return out;
+        }
+        return obj;
+    }
+
+    private static boolean isSensitiveField(String fieldName) {
+        if (fieldName == null) {
+            return false;
+        }
+        String n = fieldName.toLowerCase();
+        return n.contains("api_key")
+            || n.contains("apikey")
+            || n.contains("api-key")
+            || n.contains("password")
+            || n.contains("passwd")
+            || n.contains("pwd")
+            || n.contains("token")
+            || n.contains("access_token")
+            || n.contains("auth_token")
+            || n.contains("secret")
+            || n.contains("private_key")
+            || n.contains("authorization");
+    }
+
+    private static Object maskValue(Object v) {
+        if (v == null) {
+            return "****";
+        }
+        if (v instanceof String) {
+            String s = (String) v;
+            if (s.length() > 4) {
+                return s.substring(0, 2) + "****" + s.substring(s.length() - 2);
+            }
+            return "****";
+        }
+        return "****";
     }
 
     /**

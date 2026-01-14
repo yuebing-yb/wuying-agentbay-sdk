@@ -20,6 +20,7 @@ import java.util.Map;
 public class Browser extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String SERVER_BROWSER_USE = "wuying_browseruse";
+    private static final String SERVER_CDP = "wuying_cdp_mcp_server";
 
     private String endpointUrl;
     private boolean initialized;
@@ -203,7 +204,7 @@ public class Browser extends BaseService {
         }
 
         try {
-            OperationResult result = callMcpTool("stopChrome", new HashMap<>(), SERVER_BROWSER_USE);
+            OperationResult result = callMcpTool("stopChrome", new HashMap<>(), SERVER_CDP);
             if (!result.isSuccess()) {
             }
         } catch (Exception e) {

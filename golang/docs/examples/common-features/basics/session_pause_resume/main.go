@@ -69,7 +69,7 @@ func main() {
 
 	// Pause the session to save resources
 	fmt.Println("\n3. Pausing the session...")
-	pauseResult, err := client.Pause(session, 300, 2.0) // 5 minute timeout, 2 second poll interval
+	pauseResult, err := client.BetaPause(session, 300, 2.0) // 5 minute timeout, 2 second poll interval
 	if err != nil {
 		log.Fatalf("Failed to pause session: %v", err)
 	}
@@ -106,7 +106,7 @@ func main() {
 
 	// Resume the session
 	fmt.Println("\n6. Resuming the session...")
-	resumeResult, err := client.Resume(session, 300, 2.0) // 5 minute timeout, 2 second poll interval
+	resumeResult, err := client.BetaResume(session, 300, 2.0) // 5 minute timeout, 2 second poll interval
 	if err != nil {
 		log.Fatalf("Failed to resume session: %v", err)
 	}

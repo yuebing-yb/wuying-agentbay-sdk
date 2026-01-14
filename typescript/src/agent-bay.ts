@@ -1151,8 +1151,8 @@ export class AgentBay {
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const session = (await agentBay.create()).session;
-   * const pauseResult = await agentBay.pauseAsync(session);
-   * await agentBay.resumeAsync(session);
+   * const pauseResult = await agentBay.betaPauseAsync(session);
+   * await agentBay.betaResumeAsync(session);
    * await session.delete();
    * ```
    *
@@ -1163,12 +1163,12 @@ export class AgentBay {
    * - The session state transitions from RUNNING -> PAUSING -> PAUSED
    * - Paused sessions consume fewer resources but maintain their state
    *
-   * @see {@link resumeAsync}, {@link Session.pauseAsync}
+   * @see {@link betaResumeAsync}, {@link Session.betaPauseAsync}
    */
-  async pauseAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionPauseResult> {
+  async betaPauseAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionPauseResult> {
     try {
       // Call session's pause_async method directly
-      return await session.pauseAsync(timeout, pollInterval);
+      return await session.betaPauseAsync(timeout, pollInterval);
     } catch (error) {
       logError("Error calling pause session async:", error);
       return {
@@ -1194,8 +1194,8 @@ export class AgentBay {
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const session = (await agentBay.create()).session;
-   * await agentBay.pauseAsync(session);
-   * const resumeResult = await agentBay.resumeAsync(session);
+   * await agentBay.betaPauseAsync(session);
+   * const resumeResult = await agentBay.betaResumeAsync(session);
    * await session.delete();
    * ```
    *
@@ -1206,12 +1206,12 @@ export class AgentBay {
    * - The session state transitions from PAUSED -> RESUMING -> RUNNING
    * - Only sessions in PAUSED state can be resumed
    *
-   * @see {@link pauseAsync}, {@link Session.resumeAsync}
+   * @see {@link betaPauseAsync}, {@link Session.betaResumeAsync}
    */
-  async resumeAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionResumeResult> {
+  async betaResumeAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionResumeResult> {
     try {
       // Call session's resume_async method directly
-      return await session.resumeAsync(timeout, pollInterval);
+      return await session.betaResumeAsync(timeout, pollInterval);
     } catch (error) {
       logError("Error calling resume session async:", error);
       return {

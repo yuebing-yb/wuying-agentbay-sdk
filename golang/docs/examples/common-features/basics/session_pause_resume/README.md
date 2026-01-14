@@ -1,10 +1,10 @@
-# Session Pause and Resume Example
+# Session BetaPause and BetaResume Example
 
-This example demonstrates how to use the `Pause` and `Resume` APIs to manage session lifecycle and reduce resource consumption.
+This example demonstrates how to use the `BetaPause` and `BetaResume` APIs to manage session lifecycle and reduce resource consumption.
 
 ## Description
 
-The pause/resume feature allows you to temporarily suspend a session to reduce computational resource usage and costs, and then restore it later to continue work. This is particularly useful for long-running sessions where work may be intermittent.
+The beta pause/resume feature allows you to temporarily suspend a session to reduce computational resource usage and costs, and then restore it later to continue work. This is particularly useful for long-running sessions where work may be intermittent.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ func main() {
     fmt.Printf("Command output: %s\n", commandResult.Output)
 
     // Pause the session to save resources
-    pauseResult, err := client.Pause(session, 300, 2.0)
+    pauseResult, err := client.BetaPause(session, 300, 2.0)
     if err != nil {
         log.Fatalf("Failed to pause session: %v", err)
     }
@@ -71,7 +71,7 @@ func main() {
     fmt.Printf("Session status: %s\n", getResult.Status)
 
     // Resume the session
-    resumeResult, err := client.Resume(session, 300, 2.0)
+    resumeResult, err := client.BetaResume(session, 300, 2.0)
     if err != nil {
         log.Fatalf("Failed to resume session: %v", err)
     }
@@ -88,10 +88,10 @@ func main() {
 
 ## API Reference
 
-### Pause
+### BetaPause
 
 ```go
-func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+func (ab *AgentBay) BetaPause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
 ```
 
 Synchronously pauses a session, putting it into a dormant state to reduce resource usage and costs.
@@ -109,10 +109,10 @@ Synchronously pauses a session, putting it into a dormant state to reduce resour
   - `Status` (string): Final session status
 - `error`: An error if a critical operation fails
 
-### Resume
+### BetaResume
 
 ```go
-func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+func (ab *AgentBay) BetaResume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
 ```
 
 Synchronously resumes a session from a paused state to continue work.
@@ -170,6 +170,6 @@ Session session-xxxxxxxxxxxxx deleted successfully
 
 - Sessions in PAUSED state consume significantly fewer resources
 - Operations on paused sessions will typically fail or wait until the session is resumed
-- Both Pause and Resume are synchronous operations that wait for the session to reach the target state
+- Both BetaPause and BetaResume are synchronous operations that wait for the session to reach the target state
 - Use appropriate timeout values based on your workload requirements
 - Always handle errors appropriately in production code

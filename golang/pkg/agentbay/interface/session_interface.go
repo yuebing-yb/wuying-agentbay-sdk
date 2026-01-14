@@ -49,9 +49,9 @@ type SessionInterface interface {
 	// HttpPort returns the HTTP port for VPC sessions
 	HttpPort() string
 
-	// Pause synchronously pauses this session
-	Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+	// BetaPause synchronously pauses this session (beta)
+	BetaPause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
 
-	// Resume synchronously resumes this session
-	Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+	// BetaResume synchronously resumes this session (beta)
+	BetaResume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
 }

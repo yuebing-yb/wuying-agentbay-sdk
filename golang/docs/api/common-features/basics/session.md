@@ -53,6 +53,84 @@ MobileUseAgent), we do not provide services for overseas users registered with *
 
 ### Methods
 
+### BetaPause
+
+```go
+func (s *Session) BetaPause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+BetaPause synchronously pauses this session (beta), putting it into a dormant state to reduce
+resource usage and costs. BetaPause puts the session into a PAUSED state where computational
+resources are significantly reduced. The session state is preserved and can be resumed later to
+continue work.
+
+Parameters:
+  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Initiates pause operation through the PauseSessionAsync API - Polls session status until PAUSED
+state or timeout - Returns detailed result with success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+pauseResult, _ := result.Session.BetaPause(300, 2.0)
+```
+
+### BetaResume
+
+```go
+func (s *Session) BetaResume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+BetaResume synchronously resumes this session (beta) from a paused state to continue work.
+BetaResume restores the session from PAUSED state back to RUNNING state. All previous session state
+and data are preserved during resume operation.
+
+Parameters:
+  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Initiates resume operation through the ResumeSessionAsync API - Polls session status until RUNNING
+state or timeout - Returns detailed result with success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.BetaPause(300, 2.0)
+resumeResult, _ := result.Session.BetaResume(300, 2.0)
+```
+
 ### Delete
 
 ```go
@@ -262,83 +340,6 @@ client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
 toolsResult, _ := result.Session.ListMcpTools()
-```
-
-### Pause
-
-```go
-func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
-```
-
-Pause synchronously pauses this session, putting it into a dormant state to reduce resource
-usage and costs. Pause puts the session into a PAUSED state where computational resources are
-significantly reduced. The session state is preserved and can be resumed later to continue work.
-
-Parameters:
-  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
-  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
-
-Returns:
-  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
-    any.
-  - error: Error if the operation fails at the transport level
-
-Behavior:
-
-- Initiates pause operation through the PauseSessionAsync API - Polls session status until PAUSED
-state or timeout - Returns detailed result with success status and request tracking
-
-Exceptions:
-
-- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
-result for timeout conditions - Returns Go error for transport-level failures
-
-**Example:**
-
-```go
-client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-result, _ := client.Create(nil)
-defer result.Session.Delete()
-pauseResult, _ := result.Session.Pause(300, 2.0)
-```
-
-### Resume
-
-```go
-func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
-```
-
-Resume synchronously resumes this session from a paused state to continue work. Resume restores the
-session from PAUSED state back to RUNNING state. All previous session state and data are preserved
-during resume operation.
-
-Parameters:
-  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
-  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
-
-Returns:
-  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
-    any.
-  - error: Error if the operation fails at the transport level
-
-Behavior:
-
-- Initiates resume operation through the ResumeSessionAsync API - Polls session status until RUNNING
-state or timeout - Returns detailed result with success status and request tracking
-
-Exceptions:
-
-- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
-result for timeout conditions - Returns Go error for transport-level failures
-
-**Example:**
-
-```go
-client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-result, _ := client.Create(nil)
-defer result.Session.Delete()
-result.Session.Pause(300, 2.0)
-resumeResult, _ := result.Session.Resume(300, 2.0)
 ```
 
 ### SetLabels

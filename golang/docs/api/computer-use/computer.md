@@ -34,6 +34,20 @@ Keyboard modifier keys: Ctrl, Alt, Shift, Win
 - Drag operation requires valid start and end coordinates
 - Screenshot operations may have size limitations
 
+## Type BetaScreenshotResult
+
+```go
+type BetaScreenshotResult struct {
+	models.ApiResponse
+	Success		bool
+	Data		[]byte
+	Format		string
+	ErrorMessage	string
+}
+```
+
+BetaScreenshotResult represents the result of a beta screenshot operation (binary image bytes).
+
 ## Type BoolResult
 
 ```go
@@ -88,6 +102,16 @@ defer result.Session.Delete()
 windowList, _ := result.Session.Computer.ListRootWindows()
 activateResult, _ := result.Session.Computer.ActivateWindow(windowList.Windows[0].WindowID)
 ```
+
+### BetaTakeScreenshot
+
+```go
+func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult
+```
+
+BetaTakeScreenshot captures the current screen and returns raw image bytes.
+
+Supported formats: - "png" - "jpeg" (or "jpg")
 
 ### ClickMouse
 

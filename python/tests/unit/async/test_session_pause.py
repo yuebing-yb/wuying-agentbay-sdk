@@ -58,8 +58,8 @@ class TestSessionPause(unittest.TestCase):
 
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
-            # Call the method (pause not pause_async for polling)
-            result = asyncio.run(self.session.pause(timeout=10, poll_interval=1))
+            # Call the method (beta_pause not beta_pause_async for polling)
+            result = asyncio.run(self.session.beta_pause(timeout=10, poll_interval=1))
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -111,7 +111,7 @@ class TestSessionPause(unittest.TestCase):
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
-            result = asyncio.run(self.session.pause(timeout=10, poll_interval=1))
+            result = asyncio.run(self.session.beta_pause(timeout=10, poll_interval=1))
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -152,7 +152,7 @@ class TestSessionPause(unittest.TestCase):
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method with a short timeout
-            result = asyncio.run(self.session.pause(timeout=2, poll_interval=1))
+            result = asyncio.run(self.session.beta_pause(timeout=2, poll_interval=1))
 
             # Verify the result
             # The implementation now returns failure on timeout
@@ -187,7 +187,7 @@ class TestSessionPause(unittest.TestCase):
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
-            result = asyncio.run(self.session.pause(timeout=2, poll_interval=1))
+            result = asyncio.run(self.session.beta_pause(timeout=2, poll_interval=1))
 
             # Verify the result
             # If _get_session fails (success=False), the loop continues (exception handling covers general exceptions, but logic checks result.success)
@@ -217,7 +217,7 @@ class TestSessionPause(unittest.TestCase):
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
-            result = asyncio.run(self.session.pause())
+            result = asyncio.run(self.session.beta_pause())
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -239,7 +239,7 @@ class TestSessionPause(unittest.TestCase):
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
-            result = asyncio.run(self.session.pause())
+            result = asyncio.run(self.session.beta_pause())
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -259,7 +259,7 @@ class TestSessionPause(unittest.TestCase):
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
-            result = asyncio.run(self.session.pause())
+            result = asyncio.run(self.session.beta_pause())
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -277,7 +277,7 @@ class TestSessionPause(unittest.TestCase):
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
-            result = asyncio.run(self.session.pause())
+            result = asyncio.run(self.session.beta_pause())
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -325,7 +325,7 @@ class TestSessionPause(unittest.TestCase):
         # Patch asyncio.sleep to avoid waiting
         with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             # Call the method
-            result = asyncio.run(self.session.pause(timeout=10, poll_interval=1))
+            result = asyncio.run(self.session.beta_pause(timeout=10, poll_interval=1))
 
             # Verify the result
             self.assertIsInstance(result, SessionPauseResult)
@@ -340,11 +340,11 @@ class TestSessionPause(unittest.TestCase):
     def test_pause_with_agent_bay_pause_method_session_exception(self):
         """Test AgentBay.pause method with session exception."""
         # Mock the session.pause to raise an exception
-        self.session.pause = MagicMock(side_effect=Exception("Session pause error"))
+        self.session.beta_pause = MagicMock(side_effect=Exception("Session pause error"))
 
         # Call the method with session object (AsyncAgentBay.pause is async)
         # We need to await it.
-        result = asyncio.run(self.agent_bay.pause(self.session))
+        result = asyncio.run(self.agent_bay.beta_pause(self.session))
 
         # Verify the result
         self.assertIsInstance(result, SessionPauseResult)

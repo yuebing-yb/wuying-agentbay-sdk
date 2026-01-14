@@ -1630,6 +1630,13 @@ export class Session {
     });
 
     if (!response.ok) {
+      let bodyText = "";
+      try {
+        bodyText = await response.text();
+      } catch {
+        bodyText = "";
+      }
+      const bodyPreview = bodyText.length > 2000 ? bodyText.slice(0, 2000) + "...(truncated)" : bodyText;
       logAPIResponseWithDetails(
         "CallMcpTool(LinkUrl) Response",
         requestId,
@@ -1638,7 +1645,7 @@ export class Session {
           http_status: response.status,
           tool_name: toolName,
         },
-        ""
+        bodyPreview
       );
       return {
         success: false,
@@ -1806,7 +1813,7 @@ export class Session {
   }
 
   /**
-   * Asynchronously pause this session, putting it into a dormant state.
+   * Asynchronously pause this session (beta), putting it into a dormant state.
    *
    * This method calls the PauseSessionAsync API to initiate the pause operation and then polls
    * the GetSession API to check the session status until it becomes PAUSED or until timeout is reached.
@@ -1828,7 +1835,7 @@ export class Session {
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const result = await agentBay.create();
    * if (result.success) {
-   *   const pauseResult = await result.session.pauseAsync();
+   *   const pauseResult = await result.session.betaPauseAsync();
    *   if (pauseResult.success) {
    *     console.log('Session paused successfully');
    *   }
@@ -1844,13 +1851,13 @@ export class Session {
    *
    * **Important Notes:**
    * - Paused sessions cannot perform operations (deletion, task execution, etc.)
-   * - Use {@link resumeAsync} to restore the session to RUNNING state
+   * - Use {@link betaResumeAsync} to restore the session to RUNNING state
    * - During pause, both resource usage and costs are lower
    * - If timeout is exceeded, returns with success=false
    *
-   * @see {@link resumeAsync}
+   * @see {@link betaResumeAsync}
    */
-  async pauseAsync(timeout = 600, pollInterval = 2.0): Promise<SessionPauseResult> {
+  async betaPauseAsync(timeout = 600, pollInterval = 2.0): Promise<SessionPauseResult> {
     try {
       const request = new $_client.PauseSessionAsyncRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -1981,7 +1988,7 @@ export class Session {
   }
 
   /**
-   * Asynchronously resume this session from a paused state.
+   * Asynchronously resume this session (beta) from a paused state.
    *
    * This method calls the ResumeSessionAsync API to initiate the resume operation and then polls
    * the GetSession API to check the session status until it becomes RUNNING or until timeout is reached.
@@ -2003,7 +2010,7 @@ export class Session {
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const result = await agentBay.get('paused_session_id');
    * if (result.success) {
-   *   const resumeResult = await result.session.resumeAsync();
+   *   const resumeResult = await result.session.betaResumeAsync();
    *   if (resumeResult.success) {
    *     console.log('Session resumed successfully');
    *   }
@@ -2020,12 +2027,12 @@ export class Session {
    * **Important Notes:**
    * - Only sessions in PAUSED state can be resumed
    * - After resume, the session can perform all operations normally
-   * - Use {@link pauseAsync} to put a session into PAUSED state
+   * - Use {@link betaPauseAsync} to put a session into PAUSED state
    * - If timeout is exceeded, returns with success=false
    *
-   * @see {@link pauseAsync}
+   * @see {@link betaPauseAsync}
    */
-  async resumeAsync(timeout = 600, pollInterval = 2.0): Promise<SessionResumeResult> {
+  async betaResumeAsync(timeout = 600, pollInterval = 2.0): Promise<SessionResumeResult> {
     try {
       const request = new $_client.ResumeSessionAsyncRequest({
         authorization: `Bearer ${this.getAPIKey()}`,

@@ -16,6 +16,7 @@ from loguru import logger
 # ANSI Color codes
 _COLOR_RESET = "\033[0m"
 _COLOR_GREEN = "\033[32m"
+_COLOR_RED = "\033[31m"
 _COLOR_BLUE = "\033[34m"
 _COLOR_CYAN = "\033[36m"
 
@@ -434,6 +435,36 @@ def _mask_sensitive_data(data: Any, fields: List[str] = None) -> Any:
         return data
 
 
+def _truncate_string_for_log(s: str, max_len: int) -> str:
+    if max_len <= 0 or len(s) <= max_len:
+        return s
+    return s[:max_len] + "...(truncated)"
+
+
+def _mask_sensitive_data_string(value: str) -> str:
+    try:
+        import json
+
+        parsed = json.loads(value)
+        masked = _mask_sensitive_data(parsed)
+        return json.dumps(masked, ensure_ascii=False)
+    except Exception:
+        import re
+
+        out = value
+        for field in _SENSITIVE_FIELDS:
+            pattern = re.compile(rf'("{re.escape(field)}"\s*:\s*")([^"]*)(")', re.IGNORECASE)
+
+            def _repl(m: re.Match) -> str:
+                v = m.group(2) or ""
+                if len(v) > 4:
+                    return f'{m.group(1)}{v[:2]}****{v[-2:]}{m.group(3)}'
+                return f'{m.group(1)}****{m.group(3)}'
+
+            out = pattern.sub(_repl, out)
+        return out
+
+
 def _is_sls_format() -> bool:
     """Check if logging should be in SLS/compact format."""
     return os.getenv("AGENTBAY_LOG_FORMAT", "pretty").lower() in ("sls", "compact")
@@ -494,7 +525,8 @@ def _log_api_response_with_details(
         
         if key_fields:
             for key, value in key_fields.items():
-                parts.append(f"{key}={value}")
+                masked_value = _mask_sensitive_data({key: value}).get(key)
+                parts.append(f"{key}={masked_value}")
         
         if parts:
             msg += ", " + ", ".join(parts)
@@ -505,6 +537,7 @@ def _log_api_response_with_details(
             log.opt(depth=1).error(msg)
             
         if full_response:
+             full_response = _truncate_string_for_log(_mask_sensitive_data_string(full_response), 2000)
              # In SLS format, full response might still be useful but maybe on same line or debug
              # Requirement says "all API Response logs on one line". 
              # Full response is usually large json, putting it on INFO line might be too much.
@@ -526,18 +559,25 @@ def _log_api_response_with_details(
             # Log key fields on separate lines for better readability
             if key_fields:
                 for key, value in key_fields.items():
+                    masked_value = _mask_sensitive_data({key: value}).get(key)
                     # Add green color to parameter lines
-                    param_line = f"{_COLOR_GREEN}  └─ {key}={value}{_COLOR_RESET}"
+                    param_line = f"{_COLOR_GREEN}  └─ {key}={masked_value}{_COLOR_RESET}"
                     log.opt(depth=1).info(param_line)
 
             if full_response:
-                log.opt(depth=1).debug(f"📥 Full Response: {full_response}")
+                masked = _truncate_string_for_log(_mask_sensitive_data_string(full_response), 2000)
+                log.opt(depth=1).debug(f"📥 Full Response: {masked}")
         else:
             log.opt(depth=1).error(
                 f"❌ API Response Failed: {api_name}, RequestId={request_id}"
             )
+            if key_fields:
+                for key, value in key_fields.items():
+                    masked_value = _mask_sensitive_data({key: value}).get(key)
+                    log.opt(depth=1).error(f"{_COLOR_RED}  └─ {key}={masked_value}{_COLOR_RESET}")
             if full_response:
-                log.opt(depth=1).error(f"📥 Response: {full_response}")
+                masked = _truncate_string_for_log(_mask_sensitive_data_string(full_response), 2000)
+                log.opt(depth=1).error(f"📥 Response: {masked}")
 
 
 def _log_code_execution_output(request_id: str, raw_output: str) -> None:

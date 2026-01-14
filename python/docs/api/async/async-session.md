@@ -221,38 +221,38 @@ Get runtime metrics for this session.
 The underlying service returns a JSON string. This method parses it and
 returns a structured result.
 
-### pause
+### beta_pause
 
 ```python
-async def pause(timeout: int = 600,
-                poll_interval: float = 2.0) -> SessionPauseResult
+async def beta_pause(timeout: int = 600,
+                     poll_interval: float = 2.0) -> SessionPauseResult
 ```
 
-Asynchronously pause this session, putting it into a dormant state.
+Asynchronously pause this session (beta), putting it into a dormant state.
 This method waits until the session enters the PAUSED state.
 
-### pause_async
+### beta_pause_async
 
 ```python
-async def pause_async() -> SessionPauseResult
+async def beta_pause_async() -> SessionPauseResult
 ```
 
 Asynchronously initiate the pause session operation without waiting for completion.
 
-### resume
+### beta_resume
 
 ```python
-async def resume(timeout: int = 600,
-                 poll_interval: float = 2.0) -> SessionResumeResult
+async def beta_resume(timeout: int = 600,
+                      poll_interval: float = 2.0) -> SessionResumeResult
 ```
 
-Asynchronously resume this session from a paused state.
+Asynchronously resume this session (beta) from a paused state.
 This method waits until the session enters the RUNNING state.
 
-### resume_async
+### beta_resume_async
 
 ```python
-async def resume_async() -> SessionResumeResult
+async def beta_resume_async() -> SessionResumeResult
 ```
 
 Asynchronously initiate the resume session operation without waiting for completion.

@@ -1178,8 +1178,8 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	}, nil
 }
 
-// Pause synchronously pauses a session, putting it into a dormant state to reduce resource usage and costs.
-// Pause puts the session into a PAUSED state where computational resources are significantly reduced.
+// BetaPause synchronously pauses a session (beta), putting it into a dormant state to reduce resource usage and costs.
+// BetaPause puts the session into a PAUSED state where computational resources are significantly reduced.
 // The session state is preserved and can be resumed later to continue work.
 //
 // Parameters:
@@ -1193,7 +1193,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 //
 // Behavior:
 //
-// - Delegates to session's Pause method for actual implementation
+// - Delegates to session's BetaPause method for actual implementation
 // - Returns detailed result with success status and request tracking
 //
 // Exceptions:
@@ -1207,9 +1207,9 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
 //	result, _ := client.Create(nil)
 //	defer result.Session.Delete()
-//	pauseResult, _ := client.Pause(result.Session, 300, 2.0)
-//	client.Resume(result.Session, 300, 2.0)
-func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
+//	pauseResult, _ := client.BetaPause(result.Session, 300, 2.0)
+//	client.BetaResume(result.Session, 300, 2.0)
+func (ab *AgentBay) BetaPause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
 	// Use default values if not provided
 	if timeout <= 0 {
 		timeout = 600
@@ -1218,12 +1218,12 @@ func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (
 		pollInterval = 2.0
 	}
 
-	// Call session's Pause method with provided parameters
-	return session.Pause(timeout, pollInterval)
+	// Call session's BetaPause method with provided parameters
+	return session.BetaPause(timeout, pollInterval)
 }
 
-// Resume synchronously resumes a session from a paused state to continue work.
-// Resume restores the session from PAUSED state back to RUNNING state.
+// BetaResume synchronously resumes a session (beta) from a paused state to continue work.
+// BetaResume restores the session from PAUSED state back to RUNNING state.
 // All previous session state and data are preserved during resume operation.
 //
 // Parameters:
@@ -1237,7 +1237,7 @@ func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (
 //
 // Behavior:
 //
-// - Delegates to session's Resume method for actual implementation
+// - Delegates to session's BetaResume method for actual implementation
 // - Returns detailed result with success status and request tracking
 //
 // Exceptions:
@@ -1251,9 +1251,9 @@ func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
 //	result, _ := client.Create(nil)
 //	defer result.Session.Delete()
-//	client.Pause(result.Session, 300, 2.0)
-//	resumeResult, _ := client.Resume(result.Session, 300, 2.0)
-func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
+//	client.BetaPause(result.Session, 300, 2.0)
+//	resumeResult, _ := client.BetaResume(result.Session, 300, 2.0)
+func (ab *AgentBay) BetaResume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
 	// Use default values if not provided
 	if timeout <= 0 {
 		timeout = 600
@@ -1262,8 +1262,8 @@ func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) 
 		pollInterval = 2.0
 	}
 
-	// Call session's Resume method with provided parameters
-	return session.Resume(timeout, pollInterval)
+	// Call session's BetaResume method with provided parameters
+	return session.BetaResume(timeout, pollInterval)
 }
 
 // GetRegionID returns the region ID from config

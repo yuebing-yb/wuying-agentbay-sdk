@@ -134,13 +134,13 @@ func (m *MockSessionForCompliance) CallMcpTool(toolName string, args interface{}
 		RequestID:    "",
 	}, nil
 }
-func (m *MockSessionForCompliance) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
+func (m *MockSessionForCompliance) BetaPause(timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
 	return &models.SessionPauseResult{
 		ApiResponse: models.ApiResponse{RequestID: ""},
 		Success:     true,
 	}, nil
 }
-func (m *MockSessionForCompliance) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
+func (m *MockSessionForCompliance) BetaResume(timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
 	return &models.SessionResumeResult{
 		ApiResponse: models.ApiResponse{RequestID: ""},
 		Success:     true,

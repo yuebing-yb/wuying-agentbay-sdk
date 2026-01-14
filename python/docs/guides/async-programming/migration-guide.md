@@ -110,8 +110,8 @@ This section lists common renames. It is not an exhaustive list of all methods.
 ### Core Session Methods
 ```python
 # v0.12.x → v0.13.0+
-pause_async() → pause()
-resume_async() → resume()
+pause_async() → beta_pause()
+resume_async() → beta_resume()
 get_link_async() → get_link()
 ```
 

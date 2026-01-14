@@ -332,6 +332,58 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         call_kwargs = mock_client_instance.post.call_args[1]
         self.assertEqual(call_kwargs["json"]["server"], "wuying_shell")
 
+    @patch("agentbay._sync.session._log_api_response_with_details")
+    @patch("httpx.Client")
+    @pytest.mark.sync
+    def test_call_mcp_tool_link_url_non_2xx_logs_body(
+        self, mock_httpx_client, mock_log_api_response_with_details
+    ):
+        """Test LinkUrl mode logs response body on non-2xx."""
+        import httpx
+
+        self.session.link_url = "http://127.0.0.1:9999/"
+        self.session.token = "link_token_123"
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 502
+        mock_resp.text = '{"code":"BadGateway","message":"upstream","token":"tok_123456"}'
+
+        req = httpx.Request("POST", "http://127.0.0.1:9999/callTool")
+        real_resp = httpx.Response(status_code=502, request=req, text=mock_resp.text)
+        mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "error", request=req, response=real_resp
+        )
+
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__enter__ = MagicMock(
+            return_value=mock_client_instance
+        )
+        mock_httpx_client.return_value.__exit__ = MagicMock(return_value=None)
+        mock_client_instance.post = MagicMock(return_value=mock_resp)
+
+        result = self.session.call_mcp_tool(
+            "shell",
+            {"command": "echo hello"},
+            server_name="wuying_shell",
+        )
+
+        self.assertFalse(result.success)
+        self.assertNotEqual(result.request_id, "")
+        mock_log_api_response_with_details.assert_called()
+        called_kwargs = mock_log_api_response_with_details.call_args.kwargs
+        self.assertEqual(
+            called_kwargs.get("api_name"), "CallMcpTool(LinkUrl) Response"
+        )
+        self.assertFalse(called_kwargs.get("success"))
+        self.assertEqual(called_kwargs.get("request_id"), result.request_id)
+        self.assertEqual(
+            called_kwargs.get("key_fields", {}).get("http_status"), 502
+        )
+        self.assertEqual(
+            called_kwargs.get("key_fields", {}).get("tool_name"), "shell"
+        )
+        self.assertIn("BadGateway", called_kwargs.get("full_response", ""))
+
     @patch("agentbay._sync.session._log_operation_error")
     @patch("httpx.Client")
     @pytest.mark.sync
