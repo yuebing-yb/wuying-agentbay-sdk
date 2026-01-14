@@ -94,17 +94,6 @@ if __name__ == "__main__":
     main()
 ```
 
-## Best Practices
-
-- Prefer a single `linux_latest` session for small end-to-end workflows (UI + web + code).
-- Always `session.delete()` in a `finally` block to avoid leaking resources.
-- Keep browser tasks simple (e.g., navigate + screenshot) if you only need quick verification or lightweight automation.
-
-## Troubleshooting
-
-- **Browser operations fail**: Ensure the session is created successfully and call `session.browser.initialize(...)` before using `session.browser.agent`.
-- **`run_code` fails**: Confirm your session is `linux_latest` and check `result.error_message` for details.
-
 ## Related Resources
 
 - [Code Execution](../../codespace/code-execution.md)

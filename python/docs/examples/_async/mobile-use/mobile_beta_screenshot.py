@@ -24,7 +24,7 @@ async def main() -> None:
     agent_bay = AsyncAgentBay(api_key=api_key)
     session = None
     try:
-        result = await agent_bay.create(CreateSessionParams(image_id="imgc-0ab5takhnlaixj11v"))
+        result = await agent_bay.create(CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp"))
         if not result.success or not result.session:
             raise RuntimeError(f"Failed to create session: {result.error_message}")
         session = result.session

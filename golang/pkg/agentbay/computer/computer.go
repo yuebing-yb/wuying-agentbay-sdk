@@ -1,8 +1,11 @@
 package computer
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
@@ -89,6 +92,15 @@ type ScreenshotResult struct {
 	models.ApiResponse
 	Data         string `json:"data"`
 	ErrorMessage string `json:"error_message"`
+}
+
+// BetaScreenshotResult represents the result of a beta screenshot operation (binary image bytes).
+type BetaScreenshotResult struct {
+	models.ApiResponse
+	Success      bool
+	Data         []byte
+	Format       string
+	ErrorMessage string
 }
 
 // BoolResult represents a boolean operation result
@@ -565,6 +577,126 @@ func (c *Computer) Screenshot() *ScreenshotResult {
 		},
 		Data:         result.Data,
 		ErrorMessage: result.ErrorMessage,
+	}
+}
+
+var (
+	pngMagic  = []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	jpegMagic = []byte{0xff, 0xd8, 0xff}
+)
+
+func normalizeImageFormat(format string, defaultValue string) string {
+	f := strings.TrimSpace(strings.ToLower(format))
+	if f == "" {
+		return defaultValue
+	}
+	if f == "jpg" {
+		return "jpeg"
+	}
+	return f
+}
+
+func decodeBase64ImageFromJSON(text string, expectedFormat string) ([]byte, string, error) {
+	s := strings.TrimSpace(text)
+	if s == "" {
+		return nil, expectedFormat, fmt.Errorf("empty image data")
+	}
+	if !strings.HasPrefix(s, "{") {
+		return nil, expectedFormat, fmt.Errorf("screenshot tool returned non-JSON data")
+	}
+
+	type screenshotJSON struct {
+		Data string `json:"data"`
+	}
+	var payload screenshotJSON
+	if err := json.Unmarshal([]byte(s), &payload); err != nil {
+		return nil, expectedFormat, fmt.Errorf("invalid screenshot JSON: %w", err)
+	}
+	b64 := strings.TrimSpace(payload.Data)
+	if b64 == "" {
+		return nil, expectedFormat, fmt.Errorf("screenshot JSON missing base64 field")
+	}
+
+	b, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return nil, expectedFormat, err
+	}
+
+	exp := normalizeImageFormat(expectedFormat, expectedFormat)
+	if exp == "png" {
+		if !bytes.HasPrefix(b, pngMagic) {
+			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+		}
+		return b, "png", nil
+	}
+	if exp == "jpeg" {
+		if !bytes.HasPrefix(b, jpegMagic) {
+			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+		}
+		return b, "jpeg", nil
+	}
+	return nil, expectedFormat, fmt.Errorf("unsupported format: %s", expectedFormat)
+}
+
+// BetaTakeScreenshot captures the current screen and returns raw image bytes.
+//
+// Supported formats:
+// - "png"
+// - "jpeg" (or "jpg")
+func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
+	fmtNorm := "png"
+	if len(format) > 0 {
+		fmtNorm = normalizeImageFormat(format[0], "png")
+	}
+	if fmtNorm != "png" && fmtNorm != "jpeg" {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       "",
+			ErrorMessage: "unsupported format: supported values: png, jpeg",
+		}
+	}
+
+	args := map[string]interface{}{
+		"format": fmtNorm,
+	}
+	result, err := c.Session.CallMcpTool("screenshot", args, "wuying_capture")
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       fmtNorm,
+			ErrorMessage: fmt.Sprintf("failed to call screenshot: %v", err),
+		}
+	}
+	if !result.Success {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       fmtNorm,
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	img, fmtDetected, err := decodeBase64ImageFromJSON(result.Data, fmtNorm)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       fmtNorm,
+			ErrorMessage: fmt.Sprintf("failed to decode screenshot data: %v", err),
+		}
+	}
+	return &BetaScreenshotResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      true,
+		Data:         img,
+		Format:       fmtDetected,
+		ErrorMessage: "",
 	}
 }
 

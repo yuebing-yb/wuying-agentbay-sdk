@@ -751,23 +751,28 @@ class AsyncComputer(AsyncBaseService):
             raise AgentBayError("Screenshot tool returned empty data")
 
         text = result.data.strip()
-        if text.startswith("{") or text.startswith("["):
-            raise AgentBayError("Unexpected JSON image data")
+        # Backend contract: screenshot tool returns a JSON object string with
+        # top-level field "data" containing base64.
+        #
+        # Observed backend payload (real integration run, 2026-01-14):
+        # - json_top_keys: ['data', 'height', 'mime_type', 'type', 'width']
+        # - data_prefix_80:
+        #   '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwg'
+        if not text.startswith("{"):
+            raise AgentBayError("Screenshot tool returned non-JSON data")
 
-        if text.startswith("data:image/"):
-            comma = text.find(",")
-            if comma < 0:
-                raise AgentBayError("Invalid data URL: missing comma")
-            text = text[comma + 1 :]
-        elif "base64," in text:
-            text = text.split("base64,", 1)[1]
-
-        text = "".join(text.split())
-        pad = (-len(text)) % 4
-        if pad:
-            text = text + ("=" * pad)
         try:
-            raw = base64.b64decode(text, validate=True)
+            obj = json.loads(text)
+        except Exception as e:
+            raise AgentBayError(f"Invalid screenshot JSON: {e}") from e
+
+        if not isinstance(obj, dict):
+            raise AgentBayError("Invalid screenshot JSON: expected object")
+        b64 = obj.get("data")
+        if not isinstance(b64, str) or not b64.strip():
+            raise AgentBayError("Screenshot JSON missing base64 field")
+        try:
+            raw = base64.b64decode(b64, validate=True)
         except Exception as e:
             raise AgentBayError(f"Failed to decode screenshot data: {e}") from e
 
@@ -776,11 +781,7 @@ class AsyncComputer(AsyncBaseService):
         else:
             magic = b"\x89PNG\r\n\x1a\n"
         if not raw.startswith(magic):
-            idx = raw.find(magic, 0, 64)
-            if idx > 0:
-                raw = raw[idx:]
-            else:
-                raise AgentBayError(f"Screenshot data does not match expected format '{fmt}'")
+            raise AgentBayError(f"Screenshot data does not match expected format '{fmt}'")
 
         return ScreenshotResult(
             request_id=result.request_id,

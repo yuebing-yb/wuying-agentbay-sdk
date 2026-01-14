@@ -12,6 +12,11 @@ export interface ScreenshotResult extends OperationResult {
   data: string; // Screenshot URL
 }
 
+export interface BetaScreenshotResult extends OperationResult {
+  data: Uint8Array;
+  format: string;
+}
+
 export enum MouseButton {
   LEFT = 'left',
   RIGHT = 'right',
@@ -46,6 +51,94 @@ export class Computer {
 
   constructor(session: ComputerSession) {
     this.session = session;
+  }
+
+  private static normalizeImageFormat(format: string, defaultValue: string): string {
+    const f = String(format || "").trim().toLowerCase();
+    if (!f) {
+      return defaultValue;
+    }
+    if (f === "jpg") {
+      return "jpeg";
+    }
+    return f;
+  }
+
+  private static validateBase64String(base64String: string): void {
+    const s = String(base64String || "");
+    if (!s) {
+      throw new Error("Empty base64 string");
+    }
+    if (s.length % 4 !== 0) {
+      throw new Error("Invalid base64 string length");
+    }
+    const base64WithoutPadding = s.replace(/=+$/, "");
+    if (!/^[A-Za-z0-9+/]+$/.test(base64WithoutPadding)) {
+      throw new Error("Invalid base64 string format");
+    }
+    const paddingMatch = s.match(/=+$/);
+    if (paddingMatch && paddingMatch[0].length > 2) {
+      throw new Error("Invalid base64 padding format");
+    }
+  }
+
+  private static decodeScreenshotJsonToBytesStrict(jsonText: string, expectedFormat: string): Uint8Array {
+    const s = String(jsonText || "").trim();
+    if (!s) {
+      throw new Error("Empty image data");
+    }
+    if (!s.startsWith("{")) {
+      throw new Error("Screenshot tool returned non-JSON data");
+    }
+
+    let obj: any;
+    try {
+      obj = JSON.parse(s);
+    } catch (e) {
+      throw new Error(`Invalid screenshot JSON: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+      throw new Error("Invalid screenshot JSON: expected object");
+    }
+
+    const b64 = obj.data;
+    if (typeof b64 !== "string" || !b64.trim()) {
+      throw new Error("Screenshot JSON missing base64 field");
+    }
+    Computer.validateBase64String(b64);
+
+    let bytes: Uint8Array;
+    if (typeof Buffer !== "undefined") {
+      bytes = new Uint8Array(Buffer.from(b64, "base64"));
+    } else {
+      const binary = atob(b64);
+      const out = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        out[i] = binary.charCodeAt(i);
+      }
+      bytes = out;
+    }
+
+    const fmt = Computer.normalizeImageFormat(expectedFormat, "png");
+    if (fmt === "png") {
+      const pngMagic = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      for (let i = 0; i < pngMagic.length; i++) {
+        if (bytes[i] !== pngMagic[i]) {
+          throw new Error("Screenshot data does not match expected format 'png'");
+        }
+      }
+      return bytes;
+    }
+    if (fmt === "jpeg") {
+      const jpgMagic = new Uint8Array([0xff, 0xd8, 0xff]);
+      for (let i = 0; i < jpgMagic.length; i++) {
+        if (bytes[i] !== jpgMagic[i]) {
+          throw new Error("Screenshot data does not match expected format 'jpeg'");
+        }
+      }
+      return bytes;
+    }
+    throw new Error(`Unsupported format: ${JSON.stringify(expectedFormat)}`);
   }
 
   /**
@@ -530,6 +623,57 @@ export class Computer {
         requestId: '',
         errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
         data: ''
+      };
+    }
+  }
+
+  /**
+   * Capture the current screen and return raw image bytes (beta).
+   *
+   * This API uses the MCP tool `screenshot` (wuying_capture) and expects the backend to return
+   * a JSON string with top-level field `data` containing base64.
+   *
+   * @param format - Output image format ("png", "jpeg", or "jpg"). Default is "png"
+   */
+  async betaTakeScreenshot(format: string = "png"): Promise<BetaScreenshotResult> {
+    const fmt = Computer.normalizeImageFormat(format, "png");
+    if (fmt !== "png" && fmt !== "jpeg") {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
+        data: new Uint8Array(),
+        format: fmt,
+      };
+    }
+
+    try {
+      const result = await this.session.callMcpTool("screenshot", { format: fmt }, false, "wuying_capture");
+      const requestId = result.requestId || "";
+      if (!result.success) {
+        return {
+          success: false,
+          requestId,
+          errorMessage: result.errorMessage || "Failed to take screenshot",
+          data: new Uint8Array(),
+          format: fmt,
+        };
+      }
+      const bytes = Computer.decodeScreenshotJsonToBytesStrict(String(result.data || ""), fmt);
+      return {
+        success: true,
+        requestId,
+        errorMessage: "",
+        data: bytes,
+        format: fmt,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
+        data: new Uint8Array(),
+        format: fmt,
       };
     }
   }

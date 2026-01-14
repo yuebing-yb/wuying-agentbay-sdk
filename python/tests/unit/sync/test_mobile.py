@@ -445,12 +445,21 @@ class TestMobile:
     def test_beta_take_screenshot_success_png(self):
         """Test beta_take_screenshot returns PNG bytes."""
         import base64
+        import json
 
         png = b"\x89PNG\r\n\x1a\n" + b"payload"
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "req-1"
-        mock_result.data = base64.b64encode(png).decode("ascii")
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/png",
+                "width": 720,
+                "height": 1280,
+                "data": base64.b64encode(png).decode("ascii"),
+            }
+        )
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         result = self.mobile.beta_take_screenshot()
@@ -465,20 +474,18 @@ class TestMobile:
         )
 
     @pytest.mark.sync
-    def test_beta_take_screenshot_rejects_json_payload(self):
-        """Test beta_take_screenshot rejects JSON payloads."""
+    def test_beta_take_screenshot_non_json_payload_raises(self):
+        """Test beta_take_screenshot rejects non-JSON payloads."""
         import base64
-        import json
 
         png = b"\x89PNG\r\n\x1a\n" + b"payload"
-        b64 = base64.b64encode(png).decode("ascii")
         mock_result = Mock()
         mock_result.success = True
-        mock_result.request_id = "req-json-1"
-        mock_result.data = json.dumps({"content": [{"blob": b64}]})
+        mock_result.request_id = "req-non-json-1"
+        mock_result.data = base64.b64encode(png).decode("ascii")
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
-        with pytest.raises(AgentBayError, match="Unexpected JSON image data"):
+        with pytest.raises(AgentBayError, match="non-JSON"):
             self.mobile.beta_take_screenshot()
 
     @pytest.mark.sync
@@ -493,12 +500,21 @@ class TestMobile:
     def test_beta_take_long_screenshot_success_png(self):
         """Test beta_take_long_screenshot returns PNG bytes."""
         import base64
+        import json
 
         png = b"\x89PNG\r\n\x1a\n" + b"longpayload"
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "req-2"
-        mock_result.data = base64.b64encode(png).decode("ascii")
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/png",
+                "width": 720,
+                "height": 1280,
+                "data": base64.b64encode(png).decode("ascii"),
+            }
+        )
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         result = self.mobile.beta_take_long_screenshot(max_screens=4, format="png")
@@ -522,12 +538,21 @@ class TestMobile:
     def test_beta_take_long_screenshot_accepts_jpeg_format(self):
         """Test beta_take_long_screenshot accepts jpeg format and passes args through."""
         import base64
+        import json
 
         jpg = b"\xff\xd8\xff" + b"jpegpayload"
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "req-3"
-        mock_result.data = base64.b64encode(jpg).decode("ascii")
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/jpeg",
+                "width": 720,
+                "height": 1280,
+                "data": base64.b64encode(jpg).decode("ascii"),
+            }
+        )
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         result = self.mobile.beta_take_long_screenshot(max_screens=2, format="jpeg", quality=80)

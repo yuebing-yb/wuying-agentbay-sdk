@@ -265,6 +265,58 @@ describe('Computer', () => {
   });
 
   describe('Screen Operations', () => {
+    test('betaTakeScreenshot should call MCP tool and return JPEG bytes', async () => {
+      // Arrange
+      const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
+      const payload = Buffer.concat([jpgHeader, Buffer.from('jpegpayload')]).toString('base64');
+      const mockResult = {
+        success: true,
+        requestId: 'test-beta-jpg-123',
+        data: JSON.stringify({
+          type: "image",
+          mime_type: "image/jpeg",
+          width: 1280,
+          height: 720,
+          data: payload,
+        }),
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await computer.betaTakeScreenshot('jpg');
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'jpeg' }, false, 'wuying_capture');
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe('test-beta-jpg-123');
+      expect(result.format).toBe('jpeg');
+      expect(Buffer.from(result.data).slice(0, 3).equals(jpgHeader)).toBe(true);
+    });
+
+    test('betaTakeScreenshot should reject non-JSON payloads', async () => {
+      // Arrange
+      const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
+      const payload = Buffer.concat([jpgHeader, Buffer.from('jpegpayload')]).toString('base64');
+      const mockResult = {
+        success: true,
+        requestId: 'test-beta-non-json-123',
+        data: payload,
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await computer.betaTakeScreenshot('jpeg');
+
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain('non-JSON');
+      expect(result.data.length).toBe(0);
+    });
+  });
+
+  describe('Screen Operations', () => {
     test('getCursorPosition should call MCP tool and return position', async () => {
       // Arrange
       const mockResult = {

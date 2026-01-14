@@ -23,7 +23,7 @@ func main() {
 	}
 
 	sessionResult, err := client.Create(&agentbay.CreateSessionParams{
-		ImageId: "imgc-0ab5takhnlaixj11v",
+		ImageId: "imgc-0ab5takhnmlvhx9gp",
 	})
 	if err != nil || sessionResult == nil || sessionResult.Session == nil {
 		fmt.Printf("Failed to create session: %v\n", err)
@@ -86,4 +86,3 @@ func main() {
 	}
 	fmt.Printf("Saved %s (%d bytes)\n", p2, len(s2.Data))
 }
-

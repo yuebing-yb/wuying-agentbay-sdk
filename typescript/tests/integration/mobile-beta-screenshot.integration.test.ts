@@ -23,7 +23,7 @@ describe("Mobile beta screenshot integration tests", () => {
       return;
     }
 
-    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5takhnlaixj11v" });
+    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5takhnmlvhx9gp" });
     expect(sessionResult.session).toBeDefined();
     const session = sessionResult.session!;
 
@@ -57,7 +57,7 @@ describe("Mobile beta screenshot integration tests", () => {
       return;
     }
 
-    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5takhnlaixj11v" });
+    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5takhnmlvhx9gp" });
     expect(sessionResult.session).toBeDefined();
     const session = sessionResult.session!;
 

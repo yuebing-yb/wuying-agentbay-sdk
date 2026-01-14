@@ -311,7 +311,13 @@ describe('Mobile', () => {
       const mockResult = {
         success: true,
         requestId: 'test-beta-123',
-        data: payload,
+        data: JSON.stringify({
+          type: "image",
+          mime_type: "image/png",
+          width: 720,
+          height: 1280,
+          data: payload,
+        }),
         errorMessage: '',
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
@@ -327,11 +333,17 @@ describe('Mobile', () => {
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
     });
 
-    test('betaTakeScreenshot should reject JSON payloads', async () => {
+    test('betaTakeScreenshot should accept JSON payloads', async () => {
       // Arrange
       const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
       const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
-      const jsonPayload = JSON.stringify({ content: [{ blob: payload }] });
+      const jsonPayload = JSON.stringify({
+        type: "image",
+        mime_type: "image/png",
+        width: 720,
+        height: 1280,
+        data: payload,
+      });
       const mockResult = {
         success: true,
         requestId: 'test-beta-json-123',
@@ -344,8 +356,30 @@ describe('Mobile', () => {
       const result = await mobile.betaTakeScreenshot();
 
       // Assert
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe('test-beta-json-123');
+      expect(result.format).toBe('png');
+      expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
+    });
+
+    test('betaTakeScreenshot should reject non-JSON payloads', async () => {
+      // Arrange
+      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
+      const mockResult = {
+        success: true,
+        requestId: 'test-beta-non-json-123',
+        data: payload,
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await mobile.betaTakeScreenshot();
+
+      // Assert
       expect(result.success).toBe(false);
-      expect(result.errorMessage).toContain('Unexpected JSON image data');
+      expect(result.errorMessage).toContain('non-JSON');
       expect(result.data.length).toBe(0);
     });
 
@@ -368,7 +402,13 @@ describe('Mobile', () => {
       const mockResult = {
         success: true,
         requestId: 'test-long-123',
-        data: payload,
+        data: JSON.stringify({
+          type: "image",
+          mime_type: "image/png",
+          width: 720,
+          height: 1280,
+          data: payload,
+        }),
         errorMessage: '',
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);

@@ -1137,37 +1137,24 @@ public class Mobile extends BaseService {
         if (s.isEmpty()) {
             throw new IllegalArgumentException("Empty image data");
         }
-        // The screenshot tool returns a base64 string (or a data URL). We do not
-        // attempt to parse arbitrary JSON payloads here.
-        if (s.startsWith("{") || s.startsWith("[")) {
-            throw new IllegalArgumentException("Unexpected JSON image data");
-        }
 
-        String lower = s.toLowerCase();
-        String formatHint = "";
-        if (lower.startsWith("data:image/")) {
-            int base64Idx = lower.indexOf("base64,");
-            if (base64Idx < 0) {
-                throw new IllegalArgumentException("Invalid data URL: missing base64 marker");
-            }
-            String header = lower.substring("data:image/".length(), base64Idx);
-            int semi = header.indexOf(";");
-            String mime = (semi >= 0 ? header.substring(0, semi) : header).trim();
-            if ("png".equals(mime)) {
-                formatHint = "png";
-            } else if ("jpeg".equals(mime) || "jpg".equals(mime)) {
-                formatHint = "jpeg";
-            }
+        // Backend contract: screenshot tool returns a JSON object string with
+        // top-level field "data" containing base64.
+        if (!s.startsWith("{")) {
+            throw new IllegalArgumentException("Screenshot tool returned non-JSON data");
         }
-
-        int idx = lower.indexOf("base64,");
-        if (idx >= 0) {
-            s = s.substring(idx + "base64,".length()).trim();
-        }
-        s = s.replace("\n", "").replace("\r", "").replace("\t", "").replace(" ", "");
-        int mod = s.length() % 4;
-        if (mod != 0) {
-            s = s + "====".substring(mod);
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> obj = objectMapper.readValue(s, Map.class);
+            Object b64Obj = obj.get("data");
+            if (!(b64Obj instanceof String) || ((String) b64Obj).trim().isEmpty()) {
+                throw new IllegalArgumentException("Screenshot JSON missing base64 field");
+            }
+            s = ((String) b64Obj).trim();
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid screenshot JSON: " + e.getMessage(), e);
         }
 
         byte[] decoded = Base64.getDecoder().decode(s);
@@ -1177,8 +1164,6 @@ public class Mobile extends BaseService {
             fmt = "png";
         } else if (startsWith(decoded, JPEG_MAGIC)) {
             fmt = "jpeg";
-        } else if (!formatHint.isEmpty()) {
-            fmt = formatHint;
         }
         return new DecodedImage(decoded, fmt);
     }

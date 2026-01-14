@@ -832,33 +832,52 @@ class AsyncMobile(AsyncBaseService):
         Decode image bytes from MCP tool text output.
 
         Supports:
-        - plain base64
-        - data URL
+        - backend JSON string containing base64 in the top-level "data" field
         """
         if not isinstance(text, str) or not text.strip():
             raise AgentBayError("Screenshot tool returned empty data")
 
+        # Step 0: raw text from backend (string).
+        #
+        # Observed backend payload (real integration run, 2026-01-14):
+        # - text_prefix_120:
+        #   '{"data":"iVBORw0KGgoAAAANSUhEUgAAAtAAAAUACAYAAABuzmU9AAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZIgAACAASURBVHic7N1neFRFw8bxe7P'
+        # - top-level keys: ['data', 'height', 'mime_type', 'type', 'width']
+        # - data_len: 90477
         s = text.strip()
-        if s.startswith("{") or s.startswith("["):
-            raise AgentBayError("Unexpected JSON image data")
 
-        if s.startswith("data:image/"):
-            comma = s.find(",")
-            if comma < 0:
-                raise AgentBayError("Invalid data URL: missing comma")
-            s = s[comma + 1 :]
-        elif "base64," in s:
-            s = s.split("base64,", 1)[1]
+        # Step 1: strict JSON-only decoding.
+        #
+        # Contract: backend must return a JSON object string with a top-level "data" field.
+        if not s.startswith("{"):
+            raise AgentBayError("Screenshot tool returned non-JSON data")
 
-        s = "".join(s.split())
-        pad = (-len(s)) % 4
-        if pad:
-            s = s + ("=" * pad)
+        try:
+            obj = json.loads(s)
+        except Exception as e:
+            raise AgentBayError(f"Invalid screenshot JSON: {e}") from e
+
+        if not isinstance(obj, dict):
+            raise AgentBayError("Invalid screenshot JSON: expected object")
+        b64 = obj.get("data")
+        if not isinstance(b64, str) or not b64.strip():
+            raise AgentBayError("Screenshot JSON missing base64 field")
+
+        # Step 2: base64 string extracted from JSON field.
+        #
+        # Observed (same run):
+        # - extracted_b64_prefix_80:
+        #   'iVBORw0KGgoAAAANSUhEUgAAAtAAAAUACAYAAABuzmU9AAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZIgA'
+        s = b64.strip()
+
+        # Step 3: decode base64 bytes strictly (no whitespace/padding normalization).
         try:
             raw = base64.b64decode(s, validate=True)
         except Exception as e:
             raise AgentBayError(f"Failed to decode screenshot data: {e}") from e
 
+        # Step 4: validate bytes match expected format by magic header.
+        # Observed decoded bytes prefix for PNG: b'\\x89PNG\\r\\n\\x1a\\n'
         if expected_format == "png":
             magic = b"\x89PNG\r\n\x1a\n"
         else:

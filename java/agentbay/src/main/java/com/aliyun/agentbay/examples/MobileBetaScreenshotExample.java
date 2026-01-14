@@ -19,7 +19,7 @@ public class MobileBetaScreenshotExample {
 
         AgentBay agentBay = new AgentBay();
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId("imgc-0ab5takhnlaixj11v");
+        params.setImageId("imgc-0ab5takhnmlvhx9gp");
 
         SessionResult create = agentBay.create(params);
         if (!create.isSuccess() || create.getSession() == null) {

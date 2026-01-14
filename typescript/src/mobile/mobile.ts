@@ -129,53 +129,6 @@ function normalizeImageFormat(format: string, defaultValue: string): string {
   return f;
 }
 
-function parseImageBase64(input: string): { b64: string; formatHint: string } {
-  const s = String(input || "").trim();
-  if (!s) {
-    throw new Error("Empty image data");
-  }
-  if (s.startsWith("{") || s.startsWith("[")) {
-    throw new Error("Unexpected JSON image data");
-  }
-
-  const lower = s.toLowerCase();
-  if (lower.startsWith("data:image/")) {
-    const base64Idx = lower.indexOf("base64,");
-    if (base64Idx < 0) {
-      throw new Error("Invalid data URL: missing base64 marker");
-    }
-
-    const header = lower.slice("data:image/".length, base64Idx);
-    const semi = header.indexOf(";");
-    const mime = (semi >= 0 ? header.slice(0, semi) : header).trim();
-    const formatHint = mime === "png" ? "png" : (mime === "jpeg" || mime === "jpg") ? "jpeg" : "";
-
-    return {
-      b64: s.slice(base64Idx + "base64,".length).trim(),
-      formatHint,
-    };
-  }
-
-  const idx = lower.indexOf("base64,");
-  if (idx >= 0) {
-    return {
-      b64: s.slice(idx + "base64,".length).trim(),
-      formatHint: "",
-    };
-  }
-
-  return { b64: s, formatHint: "" };
-}
-
-function normalizeBase64ForDecode(b64: string): string {
-  let s = String(b64 || "").replace(/[\r\n\t ]+/g, "");
-  const mod = s.length % 4;
-  if (mod !== 0) {
-    s += "=".repeat(4 - mod);
-  }
-  return s;
-}
-
 function validateBase64String(base64String: string): void {
   const s = String(base64String || "");
   if (!s) {
@@ -187,6 +140,10 @@ function validateBase64String(base64String: string): void {
     throw new Error("Invalid base64 string format");
   }
 
+  if (s.length % 4 !== 0) {
+    throw new Error("Invalid base64 string length");
+  }
+
   const paddingMatch = s.match(/=+$/);
   if (paddingMatch && paddingMatch[0].length > 2) {
     throw new Error("Invalid base64 padding format");
@@ -194,7 +151,7 @@ function validateBase64String(base64String: string): void {
 }
 
 function base64ToUint8ArrayStrict(input: string): Uint8Array {
-  const s = normalizeBase64ForDecode(input);
+  const s = String(input || "").trim();
   validateBase64String(s);
 
   if (typeof Buffer !== "undefined") {
@@ -232,10 +189,31 @@ function detectImageFormat(bytes: Uint8Array): string {
 }
 
 function decodeBase64Image(input: string, expectedFormat: string): { bytes: Uint8Array; format: string } {
-  const { b64, formatHint } = parseImageBase64(input);
+  const s = String(input || "").trim();
+  if (!s) {
+    throw new Error("Empty image data");
+  }
+  if (!s.startsWith("{")) {
+    throw new Error("Screenshot tool returned non-JSON data");
+  }
+
+  let obj: any;
+  try {
+    obj = JSON.parse(s);
+  } catch (e) {
+    throw new Error(`Invalid screenshot JSON: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    throw new Error("Invalid screenshot JSON: expected object");
+  }
+  const b64 = (obj as any).data;
+  if (typeof b64 !== "string" || !b64.trim()) {
+    throw new Error("Screenshot JSON missing base64 field");
+  }
+
   const bytes = base64ToUint8ArrayStrict(b64);
   const detected = detectImageFormat(bytes);
-  return { bytes, format: detected || formatHint || expectedFormat };
+  return { bytes, format: detected || expectedFormat };
 }
 
 export class Mobile {

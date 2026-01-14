@@ -326,10 +326,10 @@ public class MobileTest {
         ScreenshotBytesResult result = mobile.betaTakeScreenshot();
 
         // Assert
-        assertFalse(result.isSuccess());
+        assertTrue(result.isSuccess());
         assertEquals("png", result.getFormat());
-        assertNotNull(result.getErrorMessage());
-        assertTrue(result.getErrorMessage().contains("Unexpected JSON image data"));
+        assertNotNull(result.getData());
+        assertTrue("PNG magic bytes missing", result.getData().length >= 8);
     }
 
     @Test

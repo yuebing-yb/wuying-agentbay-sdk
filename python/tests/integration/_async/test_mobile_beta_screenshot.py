@@ -44,7 +44,7 @@ async def agent_bay():
 
 @pytest_asyncio.fixture
 async def session(agent_bay):
-    params = CreateSessionParams(image_id="imgc-0ab5takhnlaixj11v")
+    params = CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp")
     result = await agent_bay.create(params)
     assert result.success, f"Failed to create session: {result.error_message}"
     assert result.session is not None

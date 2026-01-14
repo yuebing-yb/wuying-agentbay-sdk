@@ -408,11 +408,20 @@ class TestComputer:
         # Arrange
         payload = b"\xff\xd8\xff" + b"hello-image-bytes"
         import base64
+        import json
 
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-req"
-        mock_result.data = base64.b64encode(payload).decode("ascii")
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/jpeg",
+                "width": 1280,
+                "height": 720,
+                "data": base64.b64encode(payload).decode("ascii"),
+            }
+        )
 
         self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
@@ -434,9 +443,9 @@ class TestComputer:
 
     @pytest.mark.asyncio
     async def test_take_screenshot_strips_prefix_before_magic(self):
-        """Test take_screenshot strips unexpected prefix bytes before JPEG magic."""
+        """Test take_screenshot rejects non-JSON payloads."""
         # Arrange
-        payload = b"u\xabZ" + b"\xff\xd8\xff" + b"rest"
+        payload = b"\xff\xd8\xff" + b"rest"
         import base64
 
         mock_result = Mock()
@@ -445,11 +454,8 @@ class TestComputer:
         mock_result.data = base64.b64encode(payload).decode("ascii")
         self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        # Act
-        result = await self.computer.beta_take_screenshot(format="jpg")
-
-        # Assert
-        assert result.data.startswith(b"\xff\xd8\xff")
+        with pytest.raises(AgentBayError, match="non-JSON"):
+            await self.computer.beta_take_screenshot(format="jpg")
 
     @pytest.mark.asyncio
     async def test_take_screenshot_accepts_mode_enum(self):
@@ -457,11 +463,20 @@ class TestComputer:
         # Arrange
         payload = b"\x89PNG\r\n\x1a\n" + b"x"
         import base64
+        import json
 
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-req"
-        mock_result.data = base64.b64encode(payload).decode("ascii")
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/png",
+                "width": 1280,
+                "height": 720,
+                "data": base64.b64encode(payload).decode("ascii"),
+            }
+        )
         self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
         # Act
@@ -473,7 +488,7 @@ class TestComputer:
 
     @pytest.mark.asyncio
     async def test_take_screenshot_rejects_json_payload(self):
-        """Test beta_take_screenshot rejects JSON payloads."""
+        """Test beta_take_screenshot accepts JSON payloads."""
         import base64
         import json
 
@@ -483,11 +498,21 @@ class TestComputer:
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-req-json"
-        mock_result.data = json.dumps({"content": [{"blob": b64}]})
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/png",
+                "width": 1280,
+                "height": 720,
+                "data": b64,
+            }
+        )
         self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        with pytest.raises(AgentBayError, match="Unexpected JSON image data"):
-            await self.computer.beta_take_screenshot(format="png")
+        result = await self.computer.beta_take_screenshot(format="png")
+        assert result.success is True
+        assert result.format == "png"
+        assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
 
     @pytest.mark.asyncio
     async def test_take_screenshot_invalid_format_raises(self):

@@ -448,11 +448,12 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
+	jsonPayload := `{"type":"image","mime_type":"image/png","width":720,"height":1280,"data":"` + encoded + `"}`
 
 	expectedResult := &models.McpToolResult{
 		Success:      true,
 		RequestID:    "test-beta-screenshot",
-		Data:         encoded,
+		Data:         jsonPayload,
 		ErrorMessage: "",
 	}
 
@@ -471,12 +472,12 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 	assert.Greater(suite.T(), len(result.Data), len(pngHeader))
 }
 
-func (suite *MobileTestSuite) TestBetaTakeScreenshot_RejectsJsonPayload() {
+func (suite *MobileTestSuite) TestBetaTakeScreenshot_AcceptsJsonPayload() {
 	// Arrange
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
-	jsonPayload := `{"content":[{"blob":"` + encoded + `"}]}`
+	jsonPayload := `{"type":"image","mime_type":"image/png","width":720,"height":1280,"data":"` + encoded + `"}`
 
 	expectedResult := &models.McpToolResult{
 		Success:      true,
@@ -493,8 +494,36 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_RejectsJsonPayload() {
 	result := suite.mobile.BetaTakeScreenshot()
 
 	// Assert
-	assert.False(suite.T(), result.Success)
+	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-screenshot-json", result.RequestID)
+	assert.Equal(suite.T(), "png", result.Format)
+	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
+	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
+func (suite *MobileTestSuite) TestBetaTakeScreenshot_RejectsNonJsonPayload() {
+	// Arrange
+	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
+	encoded := base64.StdEncoding.EncodeToString(payload)
+
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-beta-screenshot-non-json",
+		Data:         encoded,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "screenshot", map[string]interface{}{
+		"format": "png",
+	}, "wuying_capture").Return(expectedResult, nil)
+
+	// Act
+	result := suite.mobile.BetaTakeScreenshot()
+
+	// Assert
+	assert.False(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-beta-screenshot-non-json", result.RequestID)
 	assert.Equal(suite.T(), "png", result.Format)
 	assert.Nil(suite.T(), result.Data)
 	assert.Contains(suite.T(), result.ErrorMessage, "failed to decode screenshot data")
@@ -505,11 +534,12 @@ func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_SuccessPng() {
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("long")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
+	jsonPayload := `{"type":"image","mime_type":"image/png","width":720,"height":1280,"data":"` + encoded + `"}`
 
 	expectedResult := &models.McpToolResult{
 		Success:      true,
 		RequestID:    "test-beta-long-screenshot",
-		Data:         encoded,
+		Data:         jsonPayload,
 		ErrorMessage: "",
 	}
 
@@ -528,12 +558,12 @@ func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_SuccessPng() {
 	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
 }
 
-func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_RejectsJsonPayload() {
+func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_AcceptsJsonPayload() {
 	// Arrange
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("long")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
-	jsonPayload := `{"content":[{"blob":"` + encoded + `"}]}`
+	jsonPayload := `{"type":"image","mime_type":"image/png","width":720,"height":1280,"data":"` + encoded + `"}`
 
 	expectedResult := &models.McpToolResult{
 		Success:      true,
@@ -551,8 +581,37 @@ func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_RejectsJsonPayload() {
 	result := suite.mobile.BetaTakeLongScreenshot(2, "png")
 
 	// Assert
-	assert.False(suite.T(), result.Success)
+	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-long-screenshot-json", result.RequestID)
+	assert.Equal(suite.T(), "png", result.Format)
+	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
+	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
+func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_RejectsNonJsonPayload() {
+	// Arrange
+	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	payload := append(append([]byte{}, pngHeader...), []byte("long")...)
+	encoded := base64.StdEncoding.EncodeToString(payload)
+
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-beta-long-screenshot-non-json",
+		Data:         encoded,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "long_screenshot", map[string]interface{}{
+		"max_screens": 2,
+		"format":      "png",
+	}, "wuying_capture").Return(expectedResult, nil)
+
+	// Act
+	result := suite.mobile.BetaTakeLongScreenshot(2, "png")
+
+	// Assert
+	assert.False(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-beta-long-screenshot-non-json", result.RequestID)
 	assert.Equal(suite.T(), "png", result.Format)
 	assert.Nil(suite.T(), result.Data)
 	assert.Contains(suite.T(), result.ErrorMessage, "failed to decode long screenshot data")

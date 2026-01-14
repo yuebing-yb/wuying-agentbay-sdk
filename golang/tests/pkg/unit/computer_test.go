@@ -1,6 +1,8 @@
 package agentbay_test
 
 import (
+	"bytes"
+	"encoding/base64"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
@@ -411,6 +413,63 @@ func (suite *ComputerTestSuite) TestScreenshot_Success() {
 	assert.Equal(suite.T(), "test-screenshot-stu", result.RequestID)
 	assert.Equal(suite.T(), "https://example.com/screenshot.png", result.Data)
 	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
+func (suite *ComputerTestSuite) TestBetaTakeScreenshot_SuccessJpeg() {
+	// Arrange
+	jpegHeader := []byte{0xff, 0xd8, 0xff}
+	payload := append(append([]byte{}, jpegHeader...), []byte("jpegpayload")...)
+	encoded := base64.StdEncoding.EncodeToString(payload)
+	jsonPayload := `{"type":"image","mime_type":"image/jpeg","width":1280,"height":720,"data":"` + encoded + `"}`
+
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-beta-screenshot-jpeg",
+		Data:         jsonPayload,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "screenshot", map[string]interface{}{
+		"format": "jpeg",
+	}, "wuying_capture").Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.BetaTakeScreenshot("jpg")
+
+	// Assert
+	assert.True(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-beta-screenshot-jpeg", result.RequestID)
+	assert.Equal(suite.T(), "jpeg", result.Format)
+	assert.True(suite.T(), bytes.HasPrefix(result.Data, jpegHeader))
+	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
+func (suite *ComputerTestSuite) TestBetaTakeScreenshot_RejectsNonJson() {
+	// Arrange
+	jpegHeader := []byte{0xff, 0xd8, 0xff}
+	payload := append(append([]byte{}, jpegHeader...), []byte("jpegpayload")...)
+	encoded := base64.StdEncoding.EncodeToString(payload)
+
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-beta-screenshot-non-json",
+		Data:         encoded,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "screenshot", map[string]interface{}{
+		"format": "jpeg",
+	}, "wuying_capture").Return(expectedResult, nil)
+
+	// Act
+	result := suite.computer.BetaTakeScreenshot("jpeg")
+
+	// Assert
+	assert.False(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-beta-screenshot-non-json", result.RequestID)
+	assert.Equal(suite.T(), "jpeg", result.Format)
+	assert.Nil(suite.T(), result.Data)
+	assert.Contains(suite.T(), result.ErrorMessage, "non-JSON")
 }
 
 // Test StartApp functionality

@@ -163,7 +163,7 @@ public class MobileIntegrationTest {
         Session xmlSession = null;
         try {
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("imgc-0ab5takhnlaixj11v");
+            params.setImageId("imgc-0ab5takhnmlvhx9gp");
 
             SessionResult result = agentBay.create(params);
             assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
@@ -215,7 +215,7 @@ public class MobileIntegrationTest {
         Session s = null;
         try {
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("imgc-0ab5takhnlaixj11v");
+            params.setImageId("imgc-0ab5takhnmlvhx9gp");
 
             SessionResult result = agentBay.create(params);
             assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
@@ -259,7 +259,7 @@ public class MobileIntegrationTest {
         Session s = null;
         try {
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("imgc-0ab5takhnlaixj11v");
+            params.setImageId("imgc-0ab5takhnmlvhx9gp");
 
             SessionResult result = agentBay.create(params);
             assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());

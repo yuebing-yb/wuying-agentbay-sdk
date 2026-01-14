@@ -1,6 +1,7 @@
 package mobile
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -824,42 +825,49 @@ func decodeBase64Image(text string, expectedFormat string) ([]byte, string, erro
 		return nil, expectedFormat, fmt.Errorf("empty image data")
 	}
 
-	// The screenshot tool returns a base64 string (or a data URL). We do not
-	// attempt to parse arbitrary JSON payloads here.
-	if strings.HasPrefix(s, "{") || strings.HasPrefix(s, "[") {
-		return nil, expectedFormat, fmt.Errorf("unexpected JSON image data")
+	// Backend contract: screenshot tool returns a JSON object string with
+	// top-level field "data" containing base64.
+	if !strings.HasPrefix(s, "{") {
+		return nil, expectedFormat, fmt.Errorf("screenshot tool returned non-JSON data")
+	}
+	type screenshotJSON struct {
+		Data string `json:"data"`
+	}
+	var payload screenshotJSON
+	if err := json.Unmarshal([]byte(s), &payload); err != nil {
+		return nil, expectedFormat, fmt.Errorf("invalid screenshot JSON: %w", err)
+	}
+	b64 := strings.TrimSpace(payload.Data)
+	if b64 == "" {
+		return nil, expectedFormat, fmt.Errorf("screenshot JSON missing base64 field")
 	}
 
-	// Strip data URL prefix if present.
-	if idx := strings.Index(strings.ToLower(s), "base64,"); idx >= 0 {
-		s = s[idx+len("base64,"):]
-	}
-
-	// Remove whitespace/newlines.
-	s = strings.ReplaceAll(s, "\n", "")
-	s = strings.ReplaceAll(s, "\r", "")
-	s = strings.ReplaceAll(s, "\t", "")
-	s = strings.ReplaceAll(s, " ", "")
-
-	// Normalize missing padding.
-	if m := len(s) % 4; m != 0 {
-		s += strings.Repeat("=", 4-m)
-	}
-
-	b, err := base64.StdEncoding.DecodeString(s)
+	b, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
 		return nil, expectedFormat, err
 	}
 
-	// Detect format by magic bytes.
-	if len(b) >= len(pngMagic) && string(b[:len(pngMagic)]) == string(pngMagic) {
+	exp := normalizeImageFormat(expectedFormat, expectedFormat)
+	if exp == "png" {
+		if !bytes.HasPrefix(b, pngMagic) {
+			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+		}
 		return b, "png", nil
 	}
-	if len(b) >= len(jpegMagic) && string(b[:len(jpegMagic)]) == string(jpegMagic) {
+	if exp == "jpeg" {
+		if !bytes.HasPrefix(b, jpegMagic) {
+			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+		}
 		return b, "jpeg", nil
 	}
 
-	return b, expectedFormat, nil
+	if bytes.HasPrefix(b, pngMagic) {
+		return b, "png", nil
+	}
+	if bytes.HasPrefix(b, jpegMagic) {
+		return b, "jpeg", nil
+	}
+	return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
 }
 
 // Configure configures mobile settings from MobileExtraConfig
