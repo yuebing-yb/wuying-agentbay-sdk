@@ -263,12 +263,20 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 		body["McpPolicyId"] = request.McpPolicyId
 	}
 
+	if !dara.IsNil(request.NetworkId) {
+		body["NetworkId"] = request.NetworkId
+	}
+
 	if !dara.IsNil(request.PersistenceDataListShrink) {
 		body["PersistenceDataList"] = request.PersistenceDataListShrink
 	}
 
 	if !dara.IsNil(request.SessionId) {
 		body["SessionId"] = request.SessionId
+	}
+
+	if !dara.IsNil(request.VolumeId) {
+		body["VolumeId"] = request.VolumeId
 	}
 
 	if !dara.IsNil(request.VpcResource) {
@@ -321,6 +329,130 @@ func (client *Client) CreateMcpSession(request *CreateMcpSessionRequest) (_resul
 	runtime := &dara.RuntimeOptions{}
 	_result = &CreateMcpSessionResponse{}
 	_body, _err := client.CreateMcpSessionWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// # Create network
+//
+// @param request - CreateNetworkRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return CreateNetworkResponse
+func (client *Client) CreateNetworkWithOptions(request *CreateNetworkRequest, runtime *dara.RuntimeOptions) (_result *CreateNetworkResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.NetworkId) {
+		body["NetworkId"] = request.NetworkId
+	}
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("CreateNetwork"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &CreateNetworkResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Create network
+//
+// @param request - CreateNetworkRequest
+//
+// @return CreateNetworkResponse
+func (client *Client) CreateNetwork(request *CreateNetworkRequest) (_result *CreateNetworkResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &CreateNetworkResponse{}
+	_body, _err := client.CreateNetworkWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// # Describe network
+//
+// @param request - DescribeNetworkRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return DescribeNetworkResponse
+func (client *Client) DescribeNetworkWithOptions(request *DescribeNetworkRequest, runtime *dara.RuntimeOptions) (_result *DescribeNetworkResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.NetworkId) {
+		body["NetworkId"] = request.NetworkId
+	}
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("DescribeNetwork"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &DescribeNetworkResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Describe network
+//
+// @param request - DescribeNetworkRequest
+//
+// @return DescribeNetworkResponse
+func (client *Client) DescribeNetwork(request *DescribeNetworkRequest) (_result *DescribeNetworkResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &DescribeNetworkResponse{}
+	_body, _err := client.DescribeNetworkWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
 	}
@@ -2126,6 +2258,212 @@ func (client *Client) GetAndLoadInternalContext(request *GetAndLoadInternalConte
 	runtime := &dara.RuntimeOptions{}
 	_result = &GetAndLoadInternalContextResponse{}
 	_body, _err := client.GetAndLoadInternalContextWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// 创建或获取Volume
+//
+// @param request - GetVolumeRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return GetVolumeResponse
+func (client *Client) GetVolumeWithOptions(request *GetVolumeRequest, runtime *dara.RuntimeOptions) (_result *GetVolumeResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.AllowCreate) {
+		body["AllowCreate"] = request.AllowCreate
+	}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.ImageId) {
+		body["ImageId"] = request.ImageId
+	}
+	if !dara.IsNil(request.VolumeName) {
+		body["VolumeName"] = request.VolumeName
+	}
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("GetVolume"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &GetVolumeResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// 创建或获取Volume
+//
+// @param request - GetVolumeRequest
+//
+// @return GetVolumeResponse
+func (client *Client) GetVolume(request *GetVolumeRequest) (_result *GetVolumeResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &GetVolumeResponse{}
+	_body, _err := client.GetVolumeWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// 删除Volume
+//
+// @param request - DeleteVolumeRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return DeleteVolumeResponse
+func (client *Client) DeleteVolumeWithOptions(request *DeleteVolumeRequest, runtime *dara.RuntimeOptions) (_result *DeleteVolumeResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.VolumeId) {
+		body["VolumeId"] = request.VolumeId
+	}
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("DeleteVolume"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &DeleteVolumeResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// 删除Volume
+//
+// @param request - DeleteVolumeRequest
+//
+// @return DeleteVolumeResponse
+func (client *Client) DeleteVolume(request *DeleteVolumeRequest) (_result *DeleteVolumeResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &DeleteVolumeResponse{}
+	_body, _err := client.DeleteVolumeWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// 查询Volume详情
+//
+// @param request - ListVolumesRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return ListVolumesResponse
+func (client *Client) ListVolumesWithOptions(request *ListVolumesRequest, runtime *dara.RuntimeOptions) (_result *ListVolumesResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	query := map[string]interface{}{}
+	if !dara.IsNil(request.NextToken) {
+		query["NextToken"] = request.NextToken
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.ImageId) {
+		body["ImageId"] = request.ImageId
+	}
+	if !dara.IsNil(request.MaxResults) {
+		body["MaxResults"] = request.MaxResults
+	}
+	if !dara.IsNil(request.VolumeIds) {
+		body["VolumeIds"] = request.VolumeIds
+	}
+	if !dara.IsNil(request.VolumeName) {
+		body["VolumeName"] = request.VolumeName
+	}
+	req := &openapiutil.OpenApiRequest{
+		Query: openapiutil.Query(query),
+		Body:  openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("ListVolumes"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &ListVolumesResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// 查询Volume详情
+//
+// @param request - ListVolumesRequest
+//
+// @return ListVolumesResponse
+func (client *Client) ListVolumes(request *ListVolumesRequest) (_result *ListVolumesResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &ListVolumesResponse{}
+	_body, _err := client.ListVolumesWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
 	}

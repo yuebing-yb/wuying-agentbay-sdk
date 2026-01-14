@@ -45,6 +45,16 @@ const docMappings = [
   { target: 'common-features/advanced/computer-use-agent.md', symbol: 'ComputerUseAgent', identifiers: ['Class ComputerUseAgent', 'ComputerUseAgent'] },
   { target: 'common-features/advanced/mobile-use-agent.md', symbol: 'MobileUseAgent', identifiers: ['Class MobileUseAgent', 'MobileUseAgent'] },
   { target: 'common-features/advanced/oss.md', symbol: 'Oss', identifiers: ['Class Oss', 'Oss'] },
+  {
+    target: 'common-features/advanced/network.md',
+    symbol: 'BetaNetworkService',
+    identifiers: ['Class BetaNetworkService', 'BetaNetworkService', 'beta-network'],
+  },
+  {
+    target: 'common-features/advanced/volume.md',
+    symbol: 'BetaVolumeService',
+    identifiers: ['Class BetaVolumeService', 'BetaVolumeService', 'beta-volume'],
+  },
   { target: 'browser-use/browser.md', symbol: 'Browser', identifiers: ['Class Browser', 'Browser'] },
   {
     target: 'browser-use/extension.md',

@@ -95,7 +95,7 @@ logger.debug("This only appears in the log file")
 # No console output, but written to /tmp/debug.log
 
 ```
-### get\_logger
+### get_logger
 
 ```python
 @classmethod
@@ -113,7 +113,7 @@ Get a logger instance.
 
   Configured logger instance
 
-### set\_level
+### set_level
 
 ```python
 @classmethod
@@ -156,7 +156,7 @@ logger.warning("But warnings still appear")
 # Output: But warnings still appear
 
 ```
-### get\_logger
+### get_logger
 
 ```python
 def get_logger(name: str = "agentbay")

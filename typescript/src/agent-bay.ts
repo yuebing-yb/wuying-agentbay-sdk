@@ -5,14 +5,18 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
+import type { McpTool } from "./session";
 import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
 import { ContextService } from "./context";
+import { BetaNetworkService } from "./beta-network";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
 import { BrowserContext,CreateSessionParams } from "./session-params";
+import type { Volume } from "./beta-volume";
+import { BetaVolumeService } from "./beta-volume";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
 import {
@@ -50,10 +54,22 @@ const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 export interface CreateSeesionWithParams {
   labels?: Record<string, string>;
   imageId?: string;
+  /**
+   * Beta: mount a volume during session creation (static mount).
+   * Accepts a volume id string or a Volume object.
+   */
+  volume?: string | Volume;
+  /**
+   * Beta: explicit volume id mount during session creation.
+   * If both volume and volumeId are provided, volume takes precedence.
+   */
+  volumeId?: string;
   contextSync?: ContextSync[];
   browserContext?: BrowserContext;
   isVpc?: boolean;
   policyId?: string;
+  betaNetworkId?: string;
+  // Note: networkId is not released; do not expose non-beta alias.
   enableBrowserReplay?: boolean;
   extraConfigs?: ExtraConfigs;
   framework?: string;
@@ -72,6 +88,22 @@ export class AgentBay {
    * Context service for managing persistent contexts.
    */
   context: ContextService;
+
+  /**
+   * Network service for managing networks.
+   */
+  /** Deprecated alias: use betaNetwork */
+  network: BetaNetworkService;
+
+  /**
+   * Beta network service for managing networks.
+   */
+  betaNetwork: BetaNetworkService;
+
+  /**
+   * Beta volume service (trial feature).
+   */
+  betaVolume: BetaVolumeService;
 
   /**
    * Initialize the AgentBay client.
@@ -118,6 +150,10 @@ export class AgentBay {
 
       // Initialize context service
       this.context = new ContextService(this);
+      this.betaVolume = new BetaVolumeService(this);
+      this.betaNetwork = new BetaNetworkService(this);
+      // Deprecated alias: network APIs are beta for now
+      this.network = this.betaNetwork as any;
     } catch (error) {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
@@ -296,9 +332,28 @@ export class AgentBay {
         request.imageId = paramsCopy.imageId;
       }
 
+      // Beta: mount volume during session creation (static mount only)
+      const volumeValue = (paramsCopy as any).volume;
+      const volumeIdValue = (paramsCopy as any).volumeId;
+      let mountVolumeId: string | undefined = undefined;
+      if (volumeValue) {
+        mountVolumeId =
+          typeof volumeValue === "string" ? volumeValue : (volumeValue as any).id;
+      } else if (volumeIdValue) {
+        mountVolumeId = volumeIdValue;
+      }
+      if (mountVolumeId) {
+        request.volumeId = mountVolumeId;
+      }
+
       // Add PolicyId if provided
       if (paramsCopy.policyId) {
         request.mcpPolicyId = paramsCopy.policyId;
+      }
+
+      // Beta: Add NetworkId if provided
+      if ((paramsCopy as any).betaNetworkId) {
+        (request as any).networkId = (paramsCopy as any).betaNetworkId;
       }
 
       // Add VPC resource if specified
@@ -504,6 +559,9 @@ export class AgentBay {
       if (data.token) {
         session.token = data.token;
       }
+      if (data.linkUrl) {
+        session.linkUrl = data.linkUrl;
+      }
 
       // Set ResourceUrl
       session.resourceUrl = resourceUrl;
@@ -531,12 +589,38 @@ export class AgentBay {
         }
       }
 
-      // For VPC sessions, automatically fetch MCP tools information
-      if (paramsCopy.isVpc) {
+      // Prefer MCP tools list from CreateMcpSession response (toolList) when present,
+      // then fall back to ListMcpTools for backward compatibility.
+      const toolListStr = data.toolList;
+      if (toolListStr) {
+        try {
+          const toolsData: unknown = JSON.parse(toolListStr);
+          const tools: McpTool[] = [];
+          if (Array.isArray(toolsData)) {
+            for (const toolData of toolsData as Array<Record<string, unknown>>) {
+              tools.push({
+                name: (toolData["name"] as string) || "",
+                description: (toolData["description"] as string) || "",
+                inputSchema: (toolData["inputSchema"] as Record<string, any>) || {},
+                server: (toolData["server"] as string) || "",
+                tool: (toolData["tool"] as string) || "",
+              });
+            }
+          }
+          session.mcpTools = tools;
+        } catch (error) {
+          logError(`Warning: Failed to parse toolList from CreateMcpSession: ${error}`);
+        }
+      }
+
+      // Backward compatibility: if isVpc=true but tool list is still empty, fall back to ListMcpTools.
+      if (paramsCopy.isVpc && session.mcpTools.length === 0) {
         logDebug("VPC session detected, automatically fetching MCP tools...");
         try {
           const toolsResult = await session.listMcpTools();
-          logDebug(`Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`);
+          logDebug(
+            `Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`
+          );
         } catch (error) {
           logError(`Warning: Failed to fetch MCP tools for VPC session: ${error}`);
           // Continue with session creation even if tools fetch fails

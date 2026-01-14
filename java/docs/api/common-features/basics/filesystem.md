@@ -189,9 +189,9 @@ List contents of a directory.
 ```java
 DirectoryListResult result = session.getFileSystem().listDirectory("/tmp");
 if (result.isSuccess()) {
-    for (Map<String, Object> entry : result.getEntries()) {
-        String name = (String) entry.get("name");
-        boolean isDir = (Boolean) entry.get("isDirectory");
+    for (DirectoryEntry entry : result.getEntries()) {
+        String name = entry.getName();
+        boolean isDir = entry.isDirectory();
         System.out.println((isDir ? "[DIR] " : "[FILE] ") + name);
     }
 }

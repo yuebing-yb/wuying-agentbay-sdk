@@ -20,6 +20,9 @@ type CreateSessionParams struct {
 	// PolicyId specifies the policy ID to apply when creating the session.
 	PolicyId	string
 
+	// BetaNetworkId specifies the beta network ID to bind this session to.
+	BetaNetworkId	string
+
 	// ExtraConfigs contains extra configuration settings for different session types
 	ExtraConfigs	*models.ExtraConfigs
 
@@ -33,6 +36,14 @@ type CreateSessionParams struct {
 	// When set, the session will be bound to the given cloud context and browser state will
 	// persist across sessions.
 	BrowserContext	*BrowserContext
+
+	// VolumeId specifies the volume ID to mount when creating the session (beta).
+	// This is a trial feature and may change in future releases.
+	VolumeId	string
+
+	// Volume specifies the volume object to mount when creating the session (beta).
+	// If both Volume and VolumeId are provided, Volume takes precedence.
+	Volume	*Volume
 }
 ```
 
@@ -72,6 +83,15 @@ func (p *CreateSessionParams) GetLabelsJSON() (string, error)
 ```
 
 GetLabelsJSON returns the labels as a JSON string.
+
+### WithBetaNetworkId
+
+```go
+func (p *CreateSessionParams) WithBetaNetworkId(betaNetworkId string) *CreateSessionParams
+```
+
+WithBetaNetworkId sets the beta network ID for the session parameters and returns the updated
+parameters.
 
 ### WithBrowserContext
 
@@ -138,6 +158,22 @@ func (p *CreateSessionParams) WithPolicyId(policyId string) *CreateSessionParams
 ```
 
 WithPolicyId sets the policy ID for the session parameters and returns the updated parameters.
+
+### WithVolume
+
+```go
+func (p *CreateSessionParams) WithVolume(volume *Volume) *CreateSessionParams
+```
+
+WithVolume sets the volume object for mounting when creating the session (beta).
+
+### WithVolumeId
+
+```go
+func (p *CreateSessionParams) WithVolumeId(volumeId string) *CreateSessionParams
+```
+
+WithVolumeId sets the volume ID for mounting when creating the session (beta).
 
 ### Related Functions
 

@@ -16,7 +16,7 @@ class OSSClientResult(ApiResponse)
 
 Result of OSS client creation operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -46,7 +46,7 @@ class OSSUploadResult(ApiResponse)
 
 Result of OSS upload operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -75,7 +75,7 @@ class OSSDownloadResult(ApiResponse)
 
 Result of OSS download operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -104,7 +104,7 @@ class Oss(BaseService)
 
 Handles Object Storage Service operations in the AgentBay cloud environment.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session)
@@ -116,7 +116,7 @@ Initialize an Oss object.
 
     session: The Session instance that this Oss belongs to.
 
-### env\_init
+### env_init
 
 ```python
 def env_init(access_key_id: str,
@@ -193,7 +193,7 @@ print(f"Upload result: {result.content}")
 session.delete()
 ```
 
-### upload\_anonymous
+### upload_anonymous
 
 ```python
 def upload_anonymous(url: str, path: str) -> OSSUploadResult
@@ -263,7 +263,7 @@ print(f"Download result: {result.content}")
 session.delete()
 ```
 
-### download\_anonymous
+### download_anonymous
 
 ```python
 def download_anonymous(url: str, path: str) -> OSSDownloadResult

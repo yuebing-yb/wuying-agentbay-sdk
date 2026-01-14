@@ -1686,4 +1686,162 @@ public class Client extends com.aliyun.teaopenapi.Client {
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
         return this.syncContextWithOptions(request, runtime);
     }
+
+    /**
+     * <b>summary</b> :
+     * <p>删除Volume</p>
+     *
+     * @param request DeleteVolumeRequest
+     * @param runtime runtime options for this request RuntimeOptions
+     * @return DeleteVolumeResponse
+     */
+    public DeleteVolumeResponse deleteVolumeWithOptions(DeleteVolumeRequest request, com.aliyun.teautil.models.RuntimeOptions runtime) throws Exception {
+        com.aliyun.teautil.Common.validateModel(request);
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        if (!com.aliyun.teautil.Common.isUnset(request.authorization)) {
+            body.put("Authorization", request.authorization);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.volumeId)) {
+            body.put("VolumeId", request.volumeId);
+        }
+        com.aliyun.teaopenapi.models.OpenApiRequest req = com.aliyun.teaopenapi.models.OpenApiRequest.build(TeaConverter.buildMap(
+            new TeaPair("body", com.aliyun.openapiutil.Client.parseToMap(body))
+        ));
+        com.aliyun.teaopenapi.models.Params params = com.aliyun.teaopenapi.models.Params.build(TeaConverter.buildMap(
+            new TeaPair("action", "DeleteVolume"),
+            new TeaPair("version", "2025-05-06"),
+            new TeaPair("protocol", "HTTPS"),
+            new TeaPair("pathname", "/"),
+            new TeaPair("method", "POST"),
+            new TeaPair("authType", "Anonymous"),
+            new TeaPair("style", "RPC"),
+            new TeaPair("reqBodyType", "formData"),
+            new TeaPair("bodyType", "json")
+        ));
+        return TeaModel.toModel(this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new DeleteVolumeResponse());
+    }
+
+    /**
+     * <b>summary</b> :
+     * <p>删除Volume</p>
+     *
+     * @param request DeleteVolumeRequest
+     * @return DeleteVolumeResponse
+     */
+    public DeleteVolumeResponse deleteVolume(DeleteVolumeRequest request) throws Exception {
+        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
+        return this.deleteVolumeWithOptions(request, runtime);
+    }
+
+    /**
+     * <b>summary</b> :
+     * <p>创建或获取Volume</p>
+     *
+     * @param request GetVolumeRequest
+     * @param runtime runtime options for this request RuntimeOptions
+     * @return GetVolumeResponse
+     */
+    public GetVolumeResponse getVolumeWithOptions(GetVolumeRequest request, com.aliyun.teautil.models.RuntimeOptions runtime) throws Exception {
+        com.aliyun.teautil.Common.validateModel(request);
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        if (!com.aliyun.teautil.Common.isUnset(request.allowCreate)) {
+            body.put("AllowCreate", request.allowCreate);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.authorization)) {
+            body.put("Authorization", request.authorization);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.imageId)) {
+            body.put("ImageId", request.imageId);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.volumeName)) {
+            body.put("VolumeName", request.volumeName);
+        }
+        com.aliyun.teaopenapi.models.OpenApiRequest req = com.aliyun.teaopenapi.models.OpenApiRequest.build(TeaConverter.buildMap(
+            new TeaPair("body", com.aliyun.openapiutil.Client.parseToMap(body))
+        ));
+        com.aliyun.teaopenapi.models.Params params = com.aliyun.teaopenapi.models.Params.build(TeaConverter.buildMap(
+            new TeaPair("action", "GetVolume"),
+            new TeaPair("version", "2025-05-06"),
+            new TeaPair("protocol", "HTTPS"),
+            new TeaPair("pathname", "/"),
+            new TeaPair("method", "POST"),
+            new TeaPair("authType", "Anonymous"),
+            new TeaPair("style", "RPC"),
+            new TeaPair("reqBodyType", "formData"),
+            new TeaPair("bodyType", "json")
+        ));
+        return TeaModel.toModel(this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new GetVolumeResponse());
+    }
+
+    /**
+     * <b>summary</b> :
+     * <p>创建或获取Volume</p>
+     *
+     * @param request GetVolumeRequest
+     * @return GetVolumeResponse
+     */
+    public GetVolumeResponse getVolume(GetVolumeRequest request) throws Exception {
+        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
+        return this.getVolumeWithOptions(request, runtime);
+    }
+
+    /**
+     * <b>summary</b> :
+     * <p>查询Volume详情</p>
+     *
+     * @param request ListVolumesRequest
+     * @param runtime runtime options for this request RuntimeOptions
+     * @return ListVolumesResponse
+     */
+    public ListVolumesResponse listVolumesWithOptions(ListVolumesRequest request, com.aliyun.teautil.models.RuntimeOptions runtime) throws Exception {
+        com.aliyun.teautil.Common.validateModel(request);
+        java.util.Map<String, Object> query = new java.util.HashMap<>();
+        if (!com.aliyun.teautil.Common.isUnset(request.nextToken)) {
+            query.put("NextToken", request.nextToken);
+        }
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        if (!com.aliyun.teautil.Common.isUnset(request.authorization)) {
+            body.put("Authorization", request.authorization);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.imageId)) {
+            body.put("ImageId", request.imageId);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.maxResults)) {
+            body.put("MaxResults", request.maxResults);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.volumeIds)) {
+            body.put("VolumeIds", request.volumeIds);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.volumeName)) {
+            body.put("VolumeName", request.volumeName);
+        }
+        com.aliyun.teaopenapi.models.OpenApiRequest req = com.aliyun.teaopenapi.models.OpenApiRequest.build(TeaConverter.buildMap(
+            new TeaPair("query", com.aliyun.openapiutil.Client.query(query)),
+            new TeaPair("body", com.aliyun.openapiutil.Client.parseToMap(body))
+        ));
+        com.aliyun.teaopenapi.models.Params params = com.aliyun.teaopenapi.models.Params.build(TeaConverter.buildMap(
+            new TeaPair("action", "ListVolumes"),
+            new TeaPair("version", "2025-05-06"),
+            new TeaPair("protocol", "HTTPS"),
+            new TeaPair("pathname", "/"),
+            new TeaPair("method", "POST"),
+            new TeaPair("authType", "Anonymous"),
+            new TeaPair("style", "RPC"),
+            new TeaPair("reqBodyType", "formData"),
+            new TeaPair("bodyType", "json")
+        ));
+        return TeaModel.toModel(this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new ListVolumesResponse());
+    }
+
+    /**
+     * <b>summary</b> :
+     * <p>查询Volume详情</p>
+     *
+     * @param request ListVolumesRequest
+     * @return ListVolumesResponse
+     */
+    public ListVolumesResponse listVolumes(ListVolumesRequest request) throws Exception {
+        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
+        return this.listVolumesWithOptions(request, runtime);
+    }
 }

@@ -246,29 +246,31 @@ function getColorForLevel(level: LogLevel): string {
  * @param fields Additional sensitive field names
  * @returns Masked data (deep copy)
  */
-export function maskSensitiveData(data: any, fields?: string[]): any {
+export function maskSensitiveData(data: unknown, fields?: string[]): unknown {
   const sensitiveFields = fields || SENSITIVE_FIELDS;
-  const visitedObjects = new WeakSet();
+  const visitedObjects = new WeakSet<object>();
 
-  function mask(obj: any): any {
+  function mask(obj: unknown): unknown {
     if (obj === null || obj === undefined) {
       return obj;
     }
 
     if (typeof obj === 'object') {
-      if (visitedObjects.has(obj)) {
+      const objRef = obj as object;
+      if (visitedObjects.has(objRef)) {
         return '[Circular]';
       }
-      visitedObjects.add(obj);
+      visitedObjects.add(objRef);
 
       if (Array.isArray(obj)) {
         return obj.map(item => mask(item));
       }
 
-      const masked: any = {};
-      for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-          const value = obj[key];
+      const masked: Record<string, unknown> = {};
+      const record = obj as Record<string, unknown>;
+      for (const key in record) {
+        if (Object.prototype.hasOwnProperty.call(record, key)) {
+          const value = record[key];
           if (sensitiveFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
             if (typeof value === 'string' && value.length > 4) {
               masked[key] = value.substring(0, 2) + '****' + value.substring(value.length - 2);
@@ -485,7 +487,7 @@ export function setupLogger(config: LoggerConfig): void {
  * @param message The message to log
  * @param args Optional arguments to log
  */
-export function log(message: string, ...args: any[]): void {
+export function log(message: string, ...args: unknown[]): void {
   if (!shouldLog('INFO')) return;
 
   if (consoleLoggingEnabled) {
@@ -514,7 +516,7 @@ export function log(message: string, ...args: any[]): void {
  * @param message The message to log
  * @param args Optional arguments to log
  */
-export function logDebug(message: string, ...args: any[]): void {
+export function logDebug(message: string, ...args: unknown[]): void {
   if (!shouldLog('DEBUG')) return;
 
   const formattedMessage = formatLogMessage('DEBUG', message);
@@ -544,7 +546,7 @@ export function logDebug(message: string, ...args: any[]): void {
  * @param message The message to log
  * @param args Optional arguments to log
  */
-export function logInfo(message: string, ...args: any[]): void {
+export function logInfo(message: string, ...args: unknown[]): void {
   if (!shouldLog('INFO')) return;
 
   const formattedMessage = formatLogMessage('INFO', message);
@@ -574,7 +576,7 @@ export function logInfo(message: string, ...args: any[]): void {
  * @param message The message to log
  * @param args Optional arguments to log
  */
-export function logWarn(message: string, ...args: any[]): void {
+export function logWarn(message: string, ...args: unknown[]): void {
   if (!shouldLog('WARN')) return;
 
   const formattedMessage = formatLogMessage('WARN', message);
@@ -604,7 +606,7 @@ export function logWarn(message: string, ...args: any[]): void {
  * @param message The error message to log
  * @param error Optional error object
  */
-export function logError(message: string, error?: any): void {
+export function logError(message: string, error?: unknown): void {
   if (!shouldLog('ERROR')) return;
 
   const formattedMessage = formatLogMessage('ERROR', message);
@@ -640,7 +642,7 @@ export function logError(message: string, error?: any): void {
  * @param apiName Name of the API being called
  * @param requestData Optional request data to log at DEBUG level
  */
-export function logAPICall(apiName: string, requestData?: any): void {
+export function logAPICall(apiName: string, requestData?: unknown): void {
   if (!shouldLog('INFO')) return;
   
   if (currentLogFormat === 'sls') {
@@ -695,7 +697,7 @@ export function logAPIResponseWithDetails(
   apiName: string,
   requestId?: string,
   success = true,
-  keyFields?: Record<string, any>,
+  keyFields?: Record<string, unknown>,
   fullResponse?: string
 ): void {
   
@@ -711,7 +713,7 @@ export function logAPIResponseWithDetails(
     
     if (keyFields) {
         for (const [key, value] of Object.entries(keyFields)) {
-            const maskedValue = maskSensitiveData({ [key]: value });
+            const maskedValue = maskSensitiveData({ [key]: value }) as Record<string, unknown>;
             msg += `, ${key}=${maskedValue[key]}`;
         }
     }
@@ -750,7 +752,7 @@ export function logAPIResponseWithDetails(
 
       if (keyFields) {
         for (const [key, value] of Object.entries(keyFields)) {
-          const maskedValue = maskSensitiveData({ [key]: value });
+          const maskedValue = maskSensitiveData({ [key]: value }) as Record<string, unknown>;
           const keyMessage = `  └─ ${key}=${maskedValue[key]}`;
           if (useColors) {
             process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${keyMessage}${ANSI_RESET}\n`);
@@ -923,7 +925,7 @@ export function logOperationError(
   if (!shouldLog('ERROR')) return;
   
   if (currentLogFormat === 'sls') {
-      let errorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
       logError(`Failed: ${operation}, Error: ${errorMsg}`, includeStackTrace ? error : undefined);
       return;
   }

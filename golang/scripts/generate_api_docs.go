@@ -273,6 +273,31 @@ var mappings = []docMapping{
 		IncludeAllFuncs: true,
 	},
 	{
+		Target:      "common-features/advanced/network.md",
+		Title:       "Network",
+		PackagePath: "pkg/agentbay",
+		ModuleName:  "network",
+		TypeNames: []string{
+			"BetaNetworkService",
+			"BetaNetworkResult",
+			"BetaNetworkStatusResult",
+		},
+	},
+	{
+		Target:      "common-features/advanced/volume.md",
+		Title:       "Volume",
+		PackagePath: "pkg/agentbay",
+		ModuleName:  "volume",
+		TypeNames: []string{
+			"BetaVolumeService",
+			"Volume",
+			"BetaVolumeResult",
+			"BetaVolumeListResult",
+			"BetaOperationResult",
+			"BetaListVolumesParams",
+		},
+	},
+	{
 		Target:          "browser-use/browser.md",
 		Title:           "Browser",
 		PackagePath:     "pkg/agentbay/browser",

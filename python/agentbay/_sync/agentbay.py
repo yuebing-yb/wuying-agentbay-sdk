@@ -50,6 +50,8 @@ from ..api.models import (
     ResumeSessionAsyncRequest,
 )
 from .context import ContextService
+from .beta_network import SyncBetaNetworkService
+from .beta_volume import SyncBetaVolumeService
 from .session import Session
 from .._common.params.session_params import CreateSessionParams
 
@@ -102,6 +104,8 @@ class AgentBay:
 
         # Initialize context service
         self.context = ContextService(self)
+        self.beta_network = SyncBetaNetworkService(self)
+        self.beta_volume = SyncBetaVolumeService(self)
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):
@@ -165,6 +169,32 @@ class AgentBay:
             session.http_port = response_data["HttpPort"]
         if response_data.get("Token"):
             session.token = response_data["Token"]
+        if response_data.get("LinkUrl"):
+            session.link_url = response_data["LinkUrl"]
+
+        tool_list = response_data.get("ToolList")
+        if tool_list:
+            try:
+                tools_data = json.loads(tool_list) if isinstance(tool_list, str) else tool_list
+                tools = []
+                if isinstance(tools_data, list):
+                    from .._common.models.mcp_tool import McpTool
+
+                    for tool_data in tools_data:
+                        if not isinstance(tool_data, dict):
+                            continue
+                        tools.append(
+                            McpTool(
+                                name=tool_data.get("name", "") or "",
+                                description=tool_data.get("description", "") or "",
+                                input_schema=tool_data.get("inputSchema", {}) or {},
+                                server=tool_data.get("server", "") or "",
+                                tool=tool_data.get("tool", "") or "",
+                            )
+                        )
+                session.mcp_tools = tools
+            except Exception as e:
+                _log_warning(f"Failed to parse ToolList from create session response: {e}")
 
         # Set ResourceUrl
         session.resource_url = resource_url
@@ -420,6 +450,10 @@ class AgentBay:
             if hasattr(params, "policy_id") and params.policy_id:
                 request.mcp_policy_id = params.policy_id
 
+            # Beta: Add NetworkId if specified
+            if hasattr(params, "beta_network_id") and params.beta_network_id:
+                request.network_id = params.beta_network_id
+
             # Add VPC resource if specified
             request.vpc_resource = params.is_vpc
 
@@ -522,6 +556,19 @@ class AgentBay:
 
             if params.image_id:
                 request.image_id = params.image_id
+
+            # Beta: mount volume during session creation (static mount only)
+            if hasattr(params, "volume") and params.volume:
+                volume_value = params.volume
+                if isinstance(volume_value, str):
+                    volume_id = volume_value
+                else:
+                    volume_id = getattr(volume_value, "id", "")
+                if not volume_id:
+                    raise ValueError(
+                        "volume must be a volume id string or an object with 'id'"
+                    )
+                request.volume_id = volume_id
 
             # Add extra_configs if provided
             mobile_sim_path = None
@@ -633,8 +680,8 @@ class AgentBay:
             # Build Session object from response data
             session = self._build_session_from_response(data, params)
 
-            # For VPC sessions, automatically fetch MCP tools information
-            if params.is_vpc:
+            # Backward compatibility: if is_vpc=true but tool list is still empty, fall back to ListMcpTools.
+            if params.is_vpc and not session.mcp_tools:
                 self._fetch_mcp_tools_for_vpc_session(session)
 
             # If we have persistence data, wait for context synchronization

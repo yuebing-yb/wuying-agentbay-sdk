@@ -123,7 +123,7 @@ describe("Logger", () => {
         api_key: "sk-1234567890abcdef",
         username: "testuser",
       };
-      const masked = maskSensitiveData(data);
+      const masked = maskSensitiveData(data) as Record<string, any>;
       expect(masked.api_key).to.equal("sk****ef");
       expect(masked.username).to.equal("testuser");
     });
@@ -133,7 +133,7 @@ describe("Logger", () => {
         access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
         user_id: "12345",
       };
-      const masked = maskSensitiveData(data);
+      const masked = maskSensitiveData(data) as Record<string, any>;
       expect(masked.access_token).to.equal("ey****J9");
       expect(masked.user_id).to.equal("12345");
     });
@@ -143,7 +143,7 @@ describe("Logger", () => {
         password: "mySecurePassword123",
         email: "user@example.com",
       };
-      const masked = maskSensitiveData(data);
+      const masked = maskSensitiveData(data) as Record<string, any>;
       expect(masked.password).to.equal("my****23");
       expect(masked.email).to.equal("user@example.com");
     });
@@ -158,7 +158,7 @@ describe("Logger", () => {
           password: "pass456",
         },
       };
-      const masked = maskSensitiveData(data);
+      const masked = maskSensitiveData(data) as Record<string, any>;
       expect(masked.user.api_key).to.equal("se****23");
       expect(masked.credentials.password).to.equal("pa****56");
       expect(masked.user.name).to.equal("John");
@@ -169,7 +169,7 @@ describe("Logger", () => {
         { api_key: "key123", name: "item1" },
         { api_key: "key456", name: "item2" },
       ];
-      const masked = maskSensitiveData(data);
+      const masked = maskSensitiveData(data) as any[];
       expect(masked[0].api_key).to.equal("ke****23");
       expect(masked[1].api_key).to.equal("ke****56");
     });
@@ -179,7 +179,7 @@ describe("Logger", () => {
         custom_secret: "mysecretvalue",
         public_field: "publicvalue",
       };
-      const masked = maskSensitiveData(data, ["custom_secret"]);
+      const masked = maskSensitiveData(data, ["custom_secret"]) as Record<string, any>;
       expect(masked.custom_secret).to.equal("my****ue");
       expect(masked.public_field).to.equal("publicvalue");
     });

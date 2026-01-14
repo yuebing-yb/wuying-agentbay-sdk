@@ -14,6 +14,12 @@ screenshot capture, and content extraction. It enables automated testing and web
 
 - Requires `browser_latest` image for browser automation features
 
+## Hierarchy
+
+- **`Browser`**
+
+  ↳ ``LocalBrowser``
+
 ## Table of contents
 
 

@@ -11,8 +11,8 @@ import sys
 import argparse
 from pathlib import Path
 
-# Add the current directory to Python path for imports
-sys.path.insert(0, str(Path(__file__).parent))
+# Add the src directory to Python path for imports
+sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from mistral_codestral_data_analysis import MistralCodestralAnalyzer, generate_sample_dataset
 

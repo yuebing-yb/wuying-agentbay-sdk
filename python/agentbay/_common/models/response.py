@@ -2,6 +2,7 @@
 API response models for AgentBay SDK.
 """
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
@@ -25,6 +26,20 @@ class ApiResponse:
     def get_request_id(self) -> str:
         """Returns the unique identifier for the API request."""
         return self.request_id
+
+
+@dataclass
+class BaseResult(ApiResponse):
+    """
+    Base result model for new typed APIs.
+
+    This is a lightweight dataclass wrapper around ApiResponse for APIs that
+    prefer returning structured results instead of generic OperationResult.
+    """
+
+    request_id: str = ""
+    success: bool = False
+    error_message: str = ""
 
 
 class SessionPauseResult(ApiResponse):

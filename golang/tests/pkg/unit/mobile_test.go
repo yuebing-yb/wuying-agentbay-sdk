@@ -1,6 +1,9 @@
 package agentbay_test
 
 import (
+	"bytes"
+	"encoding/base64"
+	"strings"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/mobile"
@@ -260,6 +263,7 @@ func (suite *MobileTestSuite) TestGetAllUIElements_Success() {
 
 	suite.mockSession.On("CallMcpTool", "get_all_ui_elements", map[string]interface{}{
 		"timeout_ms": 3000,
+		"format":     "json",
 	}).Return(expectedResult, nil)
 
 	// Act
@@ -270,6 +274,33 @@ func (suite *MobileTestSuite) TestGetAllUIElements_Success() {
 	assert.Len(suite.T(), result.Elements, 1)
 	assert.Equal(suite.T(), "Label", result.Elements[0].Text)
 	assert.Equal(suite.T(), "TextView", result.Elements[0].ClassName)
+	assert.Equal(suite.T(), "json", result.Format)
+	assert.Contains(suite.T(), result.Raw, `"className"`)
+}
+
+func (suite *MobileTestSuite) TestGetAllUIElements_XMLFormatSuccess() {
+	// Arrange
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-all-elements-xml",
+		Data:         "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation=\"0\"></hierarchy>",
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "get_all_ui_elements", map[string]interface{}{
+		"timeout_ms": 3000,
+		"format":     "xml",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.mobile.GetAllUIElements(3000, "xml")
+
+	// Assert
+	assert.Equal(suite.T(), "test-all-elements-xml", result.RequestID)
+	assert.Equal(suite.T(), "xml", result.Format)
+	assert.True(suite.T(), strings.HasPrefix(result.Raw, "<?xml"))
+	assert.Equal(suite.T(), 0, len(result.Elements))
+	assert.Empty(suite.T(), result.ErrorMessage)
 }
 
 // Test GetInstalledApps functionality
@@ -410,6 +441,80 @@ func (suite *MobileTestSuite) TestScreenshot_Success() {
 	assert.Equal(suite.T(), "test-screenshot-pqr", result.RequestID)
 	assert.Equal(suite.T(), "https://example.com/mobile-screenshot.png", result.Data)
 	assert.Empty(suite.T(), result.ErrorMessage)
+}
+
+func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
+	// Arrange
+	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
+	encoded := base64.StdEncoding.EncodeToString(payload)
+
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-beta-screenshot",
+		Data:         encoded,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "screenshot", map[string]interface{}{
+		"format": "png",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.mobile.BetaTakeScreenshot()
+
+	// Assert
+	assert.True(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-beta-screenshot", result.RequestID)
+	assert.Equal(suite.T(), "png", result.Format)
+	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
+	assert.Greater(suite.T(), len(result.Data), len(pngHeader))
+}
+
+func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_SuccessPng() {
+	// Arrange
+	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	payload := append(append([]byte{}, pngHeader...), []byte("long")...)
+	encoded := base64.StdEncoding.EncodeToString(payload)
+
+	expectedResult := &models.McpToolResult{
+		Success:      true,
+		RequestID:    "test-beta-long-screenshot",
+		Data:         encoded,
+		ErrorMessage: "",
+	}
+
+	suite.mockSession.On("CallMcpTool", "long_screenshot", map[string]interface{}{
+		"max_screens": 2,
+		"format":      "png",
+	}).Return(expectedResult, nil)
+
+	// Act
+	result := suite.mobile.BetaTakeLongScreenshot(2, "png")
+
+	// Assert
+	assert.True(suite.T(), result.Success)
+	assert.Equal(suite.T(), "test-beta-long-screenshot", result.RequestID)
+	assert.Equal(suite.T(), "png", result.Format)
+	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
+}
+
+func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_InvalidMaxScreens() {
+	// Act
+	result := suite.mobile.BetaTakeLongScreenshot(1, "png")
+
+	// Assert
+	assert.False(suite.T(), result.Success)
+	assert.Contains(suite.T(), result.ErrorMessage, "maxScreens")
+}
+
+func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_UnsupportedFormat() {
+	// Act
+	result := suite.mobile.BetaTakeLongScreenshot(2, "gif")
+
+	// Assert
+	assert.False(suite.T(), result.Success)
+	assert.Contains(suite.T(), result.ErrorMessage, "unsupported format")
 }
 
 // Test comprehensive scenarios

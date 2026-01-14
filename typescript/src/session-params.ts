@@ -2,6 +2,7 @@ import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecycleP
 import { ExtensionOption } from "./extension";
 import { BrowserFingerprintContext } from "./browser";
 import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
+import type { Volume } from "./beta-volume";
 
 // Browser fingerprint persistent path constant (moved from config.ts)
 const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
@@ -284,6 +285,16 @@ export class BrowserContext {
 export interface CreateSessionParamsConfig {
   labels: Record<string, string>;
   imageId?: string;
+  /**
+   * Beta: mount a volume during session creation (static mount).
+   * Accepts a volume id string or a Volume object.
+   */
+  volume?: string | Volume;
+  /**
+   * Beta: explicit volume id mount during session creation.
+   * If both volume and volumeId are provided, volume takes precedence.
+   */
+  volumeId?: string;
   contextSync: ContextSync[];
   /** Optional configuration for browser data synchronization */
   browserContext?: BrowserContext;
@@ -291,6 +302,9 @@ export interface CreateSessionParamsConfig {
   isVpc?: boolean;
   /** Policy id to apply when creating the session. */
   policyId?: string;
+  /** Beta network id to bind this session to. */
+  betaNetworkId?: string;
+  // Note: networkId is not released; do not expose non-beta alias.
   /** Whether to enable browser recording for the session. Defaults to true. */
   enableBrowserReplay?: boolean;
   /** Extra configuration settings for different session types (e.g., mobile) */
@@ -310,6 +324,12 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
   /** Image ID to use for the session. */
   public imageId?: string;
 
+  /** Beta: volume object or volume id string to mount during session creation. */
+  public volume?: string | Volume;
+
+  /** Beta: explicit volume id to mount during session creation. */
+  public volumeId?: string;
+
   /**
    * List of context synchronization configurations.
    * These configurations define how contexts should be synchronized and mounted.
@@ -324,6 +344,11 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
 
   /** Policy id to apply when creating the session. */
   public policyId?: string;
+
+  /** Beta network id to bind this session to. */
+  public betaNetworkId?: string;
+
+  // Note: networkId is not released; do not expose non-beta alias.
 
   /** Whether to enable browser recording for the session. Defaults to true. */
   public enableBrowserReplay?: boolean;
@@ -356,6 +381,22 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   withImageId(imageId: string): CreateSessionParams {
     this.imageId = imageId;
+    return this;
+  }
+
+  /**
+   * WithVolumeId sets the volume id for mounting when creating the session (beta).
+   */
+  withVolumeId(volumeId: string): CreateSessionParams {
+    this.volumeId = volumeId;
+    return this;
+  }
+
+  /**
+   * WithVolume sets the volume (or volume id string) for mounting when creating the session (beta).
+   */
+  withVolume(volume: string | Volume): CreateSessionParams {
+    this.volume = volume;
     return this;
   }
 
@@ -394,6 +435,14 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
    */
   withPolicyId(policyId: string): CreateSessionParams {
     this.policyId = policyId;
+    return this;
+  }
+
+  /**
+   * WithBetaNetworkId sets the beta network id for the session parameters and returns the updated parameters.
+   */
+  withBetaNetworkId(betaNetworkId: string): CreateSessionParams {
+    this.betaNetworkId = betaNetworkId;
     return this;
   }
 
@@ -536,10 +585,13 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     return {
       labels: this.labels,
       imageId: this.imageId,
+      volume: this.volume,
+      volumeId: this.volumeId,
       contextSync: allContextSyncs,
       browserContext: this.browserContext,
       isVpc: this.isVpc,
       policyId: this.policyId,
+      betaNetworkId: this.betaNetworkId,
       enableBrowserReplay: this.enableBrowserReplay,
       extraConfigs: this.extraConfigs,
     };
@@ -552,6 +604,8 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
     const params = new CreateSessionParams();
     params.labels = config.labels || {};
     params.imageId = config.imageId;
+    params.volume = config.volume;
+    params.volumeId = config.volumeId;
     params.contextSync = config.contextSync || [];
 
     // Handle browser context - convert to BrowserContext class if needed
@@ -573,6 +627,7 @@ export class CreateSessionParams implements CreateSessionParamsConfig {
 
     params.isVpc = config.isVpc || false;
     params.policyId = config.policyId;
+    params.betaNetworkId = config.betaNetworkId;
     // Keep undefined if not provided to use default behavior (enabled by default)
     params.enableBrowserReplay = config.enableBrowserReplay;
     params.extraConfigs = config.extraConfigs;

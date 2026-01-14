@@ -55,7 +55,7 @@ Handles computer UI automation operations in the AgentBay cloud environment.
 Provides comprehensive desktop automation capabilities including mouse, keyboard,
 window management, application management, and screen operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session)
@@ -67,7 +67,7 @@ Initialize a Computer object.
 
     session: The session object that provides access to the AgentBay API.
 
-### click\_mouse
+### click_mouse
 
 ```python
 async def click_mouse(
@@ -131,7 +131,7 @@ await session.delete()
 
 move_mouse, drag_mouse, get_cursor_position, get_screen_size
 
-### move\_mouse
+### move_mouse
 
 ```python
 async def move_mouse(x: int, y: int) -> BoolResult
@@ -172,7 +172,7 @@ await session.delete()
 
 click_mouse, drag_mouse, get_cursor_position
 
-### drag\_mouse
+### drag_mouse
 
 ```python
 async def drag_mouse(
@@ -282,7 +282,7 @@ await session.delete()
 
 click_mouse, move_mouse
 
-### get\_cursor\_position
+### get_cursor_position
 
 ```python
 async def get_cursor_position() -> OperationResult
@@ -318,7 +318,7 @@ await session.delete()
 
 move_mouse, click_mouse, get_screen_size
 
-### input\_text
+### input_text
 
 ```python
 async def input_text(text: str) -> BoolResult
@@ -357,7 +357,7 @@ await session.delete()
 
 press_keys, click_mouse
 
-### press\_keys
+### press_keys
 
 ```python
 async def press_keys(keys: List[str], hold: bool = False) -> BoolResult
@@ -398,7 +398,7 @@ await session.delete()
 
 release_keys, input_text
 
-### release\_keys
+### release_keys
 
 ```python
 async def release_keys(keys: List[str]) -> BoolResult
@@ -438,7 +438,7 @@ await session.delete()
 
 press_keys, input_text
 
-### get\_screen\_size
+### get_screen_size
 
 ```python
 async def get_screen_size() -> OperationResult
@@ -513,7 +513,33 @@ await session.delete()
 
 get_screen_size
 
-### list\_root\_windows
+### beta_take_screenshot
+
+```python
+async def beta_take_screenshot(format: str = "png") -> ScreenshotResult
+```
+
+Takes a screenshot of the Computer.
+
+This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+binary image data.
+
+**Arguments**:
+
+    format: The desired image format (default: "png"). Supported: "png", "jpeg", "jpg".
+  
+
+**Returns**:
+
+    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+  
+
+**Raises**:
+
+    AgentBayError: If screenshot fails or response cannot be decoded.
+    ValueError: If `format` is invalid.
+
+### list_root_windows
 
 ```python
 async def list_root_windows(timeout_ms: int = 3000) -> WindowListResult
@@ -541,7 +567,7 @@ for window in windows.windows:
 await session.delete()
 ```
 
-### get\_active\_window
+### get_active_window
 
 ```python
 async def get_active_window() -> WindowInfoResult
@@ -563,7 +589,7 @@ print(f"Active window: {active.window.title}")
 await session.delete()
 ```
 
-### activate\_window
+### activate_window
 
 ```python
 async def activate_window(window_id: int) -> BoolResult
@@ -603,7 +629,7 @@ await session.delete()
 
 list_root_windows, get_active_window, close_window
 
-### close\_window
+### close_window
 
 ```python
 async def close_window(window_id: int) -> BoolResult
@@ -643,7 +669,7 @@ await session.delete()
 
 list_root_windows, activate_window, minimize_window
 
-### maximize\_window
+### maximize_window
 
 ```python
 async def maximize_window(window_id: int) -> BoolResult
@@ -683,7 +709,7 @@ await session.delete()
 
 minimize_window, restore_window, fullscreen_window, resize_window
 
-### minimize\_window
+### minimize_window
 
 ```python
 async def minimize_window(window_id: int) -> BoolResult
@@ -723,7 +749,7 @@ await session.delete()
 
 maximize_window, restore_window, activate_window
 
-### restore\_window
+### restore_window
 
 ```python
 async def restore_window(window_id: int) -> BoolResult
@@ -765,7 +791,7 @@ await session.delete()
 
 minimize_window, maximize_window, activate_window
 
-### resize\_window
+### resize_window
 
 ```python
 async def resize_window(window_id: int, width: int, height: int) -> BoolResult
@@ -807,7 +833,7 @@ await session.delete()
 
 maximize_window, restore_window, get_screen_size
 
-### fullscreen\_window
+### fullscreen_window
 
 ```python
 async def fullscreen_window(window_id: int) -> BoolResult
@@ -848,7 +874,7 @@ await session.delete()
 
 maximize_window, restore_window
 
-### focus\_mode
+### focus_mode
 
 ```python
 async def focus_mode(on: bool) -> BoolResult
@@ -887,7 +913,7 @@ await session.delete()
 
 activate_window, get_active_window
 
-### get\_installed\_apps
+### get_installed_apps
 
 ```python
 async def get_installed_apps(
@@ -933,7 +959,7 @@ await session.delete()
 
 start_app, list_visible_apps, stop_app_by_pname
 
-### start\_app
+### start_app
 
 ```python
 async def start_app(start_cmd: str,
@@ -977,7 +1003,7 @@ await session.delete()
 
 get_installed_apps, stop_app_by_pname, list_visible_apps
 
-### list\_visible\_apps
+### list_visible_apps
 
 ```python
 async def list_visible_apps() -> ProcessListResult
@@ -1018,7 +1044,7 @@ await session.delete()
 
 get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
 
-### stop\_app\_by\_pname
+### stop_app_by_pname
 
 ```python
 async def stop_app_by_pname(pname: str) -> AppOperationResult
@@ -1058,7 +1084,7 @@ await session.delete()
 
 start_app, stop_app_by_pid, stop_app_by_cmd, list_visible_apps
 
-### stop\_app\_by\_pid
+### stop_app_by_pid
 
 ```python
 async def stop_app_by_pid(pid: int) -> AppOperationResult
@@ -1099,7 +1125,7 @@ await session.delete()
 
 start_app, stop_app_by_pname, stop_app_by_cmd, list_visible_apps
 
-### stop\_app\_by\_cmd
+### stop_app_by_cmd
 
 ```python
 async def stop_app_by_cmd(stop_cmd: str) -> AppOperationResult

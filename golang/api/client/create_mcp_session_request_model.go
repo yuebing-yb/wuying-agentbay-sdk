@@ -23,10 +23,14 @@ type iCreateMcpSessionRequest interface {
 	GetLabels() *string
 	SetMcpPolicyId(v string) *CreateMcpSessionRequest
 	GetMcpPolicyId() *string
+	SetNetworkId(v string) *CreateMcpSessionRequest
+	GetNetworkId() *string
 	SetPersistenceDataList(v []*CreateMcpSessionRequestPersistenceDataList) *CreateMcpSessionRequest
 	GetPersistenceDataList() []*CreateMcpSessionRequestPersistenceDataList
 	SetSessionId(v string) *CreateMcpSessionRequest
 	GetSessionId() *string
+	SetVolumeId(v string) *CreateMcpSessionRequest
+	GetVolumeId() *string
 	SetVpcResource(v bool) *CreateMcpSessionRequest
 	GetVpcResource() *bool
 	SetExtraConfigs(v string) *CreateMcpSessionRequest
@@ -45,8 +49,10 @@ type CreateMcpSessionRequest struct {
 	ImageId             *string                                       `json:"ImageId,omitempty" xml:"ImageId,omitempty"`
 	Labels              *string                                       `json:"Labels,omitempty" xml:"Labels,omitempty"`
 	McpPolicyId         *string                                       `json:"McpPolicyId,omitempty" xml:"McpPolicyId,omitempty"`
+	NetworkId           *string                                       `json:"NetworkId,omitempty" xml:"NetworkId,omitempty"`
 	PersistenceDataList []*CreateMcpSessionRequestPersistenceDataList `json:"PersistenceDataList,omitempty" xml:"PersistenceDataList,omitempty" type:"Repeated"`
 	SessionId           *string                                       `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
+	VolumeId            *string                                       `json:"VolumeId,omitempty" xml:"VolumeId,omitempty"`
 	VpcResource         *bool                                         `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 	ExtraConfigs        *string                                       `json:"ExtraConfigs,omitempty" xml:"ExtraConfigs,omitempty"`
 	SdkStats            *string                                       `json:"SdkStats,omitempty" xml:"SdkStats,omitempty"`
@@ -89,12 +95,20 @@ func (s *CreateMcpSessionRequest) GetMcpPolicyId() *string {
 	return s.McpPolicyId
 }
 
+func (s *CreateMcpSessionRequest) GetNetworkId() *string {
+	return s.NetworkId
+}
+
 func (s *CreateMcpSessionRequest) GetPersistenceDataList() []*CreateMcpSessionRequestPersistenceDataList {
 	return s.PersistenceDataList
 }
 
 func (s *CreateMcpSessionRequest) GetSessionId() *string {
 	return s.SessionId
+}
+
+func (s *CreateMcpSessionRequest) GetVolumeId() *string {
+	return s.VolumeId
 }
 
 func (s *CreateMcpSessionRequest) GetVpcResource() *bool {
@@ -136,6 +150,11 @@ func (s *CreateMcpSessionRequest) SetMcpPolicyId(v string) *CreateMcpSessionRequ
 	return s
 }
 
+func (s *CreateMcpSessionRequest) SetNetworkId(v string) *CreateMcpSessionRequest {
+	s.NetworkId = &v
+	return s
+}
+
 func (s *CreateMcpSessionRequest) SetPersistenceDataList(v []*CreateMcpSessionRequestPersistenceDataList) *CreateMcpSessionRequest {
 	s.PersistenceDataList = v
 	return s
@@ -143,6 +162,11 @@ func (s *CreateMcpSessionRequest) SetPersistenceDataList(v []*CreateMcpSessionRe
 
 func (s *CreateMcpSessionRequest) SetSessionId(v string) *CreateMcpSessionRequest {
 	s.SessionId = &v
+	return s
+}
+
+func (s *CreateMcpSessionRequest) SetVolumeId(v string) *CreateMcpSessionRequest {
+	s.VolumeId = &v
 	return s
 }
 

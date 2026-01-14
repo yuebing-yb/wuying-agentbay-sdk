@@ -63,20 +63,17 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
             try:
                 # Try to resume session first in case it's paused
                 try:
-                    if(session):
-                        result = session.get_status()
-                        print(f"  ✓ Resumed session: {session.session_id}{result.status}")
-                        if(result.status in ["PAUSED"]):
-                            session.resume()
-                            print(f"  ✓ Resumed session: {session.session_id}")
-                        if result.status not in ["DELETING", "DELETED","RESUMING","PAUSING"]:
-                            result = self.agent_bay.delete(session)
-                            if result.success:
-                                print(f"  ✓ Deleted session: {session.session_id}")
-                            else:
-                                print(f"  ✗ Failed to delete session: {session.session_id}")
+                    session.resume()
+                    print(f"  ✓ Resumed session: {session.session_id}")
                 except Exception as resume_error:
                     print(f"  ⚠ Could not resume session {session.session_id}: {resume_error}")
+                
+                # Delete session
+                result = self.agent_bay.delete(session)
+                if result.success:
+                    print(f"  ✓ Deleted session: {session.session_id}")
+                else:
+                    print(f"  ✗ Failed to delete session: {session.session_id}")
             except Exception as e:
                 print(f"  ✗ Error deleting session {session.session_id}: {e}")
         # Clear the list for next test
@@ -105,7 +102,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Create session
         params = CreateSessionParams(
             # image_id="imgc-0ab5takggkr3iekb6",
-            image_id="linux_latest",
+            # image_id="linux_latest",
             # is_vpc=True,
             labels={"project": "piaoyun-demo", "environment": "testing"},
         )

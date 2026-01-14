@@ -2,6 +2,48 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.14.0] - 2026-01-10
+
+### Added
+
+#### ☕ Java SDK
+- **Formal Release**: Introduced comprehensive support for the Java SDK, enabling Java developers to build agentic applications.
+- **Four Major Environments**: Full support for Browser, Computer, Mobile, and CodeSpace environments.
+- **Core Capabilities**: Support for session management, file operations (including `delete_file`), and multi-region configuration.
+- **Code Execution**: Enabled `run_code` and `run_command` support within the Java SDK.
+- **Observability**: Integrated session metrics and standardized logging.
+
+#### 📱 Mobile Agent
+- **Formal Launch**: Introduced the Mobile Agent (Natural Language Task Execution) across Python, TypeScript, Go, and Java SDKs.
+- **Natural Language Control**: Support for executing mobile tasks using natural language via `execute_task`.
+- **ADB Connection**: Added support for retrieving ADB connection URLs via `get_adb_url`.
+
+#### 📊 Observability & Metrics
+- **Session Metrics**: Implemented unified session metrics collection across all SDKs (Python, TypeScript, Go, Java).
+- **SLS Logging**: Added support for SLS-formatted logs to improve log analysis capabilities.
+
+#### 🛠️ Core Enhancements
+- **CodeSpace Languages**: Added support for **R** and **Java** language execution in CodeSpace.
+- **Binary Files**: Added comprehensive support for binary file reading (`read_file`) across all SDKs.
+- **Session List Filtering**: Added `status` parameter to `agentbay.list()` for filtering sessions by status (RUNNING, PAUSED, etc.).
+- **Ergonomic Aliases**: Introduced API aliases to improve usability and success rates for LLM interactions.
+
+### Changed
+
+#### ⚠️ Breaking Changes
+- **Agent Task Execution**: Removed `max_step_retries` parameter. In `execute_task_and_wait`, replaced `max_try_times` with `timeout` (seconds).
+- **Filesystem**: Renamed `error` field to `error_message` in `UploadResult` and `DownloadResult` objects.
+- **Session API**: Renamed `GetSession` method to `GetStatus` across all SDKs. The old `GetSession` is now internal or removed.
+
+#### Other Changes
+- **Documentation**: Added warnings regarding service restrictions for overseas users.
+
+### Fixed
+
+- **File System**: Fixed an MQTT size limit error in `write_file` by optimizing content splitting.
+- **Stability**: Resolved various issues related to session status checks, timeouts, and file transfers.
+- **CI/CD**: Fixed version file paths and workflow configurations for smoother releases.
+
 ## [0.13.0] - 2025-12-19
 
 ### Core SDK capabilities (user-visible)

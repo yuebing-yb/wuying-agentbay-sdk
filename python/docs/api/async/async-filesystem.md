@@ -25,7 +25,7 @@ Prerequisites and Constraints:
   synchronization path (or conform to backend path rules).
 - Requires available AgentBay context service (agent_bay.context) and session context.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, agent_bay,
@@ -97,7 +97,7 @@ class AsyncFileSystem(BaseService)
 
 Handles file operations in the AgentBay cloud environment.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, *args, **kwargs)
@@ -110,7 +110,7 @@ Initialize FileSystem with FileTransfer capability.
     *args: Arguments to pass to BaseService
     **kwargs: Keyword arguments to pass to BaseService
 
-### get\_file\_transfer\_context\_path
+### get_file_transfer_context_path
 
 ```python
 async def get_file_transfer_context_path() -> Optional[str]
@@ -135,13 +135,13 @@ if context_path:
   print(f"Context path: {context_path}")
 ```
 
-#### DEFAULT\_CHUNK\_SIZE
+#### DEFAULT_CHUNK_SIZE
 
 ```python
 DEFAULT_CHUNK_SIZE = 50 * 1024
 ```
 
-#### MQTT\_SIZE\_LIMIT
+#### MQTT_SIZE_LIMIT
 
 ```python
 MQTT_SIZE_LIMIT = 63 * 1024
@@ -149,7 +149,7 @@ MQTT_SIZE_LIMIT = 63 * 1024
 
 63KB = 64512 bytes
 
-#### MAX\_CONTENT\_BYTES
+#### MAX_CONTENT_BYTES
 
 ```python
 MAX_CONTENT_BYTES = 51 * 1024
@@ -157,7 +157,7 @@ MAX_CONTENT_BYTES = 51 * 1024
 
 51KB = 52224 bytes
 
-### create\_directory
+### create_directory
 
 ```python
 async def create_directory(path: str) -> BoolResult
@@ -185,7 +185,7 @@ nested_result = await session.file_system.create_directory("/tmp/parent/child/gr
 await session.delete()
 ```
 
-### delete\_file
+### delete_file
 
 ```python
 async def delete_file(path: str) -> BoolResult
@@ -212,7 +212,7 @@ delete_result = await session.file_system.delete_file("/tmp/to_delete.txt")
 await session.delete()
 ```
 
-### edit\_file
+### edit_file
 
 ```python
 async def edit_file(path: str,
@@ -245,7 +245,7 @@ edit_result = await session.file_system.edit_file("/tmp/config.txt", edits)
 await session.delete()
 ```
 
-### get\_file\_info
+### get_file_info
 
 ```python
 async def get_file_info(path: str) -> FileInfoResult
@@ -273,7 +273,7 @@ print(info_result.file_info)
 await session.delete()
 ```
 
-### list\_directory
+### list_directory
 
 ```python
 async def list_directory(path: str) -> DirectoryListResult
@@ -326,7 +326,7 @@ await session.delete()
 
 FileSystem.create_directory, FileSystem.get_file_info, FileSystem.read_file
 
-### move\_file
+### move_file
 
 ```python
 async def move_file(source: str, destination: str) -> BoolResult
@@ -356,7 +356,7 @@ read_result = await session.file_system.read_file("/tmp/moved.txt")
 await session.delete()
 ```
 
-### read\_multiple\_files
+### read_multiple_files
 
 ```python
 async def read_multiple_files(paths: List[str]) -> MultipleFileContentResult
@@ -388,7 +388,7 @@ read_result = await session.file_system.read_multiple_files(paths)
 await session.delete()
 ```
 
-### search\_files
+### search_files
 
 ```python
 async def search_files(
@@ -424,14 +424,14 @@ search_result = await session.file_system.search_files("/tmp/test", "test_*")
 await session.delete()
 ```
 
-### read\_file
+### read_file
 
 ```python
 @overload
 async def read_file(path: str) -> FileContentResult
 ```
 
-### read\_file
+### read_file
 
 ```python
 @overload
@@ -439,7 +439,7 @@ async def read_file(path: str, *,
                     format: Literal["text"]) -> FileContentResult
 ```
 
-### read\_file
+### read_file
 
 ```python
 @overload
@@ -447,7 +447,7 @@ async def read_file(path: str, *,
                     format: Literal["bytes"]) -> BinaryFileContentResult
 ```
 
-### read\_file
+### read_file
 
 ```python
 async def read_file(
@@ -515,7 +515,7 @@ async def read(path: str) -> FileContentResult
 
 Alias of read_file().
 
-### write\_file
+### write_file
 
 ```python
 async def write_file(path: str,
@@ -622,7 +622,7 @@ async def rm(path: str) -> BoolResult
 
 Alias of delete_file().
 
-### upload\_file
+### upload_file
 
 ```python
 async def upload_file(
@@ -663,7 +663,7 @@ upload_result = await session.file_system.upload_file("/local/file.txt", "/works
 await session.delete()
 ```
 
-### download\_file
+### download_file
 
 ```python
 async def download_file(
@@ -704,7 +704,7 @@ download_result = await session.file_system.download_file("/workspace/file.txt",
 await session.delete()
 ```
 
-### watch\_directory
+### watch_directory
 
 ```python
 def watch_directory(

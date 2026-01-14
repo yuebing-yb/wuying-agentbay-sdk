@@ -6,24 +6,28 @@ export class CreateMcpSessionResponseBodyData extends $dara.Model {
   appInstanceId?: string;
   errMsg?: string;
   httpPort?: string;
+  linkUrl?: string;
   networkInterfaceIp?: string;
   resourceId?: string;
   resourceUrl?: string;
   sessionId?: string;
   success?: boolean;
   token?: string;
+  toolList?: string;
   vpcResource?: boolean;
   static names(): { [key: string]: string } {
     return {
       appInstanceId: 'AppInstanceId',
       errMsg: 'ErrMsg',
       httpPort: 'HttpPort',
+      linkUrl: 'LinkUrl',
       networkInterfaceIp: 'NetworkInterfaceIp',
       resourceId: 'ResourceId',
       resourceUrl: 'ResourceUrl',
       sessionId: 'SessionId',
       success: 'Success',
       token: 'Token',
+      toolList: 'ToolList',
       vpcResource: 'VpcResource',
     };
   }
@@ -33,12 +37,14 @@ export class CreateMcpSessionResponseBodyData extends $dara.Model {
       appInstanceId: 'string',
       errMsg: 'string',
       httpPort: 'string',
+      linkUrl: 'string',
       networkInterfaceIp: 'string',
       resourceId: 'string',
       resourceUrl: 'string',
       sessionId: 'string',
       success: 'boolean',
       token: 'string',
+      toolList: 'string',
       vpcResource: 'boolean',
     };
   }

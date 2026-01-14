@@ -1,18 +1,22 @@
 package com.aliyun.agentbay.network;
 
 import com.aliyun.agentbay.AgentBay;
-public class Network {
+
+/**
+ * Beta network service (trial feature).
+ */
+public class BetaNetworkService {
     private AgentBay agentBay;
 
-    public Network(AgentBay agentBay) {
+    public BetaNetworkService(AgentBay agentBay) {
         this.agentBay = agentBay;
     }
 
-    public NetworkResult create() {
-        return create(null);
+    public NetworkResult betaGetNetworkBindToken() {
+        return betaGetNetworkBindToken(null);
     }
 
-    public NetworkResult create(String networkId) {
+    public NetworkResult betaGetNetworkBindToken(String networkId) {
         try {
             com.aliyun.wuyingai20250506.models.CreateNetworkRequest request =
                 new com.aliyun.wuyingai20250506.models.CreateNetworkRequest();
@@ -96,7 +100,7 @@ public class Network {
         }
     }
 
-    public NetworkStatusResult describe(String networkId) {
+    public NetworkStatusResult betaDescribe(String networkId) {
         if (networkId == null || networkId.isEmpty()) {
             return new NetworkStatusResult(
                 "",
@@ -182,3 +186,5 @@ public class Network {
         }
     }
 }
+
+

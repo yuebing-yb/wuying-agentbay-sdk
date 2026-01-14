@@ -12,6 +12,7 @@ export * from "./browser";
 export { Code } from "./code";
 export * from "./command";
 export { Context, ContextService } from "./context";
+export { BetaNetworkService } from "./beta-network";
 export { Computer } from "./computer";
 export * from "./exceptions";
 export * from "./extension";
@@ -25,6 +26,7 @@ export * from "./types";
 export * from "./context-sync";
 export * from "./context-manager";
 export * from "./session-params";
+export * from "./beta-volume";
 export * from "./browser/eval";
 // Export utility functions
 export {

@@ -3,9 +3,11 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
+	"github.com/invopop/jsonschema"
 )
 
 // ExecutionResult represents the result of task execution
@@ -38,27 +40,33 @@ type QueryResult struct {
 	Error        string       `json:"error,omitempty"`
 }
 
-// InitializationResult represents the result of agent initialization
-type InitializationResult struct {
-	models.ApiResponse
-	Success      bool   `json:"success"`
-	ErrorMessage string `json:"error_message"`
-}
-
-// Options for configuring the agent.
-// Args:
-// use_vision (bool): Whether to use vision to perform actions.
-// output_schema(dict): User-defined output schema for the agent's results.
-
-type AgentOptions struct {
-	UseVision    bool
-	OutputSchema string
+type DefaultSchema struct {
+	Result string `json:"Result" jsonschema:"required"`
 }
 
 // baseTaskAgent provides common functionality for task execution agents
 type baseTaskAgent struct {
 	Session    McpSession
 	ToolPrefix string
+}
+
+// GenerateJsonSchema generates a JSON schema for the given struct
+func generateJsonSchema(schema interface{}) string {
+	if schema == nil {
+		schema = &DefaultSchema{}
+	}
+	reflector := jsonschema.Reflector{
+		DoNotReference:            true,  // Disable $ref
+		AllowAdditionalProperties: false, // Disable additional properties
+	}
+	output_schema := reflector.Reflect(schema)
+
+	schemaMap := make(map[string]interface{})
+	schemaBytes, _ := json.Marshal(output_schema)
+	json.Unmarshal(schemaBytes, &schemaMap)
+
+	prettyJSON, _ := json.MarshalIndent(schemaMap, "", "  ")
+	return string(prettyJSON)
 }
 
 // getToolName returns the full MCP tool name based on prefix and action
@@ -125,10 +133,16 @@ func (b *baseTaskAgent) executeTask(task string) *ExecutionResult {
 
 	taskID, ok := content["task_id"].(string)
 	if !ok {
+		errorMessage := "Task ID not found in response"
+		if errorVal, exists := content["error"]; exists {
+			if errorStr, ok := errorVal.(string); ok {
+				errorMessage = errorStr
+			}
+		}
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
-			ErrorMessage: "Task ID not found in response",
+			ErrorMessage: errorMessage,
 			TaskStatus:   "failed",
 			TaskID:       "",
 		}
@@ -192,10 +206,17 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 
 	taskID, ok := content["task_id"].(string)
 	if !ok {
+		// 从后端返回的content中提取error信息
+		errorMessage := "Task ID not found in response"
+		if errorVal, exists := content["error"]; exists {
+			if errorStr, ok := errorVal.(string); ok {
+				errorMessage = errorStr
+			}
+		}
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
-			ErrorMessage: "Task ID not found in response",
+			ErrorMessage: errorMessage,
 			TaskStatus:   "failed",
 			TaskID:       "",
 			TaskResult:   "Invalid task ID.",
@@ -261,13 +282,37 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 	}
 
 	fmt.Println("⚠️ task execution timeout!")
-	// Automatically terminate the task on timeout
 	terminateResult := b.terminateTask(taskID)
 	if terminateResult.Success {
-		fmt.Printf("✅ Task %s terminated successfully after timeout\n", taskID)
+		fmt.Printf("✅ Terminate request sent for task %s after timeout\n", taskID)
 	} else {
 		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
 	}
+
+	fmt.Printf("⏳ Waiting for task %s to be fully terminated...\n", taskID)
+	terminatePollInterval := 1
+	maxTerminatePollAttempts := 30
+	terminateTriedTime := 0
+	taskTerminatedConfirmed := false
+
+	for terminateTriedTime < maxTerminatePollAttempts {
+		statusQuery := b.getTaskStatus(taskID)
+		if !statusQuery.Success {
+			errorMsg := statusQuery.ErrorMessage
+			if errorMsg != "" && strings.HasPrefix(errorMsg, "Task not found or already finished") {
+				fmt.Printf("✅ Task %s confirmed terminated (not found or finished)\n", taskID)
+				taskTerminatedConfirmed = true
+				break
+			}
+		}
+		time.Sleep(time.Duration(terminatePollInterval) * time.Second)
+		terminateTriedTime++
+	}
+
+	if !taskTerminatedConfirmed {
+		fmt.Printf("⚠️ Timeout waiting for task %s to be fully terminated\n", taskID)
+	}
+
 	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
 	return &ExecutionResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -593,95 +638,271 @@ func (a *ComputerUseAgent) TerminateTask(taskID string) *ExecutionResult {
 	return a.baseTaskAgent.terminateTask(taskID)
 }
 
-// Initialize initializes the browser agent with options.
-// If options is nil, default values will be used (use_vision=false, output_schema={}).
-func (a *BrowserUseAgent) Initialize(options *AgentOptions) *InitializationResult {
-	fmt.Println("Initialize Browser Use Agent...")
+/*
+Execute a task described in human language on a browser without waiting for completion (non-blocking).
 
-	args := map[string]interface{}{
-		"use_vision":    false,
-		"output_schema": map[string]interface{}{},
-	}
+This is a fire-and-return interface that immediately provides a task ID.
+Call get_task_status to check the task status. You can control the timeout
+of the task execution in your own code by setting the frequency of calling
+get_task_status.
 
-	if options != nil {
-		args["use_vision"] = options.UseVision
-		// Convert string to map if needed, or use empty map if empty string
-		if options.OutputSchema != "" {
-			var schemaMap map[string]interface{}
-			if err := json.Unmarshal([]byte(options.OutputSchema), &schemaMap); err == nil {
-				args["output_schema"] = schemaMap
-			} else {
-				// If not valid JSON, use empty map
-				args["output_schema"] = map[string]interface{}{}
-			}
-		} else {
-			args["output_schema"] = map[string]interface{}{}
-		}
-	}
+Args:
+task: Task description in human language.
+use_vision: Whether to use vision to performe the task.
+output_schema: The schema of the structured output.
 
-	result, err := a.baseTaskAgent.Session.CallMcpTool("browser_use_initialize", args)
+Returns:
+ExecutionResult: Result object containing success status, task ID,
+
+	task status, and error message if any.
+
+Example:
+```typescript
+client, err := agentbay.NewAgentBay(apiKey)
+
 	if err != nil {
-		fmt.Printf("Failed to initialize: %v\n", err)
-		return &InitializationResult{
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		return
+	}
+
+sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+sessionResult, err := client.Create(sessionParams)
+
+	if err != nil {
+		fmt.Printf("Error creating session: %v\n", err)
+		return
+	}
+
+session := sessionResult.Session
+
+	type OutputSchema struct {
+		City string `json:"City" jsonschema:"required"`
+		Weather string `json:"Weather" jsonschema:"required"`
+	}
+
+result = await session.Agent.Browser.ExecuteTask(task="Query the weather in Shanghai",false, &OutputSchema{})
+fmt.Printf(
+
+	f"Task ID: {result.task_id}, Status: {result.task_status}")
+
+status = await session.Agent.Browser.GetTaskStatus(result.task_id)
+fmt.Printf(f"Task status: {status.task_status}")
+await session.delete()
+```
+*/
+func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schema interface{}) *ExecutionResult {
+	args := map[string]interface{}{
+		"task":          task,
+		"use_vision":    use_vision,
+		"output_schema": generateJsonSchema(output_schema),
+	}
+	fmt.Println(args)
+	result, err := a.Session.CallMcpTool(a.getToolName("execute"), args)
+	if err != nil {
+		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to initialize: %v", err),
+			ErrorMessage: fmt.Sprintf("Failed to execute: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
 		}
 	}
 
-	if result.Success {
-		return &InitializationResult{
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to execute task"
+		}
+		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      true,
-			ErrorMessage: "",
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskStatus:   "failed",
+			TaskID:       "",
 		}
 	}
 
-	fmt.Println("Failed to initialize browser use agent")
-	errorMessage := result.ErrorMessage
-	if errorMessage == "" {
-		errorMessage = "Failed to initialize browser use agent"
+	// Parse task ID from response
+	var content map[string]interface{}
+	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
 	}
-	return &InitializationResult{
+
+	taskID, ok := content["task_id"].(string)
+	if !ok {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: "Task ID not found in response",
+			TaskStatus:   "failed",
+			TaskID:       "",
+		}
+	}
+
+	return &ExecutionResult{
+		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
+		Success:     true,
+		TaskID:      taskID,
+		TaskStatus:  "running",
+	}
+}
+
+/*
+Execute a task described in human language on a browser synchronously.
+
+This is a synchronous interface that blocks until the task is completed or
+an error occurs, or timeout happens. The default polling interval is 3 seconds.
+
+Args:
+
+	task: Task description in human language.
+	timeout: Maximum time to wait for task completion in seconds.
+		Used to control how long to wait for task completion.
+	use_vision: Whether to use vision to performe the task.
+	output_schema: The schema of the structured output.
+
+Returns:
+
+	ExecutionResult: Result object containing success status, task ID,
+		task status, and error message if any.
+
+Example:
+```typescript
+client, err := agentbay.NewAgentBay(apiKey)
+
+	if err != nil {
+		fmt.Printf("Error initializing AgentBay client: %v\n", err)
+		return
+	}
+
+sessionParams := agentbay.NewCreateSessionParams().WithImageId("windows_latest")
+sessionResult, err := client.Create(sessionParams)
+
+	if err != nil {
+		fmt.Printf("Error creating session: %v\n", err)
+		return
+	}
+
+session := sessionResult.Session
+
+	type OutputSchema struct {
+		City string `json:"City" jsonschema:"required"`
+		Weather string `json:"Weather" jsonschema:"required"`
+	}
+
+result = await session.Agent.Browser.ExecuteTaskAndWait(task="Query the weather in Shanghai",180, false, &OutputSchema{})
+fmt.Printf("Task status: %s\n", executionResult.TaskStatus)
+```
+*/
+func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_vision bool, output_schema interface{}) *ExecutionResult {
+	result := a.ExecuteTask(task, use_vision, output_schema)
+	if !result.Success {
+		errorMessage := result.ErrorMessage
+		if errorMessage == "" {
+			errorMessage = "Failed to execute task"
+		}
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: errorMessage,
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+	taskID := result.TaskID
+	if taskID == "" {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			ErrorMessage: "Task ID not found in response",
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Invalid task ID.",
+		}
+	}
+
+	// Poll for task completion
+	pollInterval := 3
+	maxPollAttempts := timeout / pollInterval
+	triedTime := 0
+	for triedTime < maxPollAttempts {
+		query := a.getTaskStatus(result.TaskID)
+		if !query.Success {
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: query.ErrorMessage,
+				TaskStatus:   "failed",
+				TaskID:       taskID,
+			}
+		}
+
+		taskStatus := query.TaskStatus
+		switch taskStatus {
+		case "finished":
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      true,
+				ErrorMessage: "",
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+				TaskResult:   query.TaskProduct,
+			}
+		case "failed":
+			errorMsg := query.ErrorMessage
+			if errorMsg == "" {
+				errorMsg = "Failed to execute task."
+			}
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: errorMsg,
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+			}
+		case "unsupported":
+			errorMsg := query.ErrorMessage
+			if errorMsg == "" {
+				errorMsg = "Unsupported task."
+			}
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
+				Success:      false,
+				ErrorMessage: errorMsg,
+				TaskID:       taskID,
+				TaskStatus:   taskStatus,
+			}
+		}
+
+		fmt.Printf("⏳ Task %s running 🚀: %s.\n", taskID, query.TaskAction)
+		time.Sleep(3 * time.Second)
+		triedTime++
+	}
+
+	fmt.Println("⚠️ task execution timeout!")
+	// Automatically terminate the task on timeout
+	terminateResult := a.terminateTask(taskID)
+	if terminateResult.Success {
+		fmt.Printf("✅ Task %s terminated successfully after timeout\n", taskID)
+	} else {
+		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
+	}
+	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
+	return &ExecutionResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      false,
-		ErrorMessage: errorMessage,
+		ErrorMessage: timeoutErrorMsg,
+		TaskStatus:   "failed",
+		TaskID:       taskID,
+		TaskResult:   fmt.Sprintf("Task execution timed out after %d seconds.", timeout),
 	}
-}
-
-// ExecuteTask executes a task in human language.
-// If timeout is provided, it will wait for task completion (blocking).
-// If timeout is not provided, it returns immediately with a task ID (non-blocking).
-//
-// Non-blocking usage (new style):
-//
-//	result := sessionResult.Session.Agent.Browser.ExecuteTask("Open Chrome browser")
-//	status := sessionResult.Session.Agent.Browser.GetTaskStatus(result.TaskID)
-//
-// Blocking usage (backward compatible):
-//
-//	result := sessionResult.Session.Agent.Browser.ExecuteTask("Open Chrome browser", 20)
-func (a *BrowserUseAgent) ExecuteTask(task string, timeout ...int) *ExecutionResult {
-	if len(timeout) > 0 {
-		// Backward compatible: blocking version
-		return a.baseTaskAgent.executeTaskAndWait(task, timeout[0])
-	}
-	// New non-blocking version
-	return a.baseTaskAgent.executeTask(task)
-}
-
-// ExecuteTaskAndWait executes a specific task described in human language synchronously.
-// This is a synchronous interface that blocks until the task is completed or
-// an error occurs, or timeout happens. The default polling interval is 3 seconds.
-//
-// Example:
-//
-//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//	sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//	defer sessionResult.Session.Delete()
-//	result := sessionResult.Session.Agent.Browser.ExecuteTaskAndWait("Open Chrome browser", 60)
-func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int) *ExecutionResult {
-	return a.baseTaskAgent.executeTaskAndWait(task, timeout)
 }
 
 // GetTaskStatus gets the status of the task with the given task ID
@@ -766,10 +987,17 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
 		taskID, ok = content["task_id"].(string)
 	}
 	if !ok {
+		// 从后端返回的content中提取error信息
+		errorMessage := "Task ID not found in response"
+		if errorVal, exists := content["error"]; exists {
+			if errorStr, ok := errorVal.(string); ok {
+				errorMessage = errorStr
+			}
+		}
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
-			ErrorMessage: "Task ID not found in response",
+			ErrorMessage: errorMessage,
 			TaskStatus:   "failed",
 			TaskID:       "",
 		}
@@ -843,10 +1071,16 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 		taskID, ok = content["task_id"].(string)
 	}
 	if !ok {
+		errorMessage := "Task ID not found in response"
+		if errorVal, exists := content["error"]; exists {
+			if errorStr, ok := errorVal.(string); ok {
+				errorMessage = errorStr
+			}
+		}
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
-			ErrorMessage: "Task ID not found in response",
+			ErrorMessage: errorMessage,
 			TaskStatus:   "failed",
 			TaskID:       "",
 			TaskResult:   "Invalid task ID.",
@@ -857,6 +1091,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 	maxPollAttempts := timeout / pollInterval
 	triedTime := 0
 	processedTimestamps := make(map[int64]bool) // Track processed stream fragments by timestamp_ms
+	var lastQuery *QueryResult                  // Save last query status for timeout result
 	for triedTime < maxPollAttempts {
 		query := a.GetTaskStatus(taskID)
 		if !query.Success {
@@ -867,6 +1102,11 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 				TaskStatus:   "failed",
 				TaskID:       taskID,
 			}
+		}
+
+		// Only update lastQuery if stream is not empty
+		if len(query.Stream) > 0 {
+			lastQuery = query
 		}
 
 		// Process new stream fragments for real-time output
@@ -959,21 +1199,82 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 	}
 
 	fmt.Println("⚠️ task execution timeout!")
-	// Automatically terminate the task on timeout
 	terminateResult := a.TerminateTask(taskID)
 	if terminateResult.Success {
-		fmt.Printf("✅ Task %s terminated successfully after timeout\n", taskID)
+		fmt.Printf("✅ Terminate request sent for task %s after timeout\n", taskID)
 	} else {
 		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
 	}
+
+	fmt.Printf("⏳ Waiting for task %s to be fully terminated...\n", taskID)
+	terminatePollInterval := 1
+	maxTerminatePollAttempts := 30
+	terminateTriedTime := 0
+	taskTerminatedConfirmed := false
+
+	for terminateTriedTime < maxTerminatePollAttempts {
+		statusQuery := a.GetTaskStatus(taskID)
+		if !statusQuery.Success {
+			errorMsg := statusQuery.ErrorMessage
+			if errorMsg != "" && strings.HasPrefix(errorMsg, "Task not found or already finished") {
+				fmt.Printf("✅ Task %s confirmed terminated (not found or finished)\n", taskID)
+				taskTerminatedConfirmed = true
+				break
+			}
+		}
+		time.Sleep(time.Duration(terminatePollInterval) * time.Second)
+		terminateTriedTime++
+	}
+
+	if !taskTerminatedConfirmed {
+		fmt.Printf("⚠️ Timeout waiting for task %s to be fully terminated\n", taskID)
+	}
+
 	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
+
+	// Build task_result with last query status information
+	taskResultParts := []string{fmt.Sprintf("Task execution timed out after %d seconds.", timeout)}
+
+	if lastQuery != nil {
+		// Concatenate stream content from last query
+		if len(lastQuery.Stream) > 0 {
+			var streamContentParts []string
+			for _, streamItem := range lastQuery.Stream {
+				if streamItem.Content != "" {
+					streamContentParts = append(streamContentParts, streamItem.Content)
+				}
+			}
+
+			if len(streamContentParts) > 0 {
+				streamContent := strings.Join(streamContentParts, "")
+				taskResultParts = append(taskResultParts, fmt.Sprintf("Last task status output: %s", streamContent))
+			}
+		}
+
+		// Also add other status information if available
+		if lastQuery.TaskAction != "" {
+			taskResultParts = append(taskResultParts, fmt.Sprintf("Last action: %s", lastQuery.TaskAction))
+		}
+		if lastQuery.TaskProduct != "" {
+			taskResultParts = append(taskResultParts, fmt.Sprintf("Last result: %s", lastQuery.TaskProduct))
+		}
+		if lastQuery.Error != "" {
+			taskResultParts = append(taskResultParts, fmt.Sprintf("Last error: %s", lastQuery.Error))
+		}
+		if lastQuery.TaskStatus != "" {
+			taskResultParts = append(taskResultParts, fmt.Sprintf("Last status: %s", lastQuery.TaskStatus))
+		}
+	}
+
+	taskResult := strings.Join(taskResultParts, " | ")
+
 	return &ExecutionResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      false,
 		ErrorMessage: timeoutErrorMsg,
 		TaskStatus:   "failed",
 		TaskID:       taskID,
-		TaskResult:   fmt.Sprintf("Task execution timed out after %d seconds.", timeout),
+		TaskResult:   taskResult,
 	}
 }
 

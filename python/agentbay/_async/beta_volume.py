@@ -1,0 +1,348 @@
+import json
+from typing import TYPE_CHECKING, List, Optional
+
+from .._common.models.response import ApiResponse, OperationResult, extract_request_id
+from .._common.logger import (
+    _log_api_call,
+    _log_api_response_with_details,
+    _log_operation_error,
+    get_logger,
+)
+from ..api.models import (
+    DeleteVolumeRequest,
+    GetVolumeRequest,
+    ListVolumesRequest,
+)
+
+_logger = get_logger("beta_volume")
+
+if TYPE_CHECKING:
+    from .agentbay import AsyncAgentBay
+
+
+class Volume:
+    """
+    Block storage volume (data disk).
+
+    Note: This is a beta feature and may change in future releases.
+    """
+
+    def __init__(
+        self,
+        id: str,
+        name: str,
+        belonging_image_id: Optional[str] = None,
+        status: Optional[str] = None,
+        created_at: Optional[str] = None,
+    ):
+        self.id = id
+        self.name = name
+        self.belonging_image_id = belonging_image_id
+        self.status = status
+        self.created_at = created_at
+
+
+class VolumeResult(ApiResponse):
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        volume: Optional[Volume] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.volume = volume
+        self.error_message = error_message
+
+
+class VolumeListResult(ApiResponse):
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        volumes: Optional[List[Volume]] = None,
+        next_token: str = "",
+        max_results: int = 0,
+        total_count: int = 0,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.volumes = volumes or []
+        self.next_token = next_token
+        self.max_results = max_results
+        self.total_count = total_count
+        self.error_message = error_message
+
+
+class AsyncBetaVolumeService:
+    """
+    Beta volume service (trial feature).
+    """
+
+    def __init__(self, agent_bay: "AsyncAgentBay"):
+        self._agent_bay = agent_bay
+
+    async def create(self, name: str, image_id: str) -> VolumeResult:
+        return await self.get(name=name, create=True, image_id=image_id)
+
+    async def get(
+        self,
+        *,
+        volume_id: Optional[str] = None,
+        name: Optional[str] = None,
+        create: bool = False,
+        image_id: str,
+    ) -> VolumeResult:
+        """
+        Get volume details.
+
+        - If volume_id is provided: uses ListVolumes(volume_ids=[volume_id])
+        - If name is provided: uses GetVolume(volume_name=name, allow_create=create)
+
+        image_id is required to match the underlying Aliyun SDK request.
+        """
+
+        if not image_id:
+            raise ValueError("image_id is required")
+
+        if volume_id:
+            list_result = await self.list(
+                image_id=image_id,
+                max_results=10,
+                volume_ids=[volume_id],
+            )
+            if not list_result.success:
+                return VolumeResult(
+                    request_id=list_result.request_id,
+                    success=False,
+                    volume=None,
+                    error_message=list_result.error_message,
+                )
+            if not list_result.volumes:
+                return VolumeResult(
+                    request_id=list_result.request_id,
+                    success=False,
+                    volume=None,
+                    error_message="Volume not found",
+                )
+            return VolumeResult(
+                request_id=list_result.request_id,
+                success=True,
+                volume=list_result.volumes[0],
+                error_message="",
+            )
+
+        if not name:
+            raise ValueError("Either volume_id or name is required")
+
+        request = GetVolumeRequest(
+            authorization=f"Bearer {self._agent_bay.api_key}",
+            allow_create=create,
+            image_id=image_id,
+            volume_name=name,
+        )
+
+        _log_api_call(
+            "GetVolume(beta)",
+            f"VolumeName={name}, AllowCreate={create}, ImageId={image_id}",
+        )
+
+        response = await self._agent_bay.client.get_volume_async(request)
+        request_id = extract_request_id(response)
+        data = response.to_map().get("body", {})
+
+        if not isinstance(data, dict):
+            return VolumeResult(
+                request_id=request_id,
+                success=False,
+                volume=None,
+                error_message="Invalid response format: expected dict body",
+            )
+
+        if not data.get("Success", True) and data.get("Code"):
+            code = data.get("Code", "Unknown")
+            message = data.get("Message", "Unknown error")
+            return VolumeResult(
+                request_id=request_id,
+                success=False,
+                volume=None,
+                error_message=f"[{code}] {message}",
+            )
+
+        vol_data = data.get("Data") or {}
+        if not isinstance(vol_data, dict):
+            return VolumeResult(
+                request_id=request_id,
+                success=False,
+                volume=None,
+                error_message="Invalid response format: expected dict Data",
+            )
+
+        volume_id_value = vol_data.get("VolumeId") or ""
+        if not volume_id_value:
+            body_json = json.dumps(data, ensure_ascii=False, indent=2)
+            _log_api_response_with_details(
+                "GetVolume(beta)", request_id, False, None, body_json
+            )
+            return VolumeResult(
+                request_id=request_id,
+                success=False,
+                volume=None,
+                error_message="VolumeId not found in response",
+            )
+
+        volume = Volume(
+            id=volume_id_value,
+            name=vol_data.get("VolumeName") or "",
+            belonging_image_id=vol_data.get("BelongingImageId"),
+            status=vol_data.get("Status"),
+            created_at=vol_data.get("CreateTime"),
+        )
+
+        body_json = json.dumps(data, ensure_ascii=False, indent=2)
+        _log_api_response_with_details(
+            "GetVolume(beta)",
+            request_id,
+            True,
+            {"volume_id": volume.id, "volume_name": volume.name},
+            body_json,
+        )
+
+        return VolumeResult(
+            request_id=request_id,
+            success=True,
+            volume=volume,
+            error_message="",
+        )
+
+    async def list(
+        self,
+        *,
+        image_id: str,
+        max_results: int = 10,
+        next_token: str = "",
+        volume_ids: Optional[List[str]] = None,
+        volume_name: str = "",
+    ) -> VolumeListResult:
+        if not image_id:
+            raise ValueError("image_id is required")
+
+        request = ListVolumesRequest(
+            authorization=f"Bearer {self._agent_bay.api_key}",
+            image_id=image_id,
+            max_results=max_results,
+            next_token=next_token or None,
+            volume_ids=volume_ids,
+            volume_name=volume_name or None,
+        )
+
+        _log_api_call(
+            "ListVolumes(beta)",
+            f"ImageId={image_id}, MaxResults={max_results}, NextToken={next_token}",
+        )
+
+        response = await self._agent_bay.client.list_volumes_async(request)
+        request_id = extract_request_id(response)
+        body = response.to_map().get("body", {})
+
+        if not isinstance(body, dict):
+            return VolumeListResult(
+                request_id=request_id,
+                success=False,
+                volumes=[],
+                error_message="Invalid response format: expected dict body",
+            )
+
+        if not body.get("Success", True) and body.get("Code"):
+            code = body.get("Code", "Unknown")
+            message = body.get("Message", "Unknown error")
+            return VolumeListResult(
+                request_id=request_id,
+                success=False,
+                volumes=[],
+                error_message=f"[{code}] {message}",
+            )
+
+        volumes: List[Volume] = []
+        data_list = body.get("Data") or []
+        if isinstance(data_list, list):
+            for it in data_list:
+                if not isinstance(it, dict):
+                    continue
+                vid = it.get("VolumeId") or ""
+                if not vid:
+                    continue
+                volumes.append(
+                    Volume(
+                        id=vid,
+                        name=it.get("VolumeName") or "",
+                        belonging_image_id=it.get("BelongingImageId"),
+                        status=it.get("Status"),
+                        created_at=it.get("CreateTime"),
+                    )
+                )
+
+        next_token_value = body.get("NextToken") or ""
+        max_results_value = body.get("MaxResults") or max_results
+
+        body_json = json.dumps(body, ensure_ascii=False, indent=2)
+        _log_api_response_with_details(
+            "ListVolumes(beta)",
+            request_id,
+            True,
+            {
+                "image_id": image_id,
+                "volume_count": len(volumes),
+                "has_next_page": bool(next_token_value),
+            },
+            body_json,
+        )
+
+        return VolumeListResult(
+            request_id=request_id,
+            success=True,
+            volumes=volumes,
+            next_token=next_token_value,
+            max_results=int(max_results_value or 0),
+            total_count=len(volumes),
+            error_message="",
+        )
+
+    async def delete(self, volume_id: str) -> OperationResult:
+        if not volume_id:
+            raise ValueError("volume_id is required")
+
+        request = DeleteVolumeRequest(
+            authorization=f"Bearer {self._agent_bay.api_key}",
+            volume_id=volume_id,
+        )
+
+        _log_api_call("DeleteVolume(beta)", f"VolumeId={volume_id}")
+
+        try:
+            response = await self._agent_bay.client.delete_volume_async(request)
+        except Exception as e:
+            _log_operation_error("DeleteVolume(beta)", str(e), True)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to delete volume: {e}",
+            )
+
+        request_id = extract_request_id(response)
+        body = response.to_map().get("body", {})
+
+        if isinstance(body, dict) and (not body.get("Success", True)) and body.get("Code"):
+            code = body.get("Code", "Unknown")
+            message = body.get("Message", "Unknown error")
+            return OperationResult(
+                request_id=request_id,
+                success=False,
+                error_message=f"[{code}] {message}",
+            )
+
+        return OperationResult(request_id=request_id, success=True, error_message="")
+
+

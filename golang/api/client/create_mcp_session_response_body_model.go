@@ -102,12 +102,14 @@ type CreateMcpSessionResponseBodyData struct {
 	AppInstanceId      *string `json:"AppInstanceId,omitempty" xml:"AppInstanceId,omitempty"`
 	ErrMsg             *string `json:"ErrMsg,omitempty" xml:"ErrMsg,omitempty"`
 	HttpPort           *string `json:"HttpPort,omitempty" xml:"HttpPort,omitempty"`
+	LinkUrl            *string `json:"LinkUrl,omitempty" xml:"LinkUrl,omitempty"`
 	NetworkInterfaceIp *string `json:"NetworkInterfaceIp,omitempty" xml:"NetworkInterfaceIp,omitempty"`
 	ResourceId         *string `json:"ResourceId,omitempty" xml:"ResourceId,omitempty"`
 	ResourceUrl        *string `json:"ResourceUrl,omitempty" xml:"ResourceUrl,omitempty"`
 	SessionId          *string `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
 	Success            *bool   `json:"Success,omitempty" xml:"Success,omitempty"`
 	Token              *string `json:"Token,omitempty" xml:"Token,omitempty"`
+	ToolList           *string `json:"ToolList,omitempty" xml:"ToolList,omitempty"`
 	VpcResource        *bool   `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 }
 
@@ -147,12 +149,20 @@ func (s *CreateMcpSessionResponseBodyData) GetHttpPort() *string {
 	return s.HttpPort
 }
 
+func (s *CreateMcpSessionResponseBodyData) GetLinkUrl() *string {
+	return s.LinkUrl
+}
+
 func (s *CreateMcpSessionResponseBodyData) GetNetworkInterfaceIp() *string {
 	return s.NetworkInterfaceIp
 }
 
 func (s *CreateMcpSessionResponseBodyData) GetToken() *string {
 	return s.Token
+}
+
+func (s *CreateMcpSessionResponseBodyData) GetToolList() *string {
+	return s.ToolList
 }
 
 func (s *CreateMcpSessionResponseBodyData) GetVpcResource() *bool {
@@ -194,6 +204,11 @@ func (s *CreateMcpSessionResponseBodyData) SetHttpPort(v string) *CreateMcpSessi
 	return s
 }
 
+func (s *CreateMcpSessionResponseBodyData) SetLinkUrl(v string) *CreateMcpSessionResponseBodyData {
+	s.LinkUrl = &v
+	return s
+}
+
 func (s *CreateMcpSessionResponseBodyData) SetNetworkInterfaceIp(v string) *CreateMcpSessionResponseBodyData {
 	s.NetworkInterfaceIp = &v
 	return s
@@ -201,6 +216,11 @@ func (s *CreateMcpSessionResponseBodyData) SetNetworkInterfaceIp(v string) *Crea
 
 func (s *CreateMcpSessionResponseBodyData) SetToken(v string) *CreateMcpSessionResponseBodyData {
 	s.Token = &v
+	return s
+}
+
+func (s *CreateMcpSessionResponseBodyData) SetToolList(v string) *CreateMcpSessionResponseBodyData {
+	s.ToolList = &v
 	return s
 }
 

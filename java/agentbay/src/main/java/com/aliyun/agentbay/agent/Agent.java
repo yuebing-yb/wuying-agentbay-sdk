@@ -3,6 +3,12 @@ package com.aliyun.agentbay.agent;
 import com.aliyun.agentbay.model.*;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
@@ -56,6 +62,74 @@ public class Agent extends BaseService {
      */
     public Mobile getMobile() {
         return mobile;
+    }
+
+    public static class SchemaHelper {
+        private static final Logger logger = LoggerFactory.getLogger(SchemaHelper.class);
+        private static final ObjectMapper mapper = new ObjectMapper();
+        private static final JsonSchemaGenerator schemaGenerator = new JsonSchemaGenerator(mapper);
+
+        // Default output schema
+        public static class DefaultSchema {
+          @JsonProperty(value = "result", required = true)
+          private String result;
+
+          public String getResult() { return result; }
+
+          public void setResult(String result) { this.result = result; }
+        }
+
+        // 产生一个标准的JsonSchema
+        public static String generateJsonSchema(Class<?> schemaClass) {
+          if (schemaClass == null) {
+            schemaClass = DefaultSchema.class;
+          }
+          try {
+            JsonSchema jsonSchema = schemaGenerator.generateSchema(schemaClass);
+            String schemaStr = mapper.writeValueAsString(jsonSchema);
+            // 去掉 id 字段并调整 required 字段位置
+            JsonNode schemaNode = mapper.readTree(schemaStr);
+            if (schemaNode instanceof ObjectNode) {
+              ObjectNode rootNode = (ObjectNode)schemaNode;
+              // 移除 id 字段
+              rootNode.remove("id");
+
+              // 处理 properties，提取 required 字段，组成一个标准的json schema
+              JsonNode propertiesNode = rootNode.get("properties");
+              if (propertiesNode != null && propertiesNode.isObject()) {
+                List<String> requiredFields = new ArrayList<>();
+                ObjectNode properties = (ObjectNode)propertiesNode;
+
+                // 遍历所有属性，收集 required 字段
+                properties.fields().forEachRemaining(entry -> {
+                  String fieldName = entry.getKey();
+                  JsonNode fieldNode = entry.getValue();
+
+                  if (fieldNode.isObject()) {
+                    ObjectNode fieldObject = (ObjectNode)fieldNode;
+                    JsonNode requiredNode = fieldObject.get("required");
+
+                    // 如果该字段标记为 required，添加到列表并从字段中移除
+                    if (requiredNode != null && requiredNode.asBoolean()) {
+                      requiredFields.add(fieldName);
+                      fieldObject.remove("required");
+                    }
+                  }
+                });
+
+                // 在根级别添加 required 数组, 让其变成一个标准的JsonSchema
+                if (!requiredFields.isEmpty()) {
+                  rootNode.set("required", mapper.valueToTree(requiredFields));
+                }
+              }
+            }
+
+            return mapper.writeValueAsString(schemaNode);
+          } catch (Exception e) {
+            logger.error("Failed to generate JSON schema: {}", e.getMessage());
+            return "schema: null";
+          }
+        }
     }
 
     /**
@@ -199,17 +273,51 @@ public class Agent extends BaseService {
                         Thread.sleep(3000);
                         triedTime++;
                     }
-                    // Automatically terminate the task on timeout
                     try {
                         ExecutionResult terminateResult = terminateTask(taskId);
                         if (terminateResult.isSuccess()) {
-                            logger.info("✅ Task {} terminated successfully after timeout", taskId);
+                            logger.info("✅ Terminate request sent for task {} after timeout", taskId);
                         } else {
                             logger.warn("⚠️ Failed to terminate task {} after timeout: {}", taskId, terminateResult.getErrorMessage());
                         }
                     } catch (Exception e) {
                         logger.warn("⚠️ Exception while terminating task {} after timeout: {}", taskId, e.getMessage());
                     }
+
+                    logger.info("⏳ Waiting for task {} to be fully terminated...", taskId);
+                    int terminatePollInterval = 1;
+                    int maxTerminatePollAttempts = 30;
+                    int terminateTriedTime = 0;
+                    boolean taskTerminatedConfirmed = false;
+
+                    while (terminateTriedTime < maxTerminatePollAttempts) {
+                        try {
+                            QueryResult statusQuery = getTaskStatus(taskId);
+                            if (!statusQuery.isSuccess()) {
+                                String errorMsg = statusQuery.getErrorMessage() != null ? statusQuery.getErrorMessage() : "";
+                                if (errorMsg.startsWith("Task not found or already finished")) {
+                                    logger.info("✅ Task {} confirmed terminated (not found or finished)", taskId);
+                                    taskTerminatedConfirmed = true;
+                                    break;
+                                }
+                            }
+                            Thread.sleep(terminatePollInterval * 1000);
+                            terminateTriedTime++;
+                        } catch (Exception e) {
+                            logger.warn("⚠️ Exception while polling task status during termination: {}", e.getMessage());
+                            try {
+                                Thread.sleep(terminatePollInterval * 1000);
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                            }
+                            terminateTriedTime++;
+                        }
+                    }
+
+                    if (!taskTerminatedConfirmed) {
+                        logger.warn("⚠️ Timeout waiting for task {} to be fully terminated", taskId);
+                    }
+
                     String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
                     return new ExecutionResult(
                         result.getRequestId(),
@@ -331,29 +439,26 @@ public class Agent extends BaseService {
                     String returnedTaskId = content.has("task_id") ? content.get("task_id").getAsString() : taskId;
 
                     return new ExecutionResult(
-                        result.getRequestId(),
-                        true,
-                        "",
-                        returnedTaskId,
-                        content.has("status") ? content.get("status").getAsString() : "finished"
-                    );
+                            result.getRequestId(),
+                            true,
+                            "",
+                            returnedTaskId,
+                            content.has("status") ? content.get("status").getAsString() : "finished");
                 } else {
                     return new ExecutionResult(
-                        result.getRequestId(),
-                        false,
-                        result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to terminate task",
-                        taskId,
-                        "failed"
-                    );
+                            result.getRequestId(),
+                            false,
+                            result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to terminate task",
+                            taskId,
+                            "failed");
                 }
             } catch (Exception e) {
                 return new ExecutionResult(
-                    "",
-                    false,
-                    "Failed to terminate: " + e.getMessage(),
-                    taskId,
-                    "failed"
-                );
+                        "",
+                        false,
+                        "Failed to terminate: " + e.getMessage(),
+                        taskId,
+                        "failed");
             }
         }
     }
@@ -371,108 +476,72 @@ public class Agent extends BaseService {
         }
 
         /**
-         * Initialize the browser agent with options.
+         * Execute a browser task in human language without waiting for
+         * completion (non-blocking).
          *
-         * @param options Options for the agent (can be null for default options)
-         * @return InitializationResult containing success status and error message if any
-         *
-         * @example
-         * <pre>
-         * AgentOptions options = new AgentOptions(false, "");
-         * InitializationResult result = session.getAgent().getBrowser().initialize(options);
-         * System.out.println("Initialized: " + result.isSuccess());
-         * </pre>
-         */
-        public InitializationResult initialize(AgentOptions options) {
-            try {
-                Map<String, Object> args = new HashMap<>();
-                if (options != null) {
-                    args.put("use_vision", options.isUseVision());
-                    args.put("output_schema", options.getOutputSchema());
-                } else {
-                    args.put("use_vision", false);
-                    args.put("output_schema", "");
-                }
-
-                OperationResult result = callMcpTool("browser_use_initialize", args);
-
-                if (result.isSuccess()) {
-                    return new InitializationResult(
-                        result.getRequestId(),
-                        true,
-                        ""
-                    );
-                } else {
-                    return new InitializationResult(
-                        result.getRequestId(),
-                        false,
-                        "Failed to initialize browser use agent"
-                    );
-                }
-            } catch (Exception e) {
-                return new InitializationResult(
-                    "",
-                    false,
-                    "Failed to initialize: " + e.getMessage()
-                );
-            }
-        }
-
-        /**
-         * Execute a browser task in human language without waiting for completion (non-blocking).
-         *
-         * This is a fire-and-return interface that immediately provides a task ID.
-         * Call getTaskStatus to check the task status. You can control the timeout
-         * of the task execution in your own code by setting the frequency of calling
-         * getTaskStatus.
+         * This is a fire-and-return interface that immediately provides a task
+         * ID. Call getTaskStatus to check the task status. You can control the
+         * timeout of the task execution in your own code by setting the
+         * frequency of calling getTaskStatus.
          *
          * @param task Task description in human language
-         * @return ExecutionResult containing success status, task ID, task status, and error message if any
+         * @param useVision Whether to use vision in the task
+         * @param outputSchema Optional Zod schema for a structured task output
+         *     if you need
+         * @return ExecutionResult containing success status, task ID, task
+         *     status, and error message if any
          *
          * @example
          * <pre>
+         * public static class WeatherSchema {
+         *   @JsonProperty(required = true)
+         *   private String city;
+         *   private String temperature;
+         *   public String getCity() {return city;}
+         *   public void setCity(String city) {this.city = city;}
+         *   public String getTemperature() {return temperature;}
+         *   public void setTemperature(String temperature) {this.temperature = temperature;}
+         * }
          * ExecutionResult result = session.getAgent().getBrowser()
-         *     .executeTask("Query the weather in Shanghai with Baidu");
-         * System.out.println("Task ID: " + result.getTaskId() + ", Status: " + result.getTaskStatus());
-         * QueryResult status = session.getAgent().getBrowser().getTaskStatus(result.getTaskId());
+         *     .executeTask("Query the weather in Shanghai with Baidu", true, WeatherSchema.class);
+         * System.out.println("Task ID: " + result.getTaskId() + ", Status: " +
+         * result.getTaskStatus()); QueryResult status =
+         * session.getAgent().getBrowser().getTaskStatus(result.getTaskId());
          * System.out.println("Task status: " + status.getTaskStatus());
          * </pre>
          */
-        public ExecutionResult executeTask(String task) {
+        public ExecutionResult executeTask(String task, boolean useVision,
+                Class<?> output_schema) {
             try {
+                String schemaJson = SchemaHelper.generateJsonSchema(output_schema);
+                logger.info("Output schema: {}", schemaJson);
+                System.out.println("----------------schemaJson: " + schemaJson);
+
                 Map<String, Object> args = new HashMap<>();
                 args.put("task", task);
-
+                args.put("use_vision", useVision);
+                args.put("output_schema", schemaJson);
                 OperationResult result = callMcpTool("browser_use_execute_task", args);
 
                 if (result.isSuccess()) {
                     JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
-                    String taskId = content.has("task_id") ? content.get("task_id").getAsString() : "";
+                    String taskId = content.has("task_id")
+                            ? content.get("task_id").getAsString()
+                            : "";
 
-                    return new ExecutionResult(
-                        result.getRequestId(),
-                        true,
-                        "",
-                        taskId,
-                        "running"
-                    );
+                    return new ExecutionResult(result.getRequestId(), true, "",
+                            taskId, "running");
                 } else {
-                    return new ExecutionResult(
-                        result.getRequestId(),
-                        false,
-                        result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to execute task",
-                        "",
-                        "failed"
-                    );
+                    return new ExecutionResult(result.getRequestId(), false,
+                            result.getErrorMessage() != null
+                                    ? result.getErrorMessage()
+                                    : "Failed to execute task",
+                            "", "failed");
                 }
             } catch (Exception e) {
-                return new ExecutionResult(
-                    "",
-                    false,
-                    "Failed to execute: " + e.getMessage(),
-                    "",
-                    "failed"
-                );
+                return new ExecutionResult("", false,
+                        "Failed to execute: " + e.getMessage(),
+                        "", "failed");
             }
         }
 
@@ -484,121 +553,101 @@ public class Agent extends BaseService {
          *
          * @param task Task description in human language
          * @param timeout Maximum time to wait for task completion in seconds
+         * @param useVision Whether to use vision in the task
+         * @param outputSchema Optional Zod schema for a structured task output if you need
          * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
          *
          * @example
          * <pre>
+         *  public static class WeatherSchema {
+         *   @JsonProperty(required = true)
+         *   private String city;
+         *   private String temperature;
+         *   public String getCity() {return city;}
+         *   public void setCity(String city) {this.city = city;}
+         *   public String getTemperature() {return temperature;}
+         *   public void setTemperature(String temperature) {this.temperature = temperature;}
+         * }
          * ExecutionResult result = session.getAgent().getBrowser()
-         *     .executeTaskAndWait("Query the weather in Shanghai with Baidu", 300);
+         *     .executeTaskAndWait("Query the weather in Shanghai with Baidu", 300, true, WeatherSchema.class);
          * System.out.println("Task result: " + result.getTaskResult());
          * </pre>
          */
-        public ExecutionResult executeTaskAndWait(String task, int timeout) {
-            try {
-                Map<String, Object> args = new HashMap<>();
-                args.put("task", task);
+        public ExecutionResult executeTaskAndWait(String task, int timeout,
+                                                  boolean useVision,
+                                                  Class<?> output_schema) {
+          try {
+            ExecutionResult result =
+                executeTask(task, useVision, output_schema);
+            if (result.isSuccess()) {
+              String taskId = result.getTaskId();
+              int pollInterval = 3;
+              int maxPollAttempts = timeout / pollInterval;
+              int triedTime = 0;
+              while (triedTime < maxPollAttempts) {
+                QueryResult query = getTaskStatus(taskId);
 
-                OperationResult result = callMcpTool("browser_use_execute_task", args);
-
-                if (result.isSuccess()) {
-                    JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
-                    String taskId = content.has("task_id") ? content.get("task_id").getAsString() : "";
-
-                    int pollInterval = 3;
-                    int maxPollAttempts = timeout / pollInterval;
-                    int triedTime = 0;
-                    while (triedTime < maxPollAttempts) {
-                        QueryResult query = getTaskStatus(taskId);
-
-                        if ("finished".equals(query.getTaskStatus())) {
-                            return new ExecutionResult(
-                                result.getRequestId(),
-                                true,
-                                "",
-                                taskId,
-                                query.getTaskStatus(),
-                                query.getTaskProduct()
-                            );
-                        } else if ("failed".equals(query.getTaskStatus())) {
-                            String errorMsg = query.getErrorMessage();
-                            if (errorMsg == null || errorMsg.isEmpty()) {
-                                errorMsg = "Failed to execute task.";
-                            }
-                            return new ExecutionResult(
-                                result.getRequestId(),
-                                false,
-                                errorMsg,
-                                taskId,
-                                query.getTaskStatus(),
-                                ""
-                            );
-                        } else if ("unsupported".equals(query.getTaskStatus())) {
-                            String errorMsg = query.getErrorMessage();
-                            if (errorMsg == null || errorMsg.isEmpty()) {
-                                errorMsg = "Unsupported task.";
-                            }
-                            return new ExecutionResult(
-                                result.getRequestId(),
-                                false,
-                                errorMsg,
-                                taskId,
-                                query.getTaskStatus(),
-                                ""
-                            );
-                        }
-                        Thread.sleep(3000);
-                        triedTime++;
-                    }
-                    // Automatically terminate the task on timeout
-                    try {
-                        ExecutionResult terminateResult = terminateTask(taskId);
-                        if (terminateResult.isSuccess()) {
-                            logger.info("✅ Task {} terminated successfully after timeout", taskId);
-                        } else {
-                            logger.warn("⚠️ Failed to terminate task {} after timeout: {}", taskId, terminateResult.getErrorMessage());
-                        }
-                    } catch (Exception e) {
-                        logger.warn("⚠️ Exception while terminating task {} after timeout: {}", taskId, e.getMessage());
-                    }
-                    String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
-                    return new ExecutionResult(
-                        result.getRequestId(),
-                        false,
-                        timeoutErrorMsg,
-                        taskId,
-                        "failed",
-                        String.format("Task execution timed out after %d seconds.", timeout)
-                    );
-                } else {
-                    return new ExecutionResult(
-                        result.getRequestId(),
-                        false,
-                        result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to execute task",
-                        "",
-                        "failed",
-                        "Task Failed"
-                    );
+                if ("finished".equals(query.getTaskStatus())) {
+                  return new ExecutionResult(result.getRequestId(), true, "",
+                                             taskId, query.getTaskStatus(),
+                                             query.getTaskProduct());
+                } else if ("failed".equals(query.getTaskStatus())) {
+                  String errorMsg = query.getErrorMessage();
+                  if (errorMsg == null || errorMsg.isEmpty()) {
+                    errorMsg = "Failed to execute task.";
+                  }
+                  return new ExecutionResult(result.getRequestId(), false,
+                                             errorMsg, taskId,
+                                             query.getTaskStatus(), "");
+                } else if ("unsupported".equals(query.getTaskStatus())) {
+                  String errorMsg = query.getErrorMessage();
+                  if (errorMsg == null || errorMsg.isEmpty()) {
+                    errorMsg = "Unsupported task.";
+                  }
+                  return new ExecutionResult(result.getRequestId(), false,
+                                             errorMsg, taskId,
+                                             query.getTaskStatus(), "");
                 }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return new ExecutionResult(
-                    "",
-                    false,
-                    "Task interrupted: " + e.getMessage(),
-                    "",
-                    "failed",
-                    "Task Failed"
-                );
-            } catch (Exception e) {
-                return new ExecutionResult(
-                    "",
-                    false,
-                    "Failed to execute: " + e.getMessage(),
-                    "",
-                    "failed",
-                    "Task Failed"
-                );
+                Thread.sleep(3000);
+                triedTime++;
+              }
+              // Automatically terminate the task on timeout
+              try {
+                ExecutionResult terminateResult = terminateTask(taskId);
+                if (terminateResult.isSuccess()) {
+                  logger.info("✅ Task {} terminated successfully after timeout",
+                              taskId);
+                } else {
+                  logger.warn(
+                      "⚠️ Failed to terminate task {} after timeout: {}",
+                      taskId, terminateResult.getErrorMessage());
+                }
+              } catch (Exception e) {
+                logger.warn(
+                    "⚠️ Exception while terminating task {} after timeout: {}",
+                    taskId, e.getMessage());
+              }
+              String timeoutErrorMsg = String.format(
+                  "Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).",
+                  timeout, taskId, triedTime, maxPollAttempts);
+              return new ExecutionResult(
+                  result.getRequestId(), false, timeoutErrorMsg, taskId,
+                  "failed",
+                  String.format("Task execution timed out after %d seconds.",
+                                timeout));
+            } else {
+              return result;
             }
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new ExecutionResult("", false,
+                                       "Task interrupted: " + e.getMessage(),
+                                       "", "failed", "Task Failed");
+          } catch (Exception e) {
+            return new ExecutionResult("", false,
+                                       "Failed to execute: " + e.getMessage(),
+                                       "", "failed", "Task Failed");
+          }
         }
 
         /**
@@ -794,11 +843,16 @@ public class Agent extends BaseService {
 
                         // Check if taskId is empty
                         if (taskId == null || taskId.isEmpty()) {
-                            logger.error("Failed to get task_id from response");
+                            // 从后端返回的content中提取error信息
+                            String errorMsg = "Failed to get task_id from response";
+                            if (content.has("error")) {
+                                errorMsg = content.get("error").getAsString();
+                            }
+                            logger.error("Failed to get task_id from response: {}", errorMsg);
                             return new ExecutionResult(
                                 result.getRequestId(),
                                 false,
-                                "Failed to get task_id from response",
+                                errorMsg,
                                 "",
                                 "failed"
                             );
@@ -906,11 +960,16 @@ public class Agent extends BaseService {
                 }
 
                 if (taskId == null || taskId.isEmpty()) {
-                    logger.error("Failed to get task_id from response");
+                    // 从后端返回的content中提取error信息
+                    String errorMsg = "Failed to get task_id from response";
+                    if (content.has("error")) {
+                        errorMsg = content.get("error").getAsString();
+                    }
+                    logger.error("Failed to get task_id from response: {}", errorMsg);
                     return new ExecutionResult(
                         result.getRequestId(),
                         false,
-                        "Failed to get task_id from response",
+                        errorMsg,
                         "",
                         "failed",
                         "Task Failed"
@@ -921,9 +980,15 @@ public class Agent extends BaseService {
                 int maxPollAttempts = timeout / pollInterval;
                 int triedTime = 0;
                 java.util.Set<Long> processedTimestamps = new java.util.HashSet<>();
+                QueryResult lastQuery = null;
 
                 while (triedTime < maxPollAttempts) {
                     QueryResult query = getTaskStatus(taskId);
+
+                    // Only update lastQuery if stream is not empty
+                    if (query.getStream() != null && !query.getStream().isEmpty()) {
+                        lastQuery = query;
+                    }
 
                     // Process new stream fragments for real-time output
                     if (query.getStream() != null && !query.getStream().isEmpty()) {
@@ -1028,25 +1093,103 @@ public class Agent extends BaseService {
                 }
 
                 logger.warn("⚠️ task execution timeout!");
-                // Automatically terminate the task on timeout
                 try {
                     ExecutionResult terminateResult = terminateTask(taskId);
                     if (terminateResult.isSuccess()) {
-                        logger.info("✅ Task {} terminated successfully after timeout", taskId);
+                        logger.info("✅ Terminate request sent for task {} after timeout", taskId);
                     } else {
                         logger.warn("⚠️ Failed to terminate task {} after timeout: {}", taskId, terminateResult.getErrorMessage());
                     }
                 } catch (Exception e) {
                     logger.warn("⚠️ Exception while terminating task {} after timeout: {}", taskId, e.getMessage());
                 }
+
+                logger.info("⏳ Waiting for task {} to be fully terminated...", taskId);
+                int terminatePollInterval = 1;
+                int maxTerminatePollAttempts = 30;
+                int terminateTriedTime = 0;
+                boolean taskTerminatedConfirmed = false;
+
+                while (terminateTriedTime < maxTerminatePollAttempts) {
+                    try {
+                        QueryResult statusQuery = getTaskStatus(taskId);
+                        if (!statusQuery.isSuccess()) {
+                            String errorMsg = statusQuery.getErrorMessage() != null ? statusQuery.getErrorMessage() : "";
+                            if (errorMsg.startsWith("Task not found or already finished")) {
+                                logger.info("✅ Task {} confirmed terminated (not found or finished)", taskId);
+                                taskTerminatedConfirmed = true;
+                                break;
+                            }
+                        }
+                        Thread.sleep(terminatePollInterval * 1000);
+                        terminateTriedTime++;
+                    } catch (Exception e) {
+                        logger.warn("⚠️ Exception while polling task status during termination: {}", e.getMessage());
+                        try {
+                            Thread.sleep(terminatePollInterval * 1000);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                        }
+                        terminateTriedTime++;
+                    }
+                }
+
+                if (!taskTerminatedConfirmed) {
+                    logger.warn("⚠️ Timeout waiting for task {} to be fully terminated", taskId);
+                }
+
                 String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
+                
+                // Build task_result with last query status information
+                java.util.List<String> taskResultParts = new java.util.ArrayList<>();
+                taskResultParts.add(String.format("Task execution timed out after %d seconds.", timeout));
+                
+                if (lastQuery != null) {
+                    // Concatenate stream content from last query
+                    if (lastQuery.getStream() != null && !lastQuery.getStream().isEmpty()) {
+                        java.util.List<String> streamContentParts = new java.util.ArrayList<>();
+                        for (Map<String, Object> streamItem : lastQuery.getStream()) {
+                            if (streamItem != null && streamItem.containsKey("content")) {
+                                Object contentObj = streamItem.get("content");
+                                if (contentObj != null) {
+                                    String streamContentItem = contentObj.toString();
+                                    if (!streamContentItem.isEmpty()) {
+                                        streamContentParts.add(streamContentItem);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (!streamContentParts.isEmpty()) {
+                            String streamContent = String.join("", streamContentParts);
+                            taskResultParts.add("Last task status output: " + streamContent);
+                        }
+                    }
+                    
+                    // Also add other status information if available
+                    if (lastQuery.getTaskAction() != null && !lastQuery.getTaskAction().isEmpty()) {
+                        taskResultParts.add("Last action: " + lastQuery.getTaskAction());
+                    }
+                    if (lastQuery.getTaskProduct() != null && !lastQuery.getTaskProduct().isEmpty()) {
+                        taskResultParts.add("Last result: " + lastQuery.getTaskProduct());
+                    }
+                    if (lastQuery.getError() != null && !lastQuery.getError().isEmpty()) {
+                        taskResultParts.add("Last error: " + lastQuery.getError());
+                    }
+                    if (lastQuery.getTaskStatus() != null && !lastQuery.getTaskStatus().isEmpty()) {
+                        taskResultParts.add("Last status: " + lastQuery.getTaskStatus());
+                    }
+                }
+                
+                String taskResult = String.join(" | ", taskResultParts);
+                
                 return new ExecutionResult(
                     result.getRequestId(),
                     false,
                     timeoutErrorMsg,
                     taskId,
                     "failed",
-                    String.format("Task execution timed out after %d seconds.", timeout)
+                    taskResult
                 );
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -1231,4 +1374,6 @@ public class Agent extends BaseService {
             }
         }
     }
+
+
 }

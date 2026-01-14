@@ -6,13 +6,13 @@ Agent modules are specialized AI task execution units running in AgentBay window
 
 ## 🤖 Agent Module Overview
 
-Agent modules are specialized AI task execution units
-running in AgentBay windows/linux environment to execute tasks described in natural language. 
+Agent modules are specialized AI task execution units running in AgentBay windows/linux environment to execute tasks described in natural language. 
 The task to be executed can be as simple as "Create a word document, input some words and save the document.", in which only one application is involved, or as complex as "Find out the current weather in New York City by Google/Baidu, and write the weather report to a word document, send the word document to a specific email address", in which multiple applications are involved.
 
 Currently, there are three types of agents: ComputerUseAgent, BrowserUseAgent, and MobileUseAgent.
-
-The ComputerUseAgent module is designed for tasks that involve multiple applications, while the BrowserUseAgent module is designed for tasks that involve specifically web browsers. The MobileUseAgent module is designed for tasks that involve mobile device automation.
+- 🖥️ ComputerUseAgent module is designed for tasks that involve multiple applications。
+- 🌐 BrowserUseAgent module is designed for tasks that involve specifically web browsers
+- 📱 MobileUseAgent module is designed for tasks that involve mobile device automation.
 
 The agents are capable of understanding user instructions, planning task execution steps, operating various applications, and managing files and folders on the computer or mobile devices.
 
@@ -27,7 +27,7 @@ Agent Module functionality is currently only available on specific system images
 | `windows_latest` | ✅ Supported | `execute_task`, `get_task_status`, `terminate_task` | ComputerUseAgent |
 | `linux_latest` | ✅ Supported | `execute_task`, `get_task_status`, `terminate_task` | BrowserUseAgent(⚠️BETA) |
 | `mobile_latest` | ✅ Supported | `execute_task`, `get_task_status`, `terminate_task` | MobileUseAgent |
-| `browser_latest` | ❌ Not Supported | - |  - |
+| `browser_latest` | ✅ Supported | `execute_task`, `get_task_status`, `terminate_task` | BrowserUseAgent(⚠️BETA) |
 | `code_latest` | ❌ Not Supported | - |  - |
 
 **Important:** When using ComputerUseAgent Module features, you must create sessions with `image_id="windows_latest"` to ensure the required MCP tools are available. When using BrowserUseAgent Module features, you must create sessions with `image_id="linux_latest"`. When using MobileUseAgent Module features, you must create sessions with `image_id="mobile_latest"`.
@@ -38,6 +38,7 @@ Agent Module functionality is currently only available on specific system images
 
 ```python
 from agentbay import AgentBay, CreateSessionParams
+from pydantic import BaseModel
 
 agent_bay = AgentBay()
 
@@ -68,7 +69,7 @@ else:
 #### ComputerUseAgent
 ```python
 # Execute a task using natural language
-task_description = "Calculate the square root of 144"
+task_description = "Create a text file named hello.txt in C:\\Temp"
 execution_result = agent_session.agent.computer.execute_task_and_wait(task_description, timeout=180)
 
 if execution_result.success:
@@ -82,8 +83,19 @@ else:
 #### BrowserUseAgent
 ```python
 # Execute a task using natural language
+class OutputSchema(BaseModel):
+    """Schema for task result."""
+    city: str
+    temperature:str
+    weather:str
+
 task_description = "Navigate to baidu.com and query the weather in Beijing"
-execution_result = agent_session.agent.browser.execute_task_and_wait(task_description, timeout=180)
+execution_result = agent_session.agent.browser.execute_task_and_wait(
+    task=task_description,
+    timeout=180,
+    use_vision=False,
+    output_schema=OutputSchema
+)
 
 if execution_result.success:
     print("Task completed successfully!")

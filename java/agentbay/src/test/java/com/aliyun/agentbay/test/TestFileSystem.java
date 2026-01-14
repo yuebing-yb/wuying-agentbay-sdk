@@ -236,11 +236,10 @@ public class TestFileSystem {
         
         boolean found = false;
         String dirName = testDirPath.substring(testDirPath.lastIndexOf('/') + 1);
-        for (Map<String, Object> entry : listResult.getEntries()) {
-            if (dirName.equals(entry.get("name"))) {
+        for (DirectoryEntry entry : listResult.getEntries()) {
+            if (dirName.equals(entry.getName())) {
                 found = true;
-                assertTrue("Entry should be a directory", 
-                          (Boolean) entry.get("isDirectory"));
+                assertTrue("Entry should be a directory", entry.isDirectory());
                 break;
             }
         }
@@ -276,10 +275,9 @@ public class TestFileSystem {
         
         // Verify entries
         Set<String> foundNames = new HashSet<>();
-        for (Map<String, Object> entry : result.getEntries()) {
-            assertNotNull("Entry name should not be null", entry.get("name"));
-            assertNotNull("Entry isDirectory should not be null", entry.get("isDirectory"));
-            foundNames.add((String) entry.get("name"));
+        for (DirectoryEntry entry : result.getEntries()) {
+            assertNotNull("Entry name should not be null", entry.getName());
+            foundNames.add(entry.getName());
         }
         
         assertTrue("Should find file1.txt", foundNames.contains("file1.txt"));

@@ -6,6 +6,12 @@
 
 Represents a session in the AgentBay cloud environment.
 
+## Hierarchy
+
+- **`Session`**
+
+  ↳ ``LocalSession``
+
 ## Table of contents
 
 
@@ -45,6 +51,7 @@ enableBrowserReplay: `boolean` = `false`
 fileSystem: [`FileSystem`](filesystem.md)
 httpPort: `string` = `""`
 isVpc: `boolean` = `false`
+linkUrl: `string` = `""`
 mcpTools: `McpTool`[] = `[]`
 mobile: [`Mobile`](../../mobile-use/mobile.md)
 networkInterfaceIp: `string` = `""`
@@ -315,8 +322,6 @@ if (result.success) {
   await result.session.delete();
 }
 ```
-
-___
 
 ### getMetrics
 

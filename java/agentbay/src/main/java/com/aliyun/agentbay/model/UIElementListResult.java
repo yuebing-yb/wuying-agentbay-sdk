@@ -10,12 +10,16 @@ import java.util.Map;
 public class UIElementListResult extends ApiResponse {
     private boolean success;
     private List<Map<String, Object>> elements;
+    private String raw;
+    private String format;
     private String errorMessage;
 
     public UIElementListResult() {
         super("");
         this.success = false;
         this.elements = new ArrayList<>();
+        this.raw = "";
+        this.format = "json";
         this.errorMessage = "";
     }
 
@@ -24,6 +28,18 @@ public class UIElementListResult extends ApiResponse {
         super(requestId);
         this.success = success;
         this.elements = elements != null ? elements : new ArrayList<>();
+        this.raw = "";
+        this.format = "json";
+        this.errorMessage = errorMessage != null ? errorMessage : "";
+    }
+
+    public UIElementListResult(String requestId, boolean success,
+                              List<Map<String, Object>> elements, String raw, String format, String errorMessage) {
+        super(requestId);
+        this.success = success;
+        this.elements = elements != null ? elements : new ArrayList<>();
+        this.raw = raw != null ? raw : "";
+        this.format = format != null ? format : "json";
         this.errorMessage = errorMessage != null ? errorMessage : "";
     }
 
@@ -41,6 +57,22 @@ public class UIElementListResult extends ApiResponse {
 
     public void setElements(List<Map<String, Object>> elements) {
         this.elements = elements;
+    }
+
+    public String getRaw() {
+        return raw;
+    }
+
+    public void setRaw(String raw) {
+        this.raw = raw;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
     }
 
     public String getErrorMessage() {

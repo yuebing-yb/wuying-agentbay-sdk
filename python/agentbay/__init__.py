@@ -45,6 +45,7 @@ from ._common.params.session_params import (
 )
 from ._common.models.response import (
     ApiResponse,
+    BaseResult,
     OperationResult,
     SessionResult,
     SessionListResult,
@@ -95,6 +96,8 @@ from ._sync.computer import (
     ProcessListResult,
     AppOperationResult,
 )
+from ._common.models.computer import ScreenshotMode
+from ._common.models.screenshot import ScreenshotResult
 from ._sync.mobile import Mobile
 from ._common.models.mobile import KeyCode, UIElementListResult
 from ._sync.mobile_simulate import MobileSimulateService
@@ -119,7 +122,6 @@ from ._sync.oss import Oss, OSSClientResult, OSSDownloadResult, OSSUploadResult
 from ._sync.context_manager import ContextManager
 from ._common.models.context import ContextInfoResult, ContextSyncResult
 from ._common.models.context import ContextStatusData
-from ._common.models.agent import AgentOptions
 from ._sync.context import (
     ContextListParams,
     Context,
@@ -131,6 +133,7 @@ from ._sync.context import (
     ClearContextResult,
     ContextService,
 )
+from ._sync.beta_network import SyncBetaNetworkService as BetaNetwork
 from ._sync.code import Code, CodeExecutionResult
 from ._common.models.code import (
     EnhancedCodeExecutionResult,
@@ -157,6 +160,9 @@ from ._async.context import AsyncContextService
 from ._async.extension import AsyncExtensionsService
 from ._async.code import AsyncCode
 from ._async.mobile_simulate import AsyncMobileSimulateService
+from ._async.beta_network import AsyncBetaNetworkService as AsyncBetaNetwork
+
+
 
 __all__ = [
     # Core API
@@ -189,6 +195,8 @@ __all__ = [
     "AsyncContextManager",
     "Code",
     "AsyncCode",
+    "BetaNetwork",
+    "AsyncBetaNetwork",
     # Shared Components
     "Config",
     "AgentBayError",
@@ -258,6 +266,7 @@ __all__ = [
     "ObserveOptions",
     # Browser Agent types END
     "ApiResponse",
+    "BaseResult",
     "OperationResult",
     "SessionResult",
     "SessionListResult",
@@ -289,6 +298,8 @@ __all__ = [
     # Computer/Mobile related
     "MouseButton",
     "ScrollDirection",
+    "ScreenshotMode",
+    "ScreenshotResult",
     "KeyCode",
     "InstalledAppListResult",
     "ProcessListResult",

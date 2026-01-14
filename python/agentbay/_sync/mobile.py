@@ -7,6 +7,8 @@ Handles touch operations, UI element interactions, application management, scree
 and mobile environment configuration operations.
 """
 
+import base64
+import json
 from typing import Any, Dict, List, Optional
 
 from .._common.exceptions import AgentBayError, SessionError
@@ -32,6 +34,7 @@ _logger = get_logger("mobile")
 
 
 from .._common.models.mobile import UIElementListResult, KeyCode
+from .._common.models.screenshot import ScreenshotResult
 
 
 def _parse_bounds_rect(bounds: Any) -> Optional[Dict[str, int]]:
@@ -343,6 +346,8 @@ class Mobile(BaseService):
                     request_id=request_id,
                     success=False,
                     elements=None,
+                    raw=result.data,
+                    format="json",
                     error_message=result.error_message,
                 )
 
@@ -356,6 +361,8 @@ class Mobile(BaseService):
                     request_id=request_id,
                     success=True,
                     elements=elements,
+                    raw=result.data,
+                    format="json",
                     error_message="",
                 )
             except Exception as e:
@@ -363,6 +370,8 @@ class Mobile(BaseService):
                     request_id=request_id,
                     success=False,
                     elements=None,
+                    raw=result.data,
+                    format="json",
                     error_message=f"Failed to parse clickable UI elements data: {e}",
                 )
         except Exception as e:
@@ -370,15 +379,21 @@ class Mobile(BaseService):
                 request_id="",
                 success=False,
                 elements=None,
+                raw="",
+                format="json",
                 error_message=f"Failed to get clickable UI elements: {str(e)}",
             )
 
-    def get_all_ui_elements(self, timeout_ms: int = 2000) -> UIElementListResult:
+    def get_all_ui_elements(
+        self, timeout_ms: int = 2000, format: str = "json"
+    ) -> UIElementListResult:
         """
         Retrieves all UI elements within the specified timeout.
 
         Args:
             timeout_ms (int, optional): Timeout in milliseconds. Defaults to 2000.
+            format (str, optional): Output format of the underlying MCP tool.
+                Supported values: "json", "xml". Defaults to "json".
 
         Returns:
             UIElementListResult: Result object containing UI elements and error
@@ -396,7 +411,8 @@ class Mobile(BaseService):
             session.delete()
             ```
         """
-        args = {"timeout_ms": timeout_ms}
+        format_norm = (format or "json").strip().lower() or "json"
+        args = {"timeout_ms": timeout_ms, "format": format_norm}
 
         def parse_element(element: Dict[str, Any]) -> Dict[str, Any]:
             """
@@ -439,6 +455,29 @@ class Mobile(BaseService):
                 )
 
             try:
+                if format_norm == "xml":
+                    return UIElementListResult(
+                        request_id=request_id,
+                        success=True,
+                        elements=[],
+                        raw=result.data,
+                        format="xml",
+                        error_message="",
+                    )
+
+                if format_norm != "json":
+                    return UIElementListResult(
+                        request_id=request_id,
+                        success=False,
+                        elements=None,
+                        raw=result.data,
+                        format=format_norm or "unknown",
+                        error_message=(
+                            f"Unsupported UI elements format: {format!r}. "
+                            "Supported values: 'json', 'xml'."
+                        ),
+                    )
+
                 import json
 
                 elements = json.loads(result.data)
@@ -447,6 +486,8 @@ class Mobile(BaseService):
                     request_id=request_id,
                     success=True,
                     elements=parsed_elements,
+                    raw=result.data,
+                    format="json",
                     error_message="",
                 )
             except Exception as e:
@@ -454,6 +495,8 @@ class Mobile(BaseService):
                     request_id=request_id,
                     success=False,
                     elements=None,
+                    raw=result.data,
+                    format=format_norm or "unknown",
                     error_message=f"Failed to parse UI elements data: {e}",
                 )
         except Exception as e:
@@ -461,6 +504,8 @@ class Mobile(BaseService):
                 request_id="",
                 success=False,
                 elements=None,
+                raw="",
+                format=format_norm or "unknown",
                 error_message=f"Failed to get all UI elements: {str(e)}",
             )
 
@@ -662,6 +707,180 @@ class Mobile(BaseService):
                 data=None,
                 error_message=f"Failed to take screenshot: {str(e)}",
             )
+
+    def beta_take_screenshot(self):
+        """
+        Takes a screenshot of the mobile device (beta).
+
+        This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+        binary image data.
+
+        Returns:
+            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+
+        Raises:
+            AgentBayError: If screenshot fails or response cannot be decoded.
+        """
+        result = self.session.call_mcp_tool("screenshot", {"format": "png"})
+        if not result.success:
+            raise AgentBayError(f"Failed to take screenshot: {result.error_message}")
+
+        raw = self._decode_image_from_mcp_text(result.data, expected_format="png")
+        return ScreenshotResult(
+            request_id=result.request_id,
+            success=True,
+            error_message="",
+            data=raw,
+            format="png",
+        )
+
+    def beta_take_long_screenshot(
+        self,
+        max_screens: int = 4,
+        format: str = "png",
+        quality: Optional[int] = None,
+    ):
+        """
+        Takes a long screenshot (scroll + stitch) of the mobile device (beta).
+
+        Args:
+            max_screens: Maximum number of screens to capture. Backend schema: 2..10.
+            format: The desired image format (e.g. "png", "jpeg").
+            quality: JPEG quality level (1..100). Only applicable when format is JPEG.
+
+        Returns:
+            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+
+        Raises:
+            AgentBayError: If screenshot fails or response cannot be decoded.
+            ValueError: If arguments are invalid.
+        """
+        fmt = (format or "").strip().lower()
+        if fmt == "jpg":
+            fmt = "jpeg"
+        if fmt not in ("png", "jpeg"):
+            raise ValueError("Invalid format: must be 'png', 'jpeg', or 'jpg'")
+        if not isinstance(max_screens, int) or max_screens < 2 or max_screens > 10:
+            raise ValueError("Invalid max_screens: must be an integer in [2, 10]")
+
+        args: Dict[str, Any] = {"max_screens": max_screens, "format": fmt}
+        if quality is not None:
+            if not isinstance(quality, int) or quality < 1 or quality > 100:
+                raise ValueError("Invalid quality: must be an integer in [1, 100]")
+            args["quality"] = quality
+        result = self.session.call_mcp_tool("long_screenshot", args)
+        if not result.success:
+            raise AgentBayError(f"Failed to take long screenshot: {result.error_message}")
+
+        raw = self._decode_image_from_mcp_text(result.data, expected_format=fmt)
+        return ScreenshotResult(
+            request_id=result.request_id,
+            success=True,
+            error_message="",
+            data=raw,
+            format=fmt,
+        )
+
+    @staticmethod
+    def _decode_image_from_mcp_text(text: Any, expected_format: str) -> bytes:
+        """
+        Decode image bytes from MCP tool text output.
+
+        Supports:
+        - plain base64
+        - data URL
+        - JSON objects containing base64 fields
+        - base64 with small unexpected prefix (strip by magic)
+        """
+        if not isinstance(text, str) or not text.strip():
+            raise AgentBayError("Screenshot tool returned empty data")
+
+        def _maybe_extract_base64(s: str) -> str:
+            v = (s or "").strip()
+            if not v:
+                return ""
+            if "base64," in v:
+                v = v.split("base64,", 1)[1]
+            if v.startswith("data:image/"):
+                comma = v.find(",")
+                if comma >= 0:
+                    v = v[comma + 1 :]
+            return "".join(v.split())
+
+        def _decode_base64_any(b64_text: str) -> bytes:
+            s = _maybe_extract_base64(b64_text)
+            if not s:
+                raise ValueError("empty base64 string")
+            pad = (-len(s)) % 4
+            if pad:
+                s = s + ("=" * pad)
+            if "-" in s or "_" in s:
+                return base64.urlsafe_b64decode(s)
+            return base64.b64decode(s, validate=True)
+
+        def _extract_from_json(obj: Any) -> Optional[bytes]:
+            if isinstance(obj, dict):
+                content = obj.get("content")
+                if isinstance(content, list):
+                    for item in content:
+                        if not isinstance(item, dict):
+                            continue
+                        t = str(item.get("type", "") or "").lower()
+                        if t == "image":
+                            for k in ("data", "base64", "b64"):
+                                v = item.get(k)
+                                if isinstance(v, str) and v.strip():
+                                    return _decode_base64_any(v)
+                        if t == "text":
+                            v = item.get("text")
+                            if isinstance(v, str) and v.strip():
+                                try:
+                                    return _decode_base64_any(v)
+                                except Exception:
+                                    pass
+                for k in ("data", "base64", "b64", "image", "Image"):
+                    v = obj.get(k)
+                    if isinstance(v, str) and v.strip():
+                        try:
+                            return _decode_base64_any(v)
+                        except Exception:
+                            pass
+            if isinstance(obj, list):
+                for item in obj:
+                    got = _extract_from_json(item)
+                    if got:
+                        return got
+            return None
+
+        raw: Optional[bytes] = None
+        s = text.strip()
+        try:
+            raw = _decode_base64_any(s)
+        except Exception:
+            raw = None
+
+        if raw is None:
+            try:
+                parsed = json.loads(s)
+            except Exception:
+                parsed = None
+            if parsed is not None:
+                raw = _extract_from_json(parsed)
+
+        if raw is None:
+            raise AgentBayError("Failed to decode screenshot data")
+
+        if expected_format == "png":
+            magic = b"\x89PNG\r\n\x1a\n"
+        else:
+            magic = b"\xff\xd8\xff"
+
+        if raw.startswith(magic):
+            return raw
+        idx = raw.find(magic, 0, 64)
+        if idx > 0:
+            return raw[idx:]
+        raise AgentBayError("Decoded image does not match expected format")
 
     # Mobile Configuration Operations
     def configure(self, mobile_config):

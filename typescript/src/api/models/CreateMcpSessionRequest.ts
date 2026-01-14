@@ -11,8 +11,10 @@ export class CreateMcpSessionRequest extends $dara.Model {
   imageId?: string;
   labels?: string;
   mcpPolicyId?: string;
+  networkId?: string;
   persistenceDataList?: CreateMcpSessionRequestPersistenceDataList[];
   sessionId?: string;
+  volumeId?: string;
   vpcResource?: boolean;
   extraConfigs?: string;
   sdkStats?: string;
@@ -26,8 +28,10 @@ export class CreateMcpSessionRequest extends $dara.Model {
       imageId: 'ImageId',
       labels: 'Labels',
       mcpPolicyId: 'McpPolicyId',
+      networkId: 'NetworkId',
       persistenceDataList: 'PersistenceDataList',
       sessionId: 'SessionId',
+      volumeId: 'VolumeId',
       vpcResource: 'VpcResource',
       extraConfigs: 'ExtraConfigs',
       sdkStats: 'SdkStats',
@@ -44,8 +48,10 @@ export class CreateMcpSessionRequest extends $dara.Model {
       imageId: 'string',
       labels: 'string',
       mcpPolicyId: 'string',
+      networkId: 'string',
       persistenceDataList: { 'type': 'array', 'itemType': CreateMcpSessionRequestPersistenceDataList },
       sessionId: 'string',
+      volumeId: 'string',
       vpcResource: 'boolean',
       extraConfigs: 'string',
       sdkStats: 'string',

@@ -26,6 +26,20 @@ type AdbUrlResult struct {
 
 AdbUrlResult represents the result of ADB URL retrieval operation
 
+## Type BetaScreenshotResult
+
+```go
+type BetaScreenshotResult struct {
+	models.ApiResponse
+	Success		bool	`json:"success"`
+	Data		[]byte	`json:"data"`
+	Format		string	`json:"format"`
+	ErrorMessage	string	`json:"error_message"`
+}
+```
+
+BetaScreenshotResult represents the result of a beta screenshot operation (binary image bytes).
+
 ## Type BoolResult
 
 ```go
@@ -91,6 +105,26 @@ MobileUseAgent), we do not provide services for overseas users registered with *
 
 ### Methods
 
+### BetaTakeLongScreenshot
+
+```go
+func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality ...int) *BetaScreenshotResult
+```
+
+BetaTakeLongScreenshot captures a long screenshot and returns raw image bytes.
+
+Supported formats: - "png" - "jpeg" (or "jpg")
+
+### BetaTakeScreenshot
+
+```go
+func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult
+```
+
+BetaTakeScreenshot captures the current screen as a PNG image and returns raw image bytes.
+
+It calls the MCP tool "screenshot" with format="png".
+
 ### Configure
 
 ```go
@@ -122,7 +156,7 @@ adbResult := result.Session.Mobile.GetAdbUrl(string(adbPubKey))
 ### GetAllUIElements
 
 ```go
-func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult
+func (m *Mobile) GetAllUIElements(timeoutMs int, formats ...string) *UIElementsResult
 ```
 
 GetAllUIElements retrieves all UI elements within the specified timeout
@@ -488,6 +522,8 @@ UIElement represents a UI element structure
 type UIElementsResult struct {
 	models.ApiResponse
 	Elements	[]*UIElement	`json:"elements"`
+	Raw		string		`json:"raw"`
+	Format		string		`json:"format"`
 	ErrorMessage	string		`json:"error_message"`
 }
 ```

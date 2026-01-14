@@ -23,7 +23,7 @@ Prerequisites and Constraints:
   synchronization path (or conform to backend path rules).
 - Requires available AgentBay context service (agent_bay.context) and session context.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, agent_bay,
@@ -95,7 +95,7 @@ class FileSystem(BaseService)
 
 Handles file operations in the AgentBay cloud environment.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, *args, **kwargs)
@@ -108,7 +108,7 @@ Initialize FileSystem with FileTransfer capability.
     *args: Arguments to pass to BaseService
     **kwargs: Keyword arguments to pass to BaseService
 
-### get\_file\_transfer\_context\_path
+### get_file_transfer_context_path
 
 ```python
 def get_file_transfer_context_path() -> Optional[str]
@@ -133,13 +133,13 @@ if context_path:
   print(f"Context path: {context_path}")
 ```
 
-#### DEFAULT\_CHUNK\_SIZE
+#### DEFAULT_CHUNK_SIZE
 
 ```python
 DEFAULT_CHUNK_SIZE = 50 * 1024
 ```
 
-#### MQTT\_SIZE\_LIMIT
+#### MQTT_SIZE_LIMIT
 
 ```python
 MQTT_SIZE_LIMIT = 63 * 1024
@@ -147,7 +147,7 @@ MQTT_SIZE_LIMIT = 63 * 1024
 
 63KB = 64512 bytes
 
-#### MAX\_CONTENT\_BYTES
+#### MAX_CONTENT_BYTES
 
 ```python
 MAX_CONTENT_BYTES = 51 * 1024
@@ -155,7 +155,7 @@ MAX_CONTENT_BYTES = 51 * 1024
 
 51KB = 52224 bytes
 
-### create\_directory
+### create_directory
 
 ```python
 def create_directory(path: str) -> BoolResult
@@ -183,7 +183,7 @@ nested_result = session.file_system.create_directory("/tmp/parent/child/grandchi
 session.delete()
 ```
 
-### delete\_file
+### delete_file
 
 ```python
 def delete_file(path: str) -> BoolResult
@@ -210,7 +210,7 @@ delete_result = session.file_system.delete_file("/tmp/to_delete.txt")
 session.delete()
 ```
 
-### edit\_file
+### edit_file
 
 ```python
 def edit_file(path: str,
@@ -243,7 +243,7 @@ edit_result = session.file_system.edit_file("/tmp/config.txt", edits)
 session.delete()
 ```
 
-### get\_file\_info
+### get_file_info
 
 ```python
 def get_file_info(path: str) -> FileInfoResult
@@ -271,7 +271,7 @@ print(info_result.file_info)
 session.delete()
 ```
 
-### list\_directory
+### list_directory
 
 ```python
 def list_directory(path: str) -> DirectoryListResult
@@ -324,7 +324,7 @@ session.delete()
 
 FileSystem.create_directory, FileSystem.get_file_info, FileSystem.read_file
 
-### move\_file
+### move_file
 
 ```python
 def move_file(source: str, destination: str) -> BoolResult
@@ -354,7 +354,7 @@ read_result = session.file_system.read_file("/tmp/moved.txt")
 session.delete()
 ```
 
-### read\_multiple\_files
+### read_multiple_files
 
 ```python
 def read_multiple_files(paths: List[str]) -> MultipleFileContentResult
@@ -386,7 +386,7 @@ read_result = session.file_system.read_multiple_files(paths)
 session.delete()
 ```
 
-### search\_files
+### search_files
 
 ```python
 def search_files(
@@ -422,21 +422,21 @@ search_result = session.file_system.search_files("/tmp/test", "test_*")
 session.delete()
 ```
 
-### read\_file
+### read_file
 
 ```python
 @overload
 def read_file(path: str) -> FileContentResult
 ```
 
-### read\_file
+### read_file
 
 ```python
 @overload
 def read_file(path: str, *, format: Literal["text"]) -> FileContentResult
 ```
 
-### read\_file
+### read_file
 
 ```python
 @overload
@@ -444,7 +444,7 @@ def read_file(path: str, *,
               format: Literal["bytes"]) -> BinaryFileContentResult
 ```
 
-### read\_file
+### read_file
 
 ```python
 def read_file(
@@ -512,7 +512,7 @@ def read(path: str) -> FileContentResult
 
 Alias of read_file().
 
-### write\_file
+### write_file
 
 ```python
 def write_file(path: str, content: str, mode: str = "overwrite") -> BoolResult
@@ -615,7 +615,7 @@ def rm(path: str) -> BoolResult
 
 Alias of delete_file().
 
-### upload\_file
+### upload_file
 
 ```python
 def upload_file(
@@ -656,7 +656,7 @@ upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/f
 session.delete()
 ```
 
-### download\_file
+### download_file
 
 ```python
 def download_file(
@@ -697,7 +697,7 @@ download_result = session.file_system.download_file("/workspace/file.txt", "/loc
 session.delete()
 ```
 
-### watch\_directory
+### watch_directory
 
 ```python
 def watch_directory(

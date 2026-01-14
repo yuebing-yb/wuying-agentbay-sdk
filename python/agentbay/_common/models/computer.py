@@ -2,11 +2,11 @@
 Computer module data models.
 """
 
-from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from .response import ApiResponse
+from .screenshot import ScreenshotResult
 
 
 class MouseButton(str, Enum):
@@ -29,6 +29,16 @@ class ScrollDirection(str, Enum):
     DOWN = "down"
     LEFT = "left"
     RIGHT = "right"
+
+
+class ScreenshotMode(str, Enum):
+    """
+    Screenshot capture mode.
+
+    Currently only NORMAL is supported by the underlying MCP tool.
+    """
+
+    NORMAL = "normal"
 
 
 class InstalledApp:

@@ -67,15 +67,17 @@ public class ApiClient {
     /**
      * List available MCP tools
      *
-     * @param sessionId The session ID
+     * @param imageId The image ID
      * @return ListMcpToolsResponse
      * @throws AgentBayException if the call fails
      */
-    public ListMcpToolsResponse listMcpTools(String sessionId) throws AgentBayException {
+    public ListMcpToolsResponse listMcpTools(String imageId) throws AgentBayException {
         try {
             ListMcpToolsRequest request = new ListMcpToolsRequest();
             request.authorization = "Bearer " + apiKey;
-            // sessionId is not available in this API request
+            if (imageId != null && !imageId.isEmpty()) {
+                request.imageId = imageId;
+            }
 
             ListMcpToolsResponse response = client.listMcpTools(request);
 

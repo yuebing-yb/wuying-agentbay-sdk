@@ -13,11 +13,17 @@ class UIElementListResult(ApiResponse):
         request_id: str = "",
         success: bool = False,
         elements: Optional[List[Dict[str, Any]]] = None,
+        raw: str = "",
+        format: str = "json",
         error_message: str = "",
     ):
         super().__init__(request_id)
         self.success = success
         self.elements = elements or []
+        # Raw tool output string (JSON or XML) for advanced use cases.
+        self.raw = raw
+        # Output format for raw data: "json" or "xml".
+        self.format = format
         self.error_message = error_message
 
 

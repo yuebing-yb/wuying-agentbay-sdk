@@ -6,6 +6,7 @@ import java.util.Map;
 import com.aliyun.agentbay.browser.BrowserContext;
 import com.aliyun.agentbay.context.ContextSync;
 import com.aliyun.agentbay.model.ExtraConfigs;
+import com.aliyun.agentbay.volume.Volume;
 
 /**
  * Parameters for creating a new session in the AgentBay cloud environment.
@@ -31,7 +32,12 @@ public class CreateSessionParams {
     private String policyId;
     private Boolean enableBrowserReplay;
     private ExtraConfigs extraConfigs;
-    private String networkId;
+    // Beta: network binding during session creation
+    private String betaNetworkId;
+
+    // Beta: mount a volume during session creation (static mount only)
+    private String volumeId;
+    private Volume volume;
 
     public CreateSessionParams() {
         this.contextSyncs = new ArrayList<>();
@@ -110,6 +116,22 @@ public class CreateSessionParams {
 
     public void setImageId(String imageId) {
         this.imageId = imageId;
+    }
+
+    public String getVolumeId() {
+        return volumeId;
+    }
+
+    public void setVolumeId(String volumeId) {
+        this.volumeId = volumeId;
+    }
+
+    public Volume getVolume() {
+        return volume;
+    }
+
+    public void setVolume(Volume volume) {
+        this.volume = volume;
     }
 
     public Map<String, String> getLabels() {
@@ -212,25 +234,12 @@ public class CreateSessionParams {
         this.extraConfigs = extraConfigs;
     }
 
-    /**
-     * Get the network ID to bind this session to.
-     *
-     * @return Network ID, or null if not set
-     */
-    public String getNetworkId() {
-        return networkId;
+    public String getBetaNetworkId() {
+        return betaNetworkId;
     }
 
-    /**
-     * Set the network ID to bind this session to.
-     *
-     * <p>Multiple sessions can share the same network ID, enabling network communication
-     * between sessions and network isolation.</p>
-     *
-     * @param networkId Network ID created via Network.create()
-     */
-    public void setNetworkId(String networkId) {
-        this.networkId = networkId;
+    public void setBetaNetworkId(String betaNetworkId) {
+        this.betaNetworkId = betaNetworkId;
     }
 
 }

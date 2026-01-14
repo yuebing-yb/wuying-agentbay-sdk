@@ -8,13 +8,13 @@ class Config()
 
 Configuration object for AgentBay client.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, endpoint: str, timeout_ms: int, region_id: Optional[str] = None)
 ```
 
-#### BROWSER\_RECORD\_PATH
+#### BROWSER_RECORD_PATH
 
 ```python
 BROWSER_RECORD_PATH = "/home/wuying/record"

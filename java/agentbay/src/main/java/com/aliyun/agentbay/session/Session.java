@@ -21,7 +21,11 @@ import com.aliyun.agentbay.command.Command;
 import com.aliyun.agentbay.mcp.McpToolsResult;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +34,7 @@ import java.util.Map;
  */
 public class Session {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
     private final String sessionId;
     private final AgentBay agentBay;
@@ -46,12 +51,13 @@ public class Session {
     private String fileTransferContextId;
     private String httpPort;
     private String token;
-    private String vpcLinkUrl;
-    private long vpcLinkUrlTimestamp;
+    private String linkUrl;
+    private long linkUrlTimestamp;
     private String resourceUrl;
     private String networkInterfaceIp;
     private java.util.List<com.aliyun.agentbay.mcp.McpTool> mcpTools;
     private Boolean enableBrowserReplay;
+    private String imageId;
 
     public Session(String sessionId, AgentBay agentBay, SessionParams params) {
         this.sessionId = sessionId;
@@ -67,6 +73,7 @@ public class Session {
         this.computer = new Computer(this);
         this.mobile = new Mobile(this);
         this.mcpTools = new java.util.ArrayList<>();
+        this.imageId = "";
     }
 
     /**
@@ -152,7 +159,11 @@ public class Session {
      * @throws AgentBayException if the call fails
      */
     public List<Object> listTools() throws AgentBayException {
-        ListMcpToolsResponse response = agentBay.getApiClient().listMcpTools(sessionId);
+        String img = imageId;
+        if (img == null || img.isEmpty()) {
+            img = "linux_latest";
+        }
+        ListMcpToolsResponse response = agentBay.getApiClient().listMcpTools(img);
 
         if (response != null && response.getBody() != null && response.getBody().getData() != null) {
             try {
@@ -515,9 +526,11 @@ public class Session {
                             com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
                             tool.setName((String) toolMap.get("name"));
                             tool.setDescription((String) toolMap.get("description"));
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> inputSchema = (Map<String, Object>) toolMap.get("inputSchema");
+                            
+                            // Handle inputSchema - it can be a Map, String, or null
+                            Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
                             tool.setInputSchema(inputSchema);
+                            
                             tool.setServer((String) toolMap.get("server"));
                             tool.setTool((String) toolMap.get("tool"));
                             tools.add(tool);
@@ -528,9 +541,11 @@ public class Session {
                             com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
                             tool.setName((String) toolMap.get("name"));
                             tool.setDescription((String) toolMap.get("description"));
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> inputSchema = (Map<String, Object>) toolMap.get("inputSchema");
+                            
+                            // Handle inputSchema - it can be a Map, String, or null
+                            Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
                             tool.setInputSchema(inputSchema);
+                            
                             tool.setServer((String) toolMap.get("server"));
                             tool.setTool((String) toolMap.get("tool"));
                             tools.add(tool);
@@ -556,7 +571,11 @@ public class Session {
      * Set image ID for this session (placeholder method)
      */
     public void setImageId(String imageId) {
-        // TODO: Implement set image ID
+        this.imageId = imageId;
+    }
+
+    public String getImageId() {
+        return imageId;
     }
 
     /**
@@ -696,32 +715,126 @@ public class Session {
      *
      * @return Cached VPC link URL or null if not available
      */
-    public String getVpcLinkUrl() {
-        if (vpcLinkUrl != null) {
-            long currentTime = System.currentTimeMillis();
-            long elapsedMinutes = (currentTime - vpcLinkUrlTimestamp) / (60 * 1000);
+    public String getLinkUrl() {
+        return linkUrl;
+    }
 
-            if (elapsedMinutes >= 1) {
-                updateVpcLinkUrl();
-            }
-        }
-        return vpcLinkUrl;
+    public void setLinkUrl(String linkUrl) {
+        this.linkUrl = linkUrl;
+    }
+
+    public void setLinkUrlTimestamp(Long linkUrlTimestamp) {
+        this.linkUrlTimestamp = linkUrlTimestamp;
     }
 
     /**
      * Update the cached VPC link URL based on current networkInterfaceIp and httpPort
      */
-    public void updateVpcLinkUrl() {
+    public void updateLinkUrl() {
         if (httpPort != null) {
             try {
                 Integer port = Integer.parseInt(httpPort);
                 OperationResult linkResult = getLink("https", port);
                 if (linkResult.isSuccess() && linkResult.getData() != null) {
-                    this.vpcLinkUrl = linkResult.getData();
-                    this.vpcLinkUrlTimestamp = System.currentTimeMillis();
+                    this.linkUrl = linkResult.getData();
+                    this.linkUrlTimestamp = System.currentTimeMillis();
                 }
             } catch (Exception e) {
             }
+        }
+    }
+
+    /**
+     * Helper method to parse inputSchema which can be a Map, String, or null
+     *
+     * @param inputSchemaObj The inputSchema object from the tool data
+     * @return A Map representing the inputSchema, or an empty Map if parsing fails
+     */
+    private Map<String, Object> parseInputSchema(Object inputSchemaObj) {
+        if (inputSchemaObj == null) {
+            return new java.util.HashMap<>();
+        }
+        
+        // If it's already a Map, return it
+        if (inputSchemaObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> schemaMap = (Map<String, Object>) inputSchemaObj;
+            return schemaMap;
+        }
+        
+        // If it's a String, try to parse it as JSON
+        if (inputSchemaObj instanceof String) {
+            String schemaStr = (String) inputSchemaObj;
+            if (schemaStr.isEmpty()) {
+                return new java.util.HashMap<>();
+            }
+            try {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> schemaMap = objectMapper.readValue(schemaStr, Map.class);
+                return schemaMap;
+            } catch (JsonProcessingException e) {
+                logger.warn("Failed to parse inputSchema string as JSON: {}", schemaStr, e);
+                return new java.util.HashMap<>();
+            }
+        }
+        
+        // For any other type, return empty map
+        logger.warn("Unexpected inputSchema type: {}", inputSchemaObj.getClass().getName());
+        return new java.util.HashMap<>();
+    }
+
+    /**
+     * Update MCP tools for this session
+     *
+     */
+    public void updateMcpTools(String dataJson) {
+        try {
+            List<Object> toolsData = objectMapper.readValue(dataJson, List.class);
+
+            java.util.List<com.aliyun.agentbay.mcp.McpTool> tools = new java.util.ArrayList<>();
+            if (toolsData != null) {
+                for (Object toolData : toolsData) {
+                    try {
+                        if (toolData instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> toolMap = (Map<String, Object>) toolData;
+
+                            com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
+                            tool.setName((String) toolMap.get("name"));
+                            tool.setDescription((String) toolMap.get("description"));
+                            
+                            // Handle inputSchema - it can be a Map, String, or null
+                            Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
+                            tool.setInputSchema(inputSchema);
+                            
+                            tool.setServer((String) toolMap.get("server"));
+                            tool.setTool((String) toolMap.get("tool"));
+                            tools.add(tool);
+                        } else if (toolData instanceof String) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> toolMap = objectMapper.readValue((String) toolData, Map.class);
+
+                            com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
+                            tool.setName((String) toolMap.get("name"));
+                            tool.setDescription((String) toolMap.get("description"));
+                            
+                            // Handle inputSchema - it can be a Map, String, or null
+                            Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
+                            tool.setInputSchema(inputSchema);
+                            
+                            tool.setServer((String) toolMap.get("server"));
+                            tool.setTool((String) toolMap.get("tool"));
+                            tools.add(tool);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Failed to parse tool data: {}", toolData, e);
+                    }
+                }
+            }
+
+            this.mcpTools = tools;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -782,8 +895,8 @@ public class Session {
             state.setFileTransferContextId(this.fileTransferContextId);
             state.setHttpPort(this.httpPort);
             state.setToken(this.token);
-            state.setVpcLinkUrl(this.vpcLinkUrl);
-            state.setVpcLinkUrlTimestamp(this.vpcLinkUrlTimestamp);
+            state.setLinkUrl(this.linkUrl);
+            state.setLinkUrlTimestamp(this.linkUrlTimestamp);
             state.setMcpTools(this.mcpTools);
 
             return objectMapper.writeValueAsString(state);
@@ -810,8 +923,8 @@ public class Session {
             session.setHttpPort(state.getHttpPort());
             session.setToken(state.getToken());
             session.setMcpTools(state.getMcpTools());
-            session.vpcLinkUrl = state.getVpcLinkUrl();
-            session.vpcLinkUrlTimestamp = state.getVpcLinkUrlTimestamp();
+            session.linkUrl = state.getLinkUrl();
+            session.linkUrlTimestamp = state.getLinkUrlTimestamp();
             return session;
         } catch (Exception e) {
             throw new AgentBayException("Failed to restore session state: " + e.getMessage(), e);

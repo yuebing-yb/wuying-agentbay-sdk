@@ -17,6 +17,7 @@ class LocalMCPClient {
   private server: string;
   private command: string;
   private args: string[];
+  private env: NodeJS.ProcessEnv | null;
   private session: any | null = null;
   private workerThread: ChildProcess | null = null;
   private toolCallQueue: Array<{
@@ -35,10 +36,11 @@ class LocalMCPClient {
     return this.isConnected && this.workerThread !== null;
   }
 
-  constructor(server: string, command: string, args: string[]) {
+  constructor(server: string, command: string, args: string[], env: NodeJS.ProcessEnv | null = null) {
     this.server = server;
     this.command = command;
     this.args = args;
+    this.env = env;
   }
 
   /**
@@ -71,9 +73,11 @@ class LocalMCPClient {
       logInfo(`[LocalMCPClient] command = ${this.command}, args = ${this.args.join(' ')}`);
 
       // Spawn the MCP server process
+      // Use provided env if available, otherwise use process.env
+      const envToUse = this.env !== null ? this.env : process.env;
       const childProcess = spawn(this.command, this.args, {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: process.env,
+        env: envToUse,
       });
 
       this.workerThread = childProcess;
@@ -299,7 +303,9 @@ export class LocalPageAgent extends BrowserAgent {
     const mcpScript = process.env.PAGE_TASK_MCP_SERVER_SCRIPT || '';
 
     if (mcpScript) {
-      this.mcpClient = new LocalMCPClient('PageUseAgent', "python", [mcpScript]);
+      // Pass environment variables to MCP client
+      const env = { ...process.env };
+      this.mcpClient = new LocalMCPClient('PageUseAgent', "python", [mcpScript], env);
     } else {
       this.mcpClient = null;
       logWarn(

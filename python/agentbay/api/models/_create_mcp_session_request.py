@@ -20,10 +20,12 @@ class CreateMcpSessionRequest(DaraModel):
         image_id: Optional[str] = None,
         labels: Optional[str] = None,
         mcp_policy_id: Optional[str] = None,
+        network_id: Optional[str] = None,
         persistence_data_list: Optional[
             List[main_models.CreateMcpSessionRequestPersistenceDataList]
         ] = None,
         session_id: Optional[str] = None,
+        volume_id: Optional[str] = None,
         vpc_resource: Optional[bool] = None,
         extra_configs: Optional[main_models.ExtraConfigs] = None,
         sdk_stats: Optional[str] = None,
@@ -36,8 +38,10 @@ class CreateMcpSessionRequest(DaraModel):
         self.image_id = image_id
         self.labels = labels
         self.mcp_policy_id = mcp_policy_id
+        self.network_id = network_id
         self.persistence_data_list = persistence_data_list
         self.session_id = session_id
+        self.volume_id = volume_id
         self.vpc_resource = vpc_resource
         self.extra_configs = extra_configs
         self.sdk_stats = sdk_stats
@@ -77,6 +81,9 @@ class CreateMcpSessionRequest(DaraModel):
         if self.mcp_policy_id is not None:
             result["McpPolicyId"] = self.mcp_policy_id
 
+        if self.network_id is not None:
+            result["NetworkId"] = self.network_id
+
         result["PersistenceDataList"] = []
         if self.persistence_data_list is not None:
             for k1 in self.persistence_data_list:
@@ -84,6 +91,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if self.session_id is not None:
             result["SessionId"] = self.session_id
+
+        if self.volume_id is not None:
+            result["VolumeId"] = self.volume_id
 
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
@@ -122,6 +132,9 @@ class CreateMcpSessionRequest(DaraModel):
         if m.get("McpPolicyId") is not None:
             self.mcp_policy_id = m.get("McpPolicyId")
 
+        if m.get("NetworkId") is not None:
+            self.network_id = m.get("NetworkId")
+
         self.persistence_data_list = []
         if m.get("PersistenceDataList") is not None:
             for k1 in m.get("PersistenceDataList", []):
@@ -130,6 +143,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if m.get("SessionId") is not None:
             self.session_id = m.get("SessionId")
+
+        if m.get("VolumeId") is not None:
+            self.volume_id = m.get("VolumeId")
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")

@@ -12,26 +12,33 @@ import com.aliyun.agentbay.model.GetSessionData;
 import com.aliyun.agentbay.model.GetSessionResult;
 import com.aliyun.agentbay.model.SessionParams;
 import com.aliyun.agentbay.model.SessionResult;
-import com.aliyun.agentbay.network.Network;
+import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.agentbay.util.Version;
+import com.aliyun.agentbay.volume.BetaVolumeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.wuyingai20250506.Client;
 import com.aliyun.wuyingai20250506.models.CreateMcpSessionRequest;
 import com.aliyun.wuyingai20250506.models.CreateMcpSessionResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 /**
  * Main client for interacting with the AgentBay cloud runtime environment
  */
+
 public class AgentBay {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(AgentBay.class);
 
     private String apiKey;
     private String regionId;
@@ -39,7 +46,8 @@ public class AgentBay {
     private ApiClient apiClient;
     private ConcurrentHashMap<String, Session> sessions;
     private MobileSimulate mobileSimulate;
-    private Network network;
+    private BetaNetworkService betaNetwork;
+    private BetaVolumeService betaVolume;
 
     public AgentBay() throws AgentBayException {
         this(null, null);
@@ -80,7 +88,8 @@ public class AgentBay {
             this.client = new Client(clientConfig);
             this.apiClient = new ApiClient(this.client, apiKey);
             this.mobileSimulate = new MobileSimulate(this);
-            this.network = new Network(this);
+            this.betaNetwork = new BetaNetworkService(this);
+            this.betaVolume = new BetaVolumeService(this);
         } catch (Exception e) {
             throw new AgentBayException("Failed to initialize AgentBay client", e);
         }
@@ -268,12 +277,21 @@ public class AgentBay {
     }
 
     /**
-     * Get network service for this AgentBay instance
+     * Get beta network service (trial feature).
      *
-     * @return Network instance
+     * @return BetaNetworkService instance
      */
-    public Network getNetwork() {
-        return network;
+    public BetaNetworkService getBetaNetwork() {
+        return betaNetwork;
+    }
+
+    /**
+     * Get beta volume service (trial feature).
+     *
+     * @return BetaVolumeService instance
+     */
+    public BetaVolumeService getBetaVolume() {
+        return betaVolume;
     }
 
     /**
@@ -384,16 +402,18 @@ public class AgentBay {
                     request.setPersistenceDataList(new ArrayList<>());
                 }
                 request.getPersistenceDataList().add(browserContextSync);
-                for (int i = 0; i < request.getPersistenceDataList().size(); i++) {
-                    CreateMcpSessionRequest.CreateMcpSessionRequestPersistenceDataList item = 
-                        request.getPersistenceDataList().get(i);
-
-                }
             }
 
             // Set image ID if provided
             if (params.getImageId() != null) {
                 request.setImageId(params.getImageId());
+            }
+
+            // Beta: mount volume during session creation (static mount only)
+            if (params.getVolume() != null && params.getVolume().getId() != null && !params.getVolume().getId().isEmpty()) {
+                request.setVolumeId(params.getVolume().getId());
+            } else if (params.getVolumeId() != null && !params.getVolumeId().isEmpty()) {
+                request.setVolumeId(params.getVolumeId());
             }
             
             // Set labels if provided
@@ -410,9 +430,9 @@ public class AgentBay {
                 request.setMcpPolicyId(params.getPolicyId());
             }
 
-            // Set network ID if provided
-            if (params.getNetworkId() != null && !params.getNetworkId().isEmpty()) {
-                request.setNetworkId(params.getNetworkId());
+            // Beta: Set network ID if provided
+            if (params.getBetaNetworkId() != null && !params.getBetaNetworkId().isEmpty()) {
+                request.setNetworkId(params.getBetaNetworkId());
             }
 
             // Set enable_browser_replay if explicitly set to false
@@ -502,6 +522,9 @@ public class AgentBay {
             SessionParams sessionParams = new SessionParams();
             sessionParams.setBrowserType(params.getBrowserType());
             Session session = new Session(result.getSessionId(), this, sessionParams);
+            if (params.getImageId() != null) {
+                session.setImageId(params.getImageId());
+            }
 
             // Set browser recording state (default to True if not explicitly set to False)
             session.setEnableBrowserReplay(params.getEnableBrowserReplay() != null ? params.getEnableBrowserReplay() : true);
@@ -511,7 +534,7 @@ public class AgentBay {
                 boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
                 if (vpcResource) {
                     session.setHttpPort(response.getBody().getData().getHttpPort());
-                    session.updateVpcLinkUrl();
+                    session.updateLinkUrl();
                     session.setToken(response.getBody().getData().getToken());
                     try {
                         session.listMcpTools();
@@ -519,6 +542,43 @@ public class AgentBay {
                     }
                 }
             }*/
+            if (response.getBody().getData() != null) {
+                // Case 1 (regionalized endpoint): LinkUrl/Token/ToolList may be returned regardless of is_vpc.
+                if (response.getBody().getData().getToken() != null) {
+                    session.setToken(response.getBody().getData().getToken());
+                }
+                if (response.getBody().getData().getLinkUrl() != null) {
+                    session.setLinkUrl(response.getBody().getData().getLinkUrl());
+                    session.setLinkUrlTimestamp(System.currentTimeMillis());
+                }
+                if (response.getBody().getData().getToolList() != null) {
+                    try {
+                        session.updateMcpTools(response.getBody().getData().getToolList());
+                        logger.info("Successfully update MCP tools from CreateSession response");
+                    } catch (Exception e) {
+                        logger.warn("Failed to update MCP tools from CreateSession response: {}", e.getMessage());
+                    }
+                }
+
+                // Case 2 (non-regionalized endpoint + is_vpc=true): fall back to legacy VPC info and tool listing.
+                boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
+                if (vpcResource) {
+                    session.setHttpPort(response.getBody().getData().getHttpPort());
+                    logger.info("session created with http Port: {}", session.getHttpPort());
+                    // If LinkUrl is not provided by server, derive it using GetLink.
+                    if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
+                        session.updateLinkUrl();
+                    }
+                    // If tool list is still empty, fall back to ListMcpTools.
+                    if (session.getMcpTools() == null || session.getMcpTools().isEmpty()) {
+                        try {
+                            session.listMcpTools();
+                        } catch (Exception e) {
+                            logger.warn("Failed to fetch MCP tools for VPC session: {}", e.getMessage());
+                        }
+                    }
+                }
+            }
 
             sessions.put(result.getSessionId(), session);
             result.setSession(session);
@@ -579,7 +639,6 @@ public class AgentBay {
         }
         
         try {
-            long startTime = System.currentTimeMillis();
             String devInfoFilePath = mobileSimPath + "/dev_info.json";
             String wyaApplyOption = "";
             
@@ -599,11 +658,7 @@ public class AgentBay {
                                           mobileSimPath, wyaApplyOption, devInfoFilePath).trim();
             com.aliyun.agentbay.model.CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
             if (cmdResult.isSuccess()) {
-                long endTime = System.currentTimeMillis();
-                double consumeTime = (endTime - startTime) / 1000.0;
-                String modeStr = mobileSimMode != null ? mobileSimMode.getValue() : "PropertiesOnly";
-                if (cmdResult.getOutput() != null && !cmdResult.getOutput().isEmpty()) {
-                }
+                // no-op
             } else {
             }
         } catch (Exception e) {

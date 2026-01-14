@@ -140,7 +140,7 @@ python run_mistral_analysis.py --custom "Create comprehensive dashboard with mul
 
 ```bash
 # 1. Enter project directory
-cd cookbook/codespace/api-testing-suite
+cd cookbook/codespace/codestral-data-analysis-python
 
 # 2. Set environment variables (Windows PowerShell)
 $env:AGENTBAY_API_KEY = "your_agentbay_api_key_here"
@@ -162,13 +162,19 @@ If you want to use the main script directly instead of the runner:
 
 ```bash
 # Run main analysis script directly
-python mistral_codestral_data_analysis.py
+python src/mistral_codestral_data_analysis.py
 ```
 
 ### Usage in Python Code
 
 ```python
 # Use in your own Python script
+import sys
+from pathlib import Path
+
+# Add src directory to path
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+
 from mistral_codestral_data_analysis import MistralCodestralAnalyzer
 
 # Create analyzer instance
@@ -190,11 +196,12 @@ analyzer.cleanup()
 ## 📁 File Structure
 
 ```
-cookbook/codespace/api-testing-suite/
-├── mistral_codestral_data_analysis.py  # Main implementation file
-├── run_mistral_analysis.py             # Quick run script
-├── mistral_requirements.txt            # Dependency list
-└── MISTRAL_CODESTRAL_GUIDE.md         # This guide document
+cookbook/codespace/codestral-data-analysis-python/
+├── src/
+│   └── mistral_codestral_data_analysis.py  # Main implementation file
+├── run_mistral_analysis.py                 # Quick run script
+├── mistral_requirements.txt                # Dependency list
+└── MISTRAL_CODESTRAL_GUIDE.md             # This guide document
 ```
 
 ## 🔧 Core Components
@@ -250,6 +257,12 @@ analyzer.analyze_data("Create comprehensive dashboard with multiple subplots: 1)
 If you have your own dataset, you can use it directly:
 
 ```python
+import sys
+from pathlib import Path
+
+# Add src directory to path
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+
 from mistral_codestral_data_analysis import MistralCodestralAnalyzer
 
 analyzer = MistralCodestralAnalyzer()

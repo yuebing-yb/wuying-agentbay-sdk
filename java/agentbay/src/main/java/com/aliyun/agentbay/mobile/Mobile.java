@@ -5,6 +5,7 @@ import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,8 @@ import com.aliyun.agentbay.model.Process;
  */
 public class Mobile extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final byte[] PNG_MAGIC = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+    private static final byte[] JPEG_MAGIC = new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff};
 
     public Mobile(Session session) {
         super(session);
@@ -223,6 +226,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     false,
                     new ArrayList<>(),
+                    result.getData() == null ? "" : result.getData(),
+                    "json",
                     result.getErrorMessage()
                 );
             }
@@ -234,6 +239,8 @@ public class Mobile extends BaseService {
                         result.getRequestId(),
                         true,
                         new ArrayList<>(),
+                        "",
+                        "json",
                         ""
                     );
                 }
@@ -247,6 +254,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     true,
                     elements,
+                    data,
+                    "json",
                     ""
                 );
             } catch (Exception e) {
@@ -254,6 +263,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     false,
                     new ArrayList<>(),
+                    result.getData() == null ? "" : result.getData(),
+                    "json",
                     "Failed to parse clickable UI elements data: " + e.getMessage()
                 );
             }
@@ -262,6 +273,8 @@ public class Mobile extends BaseService {
                 "",
                 false,
                 new ArrayList<>(),
+                "",
+                "json",
                 "Failed to get clickable UI elements: " + e.getMessage()
             );
         }
@@ -283,9 +296,30 @@ public class Mobile extends BaseService {
      * @return UIElementListResult containing UI elements and error message if any
      */
     public UIElementListResult getAllUiElements(int timeoutMs) {
+        return getAllUiElements(timeoutMs, "json");
+    }
+
+    /**
+     * Retrieves all UI elements within the specified timeout.
+     *
+     * Supported formats:
+     * - "json": parse and return elements
+     * - "xml": return raw XML and an empty elements list
+     *
+     * @param timeoutMs Timeout in milliseconds
+     * @param format Output format of the underlying MCP tool ("json" or "xml")
+     * @return UIElementListResult containing UI elements or raw XML
+     */
+    public UIElementListResult getAllUiElements(int timeoutMs, String format) {
         try {
+            String formatNorm = format == null ? "json" : format.trim().toLowerCase();
+            if (formatNorm.isEmpty()) {
+                formatNorm = "json";
+            }
+
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
+            args.put("format", formatNorm);
             OperationResult result = callMcpTool("get_all_ui_elements", args);
 
             if (!result.isSuccess()) {
@@ -293,6 +327,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     false,
                     new ArrayList<>(),
+                    result.getData() == null ? "" : result.getData(),
+                    formatNorm,
                     result.getErrorMessage()
                 );
             }
@@ -304,7 +340,31 @@ public class Mobile extends BaseService {
                         result.getRequestId(),
                         true,
                         new ArrayList<>(),
+                        "",
+                        formatNorm,
                         ""
+                    );
+                }
+
+                if ("xml".equals(formatNorm)) {
+                    return new UIElementListResult(
+                        result.getRequestId(),
+                        true,
+                        new ArrayList<>(),
+                        data,
+                        "xml",
+                        ""
+                    );
+                }
+
+                if (!"json".equals(formatNorm)) {
+                    return new UIElementListResult(
+                        result.getRequestId(),
+                        false,
+                        new ArrayList<>(),
+                        data,
+                        formatNorm,
+                        "Unsupported UI elements format: " + format + ". Supported values: 'json', 'xml'."
                     );
                 }
 
@@ -322,6 +382,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     true,
                     parsedElements,
+                    data,
+                    "json",
                     ""
                 );
             } catch (Exception e) {
@@ -329,6 +391,8 @@ public class Mobile extends BaseService {
                     result.getRequestId(),
                     false,
                     new ArrayList<>(),
+                    result.getData() == null ? "" : result.getData(),
+                    formatNorm,
                     "Failed to parse UI elements data: " + e.getMessage()
                 );
             }
@@ -337,6 +401,8 @@ public class Mobile extends BaseService {
                 "",
                 false,
                 new ArrayList<>(),
+                "",
+                "json",
                 "Failed to get all UI elements: " + e.getMessage()
             );
         }
@@ -648,6 +714,125 @@ public class Mobile extends BaseService {
         }
     }
 
+    /**
+     * Captures the current screen as a PNG image and returns raw image bytes.
+     *
+     * @return ScreenshotBytesResult containing PNG bytes and error message if any
+     */
+    public ScreenshotBytesResult betaTakeScreenshot() {
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("format", "png");
+            OperationResult result = callMcpTool("screenshot", args);
+
+            if (!result.isSuccess()) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    new byte[0],
+                    "png",
+                    result.getErrorMessage()
+                );
+            }
+
+            DecodedImage decoded = decodeBase64Image(result.getData(), "png");
+            return new ScreenshotBytesResult(
+                result.getRequestId(),
+                true,
+                decoded.bytes,
+                decoded.format,
+                ""
+            );
+        } catch (Exception e) {
+            return new ScreenshotBytesResult(
+                "",
+                false,
+                new byte[0],
+                "png",
+                "Failed to take screenshot: " + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Captures a long screenshot and returns raw image bytes.
+     *
+     * Supported formats:
+     * - "png"
+     * - "jpeg" (or "jpg")
+     *
+     * @param maxScreens Number of screens to stitch (range: [2, 10])
+     * @param format Output image format ("png" or "jpeg")
+     * @param quality JPEG quality (range: [1, 100]). Only used for jpeg.
+     * @return ScreenshotBytesResult containing image bytes and error message if any
+     */
+    public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String format, Integer quality) {
+        try {
+            if (maxScreens < 2 || maxScreens > 10) {
+                return new ScreenshotBytesResult("", false, new byte[0], "", "Invalid maxScreens: must be in range [2, 10]");
+            }
+
+            String formatNorm = normalizeImageFormat(format, "png");
+            if (!"png".equals(formatNorm) && !"jpeg".equals(formatNorm)) {
+                return new ScreenshotBytesResult(
+                    "",
+                    false,
+                    new byte[0],
+                    formatNorm,
+                    "Unsupported format: " + format + ". Supported values: 'png', 'jpeg'."
+                );
+            }
+            if (quality != null) {
+                if (quality < 1 || quality > 100) {
+                    return new ScreenshotBytesResult("", false, new byte[0], formatNorm, "Invalid quality: must be in range [1, 100]");
+                }
+            }
+
+            Map<String, Object> args = new HashMap<>();
+            args.put("max_screens", maxScreens);
+            args.put("format", formatNorm);
+            if (quality != null) {
+                args.put("quality", quality);
+            }
+
+            OperationResult result = callMcpTool("long_screenshot", args);
+            if (!result.isSuccess()) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    new byte[0],
+                    formatNorm,
+                    result.getErrorMessage()
+                );
+            }
+
+            DecodedImage decoded = decodeBase64Image(result.getData(), formatNorm);
+            return new ScreenshotBytesResult(
+                result.getRequestId(),
+                true,
+                decoded.bytes,
+                decoded.format,
+                ""
+            );
+        } catch (Exception e) {
+            return new ScreenshotBytesResult(
+                "",
+                false,
+                new byte[0],
+                normalizeImageFormat(format, "png"),
+                "Failed to take long screenshot: " + e.getMessage()
+            );
+        }
+    }
+
+    public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String format) {
+        return betaTakeLongScreenshot(maxScreens, format, null);
+    }
+
+    public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens) {
+        return betaTakeLongScreenshot(maxScreens, "png", null);
+    }
+
     // ==================== Mobile Configuration Operations ====================
 
     /**
@@ -900,5 +1085,184 @@ public class Mobile extends BaseService {
             }
         } catch (Exception e) {
         }
+    }
+
+    private static class DecodedImage {
+        final byte[] bytes;
+        final String format;
+
+        DecodedImage(byte[] bytes, String format) {
+            this.bytes = bytes;
+            this.format = format;
+        }
+    }
+
+    private static String normalizeImageFormat(String format, String defaultValue) {
+        String f = format == null ? "" : format.trim().toLowerCase();
+        if (f.isEmpty()) {
+            return defaultValue;
+        }
+        if ("jpg".equals(f)) {
+            return "jpeg";
+        }
+        return f;
+    }
+
+    private static DecodedImage decodeBase64Image(String data, String expectedFormat) {
+        if (data == null) {
+            throw new IllegalArgumentException("Empty image data");
+        }
+
+        String s = extractBase64FromMcpPayload(data.trim());
+        int idx = s.indexOf("base64,");
+        if (idx >= 0) {
+            s = s.substring(idx + "base64,".length()).trim();
+        }
+        s = s.replace("\n", "").replace("\r", "").replace("\t", "").replace(" ", "");
+        s = s.replace("-", "+").replace("_", "/");
+        int mod = s.length() % 4;
+        if (mod != 0) {
+            s = s + "====".substring(mod);
+        }
+
+        byte[] decoded = Base64.getDecoder().decode(s);
+        byte[] normalized = decoded;
+
+        int pngIdx = indexOfBytes(normalized, PNG_MAGIC, 128);
+        if (pngIdx > 0) {
+            normalized = slice(normalized, pngIdx);
+        }
+        int jpgIdx = indexOfBytes(normalized, JPEG_MAGIC, 128);
+        if (jpgIdx > 0) {
+            normalized = slice(normalized, jpgIdx);
+        }
+
+        String fmt = expectedFormat;
+        if (startsWith(normalized, PNG_MAGIC)) {
+            fmt = "png";
+        } else if (startsWith(normalized, JPEG_MAGIC)) {
+            fmt = "jpeg";
+        }
+        return new DecodedImage(normalized, fmt);
+    }
+
+    private static String extractBase64FromMcpPayload(String input) {
+        String s = input == null ? "" : input.trim();
+        if (s.isEmpty()) {
+            return s;
+        }
+        if (!(s.startsWith("{") || s.startsWith("["))) {
+            return s;
+        }
+        try {
+            Object obj = objectMapper.readValue(s, Object.class);
+            String b64 = extractBase64FromAny(obj);
+            return b64 == null || b64.isEmpty() ? s : b64;
+        } catch (Exception e) {
+            return s;
+        }
+    }
+
+    private static String extractBase64FromAny(Object v) {
+        if (v == null) {
+            return "";
+        }
+        if (v instanceof String) {
+            return (String) v;
+        }
+        if (v instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Object> list = (List<Object>) v;
+            if (list.isEmpty()) {
+                return "";
+            }
+            return extractBase64FromAny(list.get(0));
+        }
+        if (v instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>) v;
+            Object data = map.get("data");
+            if (data instanceof String && !((String) data).isEmpty()) {
+                return (String) data;
+            }
+            Object content = map.get("content");
+            if (content instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Object> list = (List<Object>) content;
+                if (!list.isEmpty() && list.get(0) instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> c0 = (Map<String, Object>) list.get(0);
+                    Object blob = c0.get("blob");
+                    if (blob instanceof String && !((String) blob).isEmpty()) {
+                        return (String) blob;
+                    }
+                    if (blob instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> bm = (Map<String, Object>) blob;
+                        Object d = bm.get("data");
+                        if (d instanceof String && !((String) d).isEmpty()) {
+                            return (String) d;
+                        }
+                    }
+                    Object d0 = c0.get("data");
+                    if (d0 instanceof String && !((String) d0).isEmpty()) {
+                        return (String) d0;
+                    }
+                    Object text = c0.get("text");
+                    if (text instanceof String && !((String) text).isEmpty()) {
+                        return (String) text;
+                    }
+                }
+            }
+            Object result = map.get("result");
+            if (result != null) {
+                return extractBase64FromAny(result);
+            }
+        }
+        return "";
+    }
+
+    private static boolean startsWith(byte[] data, byte[] prefix) {
+        if (data == null || prefix == null || data.length < prefix.length) {
+            return false;
+        }
+        for (int i = 0; i < prefix.length; i++) {
+            if (data[i] != prefix[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int indexOfBytes(byte[] haystack, byte[] needle, int maxSearch) {
+        if (haystack == null || needle == null || needle.length == 0 || haystack.length < needle.length) {
+            return -1;
+        }
+        int limit = Math.min(haystack.length, Math.max(maxSearch, 0));
+        for (int i = 0; i + needle.length <= limit; i++) {
+            boolean ok = true;
+            for (int j = 0; j < needle.length; j++) {
+                if (haystack[i + j] != needle[j]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static byte[] slice(byte[] src, int start) {
+        if (start <= 0) {
+            return src;
+        }
+        if (start >= src.length) {
+            return new byte[0];
+        }
+        byte[] out = new byte[src.length - start];
+        System.arraycopy(src, start, out, 0, out.length);
+        return out;
     }
 }

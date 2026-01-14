@@ -7,17 +7,19 @@ import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.CallMcpToolResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(BaseService.class);
     private static final OkHttpClient httpClient = new OkHttpClient.Builder()
         .readTimeout(120, TimeUnit.SECONDS)
         .writeTimeout(120, TimeUnit.SECONDS)
@@ -49,14 +52,21 @@ public class BaseService {
      */
     protected OperationResult callMcpTool(String toolName, Object args) {
         try {
-            if (session.isVpcEnabled()) {
-                return callMcpToolVpc(toolName, args);
+            if (isNotEmpty(session.getLinkUrl()) && isNotEmpty(session.getToken())) {
+                return callMcpToolLinkUrl(toolName, args);
             } else {
                 return callMcpToolApi(toolName, args);
             }
         } catch (Exception e) {
             return new OperationResult("", false, "", "Unexpected error: " + e.getMessage());
         }
+    }
+
+    /**
+     * Check if a string is not null and not empty
+     */
+    private boolean isNotEmpty(String str) {
+        return str != null && !str.isEmpty();
     }
 
     /**
@@ -93,44 +103,73 @@ public class BaseService {
     }
 
     /**
-     * Call MCP tool via VPC direct connection
+     * Call MCP tool via link url connection
      */
-    private OperationResult callMcpToolVpc(String toolName, Object args) {
+    private OperationResult callMcpToolLinkUrl(String toolName, Object args) {
         try {
             //
             String server = findServerForTool(toolName);
-            if (server == null || server.isEmpty()) {
+            if (!isNotEmpty(server)) {
+                try {
+                    session.listMcpTools();
+                } catch (Exception e) {
+                }
+                server = findServerForTool(toolName);
+            }
+            if (!isNotEmpty(server)) {
                 return new OperationResult("", false, "", "Server not found for tool: " + toolName);
             }
 
-            String requestId = String.format("vpc-%d-%09d",
-                System.currentTimeMillis(), random.nextInt(1000000000));
+            String requestId = String.format("link-%d-%09d", System.currentTimeMillis(), random.nextInt(1000000000));
 
-            String vpcLinkUrl = session.getVpcLinkUrl();
-            if (vpcLinkUrl == null || vpcLinkUrl.isEmpty()) {
+            String linkUrl = session.getLinkUrl();
+            if (!isNotEmpty(linkUrl)) {
                 return new OperationResult("", false, "",
-                    "VPC link URL not available. Ensure session VPC configuration is complete.");
+                    "Link URL not available. Ensure session VPC configuration is complete.");
             }
 
-            String url = vpcLinkUrl + "/callTool";
+            String url = linkUrl + "/callTool";
+
+            String token = session.getToken();
+
+            logger.info("🔗 API Call: CallMcpTool(LinkUrl)");
+            logger.info("✅ API Response: CallMcpTool(LinkUrl) Request, RequestId={}", requestId);
+            logger.info("   └─ tool_name={}", toolName);
+            String command = "";
+            try {
+                if (args instanceof Map) {
+                    Object cmd = ((Map<?, ?>) args).get("command");
+                    if (cmd != null) {
+                        command = cmd.toString();
+                    }
+                }
+            } catch (Exception e) {
+            }
+            if (command == null || command.isEmpty()) {
+                try {
+                    command = objectMapper.writeValueAsString(args);
+                } catch (Exception e) {
+                    command = "";
+                }
+            }
+            if (command != null && command.length() > 500) {
+                command = command.substring(0, 500) + "...(truncated)";
+            }
+            logger.info("   └─ command={}", command);
 
             Map<String, Object> bodyParams = new HashMap<>();
             bodyParams.put("args", args);
             bodyParams.put("server", server);
             bodyParams.put("requestId", requestId);
             bodyParams.put("tool", toolName);
-            bodyParams.put("token", session.getToken() != null ? session.getToken() : "");
+            bodyParams.put("token", token);
             String bodyJson = objectMapper.writeValueAsString(bodyParams);
 
-            String curlCommand = String.format("curl -X POST \"%s/callTool\" -H \"Content-Type: application/json\" -d '%s' -w \"\\n总耗时: %%{time_total}s\\n\"",
-                vpcLinkUrl,
-                bodyJson
-            );
-            //
             RequestBody requestBody = RequestBody.create(bodyJson, MediaType.parse("application/json"));
             Request request = new Request.Builder()
                 .url(url)
                 .header("Content-Type", "application/json")
+                .header("X-Access-Token", token)
                 .post(requestBody)
                 .build();
 
@@ -141,6 +180,7 @@ public class BaseService {
                 }
 
                 String responseBody = response.body().string();
+                @SuppressWarnings("unchecked")
                 Map<String, Object> outerData = objectMapper.readValue(responseBody, Map.class);
 
                 Object dataField = outerData.get("data");
@@ -151,9 +191,13 @@ public class BaseService {
 
                 Map<String, Object> parsedData;
                 if (dataField instanceof String) {
-                    parsedData = objectMapper.readValue((String) dataField, Map.class);
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> parsed = objectMapper.readValue((String) dataField, Map.class);
+                    parsedData = parsed;
                 } else if (dataField instanceof Map) {
-                    parsedData = (Map<String, Object>) dataField;
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> casted = (Map<String, Object>) dataField;
+                    parsedData = casted;
                 } else {
                     return new OperationResult(requestId, false, "",
                         "Invalid data field type in VPC response");
@@ -165,6 +209,7 @@ public class BaseService {
                         "No result field in VPC response data");
                 }
 
+                @SuppressWarnings("unchecked")
                 Map<String, Object> resultData = (Map<String, Object>) resultField;
                 Boolean isError = (Boolean) resultData.get("isError");
                 Object contentObj = resultData.get("content");
@@ -182,8 +227,25 @@ public class BaseService {
                 }
 
                 if (isError != null && isError) {
+                    logger.info("✅ API Response: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
+                    logger.info("   └─ http_status={}", response.code());
+                    logger.info("   └─ tool_name={}", toolName);
+                    String out = textContent != null ? textContent : "";
+                    if (out.length() > 800) {
+                        out = out.substring(0, 800) + "...(truncated)";
+                    }
+                    logger.info("   └─ output={}", out);
                     return new OperationResult(requestId, false, "", textContent);
                 }
+
+                logger.info("✅ API Response: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
+                logger.info("   └─ http_status={}", response.code());
+                logger.info("   └─ tool_name={}", toolName);
+                String out = textContent != null ? textContent : "";
+                if (out.length() > 800) {
+                    out = out.substring(0, 800) + "...(truncated)";
+                }
+                logger.info("   └─ output={}", out);
                 return new OperationResult(requestId, true, textContent, "");
             }
 
@@ -226,8 +288,16 @@ public class BaseService {
                             @SuppressWarnings("unchecked")
                             Map<String, Object> contentItem = (Map<String, Object>) content.get(0);
                             Object text = contentItem.get("text");
+                            Object blob = contentItem.get("blob");
+                            Object data = contentItem.get("data");
                             if (text != null) {
                                 throw new RuntimeException("MCP tool execution error: " + text.toString());
+                            }
+                            if (blob != null) {
+                                throw new RuntimeException("MCP tool execution error: " + blob.toString());
+                            }
+                            if (data != null) {
+                                throw new RuntimeException("MCP tool execution error: " + data.toString());
                             }
                         }
                     }
@@ -246,11 +316,27 @@ public class BaseService {
                         if (text != null) {
                             return text.toString();
                         }
+                        Object blob = contentItem.get("blob");
+                        if (blob != null) {
+                            return blob.toString();
+                        }
+                        Object data = contentItem.get("data");
+                        if (data != null) {
+                            return data.toString();
+                        }
                     }
                 }
             }
 
-            // Fallback to toString if parsing fails
+            // Fallback to JSON representation if possible
+            try {
+                if (responseData instanceof Map || responseData instanceof java.util.List) {
+                    return objectMapper.writeValueAsString(responseData);
+                }
+            } catch (Exception e) {
+            }
+
+            // Final fallback
             return responseData.toString();
 
         } catch (RuntimeException e) {

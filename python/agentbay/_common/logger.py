@@ -617,7 +617,9 @@ def _log_operation_success(operation: str, result: str = "") -> None:
             log.opt(depth=1).debug(f"📊 Result: {result}")
 
 
-def _log_operation_error(operation: str, error: str, exc_info: bool = False) -> None:
+def _log_operation_error(
+    operation: str, error: str, exc_info: bool = False, request_id: str = ""
+) -> None:
     """
     Log operation error with optional exception info.
 
@@ -625,16 +627,20 @@ def _log_operation_error(operation: str, error: str, exc_info: bool = False) -> 
         operation: Name of the operation that failed
         error: Error message
         exc_info: Whether to include exception traceback
+        request_id: Optional request ID for correlation
     """
     if _is_sls_format():
-        log.opt(depth=1).error(f"Failed: {operation}, Error: {error}")
+        rid = f", RequestId={request_id}" if request_id else ""
+        log.opt(depth=1).error(f"Failed: {operation}{rid}, Error: {error}")
         if exc_info:
              log.opt(depth=1).exception(f"Exception details for {operation}")
     else:
         if exc_info:
-            log.opt(depth=1).exception(f"❌ Failed: {operation}")
+            rid = f" (RequestId: {request_id})" if request_id else ""
+            log.opt(depth=1).exception(f"❌ Failed: {operation}{rid}")
         else:
-            log.opt(depth=1).error(f"❌ Failed: {operation}")
+            rid = f" (RequestId: {request_id})" if request_id else ""
+            log.opt(depth=1).error(f"❌ Failed: {operation}{rid}")
             log.opt(depth=1).error(f"💥 Error: {error}")
 
 

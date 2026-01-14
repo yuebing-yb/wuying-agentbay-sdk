@@ -17,7 +17,7 @@ class AgentBay()
 AgentBay represents the main client for interacting with the AgentBay cloud runtime
 environment asynchronously.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, api_key: str = "",
@@ -162,7 +162,7 @@ to check the session status until it becomes PAUSED or until timeout.
 
     SessionPauseResult: Result containing the request ID, success status, and final session status.
 
-### pause\_async
+### pause_async
 
 ```python
 def pause_async(session: Session) -> SessionPauseResult
@@ -209,7 +209,7 @@ to check the session status until it becomes RUNNING or until timeout.
 
     SessionResumeResult: Result containing the request ID, success status, and final session status.
 
-### resume\_async
+### resume_async
 
 ```python
 def resume_async(session: Session) -> SessionResumeResult

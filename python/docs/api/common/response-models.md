@@ -10,7 +10,7 @@ class ApiResponse()
 
 Base class for all API responses, containing RequestID
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "")
@@ -23,13 +23,25 @@ Initialize an ApiResponse with a request_id.
 - `request_id` _str, optional_ - Unique identifier for the API request.
   Defaults to "".
 
-### get\_request\_id
+### get_request_id
 
 ```python
 def get_request_id() -> str
 ```
 
 Returns the unique identifier for the API request.
+
+## BaseResult
+
+```python
+@dataclass
+class BaseResult(ApiResponse)
+```
+
+Base result model for new typed APIs.
+
+This is a lightweight dataclass wrapper around ApiResponse for APIs that
+prefer returning structured results instead of generic OperationResult.
 
 ## SessionPauseResult
 
@@ -39,7 +51,7 @@ class SessionPauseResult(ApiResponse)
 
 Result of session pause operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -76,7 +88,7 @@ class SessionResumeResult(ApiResponse)
 
 Result of session resume operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -113,7 +125,7 @@ class SessionResult(ApiResponse)
 
 Result of operations returning a single Session.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -142,7 +154,7 @@ class SessionListResult(ApiResponse)
 
 Result of operations returning a list of Session IDs.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -174,7 +186,7 @@ class DeleteResult(ApiResponse)
 
 Result of delete operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -207,7 +219,7 @@ class GetSessionData()
 
 Data returned by GetSession API.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, app_instance_id: str = "",
@@ -248,7 +260,7 @@ class GetSessionResult(ApiResponse)
 
 Result of GetSession operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -281,7 +293,7 @@ class OperationResult(ApiResponse)
 
 Result of general operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -316,7 +328,7 @@ class BoolResult(ApiResponse)
 
 Result of operations returning a boolean value.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -345,7 +357,7 @@ class AdbUrlResult(ApiResponse)
 
 Result of ADB URL retrieval operation.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -367,7 +379,7 @@ Initialize an AdbUrlResult.
 - `data` _Optional[str], optional_ - The ADB URL string (e.g., "adb connect IP:Port").
   Defaults to None.
 
-### extract\_request\_id
+### extract_request_id
 
 ```python
 def extract_request_id(response) -> str
@@ -394,7 +406,7 @@ class McpToolsResult(ApiResponse)
 
 Result containing MCP tools list and request ID.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "", tools: Optional[List["McpTool"]] = None)
@@ -417,7 +429,7 @@ class McpToolResult(ApiResponse)
 
 Result of an MCP tool call.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -447,7 +459,7 @@ class SessionMetrics()
 
 Structured metrics for session monitoring.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, cpu_count: int = 0,
@@ -467,28 +479,28 @@ def __init__(self, cpu_count: int = 0,
              tx_used_kb: Optional[float] = None)
 ```
 
-### rx\_rate\_kbps
+### rx_rate_kbps
 
 ```python
 @property
 def rx_rate_kbps() -> float
 ```
 
-### tx\_rate\_kbps
+### tx_rate_kbps
 
 ```python
 @property
 def tx_rate_kbps() -> float
 ```
 
-### rx\_used\_kb
+### rx_used_kb
 
 ```python
 @property
 def rx_used_kb() -> float
 ```
 
-### tx\_used\_kb
+### tx_used_kb
 
 ```python
 @property
@@ -503,7 +515,7 @@ class SessionMetricsResult(ApiResponse)
 
 Result of session get_metrics() operation.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",

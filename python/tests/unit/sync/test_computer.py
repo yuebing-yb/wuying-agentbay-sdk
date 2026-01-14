@@ -9,7 +9,7 @@ import pytest
 
 from agentbay import AgentBayError
 from agentbay import BoolResult, OperationResult
-from agentbay import Computer, MouseButton, ScrollDirection
+from agentbay import Computer, MouseButton, ScrollDirection, ScreenshotResult
 
 
 class TestComputer:
@@ -366,6 +366,91 @@ class TestComputer:
         assert result.success is True
         assert result.data == "/path/to/screenshot.png"
         self.session.call_mcp_tool.assert_called_once_with("system_screenshot", {})
+
+    @pytest.mark.sync
+    def test_take_screenshot_success_with_jpg(self):
+        """Test successful take_screenshot with jpg format (normalized to jpeg)."""
+        # Arrange
+        payload = b"\xff\xd8\xff" + b"hello-image-bytes"
+        import base64
+
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "test-req"
+        mock_result.data = base64.b64encode(payload).decode("ascii")
+
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+
+        # Act
+        result = self.computer.beta_take_screenshot(format="jpg")
+
+        # Assert
+        assert isinstance(result, ScreenshotResult)
+        assert result.success is True
+        assert result.request_id == "test-req"
+        assert result.error_message == ""
+        assert result.format == "jpeg"
+        assert result.data == payload
+        self.session.call_mcp_tool.assert_called_once_with("screenshot", {"format": "jpeg"})
+
+    @pytest.mark.sync
+    def test_take_screenshot_strips_prefix_before_magic(self):
+        """Test take_screenshot strips unexpected prefix bytes before JPEG magic."""
+        # Arrange
+        payload = b"u\xabZ" + b"\xff\xd8\xff" + b"rest"
+        import base64
+
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "test-req"
+        mock_result.data = base64.b64encode(payload).decode("ascii")
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+
+        # Act
+        result = self.computer.beta_take_screenshot(format="jpg")
+
+        # Assert
+        assert result.data.startswith(b"\xff\xd8\xff")
+
+    @pytest.mark.sync
+    def test_take_screenshot_accepts_mode_enum(self):
+        """Test beta_take_screenshot works with png."""
+        # Arrange
+        payload = b"\x89PNG\r\n\x1a\n" + b"x"
+        import base64
+
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "test-req"
+        mock_result.data = base64.b64encode(payload).decode("ascii")
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+
+        # Act
+        result = self.computer.beta_take_screenshot(format="png")
+
+        # Assert
+        assert result.success is True
+        assert result.format == "png"
+
+    @pytest.mark.sync
+    def test_take_screenshot_invalid_format_raises(self):
+        """Test take_screenshot rejects invalid format."""
+        with pytest.raises(ValueError, match="Invalid format"):
+            self.computer.beta_take_screenshot(format="webp")
+
+    @pytest.mark.sync
+    def test_take_screenshot_mcp_failure_raises_agentbayerror(self):
+        """Test take_screenshot raises AgentBayError when MCP tool fails."""
+        # Arrange
+        mock_result = Mock()
+        mock_result.success = False
+        mock_result.request_id = "test-req"
+        mock_result.error_message = "timeout"
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+
+        # Act & Assert
+        with pytest.raises(AgentBayError, match="Failed to take screenshot"):
+            self.computer.beta_take_screenshot(format="jpg")
 
     # Error Handling Tests
     @pytest.mark.sync
