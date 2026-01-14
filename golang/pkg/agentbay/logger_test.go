@@ -3,6 +3,8 @@ package agentbay
 import (
 	"encoding/json"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -91,6 +93,106 @@ func TestLogAPIResponseWithDetailsFailure(t *testing.T) {
 
 	// Verify it doesn't panic with error response
 	logAPIResponseWithDetails("GetSession", "req_67890", false, nil, string(fullResponse))
+}
+
+func TestLogAPIResponseWithDetailsFailure_Pretty_ErrorLevelIncludesKeyFieldsAndResponse(t *testing.T) {
+	oldFormat := globalLogFormat
+	oldLevel := globalLogLevel
+	oldConsole := consoleLoggingEnabled
+	defer func() {
+		globalLogFormat = oldFormat
+		globalLogLevel = oldLevel
+		consoleLoggingEnabled = oldConsole
+	}()
+
+	globalLogFormat = LogFormatPretty
+	globalLogLevel = LOG_ERROR
+	consoleLoggingEnabled = true
+
+	keyFields := map[string]interface{}{
+		"http_status": 500,
+		"tool_name":   "long_screenshot",
+	}
+
+	out := captureStdout(t, func() {
+		logAPIResponseWithDetails(
+			"CallMcpTool(LinkUrl) Response",
+			"link-1",
+			false,
+			keyFields,
+			`{"code":"BadGateway","message":"upstream error","token":"tok_123456"}`,
+		)
+	})
+
+	if !strings.Contains(out, "❌ API Response Failed: CallMcpTool(LinkUrl) Response") {
+		t.Fatalf("expected failure main line, got: %q", out)
+	}
+	if !strings.Contains(out, "RequestId=link-1") {
+		t.Fatalf("expected RequestId in output, got: %q", out)
+	}
+	if !strings.Contains(out, "http_status=500") || !strings.Contains(out, "tool_name=long_screenshot") {
+		t.Fatalf("expected key fields in output, got: %q", out)
+	}
+	if !strings.Contains(out, "📥 Response:") {
+		t.Fatalf("expected response body line in output, got: %q", out)
+	}
+	if strings.Contains(out, "tok_123456") {
+		t.Fatalf("expected token to be masked, got: %q", out)
+	}
+	if !strings.Contains(out, "to****56") {
+		t.Fatalf("expected masked token pattern in output, got: %q", out)
+	}
+}
+
+func TestCallMcpToolLinkUrl_Non2xx_LogsResponseBody(t *testing.T) {
+	oldFormat := globalLogFormat
+	oldLevel := globalLogLevel
+	oldConsole := consoleLoggingEnabled
+	defer func() {
+		globalLogFormat = oldFormat
+		globalLogLevel = oldLevel
+		consoleLoggingEnabled = oldConsole
+	}()
+
+	globalLogFormat = LogFormatPretty
+	globalLogLevel = LOG_ERROR
+	consoleLoggingEnabled = true
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/callTool" {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"code":"NotFound","message":"wrong path"}`))
+			return
+		}
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = w.Write([]byte(`{"code":"BadGateway","message":"upstream unavailable","token":"tok_123456"}`))
+	}))
+	defer srv.Close()
+
+	s := &Session{
+		LinkUrl: srv.URL,
+		Token:   "tok_abcdef",
+	}
+
+	out := captureStdout(t, func() {
+		_, _ = s.callMcpToolLinkUrl("long_screenshot", map[string]interface{}{"format": "png", "max_screens": 2}, "android")
+	})
+
+	if !strings.Contains(out, "❌ API Response Failed: CallMcpTool(LinkUrl) Response") {
+		t.Fatalf("expected failure response log, got: %q", out)
+	}
+	if !strings.Contains(out, "http_status=502") {
+		t.Fatalf("expected http status in output, got: %q", out)
+	}
+	if !strings.Contains(out, "tool_name=long_screenshot") {
+		t.Fatalf("expected tool_name in output, got: %q", out)
+	}
+	if !strings.Contains(out, "📥 Response:") {
+		t.Fatalf("expected response body line in output, got: %q", out)
+	}
+	if strings.Contains(out, "tok_123456") {
+		t.Fatalf("expected token to be masked, got: %q", out)
+	}
 }
 
 // TestLogOperationErrorWithoutStack verifies error logging without stack trace

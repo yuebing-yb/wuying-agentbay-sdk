@@ -512,7 +512,7 @@ def test_polling_proxy_multiple_ips(browser_session):
                         if (ipElement) {
                             return ipElement.textContent.trim();
                         }
-                        
+
                         return null;
                     }
                 """

@@ -37,14 +37,14 @@ class TestOssIntegration(unittest.TestCase):
         params = CreateSessionParams(
             image_id="code_latest",
         )
-        
+
         # Run async setup
         def async_setup():
             result = cls.agent_bay.create(params)
             cls.session = result.session
             print(cls.session._get_session_id())
             print(f"Session created with ID: {cls.session._get_session_id()}")
-        
+
         async_setup()
 
     @classmethod
@@ -55,7 +55,7 @@ class TestOssIntegration(unittest.TestCase):
             def async_cleanup():
                 cls.agent_bay.delete(cls.session)
                 print("Session successfully deleted")
-            
+
             async_cleanup()
 
     def test_env_init(self):

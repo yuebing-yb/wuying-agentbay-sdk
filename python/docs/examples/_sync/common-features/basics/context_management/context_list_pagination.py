@@ -11,17 +11,17 @@ from agentbay import AgentBay, AgentBayError, ContextListParams
 def list_contexts(agent_bay, max_results=10, next_token=None):
     """列出上下文，支持分页"""
     print(f"Listing contexts (max: {max_results})...")
-    
+
     params = ContextListParams(max_results=max_results, next_token=next_token)
     result = agent_bay.context.list(params)
-    
+
     if result.success:
         print(f"Found {len(result.contexts)} contexts (Total: {result.total_count or 'Unknown'})")
         for i, ctx in enumerate(result.contexts, 1):
             print(f" {i}. {ctx.name} ({ctx.id})")
             if ctx.created_at:
                 print(f"    Created: {ctx.created_at}")
-        
+
         if result.next_token:
             print(f"Has more results (next_token: {result.next_token[:20]}...)")
         return result
@@ -32,9 +32,9 @@ def list_contexts(agent_bay, max_results=10, next_token=None):
 def create_context(agent_bay, name):
     """创建新的上下文"""
     print(f"Creating context: {name}")
-    
+
     result = agent_bay.context.get(name=name, create=True)
-    
+
     if result.success:
         print(f"✅ Context created successfully!")
         print(f"   ID: {result.context.id}")
@@ -47,9 +47,9 @@ def create_context(agent_bay, name):
 def get_context_details(agent_bay, context_name):
     """获取上下文详细信息"""
     print(f"Getting context details for: {context_name}")
-    
+
     result = agent_bay.context.get(name=context_name)
-    
+
     if result.success:
         ctx = result.context
         print(f"📋 Context Details:")
@@ -71,7 +71,7 @@ def demo_pagination(agent_bay):
     """演示分页功能"""
     print("\n=== Pagination Demo ===")
     result = list_contexts(agent_bay, max_results=3)
-    
+
     if result and result.next_token:
         print("\nGetting next page...")
         list_contexts(agent_bay, max_results=3, next_token=result.next_token)
@@ -81,9 +81,9 @@ def demo_create_context(agent_bay):
     print("\n=== Create Context Demo ===")
     import time
     context_name = f"demo-context-{int(time.time())}"
-    
+
     created_ctx = create_context(agent_bay, context_name)
-    
+
     if created_ctx:
         print("\nGetting details of newly created context...")
         get_context_details(agent_bay, created_ctx.name)
@@ -91,13 +91,13 @@ def demo_create_context(agent_bay):
 def main():
     api_key = os.environ.get("AGENTBAY_API_KEY") or "your_api_key_here"
     agent_bay = AgentBay(api_key=api_key)
-    
+
     try:
         # 演示所有功能
         demo_basic_usage(agent_bay)
         demo_pagination(agent_bay)
         demo_create_context(agent_bay)
-        
+
     except AgentBayError as e:
         print(f"AgentBay error: {e}")
     except Exception as e:

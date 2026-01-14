@@ -232,7 +232,11 @@ class Browser(BaseService):
         Stop the browser instance, internal use only.
         """
         if self.is_initialized():
-            self.session.call_mcp_tool("stopChrome", {})
+            self.session.call_mcp_tool(
+                "stopChrome",
+                {},
+                server_name="cdp",
+            )
         else:
             raise BrowserError("Browser is not initialized. Cannot stop browser.")
 

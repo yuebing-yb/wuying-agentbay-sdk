@@ -296,18 +296,18 @@ class TestExtensionBrowserIntegration:
         <p><strong>Description:</strong> {manifest['description']}</p>
         <p><strong>Version:</strong> {manifest['version']}</p>
     </div>
-    
+
     <div class="directory-info">
         <p><strong>Structure:</strong> {'Directory-based' if use_directory_structure else 'Flat structure'}</p>
         <p><strong>Extension ID:</strong> <span id="extensionId">Loading...</span></p>
     </div>
-    
+
     <div class="test-section">
         <h3>Extension Test</h3>
         <button id="testStorage">Test Storage</button>
         <div id="testResult"></div>
     </div>
-    
+
     <script src="popup.js"></script>
 </body>
 </html>"""
@@ -321,20 +321,20 @@ document.addEventListener('DOMContentLoaded', function() {{
     const testButton = document.getElementById('testStorage');
     const resultDiv = document.getElementById('testResult');
     const extensionIdSpan = document.getElementById('extensionId');
-    
+
     // Display extension ID
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {{
         extensionIdSpan.textContent = chrome.runtime.id;
     }} else {{
         extensionIdSpan.textContent = 'Not available';
     }}
-    
+
     if (testButton) {{
         testButton.addEventListener('click', function() {{
             testStorageAPI();
         }});
     }}
-    
+
     function testStorageAPI() {{
         if (typeof chrome !== 'undefined' && chrome.storage) {{
             const testData = {{ 
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {{
                 extensionName: '{manifest['name']}',
                 directoryBased: {'true' if use_directory_structure else 'false'}
             }};
-            
+
             chrome.storage.local.set(testData, () => {{
                 if (chrome.runtime.lastError) {{
                     resultDiv.innerHTML = `
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {{
                         <p>📁 Structure: {'Directory-based' if use_directory_structure else 'Flat'}</p>
                     `;
                 }}
-                
+
                 // Store result for test verification
                 window.__EXTENSION_STORAGE_TEST__ = {{
                     success: !chrome.runtime.lastError,
@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {{
                 <p><strong>Storage Test Result:</strong></p>
                 <p>❌ chrome.storage not available</p>
             `;
-            
+
             window.__EXTENSION_STORAGE_TEST__ = {{
                 success: false,
                 error: 'chrome.storage not available',
@@ -381,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {{
             }};
         }}
     }}
-    
+
     // Auto-test on load
     setTimeout(testStorageAPI, 100);
 }});
@@ -405,7 +405,7 @@ console.log('Background service worker started for: {manifest['name']}');
 // Extension installation and startup events
 chrome.runtime.onInstalled.addListener((details) => {{
     console.log('Extension installed:', details);
-    
+
     // Set up initial configuration
     chrome.storage.local.set({{
         extensionInstalled: true,
@@ -419,7 +419,7 @@ chrome.runtime.onInstalled.addListener((details) => {{
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {{
     console.log('Background received message:', request);
-    
+
     switch (request.action) {{
         case 'getExtensionInfo':
             chrome.storage.local.get(['extensionInstalled', 'installTime', 'extensionName'], (result) => {{
@@ -431,7 +431,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {{
                 }});
             }});
             return true; // Keep message channel open for async response
-            
+
         case 'testBackgroundStorage':
             chrome.storage.local.set({{
                 backgroundTest: true,
@@ -444,7 +444,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {{
                 }});
             }});
             return true;
-            
+
         default:
             sendResponse({{ success: false, error: 'Unknown action: ' + request.action }});
     }}
@@ -464,7 +464,7 @@ console.log('Content script loaded for: {manifest['name']}');
 // Message listener for background communication
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {{
     console.log('Content script received message:', request);
-    
+
     switch (request.action) {{
         case 'showExtensionInfo':
             // Create a simple notification
@@ -482,22 +482,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {{
             `;
             notification.textContent = `Extension {manifest['name']} is active!`;
             document.body.appendChild(notification);
-            
+
             // Remove notification after 3 seconds
             setTimeout(() => {{
                 if (document.body.contains(notification)) {{
                     document.body.removeChild(notification);
                 }}
             }}, 3000);
-            
+
             sendResponse({{ success: true }});
             break;
-            
+
         case 'pageLoaded':
             console.log('Page loaded notification from background:', request.url);
             sendResponse({{ success: true, contentScriptActive: true }});
             break;
-            
+
         default:
             sendResponse({{ success: false, error: 'Unknown action: ' + request.action }});
     }}
@@ -608,13 +608,13 @@ console.log('Content script fully initialized for {manifest['name']} on', window
         print("\n=== Extension Option Creation Test ===")
         if not self.uploaded_extensions:
             pytest.skip("No uploaded extensions available")
-            
+
         test_extension = self.uploaded_extensions[0]
         extension_ids = [test_extension.id]
-        
+
         print(f"Creating option for extensions: {extension_ids}")
         extension_option = self.extensions_service.create_extension_option(extension_ids)
-        
+
         assert extension_option is not None
         # Verify attributes instead of strict isinstance check due to async/sync class duplication
         assert hasattr(extension_option, 'context_id')
@@ -1382,13 +1382,13 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                         commandLine: '',
                         extensionFlags: []
                     };
-                    
+
                     # Check for extension-related flags in user agent or other indicators
                     if (navigator.userAgent.includes('--load-extension') || 
                         navigator.userAgent.includes('--extension-dir')) {
                         info.extensionFlags.push('extension-flags-detected');
                     }
-                    
+
                     # Check window properties for extension indicators
                     const windowKeys = Object.keys(window);
                     const extensionKeys = windowKeys.filter(key => 
@@ -1396,7 +1396,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                         key.toLowerCase().includes('chrome')
                     );
                     info.extensionWindowKeys = extensionKeys;
-                    
+
                     return info;
                 }
             """

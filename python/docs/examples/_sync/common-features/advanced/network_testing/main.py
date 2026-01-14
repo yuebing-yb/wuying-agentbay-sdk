@@ -23,10 +23,10 @@ from agentbay import CreateSessionParams
 def test_ping(session, host: str, count: int = 4):
     """Test network connectivity using ping."""
     print(f"\n🏓 Pinging {host}...")
-    
+
     command = f"ping -c {count} {host}"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         output = result.output
         # Extract statistics
@@ -35,7 +35,7 @@ def test_ping(session, host: str, count: int = 4):
             if loss_match:
                 packet_loss = loss_match.group(1)
                 print(f"✅ Ping successful - Packet loss: {packet_loss}%")
-        
+
         # Extract average time
         if "avg" in output:
             avg_match = re.search(r'min/avg/max[^=]*=\s*[\d.]+/([\d.]+)/([\d.]+)', output)
@@ -49,10 +49,10 @@ def test_ping(session, host: str, count: int = 4):
 def test_dns_lookup(session, domain: str):
     """Perform DNS lookup."""
     print(f"\n🔍 DNS lookup for {domain}...")
-    
+
     command = f"nslookup {domain}"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         output = result.output
         # Extract IP addresses
@@ -68,10 +68,10 @@ def test_dns_lookup(session, domain: str):
 def test_http_endpoint(session, url: str):
     """Test HTTP/HTTPS endpoint."""
     print(f"\n🌐 Testing HTTP endpoint: {url}")
-    
+
     command = f"curl -s -o /dev/null -w '%{{http_code}} %{{time_total}}s' {url}"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         output = result.output.strip()
         parts = output.split()
@@ -87,10 +87,10 @@ def test_http_endpoint(session, url: str):
 def test_port_connectivity(session, host: str, port: int):
     """Test if a specific port is open."""
     print(f"\n🔌 Testing port connectivity: {host}:{port}")
-    
+
     command = f"timeout 5 bash -c 'cat < /dev/null > /dev/tcp/{host}/{port}' && echo 'open' || echo 'closed'"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         status = result.output.strip()
         if status == "open":
@@ -104,10 +104,10 @@ def test_port_connectivity(session, host: str, port: int):
 def test_traceroute(session, host: str):
     """Perform traceroute to a host."""
     print(f"\n🗺️  Traceroute to {host}...")
-    
+
     command = f"traceroute -m 10 {host}"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         output = result.output
         lines = output.strip().split('\n')
@@ -123,10 +123,10 @@ def test_traceroute(session, host: str):
 def test_bandwidth(session, url: str):
     """Test download bandwidth."""
     print(f"\n📊 Testing bandwidth with {url}...")
-    
+
     command = f"curl -s -w '%{{speed_download}}' -o /dev/null {url}"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         speed = float(result.output.strip())
         speed_mbps = (speed * 8) / (1024 * 1024)  # Convert to Mbps
@@ -138,10 +138,10 @@ def test_bandwidth(session, url: str):
 def test_network_interfaces(session):
     """List network interfaces and their status."""
     print("\n🔧 Listing network interfaces...")
-    
+
     command = "ip addr show"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         output = result.output
         interfaces = re.findall(r'\d+: (\w+):', output)
@@ -158,68 +158,68 @@ def main():
     if not api_key:
         print("❌ Error: AGENTBAY_API_KEY environment variable not set")
         return
-    
+
     agent_bay = AgentBay(api_key=api_key)
     session = None
-    
+
     try:
         print("=" * 60)
         print("Network Testing Example")
         print("=" * 60)
-        
+
         # Create session
         print("\nCreating session...")
         params = CreateSessionParams(image_id="linux_latest")
         result = agent_bay.create(params)
-        
+
         if not result.success or not result.session:
             print(f"❌ Failed to create session: {result.error_message}")
             return
-        
+
         session = result.session
         print(f"✅ Session created: {session.session_id}")
-        
+
         # Example 1: Ping test
         print("\n" + "=" * 60)
         print("Example 1: Ping Test")
         print("=" * 60)
-        
+
         test_ping(session, "8.8.8.8", count=4)
-        
+
         # Example 2: DNS lookup
         print("\n" + "=" * 60)
         print("Example 2: DNS Lookup")
         print("=" * 60)
-        
+
         test_dns_lookup(session, "google.com")
-        
+
         # Example 3: HTTP endpoint test
         print("\n" + "=" * 60)
         print("Example 3: HTTP Endpoint Test")
         print("=" * 60)
-        
+
         test_http_endpoint(session, "https://www.google.com")
-        
+
         # Example 4: Port connectivity
         print("\n" + "=" * 60)
         print("Example 4: Port Connectivity Test")
         print("=" * 60)
-        
+
         test_port_connectivity(session, "google.com", 80)
         test_port_connectivity(session, "google.com", 443)
-        
+
         # Example 5: Network interfaces
         print("\n" + "=" * 60)
         print("Example 5: Network Interfaces")
         print("=" * 60)
-        
+
         test_network_interfaces(session)
-        
+
         print("\n✅ Network testing examples completed")
-        
+
     except Exception as e:
         print(f"\n❌ Error: {e}")
-        
+
     finally:
         if session:
             print("\n🧹 Cleaning up session...")

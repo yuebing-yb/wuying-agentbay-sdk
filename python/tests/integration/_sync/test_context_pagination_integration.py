@@ -25,7 +25,7 @@ agent_bay = None
 def setup_contexts():
     """Setup contexts for all tests"""
     global created_contexts, agent_bay
-    
+
     # Skip if no API key is available or in CI environment
     api_key = os.environ.get("AGENTBAY_API_KEY")
     if not api_key or os.environ.get("CI"):
@@ -53,9 +53,9 @@ def setup_contexts():
 
     # Wait a moment for all contexts to be fully created
     time.sleep(2)
-    
+
     yield
-    
+
     # Cleanup
     for context in created_contexts:
         try:

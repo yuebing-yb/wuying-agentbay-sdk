@@ -16,7 +16,7 @@ Expected Output:
     ======================================================================
     Context List and Update Management Examples
     ======================================================================
-    
+
     Example 1: Basic Context Listing
     ======================================================================
     📋 Listing all contexts (first page)...
@@ -25,7 +25,7 @@ Expected Output:
      2. my-context-2 (SdkCtx-xxxxx) - Created: 2024-11-29T10:31:00Z
      3. data-backup (SdkCtx-xxxxx) - Created: 2024-11-29T09:15:00Z
     Has more results available
-    
+
     Example 2: Pagination Demo
     ======================================================================
     📋 Getting next page of results...
@@ -33,28 +33,28 @@ Expected Output:
      4. temp-workspace (SdkCtx-xxxxx) - Created: 2024-11-29T08:45:00Z
      5. project-files (SdkCtx-xxxxx) - Created: 2024-11-29T08:00:00Z
     ✅ All contexts listed successfully
-    
+
     Example 3: Context Creation and Management
     ======================================================================
     📦 Creating test contexts...
     ✅ Created context: test-context-1 (SdkCtx-xxxxx)
     ✅ Created context: test-context-2 (SdkCtx-xxxxx)
     ✅ Created context: test-context-3 (SdkCtx-xxxxx)
-    
+
     Example 4: Context Update Operations
     ======================================================================
     📝 Updating context names...
     ✅ Renamed 'test-context-1' → 'updated-context-1'
     ✅ Renamed 'test-context-2' → 'updated-context-2'
     ✅ Context updates completed successfully
-    
+
     Example 5: Context Search and Filter
     ======================================================================
     🔍 Searching for contexts with 'updated' in name...
     ✅ Found 2 matching contexts:
      - updated-context-1 (SdkCtx-xxxxx)
      - updated-context-2 (SdkCtx-xxxxx)
-    
+
     Example 6: Batch Operations and Cleanup
     ======================================================================
     🧹 Cleaning up test contexts...
@@ -62,7 +62,7 @@ Expected Output:
     ✅ Deleted context: updated-context-2
     ✅ Deleted context: test-context-3
     ✅ Cleanup completed successfully
-    
+
     ======================================================================
     ✅ All context management examples completed successfully!
     ======================================================================
@@ -78,23 +78,23 @@ def example_1_basic_context_listing(agent_bay: AgentBay):
     print("\n" + "="*70)
     print("Example 1: Basic Context Listing")
     print("="*70)
-    
+
     print("📋 Listing all contexts (first page)...")
-    
+
     # List contexts with default parameters (max 10 results)
     result = agent_bay.context.list()
-    
+
     if result.success:
         print(f"✅ Found {len(result.contexts)} contexts", end="")
         if result.total_count:
             print(f" (Total: {result.total_count})")
         else:
             print()
-            
+
         for i, ctx in enumerate(result.contexts, 1):
             created_time = ctx.created_at or "Unknown"
             print(f" {i}. {ctx.name} ({ctx.id}) - Created: {created_time}")
-        
+
         if result.next_token:
             print("📄 Has more results available")
             return result.next_token
@@ -111,24 +111,24 @@ def example_2_pagination_demo(agent_bay: AgentBay, next_token: Optional[str]):
     print("\n" + "="*70)
     print("Example 2: Pagination Demo")
     print("="*70)
-    
+
     if not next_token:
         print("ℹ️  No more pages to display")
         return
-    
+
     print("📋 Getting next page of results...")
-    
+
     # Get next page using pagination token
     params = ContextListParams(max_results=5, next_token=next_token)
     result = agent_bay.context.list(params)
-    
+
     if result.success:
         print(f"✅ Found {len(result.contexts)} contexts (page 2)")
-        
+
         for i, ctx in enumerate(result.contexts, 1):
             created_time = ctx.created_at or "Unknown"
             print(f" {i}. {ctx.name} ({ctx.id}) - Created: {created_time}")
-        
+
         if result.next_token:
             print("📄 More pages available")
         else:
@@ -142,9 +142,9 @@ def example_3_context_creation(agent_bay: AgentBay):
     print("\n" + "="*70)
     print("Example 3: Context Creation and Management")
     print("="*70)
-    
+
     print("📦 Creating test contexts...")
-    
+
     # Create test contexts with timestamp to ensure uniqueness
     timestamp = int(time.time())
     context_names = [
@@ -152,9 +152,9 @@ def example_3_context_creation(agent_bay: AgentBay):
         f"test-context-2-{timestamp}",
         f"test-context-3-{timestamp}"
     ]
-    
+
     created_contexts = []
-    
+
     for name in context_names:
         result = agent_bay.context.create(name)
         if result.success:
@@ -162,7 +162,7 @@ def example_3_context_creation(agent_bay: AgentBay):
             created_contexts.append(result.context)
         else:
             print(f"❌ Failed to create context {name}: {result.error_message}")
-    
+
     print(f"📊 Successfully created {len(created_contexts)}/{len(context_names)} contexts")
     return created_contexts
 
@@ -172,25 +172,25 @@ def example_4_context_update(agent_bay: AgentBay, contexts: List):
     print("\n" + "="*70)
     print("Example 4: Context Update Operations")
     print("="*70)
-    
+
     if not contexts:
         print("⚠️  No contexts available for update")
         return contexts
-    
+
     print("📝 Updating context names...")
-    
+
     updated_contexts = []
-    
+
     for i, context in enumerate(contexts[:2]):  # Update first 2 contexts
         old_name = context.name
         new_name = context.name.replace("test-context", "updated-context")
-        
+
         # Update the context object
         context.name = new_name
-        
+
         # Call update API
         result = agent_bay.context.update(context)
-        
+
         if result.success:
             print(f"✅ Renamed '{old_name}' → '{new_name}'")
             updated_contexts.append(context)
@@ -199,10 +199,10 @@ def example_4_context_update(agent_bay: AgentBay, contexts: List):
             # Revert the name change
             context.name = old_name
             updated_contexts.append(context)
-    
+
     # Add remaining contexts unchanged
     updated_contexts.extend(contexts[2:])
-    
+
     print("✅ Context updates completed")
     return updated_contexts
 
@@ -212,23 +212,23 @@ def example_5_context_search(agent_bay: AgentBay):
     print("\n" + "="*70)
     print("Example 5: Context Search and Filter")
     print("="*70)
-    
+
     print("🔍 Searching for contexts with 'updated' in name...")
-    
+
     # List all contexts and filter locally
     # Note: The API doesn't support server-side filtering, so we filter client-side
     result = agent_bay.context.list(ContextListParams(max_results=50))
-    
+
     if result.success:
         matching_contexts = [ctx for ctx in result.contexts if "updated" in ctx.name.lower()]
-        
+
         print(f"✅ Found {len(matching_contexts)} matching contexts:")
         for ctx in matching_contexts:
             print(f" - {ctx.name} ({ctx.id})")
-        
+
         if not matching_contexts:
             print("ℹ️  No contexts found with 'updated' in name")
-        
+
         return matching_contexts
     else:
         print(f"❌ Failed to search contexts: {result.error_message}")
@@ -240,15 +240,15 @@ def example_6_batch_cleanup(agent_bay: AgentBay, contexts: List):
     print("\n" + "="*70)
     print("Example 6: Batch Operations and Cleanup")
     print("="*70)
-    
+
     if not contexts:
         print("ℹ️  No contexts to clean up")
         return
-    
+
     print("🧹 Cleaning up test contexts...")
-    
+
     deleted_count = 0
-    
+
     for context in contexts:
         try:
             result = agent_bay.context.delete(context)
@@ -259,7 +259,7 @@ def example_6_batch_cleanup(agent_bay: AgentBay, contexts: List):
                 print(f"❌ Failed to delete {context.name}: {result.error_message}")
         except Exception as e:
             print(f"❌ Error deleting {context.name}: {e}")
-    
+
     print(f"📊 Cleanup completed: {deleted_count}/{len(contexts)} contexts deleted")
 
 
@@ -268,9 +268,9 @@ def example_7_error_handling(agent_bay: AgentBay):
     print("\n" + "="*70)
     print("Example 7: Error Handling and Edge Cases")
     print("="*70)
-    
+
     print("🧪 Testing error scenarios...")
-    
+
     # Test 1: Invalid pagination token
     print("\n❌ Test 1: Invalid pagination token")
     try:
@@ -282,7 +282,7 @@ def example_7_error_handling(agent_bay: AgentBay):
             print("   ⚠️  Invalid token was accepted (unexpected)")
     except Exception as e:
         print(f"   ✅ Exception caught for invalid token: {str(e)[:50]}...")
-    
+
     # Test 2: Extremely large max_results
     print("\n❌ Test 2: Large max_results value")
     try:
@@ -294,7 +294,7 @@ def example_7_error_handling(agent_bay: AgentBay):
             print(f"   ✅ Large max_results rejected: {result.error_message[:50]}...")
     except Exception as e:
         print(f"   ✅ Exception for large max_results: {str(e)[:50]}...")
-    
+
     # Test 3: Update non-existent context
     print("\n❌ Test 3: Update non-existent context")
     try:
@@ -307,7 +307,7 @@ def example_7_error_handling(agent_bay: AgentBay):
             print("   ⚠️  Non-existent context update succeeded (unexpected)")
     except Exception as e:
         print(f"   ✅ Exception for non-existent context: {str(e)[:50]}...")
-    
+
     print("\n✅ Error handling tests completed")
 
 
@@ -322,36 +322,36 @@ def main():
     print("- Search and filtering")
     print("- Batch operations and cleanup")
     print("- Error handling")
-    
+
     # Initialize AgentBay client
     agent_bay = AgentBay()
-    
+
     try:
         # Example 1: Basic listing
         next_token = example_1_basic_context_listing(agent_bay)
-        
+
         # Example 2: Pagination
         example_2_pagination_demo(agent_bay, next_token)
-        
+
         # Example 3: Context creation
         created_contexts = example_3_context_creation(agent_bay)
-        
+
         # Example 4: Context updates
         updated_contexts = example_4_context_update(agent_bay, created_contexts)
-        
+
         # Example 5: Search and filter
         example_5_context_search(agent_bay)
-        
+
         # Example 6: Cleanup
         example_6_batch_cleanup(agent_bay, updated_contexts)
-        
+
         # Example 7: Error handling
         example_7_error_handling(agent_bay)
-        
+
         print("\n" + "="*70)
         print("✅ All context management examples completed successfully!")
         print("="*70)
-        
+
     except Exception as e:
         print(f"\n❌ Example execution failed: {e}")
         import traceback

@@ -116,14 +116,14 @@ def main():
 
                 # wait for 1 second
                 time.sleep(1)
-                
+
                 started = wait_for_condition(
                     page,
                     "() => window.captchaSolvingStarted === true",
                     3000,
                     200
                 )
-                
+
                 if started:
                     print("🎯 Detected captcha processing started, waiting for completion...")
                     finished = wait_for_condition(

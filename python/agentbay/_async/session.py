@@ -882,7 +882,12 @@ class AsyncSession:
 
             # Non-VPC mode: use traditional API call
             result_data = await self._call_mcp_tool_api(
-                tool_name, args_json, read_timeout, connect_timeout, auto_gen_session
+                tool_name,
+                args_json,
+                read_timeout,
+                connect_timeout,
+                auto_gen_session,
+                server_name=server_name,
             )
             return result_data
         except Exception as e:
@@ -1063,6 +1068,7 @@ class AsyncSession:
             args={},
             read_timeout=read_timeout,
             connect_timeout=connect_timeout,
+            server_name="wuying_system",
         )
 
         if not tool_result.success:
@@ -1261,6 +1267,7 @@ class AsyncSession:
         read_timeout: Optional[int] = None,
         connect_timeout: Optional[int] = None,
         auto_gen_session: bool = False,
+        server_name: Optional[str] = None,
     ):
         """
         Handle traditional API-based MCP tool calls asynchronously.
@@ -1270,13 +1277,17 @@ class AsyncSession:
             f"Tool={tool_name}, SessionId={self.session_id}, ArgsLength={len(args_json)}",
         )
 
-        request = CallMcpToolRequest(
-            authorization=f"Bearer {self._get_api_key()}",
-            session_id=self.session_id,
-            name=tool_name,
-            args=args_json,
-            auto_gen_session=auto_gen_session,
-        )
+        request_kwargs: Dict[str, Any] = {
+            "authorization": f"Bearer {self._get_api_key()}",
+            "session_id": self.session_id,
+            "name": tool_name,
+            "args": args_json,
+            "auto_gen_session": auto_gen_session,
+        }
+        if server_name is not None:
+            request_kwargs["server"] = server_name
+
+        request = CallMcpToolRequest(**request_kwargs)
 
         try:
             # Try async method first, fall back to sync wrapped in asyncio.to_thread

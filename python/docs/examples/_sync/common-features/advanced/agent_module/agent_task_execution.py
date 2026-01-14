@@ -38,11 +38,11 @@ def main():
         # Execute a simple task asynchronously
         print("\n1. Executing async task...")
         task_description = "Create a file named test.txt with content 'Hello from Agent'"
-        
+
         # Note: This demonstrates the workflow
         # Actual implementation would use: session.agent.async_execute_task(task_description)
         print(f"Task: {task_description}")
-        
+
         # Simulate task execution using command
         result = session.command.execute_command("echo 'Hello from Agent' > /tmp/test.txt")
         print(f"Task executed: {result.success}")
@@ -56,7 +56,7 @@ def main():
         print("\n3. Executing another task...")
         task_description = "List all files in /tmp directory"
         print(f"Task: {task_description}")
-        
+
         result = session.command.execute_command("ls -la /tmp | head -10")
         print(f"Task result:\n{result.output}")
 

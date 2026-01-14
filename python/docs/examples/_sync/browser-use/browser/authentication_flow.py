@@ -97,7 +97,7 @@ def main():
         # Navigate to a page that might require authentication
         print("\n6. Testing authenticated navigation...")
         session.browser.agent.navigate("https://httpbin.org/basic-auth/user/passwd")
-        
+
         # Check if authentication is required
         success, auth_check = session.browser.agent.extract(
             ExtractOptions(

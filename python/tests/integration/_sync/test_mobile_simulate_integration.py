@@ -43,12 +43,12 @@ def test_mobile_simulate_for_model_a(agent_bay):
     )
     with open(mobile_info_file_path, "r") as f:
         mobile_info_content = f.read()
-    
+
     # Create mobile simulate service and set simulate params
     simulate_service = MobileSimulateService(agent_bay)
     simulate_service.set_simulate_enable(True)
     simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
-    
+
     upload_result = simulate_service.upload_mobile_info(mobile_info_content)
     assert upload_result.success, f"Failed to upload mobile dev info file: {upload_result.error_message}"
     mobile_sim_persistence_context_id = upload_result.mobile_simulate_context_id
@@ -100,12 +100,12 @@ def test_mobile_simulate_for_model_b(agent_bay):
     )
     with open(mobile_info_file_path, "r") as f:
         mobile_info_content = f.read()
-    
+
     # Create mobile simulate service and set simulate params
     simulate_service = MobileSimulateService(agent_bay)
     simulate_service.set_simulate_enable(True)
     simulate_service.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
-    
+
     upload_result = simulate_service.upload_mobile_info(mobile_info_content)
     assert upload_result.success, f"Failed to upload mobile dev info file: {upload_result.error_message}"
     mobile_sim_context_id = upload_result.mobile_simulate_context_id
@@ -158,12 +158,12 @@ def test_mobile_simulate_persistence(agent_bay):
     )
     with open(mobile_info_file_path, "r") as f:
         mobile_info_content = f.read()
-    
+
     # Create mobile simulate service and set simulate params
     simulate_service_1 = MobileSimulateService(agent_bay)
     simulate_service_1.set_simulate_enable(True)
     simulate_service_1.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
-    
+
     upload_result = simulate_service_1.upload_mobile_info(mobile_info_content)
     assert upload_result.success, f"Failed to upload mobile dev info file: {upload_result.error_message}"
     mobile_sim_persistence_context_id = upload_result.mobile_simulate_context_id
@@ -206,7 +206,7 @@ def test_mobile_simulate_persistence(agent_bay):
     simulate_service_2.set_simulate_enable(True)
     simulate_service_2.set_simulate_mode(MobileSimulateMode.PROPERTIES_ONLY)
     simulate_service_2.set_simulate_context_id(mobile_sim_persistence_context_id)
-    
+
     params_2 = CreateSessionParams(
         image_id="mobile_latest",
         extra_configs=ExtraConfigs(

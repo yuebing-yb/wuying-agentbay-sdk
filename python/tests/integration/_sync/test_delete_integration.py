@@ -24,7 +24,7 @@ def agent_bay():
     api_key = get_test_api_key()
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
-    
+
     return AgentBay(api_key=api_key)
 
 

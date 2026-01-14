@@ -42,8 +42,7 @@ def main():
     print(f"✅ Session created successfully: {session.session_id}")
 
     try:
-        # ===== PYTHON CODE EXECUTION =====
-        print("\n===== PYTHON CODE EXECUTION =====")
+        # ===== PYTHON CODE EXECUTION ===== print("\n===== PYTHON CODE EXECUTION =====")
 
         python_code = """
 import sys
@@ -76,8 +75,7 @@ print(f"Sum of 1 to 10: {total}")
         else:
             print(f"❌ Python code execution failed: {result.error_message}")
 
-        # ===== JAVASCRIPT CODE EXECUTION =====
-        print("\n===== JAVASCRIPT CODE EXECUTION =====")
+        # ===== JAVASCRIPT CODE EXECUTION ===== print("\n===== JAVASCRIPT CODE EXECUTION =====")
 
         js_code = """
 console.log("JavaScript code execution successful!");
@@ -108,8 +106,7 @@ console.log("Doubled array:", doubled);
         else:
             print(f"❌ JavaScript code execution failed: {result.error_message}")
 
-        # ===== FILE OPERATIONS =====
-        print("\n===== FILE OPERATIONS =====")
+        # ===== FILE OPERATIONS ===== print("\n===== FILE OPERATIONS =====")
 
         print("🔄 Testing file operations...")
         test_content = "Hello from AgentBay code execution!"
@@ -127,8 +124,7 @@ console.log("Doubled array:", doubled);
         else:
             print(f"❌ File write failed: {write_result.error_message}")
 
-        # ===== COMMAND EXECUTION =====
-        print("\n===== COMMAND EXECUTION =====")
+        # ===== COMMAND EXECUTION ===== print("\n===== COMMAND EXECUTION =====")
 
         commands = [
             "whoami",

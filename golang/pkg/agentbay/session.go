@@ -1318,7 +1318,8 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		b, _ := io.ReadAll(resp.Body)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, 8192))
+		bodyPreview := truncateForLog(string(b), 2000)
 		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("HTTP request failed with code: %d, body length: %d", resp.StatusCode, len(b)), false)
 		logAPIResponseWithDetails(
 			"CallMcpTool(LinkUrl) Response",
@@ -1328,7 +1329,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 				"http_status": resp.StatusCode,
 				"tool_name":   toolName,
 			},
-			"",
+			bodyPreview,
 		)
 		return &models.McpToolResult{
 			Success:      false,
@@ -1341,6 +1342,16 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	var outer map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&outer); err != nil {
 		logOperationError("CallMcpTool(LinkUrl)", fmt.Sprintf("failed to decode response: %v", err), true)
+		logAPIResponseWithDetails(
+			"CallMcpTool(LinkUrl) Response",
+			requestID,
+			false,
+			map[string]interface{}{
+				"http_status": resp.StatusCode,
+				"tool_name":   toolName,
+			},
+			fmt.Sprintf("failed to decode response: %v", err),
+		)
 		return &models.McpToolResult{
 			Success:      false,
 			Data:         "",
@@ -1351,6 +1362,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 
 	dataField, ok := outer["data"]
 	if !ok || dataField == nil {
+		outerJSON, _ := json.Marshal(outer)
 		logAPIResponseWithDetails(
 			"CallMcpTool(LinkUrl) Response",
 			requestID,
@@ -1359,7 +1371,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 				"http_status": resp.StatusCode,
 				"tool_name":   toolName,
 			},
-			"",
+			truncateForLog(string(outerJSON), 2000),
 		)
 		return &models.McpToolResult{
 			Success:      false,
@@ -1373,6 +1385,16 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	switch v := dataField.(type) {
 	case string:
 		if err := json.Unmarshal([]byte(v), &parsedData); err != nil {
+			logAPIResponseWithDetails(
+				"CallMcpTool(LinkUrl) Response",
+				requestID,
+				false,
+				map[string]interface{}{
+					"http_status": resp.StatusCode,
+					"tool_name":   toolName,
+				},
+				truncateForLog(v, 2000),
+			)
 			return &models.McpToolResult{
 				Success:      false,
 				Data:         "",
@@ -1393,6 +1415,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 
 	resultField, ok := parsedData["result"].(map[string]interface{})
 	if !ok || resultField == nil {
+		parsedJSON, _ := json.Marshal(parsedData)
 		logAPIResponseWithDetails(
 			"CallMcpTool(LinkUrl) Response",
 			requestID,
@@ -1401,7 +1424,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 				"http_status": resp.StatusCode,
 				"tool_name":   toolName,
 			},
-			"",
+			truncateForLog(string(parsedJSON), 2000),
 		)
 		return &models.McpToolResult{
 			Success:      false,

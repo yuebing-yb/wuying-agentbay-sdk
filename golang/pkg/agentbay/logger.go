@@ -359,8 +359,14 @@ func logAPICall(apiName, requestParams string) {
 //	keyFields := map[string]interface{}{"session_id": "abc123"}
 //	logAPIResponseWithDetails("CreateSession", "req-123", true, keyFields, "")
 func logAPIResponseWithDetails(apiName, requestID string, success bool, keyFields map[string]interface{}, fullResponse string) {
-	if globalLogLevel > LOG_INFO {
-		return
+	if success {
+		if globalLogLevel > LOG_INFO {
+			return
+		}
+	} else {
+		if globalLogLevel > LOG_ERROR {
+			return
+		}
 	}
 
 	if globalLogFormat == LogFormatSLS {
@@ -389,16 +395,28 @@ func logAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 		}
 		writeToFile(msg)
 
-		// Optionally log full response at debug level for SLS too
-		if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
+		maskedFull := ""
+		if fullResponse != "" {
+			maskedFull = maskSensitiveDataString(fullResponse)
+			maskedFull = truncateStringForLog(maskedFull, 2000)
+		}
+
+		// Log full response at debug level for success, always log for failure (truncated & masked).
+		if maskedFull != "" && (globalLogLevel <= LOG_DEBUG || !success) {
 			if consoleLoggingEnabled {
-				fmt.Printf("Full Response: %s\n", fullResponse)
+				fmt.Printf("Full Response: %s\n", maskedFull)
 			}
-			writeToFile(fmt.Sprintf("Full Response: %s", fullResponse))
+			writeToFile(fmt.Sprintf("Full Response: %s", maskedFull))
 		}
 
 	} else {
 		reset, green, red, _, blue := getColorCodes()
+
+		maskedFull := ""
+		if fullResponse != "" {
+			maskedFull = maskSensitiveDataString(fullResponse)
+			maskedFull = truncateStringForLog(maskedFull, 2000)
+		}
 
 		if success {
 			coloredMsg := fmt.Sprintf("%s✅ API Response: %s", green, apiName)
@@ -426,9 +444,9 @@ func logAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 				}
 			}
 
-			if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
-				coloredResp := fmt.Sprintf("%s📥 Full Response: %s%s", blue, fullResponse, reset)
-				plainResp := fmt.Sprintf("📥 Full Response: %s", fullResponse)
+			if maskedFull != "" && globalLogLevel <= LOG_DEBUG {
+				coloredResp := fmt.Sprintf("%s📥 Full Response: %s%s", blue, maskedFull, reset)
+				plainResp := fmt.Sprintf("📥 Full Response: %s", maskedFull)
 
 				if consoleLoggingEnabled {
 					fmt.Println(coloredResp)
@@ -449,9 +467,21 @@ func logAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 			}
 			writeToFile(plainMsg)
 
-			if fullResponse != "" && globalLogLevel <= LOG_DEBUG {
-				coloredResp := fmt.Sprintf("%s📥 Response: %s%s", red, fullResponse, reset)
-				plainResp := fmt.Sprintf("📥 Response: %s", fullResponse)
+			if keyFields != nil && len(keyFields) > 0 {
+				for key, value := range keyFields {
+					coloredField := fmt.Sprintf("%s   └─ %s=%v%s", red, key, value, reset)
+					plainField := fmt.Sprintf("   └─ %s=%v", key, value)
+
+					if consoleLoggingEnabled {
+						fmt.Println(coloredField)
+					}
+					writeToFile(plainField)
+				}
+			}
+
+			if maskedFull != "" {
+				coloredResp := fmt.Sprintf("%s📥 Response: %s%s", red, maskedFull, reset)
+				plainResp := fmt.Sprintf("📥 Response: %s", maskedFull)
 
 				if consoleLoggingEnabled {
 					fmt.Println(coloredResp)
@@ -460,6 +490,13 @@ func logAPIResponseWithDetails(apiName, requestID string, success bool, keyField
 			}
 		}
 	}
+}
+
+func truncateStringForLog(s string, max int) string {
+	if max <= 0 || len(s) <= max {
+		return s
+	}
+	return s[:max] + "...(truncated)"
 }
 
 // logOperationError logs an operation error with optional stack trace

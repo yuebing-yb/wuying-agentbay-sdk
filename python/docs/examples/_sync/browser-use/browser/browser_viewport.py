@@ -63,7 +63,7 @@ def main():
                             colorDepth: window.screen.colorDepth,
                             pixelDepth: window.screen.pixelDepth
                         } : null;
-                        
+
                         return {
                             screen: screenInfo
                         };
@@ -76,14 +76,14 @@ def main():
                 try:
                     # Increase the timeout to 60 seconds
                     page.goto("https://httpbin.org/user-agent", timeout=60000)
-                    
+
                     # Wait for page to load completely
                     page.wait_for_load_state('networkidle')
-                    
+
                     # Get the text content and try to parse it as JSON
                     body_text = page.evaluate("() => document.body.textContent")
                     print(f"Raw body content: {body_text}")
-                    
+
                     # Try to extract JSON from the text
                     response = json.loads(body_text.strip())
                     user_agent = response.get("user-agent", "")

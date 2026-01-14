@@ -41,7 +41,7 @@ def test_oss_integration():
         if not session_result.success or not session_result.session:
             print("Failed to create session")
             return
-            
+
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
 

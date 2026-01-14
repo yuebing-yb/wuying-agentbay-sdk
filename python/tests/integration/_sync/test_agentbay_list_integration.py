@@ -42,7 +42,7 @@ unique_id = None
 def setup_sessions():
     """Set up test fixtures once for the entire test module."""
     global sessions, agent_bay, unique_id
-    
+
     api_key = get_test_api_key()
     agent_bay = AgentBay(api_key=api_key)
 
@@ -117,9 +117,9 @@ def setup_sessions():
 
     # Wait a bit for sessions to be fully created and labels to propagate
     time.sleep(5)
-    
+
     yield
-    
+
     # Cleanup
     print("Cleaning up: Deleting all test sessions...")
     for session in sessions:

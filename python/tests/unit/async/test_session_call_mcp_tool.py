@@ -98,6 +98,47 @@ class TestAsyncSessionCallMcpTool(unittest.IsolatedAsyncioTestCase):
     @patch("agentbay._async.session.CallMcpToolRequest")
     @patch("agentbay._async.session.extract_request_id")
     @pytest.mark.asyncio
+    async def test_call_mcp_tool_success_non_vpc_with_server_name(
+        self, mock_extract_request_id, MockCallMcpToolRequest
+    ):
+        """Test non-VPC mode forwards explicit server_name to API request."""
+        # Setup mocks
+        mock_request = MagicMock()
+        mock_response = MagicMock()
+        MockCallMcpToolRequest.return_value = mock_request
+        mock_extract_request_id.return_value = "request-123"
+        self.agent_bay.client.call_mcp_tool_async = AsyncMock(
+            return_value=mock_response
+        )
+
+        # Mock response structure
+        mock_response.to_map.return_value = {
+            "body": {
+                "Data": json.dumps(
+                    {
+                        "content": [{"type": "text", "text": "command output"}],
+                        "isError": False,
+                    }
+                ),
+                "Success": True,
+            }
+        }
+
+        # Call the method with explicit server_name
+        result = await self.session.call_mcp_tool(
+            "shell",
+            {"command": "ls", "timeout_ms": 1000},
+            server_name="wuying_shell",
+        )
+
+        self.assertTrue(result.success)
+        MockCallMcpToolRequest.assert_called_once()
+        call_args = MockCallMcpToolRequest.call_args[1]
+        self.assertEqual(call_args.get("server"), "wuying_shell")
+
+    @patch("agentbay._async.session.CallMcpToolRequest")
+    @patch("agentbay._async.session.extract_request_id")
+    @pytest.mark.asyncio
 
     async def test_call_mcp_tool_with_error_response(
         self, mock_extract_request_id, MockCallMcpToolRequest

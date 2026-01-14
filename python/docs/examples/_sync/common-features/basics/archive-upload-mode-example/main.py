@@ -38,35 +38,35 @@ def main():
     """Main function demonstrating archive upload mode context sync."""
     print("🚀 AgentBay Archive Upload Mode Context Sync Example")
     print("=" * 60)
-    
+
     # Initialize AgentBay client
     agent_bay = AgentBay(api_key=get_api_key())
     unique_id = generate_unique_id()
-    
+
     try:
         # Archive Upload Mode Context Sync Example
         archive_upload_mode_example(agent_bay, unique_id)
-        
+
     except Exception as e:
         print(f"❌ Example execution failed: {e}")
-    
+
     print("✅ Archive upload mode example completed")
 
 def archive_upload_mode_example(agent_bay, unique_id):
     """Archive Upload Mode Context Sync Example"""
     print("\n📦 === Archive Upload Mode Context Sync Example ===")
-    
+
     session = None
-    
+
     try:
         # Step 1: Create context for Archive mode
         print("\n📦 Step 1: Creating context for Archive upload mode...")
         context_name = f"archive-mode-context-{unique_id}"
         context_result = agent_bay.context.get(context_name, create=True)
-        
+
         if not context_result.success:
             raise Exception(f"Context creation failed: {context_result.error_message}")
-        
+
         print(f"✅ Context created successfully!")
         print(f"   Context ID: {context_result.context_id}")
         print(f"   Request ID: {context_result.request_id}")
@@ -75,7 +75,7 @@ def archive_upload_mode_example(agent_bay, unique_id):
         print("\n⚙️  Step 2: Configuring sync policy with Archive upload mode...")
         upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
         sync_policy = SyncPolicy(upload_policy=upload_policy)
-        
+
         print(f"✅ Sync policy configured with uploadMode: {sync_policy.upload_policy.upload_mode.value}")
 
         # Step 3: Create context sync configuration
@@ -118,20 +118,20 @@ def archive_upload_mode_example(agent_bay, unique_id):
 
         # Step 5: Create and write test files
         print("\n📝 Step 5: Creating test files in Archive mode context...")
-        
+
         # Generate 5KB test content
         content_size = 5 * 1024  # 5KB
         base_content = "Archive mode test successful! This is a test file created in the session path. "
         repeated_content = base_content * (content_size // len(base_content) + 1)
         file_content = repeated_content[:content_size]
-        
+
         file_path = "/tmp/archive-mode-test/test-file-5kb.txt"
-        
+
         print(f"📄 Creating file: {file_path}")
         print(f"📊 File content size: {len(file_content)} bytes")
 
         write_result = session.file_system.write_file(file_path, file_content, mode="overwrite")
-        
+
         if not write_result.success:
             raise Exception(f"File write failed: {write_result.error_message}")
 
@@ -140,13 +140,13 @@ def archive_upload_mode_example(agent_bay, unique_id):
 
         # Step 6: Test context sync and info functionality
         print("\n📊 Step 6: Testing context sync and info functionality...")
-        
+
         # Call context sync before getting info
         print("🔄 Calling context sync before getting info...")
         sync_result = session.context.sync()
         if sync_result.success:
             print("✅ Context sync verified via info call")
-        
+
         if not sync_result.success:
             raise Exception(f"Context sync failed: {sync_result.error_message}")
 
@@ -159,14 +159,14 @@ def archive_upload_mode_example(agent_bay, unique_id):
         # Now call context info after sync
         print("📋 Calling context info after sync...")
         info_result = session.context.info()
-        
+
         if not info_result.success:
             raise Exception(f"Context info failed: {info_result.error_message}")
 
         print(f"✅ Context info retrieved successfully!")
         print(f"   Info Request ID: {info_result.request_id}")
         print(f"   Context status data count: {len(info_result.context_status_data)}")
-        
+
         # Display context status details
         if info_result.context_status_data:
             print("\n📋 Context status details:")
@@ -180,19 +180,19 @@ def archive_upload_mode_example(agent_bay, unique_id):
 
         # Step 7: List files in context sync directory
         print("\n🔍 Step 7: Listing files in context sync directory...")
-        
+
         # Use the sync directory path
         sync_dir_path = "/tmp/archive-mode-test"
-        
+
         list_result = agent_bay.context.list_files(context_result.context_id, sync_dir_path, page_number=1, page_size=10)
-        
+
         if not list_result.success:
             raise Exception(f"List files failed: {list_result.error_message if hasattr(list_result, 'error_message') else 'Unknown error'}")
 
         print(f"✅ List files successful!")
         print(f"   Request ID: {list_result.request_id}")
         print(f"   Total files found: {len(list_result.entries)}")
-        
+
         if list_result.entries:
             print("\n📋 Files in context sync directory:")
             for index, entry in enumerate(list_result.entries):

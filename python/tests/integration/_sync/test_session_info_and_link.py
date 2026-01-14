@@ -37,9 +37,9 @@ def session_fixture():
     session = getattr(result, "session", None)
     print(f"Session created with ID: {getattr(session, 'session_id', None)}")
     print(f"Request ID: {getattr(result, 'request_id', None)}")
-    
+
     yield session
-    
+
     print("Cleaning up: Deleting the session...")
     try:
         if session is not None:

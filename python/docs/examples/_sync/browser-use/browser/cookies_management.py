@@ -27,20 +27,20 @@ from playwright.sync_api import sync_playwright
 def get_all_cookies(context) -> List[Dict[str, Any]]:
     """Get all cookies from the browser context."""
     print("\n🍪 Getting all cookies...")
-    
+
     cookies = context.cookies()
     print(f"✅ Found {len(cookies)} cookies")
-    
+
     for cookie in cookies:
         print(f"   - {cookie['name']}: {cookie['value'][:20]}...")
-    
+
     return cookies
 
 
 def set_custom_cookies(context, cookies: List[Dict[str, Any]]):
     """Set custom cookies in the browser context."""
     print(f"\n🍪 Setting {len(cookies)} custom cookies...")
-    
+
     try:
         context.add_cookies(cookies)
         print("✅ Cookies set successfully")
@@ -51,21 +51,21 @@ def set_custom_cookies(context, cookies: List[Dict[str, Any]]):
 def delete_specific_cookie(context, cookie_name: str):
     """Delete a specific cookie by name."""
     print(f"\n🗑️  Deleting cookie: {cookie_name}")
-    
+
     try:
         # Get all cookies
         cookies = context.cookies()
-        
+
         # Filter out the cookie to delete
         remaining_cookies = [c for c in cookies if c['name'] != cookie_name]
-        
+
         # Clear all cookies
         context.clear_cookies()
-        
+
         # Re-add remaining cookies
         if remaining_cookies:
             context.add_cookies(remaining_cookies)
-        
+
         print(f"✅ Cookie '{cookie_name}' deleted")
     except Exception as e:
         print(f"❌ Failed to delete cookie: {e}")
@@ -74,7 +74,7 @@ def delete_specific_cookie(context, cookie_name: str):
 def clear_all_cookies(context):
     """Clear all cookies from the browser context."""
     print("\n🗑️  Clearing all cookies...")
-    
+
     try:
         context.clear_cookies()
         print("✅ All cookies cleared")
@@ -85,13 +85,13 @@ def clear_all_cookies(context):
 def export_cookies(context, filename: str):
     """Export cookies to a JSON file."""
     print(f"\n💾 Exporting cookies to {filename}...")
-    
+
     try:
         cookies = context.cookies()
-        
+
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(cookies, f, indent=2)
-        
+
         print(f"✅ Exported {len(cookies)} cookies")
     except Exception as e:
         print(f"❌ Failed to export cookies: {e}")
@@ -100,11 +100,11 @@ def export_cookies(context, filename: str):
 def import_cookies(context, filename: str):
     """Import cookies from a JSON file."""
     print(f"\n📥 Importing cookies from {filename}...")
-    
+
     try:
         with open(filename, 'r', encoding='utf-8') as f:
             cookies = json.load(f)
-        
+
         context.add_cookies(cookies)
         print(f"✅ Imported {len(cookies)} cookies")
     except Exception as e:
@@ -114,10 +114,10 @@ def import_cookies(context, filename: str):
 def demonstrate_cookie_persistence(page, context):
     """Demonstrate cookie persistence across page navigations."""
     print("\n🔄 Demonstrating cookie persistence...")
-    
+
     # Navigate to a website
     page.goto("https://example.com")
-    
+
     # Set a custom cookie
     custom_cookie = {
         "name": "test_cookie",
@@ -125,17 +125,17 @@ def demonstrate_cookie_persistence(page, context):
         "domain": "example.com",
         "path": "/"
     }
-    
+
     context.add_cookies([custom_cookie])
     print("✅ Set custom cookie")
-    
+
     # Reload page
     page.reload()
-    
+
     # Check if cookie persists
     cookies = context.cookies()
     test_cookie = next((c for c in cookies if c['name'] == 'test_cookie'), None)
-    
+
     if test_cookie:
         print(f"✅ Cookie persisted after reload: {test_cookie['value']}")
     else:
@@ -148,53 +148,53 @@ def main():
     if not api_key:
         print("❌ Error: AGENTBAY_API_KEY environment variable not set")
         return
-    
+
     agent_bay = AgentBay(api_key=api_key)
     session = None
-    
+
     try:
         print("=" * 60)
         print("Browser Cookies Management Example")
         print("=" * 60)
-        
+
         # Create browser session
         print("\nCreating browser session...")
         params = CreateSessionParams(image_id="browser_latest")
         result = agent_bay.create(params)
-        
+
         if not result.success or not result.session:
             print(f"❌ Failed to create session: {result.error_message}")
             return
-        
+
         session = result.session
         print(f"✅ Session created: {session.session_id}")
-        
+
         # Initialize browser
         browser_option = BrowserOption()
         if not session.browser.initialize(browser_option):
             print("❌ Failed to initialize browser")
             return
-        
+
         print("✅ Browser initialized")
-        
+
         # Get browser endpoint
         endpoint_url = session.browser.get_endpoint_url()
-        
+
         with sync_playwright() as p:
             browser = p.chromium.connect_over_cdp(endpoint_url)
             context = browser.contexts[0]
             page = context.new_page()
-            
+
             # Navigate to a website to get some cookies
             page.goto("https://example.com")
             page.wait_for_load_state("networkidle")
-            
+
             # Example 1: Get all cookies
             print("\n" + "=" * 60)
             print("Example 1: Get All Cookies")
             print("=" * 60)
             cookies = get_all_cookies(context)
-            
+
             # Example 2: Set custom cookies
             print("\n" + "=" * 60)
             print("Example 2: Set Custom Cookies")
@@ -215,40 +215,40 @@ def main():
             ]
             set_custom_cookies(context, custom_cookies)
             get_all_cookies(context)
-            
+
             # Example 3: Export cookies
             print("\n" + "=" * 60)
             print("Example 3: Export Cookies")
             print("=" * 60)
             export_cookies(context, "/tmp/cookies_backup.json")
-            
+
             # Example 4: Clear all cookies
             print("\n" + "=" * 60)
             print("Example 4: Clear All Cookies")
             print("=" * 60)
             clear_all_cookies(context)
             get_all_cookies(context)
-            
+
             # Example 5: Import cookies
             print("\n" + "=" * 60)
             print("Example 5: Import Cookies")
             print("=" * 60)
             import_cookies(context, "/tmp/cookies_backup.json")
             get_all_cookies(context)
-            
+
             # Example 6: Cookie persistence
             print("\n" + "=" * 60)
             print("Example 6: Cookie Persistence")
             print("=" * 60)
             demonstrate_cookie_persistence(page, context)
-            
+
             browser.close()
-        
+
         print("\n✅ Cookies management examples completed")
-        
+
     except Exception as e:
         print(f"\n❌ Error: {e}")
-        
+
     finally:
         if session:
             print("\n🧹 Cleaning up session...")

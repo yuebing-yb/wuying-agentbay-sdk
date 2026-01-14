@@ -16,7 +16,7 @@ class TestAsyncCode(unittest.TestCase):
         self.mock_session._get_session_id.return_value = "test-session-id"
         self.mock_session._is_vpc_enabled.return_value = False
         self.mock_session.call_mcp_tool = MagicMock()
-        
+
         # AsyncCode constructor calls super which stores session
         self.code = Code(self.mock_session)
 
@@ -43,7 +43,7 @@ class TestAsyncCode(unittest.TestCase):
             self.mock_session.call_mcp_tool.call_args.kwargs.get("server_name"),
             "wuying_codespace",
         )
-        
+
         # Verify the result
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)

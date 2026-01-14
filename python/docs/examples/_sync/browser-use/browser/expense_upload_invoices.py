@@ -24,11 +24,11 @@ def main():
 
     agent_bay = AgentBay(api_key=api_key)
     session_result = agent_bay.create(CreateSessionParams(image_id="browser_latest"))
-    
+
     if not session_result.success or session_result.session is None:
         print(f"Failed to create session: {session_result.error_message}")
         return
-    
+
     session = session_result.session
 
     try:

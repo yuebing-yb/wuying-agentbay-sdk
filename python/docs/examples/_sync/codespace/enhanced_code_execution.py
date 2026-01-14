@@ -21,14 +21,14 @@ from agentbay import CreateSessionParams
 def demonstrate_basic_usage(session):
     """Demonstrate basic usage with backward compatibility."""
     print("\n===== BASIC USAGE (BACKWARD COMPATIBLE) =====")
-    
+
     code = """
 print('Hello, Enhanced AgentBay!')
 result = 2 + 2
 print(f'2 + 2 = {result}')
 result
 """
-    
+
     result = session.code.run_code(code, "python")
     print(f"Success: {result.success}")
     print(f"Result: {result.result}")  # Backward compatible property
@@ -39,7 +39,7 @@ result
 def demonstrate_rich_outputs(session):
     """Demonstrate various output formats."""
     print("\n===== RICH OUTPUT FORMATS =====")
-    
+
     # Test multiple output types
     code = """
 import json
@@ -60,17 +60,17 @@ print(json_str)
 # Return structured data
 data
 """
-    
+
     result = session.code.run_code(code, "python")
-    
+
     print(f"Success: {result.success}")
     print(f"Execution time: {result.execution_time}s")
-    
+
     # New enhanced features
     print(f"Number of results: {len(result.results)}")
     print(f"Stdout logs: {len(result.logs.stdout)} entries")
     print(f"Stderr logs: {len(result.logs.stderr)} entries")
-    
+
     # Show results details
     for i, res in enumerate(result.results):
         print(f"Result {i}: formats={res.formats()}, is_main={res.is_main_result}")
@@ -78,14 +78,14 @@ data
             print(f"  Text: {res.text[:100]}...")
         if res.json:
             print(f"  JSON: {res.json}")
-    
+
     return result
 
 
 def demonstrate_data_analysis(session):
     """Demonstrate data analysis with rich outputs."""
     print("\n===== DATA ANALYSIS EXAMPLE =====")
-    
+
     code = """
 # Simulate data analysis workflow
 data = [
@@ -121,12 +121,12 @@ report = {
 print("Analysis complete!")
 report
 """
-    
+
     result = session.code.run_code(code, "python")
-    
+
     print(f"Success: {result.success}")
     print(f"Execution time: {result.execution_time}s")
-    
+
     # Check for JSON output
     for res in result.results:
         if res.json:
@@ -135,14 +135,14 @@ report
             print(f"  Average score: {res.json.get('summary', {}).get('average_score', 'N/A')}")
         if res.is_main_result:
             print(f"Main result format: {res.formats()}")
-    
+
     return result
 
 
 def demonstrate_error_handling(session):
     """Demonstrate enhanced error handling."""
     print("\n===== ERROR HANDLING =====")
-    
+
     # Test with intentional error
     code = """
 print("Starting calculation...")
@@ -158,11 +158,11 @@ except ZeroDivisionError as e:
     print("Error handled gracefully")
     error_info
 """
-    
+
     result = session.code.run_code(code, "python")
-    
+
     print(f"Success: {result.success}")
-    
+
     if result.error:
         print("Error details:")
         print(f"  Name: {result.error.name}")
@@ -170,19 +170,19 @@ except ZeroDivisionError as e:
         print(f"  Traceback: {result.error.traceback[:100]}...")
     else:
         print("No error object (error was handled in code)")
-    
+
     # Check results
     for res in result.results:
         if res.json and "error_type" in res.json:
             print(f"Handled error type: {res.json['error_type']}")
-    
+
     return result
 
 
 def demonstrate_execution_logs(session):
     """Demonstrate detailed execution logging."""
     print("\n===== EXECUTION LOGS =====")
-    
+
     code = """
 import sys
 import time
@@ -201,29 +201,29 @@ print("Warning: This is a test warning", file=sys.stderr)
 print("Process completed successfully")
 "Final result: SUCCESS"
 """
-    
+
     result = session.code.run_code(code, "python")
-    
+
     print(f"Success: {result.success}")
     print(f"Execution time: {result.execution_time}s")
-    
+
     print("\nStdout logs:")
     for i, log in enumerate(result.logs.stdout):
         print(f"  {i+1}: {log.strip()}")
-    
+
     print("\nStderr logs:")
     for i, log in enumerate(result.logs.stderr):
         print(f"  {i+1}: {log.strip()}")
-    
+
     print(f"\nFinal result: {result.result}")
-    
+
     return result
 
 
 def demonstrate_javascript_enhanced(session):
     """Demonstrate enhanced JavaScript execution."""
     print("\n===== ENHANCED JAVASCRIPT EXECUTION =====")
-    
+
     code = """
 console.log("Starting JavaScript enhanced execution");
 
@@ -253,52 +253,52 @@ console.log("Summary created:", JSON.stringify(summary, null, 2));
 // Return the summary
 summary;
 """
-    
+
     result = session.code.run_code(code, "javascript")
-    
+
     print(f"Success: {result.success}")
     print(f"Execution time: {result.execution_time}s")
-    
+
     # Show logs
     if result.logs.stdout:
         print("Console output:")
         for log in result.logs.stdout:
             print(f"  {log.strip()}")
-    
+
     # Show results
     for res in result.results:
         if res.json:
             print("JavaScript returned JSON:")
             print(f"  Active users: {res.json.get('active', 'N/A')}")
             print(f"  Active names: {res.json.get('activeUserNames', [])}")
-    
+
     return result
 
 
 def main():
     """Main function demonstrating enhanced code execution features."""
     print("🚀 AgentBay Enhanced Code Execution Example")
-    
+
     # Initialize AgentBay client
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         print("❌ Error: AGENTBAY_API_KEY environment variable not set")
         return
-    
+
     agent_bay = AgentBay(api_key=api_key)
-    
+
     # Create session with code_latest image
     print("\n📱 Creating session with code_latest image...")
     params = CreateSessionParams(image_id="code_latest")
     session_result = agent_bay.create(params)
-    
+
     if not session_result.success:
         print(f"❌ Session creation failed: {session_result.error_message}")
         return
-    
+
     session = session_result.session
     print(f"✅ Session created successfully: {session.session_id}")
-    
+
     try:
         # Demonstrate various enhanced features
         demonstrate_basic_usage(session)
@@ -307,12 +307,12 @@ def main():
         demonstrate_error_handling(session)
         demonstrate_execution_logs(session)
         demonstrate_javascript_enhanced(session)
-        
+
         print("\n🎉 All enhanced features demonstrated successfully!")
-        
+
     except Exception as e:
         print(f"❌ Error during demonstration: {e}")
-    
+
     finally:
         # Clean up session
         print(f"\n🧹 Cleaning up session: {session.session_id}")

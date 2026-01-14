@@ -377,7 +377,7 @@ class TestAsyncBrowser(unittest.TestCase):
         response2 = MagicMock(
             success=True, data=json.dumps([{"selector": "#search"}])
         )
-        
+
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
         with patch("time.sleep", new=MagicMock(return_value=None)):

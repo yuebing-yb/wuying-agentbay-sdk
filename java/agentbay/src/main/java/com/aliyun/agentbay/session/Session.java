@@ -188,7 +188,7 @@ public class Session {
      */
     public SessionMetricsResult getMetrics() {
         try {
-            CallMcpToolResponse toolResponse = callTool("get_metrics", new java.util.HashMap<>());
+            CallMcpToolResponse toolResponse = callTool("get_metrics", new java.util.HashMap<>(), "wuying_system");
 
             if (toolResponse == null || toolResponse.getBody() == null) {
                 return new SessionMetricsResult("", false, null, "No response from get_metrics tool");
