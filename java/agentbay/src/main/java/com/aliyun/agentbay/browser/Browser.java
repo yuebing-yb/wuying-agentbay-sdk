@@ -213,9 +213,10 @@ public class Browser extends BaseService {
 
     /**
      * Get the endpoint URL for browser connection.
+     * When initialized, always fetches the latest CDP url from getCdpLink API.
      *
      * @return Browser endpoint URL
-     * @throws BrowserException if browser is not initialized
+     * @throws BrowserException if browser is not initialized or endpoint URL cannot be retrieved
      */
     public String getEndpointUrl() throws BrowserException {
         if (!isInitialized()) {
@@ -223,29 +224,27 @@ public class Browser extends BaseService {
         }
 
         try {
-            // Get CDP URL from session
-            OperationResult linkResult = getLinkFromSession();
-            if (linkResult.isSuccess()) {
-                this.endpointUrl = linkResult.getData();
+            com.aliyun.wuyingai20250506.models.GetCdpLinkRequest request =
+                new com.aliyun.wuyingai20250506.models.GetCdpLinkRequest();
+            request.setAuthorization("Bearer " + session.getAgentBay().getApiKey());
+            request.setSessionId(session.getSessionId());
+
+            com.aliyun.wuyingai20250506.models.GetCdpLinkResponse response =
+                session.getAgentBay().getClient().getCdpLink(request);
+
+            if (response != null && response.getBody() != null &&
+                response.getBody().getSuccess() && response.getBody().getData() != null) {
+                this.endpointUrl = response.getBody().getData().getUrl();
             } else {
-                throw new BrowserException("Failed to get link from session: " + linkResult.getErrorMessage());
+                String errorMsg = response != null && response.getBody() != null ?
+                    response.getBody().getMessage() : "Unknown error";
+                throw new BrowserException("Failed to get CDP link: " + errorMsg);
             }
 
             return this.endpointUrl;
 
         } catch (Exception e) {
             throw new BrowserException("Failed to get endpoint URL from session: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Get link from session.
-     */
-    private OperationResult getLinkFromSession() {
-        try {
-            return session.getLink();
-        } catch (Exception e) {
-            return new OperationResult("", false, "", "Failed to get link from session: " + e.getMessage());
         }
     }
 
