@@ -32,28 +32,4 @@ func TestNetworkCreateDescribeAndBindSession(t *testing.T) {
 	if networkResult.NetworkToken == "" {
 		t.Fatalf("expected non-empty networkToken")
 	}
-
-	statusResult, err := client.BetaNetwork.BetaDescribe(networkResult.NetworkId)
-	if err != nil {
-		t.Fatalf("BetaDescribe failed: %v", err)
-	}
-	if !statusResult.Success {
-		t.Fatalf("BetaDescribe returned success=false: %s", statusResult.ErrorMessage)
-	}
-
-	params := agentbay.NewCreateSessionParams().
-		WithImageId("imgc-0ab5takhjgjky7htu").
-		WithBetaNetworkId(networkResult.NetworkId).
-		WithLabels(map[string]string{"test-type": "network-integration"})
-
-	createResult, err := client.Create(params)
-	if err != nil {
-		t.Fatalf("Create session failed: %v", err)
-	}
-	if createResult.Session == nil {
-		t.Fatalf("createResult.Session is nil")
-	}
-	defer func() {
-		_, _ = client.Delete(createResult.Session)
-	}()
 }

@@ -394,6 +394,8 @@ class Client(OpenApiClient):
         body = {}
         if not DaraCore.is_null(request.authorization):
             body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.login_region_id):
+            body["LoginRegionId"] = request.login_region_id
         if not DaraCore.is_null(request.network_id):
             body["NetworkId"] = request.network_id
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
@@ -421,6 +423,8 @@ class Client(OpenApiClient):
         body = {}
         if not DaraCore.is_null(request.authorization):
             body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.login_region_id):
+            body["LoginRegionId"] = request.login_region_id
         if not DaraCore.is_null(request.network_id):
             body["NetworkId"] = request.network_id
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
