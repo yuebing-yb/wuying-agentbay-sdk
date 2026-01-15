@@ -52,16 +52,9 @@ public class BaseService {
     protected OperationResult callMcpTool(String toolName, Object args) {
         try {
             String serverName = session.getMcpServerForTool(toolName);
-            if (!isNotEmpty(serverName)) {
-                return new OperationResult(
-                    "",
-                    false,
-                    "",
-                    "Failed to resolve MCP server for tool: " + toolName +
-                        ". Tool list may be missing or tool unavailable in current image"
-                );
-            }
-            if (isNotEmpty(session.getLinkUrl()) && isNotEmpty(session.getToken())) {
+            // LinkUrl route requires explicit server name. If it's not available,
+            // fall back to API-based call to let backend resolve the server.
+            if (isNotEmpty(session.getLinkUrl()) && isNotEmpty(session.getToken()) && isNotEmpty(serverName)) {
                 return callMcpToolLinkUrl(toolName, args, serverName);
             }
             return callMcpToolApi(toolName, args);

@@ -1326,21 +1326,16 @@ export class Session {
         logDebug(`Normalized press_keys arguments: ${JSON.stringify(args)}`);
       }
 
-      const serverName = this.getMcpServerForTool(toolName);
-      if (!serverName) {
-        return {
-          success: false,
-          data: "",
-          errorMessage:
-            `Failed to resolve MCP server for tool: ${toolName}. ` +
-            "This session may not have ToolList populated, or the tool is unavailable in the current image.",
-          requestId: "",
-        };
-      }
+      // Server name is optional for API-based tool calls.
+      // Some environments do not return ToolList in CreateSession, and the backend
+      // can resolve the server by tool name.
+      const serverName = this.getMcpServerForTool(toolName) || "";
 
       const argsJSON = JSON.stringify(args);
 
-      if (this.getLinkUrl() && this.getToken()) {
+      // LinkUrl route requires explicit server name. If it's not available,
+      // fall back to API-based call to let backend resolve the server.
+      if (this.getLinkUrl() && this.getToken() && serverName) {
         return await this.callMcpToolLinkUrl(toolName, args, serverName);
       }
 

@@ -19,7 +19,7 @@ class TestSessionGetMetricsIntegration(unittest.IsolatedAsyncioTestCase):
 
     @pytest.mark.asyncio
     async def test_get_metrics_returns_structured_data(self):
-        result = await self.agent_bay.create(CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp"))
+        result = await self.agent_bay.create()
         self.assertTrue(result.success)
         session = result.session
         self.assertIsNotNone(session)
