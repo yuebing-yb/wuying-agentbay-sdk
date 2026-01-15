@@ -77,11 +77,11 @@ class BaseService:
         try:
             # Delegate to session's central call_mcp_tool which handles LinkUrl/VPC/API routing
             mcp_result = self.session.call_mcp_tool(
-                name, 
-                args, 
-                read_timeout=read_timeout, 
+                name,
+                args,
+                read_timeout=read_timeout,
                 connect_timeout=connect_timeout,
-                auto_gen_session=auto_gen_session
+                auto_gen_session=auto_gen_session,
             )
 
             # Convert McpToolResult to OperationResult
@@ -107,9 +107,9 @@ class BaseService:
         """
         if not error_msg:
             return error_msg
-        
+
         # Mask API keys
         if "Authorization" in error_msg:
             return "Error contains sensitive information (Authorization header)"
-            
+
         return error_msg

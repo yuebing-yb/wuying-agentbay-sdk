@@ -42,7 +42,11 @@ export interface McpToolResult {
 export interface McpSession {
   getAPIKey(): string;
   getSessionId(): string;
-  callMcpTool(toolName: string, args: Record<string, any>): Promise<McpToolResult>;
+  callMcpTool(
+    toolName: string,
+    args: Record<string, any>,
+    autoGenSession?: boolean
+  ): Promise<McpToolResult>;
 }
 
 /**
@@ -83,7 +87,7 @@ abstract class BaseTaskAgent {
     try {
       const args = {task};
       const result = await this.session.callMcpTool(
-          this.getToolName('execute'), args);
+          this.getToolName('execute'), args, false);
 
       if (!result.success) {
         return {
@@ -269,7 +273,7 @@ abstract class BaseTaskAgent {
     try {
       const args = {task_id: taskId};
       const result = await this.session.callMcpTool(
-          this.getToolName('get_status'), args);
+          this.getToolName('get_status'), args, false);
 
       if (!result.success) {
         return {
@@ -327,7 +331,7 @@ abstract class BaseTaskAgent {
     try {
       const args = {task_id: taskId};
       const result = await this.session.callMcpTool(
-          this.getToolName('terminate'), args);
+          this.getToolName('terminate'), args, false);
 
       let content: Record<string, any>;
       try {

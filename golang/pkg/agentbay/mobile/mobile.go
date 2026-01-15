@@ -1,6 +1,7 @@
 package mobile
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -169,11 +170,7 @@ type Mobile struct {
 		GetClient() *mcp.Client
 		GetSessionId() string
 		GetImageID() string
-		IsVpc() bool
-		NetworkInterfaceIp() string
-		HttpPort() string
-		FindServerForTool(toolName string) string
-		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 	command *command.Command
 }
@@ -183,11 +180,7 @@ type SessionWithCommand interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command
 }
 
@@ -197,11 +190,7 @@ func NewMobile(session interface {
 	GetClient() *mcp.Client
 	GetSessionId() string
 	GetImageID() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Mobile {
 	mobile := &Mobile{
 		Session: session,
@@ -827,185 +816,49 @@ func decodeBase64Image(text string, expectedFormat string) ([]byte, string, erro
 		return nil, expectedFormat, fmt.Errorf("empty image data")
 	}
 
-	s = extractBase64FromMcpPayload(s)
-
-	// Strip data URL prefix if present.
-	if idx := strings.Index(s, "base64,"); idx >= 0 {
-		s = s[idx+len("base64,"):]
+	// Backend contract: screenshot tool returns a JSON object string with
+	// top-level field "data" containing base64.
+	if !strings.HasPrefix(s, "{") {
+		return nil, expectedFormat, fmt.Errorf("screenshot tool returned non-JSON data")
+	}
+	type screenshotJSON struct {
+		Data string `json:"data"`
+	}
+	var payload screenshotJSON
+	if err := json.Unmarshal([]byte(s), &payload); err != nil {
+		return nil, expectedFormat, fmt.Errorf("invalid screenshot JSON: %w", err)
+	}
+	b64 := strings.TrimSpace(payload.Data)
+	if b64 == "" {
+		return nil, expectedFormat, fmt.Errorf("screenshot JSON missing base64 field")
 	}
 
-	// Remove whitespace/newlines.
-	s = strings.ReplaceAll(s, "\n", "")
-	s = strings.ReplaceAll(s, "\r", "")
-	s = strings.ReplaceAll(s, "\t", "")
-	s = strings.ReplaceAll(s, " ", "")
-
-	// Normalize urlsafe base64 and padding.
-	s = strings.ReplaceAll(s, "-", "+")
-	s = strings.ReplaceAll(s, "_", "/")
-	if m := len(s) % 4; m != 0 {
-		s += strings.Repeat("=", 4-m)
-	}
-
-	b, err := base64.StdEncoding.DecodeString(s)
+	b, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
 		return nil, expectedFormat, err
 	}
 
-	// Some backends prepend non-image prefix; strip until magic bytes.
-	if len(b) >= len(pngMagic) {
-		if idx := indexBytes(b, pngMagic, 128); idx > 0 {
-			b = b[idx:]
+	exp := normalizeImageFormat(expectedFormat, expectedFormat)
+	if exp == "png" {
+		if !bytes.HasPrefix(b, pngMagic) {
+			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
 		}
-	}
-	if len(b) >= len(jpegMagic) {
-		if idx := indexBytes(b, jpegMagic, 128); idx > 0 {
-			b = b[idx:]
-		}
-	}
-
-	// Detect format by magic bytes.
-	if len(b) >= len(pngMagic) && string(b[:len(pngMagic)]) == string(pngMagic) {
 		return b, "png", nil
 	}
-	if len(b) >= len(jpegMagic) && string(b[:len(jpegMagic)]) == string(jpegMagic) {
+	if exp == "jpeg" {
+		if !bytes.HasPrefix(b, jpegMagic) {
+			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+		}
 		return b, "jpeg", nil
 	}
 
-	return b, expectedFormat, nil
-}
-
-func extractBase64FromMcpPayload(s string) string {
-	trimmed := strings.TrimSpace(s)
-	if trimmed == "" {
-		return s
+	if bytes.HasPrefix(b, pngMagic) {
+		return b, "png", nil
 	}
-	if !(strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[")) {
-		return s
+	if bytes.HasPrefix(b, jpegMagic) {
+		return b, "jpeg", nil
 	}
-
-	var obj interface{}
-	if err := json.Unmarshal([]byte(trimmed), &obj); err != nil {
-		return s
-	}
-
-	// Try common MCP response shapes:
-	// - { "content": [ { "blob": "..."} ] }
-	// - { "content": [ { "data": "..."} ] }
-	// - { "result": { "content": [ ... ] } }
-	if b64 := extractBase64FromAny(obj); b64 != "" {
-		return b64
-	}
-	return s
-}
-
-func extractBase64FromAny(v interface{}) string {
-	switch m := v.(type) {
-	case map[string]interface{}:
-		if s, ok := m["data"].(string); ok && strings.TrimSpace(s) != "" {
-			return s
-		}
-		if content, ok := m["content"].([]interface{}); ok && len(content) > 0 {
-			if item, ok := content[0].(map[string]interface{}); ok {
-				if s, ok := item["blob"].(string); ok && strings.TrimSpace(s) != "" {
-					return s
-				}
-				if mm, ok := item["blob"].(map[string]interface{}); ok {
-					if s, ok := mm["data"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-					if s, ok := mm["blob"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-					if s, ok := mm["base64"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-				}
-				if s, ok := item["data"].(string); ok && strings.TrimSpace(s) != "" {
-					return s
-				}
-				if mm, ok := item["data"].(map[string]interface{}); ok {
-					if s, ok := mm["data"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-					if s, ok := mm["base64"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-				}
-				if s, ok := item["text"].(string); ok && strings.TrimSpace(s) != "" {
-					return s
-				}
-				// Nested image/source object (best-effort).
-				if nested, ok := item["image"].(map[string]interface{}); ok {
-					if s, ok := nested["data"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-					if s, ok := nested["blob"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-					if mm, ok := nested["blob"].(map[string]interface{}); ok {
-						if s, ok := mm["data"].(string); ok && strings.TrimSpace(s) != "" {
-							return s
-						}
-					}
-					if s, ok := nested["base64"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-				}
-				if nested, ok := item["source"].(map[string]interface{}); ok {
-					if s, ok := nested["data"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-					if s, ok := nested["blob"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-					if mm, ok := nested["blob"].(map[string]interface{}); ok {
-						if s, ok := mm["data"].(string); ok && strings.TrimSpace(s) != "" {
-							return s
-						}
-					}
-					if s, ok := nested["base64"].(string); ok && strings.TrimSpace(s) != "" {
-						return s
-					}
-				}
-			}
-		}
-		if r, ok := m["result"]; ok {
-			if b64 := extractBase64FromAny(r); b64 != "" {
-				return b64
-			}
-		}
-	case []interface{}:
-		if len(m) > 0 {
-			if b64 := extractBase64FromAny(m[0]); b64 != "" {
-				return b64
-			}
-		}
-	}
-	return ""
-}
-
-func indexBytes(haystack []byte, needle []byte, maxSearch int) int {
-	if len(needle) == 0 || len(haystack) < len(needle) {
-		return -1
-	}
-	limit := len(haystack)
-	if maxSearch > 0 && maxSearch < limit {
-		limit = maxSearch
-	}
-	for i := 0; i+len(needle) <= limit; i++ {
-		match := true
-		for j := 0; j < len(needle); j++ {
-			if haystack[i+j] != needle[j] {
-				match = false
-				break
-			}
-		}
-		if match {
-			return i
-		}
-	}
-	return -1
+	return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
 }
 
 // Configure configures mobile settings from MobileExtraConfig

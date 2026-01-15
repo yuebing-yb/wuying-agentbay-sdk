@@ -120,8 +120,10 @@ class AsyncAgent(AsyncBaseService):
             """
             try:
                 args = {"task": task}
+                tool_name = self._get_tool_name("execute")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("execute"), args
+                    tool_name,
+                    args,
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -189,8 +191,10 @@ class AsyncAgent(AsyncBaseService):
 
             try:
                 args = {"task": task}
+                tool_name = self._get_tool_name("execute")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("execute"), args
+                    tool_name,
+                    args,
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -303,8 +307,10 @@ class AsyncAgent(AsyncBaseService):
             """
             try:
                 args = {"task_id": task_id}
+                tool_name = self._get_tool_name("get_status")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("get_status"), args
+                    tool_name,
+                    args,
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -369,8 +375,10 @@ class AsyncAgent(AsyncBaseService):
             _logger.info("Terminating task")
             try:
                 args = {"task_id": task_id}
+                tool_name = self._get_tool_name("terminate")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("terminate"), args
+                    tool_name,
+                    args,
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -483,8 +491,10 @@ class AsyncAgent(AsyncBaseService):
                         DefaultSchema.model_json_schema()
                     )
 
+                tool_name = self._get_tool_name("execute")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("execute"), args
+                    tool_name,
+                    args,
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -573,8 +583,10 @@ class AsyncAgent(AsyncBaseService):
                         DefaultSchema.model_json_schema()
                     )
 
+                tool_name = self._get_tool_name("execute")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("execute"), args
+                    tool_name,
+                    args,
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -723,8 +735,10 @@ class AsyncAgent(AsyncBaseService):
             }
 
             try:
+                tool_name = self._get_tool_name("execute")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("execute"), args
+                    tool_name,
+                    args,
                 )
 
                 if result.success:
@@ -815,8 +829,10 @@ class AsyncAgent(AsyncBaseService):
             max_poll_attempts = timeout // poll_interval
 
             try:
+                tool_name = self._get_tool_name("execute")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("execute"), args
+                    tool_name,
+                    args,
                 )
 
                 if not result.success:
@@ -952,13 +968,13 @@ class AsyncAgent(AsyncBaseService):
                     _logger.warning(f"⚠️ Failed to terminate task {task_id} after timeout: {terminate_result.error_message}")
             except Exception as e:
                 _logger.warning(f"⚠️ Exception while terminating task {task_id} after timeout: {e}")
-            
+
             _logger.info(f"⏳ Waiting for task {task_id} to be fully terminated...")
             terminate_poll_interval = 1
             max_terminate_poll_attempts = 30
             terminate_tried_time = 0
             task_terminated_confirmed = False
-            
+
             while terminate_tried_time < max_terminate_poll_attempts:
                 try:
                     status_query = await self.get_task_status(task_id)
@@ -974,15 +990,15 @@ class AsyncAgent(AsyncBaseService):
                     _logger.warning(f"⚠️ Exception while polling task status during termination: {e}")
                     await asyncio.sleep(terminate_poll_interval)
                     terminate_tried_time += 1
-            
+
             if not task_terminated_confirmed:
                 _logger.warning(f"⚠️ Timeout waiting for task {task_id} to be fully terminated")
-            
+
             timeout_error_msg = f"Task execution timed out after {timeout} seconds. Task ID: {task_id}. Polled {tried_time} times (max: {max_poll_attempts})."
-            
+
             # Build task_result with last query status information
             task_result_parts = [f"Task execution timed out after {timeout} seconds."]
-            
+
             if last_query:
                 # Concatenate stream content from last query
                 if last_query.stream:
@@ -992,11 +1008,11 @@ class AsyncAgent(AsyncBaseService):
                             content = stream_item.get("content", "")
                             if content:
                                 stream_content_parts.append(content)
-                    
+
                     if stream_content_parts:
                         stream_content = "".join(stream_content_parts)
                         task_result_parts.append(f"Last task status output: {stream_content}")
-                
+
                 # Also add other status information if available
                 if last_query.task_action:
                     task_result_parts.append(f"Last action: {last_query.task_action}")
@@ -1006,9 +1022,9 @@ class AsyncAgent(AsyncBaseService):
                     task_result_parts.append(f"Last error: {last_query.error}")
                 if last_query.task_status:
                     task_result_parts.append(f"Last status: {last_query.task_status}")
-            
+
             task_result = " | ".join(task_result_parts)
-            
+
             return ExecutionResult(
                 request_id=last_request_id,
                 success=False,
@@ -1021,8 +1037,10 @@ class AsyncAgent(AsyncBaseService):
         async def get_task_status(self, task_id: str) -> QueryResult:
             try:
                 args = {"task_id": task_id}
+                tool_name = self._get_tool_name("get_status")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("get_status"), args
+                    tool_name,
+                    args,
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -1079,8 +1097,10 @@ class AsyncAgent(AsyncBaseService):
             _logger.info("Terminating task")
             try:
                 args = {"task_id": task_id}
+                tool_name = self._get_tool_name("terminate")
                 result = await self.session.call_mcp_tool(
-                    self._get_tool_name("terminate"), args
+                    tool_name,
+                    args,
                 )
                 if result.success:
                     content = json.loads(result.data)

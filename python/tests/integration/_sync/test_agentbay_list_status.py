@@ -59,7 +59,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         if getattr(self, '_skip_teardown', False):
             print("Skipping tearDown for this test")
             return
-        
+
         print("\nCleaning up test sessions for this test...")
         for session in self.test_sessions:
             try:
@@ -69,7 +69,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
                         result = session.get_status()
                         print(f"  ✓ Resumed session: {session.session_id}{result.status}")
                         if(result.status in ["PAUSED"]):
-                            session.resume()
+                            session.beta_resume()
                             print(f"  ✓ Resumed session: {session.session_id}")
                         if result.status not in ["DELETING", "DELETED","RESUMING","PAUSING"]:
                             result = self.agent_bay.delete(session)
@@ -79,7 +79,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
                                 print(f"  ✗ Failed to delete session: {session.session_id}")
                 except Exception as resume_error:
                     print(f"  ⚠ Could not resume session {session.session_id}: {resume_error}")
-                    
+
             except Exception as e:
                 print(f"  ✗ Error deleting session {session.session_id}: {e}")
         # Clear the list for next test
@@ -113,18 +113,18 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         """
         Helper method to verify session status using both get_status and _get_session,
         and verify the session appears in the list with correct status.
-        
+
         Args:
             session: The session to verify
             expected_statuses: List of expected status values (e.g., ["PAUSED", "PAUSING"])
             operation_name: Name of the operation for logging purposes
         """
         print(f"\nVerifying session status after {operation_name}...")
-        
+
         # First call get_status to check the current status
         status_result = session.get_status()
         self.assertTrue(status_result.success, f"Failed to get session status: {status_result.error_message}")
-        
+
         initial_status = status_result.status if status_result.status else "UNKNOWN"
         print(f"  ✓ Session status from get_status: {initial_status}")
         self.assertIn(initial_status, expected_statuses, 
@@ -140,11 +140,11 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         self.assertEqual(current_status, initial_status, 
                         f"Session status mismatch: expected {initial_status}, got {current_status}")
         print(f"  ✓ Session status from _get_session: {current_status}")
-        
+
         # Test list with current status
         list_result = self.agent_bay.list(status=current_status)
         self.assertTrue(list_result.success, f"Failed to list sessions: {list_result.error_message}")
-        
+
         # Verify session is in the list and check array structure
         session_found = False
         for session_data in list_result.session_ids:
@@ -158,11 +158,11 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
             else:
                 print("  ✗ Invalid session data in list result")
                 break
-        
+
         self.assertTrue(session_found, f"Session {session.session_id} not found in list with status {current_status}")
         print(f"  ✓ Session found in list with status {current_status}")
         print(f"  ✓ Session status verification completed for {operation_name}")
-        
+
         return current_status
 
     @pytest.mark.sync
@@ -179,7 +179,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # First call get_status to check the current status
         status_result = session.get_status()
         self.assertTrue(status_result.success, f"Failed to get session status: {status_result.error_message}")
-        
+
         initial_status = status_result.status if status_result.status else "UNKNOWN"
         print(f"  ✓ Session status from get_status: {initial_status}")
         self.assertIn(initial_status, "RUNNING", 
@@ -187,7 +187,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause the session
         print(f"\nStep 2: Pausing session...")
-        pause_result = self.agent_bay.pause(session)
+        pause_result = self.agent_bay.beta_pause(session)
 
         # Verify pause result
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -215,7 +215,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause the session first
         print(f"\nStep 1: Pausing session...")
-        pause_result = self.agent_bay.pause(session)
+        pause_result = self.agent_bay.beta_pause(session)
         self.assertTrue(
             pause_result.success, f"Pause failed: {pause_result.error_message}"
         )
@@ -228,7 +228,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         # Session should be PAUSED or PAUSING after pause operation
         status_result = session.get_status()
         self.assertTrue(status_result.success, f"Failed to get session status: {status_result.error_message}")
-        
+
         initial_status = status_result.status if status_result.status else "UNKNOWN"
         print(f"  ✓ Session status from get_status: {initial_status}")
         self.assertIn(initial_status, ["PAUSED","PAUSING"], 
@@ -237,7 +237,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Resume the session (asynchronous)
         print(f"\nStep 3: Resuming session asynchronously...")
-        resume_result = self.agent_bay.resume_async(session)
+        resume_result = self.agent_bay.beta_resume_async(session)
 
         # Verify async resume result
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -259,17 +259,17 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         """Test successful pause and delete operations on a session."""
         # 设置跳过 tearDown 的标记
         self._skip_teardown = True
-        
+
         print("\n" + "=" * 60)
         print("TEST: Pause and Delete Session Success")
         print("=" * 60)
         print(f"\nStep 1: Creating test session...")
         # Create a test session
         session = self._create_test_session()
-        
+
         # Pause the session
         print(f"\nStep 2: Pausing session...")
-        pause_result = self.agent_bay.pause(session)
+        pause_result = self.agent_bay.beta_pause(session)
 
         # Verify pause result
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -284,7 +284,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         time.sleep(2)
 
         print(f"  ✓ Checking session status before resuming")
-        session.resume()
+        session.beta_resume()
         print(f"  ✓ Session resumed")
 
         # Session should be PAUSED or PAUSING after pause operation

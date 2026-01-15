@@ -44,7 +44,6 @@ public class BaseService {
 
     /**
      * Call an MCP tool and parse the response similar to Python's _call_mcp_tool method.
-     * Routes to VPC or API call based on session configuration.
      *
      * @param toolName The name of the tool to call
      * @param args     The arguments to pass to the tool
@@ -52,19 +51,25 @@ public class BaseService {
      */
     protected OperationResult callMcpTool(String toolName, Object args) {
         try {
-            if (isNotEmpty(session.getLinkUrl()) && isNotEmpty(session.getToken())) {
-                return callMcpToolLinkUrl(toolName, args);
-            } else {
-                return callMcpToolApi(toolName, args);
+            String serverName = session.getMcpServerForTool(toolName);
+            if (!isNotEmpty(serverName)) {
+                return new OperationResult(
+                    "",
+                    false,
+                    "",
+                    "Failed to resolve MCP server for tool: " + toolName +
+                        ". Tool list may be missing or tool unavailable in current image"
+                );
             }
+            if (isNotEmpty(session.getLinkUrl()) && isNotEmpty(session.getToken())) {
+                return callMcpToolLinkUrl(toolName, args, serverName);
+            }
+            return callMcpToolApi(toolName, args);
         } catch (Exception e) {
             return new OperationResult("", false, "", "Unexpected error: " + e.getMessage());
         }
     }
 
-    /**
-     * Check if a string is not null and not empty
-     */
     private boolean isNotEmpty(String str) {
         return str != null && !str.isEmpty();
     }
@@ -89,7 +94,11 @@ public class BaseService {
                 } catch (RuntimeException e) {
                     if (e.getMessage() != null && e.getMessage().startsWith("MCP tool execution error:")) {
                         String errorMsg = e.getMessage().substring("MCP tool execution error: ".length());
-                        return new OperationResult(requestId, false, "", errorMsg);
+                        String errorWithRequestId = errorMsg;
+                        if (requestId != null && !requestId.isEmpty()) {
+                            errorWithRequestId = String.format("RequestId=%s, %s", requestId, errorMsg);
+                        }
+                        return new OperationResult(requestId, false, "", errorWithRequestId);
                     }
                     throw e;
                 }
@@ -103,63 +112,31 @@ public class BaseService {
     }
 
     /**
-     * Call MCP tool via link url connection
+     * Call MCP tool via LinkUrl route.
      */
-    private OperationResult callMcpToolLinkUrl(String toolName, Object args) {
+    private OperationResult callMcpToolLinkUrl(String toolName, Object args, String serverName) {
         try {
-            //
-            String server = findServerForTool(toolName);
-            if (!isNotEmpty(server)) {
-                try {
-                    session.listMcpTools();
-                } catch (Exception e) {
-                }
-                server = findServerForTool(toolName);
-            }
-            if (!isNotEmpty(server)) {
-                return new OperationResult("", false, "", "Server not found for tool: " + toolName);
+            if (!isNotEmpty(serverName)) {
+                return new OperationResult(
+                    "",
+                    false,
+                    "",
+                    "Server name is required for LinkUrl tool call: " + toolName
+                );
             }
 
             String requestId = String.format("link-%d-%09d", System.currentTimeMillis(), random.nextInt(1000000000));
-
             String linkUrl = session.getLinkUrl();
-            if (!isNotEmpty(linkUrl)) {
-                return new OperationResult("", false, "",
-                    "Link URL not available. Ensure session VPC configuration is complete.");
-            }
-
-            String url = linkUrl + "/callTool";
-
             String token = session.getToken();
+            if (!isNotEmpty(linkUrl) || !isNotEmpty(token)) {
+                return new OperationResult(requestId, false, "", "LinkUrl/token not available");
+            }
 
-            logger.info("🔗 API Call: CallMcpTool(LinkUrl)");
-            logger.info("✅ API Response: CallMcpTool(LinkUrl) Request, RequestId={}", requestId);
-            logger.info("   └─ tool_name={}", toolName);
-            String command = "";
-            try {
-                if (args instanceof Map) {
-                    Object cmd = ((Map<?, ?>) args).get("command");
-                    if (cmd != null) {
-                        command = cmd.toString();
-                    }
-                }
-            } catch (Exception e) {
-            }
-            if (command == null || command.isEmpty()) {
-                try {
-                    command = objectMapper.writeValueAsString(args);
-                } catch (Exception e) {
-                    command = "";
-                }
-            }
-            if (command != null && command.length() > 500) {
-                command = command.substring(0, 500) + "...(truncated)";
-            }
-            logger.info("   └─ command={}", command);
+            String url = linkUrl.endsWith("/") ? linkUrl + "callTool" : linkUrl + "/callTool";
 
             Map<String, Object> bodyParams = new HashMap<>();
             bodyParams.put("args", args);
-            bodyParams.put("server", server);
+            bodyParams.put("server", serverName);
             bodyParams.put("requestId", requestId);
             bodyParams.put("tool", toolName);
             bodyParams.put("token", token);
@@ -175,18 +152,26 @@ public class BaseService {
 
             try (Response response = httpClient.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
-                    return new OperationResult(requestId, false, "",
-                        "HTTP request failed with code: " + response.code());
+                    String respBody = "";
+                    try {
+                        if (response.body() != null) {
+                            respBody = response.body().string();
+                        }
+                    } catch (Exception ignored) {
+                        respBody = "";
+                    }
+                    logger.error("❌ API Response Failed: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
+                    logger.error("📥 Response: {}", respBody);
+                    return new OperationResult(requestId, false, "", "HTTP request failed with code: " + response.code());
                 }
 
-                String responseBody = response.body().string();
+                String responseBody = response.body() != null ? response.body().string() : "";
                 @SuppressWarnings("unchecked")
                 Map<String, Object> outerData = objectMapper.readValue(responseBody, Map.class);
 
                 Object dataField = outerData.get("data");
                 if (dataField == null) {
-                    return new OperationResult(requestId, false, "",
-                        "No data field in VPC response");
+                    return new OperationResult(requestId, false, "", "No data field in LinkUrl response");
                 }
 
                 Map<String, Object> parsedData;
@@ -199,14 +184,12 @@ public class BaseService {
                     Map<String, Object> casted = (Map<String, Object>) dataField;
                     parsedData = casted;
                 } else {
-                    return new OperationResult(requestId, false, "",
-                        "Invalid data field type in VPC response");
+                    return new OperationResult(requestId, false, "", "Invalid data field type in LinkUrl response");
                 }
 
                 Object resultField = parsedData.get("result");
-                if (resultField == null || !(resultField instanceof Map)) {
-                    return new OperationResult(requestId, false, "",
-                        "No result field in VPC response data");
+                if (!(resultField instanceof Map)) {
+                    return new OperationResult(requestId, false, "", "No result field in LinkUrl response data");
                 }
 
                 @SuppressWarnings("unchecked")
@@ -220,35 +203,23 @@ public class BaseService {
                     if (!content.isEmpty() && content.get(0) instanceof Map) {
                         Map<?, ?> firstContent = (Map<?, ?>) content.get(0);
                         Object text = firstContent.get("text");
+                        Object blob = firstContent.get("blob");
+                        Object data = firstContent.get("data");
                         if (text != null) {
                             textContent = text.toString();
+                        } else if (blob != null) {
+                            textContent = blob.toString();
+                        } else if (data != null) {
+                            textContent = data.toString();
                         }
                     }
                 }
 
                 if (isError != null && isError) {
-                    logger.info("✅ API Response: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
-                    logger.info("   └─ http_status={}", response.code());
-                    logger.info("   └─ tool_name={}", toolName);
-                    String out = textContent != null ? textContent : "";
-                    if (out.length() > 800) {
-                        out = out.substring(0, 800) + "...(truncated)";
-                    }
-                    logger.info("   └─ output={}", out);
                     return new OperationResult(requestId, false, "", textContent);
                 }
-
-                logger.info("✅ API Response: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
-                logger.info("   └─ http_status={}", response.code());
-                logger.info("   └─ tool_name={}", toolName);
-                String out = textContent != null ? textContent : "";
-                if (out.length() > 800) {
-                    out = out.substring(0, 800) + "...(truncated)";
-                }
-                logger.info("   └─ output={}", out);
                 return new OperationResult(requestId, true, textContent, "");
             }
-
         } catch (IOException e) {
             return new OperationResult("", false, "", "HTTP request failed: " + e.getMessage());
         } catch (Exception e) {
@@ -256,12 +227,6 @@ public class BaseService {
         }
     }
 
-    /**
-     * Find server for a given tool name
-     */
-    private String findServerForTool(String toolName) {
-        return session.findServerForTool(toolName);
-    }
 
     /**
      * Parse MCP tool response body, similar to Python's _parse_response_body method.

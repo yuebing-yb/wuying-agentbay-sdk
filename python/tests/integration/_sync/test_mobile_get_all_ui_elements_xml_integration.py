@@ -11,7 +11,7 @@ import pytest
 from agentbay import AgentBay, CreateSessionParams
 
 
-IMAGE_ID = "imgc-0ab5takhnlaixj11v"
+IMAGE_ID = "imgc-0ab5takhnmlvhx9gp"
 
 
 @pytest.fixture(scope="module")

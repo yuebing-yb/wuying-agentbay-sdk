@@ -37,10 +37,10 @@ def main():
     # Retrieve the session by ID using Get API
     print("\nRetrieving session using Get API...")
     get_result = agentbay.get(session_id)
-    
+
     if not get_result.success:
         raise RuntimeError(f"Failed to get session: {get_result.error_message}")
-    
+
     session = get_result.session
 
     # Display session information

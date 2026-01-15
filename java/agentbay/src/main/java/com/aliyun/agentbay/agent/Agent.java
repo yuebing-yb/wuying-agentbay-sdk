@@ -25,6 +25,8 @@ import java.util.Map;
  */
 public class Agent extends BaseService {
     private static final Gson gson = new Gson();
+    private static final String SERVER_MOBILE_AGENT = "wuying_mobile_agent";
+    private static final String SERVER_BROWSER_USE = "wuying_browseruse";
 
     private final Computer computer;
     private final Browser browser;

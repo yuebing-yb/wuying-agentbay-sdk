@@ -136,7 +136,11 @@ export class Command {
         args.envs = envs;
       }
 
-      const result = await this.session.callMcpTool("shell", args);
+      const result = await this.session.callMcpTool(
+        "shell",
+        args,
+        false
+      );
 
       if (result.success) {
         // Try to parse the new JSON format response

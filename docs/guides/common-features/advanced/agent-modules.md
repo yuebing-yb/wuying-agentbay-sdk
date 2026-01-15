@@ -128,7 +128,6 @@ else:
 
 - [Session Management Guide](../basics/session-management.md)
 - [Data Persistence Guide](../basics/data-persistence.md)
-- [VPC Sessions Guide](vpc-sessions.md)
 
 ## 🆘 Getting Help
 

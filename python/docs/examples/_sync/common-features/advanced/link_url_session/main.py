@@ -13,12 +13,9 @@ def main() -> None:
 
     agent_bay = AgentBay(api_key=api_key)
 
-    # When the cloud CreateSession response provides LinkUrl/ToolList, the SDK can:
-    # - expose LinkUrl/Token from the session
-    # - call MCP tools through the LinkUrl route (Java BaseService style)
+    image_id = os.getenv("AGENTBAY_IMAGE_ID") or "linux_latest"
     params = CreateSessionParams(
-        image_id="imgc-0ab5takhjgjky7htu",
-        is_vpc=True,
+        image_id=image_id,
         labels={"example": "link-url-session"},
     )
 
@@ -31,7 +28,6 @@ def main() -> None:
         print(f"session_id={session.session_id}")
         print(f"token={session.get_token()}")
         print(f"link_url={session.get_link_url()}")
-        print(f"mcp_tools_count={len(session.mcp_tools)}")
 
         cmd = session.command.execute_command("echo hello-from-link-url-session")
         if not cmd.success:
@@ -45,9 +41,4 @@ if __name__ == "__main__":
     import asyncio
 
     main()
-
-
-
-
-
 

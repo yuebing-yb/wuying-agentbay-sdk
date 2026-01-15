@@ -1,7 +1,10 @@
 import asyncio
 import json
+import random
 import time
 from typing import TYPE_CHECKING, Any, Dict, Optional
+
+import httpx
 
 from .._common.exceptions import SessionError
 from .._common.logger import (
@@ -11,6 +14,7 @@ from .._common.logger import (
     _log_operation_error,
     _log_operation_start,
     _log_operation_success,
+    _truncate_string_for_log,
     _log_warning,
     get_logger,
 )
@@ -25,6 +29,7 @@ from .._common.models import (
     SessionResumeResult,
     extract_request_id,
 )
+from .._common.models.mcp_tool import McpTool
 from ..api.models import (
     CallMcpToolRequest,
     DeleteSessionAsyncRequest,
@@ -111,23 +116,20 @@ class AsyncSession:
         self.agent_bay = agent_bay
         self.session_id = session_id
 
-        # VPC-related information
-        self.is_vpc = False  # Whether this session uses VPC resources
-        self.network_interface_ip = ""  # Network interface IP for VPC sessions
-        self.http_port = ""  # HTTP port for VPC sessions
-        self.token = ""
-        self.link_url = ""
-
         # Resource URL for accessing the session
         self.resource_url = ""
+
+        # LinkUrl-based direct tool call (non-VPC)
+        self.token = ""
+        self.link_url = ""
 
         # Recording functionality
         self.enableBrowserReplay = (
             True  # Whether browser recording is enabled for this session
         )
 
-        # MCP tools available for this session
-        self.mcp_tools = []  # List[McpTool]
+        # MCP tool list returned by backend for this session
+        self.mcpTools: list[McpTool] = []
 
         # Initialize file system, command and code handlers
         self.file_system = AsyncFileSystem(self)
@@ -176,6 +178,24 @@ class AsyncSession:
     def _get_session_id(self) -> str:
         """Internal method to get the session ID."""
         return self.session_id
+
+    def _get_token(self) -> str:
+        return self.token
+
+    def _get_link_url(self) -> str:
+        return self.link_url
+
+    def get_token(self) -> str:
+        return self._get_token()
+
+    def get_link_url(self) -> str:
+        return self._get_link_url()
+
+    def getToken(self) -> str:
+        return self._get_token()
+
+    def getLinkUrl(self) -> str:
+        return self._get_link_url()
 
     async def get_status(self) -> "SessionStatusResult":
         """
@@ -275,49 +295,6 @@ class AsyncSession:
                 success=False,
                 error_message=f"Failed to get session status {self.session_id}: {e}",
             )
-    def _is_vpc_enabled(self) -> bool:
-        """Internal method to check if this session uses VPC resources."""
-        return self.is_vpc
-
-    def _get_network_interface_ip(self) -> str:
-        """Internal method to get the network interface IP for VPC sessions."""
-        return self.network_interface_ip
-
-    def _get_http_port(self) -> str:
-        """Internal method to get the HTTP port for VPC sessions."""
-        return self.http_port
-
-    def _get_token(self) -> str:
-        """Internal method to get the token for VPC sessions."""
-        return self.token
-
-    def _get_link_url(self) -> str:
-        """Internal method to get the LinkUrl for LinkUrl-based VPC sessions."""
-        return self.link_url
-
-    def get_token(self) -> str:
-        """Get the token associated with this session."""
-        return self.token
-
-    def get_link_url(self) -> str:
-        """Get the LinkUrl associated with this session."""
-        return self.link_url
-
-    # CamelCase aliases for cross-SDK consistency
-    def getToken(self) -> str:
-        """Alias of get_token()."""
-        return self.get_token()
-
-    def getLinkUrl(self) -> str:
-        """Alias of get_link_url()."""
-        return self.get_link_url()
-
-    def _find_server_for_tool(self, tool_name: str) -> str:
-        """Internal method to find the server that provides the given MCP tool."""
-        for tool in self.mcp_tools:
-            if tool.name == tool_name:
-                return tool.server
-        return ""
 
     async def delete(self, sync_context: bool = False) -> DeleteResult:
         """
@@ -831,17 +808,12 @@ class AsyncSession:
                 tools_data = json.loads(response.body.data)
                 for tool_data in tools_data:
                     tool = McpTool(
-                        name=tool_data.get("name", ""),
-                        description=tool_data.get("description", ""),
-                        input_schema=tool_data.get("inputSchema", {}),
-                        server=tool_data.get("server", ""),
-                        tool=tool_data.get("tool", ""),
+                        name=tool_data.get("name", "") or "",
+                        server=tool_data.get("server", "") or "",
                     )
                     tools.append(tool)
             except json.JSONDecodeError as e:
                 _logger.error(f"❌ Error unmarshaling tools data: {e}")
-
-        self.mcp_tools = tools  # Update the session's mcp_tools field
 
         # Log successful tools retrieval
         _log_api_response_with_details(
@@ -852,6 +824,22 @@ class AsyncSession:
         )
 
         return McpToolsResult(request_id=request_id, tools=tools)
+
+    def _get_mcp_server_for_tool(self, tool_name: str) -> Optional[str]:
+        """
+        Resolve MCP server name by tool name from session tool list.
+
+        Returns:
+            Optional[str]: Server name if found, otherwise None.
+        """
+        for t in self.mcpTools or []:
+            try:
+                if t and getattr(t, "name", None) == tool_name:
+                    server = getattr(t, "server", "") or ""
+                    return server if server else None
+            except Exception:
+                continue
+        return None
 
     async def call_mcp_tool(
         self,
@@ -873,21 +861,35 @@ class AsyncSession:
                 args["keys"] = normalize_keys(args["keys"])
                 _logger.debug(f"Normalized press_keys arguments: {args}")
 
+            server_name = self._get_mcp_server_for_tool(tool_name)
+            if not server_name:
+                return McpToolResult(
+                    request_id="",
+                    success=False,
+                    data="",
+                    error_message=(
+                        f"Failed to resolve MCP server for tool: {tool_name}. "
+                        "This session may not have ToolList populated, or the tool is unavailable in the current image."
+                    ),
+                )
+
             args_json = json.dumps(args, ensure_ascii=False)
 
-            # Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
             if self._get_link_url() and self._get_token():
-                return await self._call_mcp_tool_link_url(tool_name, args)
+                return await self._call_mcp_tool_link_url(
+                    tool_name=tool_name,
+                    args=args,
+                    server_name=server_name,
+                )
 
-            # Legacy VPC route (ip:port).
-            if self._is_vpc_enabled():
-                return await self._call_mcp_tool_vpc(tool_name, args_json)
-
-            # Non-VPC mode: use traditional API call
-            result_data = await self._call_mcp_tool_api(
-                tool_name, args_json, read_timeout, connect_timeout, auto_gen_session
+            return await self._call_mcp_tool_api(
+                tool_name,
+                args_json,
+                read_timeout,
+                connect_timeout,
+                auto_gen_session,
+                server_name=server_name,
             )
-            return result_data
         except Exception as e:
             _logger.error(f"❌ Failed to call MCP tool {tool_name}: {e}")
             return McpToolResult(
@@ -897,37 +899,13 @@ class AsyncSession:
                 error_message=f"Failed to call MCP tool: {e}",
             )
 
-    async def _call_mcp_tool_link_url(self, tool_name: str, args: Dict[str, Any]):
-        """
-        Handle LinkUrl-based MCP tool calls using HTTP POST JSON, matching Java BaseService.callMcpToolVpc.
-        """
-        import random
-        import time
-
-        import httpx
-
-        args_json = json.dumps(args, ensure_ascii=False)
-        command = args.get("command") if isinstance(args, dict) else None
-        if not isinstance(command, str):
-            command = args_json[:500] + ("...(truncated)" if len(args_json) > 500 else "")
-
-        _log_api_call("CallMcpTool(LinkUrl)", "")
-
-        server = self._find_server_for_tool(tool_name)
-        if not server:
-            _log_operation_error(
-                "CallMcpTool(LinkUrl)",
-                f"server not found for tool: {tool_name}",
-                False,
-            )
-            return McpToolResult(
-                request_id="",
-                success=False,
-                data="",
-                error_message=f"server not found for tool: {tool_name}",
-            )
-
-        link_url = self._get_link_url().rstrip("/")
+    async def _call_mcp_tool_link_url(
+        self,
+        tool_name: str,
+        args: Dict[str, Any],
+        server_name: str,
+    ) -> McpToolResult:
+        link_url = self._get_link_url()
         token = self._get_token()
         if not link_url or not token:
             return McpToolResult(
@@ -938,32 +916,47 @@ class AsyncSession:
             )
 
         request_id = f"link-{int(time.time() * 1000)}-{random.randint(0, 999999999):09d}"
-
-        _log_api_response_with_details(
-            api_name="CallMcpTool(LinkUrl) Request",
-            request_id=request_id,
-            success=True,
-            key_fields={
-                "tool_name": tool_name,
-                "command": command,
-            },
+        _log_api_call(
+            "CallMcpTool(LinkUrl)",
+            f"Tool={tool_name}, ArgsLength={len(json.dumps(args, ensure_ascii=False))}, RequestId={request_id}",
         )
-        payload = {
+
+        url = link_url.rstrip("/") + "/callTool"
+        payload: Dict[str, Any] = {
             "args": args,
-            "server": server,
+            "server": server_name,
             "requestId": request_id,
             "tool": tool_name,
             "token": token,
         }
 
-        headers = {"Content-Type": "application/json", "X-Access-Token": token}
-
         try:
             async with httpx.AsyncClient(timeout=120) as client:
-                resp = await client.post(f"{link_url}/callTool", json=payload, headers=headers)
-                resp.raise_for_status()
-                outer = resp.json()
+                resp = await client.post(
+                    url,
+                    json=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Access-Token": token,
+                    },
+                )
 
+            if resp.status_code < 200 or resp.status_code >= 300:
+                _log_api_response_with_details(
+                    api_name="CallMcpTool(LinkUrl) Response",
+                    request_id=request_id,
+                    success=False,
+                    key_fields={"http_status": resp.status_code, "tool_name": tool_name},
+                    full_response=resp.text,
+                )
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    data="",
+                    error_message=f"HTTP request failed with code: {resp.status_code}",
+                )
+
+            outer = resp.json()
             data_field = outer.get("data")
             if data_field is None:
                 return McpToolResult(
@@ -973,7 +966,6 @@ class AsyncSession:
                     error_message="No data field in LinkUrl response",
                 )
 
-            parsed_data = None
             if isinstance(data_field, str):
                 parsed_data = json.loads(data_field)
             elif isinstance(data_field, dict):
@@ -986,8 +978,8 @@ class AsyncSession:
                     error_message="Invalid data field type in LinkUrl response",
                 )
 
-            result = parsed_data.get("result")
-            if not isinstance(result, dict):
+            result_field = parsed_data.get("result", {})
+            if not isinstance(result_field, dict):
                 return McpToolResult(
                     request_id=request_id,
                     success=False,
@@ -995,23 +987,35 @@ class AsyncSession:
                     error_message="No result field in LinkUrl response data",
                 )
 
-            is_error = bool(result.get("isError", False))
-            content = result.get("content", [])
+            is_error = bool(result_field.get("isError", False))
+            content = result_field.get("content", [])
             text_content = ""
             if isinstance(content, list) and content:
-                first_content = content[0]
-                if isinstance(first_content, dict):
-                    text_content = first_content.get("text", "")
+                first = content[0]
+                if isinstance(first, str):
+                    text_content = first
+                elif isinstance(first, dict):
+                    text_content = first.get("text") or first.get("blob") or first.get("data") or ""
+
+            response_preview = ""
+            if text_content:
+                response_preview = _truncate_string_for_log(str(text_content), 2000)
+
+            key_fields = {
+                "tool_name": tool_name,
+                "server": server_name,
+                "is_error": is_error,
+                "data_len": len(str(text_content)),
+            }
+            if response_preview:
+                key_fields["response_preview"] = response_preview
 
             _log_api_response_with_details(
                 api_name="CallMcpTool(LinkUrl) Response",
                 request_id=request_id,
                 success=not is_error,
-                key_fields={
-                    "http_status": int(resp.status_code),
-                    "tool_name": tool_name,
-                    "output": (text_content[:800] + "...(truncated)") if len(text_content) > 800 else text_content,
-                },
+                key_fields=key_fields,
+                full_response=str(text_content) if is_error else "",
             )
 
             if is_error:
@@ -1019,30 +1023,27 @@ class AsyncSession:
                     request_id=request_id,
                     success=False,
                     data="",
-                    error_message=text_content,
+                    error_message=str(text_content),
                 )
 
             return McpToolResult(
                 request_id=request_id,
                 success=True,
-                data=text_content or json.dumps(result, ensure_ascii=False),
+                data=str(text_content),
                 error_message="",
             )
-        except httpx.RequestError as e:
-            _log_operation_error("CallMcpTool(LinkUrl)", f"HTTP request failed: {e}", True)
+        except Exception as e:
+            _log_operation_error(
+                "CallMcpTool(LinkUrl)",
+                f"HTTP request failed: {e}",
+                True,
+                request_id=request_id,
+            )
             return McpToolResult(
                 request_id=request_id,
                 success=False,
                 data="",
                 error_message=f"HTTP request failed: {e}",
-            )
-        except Exception as e:
-            _log_operation_error("CallMcpTool(LinkUrl)", f"Unexpected error: {e}", True)
-            return McpToolResult(
-                request_id=request_id,
-                success=False,
-                data="",
-                error_message=f"Unexpected error: {e}",
             )
 
     async def get_metrics(
@@ -1125,128 +1126,6 @@ class AsyncSession:
                 raw={},
             )
 
-    async def _call_mcp_tool_vpc(self, tool_name: str, args_json: str):
-        """
-        Handle VPC-based MCP tool calls using HTTP requests asynchronously.
-        """
-        import random
-        import string
-        import time
-
-        import httpx
-
-        _log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
-
-        # Find server for this tool
-        server = self._find_server_for_tool(tool_name)
-        if not server:
-            _log_operation_error(
-                "CallMcpTool(VPC)",
-                f"server not found for tool: {tool_name}",
-                False,
-            )
-            return McpToolResult(
-                request_id="",
-                success=False,
-                data="",
-                error_message=f"server not found for tool: {tool_name}",
-            )
-
-        # Check VPC network configuration
-        if not self._get_network_interface_ip() or not self._get_http_port():
-            _log_operation_error(
-                "CallMcpTool(VPC)",
-                f"VPC network configuration incomplete: networkInterfaceIp={self._get_network_interface_ip()}, httpPort={self._get_http_port()}",
-                False,
-            )
-            return McpToolResult(
-                request_id="",
-                success=False,
-                data="",
-                error_message=f"VPC network configuration incomplete: networkInterfaceIp={self._get_network_interface_ip()}, httpPort={self._get_http_port()}",
-            )
-
-        # Construct VPC URL with query parameters
-        base_url = f"http://{self._get_network_interface_ip()}:{self._get_http_port()}/callTool"
-
-        # Prepare query parameters
-        request_id = f"vpc-{int(time.time() * 1000)}-{''.join(random.choices(string.ascii_lowercase + string.digits, k=9))}"
-        params = {
-            "server": server,
-            "tool": tool_name,
-            "args": args_json,
-            "token": self._get_token(),
-            "requestId": request_id,
-        }
-
-        # Set headers
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-        try:
-            # Send HTTP request asynchronously using httpx
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    base_url, params=params, headers=headers, timeout=30
-                )
-                response.raise_for_status()
-                response_data = response.json()
-
-            # Extract content
-            content = response_data.get("content", [])
-            is_error = response_data.get("isError", False)
-
-            # Extract text from content
-            text_content = ""
-            if content and isinstance(content, list) and len(content) > 0:
-                first_content = content[0]
-                if isinstance(first_content, dict):
-                    text_content = first_content.get("text", "")
-
-            if is_error:
-                _log_operation_error(
-                    "CallMcpTool(VPC)",
-                    f"Tool returned error: {text_content}",
-                    False,
-                )
-                return McpToolResult(
-                    request_id=request_id,
-                    success=False,
-                    data="",
-                    error_message=text_content,
-                )
-
-            _log_api_response_with_details(
-                "CallMcpTool(VPC)",
-                request_id,
-                True,
-                {"tool": tool_name},
-                text_content[:200] if text_content else "",
-            )
-
-            return McpToolResult(
-                request_id=request_id,
-                success=True,
-                data=text_content,
-                error_message="",
-            )
-
-        except httpx.RequestError as e:
-            _log_operation_error("CallMcpTool(VPC)", f"HTTP request failed: {e}", True)
-            return McpToolResult(
-                request_id=request_id,
-                success=False,
-                data="",
-                error_message=f"HTTP request failed: {e}",
-            )
-        except Exception as e:
-            _log_operation_error("CallMcpTool(VPC)", f"Unexpected error: {e}", True)
-            return McpToolResult(
-                request_id=request_id,
-                success=False,
-                data="",
-                error_message=f"Unexpected error: {e}",
-            )
-
     async def _call_mcp_tool_api(
         self,
         tool_name: str,
@@ -1254,6 +1133,7 @@ class AsyncSession:
         read_timeout: Optional[int] = None,
         connect_timeout: Optional[int] = None,
         auto_gen_session: bool = False,
+        server_name: str = "",
     ):
         """
         Handle traditional API-based MCP tool calls asynchronously.
@@ -1263,13 +1143,16 @@ class AsyncSession:
             f"Tool={tool_name}, SessionId={self.session_id}, ArgsLength={len(args_json)}",
         )
 
-        request = CallMcpToolRequest(
-            authorization=f"Bearer {self._get_api_key()}",
-            session_id=self.session_id,
-            name=tool_name,
-            args=args_json,
-            auto_gen_session=auto_gen_session,
-        )
+        request_kwargs: Dict[str, Any] = {
+            "authorization": f"Bearer {self._get_api_key()}",
+            "session_id": self.session_id,
+            "name": tool_name,
+            "args": args_json,
+            "auto_gen_session": auto_gen_session,
+            "server": server_name,
+        }
+
+        request = CallMcpToolRequest(**request_kwargs)
 
         try:
             # Try async method first, fall back to sync wrapped in asyncio.to_thread
@@ -1377,16 +1260,16 @@ class AsyncSession:
                 error_message=f"API request failed: {e}",
             )
 
-    async def pause(
+    async def beta_pause(
         self, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionPauseResult:
         """
-        Asynchronously pause this session, putting it into a dormant state.
+        Asynchronously pause this session (beta), putting it into a dormant state.
         This method waits until the session enters the PAUSED state.
         """
         try:
             # Call the async initiate method first
-            result = await self.pause_async()
+            result = await self.beta_pause_async()
             if not result.success:
                 return result
 
@@ -1462,7 +1345,7 @@ class AsyncSession:
                 error_message=f"Unexpected error pausing session: {e}",
             )
 
-    async def pause_async(self) -> SessionPauseResult:
+    async def beta_pause_async(self) -> SessionPauseResult:
         """
         Asynchronously initiate the pause session operation without waiting for completion.
         """
@@ -1536,16 +1419,16 @@ class AsyncSession:
                 error_message=f"Unexpected error pausing session: {e}",
             )
 
-    async def resume(
+    async def beta_resume(
         self, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionResumeResult:
         """
-        Asynchronously resume this session from a paused state.
+        Asynchronously resume this session (beta) from a paused state.
         This method waits until the session enters the RUNNING state.
         """
         try:
             # Call the async initiate method first
-            result = await self.resume_async()
+            result = await self.beta_resume_async()
             if not result.success:
                 return result
 
@@ -1619,7 +1502,7 @@ class AsyncSession:
                 error_message=f"Unexpected error resuming session: {e}",
             )
 
-    async def resume_async(self) -> SessionResumeResult:
+    async def beta_resume_async(self) -> SessionResumeResult:
         """
         Asynchronously initiate the resume session operation without waiting for completion.
         """

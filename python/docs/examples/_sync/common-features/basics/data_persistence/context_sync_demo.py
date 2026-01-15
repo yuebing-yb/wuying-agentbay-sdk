@@ -20,22 +20,22 @@ from agentbay import AgentBay, CreateSessionParams, ContextSync, SyncPolicy
 def main():
     """Main function"""
     print("🔄 AgentBay Context Sync Demo Example")
-    
+
     # Initialize AgentBay client
     agent_bay = AgentBay()
-    
+
     try:
         # Context sync demonstration
         print("\n" + "="*60)
         print("🔄 Context Synchronization Demo")
         print("="*60)
         context_sync_demo(agent_bay)
-        
+
     except Exception as e:
         print(f"❌ Example execution failed: {e}")
         import traceback
         traceback.print_exc()
-    
+
     print("✅ Context sync example completed")
 
 
@@ -46,17 +46,17 @@ def context_sync_demo(agent_bay):
     print("\n🔄 Context Sync Demo")
     print("📤 This method uses to wait for sync completion")
     print("⏳ Function waits until sync is complete")
-    
+
     # Create context and session
     print("\n📦 Creating context and session...")
     context_result = agent_bay.context.get("sync-demo", create=True)
     if not context_result.success:
         print(f"❌ Context creation failed: {context_result.error_message}")
         return
-    
+
     context = context_result.context
     print(f"✅ Context created: {context.id}")
-    
+
     # Create session with context sync
     sync_policy = SyncPolicy.default()
     context_sync = ContextSync.new(
@@ -64,22 +64,22 @@ def context_sync_demo(agent_bay):
         path="/tmp/sync_data",
         policy=sync_policy
     )
-    
+
     params = CreateSessionParams()
     params.context_syncs = [context_sync]
     session_result = agent_bay.create(params)
-    
+
     if not session_result.success:
         print(f"❌ Session creation failed: {session_result.error_message}")
         return
-    
+
     session = session_result.session
     print(f"✅ Session created: {session.session_id}")
-    
+
     # Create test data
     print("\n💾 Creating test data...")
     session.command.execute_command("mkdir -p /tmp/sync_data/test_files")
-    
+
     test_files = [
         ("/tmp/sync_data/test_files/small.txt", "Small test file content\n" * 10),
         ("/tmp/sync_data/test_files/medium.txt", "Medium test file content\n" * 100),
@@ -89,7 +89,7 @@ def context_sync_demo(agent_bay):
             "session_id": session.session_id
         }, indent=2))
     ]
-    
+
     created_files = 0
     for file_path, content in test_files:
         write_result = session.file_system.write_file(file_path, content)
@@ -98,18 +98,18 @@ def context_sync_demo(agent_bay):
             created_files += 1
         else:
             print(f"❌ Failed to create file {file_path}: {write_result.error_message}")
-    
+
     print(f"📊 Created {created_files}/{len(test_files)} test files")
-    
+
     # Track sync timing
     sync_start_time = time.time()
-    
+
     # Call context sync with - wait for completion
     print("\n📤 Calling session.context.sync()...")
     sync_result = session.context.sync()
-    
+
     sync_duration = time.time() - sync_start_time
-    
+
     if sync_result.success:
         print("✅ Sync completed successfully")
         print(f"   Request ID: {sync_result.request_id}")
@@ -120,7 +120,7 @@ def context_sync_demo(agent_bay):
         print(f"   Request ID: {sync_result.request_id}")
         print(f"   Final success: {sync_result.success}")
         print(f"   Duration: {sync_duration:.2f} seconds")
-    
+
     # Clean up session
     print("\n🧹 Cleaning up session...")
     delete_result = agent_bay.delete(session)
@@ -128,7 +128,7 @@ def context_sync_demo(agent_bay):
         print("✅ Session deleted successfully")
     else:
         print(f"❌ Session deletion failed: {delete_result.error_message}")
-    
+
     print("✅ Context sync demo completed")
 
 

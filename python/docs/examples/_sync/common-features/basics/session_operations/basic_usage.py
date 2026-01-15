@@ -18,7 +18,7 @@ def main():
     linux_session = None
     try:
         agent_bay = AgentBay(api_key=api_key)
-        
+
         print("Creating a new session (Async)...")
         # Create a session
         params = CreateSessionParams(
@@ -28,7 +28,7 @@ def main():
         session = session_result.session
         print(f"Session created with ID: {session.session_id}")
         print(f"Request ID: {session_result.request_id}")
-        
+
         # Execute a command
         print("\nExecuting a command...")
         cmd_result = session.command.execute_command("echo 'Hello Async World'")
@@ -115,7 +115,7 @@ def main():
                 print("Browser session deleted successfully")
             except Exception as delete_error:
                 print(f"Failed to delete browser session : {delete_error}")
-        
+
         if linux_session:
             try:
                 linux_delete_result = agent_bay.delete(linux_session)

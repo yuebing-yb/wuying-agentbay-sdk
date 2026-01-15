@@ -18,9 +18,9 @@ type AgentBayInterface interface {
 	// List returns paginated list of Sessions filtered by status and labels
 	List(status string, labels map[string]string, page *int, limit *int32) (*agentbay.SessionListResult, error)
 
-	// Pause synchronously pauses a session
-	Pause(session *agentbay.Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+	// BetaPause synchronously pauses a session (beta)
+	BetaPause(session *agentbay.Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
 
-	// Resume synchronously resumes a session
-	Resume(session *agentbay.Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+	// BetaResume synchronously resumes a session (beta)
+	BetaResume(session *agentbay.Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
 }

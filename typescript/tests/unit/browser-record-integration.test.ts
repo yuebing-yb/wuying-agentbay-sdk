@@ -178,6 +178,5 @@ describe("Browser Record Integration (Unit Test)", () => {
     expect(params.labels).toEqual({ project: "browser-test", type: "recording" });
     expect(params.imageId).toBe("browser_latest");
     expect(params.enableBrowserReplay).toBe(true);
-    expect(params.isVpc).toBe(false);
   });
 });

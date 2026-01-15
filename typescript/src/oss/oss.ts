@@ -74,7 +74,11 @@ export class Oss {
         endpoint: endpoint || "",
         region: region || "",
       };
-      const result = await this.session.callMcpTool("oss_env_init", args);
+      const result = await this.session.callMcpTool(
+        "oss_env_init",
+        args,
+        false
+      );
       
       if (result.success) {
         if (result.data) {
@@ -153,7 +157,11 @@ export class Oss {
         object,
         path,
       };
-      const result = await this.session.callMcpTool("oss_upload", args);
+      const result = await this.session.callMcpTool(
+        "oss_upload",
+        args,
+        false
+      );
 
       return {
         requestId: result.requestId,
@@ -197,7 +205,11 @@ export class Oss {
         url,
         path,
       };
-      const result = await this.session.callMcpTool("oss_upload_annon", args);
+      const result = await this.session.callMcpTool(
+        "oss_upload_annon",
+        args,
+        false
+      );
 
       return {
         requestId: result.requestId,
@@ -248,7 +260,11 @@ export class Oss {
         object,
         path,
       };
-      const result = await this.session.callMcpTool("oss_download", args);
+      const result = await this.session.callMcpTool(
+        "oss_download",
+        args,
+        false
+      );
 
       return {
         requestId: result.requestId,
@@ -295,7 +311,11 @@ export class Oss {
         url,
         path,
       };
-      const result = await this.session.callMcpTool("oss_download_annon", args);
+      const result = await this.session.callMcpTool(
+        "oss_download_annon",
+        args,
+        false
+      );
 
       return {
         requestId: result.requestId,

@@ -9,10 +9,7 @@ class McpTool:
     """
 
     name: str
-    description: str
-    input_schema: Dict[str, Any]
     server: str
-    tool: str
 
     def get_name(self) -> str:
         """Return the tool name."""

@@ -49,6 +49,7 @@ from ..api.models import (
     ListSessionRequest,
     ResumeSessionAsyncRequest,
 )
+from .._common.models.mcp_tool import McpTool
 from .context import ContextService
 from .beta_network import SyncBetaNetworkService
 from .beta_volume import SyncBetaVolumeService
@@ -134,6 +135,41 @@ class AgentBay:
         except:
             return str(obj)
 
+    def _parse_tool_list_to_mcp_tools(self, tool_list: Any) -> list[McpTool]:
+        """
+        Parse backend ToolList field into a list of McpTool objects.
+
+        Backend may return ToolList as a JSON string or a list of dicts.
+        """
+        if not tool_list:
+            return []
+
+        items: Any = tool_list
+        if isinstance(tool_list, str):
+            try:
+                items = json.loads(tool_list)
+            except Exception as e:
+                _logger.warning(f"Failed to parse ToolList JSON: {e}")
+                return []
+
+        if not isinstance(items, list):
+            return []
+
+        tools: list[McpTool] = []
+        for item in items:
+            if isinstance(item, McpTool):
+                tools.append(item)
+                continue
+            if not isinstance(item, dict):
+                continue
+            tools.append(
+                McpTool(
+                    name=item.get("name", "") or item.get("Name", "") or "",
+                    server=item.get("server", "") or item.get("serverName", "") or item.get("Server", "") or "",
+                )
+            )
+        return tools
+
     def _build_session_from_response(
         self,
         response_data: dict,
@@ -161,43 +197,18 @@ class AgentBay:
         # Create Session object
         session = Session(self, session_id)
 
-        # Set VPC-related information from response
-        session.is_vpc = params.is_vpc
-        if response_data.get("NetworkInterfaceIp"):
-            session.network_interface_ip = response_data["NetworkInterfaceIp"]
-        if response_data.get("HttpPort"):
-            session.http_port = response_data["HttpPort"]
-        if response_data.get("Token"):
-            session.token = response_data["Token"]
-        if response_data.get("LinkUrl"):
-            session.link_url = response_data["LinkUrl"]
-
+        # ToolList returned by backend for this session
         tool_list = response_data.get("ToolList")
-        if tool_list:
-            try:
-                tools_data = json.loads(tool_list) if isinstance(tool_list, str) else tool_list
-                tools = []
-                if isinstance(tools_data, list):
-                    from .._common.models.mcp_tool import McpTool
-
-                    for tool_data in tools_data:
-                        if not isinstance(tool_data, dict):
-                            continue
-                        tools.append(
-                            McpTool(
-                                name=tool_data.get("name", "") or "",
-                                description=tool_data.get("description", "") or "",
-                                input_schema=tool_data.get("inputSchema", {}) or {},
-                                server=tool_data.get("server", "") or "",
-                                tool=tool_data.get("tool", "") or "",
-                            )
-                        )
-                session.mcp_tools = tools
-            except Exception as e:
-                _log_warning(f"Failed to parse ToolList from create session response: {e}")
+        session.mcpTools = self._parse_tool_list_to_mcp_tools(tool_list)
 
         # Set ResourceUrl
         session.resource_url = resource_url
+
+        # LinkUrl/token may be returned by the server for direct tool calls.
+        if "Token" in response_data and response_data.get("Token") is not None:
+            session.token = str(response_data.get("Token") or "")
+        if "LinkUrl" in response_data and response_data.get("LinkUrl") is not None:
+            session.link_url = str(response_data.get("LinkUrl") or "")
 
         # Set browser recording state (default to True if not explicitly set to False)
         session.enableBrowserReplay = params.enable_browser_replay if params.enable_browser_replay is not None else True
@@ -218,23 +229,7 @@ class AgentBay:
 
         return session
 
-    def _fetch_mcp_tools_for_vpc_session(self, session: Session) -> None:
-        """
-        Fetch MCP tools information for VPC sessions asynchronously.
-
-        Args:
-            session: The session to fetch MCP tools for
-        """
-        _log_operation_start("Fetching MCP tools", "VPC session detected")
-        try:
-            tools_result = session.list_mcp_tools()
-            _log_operation_success(
-                f"Fetched {len(tools_result.tools)} MCP tools",
-                f"RequestID: {tools_result.request_id}",
-            )
-        except Exception as e:
-            _log_warning(f"Failed to fetch MCP tools for VPC session: {e}")
-            # Continue with session creation even if tools fetch fails
+    # NOTE: Do not fetch MCP tool list automatically for any session.
 
     def _wait_for_context_synchronization(self, session: Session) -> None:
         """
@@ -453,9 +448,6 @@ class AgentBay:
             # Beta: Add NetworkId if specified
             if hasattr(params, "beta_network_id") and params.beta_network_id:
                 request.network_id = params.beta_network_id
-
-            # Add VPC resource if specified
-            request.vpc_resource = params.is_vpc
 
             # Flag to indicate if we need to wait for context synchronization
             needs_context_sync = False
@@ -679,10 +671,6 @@ class AgentBay:
 
             # Build Session object from response data
             session = self._build_session_from_response(data, params)
-
-            # Backward compatibility: if is_vpc=true but tool list is still empty, fall back to ListMcpTools.
-            if params.is_vpc and not session.mcp_tools:
-                self._fetch_mcp_tools_for_vpc_session(session)
 
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
@@ -1025,6 +1013,7 @@ class AgentBay:
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
                         status=data_dict.get("Status", ""),
+                        tool_list=data_dict.get("ToolList", "") or "",
                     )
 
                 # Log API response with key details
@@ -1119,13 +1108,10 @@ class AgentBay:
         # Create the Session object
         session = Session(self, session_id)
 
-        # Set VPC-related information and ResourceUrl from GetSession response
+        # Set ResourceUrl from GetSession response
         if get_result.data:
-            session.is_vpc = get_result.data.vpc_resource
-            session.network_interface_ip = get_result.data.network_interface_ip
-            session.http_port = get_result.data.http_port
-            session.token = get_result.data.token
             session.resource_url = get_result.data.resource_url
+            session.mcpTools = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list)
 
         return SessionResult(
             request_id=get_result.request_id,
@@ -1133,37 +1119,23 @@ class AgentBay:
             session=session,
         )
 
-    def pause(
+    def beta_pause(
         self, session: Session, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionPauseResult:
         """
-        Asynchronously pause a session, putting it into a dormant state.
-
-        This method internally calls the PauseSessionAsync API and then polls the GetSession API
-        to check the session status until it becomes PAUSED or until timeout.
-
-        Args:
-            session (AsyncSession): The session to pause.
-            timeout (int, optional): Timeout in seconds to wait for the session to pause.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionPauseResult: Result containing the request ID, success status, and final session status.
+        Asynchronously pause a session (beta), putting it into a dormant state.
         """
         try:
-            # Call session's pause method
-            return session.pause(timeout, poll_interval)
+            return session.beta_pause(timeout, poll_interval)
         except Exception as e:
-            _log_operation_error("pause_session", str(e), exc_info=True)
+            _log_operation_error("beta_pause_session", str(e), exc_info=True)
             return SessionPauseResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to pause session {session.session_id}: {e}",
             )
 
-    def pause_async(self, session: Session) -> SessionPauseResult:
+    def beta_pause_async(self, session: Session) -> SessionPauseResult:
         """
         Fire-and-return pause: trigger PauseSessionAsync without waiting for PAUSED.
 
@@ -1230,44 +1202,30 @@ class AgentBay:
             return SessionPauseResult(request_id=request_id, success=True)
 
         except Exception as e:
-            _log_operation_error("pause_session_async", str(e), exc_info=True)
+            _log_operation_error("beta_pause_session_async", str(e), exc_info=True)
             return SessionPauseResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to pause session {session.session_id}: {e}",
             )
 
-    def resume(
+    def beta_resume(
         self, session: Session, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionResumeResult:
         """
-        Asynchronously resume a session from a paused state.
-
-        This method internally calls the ResumeSessionAsync API and then polls the GetSession API
-        to check the session status until it becomes RUNNING or until timeout.
-
-        Args:
-            session (AsyncSession): The session to resume.
-            timeout (int, optional): Timeout in seconds to wait for the session to resume.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionResumeResult: Result containing the request ID, success status, and final session status.
+        Asynchronously resume a session (beta) from a paused state.
         """
         try:
-            # Call session's resume method
-            return session.resume(timeout, poll_interval)
+            return session.beta_resume(timeout, poll_interval)
         except Exception as e:
-            _log_operation_error("resume_session", str(e), exc_info=True)
+            _log_operation_error("beta_resume_session", str(e), exc_info=True)
             return SessionResumeResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to resume session {session.session_id}: {e}",
             )
 
-    def resume_async(self, session: Session) -> SessionResumeResult:
+    def beta_resume_async(self, session: Session) -> SessionResumeResult:
         """
         Fire-and-return resume: trigger ResumeSessionAsync without waiting for RUNNING.
 
@@ -1318,7 +1276,7 @@ class AgentBay:
             return SessionResumeResult(request_id=request_id, success=True)
 
         except Exception as e:
-            _log_operation_error("resume_session_async", str(e), exc_info=True)
+            _log_operation_error("beta_resume_session_async", str(e), exc_info=True)
             return SessionResumeResult(
                 request_id="",
                 success=False,

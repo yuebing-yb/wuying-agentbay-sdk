@@ -49,7 +49,8 @@ class TestComputer:
         assert result.success is True
         assert result.data is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "click_mouse", {"x": 100, "y": 200, "button": "left"}
+            "click_mouse",
+            {"x": 100, "y": 200, "button": "left"},
         )
 
     @pytest.mark.sync
@@ -69,7 +70,8 @@ class TestComputer:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "click_mouse", {"x": 100, "y": 200, "button": "right"}
+            "click_mouse",
+            {"x": 100, "y": 200, "button": "right"},
         )
 
     @pytest.mark.sync
@@ -99,7 +101,8 @@ class TestComputer:
         # Assert
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "click_mouse", {"x": 100, "y": 200, "button": "right"}
+            "click_mouse",
+            {"x": 100, "y": 200, "button": "right"},
         )
 
     @pytest.mark.sync
@@ -121,7 +124,8 @@ class TestComputer:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "click_mouse", {"x": 100, "y": 200, "button": "double_left"}
+            "click_mouse",
+            {"x": 100, "y": 200, "button": "double_left"},
         )
 
     @pytest.mark.sync
@@ -143,7 +147,8 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "move_mouse", {"x": 150, "y": 250}
+            "move_mouse",
+            {"x": 150, "y": 250},
         )
 
     @pytest.mark.sync
@@ -188,7 +193,8 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "scroll", {"x": 300, "y": 300, "direction": "up", "amount": 1}
+            "scroll",
+            {"x": 300, "y": 300, "direction": "up", "amount": 1},
         )
 
     @pytest.mark.sync
@@ -208,7 +214,8 @@ class TestComputer:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "scroll", {"x": 300, "y": 300, "direction": "down", "amount": 3}
+            "scroll",
+            {"x": 300, "y": 300, "direction": "down", "amount": 3},
         )
 
     @pytest.mark.sync
@@ -231,7 +238,10 @@ class TestComputer:
         assert isinstance(result, OperationResult)
         assert result.success is True
         assert result.data == {"x": 150, "y": 250}
-        self.session.call_mcp_tool.assert_called_once_with("get_cursor_position", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "get_cursor_position",
+            {},
+        )
 
     # Keyboard Operations Tests
     @pytest.mark.sync
@@ -252,7 +262,8 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "input_text", {"text": "Hello World"}
+            "input_text",
+            {"text": "Hello World"},
         )
 
     @pytest.mark.sync
@@ -274,7 +285,8 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "press_keys", {"keys": ["Ctrl", "a"], "hold": False}
+            "press_keys",
+            {"keys": ["Ctrl", "a"], "hold": False},
         )
 
     @pytest.mark.sync
@@ -294,7 +306,8 @@ class TestComputer:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "press_keys", {"keys": ["Shift"], "hold": True}
+            "press_keys",
+            {"keys": ["Shift"], "hold": True},
         )
 
     @pytest.mark.sync
@@ -316,7 +329,8 @@ class TestComputer:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "release_keys", {"keys": ["Shift"]}
+            "release_keys",
+            {"keys": ["Shift"]},
         )
 
     # Screen Operations Tests
@@ -343,7 +357,10 @@ class TestComputer:
         assert isinstance(result.data, dict)
         assert result.data["width"] == 1920
         assert result.data["height"] == 1080
-        self.session.call_mcp_tool.assert_called_once_with("get_screen_size", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "get_screen_size",
+            {},
+        )
 
     @pytest.mark.sync
 
@@ -365,7 +382,10 @@ class TestComputer:
         assert isinstance(result, OperationResult)
         assert result.success is True
         assert result.data == "/path/to/screenshot.png"
-        self.session.call_mcp_tool.assert_called_once_with("system_screenshot", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "system_screenshot",
+            {},
+        )
 
     @pytest.mark.sync
     def test_take_screenshot_success_with_jpg(self):
@@ -373,11 +393,20 @@ class TestComputer:
         # Arrange
         payload = b"\xff\xd8\xff" + b"hello-image-bytes"
         import base64
+        import json
 
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-req"
-        mock_result.data = base64.b64encode(payload).decode("ascii")
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/jpeg",
+                "width": 1280,
+                "height": 720,
+                "data": base64.b64encode(payload).decode("ascii"),
+            }
+        )
 
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
@@ -391,13 +420,16 @@ class TestComputer:
         assert result.error_message == ""
         assert result.format == "jpeg"
         assert result.data == payload
-        self.session.call_mcp_tool.assert_called_once_with("screenshot", {"format": "jpeg"})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "screenshot",
+            {"format": "jpeg"},
+        )
 
     @pytest.mark.sync
     def test_take_screenshot_strips_prefix_before_magic(self):
-        """Test take_screenshot strips unexpected prefix bytes before JPEG magic."""
+        """Test take_screenshot rejects non-JSON payloads."""
         # Arrange
-        payload = b"u\xabZ" + b"\xff\xd8\xff" + b"rest"
+        payload = b"\xff\xd8\xff" + b"rest"
         import base64
 
         mock_result = Mock()
@@ -406,11 +438,8 @@ class TestComputer:
         mock_result.data = base64.b64encode(payload).decode("ascii")
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
-        # Act
-        result = self.computer.beta_take_screenshot(format="jpg")
-
-        # Assert
-        assert result.data.startswith(b"\xff\xd8\xff")
+        with pytest.raises(AgentBayError, match="non-JSON"):
+            self.computer.beta_take_screenshot(format="jpg")
 
     @pytest.mark.sync
     def test_take_screenshot_accepts_mode_enum(self):
@@ -418,11 +447,20 @@ class TestComputer:
         # Arrange
         payload = b"\x89PNG\r\n\x1a\n" + b"x"
         import base64
+        import json
 
         mock_result = Mock()
         mock_result.success = True
         mock_result.request_id = "test-req"
-        mock_result.data = base64.b64encode(payload).decode("ascii")
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/png",
+                "width": 1280,
+                "height": 720,
+                "data": base64.b64encode(payload).decode("ascii"),
+            }
+        )
         self.session.call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Act
@@ -431,6 +469,34 @@ class TestComputer:
         # Assert
         assert result.success is True
         assert result.format == "png"
+
+    @pytest.mark.sync
+    def test_take_screenshot_rejects_json_payload(self):
+        """Test beta_take_screenshot accepts JSON payloads."""
+        import base64
+        import json
+
+        payload = b"\x89PNG\r\n\x1a\n" + b"x"
+        b64 = base64.b64encode(payload).decode("ascii")
+
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "test-req-json"
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/png",
+                "width": 1280,
+                "height": 720,
+                "data": b64,
+            }
+        )
+        self.session.call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.computer.beta_take_screenshot(format="png")
+        assert result.success is True
+        assert result.format == "png"
+        assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
 
     @pytest.mark.sync
     def test_take_screenshot_invalid_format_raises(self):
@@ -518,7 +584,8 @@ class TestComputer:
         # Assert
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "scroll", {"x": 300, "y": 300, "direction": "down", "amount": 5}
+            "scroll",
+            {"x": 300, "y": 300, "direction": "down", "amount": 5},
         )
 
     @pytest.mark.sync
@@ -567,7 +634,10 @@ class TestComputer:
         assert result.success is True
         assert len(result.data) == 1
         assert result.data[0].pname == "Calculator"
-        self.session.call_mcp_tool.assert_called_once_with("list_visible_apps", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "list_visible_apps",
+            {},
+        )
 
     @pytest.mark.sync
 

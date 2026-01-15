@@ -13,6 +13,8 @@ import java.util.Map;
  * Similar to Python's Oss class.
  */
 public class OSS extends BaseService {
+    private static final String SERVER_OSS = "wuying_oss";
+
     public OSS(Session session) {
         super(session);
     }

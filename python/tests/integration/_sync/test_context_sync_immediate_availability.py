@@ -45,7 +45,7 @@ def agent_bay():
 def test_context_sync_immediate_file_availability(agent_bay):
     """
     Test that after context.sync() returns, files are immediately available in context storage.
-    
+
     Test flow:
     1. Create a context
     2. Create a session with context sync
@@ -55,19 +55,19 @@ def test_context_sync_immediate_file_availability(agent_bay):
     """
     print("=== Testing context.sync() immediate file availability ===")
     logger.info("Starting large file sync test with detailed logging")
-    
+
     unique_id = generate_unique_id()
     test_sessions = []
-    
+
     # Step 1: Create a context
     context_name = f"test-sync-immediate-{unique_id}"
     context_result = agent_bay.context.create(context_name)
-    
+
     assert context_result.success, f"Failed to create context: {context_result.error_message}"
-    
+
     context_id = context_result.context_id
     print(f"✅ Created context: {context_id}")
-    
+
     try:
         # Step 2: Create session with context sync
         context_sync = ContextSync.new(
@@ -75,49 +75,49 @@ def test_context_sync_immediate_file_availability(agent_bay):
             "/tmp/sync-test", 
             SyncPolicy.default()
         )
-        
+
         session_params = CreateSessionParams()
         session_params.context_syncs = [context_sync]
         session_params.labels = {"test": "context-sync-immediate-availability"}
         session_params.image_id = "linux_latest"
-        
+
         session_result = agent_bay.create(session_params)
         assert session_result.success, f"Failed to create session: {session_result.error_message}"
-        
+
         session = session_result.session
         test_sessions.append(session)
         print(f"✅ Created session: {session.session_id}")
-        
+
         # Wait for session to be ready
         time.sleep(2)
-        
+
         # Step 3: Create a large test file directly in the cloud environment (more efficient)
         test_file_path = "/tmp/sync-test/large_test_file.txt"
-        
+
         # Use dd command to create a 5MB file directly in the cloud environment
         create_cmd = f"dd if=/dev/zero of={test_file_path} bs=1M count=5"
         cmd_result = session.command.execute_command(create_cmd)
         assert cmd_result.success, f"Failed to create large file: {cmd_result.error_message}"
         print(f"✅ Created large test file directly in cloud: {test_file_path}")
         print(f"   Command output: {cmd_result.output.strip()}")
-        
+
         # Verify file was created and get its size
         size_cmd = f"ls -lh {test_file_path}"
         size_result = session.command.execute_command(size_cmd)
         assert size_result.success, f"Failed to check file size: {size_result.error_message}"
         print(f"✅ File details: {size_result.output.strip()}")
-        
+
         # Step 4: Call context.sync() and wait for completion
         print("📤 Starting context sync...")
         sync_result = session.context.sync()
-        
+
         assert sync_result.success, f"Failed to sync context: {sync_result.error_message}"
         assert sync_result.request_id is not None
         print(f"✅ Context sync completed successfully (RequestID: {sync_result.request_id})")
-        
+
         # Step 5: Immediately check if file exists in context storage
         print("🔍 Immediately checking file availability in context...")
-        
+
         # List files in the context to verify the file is available
         list_result = agent_bay.context.list_files(
             context_id, 
@@ -125,9 +125,9 @@ def test_context_sync_immediate_file_availability(agent_bay):
             page_number=1, 
             page_size=10
         )
-        
+
         assert list_result.success, f"Failed to list context files: {getattr(list_result, 'error_message', 'Unknown error')}"
-        
+
         # Check if our test file is in the list
         file_found = False
         for entry in list_result.entries:
@@ -141,26 +141,26 @@ def test_context_sync_immediate_file_availability(agent_bay):
                 else:
                     print(f"⚠️  File size seems small: got {entry.size}, expected ≥ {expected_size} bytes")
                 break
-        
+
         assert file_found, f"Test file not found in context immediately after sync. Found files: {[entry.file_path for entry in list_result.entries]}"
-        
+
         # Additional verification: Try to get download URL for the file
         try:
             download_url_result = agent_bay.context.get_file_download_url(
                 context_id,
                 test_file_path
             )
-            
+
             if download_url_result.success:
                 print(f"✅ File download URL available: {download_url_result.url[:50]}...")
             else:
                 print(f"⚠️  File download URL not immediately available: {download_url_result.error_message}")
-                
+
         except Exception as e:
             print(f"⚠️  Error getting download URL: {e}")
-        
+
         print("🎉 Test completed successfully - large file (5MB) is immediately available after sync!")
-        
+
     finally:
         # Clean up sessions
         for session in test_sessions:
@@ -169,7 +169,7 @@ def test_context_sync_immediate_file_availability(agent_bay):
                 print(f"Cleaned up session {session.session_id}: {delete_result.success}")
             except Exception as e:
                 print(f"Error cleaning up session {session.session_id}: {e}")
-        
+
         # Clean up context
         try:
             from agentbay._sync.context import Context

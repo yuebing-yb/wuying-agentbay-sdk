@@ -37,7 +37,7 @@ describe("AgentBay List Status Integration Tests", () => {
           if (session) {
             const result = await session.getStatus();
             if (result.status === "PAUSED") {
-              await session.resumeAsync();
+              await session.betaResumeAsync();
               log(`  ✓ Resumed session: ${session.sessionId}`);
             }
             if (result.status && !["DELETING", "DELETED", "RESUMING", "PAUSING"].includes(result.status)) {
@@ -150,7 +150,7 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // Pause the session
     log(`\nStep 2: Pausing session...`);
-    const pauseResult = await session.pauseAsync();
+    const pauseResult = await session.betaPauseAsync();
 
     // Verify pause result
     expect(pauseResult.success).toBe(true);
@@ -175,7 +175,7 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // Pause the session first
     log(`\nStep 1: Pausing session...`);
-    const pauseResult = await session.pauseAsync();
+    const pauseResult = await session.betaPauseAsync();
     expect(pauseResult.success).toBe(true);
     log(`  ✓ Session pause initiated successfully`);
 
@@ -193,7 +193,7 @@ describe("AgentBay List Status Integration Tests", () => {
     expect(["PAUSED", "PAUSING"]).toContain(initialStatus);
     log(`  ✓ Session status checked`);
 
-    const resumeResult = await session.resumeAsync();
+    const resumeResult = await session.betaResumeAsync();
 
     // Verify resume result
     expect(resumeResult.success).toBe(true);
@@ -219,7 +219,7 @@ describe("AgentBay List Status Integration Tests", () => {
     
     // Pause the session
     log(`\nStep 2: Pausing session...`);
-    const pauseResult = await session.pauseAsync();
+    const pauseResult = await session.betaPauseAsync();
 
     // Verify pause result
     expect(pauseResult.success).toBe(true);
@@ -231,7 +231,7 @@ describe("AgentBay List Status Integration Tests", () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     log(`  ✓ Checking session status before resuming`);
-    await session.resumeAsync();
+    await session.betaResumeAsync();
     log(`  ✓ Session resumed`);
 
     log(`  ✓ Session status after pause checked`);

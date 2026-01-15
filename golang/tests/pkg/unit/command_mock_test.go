@@ -14,7 +14,7 @@ import (
 
 // CommandTestMockSession is a simple mock implementation of the Session interface for testing implementation logic
 type CommandTestMockSession struct {
-	callMcpToolFunc func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	callMcpToolFunc func(toolName string, args interface{}) (*models.McpToolResult, error)
 }
 
 func (m *CommandTestMockSession) GetAPIKey() string {
@@ -41,13 +41,9 @@ func (m *CommandTestMockSession) HttpPort() string {
 	return ""
 }
 
-func (m *CommandTestMockSession) FindServerForTool(toolName string) string {
-	return ""
-}
-
-func (m *CommandTestMockSession) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+func (m *CommandTestMockSession) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	if m.callMcpToolFunc != nil {
-		return m.callMcpToolFunc(toolName, args, autoGenSession...)
+		return m.callMcpToolFunc(toolName, args)
 	}
 	return nil, nil
 }
@@ -208,7 +204,7 @@ func TestCommand_Implementation_NewJsonFormat(t *testing.T) {
 	}
 
 	mockSession := &CommandTestMockSession{
-		callMcpToolFunc: func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
 			assert.Equal(t, "shell", toolName)
 			return mockResult, nil
 		},
@@ -246,7 +242,7 @@ func TestCommand_Implementation_NewJsonFormatError(t *testing.T) {
 	}
 
 	mockSession := &CommandTestMockSession{
-		callMcpToolFunc: func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
 			assert.Equal(t, "shell", toolName)
 			return mockResult, nil
 		},
@@ -277,7 +273,7 @@ func TestCommand_Implementation_CwdAndEnvs(t *testing.T) {
 
 	var capturedArgs interface{}
 	mockSession := &CommandTestMockSession{
-		callMcpToolFunc: func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
 			assert.Equal(t, "shell", toolName)
 			capturedArgs = args
 			return mockResult, nil
@@ -312,7 +308,8 @@ func TestCommand_Implementation_TimeoutLimit(t *testing.T) {
 	// Test with timeout exceeding 50s (50000ms) - should be limited to 50s
 	var capturedTimeout1 interface{}
 	mockSession1 := &CommandTestMockSession{
-		callMcpToolFunc: func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
+			assert.Equal(t, "shell", toolName)
 			capturedTimeout1 = args.(map[string]interface{})["timeout_ms"]
 			return mockResult, nil
 		},
@@ -326,7 +323,8 @@ func TestCommand_Implementation_TimeoutLimit(t *testing.T) {
 	// Test with timeout exactly at limit
 	var capturedTimeout2 interface{}
 	mockSession2 := &CommandTestMockSession{
-		callMcpToolFunc: func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
+			assert.Equal(t, "shell", toolName)
 			capturedTimeout2 = args.(map[string]interface{})["timeout_ms"]
 			return mockResult, nil
 		},
@@ -340,7 +338,8 @@ func TestCommand_Implementation_TimeoutLimit(t *testing.T) {
 	// Test with timeout below limit
 	var capturedTimeout3 interface{}
 	mockSession3 := &CommandTestMockSession{
-		callMcpToolFunc: func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
+			assert.Equal(t, "shell", toolName)
 			capturedTimeout3 = args.(map[string]interface{})["timeout_ms"]
 			return mockResult, nil
 		},
@@ -365,7 +364,7 @@ func TestCommand_Implementation_ValidEnvs(t *testing.T) {
 
 	var capturedEnvs interface{}
 	mockSession := &CommandTestMockSession{
-		callMcpToolFunc: func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
 			assert.Equal(t, "shell", toolName)
 			capturedEnvs = args.(map[string]interface{})["envs"]
 			return mockResult, nil

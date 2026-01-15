@@ -427,5 +427,5 @@ class AsyncExtensionsService:
         await self._ensure_context()
 
         cid = self.context_id or self._provided_context_id
-        
+
         return ExtensionOption(context_id=cid, extension_ids=extension_ids)

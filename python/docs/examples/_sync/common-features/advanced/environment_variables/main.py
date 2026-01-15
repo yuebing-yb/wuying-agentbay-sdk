@@ -21,10 +21,10 @@ from agentbay import CreateSessionParams
 def set_environment_variable(session, var_name: str, var_value: str):
     """Set an environment variable."""
     print(f"\n🔧 Setting environment variable: {var_name}={var_value}")
-    
+
     command = f"export {var_name}='{var_value}' && echo ${var_name}"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         print(f"✅ Variable set: {result.output.strip()}")
     else:
@@ -34,10 +34,10 @@ def set_environment_variable(session, var_name: str, var_value: str):
 def get_environment_variable(session, var_name: str):
     """Get an environment variable."""
     print(f"\n🔍 Getting environment variable: {var_name}")
-    
+
     command = f"echo ${var_name}"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         value = result.output.strip()
         print(f"✅ {var_name}={value}")
@@ -50,10 +50,10 @@ def get_environment_variable(session, var_name: str):
 def list_all_environment_variables(session):
     """List all environment variables."""
     print("\n📋 Listing all environment variables...")
-    
+
     command = "env | sort"
     result = session.command.execute_command(command)
-    
+
     if result.success:
         env_vars = result.output.strip().split('\n')
         print(f"✅ Found {len(env_vars)} environment variables")
@@ -68,7 +68,7 @@ def list_all_environment_variables(session):
 def use_env_in_script(session):
     """Create and run a script that uses environment variables."""
     print("\n📜 Creating and running a script with environment variables...")
-    
+
     # Create a script that uses environment variables
     script_content = """#!/bin/bash
 echo "Application: $APP_NAME"
@@ -76,19 +76,19 @@ echo "Version: $APP_VERSION"
 echo "Environment: $APP_ENV"
 echo "Debug Mode: $DEBUG"
 """
-    
+
     # Write script to file
     write_result = session.file_system.write_file("/tmp/env_script.sh", script_content)
     if not write_result.success:
         print(f"❌ Failed to write script: {write_result.error_message}")
         return
-    
+
     # Make script executable
     chmod_result = session.command.execute_command("chmod +x /tmp/env_script.sh")
     if not chmod_result.success:
         print(f"❌ Failed to make script executable: {chmod_result.error_message}")
         return
-    
+
     # Run script with environment variables
     command = """
 export APP_NAME="AgentBay SDK"
@@ -97,7 +97,7 @@ export APP_ENV="production"
 export DEBUG="true"
 /tmp/env_script.sh
 """
-    
+
     result = session.command.execute_command(command)
     if result.success:
         print("✅ Script output:")
@@ -109,15 +109,15 @@ export DEBUG="true"
 def demonstrate_env_persistence(session):
     """Demonstrate environment variable persistence across commands."""
     print("\n🔄 Demonstrating environment variable persistence...")
-    
+
     # Set variable in one command
     print("  Setting variable in first command...")
     result1 = session.command.execute_command("export TEST_VAR='persistent_value'")
-    
+
     # Try to access in another command (will not persist by default)
     print("  Trying to access in second command...")
     result2 = session.command.execute_command("echo $TEST_VAR")
-    
+
     if result2.success:
         value = result2.output.strip()
         if value:
@@ -125,7 +125,7 @@ def demonstrate_env_persistence(session):
         else:
             print("  ⚠️  Variable did not persist (expected behavior)")
             print("  💡 Tip: Use a single command or script for persistent variables")
-    
+
     # Demonstrate workaround: use single command
     print("\n  Using single command for persistence...")
     result3 = session.command.execute_command(
@@ -141,70 +141,70 @@ def main():
     if not api_key:
         print("❌ Error: AGENTBAY_API_KEY environment variable not set")
         return
-    
+
     agent_bay = AgentBay(api_key=api_key)
     session = None
-    
+
     try:
         print("=" * 60)
         print("Environment Variables Management Example")
         print("=" * 60)
-        
+
         # Create session
         print("\nCreating session...")
         params = CreateSessionParams(image_id="linux_latest")
         result = agent_bay.create(params)
-        
+
         if not result.success or not result.session:
             print(f"❌ Failed to create session: {result.error_message}")
             return
-        
+
         session = result.session
         print(f"✅ Session created: {session.session_id}")
-        
+
         # Example 1: List all environment variables
         print("\n" + "=" * 60)
         print("Example 1: List All Environment Variables")
         print("=" * 60)
-        
+
         list_all_environment_variables(session)
-        
+
         # Example 2: Get specific environment variables
         print("\n" + "=" * 60)
         print("Example 2: Get Specific Environment Variables")
         print("=" * 60)
-        
+
         get_environment_variable(session, "PATH")
         get_environment_variable(session, "HOME")
         get_environment_variable(session, "USER")
-        
+
         # Example 3: Set and use environment variables
         print("\n" + "=" * 60)
         print("Example 3: Set and Use Environment Variables")
         print("=" * 60)
-        
+
         set_environment_variable(session, "MY_API_KEY", "secret_key_123")
         set_environment_variable(session, "MY_APP_NAME", "Test Application")
-        
+
         # Example 4: Use environment variables in scripts
         print("\n" + "=" * 60)
         print("Example 4: Use Environment Variables in Scripts")
         print("=" * 60)
-        
+
         use_env_in_script(session)
-        
+
         # Example 5: Environment variable persistence
         print("\n" + "=" * 60)
         print("Example 5: Environment Variable Persistence")
         print("=" * 60)
-        
+
         demonstrate_env_persistence(session)
-        
+
         print("\n✅ Environment variables management examples completed")
-        
+
     except Exception as e:
         print(f"\n❌ Error: {e}")
-        
+
     finally:
         if session:
             print("\n🧹 Cleaning up session...")

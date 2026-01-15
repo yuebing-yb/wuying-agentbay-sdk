@@ -19,7 +19,6 @@ public class CodeExecutionExample {
         try {
             // Get API Key from environment variable
             String apiKey = System.getenv("AGENTBAY_API_KEY");
-            System.out.println(apiKey);
             if (apiKey == null || apiKey.trim().isEmpty()) {
                 System.err.println("Error: AGENTBAY_API_KEY environment variable not set");
                 return;
@@ -30,7 +29,6 @@ public class CodeExecutionExample {
             String endpoint = getEnvOrDefault("AGENTBAY_ENDPOINT", "agentbay.us-east-1.aliyuncs.com");
             int timeout = Integer.parseInt(getEnvOrDefault("AGENTBAY_TIMEOUT", "60000"));
             String imageId = getEnvOrDefault("AGENTBAY_IMAGE_ID", "imgc-0aae4rxtt0yuix7oh");
-            boolean isVpc = Boolean.parseBoolean(getEnvOrDefault("AGENTBAY_IS_VPC", "true"));
 
             // Print configuration
             System.out.println("========== Configuration ==========");
@@ -38,7 +36,6 @@ public class CodeExecutionExample {
             System.out.println("Endpoint: " + endpoint);
             System.out.println("Timeout: " + timeout + "ms");
             System.out.println("Image ID: " + imageId);
-            System.out.println("Is VPC: " + isVpc);
             System.out.println("===================================\n");
 
             // Create AgentBay client
@@ -50,7 +47,6 @@ public class CodeExecutionExample {
             System.out.println("Creating session...");
             CreateSessionParams params = new CreateSessionParams();
             params.setImageId(imageId);
-//            params.setIsVpc(isVpc);
             long startTime = System.currentTimeMillis();
             SessionResult sessionResult = agentBay.create(params);
             long duration = System.currentTimeMillis() - startTime;

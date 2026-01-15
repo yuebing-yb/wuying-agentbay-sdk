@@ -47,8 +47,7 @@ def main():
         # Get the FileSystem interface
         fs = session.file_system
 
-        # ===== BASIC FILE OPERATIONS =====
-        print("\n===== BASIC FILE OPERATIONS =====")
+        # ===== BASIC FILE OPERATIONS ===== print("\n===== BASIC FILE OPERATIONS =====")
 
         # Example 1: Write a simple file
         print("\nExample 1: Writing a simple file...")
@@ -98,8 +97,7 @@ def main():
             print(f"Error reading updated file: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # ===== DIRECTORY OPERATIONS =====
-        print("\n===== DIRECTORY OPERATIONS =====")
+        # ===== DIRECTORY OPERATIONS ===== print("\n===== DIRECTORY OPERATIONS =====")
 
         # Example 4: Create a directory
         print("\nExample 4: Creating a directory...")
@@ -123,8 +121,7 @@ def main():
             print(f"Error listing directory: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # ===== FILE INFORMATION =====
-        print("\n===== FILE INFORMATION =====")
+        # ===== FILE INFORMATION ===== print("\n===== FILE INFORMATION =====")
 
         # Example 6: Get file information
         print("\nExample 6: Getting file information...")
@@ -138,8 +135,7 @@ def main():
             print(f"Error getting file info: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # ===== FILE EDITING =====
-        print("\n===== FILE EDITING =====")
+        # ===== FILE EDITING ===== print("\n===== FILE EDITING =====")
 
         # Example 7: Edit a file
         print("\nExample 7: Editing a file...")
@@ -165,8 +161,7 @@ def main():
             print(f"Error reading edited file: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # ===== FILE MOVING =====
-        print("\n===== FILE MOVING =====")
+        # ===== FILE MOVING ===== print("\n===== FILE MOVING =====")
 
         # Example 8: Move a file
         print("\nExample 8: Moving a file...")
@@ -188,8 +183,7 @@ def main():
             print(f"Error reading moved file: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # ===== FILE SEARCHING =====
-        print("\n===== FILE SEARCHING =====")
+        # ===== FILE SEARCHING ===== print("\n===== FILE SEARCHING =====")
 
         # Create some files for searching with names that match our search patterns
         fs.write_file(
@@ -249,8 +243,7 @@ def main():
             print(f"Error searching files: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # ===== MULTIPLE FILE READING =====
-        print("\n===== MULTIPLE FILE READING =====")
+        # ===== MULTIPLE FILE READING ===== print("\n===== MULTIPLE FILE READING =====")
 
         # Example 12: Read multiple files
         print("\nExample 12: Reading multiple files...")
@@ -270,8 +263,7 @@ def main():
             print(f"Error reading multiple files: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # ===== LARGE FILE OPERATIONS =====
-        print("\n===== LARGE FILE OPERATIONS =====")
+        # ===== LARGE FILE OPERATIONS ===== print("\n===== LARGE FILE OPERATIONS =====")
 
         # Example 13: Write a large file with default chunk size
         print("\nExample 13: Writing a large file with default chunk size...")

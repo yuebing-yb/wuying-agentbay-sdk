@@ -1,3 +1,369 @@
+"""Integration tests for beta pause and beta resume operations (pytest style)."""
+
+import os
+from uuid import uuid4
+
+import pytest
+import pytest_asyncio
+from dotenv import load_dotenv
+
+from agentbay import AsyncAgentBay, Config, CreateSessionParams
+
+load_dotenv()
+
+
+def _get_test_api_key() -> str:
+    """Get API key for integration testing."""
+    return os.environ.get("AGENTBAY_API_KEY") or ""
+
+
+def _get_test_endpoint() -> str:
+    """Get endpoint for integration testing."""
+    return os.environ.get("AGENTBAY_ENDPOINT") or ""
+
+
+@pytest_asyncio.fixture(scope="session")
+async def agent_bay() -> AsyncAgentBay:
+    api_key = _get_test_api_key()
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+
+    endpoint = _get_test_endpoint()
+    if endpoint:
+        cfg = Config(endpoint=endpoint, timeout_ms=60000)
+        return AsyncAgentBay(api_key=api_key, cfg=cfg)
+    return AsyncAgentBay(api_key=api_key)
+
+
+async def _create_test_session(agent_bay: AsyncAgentBay):
+    session_name = f"test-beta-pause-resume-{uuid4().hex[:8]}"
+    params = CreateSessionParams(
+        image_id="linux_latest",
+        labels={"project": "piaoyun-demo", "environment": "testing", "name": session_name},
+    )
+    result = await agent_bay.create(params)
+    assert result.success, f"Failed to create session: {result.error_message}"
+    assert result.session is not None, "Session object is None"
+    return result.session
+
+
+async def _safe_cleanup_session(agent_bay: AsyncAgentBay, session) -> None:
+    if session is None:
+        return
+
+    try:
+        status_result = await session.get_status()
+        if status_result.success and status_result.status == "PAUSED":
+            await session.beta_resume(timeout=180, poll_interval=3)
+    except Exception:
+        pass
+
+    try:
+        await agent_bay.delete(session)
+    except Exception:
+        pass
+
+
+@pytest_asyncio.fixture
+async def session(agent_bay: AsyncAgentBay):
+    s = await _create_test_session(agent_bay)
+    try:
+        yield s
+    finally:
+        await _safe_cleanup_session(agent_bay, s)
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_and_resume_session_success(session):
+    status_result = await session.get_status()
+    assert status_result.success, f"Failed to get session status: {status_result.error_message}"
+    assert status_result.status == "RUNNING", f"Expected RUNNING, got {status_result.status}"
+
+    pause_result = await session.beta_pause(timeout=600, poll_interval=2.0)
+    assert pause_result.success, f"beta_pause failed: {pause_result.error_message}"
+    assert pause_result.status == "PAUSED", f"Expected PAUSED, got {pause_result.status}"
+
+    resume_result = await session.beta_resume(timeout=600, poll_interval=2.0)
+    assert resume_result.success, f"beta_resume failed: {resume_result.error_message}"
+    assert resume_result.status == "RUNNING", f"Expected RUNNING, got {resume_result.status}"
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_and_delete_session_success(agent_bay: AsyncAgentBay):
+    s = await _create_test_session(agent_bay)
+    try:
+        pause_result = await s.beta_pause(timeout=600, poll_interval=2.0)
+        assert pause_result.success, f"beta_pause failed: {pause_result.error_message}"
+
+        resume_result = await s.beta_resume(timeout=600, poll_interval=2.0)
+        assert resume_result.success, f"beta_resume failed: {resume_result.error_message}"
+
+        delete_result = await agent_bay.delete(s)
+        assert delete_result.success, f"delete failed: {delete_result.error_message}"
+    finally:
+        await _safe_cleanup_session(agent_bay, s)
+
+
+@pytest.mark.asyncio
+async def test_agentbay_beta_pause_and_beta_resume_async(agent_bay: AsyncAgentBay, session):
+    pause_result = await agent_bay.beta_pause(session, timeout=600, poll_interval=2.0)
+    assert pause_result.success, f"agent_bay.beta_pause failed: {pause_result.error_message}"
+
+    resume_result = await agent_bay.beta_resume_async(session)
+    assert resume_result.success, f"agent_bay.beta_resume_async failed: {resume_result.error_message}"
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_nonexistent_session(agent_bay: AsyncAgentBay):
+    fake_session_id = f"session-nonexistent-{uuid4().hex[:8]}"
+    get_result = await agent_bay.get(fake_session_id)
+    assert not get_result.success, "Expected get() to fail for nonexistent session"
+
+# Legacy unittest-based tests removed.
+# NOTE: Everything below is kept as inert text to avoid accidental collection.
+if False:
+    r'''
+
+import os
+from uuid import uuid4
+
+import pytest
+import pytest_asyncio
+from dotenv import load_dotenv
+
+from agentbay import AsyncAgentBay, Config, CreateSessionParams
+
+load_dotenv()
+
+
+def _get_test_api_key() -> str:
+    """Get API key for integration testing."""
+    return os.environ.get("AGENTBAY_API_KEY") or ""
+
+
+def _get_test_endpoint() -> str:
+    """Get endpoint for integration testing."""
+    return os.environ.get("AGENTBAY_ENDPOINT") or ""
+
+
+@pytest_asyncio.fixture(scope="session")
+async def agent_bay() -> AsyncAgentBay:
+    api_key = _get_test_api_key()
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+
+    endpoint = _get_test_endpoint()
+    if endpoint:
+        cfg = Config(endpoint=endpoint, timeout_ms=60000)
+        return AsyncAgentBay(api_key=api_key, cfg=cfg)
+    return AsyncAgentBay(api_key=api_key)
+
+
+async def _create_test_session(agent_bay: AsyncAgentBay):
+    session_name = f"test-beta-pause-resume-{uuid4().hex[:8]}"
+    params = CreateSessionParams(
+        image_id="linux_latest",
+        labels={"project": "piaoyun-demo", "environment": "testing", "name": session_name},
+    )
+    result = await agent_bay.create(params)
+    assert result.success, f"Failed to create session: {result.error_message}"
+    assert result.session is not None, "Session object is None"
+    return result.session
+
+
+async def _safe_cleanup_session(agent_bay: AsyncAgentBay, session) -> None:
+    if session is None:
+        return
+
+    try:
+        status_result = await session.get_status()
+        if status_result.success and status_result.status == "PAUSED":
+            await session.beta_resume(timeout=180, poll_interval=3)
+    except Exception:
+        pass
+
+    try:
+        await agent_bay.delete(session)
+    except Exception:
+        pass
+
+
+@pytest_asyncio.fixture
+async def session(agent_bay: AsyncAgentBay):
+    s = await _create_test_session(agent_bay)
+    try:
+        yield s
+    finally:
+        await _safe_cleanup_session(agent_bay, s)
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_and_resume_session_success(session):
+    status_result = await session.get_status()
+    assert status_result.success, f"Failed to get session status: {status_result.error_message}"
+    assert status_result.status == "RUNNING", f"Expected RUNNING, got {status_result.status}"
+
+    pause_result = await session.beta_pause(timeout=600, poll_interval=2.0)
+    assert pause_result.success, f"beta_pause failed: {pause_result.error_message}"
+    assert pause_result.status == "PAUSED", f"Expected PAUSED, got {pause_result.status}"
+
+    resume_result = await session.beta_resume(timeout=600, poll_interval=2.0)
+    assert resume_result.success, f"beta_resume failed: {resume_result.error_message}"
+    assert resume_result.status == "RUNNING", f"Expected RUNNING, got {resume_result.status}"
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_and_delete_session_success(agent_bay: AsyncAgentBay):
+    s = await _create_test_session(agent_bay)
+    try:
+        pause_result = await s.beta_pause(timeout=600, poll_interval=2.0)
+        assert pause_result.success, f"beta_pause failed: {pause_result.error_message}"
+
+        resume_result = await s.beta_resume(timeout=600, poll_interval=2.0)
+        assert resume_result.success, f"beta_resume failed: {resume_result.error_message}"
+
+        delete_result = await agent_bay.delete(s)
+        assert delete_result.success, f"delete failed: {delete_result.error_message}"
+    finally:
+        await _safe_cleanup_session(agent_bay, s)
+
+
+@pytest.mark.asyncio
+async def test_agentbay_beta_pause_and_beta_resume_async(agent_bay: AsyncAgentBay, session):
+    pause_result = await agent_bay.beta_pause(session, timeout=600, poll_interval=2.0)
+    assert pause_result.success, f"agent_bay.beta_pause failed: {pause_result.error_message}"
+
+    resume_result = await agent_bay.beta_resume_async(session)
+    assert resume_result.success, f"agent_bay.beta_resume_async failed: {resume_result.error_message}"
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_nonexistent_session(agent_bay: AsyncAgentBay):
+    fake_session_id = f"session-nonexistent-{uuid4().hex[:8]}"
+    get_result = await agent_bay.get(fake_session_id)
+    assert not get_result.success, "Expected get() to fail for nonexistent session"
+
+"""Integration tests for beta pause and beta resume operations (pytest style)."""
+
+import os
+from uuid import uuid4
+
+import pytest
+import pytest_asyncio
+from dotenv import load_dotenv
+
+from agentbay import AsyncAgentBay, Config, CreateSessionParams
+
+load_dotenv()
+
+
+def _get_test_api_key() -> str:
+    """Get API key for integration testing."""
+    return os.environ.get("AGENTBAY_API_KEY") or ""
+
+
+def _get_test_endpoint() -> str:
+    """Get endpoint for integration testing."""
+    return os.environ.get("AGENTBAY_ENDPOINT") or ""
+
+
+@pytest_asyncio.fixture(scope="session")
+async def agent_bay() -> AsyncAgentBay:
+    api_key = _get_test_api_key()
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+
+    endpoint = _get_test_endpoint()
+    if endpoint:
+        cfg = Config(endpoint=endpoint, timeout_ms=60000)
+        return AsyncAgentBay(api_key=api_key, cfg=cfg)
+    return AsyncAgentBay(api_key=api_key)
+
+
+async def _create_test_session(agent_bay: AsyncAgentBay):
+    session_name = f"test-beta-pause-resume-{uuid4().hex[:8]}"
+    params = CreateSessionParams(
+        image_id="linux_latest",
+        labels={"project": "piaoyun-demo", "environment": "testing", "name": session_name},
+    )
+    result = await agent_bay.create(params)
+    assert result.success, f"Failed to create session: {result.error_message}"
+    assert result.session is not None, "Session object is None"
+    return result.session
+
+
+async def _safe_cleanup_session(agent_bay: AsyncAgentBay, session) -> None:
+    if session is None:
+        return
+
+    try:
+        status_result = await session.get_status()
+        if status_result.success and status_result.status == "PAUSED":
+            await session.beta_resume(timeout=180, poll_interval=3)
+    except Exception:
+        pass
+
+    try:
+        await agent_bay.delete(session)
+    except Exception:
+        pass
+
+
+@pytest_asyncio.fixture
+async def session(agent_bay: AsyncAgentBay):
+    s = await _create_test_session(agent_bay)
+    try:
+        yield s
+    finally:
+        await _safe_cleanup_session(agent_bay, s)
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_and_resume_session_success(session):
+    status_result = await session.get_status()
+    assert status_result.success, f"Failed to get session status: {status_result.error_message}"
+    assert status_result.status == "RUNNING", f"Expected RUNNING, got {status_result.status}"
+
+    pause_result = await session.beta_pause(timeout=600, poll_interval=2.0)
+    assert pause_result.success, f"beta_pause failed: {pause_result.error_message}"
+    assert pause_result.status == "PAUSED", f"Expected PAUSED, got {pause_result.status}"
+
+    resume_result = await session.beta_resume(timeout=600, poll_interval=2.0)
+    assert resume_result.success, f"beta_resume failed: {resume_result.error_message}"
+    assert resume_result.status == "RUNNING", f"Expected RUNNING, got {resume_result.status}"
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_and_delete_session_success(agent_bay: AsyncAgentBay):
+    s = await _create_test_session(agent_bay)
+    try:
+        pause_result = await s.beta_pause(timeout=600, poll_interval=2.0)
+        assert pause_result.success, f"beta_pause failed: {pause_result.error_message}"
+
+        resume_result = await s.beta_resume(timeout=600, poll_interval=2.0)
+        assert resume_result.success, f"beta_resume failed: {resume_result.error_message}"
+
+        delete_result = await agent_bay.delete(s)
+        assert delete_result.success, f"delete failed: {delete_result.error_message}"
+    finally:
+        await _safe_cleanup_session(agent_bay, s)
+
+
+@pytest.mark.asyncio
+async def test_agentbay_beta_pause_and_beta_resume_async(agent_bay: AsyncAgentBay, session):
+    pause_result = await agent_bay.beta_pause(session, timeout=600, poll_interval=2.0)
+    assert pause_result.success, f"agent_bay.beta_pause failed: {pause_result.error_message}"
+
+    resume_result = await agent_bay.beta_resume_async(session)
+    assert resume_result.success, f"agent_bay.beta_resume_async failed: {resume_result.error_message}"
+
+
+@pytest.mark.asyncio
+async def test_beta_pause_nonexistent_session(agent_bay: AsyncAgentBay):
+    fake_session_id = f"session-nonexistent-{uuid4().hex[:8]}"
+    get_result = await agent_bay.get(fake_session_id)
+    assert not get_result.success, "Expected get() to fail for nonexistent session"
+
 """Integration tests for Session pause and resume operations."""
 
 import os
@@ -5,6 +371,7 @@ import time
 import unittest
 from uuid import uuid4
 
+import asyncio
 import pytest
 from dotenv import load_dotenv
 
@@ -60,13 +427,13 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
             try:
                 # Try to resume session first in case it's paused
                 try:
-                    session.resume()
+                    asyncio.run(session.beta_resume())
                     print(f"  ✓ Resumed session: {session.session_id}")
                 except Exception as resume_error:
                     print(f"  ⚠ Could not resume session {session.session_id}: {resume_error}")
                 
                 # Delete session
-                result = self.agent_bay.delete(session)
+                result = asyncio.run(self.agent_bay.delete(session))
                 if result.success:
                     print(f"  ✓ Deleted session: {session.session_id}")
                 else:
@@ -136,7 +503,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause the session
         print(f"\nStep 2: Pausing session...")
-        pause_result = await self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.beta_pause(session)
 
         # Verify pause result
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -168,7 +535,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Resume the session (synchronous)
         print(f"\nStep 4: Resuming session...")
-        resume_result = await self.agent_bay.resume(session, timeout=120, poll_interval=3)
+        resume_result = await self.agent_bay.beta_resume(session, timeout=120, poll_interval=3)
 
         # Verify resume result
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -200,7 +567,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause the session first
         print(f"\nStep 1: Pausing session...")
-        pause_result = await self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.beta_pause(session)
         self.assertTrue(
             pause_result.success, f"Pause failed: {pause_result.error_message}"
         )
@@ -220,7 +587,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"\nStep 3: Resuming session asynchronously...")
         import asyncio
 
-        resume_result = asyncio.run(self.agent_bay.resume_async(session))
+        resume_result = await self.agent_bay.beta_resume_async(session)
 
         # Verify async resume result
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -264,7 +631,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause the session
         print(f"\nStep 2: Pausing session...")
-        pause_result = await self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.beta_pause(session)
 
         # Verify pause result
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -330,7 +697,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         )
 
         # This should return a failed SessionPauseResult
-        pause_result = await self.agent_bay.pause(invalid_session)
+        pause_result = await self.agent_bay.beta_pause(invalid_session)
 
         # Verify that the result is a SessionPauseResult and indicates failure
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -356,7 +723,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         )
 
         # This should return a failed SessionResumeResult
-        resume_result = await self.agent_bay.resume(invalid_session)
+        resume_result = await self.agent_bay.beta_resume(invalid_session)
 
         # Verify that the result is a SessionResumeResult and indicates failure
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -382,7 +749,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         )
 
         # This should return a failed SessionResumeResult
-        resume_result = await self.agent_bay.resume(invalid_session)
+        resume_result = await self.agent_bay.beta_resume(invalid_session)
 
         # Verify that the result is a SessionResumeResult and indicates failure
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -403,7 +770,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause the session
         print(f"\nStep 1: Pausing session...")
-        pause_result1 = self.agent_bay.pause(session)
+        pause_result1 = await self.agent_bay.beta_pause(session)
         self.assertTrue(
             pause_result1.success, f"First pause failed: {pause_result1.error_message}"
         )
@@ -421,7 +788,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Try to pause again
         print(f"\nStep 3: Attempting to pause already paused session...")
-        pause_result2 = self.agent_bay.pause(session)
+        pause_result2 = await self.agent_bay.beta_pause(session)
         self.assertFalse(pause_result2.success)
 
     @pytest.mark.asyncio
@@ -442,7 +809,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Try to resume the already running session
         print(f"\nAttempting to resume already running session...")
-        resume_result = await self.agent_bay.resume(session, timeout=30, poll_interval=2)
+        resume_result = await self.agent_bay.beta_resume(session, timeout=30, poll_interval=2)
 
         # Resume of already running session may succeed or have specific behavior
         # Just verify it doesn't crash and returns a proper result object
@@ -462,7 +829,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Pause with custom parameters (using agent_bay method)
         print(f"\nStep 1: Pausing session with custom parameters...")
-        pause_result = await self.agent_bay.pause(session, timeout=300, poll_interval=3.0)
+        pause_result = await self.agent_bay.beta_pause(session, timeout=300, poll_interval=3.0)
 
         self.assertIsInstance(pause_result, SessionPauseResult)
         self.assertTrue(
@@ -483,7 +850,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Resume with custom parameters
         print(f"\nStep 3: Resuming session with custom parameters...")
-        resume_result = await self.agent_bay.resume(session, timeout=300, poll_interval=3.0)
+        resume_result = await self.agent_bay.beta_resume(session, timeout=300, poll_interval=3.0)
 
         self.assertIsInstance(resume_result, SessionResumeResult)
         self.assertTrue(
@@ -530,13 +897,13 @@ class TestSessionPauseResumeEdgeCases(unittest.TestCase):
             try:
                 # Try to resume session first in case it's paused
                 try:
-                    session.resume()
+                    asyncio.run(session.beta_resume())
                     print(f"  ✓ Resumed session: {session.session_id}")
                 except Exception as resume_error:
                     print(f"  ⚠ Could not resume session {session.session_id}: {resume_error}")
                 
                 # Delete session
-                result = self.agent_bay.delete(session)
+                result = asyncio.run(self.agent_bay.delete(session))
                 if result.success:
                     print(f"  ✓ Deleted session: {session.session_id}")
                 else:
@@ -579,7 +946,7 @@ class TestSessionPauseResumeEdgeCases(unittest.TestCase):
 
         # Pause with short timeout (using agent_bay method)
         print(f"\nPausing session with short timeout...")
-        pause_result = await self.agent_bay.pause(session, timeout=10, poll_interval=1)
+        pause_result = await self.agent_bay.beta_pause(session, timeout=10, poll_interval=1)
 
         # Pause should succeed regardless of timeout parameter
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -601,3 +968,4 @@ if __name__ == "__main__":
     print("=" * 60 + "\n")
 
     unittest.main(verbosity=2)
+    '''

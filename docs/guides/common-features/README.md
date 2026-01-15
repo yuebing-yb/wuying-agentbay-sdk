@@ -24,7 +24,6 @@ Advanced capabilities for complex use cases:
 
 - [Custom Images](advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](advanced/session-link-access.md) - Session connectivity and URL generation
-- [VPC Sessions](advanced/vpc-sessions.md) - Isolated network environments
 - [Agent Modules](advanced/agent-modules.md) - AI-powered task execution
 - [OSS Integration](advanced/oss-integration.md) - Object Storage Service integration
 

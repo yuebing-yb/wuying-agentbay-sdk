@@ -280,7 +280,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "create_directory",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -328,7 +329,11 @@ export class FileSystem {
   async deleteFile(path: string): Promise<BoolResult> {
     try {
       const args = { path };
-      const result = await this.session.callMcpTool("delete_file", args);
+      const result = await this.session.callMcpTool(
+        "delete_file",
+        args,
+        false
+      );
 
       if (!result.success) {
         return {
@@ -437,7 +442,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "edit_file",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -489,7 +495,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "get_file_info",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -574,7 +581,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "list_directory",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -635,7 +643,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "move_file",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -695,7 +704,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "read_file",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -819,7 +829,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "read_multiple_files",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -939,7 +950,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "search_files",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -1010,7 +1022,8 @@ export class FileSystem {
 
       const result = await this.session.callMcpTool(
         "write_file",
-        args
+        args,
+        false
       );
 
       if (!result.success) {
@@ -1480,7 +1493,11 @@ export class FileSystem {
   async getFileChange(path: string): Promise<FileChangeResult> {
     try {
       const args = { path };
-      const result = await this.session.callMcpTool("get_file_change", args);
+      const result = await this.session.callMcpTool(
+        "get_file_change",
+        args,
+        false
+      );
 
       if (!result.success) {
         return {

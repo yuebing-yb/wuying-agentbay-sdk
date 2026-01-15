@@ -106,7 +106,10 @@ class Computer(BaseService):
 
         args = {"x": x, "y": y, "button": button_str}
         try:
-            result = self.session.call_mcp_tool("click_mouse", args)
+            result = self.session.call_mcp_tool(
+                "click_mouse",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -160,7 +163,10 @@ class Computer(BaseService):
         """
         args = {"x": x, "y": y}
         try:
-            result = self.session.call_mcp_tool("move_mouse", args)
+            result = self.session.call_mcp_tool(
+                "move_mouse",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -243,7 +249,10 @@ class Computer(BaseService):
             "button": button_str,
         }
         try:
-            result = self.session.call_mcp_tool("drag_mouse", args)
+            result = self.session.call_mcp_tool(
+                "drag_mouse",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -319,7 +328,10 @@ class Computer(BaseService):
 
         args = {"x": x, "y": y, "direction": direction_str, "amount": amount}
         try:
-            result = self.session.call_mcp_tool("scroll", args)
+            result = self.session.call_mcp_tool(
+                "scroll",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -370,7 +382,10 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self.session.call_mcp_tool("get_cursor_position", args)
+            result = self.session.call_mcp_tool(
+                "get_cursor_position",
+                args,
+            )
 
             if not result.success:
                 return OperationResult(
@@ -423,7 +438,10 @@ class Computer(BaseService):
         """
         args = {"text": text}
         try:
-            result = self.session.call_mcp_tool("input_text", args)
+            result = self.session.call_mcp_tool(
+                "input_text",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -477,7 +495,10 @@ class Computer(BaseService):
         """
         args = {"keys": keys, "hold": hold}
         try:
-            result = self.session.call_mcp_tool("press_keys", args)
+            result = self.session.call_mcp_tool(
+                "press_keys",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -530,7 +551,10 @@ class Computer(BaseService):
         """
         args = {"keys": keys}
         try:
-            result = self.session.call_mcp_tool("release_keys", args)
+            result = self.session.call_mcp_tool(
+                "release_keys",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -585,7 +609,10 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self.session.call_mcp_tool("get_screen_size", args)
+            result = self.session.call_mcp_tool(
+                "get_screen_size",
+                args,
+            )
 
             if not result.success:
                 return OperationResult(
@@ -648,7 +675,10 @@ class Computer(BaseService):
         """
         args = {}
         try:
-            result = self.session.call_mcp_tool("system_screenshot", args)
+            result = self.session.call_mcp_tool(
+                "system_screenshot",
+                args,
+            )
 
             if not result.success:
                 return OperationResult(
@@ -698,65 +728,11 @@ class Computer(BaseService):
         if fmt not in ("png", "jpeg"):
             raise ValueError("Invalid format: must be 'png', 'jpeg', or 'jpg'")
 
-        def _maybe_extract_base64(text: str) -> str:
-            s = (text or "").strip()
-            if not s:
-                return ""
-            if "base64," in s:
-                s = s.split("base64,", 1)[1]
-            if s.startswith("data:image/"):
-                comma = s.find(",")
-                if comma >= 0:
-                    s = s[comma + 1 :]
-            return "".join(s.split())
-
-        def _decode_base64_any(b64_text: str) -> bytes:
-            s = _maybe_extract_base64(b64_text)
-            if not s:
-                raise ValueError("empty base64 string")
-            pad = (-len(s)) % 4
-            if pad:
-                s = s + ("=" * pad)
-            if "-" in s or "_" in s:
-                return base64.urlsafe_b64decode(s)
-            return base64.b64decode(s, validate=True)
-
-        def _extract_from_json(obj: Any) -> Optional[bytes]:
-            if isinstance(obj, dict):
-                content = obj.get("content")
-                if isinstance(content, list):
-                    for item in content:
-                        if not isinstance(item, dict):
-                            continue
-                        t = str(item.get("type", "") or "").lower()
-                        if t == "image":
-                            for k in ("data", "base64", "b64"):
-                                v = item.get(k)
-                                if isinstance(v, str) and v.strip():
-                                    return _decode_base64_any(v)
-                        if t == "text":
-                            v = item.get("text")
-                            if isinstance(v, str) and v.strip():
-                                try:
-                                    return _decode_base64_any(v)
-                                except Exception:
-                                    pass
-                for k in ("data", "base64", "b64", "image", "Image"):
-                    v = obj.get(k)
-                    if isinstance(v, str) and v.strip():
-                        try:
-                            return _decode_base64_any(v)
-                        except Exception:
-                            pass
-            if isinstance(obj, list):
-                for item in obj:
-                    got = _extract_from_json(item)
-                    if got:
-                        return got
-            return None
-
         args = {"format": fmt}
-        result = self.session.call_mcp_tool("screenshot", args)
+        result = self.session.call_mcp_tool(
+            "screenshot",
+            args,
+        )
 
         if not result.success:
             raise AgentBayError(
@@ -766,41 +742,38 @@ class Computer(BaseService):
         if not isinstance(result.data, str) or not result.data.strip():
             raise AgentBayError("Screenshot tool returned empty data")
 
-        raw: Optional[bytes] = None
         text = result.data.strip()
+        # Backend contract: screenshot tool returns a JSON object string with
+        # top-level field "data" containing base64.
+        #
+        # Observed backend payload (real integration run, 2026-01-14):
+        # - json_top_keys: ['data', 'height', 'mime_type', 'type', 'width']
+        # - data_prefix_80:
+        #   '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwg'
+        if not text.startswith("{"):
+            raise AgentBayError("Screenshot tool returned non-JSON data")
+
         try:
-            raw = _decode_base64_any(text)
-        except Exception:
-            raw = None
+            obj = json.loads(text)
+        except Exception as e:
+            raise AgentBayError(f"Invalid screenshot JSON: {e}") from e
 
-        if raw is None:
-            try:
-                parsed = json.loads(text)
-            except Exception:
-                parsed = None
-            if parsed is not None:
-                raw = _extract_from_json(parsed)
+        if not isinstance(obj, dict):
+            raise AgentBayError("Invalid screenshot JSON: expected object")
+        b64 = obj.get("data")
+        if not isinstance(b64, str) or not b64.strip():
+            raise AgentBayError("Screenshot JSON missing base64 field")
+        try:
+            raw = base64.b64decode(b64, validate=True)
+        except Exception as e:
+            raise AgentBayError(f"Failed to decode screenshot data: {e}") from e
 
-        if raw is None:
-            raise AgentBayError(
-                "Failed to decode screenshot data: unsupported response format (not base64 or JSON-with-image)"
-            )
-
-        def _normalize_by_magic(data: bytes, expected_fmt: str) -> bytes:
-            if expected_fmt == "jpeg":
-                magic = b"\xff\xd8\xff"
-            else:
-                magic = b"\x89PNG\r\n\x1a\n"
-            if data.startswith(magic):
-                return data
-            idx = data.find(magic, 0, 64)
-            if idx > 0:
-                return data[idx:]
-            raise AgentBayError(
-                f"Screenshot data does not match expected format '{expected_fmt}'"
-            )
-
-        raw = _normalize_by_magic(raw, fmt)
+        if fmt == "jpeg":
+            magic = b"\xff\xd8\xff"
+        else:
+            magic = b"\x89PNG\r\n\x1a\n"
+        if not raw.startswith(magic):
+            raise AgentBayError(f"Screenshot data does not match expected format '{fmt}'")
 
         return ScreenshotResult(
             request_id=result.request_id,
@@ -832,7 +805,10 @@ class Computer(BaseService):
         """
         try:
             args = {"timeout_ms": timeout_ms}
-            result = self.session.call_mcp_tool("list_root_windows", args)
+            result = self.session.call_mcp_tool(
+                "list_root_windows",
+                args,
+            )
 
             if not result.success:
                 return WindowListResult(
@@ -888,7 +864,10 @@ class Computer(BaseService):
         """
         try:
             args = {}
-            result = self.session.call_mcp_tool("get_active_window", args)
+            result = self.session.call_mcp_tool(
+                "get_active_window",
+                args,
+            )
 
             if not result.success:
                 return WindowInfoResult(
@@ -955,7 +934,10 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("activate_window", args)
+            result = self.session.call_mcp_tool(
+                "activate_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1008,7 +990,10 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("close_window", args)
+            result = self.session.call_mcp_tool(
+                "close_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1061,7 +1046,10 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("maximize_window", args)
+            result = self.session.call_mcp_tool(
+                "maximize_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1114,7 +1102,10 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("minimize_window", args)
+            result = self.session.call_mcp_tool(
+                "minimize_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1169,7 +1160,10 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("restore_window", args)
+            result = self.session.call_mcp_tool(
+                "restore_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1226,7 +1220,10 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id, "width": width, "height": height}
-            result = self.session.call_mcp_tool("resize_window", args)
+            result = self.session.call_mcp_tool(
+                "resize_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1280,7 +1277,10 @@ class Computer(BaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = self.session.call_mcp_tool("fullscreen_window", args)
+            result = self.session.call_mcp_tool(
+                "fullscreen_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1332,7 +1332,10 @@ class Computer(BaseService):
         """
         try:
             args = {"on": on}
-            result = self.session.call_mcp_tool("focus_mode", args)
+            result = self.session.call_mcp_tool(
+                "focus_mode",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1399,7 +1402,10 @@ class Computer(BaseService):
                 "ignore_system_apps": ignore_system_apps,
             }
 
-            result = self.session.call_mcp_tool("get_installed_apps", args)
+            result = self.session.call_mcp_tool(
+                "get_installed_apps",
+                args,
+            )
 
             if not result.success:
                 return InstalledAppListResult(
@@ -1468,7 +1474,10 @@ class Computer(BaseService):
             if activity:
                 args["activity"] = activity
 
-            result = self.session.call_mcp_tool("start_app", args)
+            result = self.session.call_mcp_tool(
+                "start_app",
+                args,
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -1528,7 +1537,10 @@ class Computer(BaseService):
             get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
         """
         try:
-            result = self.session.call_mcp_tool("list_visible_apps", {})
+            result = self.session.call_mcp_tool(
+                "list_visible_apps",
+                {},
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -1586,7 +1598,10 @@ class Computer(BaseService):
         """
         try:
             args = {"pname": pname}
-            result = self.session.call_mcp_tool("stop_app_by_pname", args)
+            result = self.session.call_mcp_tool(
+                "stop_app_by_pname",
+                args,
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1626,7 +1641,10 @@ class Computer(BaseService):
         """
         try:
             args = {"pid": pid}
-            result = self.session.call_mcp_tool("stop_app_by_pid", args)
+            result = self.session.call_mcp_tool(
+                "stop_app_by_pid",
+                args,
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1666,7 +1684,10 @@ class Computer(BaseService):
         """
         try:
             args = {"stop_cmd": stop_cmd}
-            result = self.session.call_mcp_tool("stop_app_by_cmd", args)
+            result = self.session.call_mcp_tool(
+                "stop_app_by_cmd",
+                args,
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,

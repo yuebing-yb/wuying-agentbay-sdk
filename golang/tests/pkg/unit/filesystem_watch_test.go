@@ -47,12 +47,7 @@ func (m *MockWatchSession) HttpPort() string {
 	return args.String(0)
 }
 
-func (m *MockWatchSession) FindServerForTool(toolName string) string {
-	args := m.Called(toolName)
-	return args.String(0)
-}
-
-func (m *MockWatchSession) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+func (m *MockWatchSession) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	mockArgs := m.Called(toolName, args)
 	return mockArgs.Get(0).(*models.McpToolResult), mockArgs.Error(1)
 }

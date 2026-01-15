@@ -264,7 +264,7 @@ def _prepare_for_screenshots(session) -> None:
 
 
 agent_bay = AgentBay()
-session = agent_bay.create(CreateSessionParams(image_id="imgc-0ab5takhnlaixj11v")).session
+session = agent_bay.create(CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp")).session
 try:
     _prepare_for_screenshots(session)
     result = session.mobile.beta_take_screenshot()

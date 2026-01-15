@@ -34,7 +34,7 @@ def agent_bay():
     api_key = os.environ.get("AGENTBAY_API_KEY")
     if not api_key or os.environ.get("CI"):
         pytest.skip("Skipping integration test: No API key available or running in CI")
-    
+
     # Initialize AgentBay client
     return AgentBay(api_key)
 
@@ -44,17 +44,17 @@ def browser_context_fixture(agent_bay):
     """Create and cleanup a browser context for the test module."""
     # Create a unique context name for this test
     context_name = f"test-browser-context-{int(time.time())}"
-    
+
     # Create a context
     context_result = agent_bay.context.get(context_name, True)
     if not context_result.success or not context_result.context:
         pytest.skip("Failed to create context")
-    
+
     context = context_result.context
     print(f"Created context: {context.name} (ID: {context.id})")
-    
+
     yield context
-    
+
     # Clean up context
     try:
         agent_bay.context.delete(context)
@@ -67,7 +67,7 @@ def browser_context_fixture(agent_bay):
 def test_browser_context_cookie_persistence(agent_bay, browser_context_fixture):
     """Test that manually set cookies persist across sessions with the same browser context."""
     context = browser_context_fixture
-    
+
     # Test data
     test_url = "https://www.baidu.com"
     test_domain = "baidu.com"

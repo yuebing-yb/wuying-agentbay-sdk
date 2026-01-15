@@ -33,6 +33,86 @@ AgentBay represents the main client for interacting with the AgentBay cloud runt
 
 ### Methods
 
+### BetaPause
+
+```go
+func (ab *AgentBay) BetaPause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+BetaPause synchronously pauses a session (beta), putting it into a dormant state to reduce resource
+usage and costs. BetaPause puts the session into a PAUSED state where computational resources are
+significantly reduced. The session state is preserved and can be resumed later to continue work.
+
+Parameters:
+  - session: The session to pause.
+  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Delegates to session's BetaPause method for actual implementation - Returns detailed result with
+success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+pauseResult, _ := client.BetaPause(result.Session, 300, 2.0)
+client.BetaResume(result.Session, 300, 2.0)
+```
+
+### BetaResume
+
+```go
+func (ab *AgentBay) BetaResume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+BetaResume synchronously resumes a session (beta) from a paused state to continue work. BetaResume
+restores the session from PAUSED state back to RUNNING state. All previous session state and data
+are preserved during resume operation.
+
+Parameters:
+  - session: The session to resume.
+  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Delegates to session's BetaResume method for actual implementation - Returns detailed result with
+success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+client.BetaPause(result.Session, 300, 2.0)
+resumeResult, _ := client.BetaResume(result.Session, 300, 2.0)
+```
+
 ### Create
 
 ```go
@@ -46,7 +126,6 @@ Parameters:
   - params: Configuration parameters for the session (optional)
   - Labels: Key-value pairs for session metadata
   - ImageId: Custom image ID for the session environment
-  - IsVpc: Whether to create a VPC session
   - PolicyId: Security policy ID
   - ExtraConfigs: Additional configuration options
 
@@ -187,86 +266,6 @@ Returns:
 client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.ListByStatus(SessionStatusRunning, nil, nil, nil)
 result, _ := client.ListByStatus("", nil, nil, nil) // No status filter
-```
-
-### Pause
-
-```go
-func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
-```
-
-Pause synchronously pauses a session, putting it into a dormant state to reduce resource usage and
-costs. Pause puts the session into a PAUSED state where computational resources are significantly
-reduced. The session state is preserved and can be resumed later to continue work.
-
-Parameters:
-  - session: The session to pause.
-  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
-  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
-
-Returns:
-  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
-    any.
-  - error: Error if the operation fails at the transport level
-
-Behavior:
-
-- Delegates to session's Pause method for actual implementation - Returns detailed result with
-success status and request tracking
-
-Exceptions:
-
-- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
-result for timeout conditions - Returns Go error for transport-level failures
-
-**Example:**
-
-```go
-client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-result, _ := client.Create(nil)
-defer result.Session.Delete()
-pauseResult, _ := client.Pause(result.Session, 300, 2.0)
-client.Resume(result.Session, 300, 2.0)
-```
-
-### Resume
-
-```go
-func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
-```
-
-Resume synchronously resumes a session from a paused state to continue work. Resume restores the
-session from PAUSED state back to RUNNING state. All previous session state and data are preserved
-during resume operation.
-
-Parameters:
-  - session: The session to resume.
-  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
-  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
-
-Returns:
-  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
-    any.
-  - error: Error if the operation fails at the transport level
-
-Behavior:
-
-- Delegates to session's Resume method for actual implementation - Returns detailed result with
-success status and request tracking
-
-Exceptions:
-
-- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
-result for timeout conditions - Returns Go error for transport-level failures
-
-**Example:**
-
-```go
-client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-result, _ := client.Create(nil)
-defer result.Session.Delete()
-client.Pause(result.Session, 300, 2.0)
-resumeResult, _ := client.Resume(result.Session, 300, 2.0)
 ```
 
 ### Related Functions

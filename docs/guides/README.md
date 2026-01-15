@@ -20,7 +20,6 @@ Features available across all environments:
 **Advanced**
 - [Custom Images](common-features/advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](common-features/advanced/session-link-access.md) - Session connectivity and URL generation
-- [VPC Sessions](common-features/advanced/vpc-sessions.md) - Virtual private cloud session configuration
 - [Agent Modules](common-features/advanced/agent-modules.md) - AI-driven automation capabilities
 - [OSS Integration](common-features/advanced/oss-integration.md) - Object Storage Service integration
 

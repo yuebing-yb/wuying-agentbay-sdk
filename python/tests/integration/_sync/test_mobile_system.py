@@ -27,17 +27,17 @@ def mobile_session():
     )
     result = agent_bay.create(params)
     session = result.session
-    
+
     class SessionWrapper:
         def __init__(self):
             self.agent_bay = agent_bay
             self.session = session
             self.ui = session.mobile
             self.application = session.mobile
-    
+
     wrapper = SessionWrapper()
     yield wrapper
-    
+
     # Cleanup
     try:
         if session:

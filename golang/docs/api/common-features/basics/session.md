@@ -11,16 +11,14 @@ type Session struct {
 	AgentBay	*AgentBay
 	SessionID	string
 	ImageId		string	// ImageId used when creating this session
-
-	// VPC-related information
-	IsVpcEnabled		bool	// Whether this session uses VPC resources
-	NetworkInterfaceIP	string	// Network interface IP for VPC sessions
-	HttpPortNumber		string	// HTTP port for VPC sessions
-	Token			string	// Token for VPC sessions
-	LinkUrl			string	// LinkUrl for LinkUrl-based VPC route
+	McpTools	[]McpTool
 
 	// Resource URL for accessing the session
 	ResourceUrl	string
+
+	// LinkUrl-based direct tool call (non-VPC)
+	Token	string
+	LinkUrl	string
 
 	// Browser replay enabled flag
 	EnableBrowserReplay	bool
@@ -43,9 +41,6 @@ type Session struct {
 
 	// Context management
 	Context	*ContextManager
-
-	// MCP tools available for this session
-	McpTools	[]McpTool
 }
 ```
 
@@ -55,6 +50,84 @@ Session represents a session in the AgentBay cloud environment.
 MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ### Methods
+
+### BetaPause
+
+```go
+func (s *Session) BetaPause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+```
+
+BetaPause synchronously pauses this session (beta), putting it into a dormant state to reduce
+resource usage and costs. BetaPause puts the session into a PAUSED state where computational
+resources are significantly reduced. The session state is preserved and can be resumed later to
+continue work.
+
+Parameters:
+  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Initiates pause operation through the PauseSessionAsync API - Polls session status until PAUSED
+state or timeout - Returns detailed result with success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+pauseResult, _ := result.Session.BetaPause(300, 2.0)
+```
+
+### BetaResume
+
+```go
+func (s *Session) BetaResume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+```
+
+BetaResume synchronously resumes this session (beta) from a paused state to continue work.
+BetaResume restores the session from PAUSED state back to RUNNING state. All previous session state
+and data are preserved during resume operation.
+
+Parameters:
+  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
+  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
+
+Returns:
+  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
+    any.
+  - error: Error if the operation fails at the transport level
+
+Behavior:
+
+- Initiates resume operation through the ResumeSessionAsync API - Polls session status until RUNNING
+state or timeout - Returns detailed result with success status and request tracking
+
+Exceptions:
+
+- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
+result for timeout conditions - Returns Go error for transport-level failures
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+defer result.Session.Delete()
+result.Session.BetaPause(300, 2.0)
+resumeResult, _ := result.Session.BetaResume(300, 2.0)
+```
 
 ### Delete
 
@@ -183,7 +256,7 @@ linkResult, _ := result.Session.GetLink(nil, &port, nil)
 func (s *Session) GetLinkUrl() string
 ```
 
-GetLinkUrl returns the LinkUrl for LinkUrl-based VPC sessions.
+GetLinkUrl returns the LinkUrl for LinkUrl-based direct tool calls.
 
 ### GetMetrics
 
@@ -210,7 +283,7 @@ GetSessionDetail API and returns status only.
 func (s *Session) GetToken() string
 ```
 
-GetToken returns the token for VPC sessions
+GetToken returns the token for LinkUrl-based direct tool calls.
 
 ### Info
 
@@ -255,8 +328,8 @@ Returns:
 Behavior:
 
 - Uses the ImageId from session creation - Defaults to "linux_latest" if ImageId is empty -
-Retrieves all available MCP tools for the specified image - Updates the session's McpTools field
-with the retrieved tools
+Retrieves all available MCP tools for the specified image - Does not store tools on the Session (no
+caching)
 
 **Example:**
 
@@ -265,83 +338,6 @@ client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
 result, _ := client.Create(nil)
 defer result.Session.Delete()
 toolsResult, _ := result.Session.ListMcpTools()
-```
-
-### Pause
-
-```go
-func (s *Session) Pause(timeout int, pollInterval float64) (*models.SessionPauseResult, error)
-```
-
-Pause synchronously pauses this session, putting it into a dormant state to reduce resource
-usage and costs. Pause puts the session into a PAUSED state where computational resources are
-significantly reduced. The session state is preserved and can be resumed later to continue work.
-
-Parameters:
-  - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
-  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
-
-Returns:
-  - *models.SessionPauseResult: Result containing success status, request ID, and error message if
-    any.
-  - error: Error if the operation fails at the transport level
-
-Behavior:
-
-- Initiates pause operation through the PauseSessionAsync API - Polls session status until PAUSED
-state or timeout - Returns detailed result with success status and request tracking
-
-Exceptions:
-
-- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
-result for timeout conditions - Returns Go error for transport-level failures
-
-**Example:**
-
-```go
-client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-result, _ := client.Create(nil)
-defer result.Session.Delete()
-pauseResult, _ := result.Session.Pause(300, 2.0)
-```
-
-### Resume
-
-```go
-func (s *Session) Resume(timeout int, pollInterval float64) (*models.SessionResumeResult, error)
-```
-
-Resume synchronously resumes this session from a paused state to continue work. Resume restores the
-session from PAUSED state back to RUNNING state. All previous session state and data are preserved
-during resume operation.
-
-Parameters:
-  - timeout: Timeout in seconds to wait for the session to resume. Defaults to 600 seconds.
-  - pollInterval: Interval in seconds between status polls. Defaults to 2.0 seconds.
-
-Returns:
-  - *models.SessionResumeResult: Result containing success status, request ID, and error message if
-    any.
-  - error: Error if the operation fails at the transport level
-
-Behavior:
-
-- Initiates resume operation through the ResumeSessionAsync API - Polls session status until RUNNING
-state or timeout - Returns detailed result with success status and request tracking
-
-Exceptions:
-
-- Returns error result (not Go error) for API-level errors like invalid session ID - Returns error
-result for timeout conditions - Returns Go error for transport-level failures
-
-**Example:**
-
-```go
-client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
-result, _ := client.Create(nil)
-defer result.Session.Delete()
-result.Session.Pause(300, 2.0)
-resumeResult, _ := result.Session.Resume(300, 2.0)
 ```
 
 ### SetLabels
@@ -398,9 +394,6 @@ type CreateSessionParams struct {
 	// ContextSync is a list of context synchronization configurations.
 	// These configurations define how contexts should be synchronized and mounted.
 	ContextSync	[]*ContextSync
-
-	// IsVpc specifies whether to create a VPC-based session. Defaults to false.
-	IsVpc	bool
 
 	// PolicyId specifies the policy ID to apply when creating the session.
 	PolicyId	string
@@ -519,14 +512,6 @@ func (p *CreateSessionParams) WithImageId(imageId string) *CreateSessionParams
 ```
 
 WithImageId sets the image ID for the session parameters and returns the updated parameters.
-
-### WithIsVpc
-
-```go
-func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams
-```
-
-WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
 
 ### WithLabels
 

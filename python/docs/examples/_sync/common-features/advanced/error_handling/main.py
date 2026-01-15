@@ -32,23 +32,23 @@ def create_session_with_retry(
         try:
             print(f"Attempt {attempt + 1}/{max_retries} to create session...")
             result = agent_bay.create(params)
-            
+
             if result.success and result.session:
                 print(f"✅ Session created successfully: {result.session.session_id}")
                 return result.session
             else:
                 print(f"❌ Session creation failed: {result.error_message}")
-                
+
         except AgentBayError as e:
             print(f"❌ AgentBay error on attempt {attempt + 1}: {e}")
-            
+
         except Exception as e:
             print(f"❌ Unexpected error on attempt {attempt + 1}: {e}")
-        
+
         if attempt < max_retries - 1:
             print(f"Waiting {retry_delay} seconds before retry...")
             time.sleep(retry_delay)
-    
+
     print("❌ Failed to create session after all retries")
     return None
 
@@ -58,18 +58,18 @@ def safe_command_execution(session, command: str, timeout: float = 30.0):
     try:
         print(f"Executing command: {command}")
         result = session.command.execute_command(command)
-        
+
         if result.success:
             print(f"✅ Command succeeded: {result.output[:100]}")
             return result.output
         else:
             print(f"❌ Command failed: {result.error_message}")
             return None
-            
+
     except AgentBayError as e:
         print(f"❌ AgentBay error during command execution: {e}")
         return None
-        
+
     except Exception as e:
         print(f"❌ Unexpected error during command execution: {e}")
         return None
@@ -81,32 +81,32 @@ def safe_file_operation(session, file_path: str, content: str):
         # Try to write file
         print(f"Writing to file: {file_path}")
         write_result = session.file_system.write_file(file_path, content)
-        
+
         if not write_result.success:
             print(f"❌ Failed to write file: {write_result.error_message}")
             return False
-        
+
         print(f"✅ File written successfully")
-        
+
         # Verify by reading
         print(f"Verifying file content...")
         read_result = session.file_system.read_file(file_path)
-        
+
         if not read_result.success:
             print(f"❌ Failed to read file: {read_result.error_message}")
             return False
-        
+
         if read_result.content == content:
             print(f"✅ File content verified")
             return True
         else:
             print(f"❌ File content mismatch")
             return False
-            
+
     except AgentBayError as e:
         print(f"❌ AgentBay error during file operation: {e}")
         return False
-        
+
     except Exception as e:
         print(f"❌ Unexpected error during file operation: {e}")
         return False
@@ -118,57 +118,57 @@ def main():
     if not api_key:
         print("❌ Error: AGENTBAY_API_KEY environment variable not set")
         return
-    
+
     agent_bay = AgentBay(api_key=api_key)
     session: Optional[object] = None
-    
+
     try:
         print("=" * 60)
         print("Example 1: Session Creation with Retry")
         print("=" * 60)
-        
+
         params = CreateSessionParams(image_id="linux_latest")
         session = create_session_with_retry(agent_bay, params, max_retries=3)
-        
+
         if not session:
             print("❌ Could not create session, exiting")
             return
-        
+
         print("\n" + "=" * 60)
         print("Example 2: Safe Command Execution")
         print("=" * 60)
-        
+
         # Execute a safe command
         safe_command_execution(session, "echo 'Hello World'")
-        
+
         # Execute a command that might take longer
         safe_command_execution(session, "sleep 2 && echo 'Done'")
-        
+
         # Execute a command with potential issues
         safe_command_execution(session, "nonexistent_command")
-        
+
         print("\n" + "=" * 60)
         print("Example 3: Safe File Operations")
         print("=" * 60)
-        
+
         # Try to write to a valid location
         safe_file_operation(
             session,
             "/tmp/test_error_handling.txt",
             "This is a test file for error handling"
         )
-        
+
         # Try to write to an invalid location (should fail gracefully)
         safe_file_operation(
             session,
             "/root/protected_file.txt",
             "This should fail"
         )
-        
+
         print("\n" + "=" * 60)
         print("Example 4: Handling Invalid Operations")
         print("=" * 60)
-        
+
         try:
             # Try to read a non-existent file
             result = session.file_system.read_file("/nonexistent/file.txt")
@@ -176,15 +176,15 @@ def main():
                 print(f"✅ Gracefully handled non-existent file: {result.error_message}")
         except Exception as e:
             print(f"❌ Exception when reading non-existent file: {e}")
-        
+
         print("\n✅ Error handling examples completed")
-        
+
     except KeyboardInterrupt:
         print("\n⚠️  Interrupted by user")
-        
+
     except Exception as e:
         print(f"\n❌ Unexpected error in main: {e}")
-        
+
     finally:
         # Always clean up resources
         if session:

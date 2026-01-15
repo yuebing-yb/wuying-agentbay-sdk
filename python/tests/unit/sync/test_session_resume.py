@@ -33,8 +33,8 @@ class TestSessionResume(unittest.TestCase):
         self.session.token = ""
         self.session.resource_url = ""
 
-    def test_resume_async_success_immediate(self):
-        """Test successful async session resume with immediate success."""
+    def test_resume_success_immediate(self):
+        """Test successful beta session resume with immediate success."""
         # Mock the ResumeSessionAsync response
         mock_response = ResumeSessionAsyncResponse()
         mock_response.body = ResumeSessionAsyncResponseBody(
@@ -61,8 +61,8 @@ class TestSessionResume(unittest.TestCase):
 
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
-            # Call the method (resume not resume_async for polling)
-            result = self.session.resume(timeout=10, poll_interval=1)
+            # Call the method (beta_resume not beta_resume_async for polling)
+            result = self.session.beta_resume(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -74,8 +74,8 @@ class TestSessionResume(unittest.TestCase):
             # Verify that sleep was not called since we got RUNNING directly.
             mock_sleep.assert_not_called()
 
-    def test_resume_async_success_after_polling(self):
-        """Test successful async session resume after polling."""
+    def test_resume_success_after_polling(self):
+        """Test successful beta session resume after polling."""
         # Mock the ResumeSessionAsync response
         mock_response = ResumeSessionAsyncResponse()
         mock_response.body = ResumeSessionAsyncResponseBody(
@@ -114,7 +114,7 @@ class TestSessionResume(unittest.TestCase):
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = self.session.resume(timeout=10, poll_interval=1)
+            result = self.session.beta_resume(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -126,8 +126,8 @@ class TestSessionResume(unittest.TestCase):
             # Verify that sleep was called once (after the first attempt)
             mock_sleep.assert_called_once_with(1)
 
-    def test_resume_async_timeout(self):
-        """Test async session resume timeout."""
+    def test_resume_timeout(self):
+        """Test beta session resume timeout."""
         # Mock the ResumeSessionAsync response
         mock_response = ResumeSessionAsyncResponse()
         mock_response.body = ResumeSessionAsyncResponseBody(
@@ -155,7 +155,7 @@ class TestSessionResume(unittest.TestCase):
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method with a short timeout
-            result = self.session.resume(timeout=2, poll_interval=1)
+            result = self.session.beta_resume(timeout=2, poll_interval=1)
 
             # Verify the result
             # The implementation now returns failure on timeout
@@ -164,8 +164,8 @@ class TestSessionResume(unittest.TestCase):
             self.assertIn("Timed out", result.error_message)
             self.assertEqual(result.request_id, "test-request-id")
 
-    def test_resume_async_get_session_failure(self):
-        """Test async session resume when _get_session fails."""
+    def test_resume_get_session_failure(self):
+        """Test beta session resume when _get_session fails."""
         # Mock the ResumeSessionAsync response
         mock_response = ResumeSessionAsyncResponse()
         mock_response.body = ResumeSessionAsyncResponseBody(
@@ -190,7 +190,7 @@ class TestSessionResume(unittest.TestCase):
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = self.session.resume(timeout=2, poll_interval=1)
+            result = self.session.beta_resume(timeout=2, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -198,8 +198,8 @@ class TestSessionResume(unittest.TestCase):
             self.assertIn("Timed out", result.error_message)
             self.assertEqual(result.request_id, "test-request-id")
 
-    def test_resume_async_api_error(self):
-        """Test async session resume with API error."""
+    def test_resume_api_error(self):
+        """Test beta session resume with API error."""
         # Mock the ResumeSessionAsync response with error
         mock_response = ResumeSessionAsyncResponse()
         mock_response.body = ResumeSessionAsyncResponseBody(
@@ -216,7 +216,7 @@ class TestSessionResume(unittest.TestCase):
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = self.session.resume()
+            result = self.session.beta_resume()
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -226,8 +226,8 @@ class TestSessionResume(unittest.TestCase):
                 result.error_message, "[SessionNotFound] Session does not exist"
             )
 
-    def test_resume_async_empty_response_body(self):
-        """Test async session resume with empty response body."""
+    def test_resume_empty_response_body(self):
+        """Test beta session resume with empty response body."""
         # Mock the ResumeSessionAsync response with no body
         mock_response = ResumeSessionAsyncResponse(status_code=200)
         mock_response.body = None
@@ -238,7 +238,7 @@ class TestSessionResume(unittest.TestCase):
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = self.session.resume()
+            result = self.session.beta_resume()
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -246,8 +246,8 @@ class TestSessionResume(unittest.TestCase):
             self.assertEqual(result.error_message, "Invalid response body")
             self.assertEqual(result.request_id, "")
 
-    def test_resume_async_invalid_response_format(self):
-        """Test async session resume with invalid response format."""
+    def test_resume_invalid_response_format(self):
+        """Test beta session resume with invalid response format."""
         # Mock the ResumeSessionAsync response with invalid format
         mock_response = MagicMock()
         mock_response.to_map.return_value = None
@@ -258,7 +258,7 @@ class TestSessionResume(unittest.TestCase):
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = self.session.resume()
+            result = self.session.beta_resume()
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -266,8 +266,8 @@ class TestSessionResume(unittest.TestCase):
             self.assertEqual(result.error_message, "Invalid response format")
             self.assertEqual(result.request_id, "")
 
-    def test_resume_async_client_exception(self):
-        """Test async session resume with client exception."""
+    def test_resume_client_exception(self):
+        """Test beta session resume with client exception."""
         # Mock the client to raise an exception
         self.agent_bay.client.resume_session_async.side_effect = Exception(
             "Network error"
@@ -276,7 +276,7 @@ class TestSessionResume(unittest.TestCase):
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = self.session.resume()
+            result = self.session.beta_resume()
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)
@@ -284,8 +284,8 @@ class TestSessionResume(unittest.TestCase):
             self.assertIn("Network error", result.error_message)
             self.assertEqual(result.request_id, "")
 
-    def test_resume_async_unexpected_state(self):
-        """Test async session resume with unexpected state."""
+    def test_resume_unexpected_state(self):
+        """Test beta session resume with unexpected state."""
         # Mock the ResumeSessionAsync response
         mock_response = ResumeSessionAsyncResponse()
         mock_response.body = ResumeSessionAsyncResponseBody(
@@ -324,7 +324,7 @@ class TestSessionResume(unittest.TestCase):
         # Patch time.sleep to avoid waiting
         with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
             # Call the method
-            result = self.session.resume(timeout=10, poll_interval=1)
+            result = self.session.beta_resume(timeout=10, poll_interval=1)
 
             # Verify the result
             self.assertIsInstance(result, SessionResumeResult)

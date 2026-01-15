@@ -136,36 +136,20 @@ Get a session by its ID asynchronously.
 
     SessionResult: Result containing the Session instance, request ID, and success status.
 
-### pause
+### beta_pause
 
 ```python
-def pause(session: Session,
-          timeout: int = 600,
-          poll_interval: float = 2.0) -> SessionPauseResult
+def beta_pause(session: Session,
+               timeout: int = 600,
+               poll_interval: float = 2.0) -> SessionPauseResult
 ```
 
-Asynchronously pause a session, putting it into a dormant state.
+Asynchronously pause a session (beta), putting it into a dormant state.
 
-This method internally calls the PauseSessionAsync API and then polls the GetSession API
-to check the session status until it becomes PAUSED or until timeout.
-
-**Arguments**:
-
-- `session` _Session_ - The session to pause.
-- `timeout` _int, optional_ - Timeout in seconds to wait for the session to pause.
-  Defaults to 600 seconds.
-- `poll_interval` _float, optional_ - Interval in seconds between status polls.
-  Defaults to 2.0 seconds.
-  
-
-**Returns**:
-
-    SessionPauseResult: Result containing the request ID, success status, and final session status.
-
-### pause_async
+### beta_pause_async
 
 ```python
-def pause_async(session: Session) -> SessionPauseResult
+def beta_pause_async(session: Session) -> SessionPauseResult
 ```
 
 Fire-and-return pause: trigger PauseSessionAsync without waiting for PAUSED.
@@ -183,36 +167,20 @@ use the pause() method instead.
 
     SessionPauseResult: Result containing the request ID and success status.
 
-### resume
+### beta_resume
 
 ```python
-def resume(session: Session,
-           timeout: int = 600,
-           poll_interval: float = 2.0) -> SessionResumeResult
+def beta_resume(session: Session,
+                timeout: int = 600,
+                poll_interval: float = 2.0) -> SessionResumeResult
 ```
 
-Asynchronously resume a session from a paused state.
+Asynchronously resume a session (beta) from a paused state.
 
-This method internally calls the ResumeSessionAsync API and then polls the GetSession API
-to check the session status until it becomes RUNNING or until timeout.
-
-**Arguments**:
-
-- `session` _Session_ - The session to resume.
-- `timeout` _int, optional_ - Timeout in seconds to wait for the session to resume.
-  Defaults to 600 seconds.
-- `poll_interval` _float, optional_ - Interval in seconds between status polls.
-  Defaults to 2.0 seconds.
-  
-
-**Returns**:
-
-    SessionResumeResult: Result containing the request ID, success status, and final session status.
-
-### resume_async
+### beta_resume_async
 
 ```python
-def resume_async(session: Session) -> SessionResumeResult
+def beta_resume_async(session: Session) -> SessionResumeResult
 ```
 
 Fire-and-return resume: trigger ResumeSessionAsync without waiting for RUNNING.

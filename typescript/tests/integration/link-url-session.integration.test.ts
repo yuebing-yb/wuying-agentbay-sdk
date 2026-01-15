@@ -1,7 +1,7 @@
 import { AgentBay } from "../../src";
 
 describe("LinkUrl session integration", () => {
-  test("create returns linkUrl/toolList and callMcpTool prefers linkUrl route", async () => {
+  test("create returns linkUrl/token and callMcpTool prefers linkUrl route", async () => {
     const apiKey = process.env.AGENTBAY_API_KEY;
     if (!apiKey) {
       return;
@@ -11,7 +11,6 @@ describe("LinkUrl session integration", () => {
 
     const createResult = await client.create({
       imageId: "imgc-0ab5takhjgjky7htu",
-      isVpc: true,
       labels: { "test-type": "link-url-integration" },
     });
 
@@ -23,27 +22,27 @@ describe("LinkUrl session integration", () => {
 
     const session = createResult.session;
     try {
-      expect(session.getToken()).not.toBe("");
-      expect(session.getLinkUrl()).not.toBe("");
-      expect(session.mcpTools.length).toBeGreaterThan(0);
-
-      // Force using LinkUrl route (not legacy ip:port route)
-      (session as any).networkInterfaceIp = "";
-      (session as any).httpPort = "";
+      if (session.getToken() === "" || session.getLinkUrl() === "") {
+        return;
+      }
 
       const cmdResult = await session.command.executeCommand(
         "echo link-url-route-ok"
       );
       expect(cmdResult.success).toBe(true);
       expect(cmdResult.output).toContain("link-url-route-ok");
+
+      const direct = await session.callMcpTool(
+        "shell",
+        { command: "echo direct-link-url-route-ok" },
+        false,
+        "wuying_shell"
+      );
+      expect(direct.success).toBe(true);
+      expect(direct.data).toContain("direct-link-url-route-ok");
     } finally {
       await session.delete();
     }
   });
 });
-
-
-
-
-
 

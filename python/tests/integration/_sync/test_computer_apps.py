@@ -144,7 +144,7 @@ def test_app_lifecycle(session):
     # Wait for window
     print("Verifying app visibility (polling)...")
     found_in_visible = False
-    
+
     # Poll for up to 10 seconds
     for i in range(5):
         visible_apps = session.computer.list_visible_apps()
@@ -153,11 +153,11 @@ def test_app_lifecycle(session):
                 if p.pid == pid:
                     found_in_visible = True
                     break
-        
+
         if found_in_visible:
             print("App found in visible list")
             break
-            
+
         print(f"App PID {pid} not visible yet, waiting... (attempt {i+1})")
         time.sleep(2)
 

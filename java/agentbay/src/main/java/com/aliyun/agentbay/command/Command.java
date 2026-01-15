@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Command extends BaseService {
+    private static final String SERVER_SHELL = "wuying_shell";
+
     public Command(Session session) {
         super(session);
     }

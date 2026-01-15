@@ -123,7 +123,7 @@ class TestRegionIdIntegration(unittest.TestCase):
 
         # Create session with context sync
         from agentbay import ContextSync
-        
+
         params = CreateSessionParams()
         params.context_syncs = [
             ContextSync(

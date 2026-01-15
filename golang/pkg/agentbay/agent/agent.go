@@ -86,6 +86,16 @@ func (b *baseTaskAgent) getToolName(action string) string {
 	return baseName
 }
 
+func (b *baseTaskAgent) getServerName() string {
+	if b.ToolPrefix == "flux" {
+		return "flux"
+	}
+	if b.ToolPrefix == "browser_use" {
+		return "wuying_browseruse"
+	}
+	return "wuying_mobile_agent"
+}
+
 // executeTask executes a task in human language without waiting for completion (non-blocking).
 // This is a fire-and-return interface that immediately provides a task ID.
 // Call getTaskStatus to check the task status.
@@ -538,7 +548,7 @@ type Agent struct {
 type McpSession interface {
 	GetAPIKey() string
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }
 
 func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {

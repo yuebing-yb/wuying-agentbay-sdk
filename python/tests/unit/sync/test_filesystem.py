@@ -169,7 +169,8 @@ class TestAsyncFileSystem(unittest.TestCase):
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.data)
         self.session.call_mcp_tool.assert_called_once_with(
-            "delete_file", {"path": "/path/to/file.txt"}
+            "delete_file",
+            {"path": "/path/to/file.txt"},
         )
 
     @patch("agentbay._sync.filesystem.FileSystem.get_file_info")
@@ -698,7 +699,7 @@ class TestAsyncFileSystem(unittest.TestCase):
         # Mock binary chunk read - backend returns base64, SDK decodes to bytes
         binary_data = b'\xff\xd8\xff\xe0\x00\x10JFIF'  # JPEG header
         base64_data = base64.b64encode(binary_data).decode('ascii')
-        
+
         mock_read_file_chunk.return_value = BinaryFileContentResult(
             request_id="request-123",
             success=True,
@@ -738,7 +739,7 @@ class TestAsyncFileSystem(unittest.TestCase):
         chunk1 = b'\x00' * (50 * 1024)
         chunk2 = b'\x01' * (50 * 1024)
         chunk3 = b'\x02' * (50 * 1024)
-        
+
         mock_read_file_chunk.side_effect = [
             BinaryFileContentResult(
                 request_id="request-123-1", success=True, content=chunk1
@@ -868,7 +869,7 @@ class TestAsyncFileSystem(unittest.TestCase):
         # Mock MCP tool call returning base64-encoded string
         binary_data = b'\xff\xd8\xff\xe0\x00\x10JFIF'
         base64_data = base64.b64encode(binary_data).decode('ascii')
-        
+
         mock_result = McpToolResult(
             request_id="request-123",
             success=True,
@@ -879,12 +880,12 @@ class TestAsyncFileSystem(unittest.TestCase):
         result = self.fs._read_file_chunk(
             "/path/to/image.jpeg", offset=0, length=1024, format_type="binary"
         )
-        
+
         self.assertIsInstance(result, BinaryFileContentResult)
         self.assertTrue(result.success)
         self.assertIsInstance(result.content, bytes)
         self.assertEqual(result.content, binary_data)
-        
+
         # Verify MCP tool was called with format='binary'
         self.session.call_mcp_tool.assert_called_once()
         call_args = self.session.call_mcp_tool.call_args
@@ -912,7 +913,7 @@ class TestAsyncFileSystem(unittest.TestCase):
         result = self.fs._read_file_chunk(
             "/path/to/image.jpeg", offset=0, length=1024, format_type="binary"
         )
-        
+
         self.assertIsInstance(result, BinaryFileContentResult)
         self.assertFalse(result.success)
         self.assertEqual(result.content, b"")
@@ -935,11 +936,11 @@ class TestAsyncFileSystem(unittest.TestCase):
         result = self.fs._read_file_chunk(
             "/path/to/file.txt", offset=0, length=1024, format_type="text"
         )
-        
+
         self.assertIsInstance(result, FileContentResult)
         self.assertTrue(result.success)
         self.assertEqual(result.content, "text content")
-        
+
         # Verify MCP tool was called WITHOUT format parameter (default text)
         self.session.call_mcp_tool.assert_called_once()
         call_args = self.session.call_mcp_tool.call_args

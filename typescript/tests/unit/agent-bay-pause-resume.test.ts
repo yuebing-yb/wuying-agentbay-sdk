@@ -8,7 +8,7 @@ const mockSessionData = {
   resourceUrl: "mock-resource-url",
 };
 
-describe("AgentBay Pause and Resume", () => {
+describe("AgentBay Beta Pause and Beta Resume", () => {
   let mockClient: any;
   let pauseSessionAsyncStub: sinon.SinonStub;
   let resumeSessionAsyncStub: sinon.SinonStub;
@@ -41,7 +41,7 @@ describe("AgentBay Pause and Resume", () => {
     sinon.restore();
   });
 
-  describe("pauseAsync", () => {
+  describe("betaPauseAsync", () => {
     it("should successfully pause a session", async () => {
       // Mock the PauseSessionAsync response
       const mockPauseResponse = {
@@ -79,7 +79,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionPauseResult = await agentBay.pauseAsync(session);
+      const result: SessionPauseResult = await agentBay.betaPauseAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -118,7 +118,7 @@ describe("AgentBay Pause and Resume", () => {
       pauseSessionAsyncStub.resolves(mockPauseResponse);
 
       // Call the method
-      const result: SessionPauseResult = await agentBay.pauseAsync(session);
+      const result: SessionPauseResult = await agentBay.betaPauseAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -135,7 +135,7 @@ describe("AgentBay Pause and Resume", () => {
       pauseSessionAsyncStub.rejects(new Error("Network error"));
 
       // Call the method
-      const result: SessionPauseResult = await agentBay.pauseAsync(session);
+      const result: SessionPauseResult = await agentBay.betaPauseAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -179,7 +179,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method with short timeout
-      const result: SessionPauseResult = await agentBay.pauseAsync(session, 0.1, 0.05);
+      const result: SessionPauseResult = await agentBay.betaPauseAsync(session, 0.1, 0.05);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -222,7 +222,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionPauseResult = await agentBay.pauseAsync(session);
+      const result: SessionPauseResult = await agentBay.betaPauseAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -267,7 +267,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionPauseResult = await agentBay.pauseAsync(session);
+      const result: SessionPauseResult = await agentBay.betaPauseAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -314,7 +314,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionPauseResult = await agentBay.pauseAsync(session);
+      const result: SessionPauseResult = await agentBay.betaPauseAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -325,7 +325,7 @@ describe("AgentBay Pause and Resume", () => {
     });
   });
 
-  describe("resumeAsync", () => {
+  describe("betaResumeAsync", () => {
     it("should successfully resume a session", async () => {
       // Mock the ResumeSessionAsync response
       const mockResumeResponse = {
@@ -363,7 +363,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.resumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -402,7 +402,7 @@ describe("AgentBay Pause and Resume", () => {
       resumeSessionAsyncStub.resolves(mockResumeResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.resumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -419,7 +419,7 @@ describe("AgentBay Pause and Resume", () => {
       resumeSessionAsyncStub.rejects(new Error("Network error"));
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.resumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -463,7 +463,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method with short timeout
-      const result: SessionResumeResult = await agentBay.resumeAsync(session, 0.1, 0.05);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(session, 0.1, 0.05);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -506,7 +506,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.resumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -551,7 +551,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.resumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();
@@ -598,7 +598,7 @@ describe("AgentBay Pause and Resume", () => {
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.resumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
 
       // Verify the result
       expect(result).toBeDefined();

@@ -42,7 +42,7 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('tap', {
         x: 100,
         y: 200
-      });
+      }, false);
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-123');
     });
@@ -65,7 +65,7 @@ describe('Mobile', () => {
         end_x: 200,
         end_y: 200,
         duration_ms: 500
-      });
+      }, false);
       expect(result.success).toBe(true);
     });
 
@@ -87,7 +87,7 @@ describe('Mobile', () => {
         end_x: 200,
         end_y: 200,
         duration_ms: 300
-      });
+      }, false);
     });
   });
 
@@ -106,7 +106,7 @@ describe('Mobile', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('input_text', {
         text: 'Hello Mobile'
-      });
+      }, false);
       expect(result.success).toBe(true);
     });
 
@@ -124,7 +124,7 @@ describe('Mobile', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('send_key', {
         key: 4
-      });
+      }, false);
       expect(result.success).toBe(true);
     });
   });
@@ -151,7 +151,7 @@ describe('Mobile', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_clickable_ui_elements', {
         timeout_ms: 5000
-      });
+      }, false);
       expect(result.elements).toHaveLength(1);
       expect(result.elements[0].text).toBe('Button 1');
     });
@@ -178,7 +178,7 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_all_ui_elements', {
         timeout_ms: 3000,
         format: 'json'
-      });
+      }, false);
       expect(result.format).toBe('json');
       expect(typeof result.raw).toBe('string');
       expect(result.raw).toContain('android.widget.TextView');
@@ -203,7 +203,7 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_all_ui_elements', {
         timeout_ms: 3000,
         format: 'xml'
-      });
+      }, false);
       expect(result.success).toBe(true);
       expect(result.format).toBe('xml');
       expect(result.raw.startsWith('<?xml')).toBe(true);
@@ -235,7 +235,7 @@ describe('Mobile', () => {
         start_menu: false,
         desktop: true,
         ignore_system_apps: true
-      });
+      }, false);
       expect(result.apps).toHaveLength(1);
       expect(result.apps[0].name).toBe('Calculator');
     });
@@ -262,7 +262,7 @@ describe('Mobile', () => {
         start_cmd: 'com.android.calculator2',
         work_directory: '',
         activity: ''
-      });
+      }, false);
       expect(result.processes).toHaveLength(1);
       expect(result.processes[0].pid).toBe(1234);
     });
@@ -281,7 +281,7 @@ describe('Mobile', () => {
       // Assert
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_cmd', {
         stop_cmd: 'am force-stop com.android.calculator2'
-      });
+      }, false);
       expect(result.success).toBe(true);
     });
   });
@@ -300,7 +300,7 @@ describe('Mobile', () => {
       const result = await mobile.screenshot();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('system_screenshot', {});
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('system_screenshot', {}, false);
       expect(result.data).toBe('https://example.com/mobile-screenshot.png');
     });
 
@@ -311,6 +311,64 @@ describe('Mobile', () => {
       const mockResult = {
         success: true,
         requestId: 'test-beta-123',
+        data: JSON.stringify({
+          type: "image",
+          mime_type: "image/png",
+          width: 720,
+          height: 1280,
+          data: payload,
+        }),
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await mobile.betaTakeScreenshot();
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'png' }, false);
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe('test-beta-123');
+      expect(result.format).toBe('png');
+      expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
+    });
+
+    test('betaTakeScreenshot should accept JSON payloads', async () => {
+      // Arrange
+      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
+      const jsonPayload = JSON.stringify({
+        type: "image",
+        mime_type: "image/png",
+        width: 720,
+        height: 1280,
+        data: payload,
+      });
+      const mockResult = {
+        success: true,
+        requestId: 'test-beta-json-123',
+        data: jsonPayload,
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await mobile.betaTakeScreenshot();
+
+      // Assert
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe('test-beta-json-123');
+      expect(result.format).toBe('png');
+      expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
+    });
+
+    test('betaTakeScreenshot should reject non-JSON payloads', async () => {
+      // Arrange
+      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
+      const mockResult = {
+        success: true,
+        requestId: 'test-beta-non-json-123',
         data: payload,
         errorMessage: '',
       };
@@ -320,11 +378,9 @@ describe('Mobile', () => {
       const result = await mobile.betaTakeScreenshot();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'png' });
-      expect(result.success).toBe(true);
-      expect(result.requestId).toBe('test-beta-123');
-      expect(result.format).toBe('png');
-      expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.errorMessage).toContain('non-JSON');
+      expect(result.data.length).toBe(0);
     });
 
     test('betaTakeLongScreenshot should validate maxScreens and format', async () => {
@@ -346,7 +402,13 @@ describe('Mobile', () => {
       const mockResult = {
         success: true,
         requestId: 'test-long-123',
-        data: payload,
+        data: JSON.stringify({
+          type: "image",
+          mime_type: "image/png",
+          width: 720,
+          height: 1280,
+          data: payload,
+        }),
         errorMessage: '',
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
@@ -359,7 +421,7 @@ describe('Mobile', () => {
         max_screens: 2,
         format: 'jpeg',
         quality: 80,
-      });
+      }, false);
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-long-123');
       expect(result.format).toBe('png');

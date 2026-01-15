@@ -17,7 +17,6 @@ Complete guides for using the AgentBay Java SDK effectively.
 - [File Operations](../api/common-features/basics/filesystem.md) - Read, write, and manage files in cloud environments
 
 **Advanced:**
-- [VPC Sessions](../../../docs/guides/common-features/advanced/vpc-sessions.md) - Connect sessions to your VPC network
 - [OSS Integration](../../../docs/guides/common-features/advanced/oss-integration.md) - Object storage integration
 - [Custom Images](../../../docs/guides/common-features/advanced/custom-images.md) - Use custom Docker images
 

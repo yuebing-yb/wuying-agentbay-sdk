@@ -75,7 +75,7 @@ def main():
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]
                 page = context.new_page()
-                
+
                 # Check user agent.
                 print("\n--- Check User Agent ---")
                 try:
@@ -119,7 +119,7 @@ def main():
 
         # Clean up session
         agent_bay.delete(session)
-    
+
 
 if __name__ == "__main__":
     main()

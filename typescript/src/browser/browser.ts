@@ -578,7 +578,7 @@ export class Browser {
    */
   async destroy(): Promise<void> {
     if (this.isInitialized()) {
-      await this.session.callMcpTool("stopChrome", {});
+      await this.session.callMcpTool("stopChrome", {}, false);
     } else {
       throw new BrowserError("Browser is not initialized. Cannot destroy browser.");
     }
@@ -610,22 +610,17 @@ export class Browser {
     }
 
     try {
-      if (this.session.isVpc) {
-        logDebug(`VPC mode, endpoint_router_port: ${this.session.httpPort}`);
-        this._endpointUrl = `ws://${this.session.networkInterfaceIp}:${this.session.httpPort}`;
+      const { GetCdpLinkRequest } = await import('../api/models/model');
+      const request = new GetCdpLinkRequest({
+        authorization: `Bearer ${this.session.getAPIKey()}`,
+        sessionId: this.session.sessionId
+      });
+      const response = await this.session.getAgentBay().getClient().getCdpLink(request);
+      if (response.body && response.body.success && response.body.data) {
+        this._endpointUrl = response.body.data.url || null;
       } else {
-        const { GetCdpLinkRequest } = await import('../api/models/model');
-        const request = new GetCdpLinkRequest({
-          authorization: `Bearer ${this.session.getAPIKey()}`,
-          sessionId: this.session.sessionId
-        });
-        const response = await this.session.getAgentBay().getClient().getCdpLink(request);
-        if (response.body && response.body.success && response.body.data) {
-          this._endpointUrl = response.body.data.url || null;
-        } else {
-          const errorMsg = response.body?.message || "Unknown error";
-          throw new BrowserError(`Failed to get CDP link: ${errorMsg}`);
-        }
+        const errorMsg = response.body?.message || "Unknown error";
+        throw new BrowserError(`Failed to get CDP link: ${errorMsg}`);
       }
       return this._endpointUrl!;
     } catch (error) {
@@ -652,7 +647,7 @@ export class Browser {
    */
   private _stopBrowser(): void {
     if (this.isInitialized()) {
-      this.session.callMcpTool("stopChrome", {});
+      this.session.callMcpTool("stopChrome", {}, false);
     } else {
       throw new BrowserError("Browser is not initialized. Cannot stop browser.");
     }

@@ -73,7 +73,7 @@ def main():
         # Test page with known resources
         print("\n5. Testing resource loading...")
         session.browser.agent.navigate("https://httpbin.org/image/png")
-        
+
         resource_result = session.browser.agent.extract(
             ExtractOptions(instruction="What type of resource is displayed on this page?", schema=NetworkActivity)
         )
@@ -82,7 +82,7 @@ def main():
         # Navigate to JSON endpoint
         print("\n6. Testing JSON API endpoint...")
         session.browser.agent.navigate("https://httpbin.org/json")
-        
+
         json_result = session.browser.agent.extract(
             ExtractOptions(instruction="What is the content type and structure of the response?", schema=NetworkActivity)
         )
@@ -91,7 +91,7 @@ def main():
         # Test redirect
         print("\n7. Testing redirect behavior...")
         session.browser.agent.navigate("https://httpbin.org/redirect/1")
-        
+
         redirect_result = session.browser.agent.extract(
             ExtractOptions(instruction="What is the final URL after redirect?", schema=NetworkActivity)
         )
@@ -100,7 +100,7 @@ def main():
         # Test status codes
         print("\n8. Testing different status codes...")
         session.browser.agent.navigate("https://httpbin.org/status/200")
-        
+
         status_result = session.browser.agent.extract(
             ExtractOptions(instruction="What is displayed on this page?", schema=NetworkActivity)
         )
@@ -109,7 +109,7 @@ def main():
         # Performance timing
         print("\n9. Analyzing page load performance...")
         session.browser.agent.navigate("https://example.com")
-        
+
         perf_result = session.browser.agent.extract(
             ExtractOptions(instruction="How long did it take for the page to load? (if timing info is visible)", schema=NetworkActivity)
         )

@@ -288,11 +288,6 @@ if not info_result.success:
     print("Session may have been terminated")
     print("Create a new session and try again")
 
-# Check 3: Review VPC and subnet configurations (for VPC sessions)
-# If using VPC mode, ensure:
-# - Security groups allow traffic on the specified port
-# - Network ACLs permit inbound/outbound connections
-# - Route tables are correctly configured
 ```
 
 ### Debugging Helper Function

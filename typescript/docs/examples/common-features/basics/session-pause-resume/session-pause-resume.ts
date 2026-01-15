@@ -36,7 +36,7 @@ async function pauseAndResumeSession() {
 
       // Pause the session
       log('\n⏸️  Pausing session...');
-      const pauseResult = await agentBay.pauseAsync(session);
+      const pauseResult = await agentBay.betaPauseAsync(session);
       
       if (pauseResult.success) {
         log(`✅ Session pause initiated successfully`);
@@ -58,7 +58,7 @@ async function pauseAndResumeSession() {
 
       // Resume the session
       log('\n▶️  Resuming session...');
-      const resumeResult = await agentBay.resumeAsync(session);
+      const resumeResult = await agentBay.betaResumeAsync(session);
       
       if (resumeResult.success) {
         log(`✅ Session resume initiated successfully`);
@@ -125,11 +125,11 @@ async function handleNonExistentSession() {
   try {
     // Try to pause the non-existent session
     log('⏸️  Attempting to pause non-existent session...');
-    const pauseResult = await agentBay.pauseAsync(fakeSession);
+    const pauseResult = await agentBay.betaPauseAsync(fakeSession);
     log(`Pause result: Success=${pauseResult.success}, Error=${pauseResult.errorMessage || 'None'}`);
     
     log('▶️  Attempting to resume non-existent session...');
-    const resumeResult = await agentBay.resumeAsync(fakeSession);
+    const resumeResult = await agentBay.betaResumeAsync(fakeSession);
     log(`Resume result: Success=${resumeResult.success}, Error=${resumeResult.errorMessage || 'None'}`);
   } catch (error) {
     log(`Expected error when handling non-existent session: ${error}`);
@@ -168,7 +168,7 @@ async function pauseAndResumeWithCustomParameters() {
       // Pause the session with custom parameters
       // Using shorter timeout and poll interval for demonstration
       log('\n⏸️  Pausing session with custom parameters (timeout=30s, pollInterval=1s)...');
-      const pauseResult = await agentBay.pauseAsync(session, 30, 1);
+      const pauseResult = await agentBay.betaPauseAsync(session, 30, 1);
       
       if (pauseResult.success) {
         log(`✅ Session pause with custom parameters initiated successfully`);
@@ -188,7 +188,7 @@ async function pauseAndResumeWithCustomParameters() {
 
       // Resume the session with custom parameters
       log('\n▶️  Resuming session with custom parameters (timeout=30s, pollInterval=1s)...');
-      const resumeResult = await agentBay.resumeAsync(session, 30, 1);
+      const resumeResult = await agentBay.betaResumeAsync(session, 30, 1);
       
       if (resumeResult.success) {
         log(`✅ Session resume with custom parameters initiated successfully`);

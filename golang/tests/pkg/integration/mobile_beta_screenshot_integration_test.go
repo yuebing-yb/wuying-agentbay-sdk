@@ -3,7 +3,6 @@ package integration
 import (
 	"bytes"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -22,7 +21,7 @@ func TestMobileBetaScreenshotPNG(t *testing.T) {
 	require.NoError(t, err, "Failed to create AgentBay client")
 
 	sessionParams := &agentbay.CreateSessionParams{
-		ImageId: "imgc-0ab5takhnlaixj11v",
+		ImageId: "imgc-0ab5takhnmlvhx9gp",
 	}
 	sessionResult, err := agentBay.Create(sessionParams)
 	require.NoError(t, err, "Failed to create session")
@@ -58,11 +57,8 @@ func TestMobileBetaScreenshotPNG(t *testing.T) {
 	assert.Greater(t, len(s.Data), 8)
 
 	ls := session.Mobile.BetaTakeLongScreenshot(2, "png")
-	if !ls.Success && strings.Contains(ls.ErrorMessage, "Failed to capture long screenshot") {
-		t.Skip(ls.ErrorMessage)
-	}
 	assert.NotEmpty(t, ls.RequestID)
-	assert.True(t, ls.Success)
+	assert.True(t, ls.Success, "beta long screenshot failed: %s", ls.ErrorMessage)
 	assert.Equal(t, "png", ls.Format)
 	assert.True(t, bytes.HasPrefix(ls.Data, []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}))
 	assert.Greater(t, len(ls.Data), 8)

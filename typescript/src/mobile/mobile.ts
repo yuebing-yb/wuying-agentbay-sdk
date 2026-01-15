@@ -66,7 +66,11 @@ export interface AdbUrlResult extends OperationResult {
 
 // Session interface for Mobile module
 interface MobileSession {
-  callMcpTool(toolName: string, args: Record<string, any>): Promise<any>;
+  callMcpTool(
+    toolName: string,
+    args: Record<string, any>,
+    autoGenSession?: boolean
+  ): Promise<any>;
   sessionId: string;
   getAPIKey(): string;
   getAgentBay(): any;
@@ -124,44 +128,30 @@ function normalizeImageFormat(format: string, defaultValue: string): string {
   return f;
 }
 
-function stripDataUrlPrefix(b64: string): string {
-  const s = String(b64 || "").trim();
-  const idx = s.indexOf("base64,");
-  if (idx >= 0) {
-    return s.slice(idx + "base64,".length).trim();
+function validateBase64String(base64String: string): void {
+  const s = String(base64String || "");
+  if (!s) {
+    throw new Error("Empty base64 string");
   }
-  return s;
+
+  const base64WithoutPadding = s.replace(/=+$/, "");
+  if (!/^[A-Za-z0-9+/]+$/.test(base64WithoutPadding)) {
+    throw new Error("Invalid base64 string format");
+  }
+
+  if (s.length % 4 !== 0) {
+    throw new Error("Invalid base64 string length");
+  }
+
+  const paddingMatch = s.match(/=+$/);
+  if (paddingMatch && paddingMatch[0].length > 2) {
+    throw new Error("Invalid base64 padding format");
+  }
 }
 
-function indexOfSubarray(haystack: Uint8Array, needle: Uint8Array, maxSearch: number): number {
-  if (needle.length === 0 || haystack.length < needle.length) {
-    return -1;
-  }
-  const limit = Math.min(haystack.length, Math.max(0, maxSearch));
-  for (let i = 0; i + needle.length <= limit; i++) {
-    let ok = true;
-    for (let j = 0; j < needle.length; j++) {
-      if (haystack[i + j] !== needle[j]) {
-        ok = false;
-        break;
-      }
-    }
-    if (ok) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-function base64ToUint8Array(input: string): Uint8Array {
-  let s = stripDataUrlPrefix(input)
-    .replace(/[\r\n\t ]+/g, "")
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
-  const mod = s.length % 4;
-  if (mod !== 0) {
-    s += "=".repeat(4 - mod);
-  }
+function base64ToUint8ArrayStrict(input: string): Uint8Array {
+  const s = String(input || "").trim();
+  validateBase64String(s);
 
   if (typeof Buffer !== "undefined") {
     return new Uint8Array(Buffer.from(s, "base64"));
@@ -175,88 +165,54 @@ function base64ToUint8Array(input: string): Uint8Array {
   return out;
 }
 
-function decodeBase64Image(input: string, expectedFormat: string): { bytes: Uint8Array; format: string } {
-  const b64 = extractBase64FromMcpPayload(input);
-  const raw = base64ToUint8Array(b64);
-
-  // Some backends prepend non-image prefix; strip until magic bytes.
-  let b = raw;
-  const pngIdx = indexOfSubarray(b, PNG_MAGIC, 128);
-  if (pngIdx > 0) {
-    b = b.slice(pngIdx);
+function startsWithMagic(bytes: Uint8Array, magic: Uint8Array): boolean {
+  if (bytes.length < magic.length) {
+    return false;
   }
-  const jpgIdx = indexOfSubarray(b, JPEG_MAGIC, 128);
-  if (jpgIdx > 0) {
-    b = b.slice(jpgIdx);
+  for (let i = 0; i < magic.length; i++) {
+    if (bytes[i] !== magic[i]) {
+      return false;
+    }
   }
-
-  const fmt =
-    indexOfSubarray(b, PNG_MAGIC, PNG_MAGIC.length) === 0
-      ? "png"
-      : indexOfSubarray(b, JPEG_MAGIC, JPEG_MAGIC.length) === 0
-        ? "jpeg"
-        : expectedFormat;
-
-  return { bytes: b, format: fmt };
+  return true;
 }
 
-function extractBase64FromMcpPayload(input: string): string {
-  const s = String(input || "").trim();
-  if (!(s.startsWith("{") || s.startsWith("["))) {
-    return s;
+function detectImageFormat(bytes: Uint8Array): string {
+  if (startsWithMagic(bytes, PNG_MAGIC)) {
+    return "png";
   }
-  try {
-    const obj = JSON.parse(s);
-    const b64 = extractBase64FromAny(obj);
-    return b64 || s;
-  } catch {
-    return s;
-  }
-}
-
-function extractBase64FromAny(v: any): string {
-  if (!v) {
-    return "";
-  }
-  if (typeof v === "string") {
-    return v;
-  }
-  if (Array.isArray(v)) {
-    return v.length > 0 ? extractBase64FromAny(v[0]) : "";
-  }
-  if (typeof v === "object") {
-    if (typeof (v as any).data === "string" && (v as any).data) {
-      return (v as any).data;
-    }
-    const content = (v as any).content;
-    if (Array.isArray(content) && content.length > 0 && typeof content[0] === "object" && content[0]) {
-      const c0: any = content[0];
-      if (typeof c0.blob === "string" && c0.blob) {
-        return c0.blob;
-      }
-      if (typeof c0.data === "string" && c0.data) {
-        return c0.data;
-      }
-      if (typeof c0.text === "string" && c0.text) {
-        return c0.text;
-      }
-      if (c0.blob && typeof c0.blob === "object") {
-        if (typeof c0.blob.data === "string" && c0.blob.data) {
-          return c0.blob.data;
-        }
-      }
-      if (c0.image && typeof c0.image === "object" && typeof c0.image.data === "string" && c0.image.data) {
-        return c0.image.data;
-      }
-      if (c0.source && typeof c0.source === "object" && typeof c0.source.data === "string" && c0.source.data) {
-        return c0.source.data;
-      }
-    }
-    if ((v as any).result) {
-      return extractBase64FromAny((v as any).result);
-    }
+  if (startsWithMagic(bytes, JPEG_MAGIC)) {
+    return "jpeg";
   }
   return "";
+}
+
+function decodeBase64Image(input: string, expectedFormat: string): { bytes: Uint8Array; format: string } {
+  const s = String(input || "").trim();
+  if (!s) {
+    throw new Error("Empty image data");
+  }
+  if (!s.startsWith("{")) {
+    throw new Error("Screenshot tool returned non-JSON data");
+  }
+
+  let obj: any;
+  try {
+    obj = JSON.parse(s);
+  } catch (e) {
+    throw new Error(`Invalid screenshot JSON: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    throw new Error("Invalid screenshot JSON: expected object");
+  }
+  const b64 = (obj as any).data;
+  if (typeof b64 !== "string" || !b64.trim()) {
+    throw new Error("Screenshot JSON missing base64 field");
+  }
+
+  const bytes = base64ToUint8ArrayStrict(b64);
+  const detected = detectImageFormat(bytes);
+  return { bytes, format: detected || expectedFormat };
 }
 
 export class Mobile {
@@ -288,7 +244,7 @@ export class Mobile {
   async tap(x: number, y: number): Promise<BoolResult> {
     const args = { x, y };
     try {
-      const result = await this.session.callMcpTool('tap', args);
+      const result = await this.session.callMcpTool('tap', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -329,7 +285,7 @@ export class Mobile {
   async swipe(startX: number, startY: number, endX: number, endY: number, durationMs = 300): Promise<BoolResult> {
     const args = { start_x: startX, start_y: startY, end_x: endX, end_y: endY, duration_ms: durationMs };
     try {
-      const result = await this.session.callMcpTool('swipe', args);
+      const result = await this.session.callMcpTool('swipe', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -366,7 +322,7 @@ export class Mobile {
   async inputText(text: string): Promise<BoolResult> {
     const args = { text };
     try {
-      const result = await this.session.callMcpTool('input_text', args);
+      const result = await this.session.callMcpTool('input_text', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -403,7 +359,7 @@ export class Mobile {
   async sendKey(key: number): Promise<BoolResult> {
     const args = { key };
     try {
-      const result = await this.session.callMcpTool('send_key', args);
+      const result = await this.session.callMcpTool('send_key', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -426,7 +382,7 @@ export class Mobile {
   async getClickableUIElements(timeoutMs = 5000): Promise<UIElementsResult> {
     const args = { timeout_ms: timeoutMs };
     try {
-      const result = await this.session.callMcpTool('get_clickable_ui_elements', args);
+      const result = await this.session.callMcpTool('get_clickable_ui_elements', args, false);
 
       if (!result.success) {
         return {
@@ -491,7 +447,7 @@ export class Mobile {
     const formatNorm = ((format || 'json') as string).trim().toLowerCase() || 'json';
     const args = { timeout_ms: timeoutMs, format: formatNorm };
     try {
-      const result = await this.session.callMcpTool('get_all_ui_elements', args);
+      const result = await this.session.callMcpTool('get_all_ui_elements', args, false);
 
       if (!result.success) {
         return {
@@ -577,7 +533,7 @@ export class Mobile {
   async getInstalledApps(startMenu = false, desktop = true, ignoreSystemApps = true): Promise<InstalledAppsResult> {
     const args = { start_menu: startMenu, desktop, ignore_system_apps: ignoreSystemApps };
     try {
-      const result = await this.session.callMcpTool('get_installed_apps', args);
+      const result = await this.session.callMcpTool('get_installed_apps', args, false);
       
       if (!result.success) {
         return {
@@ -645,7 +601,7 @@ export class Mobile {
   async startApp(startCmd: string, workDirectory = '', activity = ''): Promise<ProcessResult> {
     const args = { start_cmd: startCmd, work_directory: workDirectory, activity };
     try {
-      const result = await this.session.callMcpTool('start_app', args);
+      const result = await this.session.callMcpTool('start_app', args, false);
       
       if (!result.success) {
         return {
@@ -712,7 +668,7 @@ export class Mobile {
   async stopAppByCmd(stopCmd: string): Promise<BoolResult> {
     const args = { stop_cmd: stopCmd };
     try {
-      const result = await this.session.callMcpTool('stop_app_by_cmd', args);
+      const result = await this.session.callMcpTool('stop_app_by_cmd', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -747,7 +703,7 @@ export class Mobile {
    */
   async screenshot(): Promise<ScreenshotResult> {
     try {
-      const result = await this.session.callMcpTool('system_screenshot', {});
+      const result = await this.session.callMcpTool('system_screenshot', {}, false);
       
       if (!result.success) {
         return {
@@ -781,7 +737,7 @@ export class Mobile {
    */
   async betaTakeScreenshot(): Promise<BetaScreenshotResult> {
     try {
-      const result = await this.session.callMcpTool("screenshot", { format: "png" });
+      const result = await this.session.callMcpTool("screenshot", { format: "png" }, false);
       const requestId = result.requestId || "";
       if (!result.success) {
         return {
@@ -863,7 +819,7 @@ export class Mobile {
         args.quality = quality;
       }
 
-      const result = await this.session.callMcpTool("long_screenshot", args);
+      const result = await this.session.callMcpTool("long_screenshot", args, false);
       const requestId = result.requestId || "";
       if (!result.success) {
         return {

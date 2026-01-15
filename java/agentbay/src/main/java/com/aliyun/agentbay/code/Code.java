@@ -9,6 +9,7 @@ import java.util.*;
 
 public class Code extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SERVER_CODESPACE = "wuying_codespace";
 
     public Code(Session session) {
         super(session);

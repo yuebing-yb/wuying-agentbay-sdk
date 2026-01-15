@@ -47,7 +47,7 @@ def agent_bay():
 
 @pytest.fixture
 def session(agent_bay):
-    params = CreateSessionParams(image_id="imgc-0ab5takhnlaixj11v")
+    params = CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp")
     result = agent_bay.create(params)
     assert result.success, f"Failed to create session: {result.error_message}"
     assert result.session is not None
@@ -69,13 +69,7 @@ def test_mobile_beta_take_screenshot_png(session):
 @pytest.mark.sync
 def test_mobile_beta_take_long_screenshot_png(session):
     _prepare_for_screenshot_tests(session)
-    try:
-        result = session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
-    except AgentBayError as e:
-        msg = str(e)
-        if "Failed to capture long screenshot" in msg:
-            pytest.xfail(msg)
-        raise
+    result = session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
     assert result.success is True
     assert result.format == "png"
     assert isinstance(result.data, (bytes, bytearray))

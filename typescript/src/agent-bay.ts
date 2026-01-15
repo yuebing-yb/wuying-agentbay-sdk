@@ -66,7 +66,6 @@ export interface CreateSessionParams {
   volumeId?: string;
   contextSync?: ContextSync[];
   browserContext?: BrowserContext;
-  isVpc?: boolean;
   policyId?: string;
   betaNetworkId?: string;
   // Note: networkId is not released; do not expose non-beta alias.
@@ -247,7 +246,6 @@ export class AgentBay {
    *                 - imageId: Custom image ID for the session environment
    *                 - contextSync: Array of context synchronization configurations
    *                 - browserContext: Browser-specific context configuration
-   *                 - isVpc: Whether to create a VPC session
    *                 - policyId: Security policy ID
    *                 - enableBrowserReplay: Enable browser session recording
    *                 - extraConfigs: Additional configuration options
@@ -276,7 +274,6 @@ export class AgentBay {
    * - Creates a new isolated cloud runtime environment
    * - Automatically creates file transfer context if not provided
    * - Waits for context synchronization if contextSync is specified
-   * - For VPC sessions, includes VPC-specific configuration
    * - Browser replay creates a separate recording context
    *
    * @see {@link get}, {@link list}, {@link Session.delete}
@@ -356,9 +353,6 @@ export class AgentBay {
         (request as any).networkId = (paramsCopy as any).betaNetworkId;
       }
 
-      // Add VPC resource if specified
-      request.vpcResource = paramsCopy.isVpc || false;
-
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
 
@@ -434,7 +428,6 @@ export class AgentBay {
         labels: paramsCopy.labels,
         imageId: paramsCopy.imageId,
         policyId: paramsCopy.policyId,
-        isVpc: paramsCopy.isVpc,
         persistenceDataCount: paramsCopy.contextSync ? paramsCopy.contextSync.length : 0,
       });
 
@@ -548,23 +541,13 @@ export class AgentBay {
 
       const session = new Session(this, sessionId);
 
-      // Set VPC-related information from response
-      session.isVpc = paramsCopy.isVpc || false;
-      if (data.networkInterfaceIp) {
-        session.networkInterfaceIp = data.networkInterfaceIp;
-      }
-      if (data.httpPort) {
-        session.httpPort = data.httpPort;
-      }
-      if (data.token) {
-        session.token = data.token;
-      }
-      if (data.linkUrl) {
-        session.linkUrl = data.linkUrl;
-      }
-
       // Set ResourceUrl
       session.resourceUrl = resourceUrl;
+
+      // LinkUrl/token may be returned by the server for direct tool calls.
+      session.token = data.token || "";
+      session.linkUrl = data.linkUrl || "";
+      session.mcpTools = this.parseToolListToMcpTools(data.toolList);
 
       // Set browser recording state
       session.enableBrowserReplay = paramsCopy.enableBrowserReplay || false;
@@ -586,44 +569,6 @@ export class AgentBay {
         } catch (error) {
           logError(`Warning: Failed to apply mobile configuration: ${error}`);
           // Continue with session creation even if mobile config fails
-        }
-      }
-
-      // Prefer MCP tools list from CreateMcpSession response (toolList) when present,
-      // then fall back to ListMcpTools for backward compatibility.
-      const toolListStr = data.toolList;
-      if (toolListStr) {
-        try {
-          const toolsData: unknown = JSON.parse(toolListStr);
-          const tools: McpTool[] = [];
-          if (Array.isArray(toolsData)) {
-            for (const toolData of toolsData as Array<Record<string, unknown>>) {
-              tools.push({
-                name: (toolData["name"] as string) || "",
-                description: (toolData["description"] as string) || "",
-                inputSchema: (toolData["inputSchema"] as Record<string, any>) || {},
-                server: (toolData["server"] as string) || "",
-                tool: (toolData["tool"] as string) || "",
-              });
-            }
-          }
-          session.mcpTools = tools;
-        } catch (error) {
-          logError(`Warning: Failed to parse toolList from CreateMcpSession: ${error}`);
-        }
-      }
-
-      // Backward compatibility: if isVpc=true but tool list is still empty, fall back to ListMcpTools.
-      if (paramsCopy.isVpc && session.mcpTools.length === 0) {
-        logDebug("VPC session detected, automatically fetching MCP tools...");
-        try {
-          const toolsResult = await session.listMcpTools();
-          logDebug(
-            `Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`
-          );
-        } catch (error) {
-          logError(`Warning: Failed to fetch MCP tools for VPC session: ${error}`);
-          // Continue with session creation even if tools fetch fails
         }
       }
 
@@ -1026,6 +971,7 @@ export class AgentBay {
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
           status: body.data.status || "",
+          toolList: body.data.toolList || "",
           contexts: contexts.length > 0 ? contexts : undefined,
         };
 
@@ -1122,13 +1068,11 @@ export class AgentBay {
     // Create the Session object
     const session = new Session(this, sessionId);
 
-    // Set VPC-related information and ResourceUrl from GetSession response
+    // Set ResourceUrl from GetSession response
     if (getResult.data) {
-      session.isVpc = getResult.data.vpcResource;
-      session.networkInterfaceIp = getResult.data.networkInterfaceIp;
-      session.httpPort = getResult.data.httpPort;
-      session.token = getResult.data.token;
       session.resourceUrl = getResult.data.resourceUrl;
+      session.token = getResult.data.token || "";
+      session.mcpTools = this.parseToolListToMcpTools(getResult.data.toolList);
     }
 
     return {
@@ -1186,8 +1130,8 @@ export class AgentBay {
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const session = (await agentBay.create()).session;
-   * const pauseResult = await agentBay.pauseAsync(session);
-   * await agentBay.resumeAsync(session);
+   * const pauseResult = await agentBay.betaPauseAsync(session);
+   * await agentBay.betaResumeAsync(session);
    * await session.delete();
    * ```
    *
@@ -1198,12 +1142,12 @@ export class AgentBay {
    * - The session state transitions from RUNNING -> PAUSING -> PAUSED
    * - Paused sessions consume fewer resources but maintain their state
    *
-   * @see {@link resumeAsync}, {@link Session.pauseAsync}
+   * @see {@link betaResumeAsync}, {@link Session.betaPauseAsync}
    */
-  async pauseAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionPauseResult> {
+  async betaPauseAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionPauseResult> {
     try {
       // Call session's pause_async method directly
-      return await session.pauseAsync(timeout, pollInterval);
+      return await session.betaPauseAsync(timeout, pollInterval);
     } catch (error) {
       logError("Error calling pause session async:", error);
       return {
@@ -1229,8 +1173,8 @@ export class AgentBay {
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const session = (await agentBay.create()).session;
-   * await agentBay.pauseAsync(session);
-   * const resumeResult = await agentBay.resumeAsync(session);
+   * await agentBay.betaPauseAsync(session);
+   * const resumeResult = await agentBay.betaResumeAsync(session);
    * await session.delete();
    * ```
    *
@@ -1241,12 +1185,12 @@ export class AgentBay {
    * - The session state transitions from PAUSED -> RESUMING -> RUNNING
    * - Only sessions in PAUSED state can be resumed
    *
-   * @see {@link pauseAsync}, {@link Session.resumeAsync}
+   * @see {@link betaPauseAsync}, {@link Session.betaResumeAsync}
    */
-  async resumeAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionResumeResult> {
+  async betaResumeAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionResumeResult> {
     try {
       // Call session's resume_async method directly
-      return await session.resumeAsync(timeout, pollInterval);
+      return await session.betaResumeAsync(timeout, pollInterval);
     } catch (error) {
       logError("Error calling resume session async:", error);
       return {
@@ -1255,6 +1199,47 @@ export class AgentBay {
         errorMessage: `Failed to resume session ${session.sessionId}: ${error}`,
       };
     }
+  }
+
+  private parseToolListToMcpTools(toolList: any): McpTool[] {
+    if (!toolList) {
+      return [];
+    }
+
+    let items = toolList;
+    if (typeof toolList === "string") {
+      try {
+        items = JSON.parse(toolList);
+      } catch (error) {
+        logDebug(`Failed to parse ToolList JSON: ${error}`);
+        return [];
+      }
+    }
+
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    const tools: McpTool[] = [];
+    for (const item of items) {
+      if (!item || typeof item !== "object") {
+        continue;
+      }
+      const name = item.name || item.Name || "";
+      const server = item.server || item.serverName || item.Server || "";
+      const description = item.description || item.Description || "";
+      const inputSchema = item.inputSchema || item.input_schema || {};
+      const tool = item.tool || item.Tool || "";
+      tools.push({
+        name,
+        server,
+        description,
+        inputSchema,
+        tool,
+      });
+    }
+
+    return tools;
   }
 
   /**

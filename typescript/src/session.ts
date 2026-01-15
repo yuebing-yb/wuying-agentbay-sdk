@@ -46,6 +46,17 @@ import {
   setRequestId,
 } from "./utils/logger";
 
+async function fetchCompat(input: any, init: any): Promise<any> {
+  const f = (globalThis as any).fetch;
+  if (typeof f === "function") {
+    return await f(input, init);
+  }
+
+  const mod: any = await import("node-fetch");
+  const nodeFetch = mod.default || mod;
+  return await nodeFetch(input, init);
+}
+
 /**
  * Represents an MCP tool with complete information.
  */
@@ -153,15 +164,12 @@ export class Session {
   private agentBay: AgentBay;
   public sessionId: string;
 
-  // VPC-related information
-  public isVpc = false; // Whether this session uses VPC resources
-  public networkInterfaceIp = ""; // Network interface IP for VPC sessions
-  public httpPort = ""; // HTTP port for VPC sessions
-  public token = ""; // Token for VPC sessions
-  public linkUrl = ""; // LinkUrl for LinkUrl-based VPC route
-
   // Resource URL for accessing the session
   public resourceUrl = "";
+
+  // LinkUrl-based direct tool call (non-VPC)
+  public token = "";
+  public linkUrl = "";
 
   // Recording functionality
   public enableBrowserReplay = false; // Whether browser recording is enabled for this session
@@ -185,7 +193,7 @@ export class Session {
   // Context management (matching Go version)
   public context: ContextManager;
 
-  // MCP tools available for this session
+  // MCP tools list returned by backend for this session
   public mcpTools: McpTool[] = [];
 
   /**
@@ -258,6 +266,14 @@ export class Session {
    */
   getAPIKey(): string {
     return this.agentBay.getAPIKey();
+  }
+
+  getToken(): string {
+    return this.token;
+  }
+
+  getLinkUrl(): string {
+    return this.linkUrl;
   }
 
   /**
@@ -365,66 +381,6 @@ export class Session {
         errorMessage: `Failed to get session detail ${this.sessionId}: ${error}`,
       };
     }
-  }
-
-  /**
-   * Return whether this session uses VPC resources.
-   *
-   * @returns boolean indicating if VPC is enabled for this session
-   * @internal
-   */
-  private isVpcEnabled(): boolean {
-    return this.isVpc;
-  }
-
-  /**
-   * Return the network interface IP for VPC sessions.
-   *
-   * @returns The network interface IP string for VPC sessions
-   * @internal
-   */
-  private getNetworkInterfaceIp(): string {
-    return this.networkInterfaceIp;
-  }
-
-  /**
-   * Return the HTTP port for VPC sessions.
-   *
-   * @returns The HTTP port string for VPC sessions
-   * @internal
-   */
-  private getHttpPort(): string {
-    return this.httpPort;
-  }
-
-  /**
-   * Return the token for VPC sessions.
-   *
-   * @returns The token string for VPC sessions
-   * @internal
-   */
-  public getToken(): string {
-    return this.token;
-  }
-
-  public getLinkUrl(): string {
-    return this.linkUrl;
-  }
-
-  /**
-   * Find the server that provides the given tool.
-   *
-   * @param toolName - Name of the tool to find
-   * @returns The server name that provides the tool, or empty string if not found
-   * @internal
-   */
-  private findServerForTool(toolName: string): string {
-    for (const tool of this.mcpTools) {
-      if (tool.name === toolName) {
-        return tool.server;
-      }
-    }
-    return "";
   }
 
   /**
@@ -1299,7 +1255,7 @@ export class Session {
       }
     }
 
-    this.mcpTools = tools; // Update the session's mcpTools field
+    // Do not store MCP tools in Session.
 
     // Log API response with key fields
     const keyFields: Record<string, any> = {
@@ -1322,6 +1278,15 @@ export class Session {
       success: true,
       tools,
     };
+  }
+
+  private getMcpServerForTool(toolName: string): string | null {
+    for (const tool of this.mcpTools || []) {
+      if (tool && tool.name === toolName) {
+        return tool.server || null;
+      }
+    }
+    return null;
   }
 
   /**
@@ -1361,223 +1326,133 @@ export class Session {
         logDebug(`Normalized press_keys arguments: ${JSON.stringify(args)}`);
       }
 
-      const argsJSON = JSON.stringify(args);
-
-      // Prefer LinkUrl-based VPC route when LinkUrl/Token are present (Java BaseService style).
-      if (this.getLinkUrl() && this.getToken()) {
-        return await this.callMcpToolLinkUrl(toolName, args);
-      }
-
-      // Check if this is a VPC session
-      if (this.isVpcEnabled()) {
-        // VPC mode: Use HTTP request to the VPC endpoint
-        const server = this.findServerForTool(toolName);
-        if (!server) {
-          return {
-            success: false,
-            data: "",
-            errorMessage: `Server not found for tool: ${toolName}`,
-            requestId: "",
-          };
-        }
-
-        if (!this.networkInterfaceIp || !this.httpPort) {
-          return {
-            success: false,
-            data: "",
-            errorMessage: `VPC network configuration incomplete: networkInterfaceIp=${this.networkInterfaceIp}, httpPort=${this.httpPort}. This may indicate the VPC session was not properly configured with network parameters.`,
-            requestId: "",
-          };
-        }
-
-        const baseURL = `http://${this.networkInterfaceIp}:${this.httpPort}/callTool`;
-        const url = new URL(baseURL);
-        url.searchParams.append("server", server);
-        url.searchParams.append("tool", toolName);
-        url.searchParams.append("args", argsJSON);
-        url.searchParams.append("token", this.getToken());
-        // Add requestId for debugging purposes
-        const requestId = `vpc-${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 9)}`;
-        url.searchParams.append("requestId", requestId);
-
-        const response = await fetch(url.toString(), {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        });
-
-        if (!response.ok) {
-          return {
-            success: false,
-            data: "",
-            errorMessage: `VPC request failed: ${response.statusText}`,
-            requestId: "",
-          };
-        }
-
-        const responseData = (await response.json()) as any;
-
-        // Extract the actual result from the nested VPC response structure
-        let actualResult: any = responseData;
-        if (typeof responseData.data === "string") {
-          try {
-            const dataMap = JSON.parse(responseData.data);
-            if (dataMap.result) {
-              actualResult = dataMap.result;
-            }
-          } catch (err) {
-            // Keep original response if parsing fails
-          }
-        } else if (responseData.data && responseData.data.result) {
-          actualResult = responseData.data.result;
-        }
-
-        // Extract text content from the result
-        let textContent = "";
-        if (
-          actualResult.content &&
-          Array.isArray(actualResult.content) &&
-          actualResult.content.length > 0
-        ) {
-          const contentItem = actualResult.content[0];
-          if (contentItem) {
-            if (typeof contentItem.text === "string" && contentItem.text) {
-              textContent = contentItem.text;
-            } else if (typeof contentItem.blob === "string" && contentItem.blob) {
-              textContent = contentItem.blob;
-            } else if (typeof contentItem.data === "string" && contentItem.data) {
-              textContent = contentItem.data;
-            }
-          }
-        }
-
-        // For run_code tool, extract and log the actual code execution output
-        // And return raw data to let Code service handle parsing
-        if (toolName === "run_code" && actualResult) {
-          const dataStr =
-            typeof actualResult === "string"
-              ? actualResult
-              : JSON.stringify(actualResult);
-          logCodeExecutionOutput(requestId, dataStr);
-
-          return {
-            success: true,
-            data: dataStr,
-            errorMessage: "",
-            requestId: "",
-          };
-        }
-
+      const serverName = this.getMcpServerForTool(toolName);
+      if (!serverName) {
         return {
-          success: true,
-          data: textContent || JSON.stringify(actualResult),
-          errorMessage: "",
+          success: false,
+          data: "",
+          errorMessage:
+            `Failed to resolve MCP server for tool: ${toolName}. ` +
+            "This session may not have ToolList populated, or the tool is unavailable in the current image.",
           requestId: "",
         };
-      } else {
-        // Non-VPC mode: use traditional API call
-        const callToolRequest = new CallMcpToolRequest({
-          authorization: `Bearer ${this.getAPIKey()}`,
-          sessionId: this.getSessionId(),
-          name: toolName,
-          args: argsJSON,
-          autoGenSession: autoGenSession,
-        });
+      }
 
-        const response = await this.getClient().callMcpTool(callToolRequest);
+      const argsJSON = JSON.stringify(args);
 
-        if (!response.body?.data) {
-          return {
-            success: false,
-            data: "",
-            errorMessage: "Invalid response data format",
-            requestId: extractRequestId(response) || "",
-          };
-        }
+      if (this.getLinkUrl() && this.getToken()) {
+        return await this.callMcpToolLinkUrl(toolName, args, serverName);
+      }
 
-        // Check for API-level errors before parsing Data
-        if (response.body.success === false && response.body.code) {
-          const errorMessage = `[${response.body.code}] ${
-            response.body.message || "Unknown error"
-          }`;
-          return {
-            success: false,
-            data: "",
-            errorMessage,
-            requestId: extractRequestId(response) || "",
-          };
-        }
+      // Use traditional API call
+      const callToolRequest = new CallMcpToolRequest({
+        authorization: `Bearer ${this.getAPIKey()}`,
+        sessionId: this.getSessionId(),
+        name: toolName,
+        args: argsJSON,
+        autoGenSession: autoGenSession,
+        server: serverName,
+      });
 
-        const data = response.body.data as Record<string, any>;
-        const reqId = extractRequestId(response) || "";
+      const response = await this.getClient().callMcpTool(callToolRequest);
 
-        // For run_code tool, return raw data to let Code service handle parsing
-        if (toolName === "run_code") {
-          let dataStr = "";
+      if (!response.body?.data) {
+        return {
+          success: false,
+          data: "",
+          errorMessage: "Invalid response data format",
+          requestId: extractRequestId(response) || "",
+        };
+      }
 
-          // Check if data has content array (standard MCP tool response)
-          // The backend might wrap the actual result JSON inside content[0].text
-          if (data && Array.isArray(data.content) && data.content.length > 0 && data.content[0].text) {
-             dataStr = data.content[0].text;
-          } else {
-             // Fallback: use the whole data object/string
-             dataStr = typeof response.body.data === "string"
+      // Check for API-level errors before parsing Data
+      if (response.body.success === false && response.body.code) {
+        const errorMessage = `[${response.body.code}] ${
+          response.body.message || "Unknown error"
+        }`;
+        return {
+          success: false,
+          data: "",
+          errorMessage,
+          requestId: extractRequestId(response) || "",
+        };
+      }
+
+      const data = response.body.data as Record<string, any>;
+      const reqId = extractRequestId(response) || "";
+      if (reqId) {
+        setRequestId(reqId);
+      }
+
+      // For run_code tool, return raw data to let Code service handle parsing
+      if (toolName === "run_code") {
+        let dataStr = "";
+
+        // Check if data has content array (standard MCP tool response)
+        // The backend might wrap the actual result JSON inside content[0].text
+        if (
+          data &&
+          Array.isArray(data.content) &&
+          data.content.length > 0 &&
+          data.content[0].text
+        ) {
+          dataStr = data.content[0].text;
+        } else {
+          // Fallback: use the whole data object/string
+          dataStr =
+            typeof response.body.data === "string"
               ? response.body.data
               : JSON.stringify(response.body.data);
-          }
-
-          logCodeExecutionOutput(reqId, dataStr);
-
-          // If the backend marked it as an error, we should reflect that
-          const isError = data.isError === true;
-
-          return {
-            success: !isError,
-            data: dataStr,
-            errorMessage: isError ? dataStr : "",
-            requestId: reqId,
-          };
         }
 
-        // Check if there's an error in the response
-        if (data.isError) {
-          const errorContent = data.content || [];
-          const errorMessage = errorContent
-            .map((item: any) => item.text || "Unknown error")
-            .join("; ");
+        logCodeExecutionOutput(reqId, dataStr);
 
-          return {
-            success: false,
-            data: "",
-            errorMessage,
-            requestId: reqId,
-          };
-        }
-
-        // Extract text content from content array
-        const content = data.content || [];
-        let textContent = "";
-        if (content.length > 0) {
-          const c0 = content[0] || {};
-          if (typeof c0.text === "string" && c0.text) {
-            textContent = c0.text;
-          } else if (typeof c0.blob === "string" && c0.blob) {
-            textContent = c0.blob;
-          } else if (typeof c0.data === "string" && c0.data) {
-            textContent = c0.data;
-          }
-        }
+        // If the backend marked it as an error, we should reflect that
+        const isError = data.isError === true;
 
         return {
-          success: true,
-          data: textContent || JSON.stringify(data),
-          errorMessage: "",
+          success: !isError,
+          data: dataStr,
+          errorMessage: isError ? dataStr : "",
           requestId: reqId,
         };
       }
+
+      // Check if there's an error in the response
+      if (data.isError) {
+        const errorContent = data.content || [];
+        const errorMessage = errorContent
+          .map((item: any) => item.text || "Unknown error")
+          .join("; ");
+
+        return {
+          success: false,
+          data: "",
+          errorMessage,
+          requestId: reqId,
+        };
+      }
+
+      // Extract text content from content array
+      const content = data.content || [];
+      let textContent = "";
+      if (content.length > 0) {
+        const c0 = content[0] || {};
+        if (typeof c0.text === "string" && c0.text) {
+          textContent = c0.text;
+        } else if (typeof c0.blob === "string" && c0.blob) {
+          textContent = c0.blob;
+        } else if (typeof c0.data === "string" && c0.data) {
+          textContent = c0.data;
+        }
+      }
+
+      return {
+        success: true,
+        data: textContent || JSON.stringify(data),
+        errorMessage: "",
+        requestId: reqId,
+      };
     } catch (error) {
       return {
         success: false,
@@ -1590,48 +1465,50 @@ export class Session {
 
   private async callMcpToolLinkUrl(
     toolName: string,
-    args: any
+    args: any,
+    serverName: string
   ): Promise<import("./agent/agent").McpToolResult> {
-    const server = this.findServerForTool(toolName);
-    if (!server) {
+    if (!serverName) {
       return {
         success: false,
         data: "",
-        errorMessage: `Server not found for tool: ${toolName}`,
+        errorMessage: `Server name is required for LinkUrl tool call: ${toolName}`,
         requestId: "",
       };
     }
 
-    const requestId = `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const linkUrl = this.getLinkUrl().replace(/\/+$/, "");
+    const linkUrl = this.getLinkUrl();
     const token = this.getToken();
-    const argsLength = JSON.stringify(args).length;
+    if (!linkUrl || !token) {
+      return {
+        success: false,
+        data: "",
+        errorMessage: "LinkUrl/token not available",
+        requestId: "",
+      };
+    }
 
-    logAPICall("CallMcpTool(LinkUrl)", "");
-    logAPIResponseWithDetails(
-      "CallMcpTool(LinkUrl) Request",
-      requestId,
-      true,
-      {
-        tool_name: toolName,
-        command:
-          typeof args?.command === "string"
-            ? args.command
-            : JSON.stringify(args).slice(0, 500) +
-              (JSON.stringify(args).length > 500 ? "...(truncated)" : ""),
-      },
-      ""
+    const requestId = `link-${Date.now()}-${Math.floor(
+      Math.random() * 1_000_000_000
+    )
+      .toString()
+      .padStart(9, "0")}`;
+
+    logAPICall(
+      "CallMcpTool(LinkUrl)",
+      `Tool=${toolName}, ArgsLength=${JSON.stringify(args).length}, RequestId=${requestId}`
     );
 
+    const url = `${linkUrl.replace(/\/+$/, "")}/callTool`;
     const payload = {
       args,
-      server,
+      server: serverName,
       requestId,
       tool: toolName,
       token,
     };
 
-    const response = await fetch(`${linkUrl}/callTool`, {
+    const resp = await fetchCompat(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1640,103 +1517,68 @@ export class Session {
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
+    if (!resp.ok) {
+      const bodyText = await resp.text().catch(() => "");
       logAPIResponseWithDetails(
         "CallMcpTool(LinkUrl) Response",
         requestId,
         false,
-        {
-          http_status: response.status,
-          tool_name: toolName,
-        },
-        ""
+        { http_status: resp.status, tool_name: toolName },
+        bodyText
       );
       return {
         success: false,
         data: "",
-        errorMessage: `VPC request failed with code: ${response.status}`,
+        errorMessage: `HTTP request failed with code: ${resp.status}`,
         requestId,
       };
     }
 
-    const outer = (await response.json()) as any;
+    const outer = await resp.json();
     const dataField = outer?.data;
-    if (dataField === undefined || dataField === null) {
-      return {
-        success: false,
-        data: "",
-        errorMessage: "No data field in LinkUrl response",
-        requestId,
-      };
-    }
-
     let parsedData: any = dataField;
     if (typeof dataField === "string") {
-      try {
-        parsedData = JSON.parse(dataField);
-      } catch (err) {
-        return {
-          success: false,
-          data: "",
-          errorMessage: `Invalid data field JSON in LinkUrl response: ${err}`,
-          requestId,
-        };
-      }
+      parsedData = JSON.parse(dataField);
     }
 
-    const result = parsedData?.result;
-    if (!result) {
-      return {
-        success: false,
-        data: "",
-        errorMessage: "No result field in LinkUrl response data",
-        requestId,
-      };
-    }
-
-    const isError = result.isError === true;
-    let textContent = "";
-    if (Array.isArray(result.content) && result.content.length > 0) {
-      const contentItem = result.content[0];
-      if (contentItem) {
-        if (typeof contentItem.text === "string" && contentItem.text) {
-          textContent = contentItem.text;
-        } else if (typeof contentItem.blob === "string" && contentItem.blob) {
-          textContent = contentItem.blob;
-        } else if (typeof contentItem.data === "string" && contentItem.data) {
-          textContent = contentItem.data;
-        }
-      }
-    }
+    const resultField = parsedData?.result;
+    const isError = resultField?.isError === true;
+    const content = Array.isArray(resultField?.content) ? resultField.content : [];
+    const first = content[0] ?? {};
+    const textContent =
+      typeof first === "string"
+        ? first
+        : (first as any).text ?? (first as any).blob ?? (first as any).data ?? "";
 
     logAPIResponseWithDetails(
       "CallMcpTool(LinkUrl) Response",
       requestId,
       !isError,
       {
-        http_status: response.status,
         tool_name: toolName,
-        output:
-          textContent.length > 800
-            ? textContent.slice(0, 800) + "...(truncated)"
-            : textContent,
+        server: serverName,
+        is_error: isError,
+        data_len: String(textContent ?? "").length,
       },
-      ""
+      isError ? String(textContent ?? "") : ""
     );
 
-    if (isError) {
+    if (toolName === "run_code") {
+      const dataStr =
+        typeof textContent === "string" ? textContent : JSON.stringify(textContent);
+      logCodeExecutionOutput(requestId, dataStr);
       return {
-        success: false,
-        data: "",
-        errorMessage: textContent,
+        success: !isError,
+        data: dataStr,
+        errorMessage: isError ? dataStr : "",
         requestId,
       };
     }
 
     return {
-      success: true,
-      data: textContent || JSON.stringify(result),
-      errorMessage: "",
+      success: !isError,
+      data: String(textContent ?? ""),
+      errorMessage: isError ? String(textContent ?? "") : "",
       requestId,
     };
   }
@@ -1759,7 +1601,7 @@ export class Session {
    * ```
    */
   async getMetrics(): Promise<SessionMetricsResult> {
-    const toolResult = await this.callMcpTool("get_metrics", {});
+    const toolResult = await this.callMcpTool("get_metrics", {}, false);
     const requestId = toolResult.requestId || "";
 
     if (!toolResult.success) {
@@ -1817,7 +1659,7 @@ export class Session {
   }
 
   /**
-   * Asynchronously pause this session, putting it into a dormant state.
+   * Asynchronously pause this session (beta), putting it into a dormant state.
    *
    * This method calls the PauseSessionAsync API to initiate the pause operation and then polls
    * the GetSession API to check the session status until it becomes PAUSED or until timeout is reached.
@@ -1839,7 +1681,7 @@ export class Session {
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const result = await agentBay.create();
    * if (result.success) {
-   *   const pauseResult = await result.session.pauseAsync();
+   *   const pauseResult = await result.session.betaPauseAsync();
    *   if (pauseResult.success) {
    *     console.log('Session paused successfully');
    *   }
@@ -1855,13 +1697,13 @@ export class Session {
    *
    * **Important Notes:**
    * - Paused sessions cannot perform operations (deletion, task execution, etc.)
-   * - Use {@link resumeAsync} to restore the session to RUNNING state
+   * - Use {@link betaResumeAsync} to restore the session to RUNNING state
    * - During pause, both resource usage and costs are lower
    * - If timeout is exceeded, returns with success=false
    *
-   * @see {@link resumeAsync}
+   * @see {@link betaResumeAsync}
    */
-  async pauseAsync(timeout = 600, pollInterval = 2.0): Promise<SessionPauseResult> {
+  async betaPauseAsync(timeout = 600, pollInterval = 2.0): Promise<SessionPauseResult> {
     try {
       const request = new $_client.PauseSessionAsyncRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -1992,7 +1834,7 @@ export class Session {
   }
 
   /**
-   * Asynchronously resume this session from a paused state.
+   * Asynchronously resume this session (beta) from a paused state.
    *
    * This method calls the ResumeSessionAsync API to initiate the resume operation and then polls
    * the GetSession API to check the session status until it becomes RUNNING or until timeout is reached.
@@ -2014,7 +1856,7 @@ export class Session {
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const result = await agentBay.get('paused_session_id');
    * if (result.success) {
-   *   const resumeResult = await result.session.resumeAsync();
+   *   const resumeResult = await result.session.betaResumeAsync();
    *   if (resumeResult.success) {
    *     console.log('Session resumed successfully');
    *   }
@@ -2031,12 +1873,12 @@ export class Session {
    * **Important Notes:**
    * - Only sessions in PAUSED state can be resumed
    * - After resume, the session can perform all operations normally
-   * - Use {@link pauseAsync} to put a session into PAUSED state
+   * - Use {@link betaPauseAsync} to put a session into PAUSED state
    * - If timeout is exceeded, returns with success=false
    *
-   * @see {@link pauseAsync}
+   * @see {@link betaPauseAsync}
    */
-  async resumeAsync(timeout = 600, pollInterval = 2.0): Promise<SessionResumeResult> {
+  async betaResumeAsync(timeout = 600, pollInterval = 2.0): Promise<SessionResumeResult> {
     try {
       const request = new $_client.ResumeSessionAsyncRequest({
         authorization: `Bearer ${this.getAPIKey()}`,

@@ -35,7 +35,7 @@ describe('Command', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
         command: 'echo test',
         timeout_ms: 1000,
-      });
+      }, false);
     });
 
     it('should execute command with custom timeout', async () => {
@@ -54,7 +54,7 @@ describe('Command', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
         command: 'echo test',
         timeout_ms: 5000,
-      });
+      }, false);
     });
 
     it('should parse new JSON format response', async () => {
@@ -124,7 +124,7 @@ describe('Command', () => {
         command: 'pwd',
         timeout_ms: 1000,
         cwd: '/tmp',
-      });
+      }, false);
       expect(result.success).toBe(true);
     });
 
@@ -148,7 +148,7 @@ describe('Command', () => {
         command: 'echo $TEST_VAR',
         timeout_ms: 1000,
         envs: { TEST_VAR: 'test_value' },
-      });
+      }, false);
       expect(result.success).toBe(true);
     });
 
@@ -173,7 +173,7 @@ describe('Command', () => {
         timeout_ms: 1000,
         cwd: '/tmp',
         envs: { CUSTOM_VAR: 'custom_value' },
-      });
+      }, false);
       expect(result.success).toBe(true);
     });
 
@@ -192,7 +192,7 @@ describe('Command', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
         command: 'ls -la',
         timeout_ms: 50000, // Should be limited to 50s
-      });
+      }, false);
 
       // Test with timeout exactly at limit
       mockSession.callMcpTool.mockClear();
@@ -200,7 +200,7 @@ describe('Command', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
         command: 'ls -la',
         timeout_ms: 50000, // Should remain 50s
-      });
+      }, false);
 
       // Test with timeout below limit
       mockSession.callMcpTool.mockClear();
@@ -208,7 +208,7 @@ describe('Command', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
         command: 'ls -la',
         timeout_ms: 30000, // Should remain unchanged
-      });
+      }, false);
     });
 
     it('should fallback to old format if JSON parsing fails', async () => {
@@ -301,7 +301,7 @@ describe('Command', () => {
         command: 'echo test',
         timeout_ms: 1000,
         envs: { TEST_VAR: '123', MODE: 'production' },
-      });
+      }, false);
     });
   });
 
@@ -325,7 +325,7 @@ describe('Command', () => {
         timeout_ms: 2000,
         cwd: '/tmp',
         envs: { A: 'B' },
-      });
+      }, false);
     });
 
     it('exec() should call executeCommand()', async () => {
@@ -343,7 +343,7 @@ describe('Command', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
         command: 'echo test',
         timeout_ms: 1000,
-      });
+      }, false);
     });
   });
 });

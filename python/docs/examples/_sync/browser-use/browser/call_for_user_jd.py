@@ -94,7 +94,7 @@ def main():
                 # Listen for console messages
                 def handle_console(msg):
                     print(f"🔍 Received console message: {msg.text}")
-                    
+
                     # Parse JSON message
                     try:
                         message_data = json.loads(msg.text)
@@ -126,9 +126,9 @@ def main():
                 print("click login")
                 page.click('.link-login')
                 time.sleep(25)
-                
+
                 print("Test completed")
-                
+
                 # Keep browser open for a while to observe results
                 time.sleep(5)
 
@@ -139,7 +139,7 @@ def main():
                     print("page_screenshot_base64 = data:image/png;base64,", b64)
                 except Exception as e:
                     print("screenshot failed:", e)
-                
+
                 browser.close()
 
 if __name__ == "__main__":

@@ -25,7 +25,6 @@ examples/
 │   │   └── get/                   # Session retrieval
 │   └── advanced/                  # Advanced features
 │       ├── agent_module/          # AI-powered automation
-│       ├── vpc_session/           # Secure isolated network environments
 │       └── archive-upload-mode-example/ # Archive upload mode
 ├── browser-use/                   # Browser automation (browser_latest)
 │   └── browser/                   # Browser automation examples
@@ -75,7 +74,6 @@ Features available across all environment types (browser, computer, mobile, code
 
 **Advanced:**
 - **Agent Module**: AI-powered task automation with natural language
-- **VPC Sessions**: Secure isolated network environments
 - **Archive Upload**: Archive upload mode configuration
 
 ### [Browser Use](browser-use/)
@@ -254,7 +252,6 @@ if err == nil {
 
 **Advanced Features:**
 - AI Agent: `common-features/advanced/agent_module/main.go`
-- VPC sessions: `common-features/advanced/vpc_session/main.go`
 
 ## 🆘 Troubleshooting
 

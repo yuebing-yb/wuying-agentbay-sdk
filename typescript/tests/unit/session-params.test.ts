@@ -271,7 +271,6 @@ describe("Session Parameters", () => {
                 labels: { test: "value" },
                 imageId: "test_image",
                 contextSync: [],
-                isVpc: false,
                 enableBrowserReplay: true,
             };
 

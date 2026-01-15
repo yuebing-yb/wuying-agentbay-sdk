@@ -68,6 +68,12 @@ class TestAsyncSessionGetMetrics(unittest.IsolatedAsyncioTestCase):
         )
 
         result = await self.session.get_metrics()
+        self.session.call_mcp_tool.assert_awaited_once_with(
+            tool_name="get_metrics",
+            args={},
+            read_timeout=None,
+            connect_timeout=None,
+        )
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "req-1")
         self.assertIsNotNone(result.metrics)
@@ -95,6 +101,12 @@ class TestAsyncSessionGetMetrics(unittest.IsolatedAsyncioTestCase):
         )
 
         result = await self.session.get_metrics()
+        self.session.call_mcp_tool.assert_awaited_once_with(
+            tool_name="get_metrics",
+            args={},
+            read_timeout=None,
+            connect_timeout=None,
+        )
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "req-2")
         self.assertIsNone(result.metrics)

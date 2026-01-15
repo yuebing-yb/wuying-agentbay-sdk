@@ -85,32 +85,32 @@ func (mr *MockAgentBayInterfaceMockRecorder) List(arg0, arg1, arg2, arg3 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockAgentBayInterface)(nil).List), arg0, arg1, arg2, arg3)
 }
 
-// Pause mocks base method.
-func (m *MockAgentBayInterface) Pause(arg0 *agentbay.Session, arg1 int, arg2 float64) (*models.SessionPauseResult, error) {
+// BetaPause mocks base method.
+func (m *MockAgentBayInterface) BetaPause(arg0 *agentbay.Session, arg1 int, arg2 float64) (*models.SessionPauseResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Pause", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "BetaPause", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*models.SessionPauseResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Pause indicates an expected call of Pause.
-func (mr *MockAgentBayInterfaceMockRecorder) Pause(arg0, arg1, arg2 interface{}) *gomock.Call {
+// BetaPause indicates an expected call of BetaPause.
+func (mr *MockAgentBayInterfaceMockRecorder) BetaPause(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pause", reflect.TypeOf((*MockAgentBayInterface)(nil).Pause), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BetaPause", reflect.TypeOf((*MockAgentBayInterface)(nil).BetaPause), arg0, arg1, arg2)
 }
 
-// Resume mocks base method.
-func (m *MockAgentBayInterface) Resume(arg0 *agentbay.Session, arg1 int, arg2 float64) (*models.SessionResumeResult, error) {
+// BetaResume mocks base method.
+func (m *MockAgentBayInterface) BetaResume(arg0 *agentbay.Session, arg1 int, arg2 float64) (*models.SessionResumeResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Resume", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "BetaResume", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*models.SessionResumeResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Resume indicates an expected call of Resume.
-func (mr *MockAgentBayInterfaceMockRecorder) Resume(arg0, arg1, arg2 interface{}) *gomock.Call {
+// BetaResume indicates an expected call of BetaResume.
+func (mr *MockAgentBayInterfaceMockRecorder) BetaResume(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resume", reflect.TypeOf((*MockAgentBayInterface)(nil).Resume), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BetaResume", reflect.TypeOf((*MockAgentBayInterface)(nil).BetaResume), arg0, arg1, arg2)
 }

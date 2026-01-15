@@ -71,7 +71,7 @@ func TestDeletePausedSession(t *testing.T) {
 
 	// Pause the session
 	fmt.Println("Step 2: Pausing session...")
-	pauseResult, err := client.Pause(createdSession, 600, 2.0)
+	pauseResult, err := client.BetaPause(createdSession, 600, 2.0)
 	if err != nil {
 		t.Fatalf("Failed to pause session: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestDeletePausedSession(t *testing.T) {
 	
 	// Resume the session first to test delete on running session
 	fmt.Println("Step 4: Resuming session before delete test...")
-	resumeResult, err := client.Resume(createdSession, 120, 2.0)
+	resumeResult, err := client.BetaResume(createdSession, 120, 2.0)
 	if err != nil {
 		t.Logf("Failed to resume session for delete test: %v", err)
 		t.Skip("Skipping delete test due to resume failure")

@@ -295,6 +295,35 @@ export function maskSensitiveData(data: unknown, fields?: string[]): unknown {
   return mask(data);
 }
 
+function truncateStringForLog(s: string, max: number): string {
+  if (!max || max <= 0 || s.length <= max) {
+    return s;
+  }
+  return s.slice(0, max) + "...(truncated)";
+}
+
+function maskSensitiveDataString(input: string): string {
+  try {
+    const parsed = JSON.parse(input) as unknown;
+    const masked = maskSensitiveData(parsed) as unknown;
+    return JSON.stringify(masked);
+  } catch {
+    const fields = SENSITIVE_FIELDS;
+    let out = input;
+    for (const field of fields) {
+      const re = new RegExp(`("${field}"\\s*:\\s*")([^"]*)(")`, "gi");
+      out = out.replace(re, (_m, p1, p2, p3) => {
+        const v = String(p2 || "");
+        if (v.length > 4) {
+          return `${p1}${v.substring(0, 2)}****${v.substring(v.length - 2)}${p3}`;
+        }
+        return `${p1}****${p3}`;
+      });
+    }
+    return out;
+  }
+}
+
 /**
  * Set the log level
  * @param level The log level to set
@@ -764,7 +793,8 @@ export function logAPIResponseWithDetails(
     }
 
     if (fullResponse && shouldLog('DEBUG')) {
-      logDebug(`📥 Full Response: ${fullResponse}`);
+      const masked = truncateStringForLog(maskSensitiveDataString(fullResponse), 2000);
+      logDebug(`📥 Full Response: ${masked}`);
     }
   } else {
     if (shouldLog('ERROR')) {
@@ -780,11 +810,24 @@ export function logAPIResponseWithDetails(
         logError(errorMessage);
       }
 
+      if (keyFields) {
+        for (const [key, value] of Object.entries(keyFields)) {
+          const maskedValue = maskSensitiveData({ [key]: value }) as Record<string, unknown>;
+          const keyMessage = `  └─ ${key}=${maskedValue[key]}`;
+          if (useColors) {
+            process.stderr.write(`${ANSI_RED}❌ ERROR: ${keyMessage}${ANSI_RESET}\n`);
+          } else {
+            logError(keyMessage);
+          }
+        }
+      }
+
       if (fullResponse) {
+        const masked = truncateStringForLog(maskSensitiveDataString(fullResponse), 2000);
         if (useColors) {
-          process.stderr.write(`${ANSI_RED}ℹ️  INFO: 📥 Response: ${fullResponse}${ANSI_RESET}\n`);
+          process.stderr.write(`${ANSI_RED}❌ ERROR: 📥 Response: ${masked}${ANSI_RESET}\n`);
         } else {
-          logError(`📥 Response: ${fullResponse}`);
+          logError(`📥 Response: ${masked}`);
         }
       }
     }

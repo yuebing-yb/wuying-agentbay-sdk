@@ -106,30 +106,26 @@ class TestRegionIdSupport(unittest.TestCase):
             with patch(
                 "agentbay._sync.agentbay.AgentBay._wait_for_context_synchronization"
             ) as mock_wait:
-                with patch(
-                    "agentbay._sync.agentbay.AgentBay._fetch_mcp_tools_for_vpc_session"
-                ) as mock_fetch:
-                    mock_context_result = ContextResult(
-                        success=True,
-                        context=Context(id="test-context-id", name="test-context"),
-                    )
-                    mock_context_get.return_value = mock_context_result
-                    mock_wait.return_value = None
-                    mock_fetch.return_value = None
+                mock_context_result = ContextResult(
+                    success=True,
+                    context=Context(id="test-context-id", name="test-context"),
+                )
+                mock_context_get.return_value = mock_context_result
+                mock_wait.return_value = None
 
-                    # Create AgentBay instance with region_id in config
-                    config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
-                    agent_bay = AgentBay(cfg=config)
+                # Create AgentBay instance with region_id in config
+                config = Config(endpoint="wuyingai.cn-shanghai.aliyuncs.com", timeout_ms=60000, region_id="cn-hangzhou")
+                agent_bay = AgentBay(cfg=config)
 
-                    # Create session
-                    params = CreateSessionParams()
-                    result = agent_bay.create(params)
+                # Create session
+                params = CreateSessionParams()
+                result = agent_bay.create(params)
 
-                    # Verify the API call was made with LoginRegionId
-                    mock_client.create_mcp_session.assert_called_once()
-                    call_args = mock_client.create_mcp_session.call_args[0][0]
-                    self.assertIsInstance(call_args, CreateMcpSessionRequest)
-                    self.assertEqual(call_args.login_region_id, "cn-hangzhou")
+                # Verify the API call was made with LoginRegionId
+                mock_client.create_mcp_session.assert_called_once()
+                call_args = mock_client.create_mcp_session.call_args[0][0]
+                self.assertIsInstance(call_args, CreateMcpSessionRequest)
+                self.assertEqual(call_args.login_region_id, "cn-hangzhou")
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
     @patch("agentbay._sync.agentbay._load_config")
@@ -168,23 +164,19 @@ class TestRegionIdSupport(unittest.TestCase):
             with patch(
                 "agentbay._sync.agentbay.AgentBay._wait_for_context_synchronization"
             ) as mock_wait:
-                with patch(
-                    "agentbay._sync.agentbay.AgentBay._fetch_mcp_tools_for_vpc_session"
-                ) as mock_fetch:
-                    mock_context_result = ContextResult(
-                        success=True,
-                        context=Context(id="test-context-id", name="test-context"),
-                    )
-                    mock_context_get.return_value = mock_context_result
-                    mock_wait.return_value = None
-                    mock_fetch.return_value = None
+                mock_context_result = ContextResult(
+                    success=True,
+                    context=Context(id="test-context-id", name="test-context"),
+                )
+                mock_context_get.return_value = mock_context_result
+                mock_wait.return_value = None
 
-                    # Create AgentBay instance without region_id
-                    agent_bay = AgentBay()
+                # Create AgentBay instance without region_id
+                agent_bay = AgentBay()
 
-                    # Create session
-                    params = CreateSessionParams()
-                    result = agent_bay.create(params)
+                # Create session
+                params = CreateSessionParams()
+                result = agent_bay.create(params)
 
             # Verify the API call was made without LoginRegionId
             mock_client.create_mcp_session.assert_called_once()

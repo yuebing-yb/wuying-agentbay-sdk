@@ -790,7 +790,10 @@ class AsyncFileSystem(BaseService):
         """
         args = {"path": path}
         try:
-            result = await self.session.call_mcp_tool("create_directory", args)
+            result = await self.session.call_mcp_tool(
+                "create_directory",
+                args,
+            )
             _logger.debug(f"📥 create_directory response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -829,7 +832,10 @@ class AsyncFileSystem(BaseService):
         """
         args = {"path": path}
         try:
-            result = await self.session.call_mcp_tool("delete_file", args)
+            result = await self.session.call_mcp_tool(
+                "delete_file",
+                args,
+            )
             _logger.debug(f"📥 delete_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -874,7 +880,10 @@ class AsyncFileSystem(BaseService):
         """
         args = {"path": path, "edits": edits, "dryRun": dry_run}
         try:
-            result = await self.session.call_mcp_tool("edit_file", args)
+            result = await self.session.call_mcp_tool(
+                "edit_file",
+                args,
+            )
             _logger.debug(f"📥 edit_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -949,7 +958,10 @@ class AsyncFileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = await self.session.call_mcp_tool("get_file_info", args)
+            result = await self.session.call_mcp_tool(
+                "get_file_info",
+                args,
+            )
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1069,7 +1081,10 @@ class AsyncFileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = await self.session.call_mcp_tool("list_directory", args)
+            result = await self.session.call_mcp_tool(
+                "list_directory",
+                args,
+            )
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1122,7 +1137,10 @@ class AsyncFileSystem(BaseService):
         """
         args = {"source": source, "destination": destination}
         try:
-            result = await self.session.call_mcp_tool("move_file", args)
+            result = await self.session.call_mcp_tool(
+                "move_file",
+                args,
+            )
             _logger.debug(f"📥 move_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -1168,7 +1186,10 @@ class AsyncFileSystem(BaseService):
             args["format"] = "binary"
 
         try:
-            result = await self.session.call_mcp_tool("read_file", args)
+            result = await self.session.call_mcp_tool(
+                "read_file",
+                args,
+            )
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1315,7 +1336,10 @@ class AsyncFileSystem(BaseService):
 
         args = {"paths": paths}
         try:
-            result = await self.session.call_mcp_tool("read_multiple_files", args)
+            result = await self.session.call_mcp_tool(
+                "read_multiple_files",
+                args,
+            )
             try:
                 response_body = json.dumps(
                     getattr(result, "body", result), ensure_ascii=False, indent=2
@@ -1383,7 +1407,10 @@ class AsyncFileSystem(BaseService):
             args["excludePatterns"] = ",".join(exclude_patterns)
 
         try:
-            result = await self.session.call_mcp_tool("search_files", args)
+            result = await self.session.call_mcp_tool(
+                "search_files",
+                args,
+            )
             _logger.debug(f"📥 search_files response: {result}")
 
             if result.success:
@@ -1442,7 +1469,10 @@ class AsyncFileSystem(BaseService):
 
         args = {"path": path, "content": content, "mode": mode}
         try:
-            result = await self.session.call_mcp_tool("write_file", args)
+            result = await self.session.call_mcp_tool(
+                "write_file",
+                args,
+            )
             _logger.debug(f"📥 write_file response: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
@@ -1492,15 +1522,15 @@ class AsyncFileSystem(BaseService):
         Example:
             ```python
             session = (await agent_bay.create()).session
-            
+
             # Read text file (default)
             text_result = await session.file_system.read_file("/tmp/test.txt")
             print(text_result.content)  # str
-            
+
             # Read binary file
             binary_result = await session.file_system.read_file("/tmp/image.png", format="bytes")
             print(binary_result.content)  # bytes
-            
+
             await session.delete()
             ```
 
@@ -1959,7 +1989,10 @@ class AsyncFileSystem(BaseService):
 
         args = {"path": path}
         try:
-            result = await self.session.call_mcp_tool("get_file_change", args)
+            result = await self.session.call_mcp_tool(
+                "get_file_change",
+                args,
+            )
             try:
                 print("Response body:")
                 print(

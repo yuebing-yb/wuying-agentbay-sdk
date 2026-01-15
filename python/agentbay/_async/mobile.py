@@ -130,7 +130,10 @@ class AsyncMobile(AsyncBaseService):
         """
         args = {"x": x, "y": y}
         try:
-            result = await self.session.call_mcp_tool("tap", args)
+            result = await self.session.call_mcp_tool(
+                "tap",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -191,7 +194,10 @@ class AsyncMobile(AsyncBaseService):
             "duration_ms": duration_ms,
         }
         try:
-            result = await self.session.call_mcp_tool("swipe", args)
+            result = await self.session.call_mcp_tool(
+                "swipe",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -234,7 +240,10 @@ class AsyncMobile(AsyncBaseService):
         """
         args = {"text": text}
         try:
-            result = await self.session.call_mcp_tool("input_text", args)
+            result = await self.session.call_mcp_tool(
+                "input_text",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -283,7 +292,10 @@ class AsyncMobile(AsyncBaseService):
         """
         args = {"key": key}
         try:
-            result = await self.session.call_mcp_tool("send_key", args)
+            result = await self.session.call_mcp_tool(
+                "send_key",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -335,7 +347,10 @@ class AsyncMobile(AsyncBaseService):
         """
         args = {"timeout_ms": timeout_ms}
         try:
-            result = await self.session.call_mcp_tool("get_clickable_ui_elements", args)
+            result = await self.session.call_mcp_tool(
+                "get_clickable_ui_elements",
+                args,
+            )
             request_id = result.request_id
 
             if not result.success:
@@ -440,7 +455,10 @@ class AsyncMobile(AsyncBaseService):
             return parsed
 
         try:
-            result = await self.session.call_mcp_tool("get_all_ui_elements", args)
+            result = await self.session.call_mcp_tool(
+                "get_all_ui_elements",
+                args,
+            )
             request_id = result.request_id
 
             if not result.success:
@@ -537,7 +555,10 @@ class AsyncMobile(AsyncBaseService):
                 "ignore_system_apps": ignore_system_apps,
             }
 
-            result = await self.session.call_mcp_tool("get_installed_apps", args)
+            result = await self.session.call_mcp_tool(
+                "get_installed_apps",
+                args,
+            )
 
             if not result.success:
                 return InstalledAppListResult(
@@ -601,7 +622,10 @@ class AsyncMobile(AsyncBaseService):
             if activity:
                 args["activity"] = activity
 
-            result = await self.session.call_mcp_tool("start_app", args)
+            result = await self.session.call_mcp_tool(
+                "start_app",
+                args,
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -652,7 +676,10 @@ class AsyncMobile(AsyncBaseService):
         """
         try:
             args = {"stop_cmd": stop_cmd}
-            result = await self.session.call_mcp_tool("stop_app_by_cmd", args)
+            result = await self.session.call_mcp_tool(
+                "stop_app_by_cmd",
+                args,
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -681,7 +708,10 @@ class AsyncMobile(AsyncBaseService):
         """
         args = {}
         try:
-            result = await self.session.call_mcp_tool("system_screenshot", args)
+            result = await self.session.call_mcp_tool(
+                "system_screenshot",
+                args,
+            )
 
             if not result.success:
                 return OperationResult(
@@ -718,7 +748,10 @@ class AsyncMobile(AsyncBaseService):
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
         """
-        result = await self.session.call_mcp_tool("screenshot", {"format": "png"})
+        result = await self.session.call_mcp_tool(
+            "screenshot",
+            {"format": "png"},
+        )
         if not result.success:
             raise AgentBayError(f"Failed to take screenshot: {result.error_message}")
 
@@ -765,7 +798,10 @@ class AsyncMobile(AsyncBaseService):
             if not isinstance(quality, int) or quality < 1 or quality > 100:
                 raise ValueError("Invalid quality: must be an integer in [1, 100]")
             args["quality"] = quality
-        result = await self.session.call_mcp_tool("long_screenshot", args)
+        result = await self.session.call_mcp_tool(
+            "long_screenshot",
+            args,
+        )
         if not result.success:
             raise AgentBayError(f"Failed to take long screenshot: {result.error_message}")
 
@@ -784,89 +820,52 @@ class AsyncMobile(AsyncBaseService):
         Decode image bytes from MCP tool text output.
 
         Supports:
-        - plain base64
-        - data URL
-        - JSON objects containing base64 fields
-        - base64 with small unexpected prefix (strip by magic)
+        - backend JSON string containing base64 in the top-level "data" field
         """
         if not isinstance(text, str) or not text.strip():
             raise AgentBayError("Screenshot tool returned empty data")
 
-        def _maybe_extract_base64(s: str) -> str:
-            v = (s or "").strip()
-            if not v:
-                return ""
-            if "base64," in v:
-                v = v.split("base64,", 1)[1]
-            if v.startswith("data:image/"):
-                comma = v.find(",")
-                if comma >= 0:
-                    v = v[comma + 1 :]
-            return "".join(v.split())
-
-        def _decode_base64_any(b64_text: str) -> bytes:
-            s = _maybe_extract_base64(b64_text)
-            if not s:
-                raise ValueError("empty base64 string")
-            pad = (-len(s)) % 4
-            if pad:
-                s = s + ("=" * pad)
-            if "-" in s or "_" in s:
-                return base64.urlsafe_b64decode(s)
-            return base64.b64decode(s, validate=True)
-
-        def _extract_from_json(obj: Any) -> Optional[bytes]:
-            if isinstance(obj, dict):
-                content = obj.get("content")
-                if isinstance(content, list):
-                    for item in content:
-                        if not isinstance(item, dict):
-                            continue
-                        t = str(item.get("type", "") or "").lower()
-                        if t == "image":
-                            for k in ("data", "base64", "b64"):
-                                v = item.get(k)
-                                if isinstance(v, str) and v.strip():
-                                    return _decode_base64_any(v)
-                        if t == "text":
-                            v = item.get("text")
-                            if isinstance(v, str) and v.strip():
-                                try:
-                                    return _decode_base64_any(v)
-                                except Exception:
-                                    pass
-                for k in ("data", "base64", "b64", "image", "Image"):
-                    v = obj.get(k)
-                    if isinstance(v, str) and v.strip():
-                        try:
-                            return _decode_base64_any(v)
-                        except Exception:
-                            pass
-            if isinstance(obj, list):
-                for item in obj:
-                    got = _extract_from_json(item)
-                    if got:
-                        return got
-            return None
-
-        raw: Optional[bytes] = None
+        # Step 0: raw text from backend (string).
+        #
+        # Observed backend payload (real integration run, 2026-01-14):
+        # - text_prefix_120:
+        #   '{"data":"iVBORw0KGgoAAAANSUhEUgAAAtAAAAUACAYAAABuzmU9AAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZIgAACAASURBVHic7N1neFRFw8bxe7P'
+        # - top-level keys: ['data', 'height', 'mime_type', 'type', 'width']
+        # - data_len: 90477
         s = text.strip()
+
+        # Step 1: strict JSON-only decoding.
+        #
+        # Contract: backend must return a JSON object string with a top-level "data" field.
+        if not s.startswith("{"):
+            raise AgentBayError("Screenshot tool returned non-JSON data")
+
         try:
-            raw = _decode_base64_any(s)
-        except Exception:
-            raw = None
+            obj = json.loads(s)
+        except Exception as e:
+            raise AgentBayError(f"Invalid screenshot JSON: {e}") from e
 
-        if raw is None:
-            try:
-                parsed = json.loads(s)
-            except Exception:
-                parsed = None
-            if parsed is not None:
-                raw = _extract_from_json(parsed)
+        if not isinstance(obj, dict):
+            raise AgentBayError("Invalid screenshot JSON: expected object")
+        b64 = obj.get("data")
+        if not isinstance(b64, str) or not b64.strip():
+            raise AgentBayError("Screenshot JSON missing base64 field")
 
-        if raw is None:
-            raise AgentBayError("Failed to decode screenshot data")
+        # Step 2: base64 string extracted from JSON field.
+        #
+        # Observed (same run):
+        # - extracted_b64_prefix_80:
+        #   'iVBORw0KGgoAAAANSUhEUgAAAtAAAAUACAYAAABuzmU9AAAAAXNSR0IArs4c6QAAAARzQklUCAgICHwIZIgA'
+        s = b64.strip()
 
+        # Step 3: decode base64 bytes strictly (no whitespace/padding normalization).
+        try:
+            raw = base64.b64decode(s, validate=True)
+        except Exception as e:
+            raise AgentBayError(f"Failed to decode screenshot data: {e}") from e
+
+        # Step 4: validate bytes match expected format by magic header.
+        # Observed decoded bytes prefix for PNG: b'\\x89PNG\\r\\n\\x1a\\n'
         if expected_format == "png":
             magic = b"\x89PNG\r\n\x1a\n"
         else:
@@ -874,9 +873,6 @@ class AsyncMobile(AsyncBaseService):
 
         if raw.startswith(magic):
             return raw
-        idx = raw.find(magic, 0, 64)
-        if idx > 0:
-            return raw[idx:]
         raise AgentBayError("Decoded image does not match expected format")
 
     # Mobile Configuration Operations

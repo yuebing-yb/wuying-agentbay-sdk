@@ -231,6 +231,7 @@ class GetSessionData:
         vpc_resource: bool = False,
         resource_url: str = "",
         status: str = "",
+        tool_list: str = "",
         contexts: Optional[List[Dict[str, str]]] = None,
     ):
         """
@@ -260,6 +261,7 @@ class GetSessionData:
         self.vpc_resource = vpc_resource
         self.resource_url = resource_url
         self.status = status
+        self.tool_list = tool_list
         self.contexts = contexts or []
 
 
