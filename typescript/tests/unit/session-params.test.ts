@@ -256,14 +256,12 @@ describe("Session Parameters", () => {
             const params :CreateSessionParams = {
                 labels: { project: "test", env: "development" },
                 enableBrowserReplay:true,
-                isVpc:false,
                 imageId:"browser_latest"
             };
 
             expect(params.labels).toEqual({ project: "test", env: "development" });
             expect(params.imageId).toBe("browser_latest");
             expect(params.enableBrowserReplay).toBe(true);
-            expect(params.isVpc).toBe(false);
         });
 
         it("should handle enableBrowserReplay in fromJSON", () => {
