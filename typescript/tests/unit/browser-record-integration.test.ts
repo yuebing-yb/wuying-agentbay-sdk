@@ -170,7 +170,6 @@ describe("Browser Record Integration (Unit Test)", () => {
   test("should support method chaining with enableBrowserReplay in CreateSessionParams", () => {
     const params : CreateSessionParams  ={
       imageId:'browser_latest',
-      isVpc:false,
       enableBrowserReplay:true,
       labels:{project: "browser-test", type: "recording"}
     }

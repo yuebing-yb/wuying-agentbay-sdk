@@ -941,7 +941,6 @@ describe("Extension Service Integration Tests", () => {
       labels: { test_type: "extension_integration" },
       imageId: "browser_latest",
       browserContext: browserContext,
-      isVpc: false
     };
 
       log("\nCreating session with browser context...", sessionParams);
