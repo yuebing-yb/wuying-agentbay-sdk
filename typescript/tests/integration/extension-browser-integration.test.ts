@@ -22,9 +22,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { AgentBay } from "../../src";
+import { AgentBay, CreateSessionParams } from "../../src";
 import { ExtensionsService, Extension, ExtensionOption } from "../../src/extension";
-import { CreateSessionParams, BrowserContext } from "../../src/session-params";
+import { BrowserContext } from "../../src/session-params";
 import { Context } from "../../src/context";
 import { Session } from "../../src/session";
 import { SessionResult, ContextResult } from "../../src/types/api-response";
@@ -937,15 +937,16 @@ describe("Extension Service Integration Tests", () => {
       extensionOption
     );
     
-    const sessionParams = new CreateSessionParams()
-      .withLabels({ test_type: "extension_integration" })
-      .withImageId("browser_latest")
-      .withBrowserContext(browserContext)
-      .withIsVpc(false);
+    const sessionParams: CreateSessionParams = {
+      labels: { test_type: "extension_integration" },
+      imageId: "browser_latest",
+      browserContext: browserContext,
+      isVpc: false
+    };
 
-      log("\nCreating session with browser context...", sessionParams.toJSON());
+      log("\nCreating session with browser context...", sessionParams);
     
-    const sessionResult: SessionResult = await agentBay.create(sessionParams.toJSON());
+    const sessionResult: SessionResult = await agentBay.create(sessionParams);
     log(`  ✅ Created session: ${sessionResult.session.id}`);
     expect(sessionResult.success).toBe(true);
     const session = sessionResult.session;

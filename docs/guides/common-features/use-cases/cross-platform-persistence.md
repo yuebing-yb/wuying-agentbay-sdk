@@ -177,9 +177,16 @@ const syncPolicy: SyncPolicy = {
 };
 
 // Create session with context sync
-const sessionParams = new CreateSessionParams();
-sessionParams.addContextSync(context.id, linuxPath, syncPolicy);
-sessionParams.withImageId("linux_latest");
+const sessionParams: CreateSessionParams = {
+  imageId: "linux_latest",
+  contextSyncs: [
+    {
+      contextId: context.id,
+      path: linuxPath,
+      syncPolicy: syncPolicy
+    }
+  ]
+};
 
 // Create session
 const sessionResult = await ab.create(sessionParams);

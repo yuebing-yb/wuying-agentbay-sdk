@@ -14,7 +14,7 @@ import { BetaNetworkService } from "./beta-network";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
-import { BrowserContext,CreateSessionParams } from "./session-params";
+import { BrowserContext } from "./session-params";
 import type { Volume } from "./beta-volume";
 import { BetaVolumeService } from "./beta-volume";
 import { Context } from "./context";
@@ -51,7 +51,7 @@ const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 /**
  * Parameters for creating a session.
  */
-export interface CreateSeesionWithParams {
+export interface CreateSessionParams {
   labels?: Record<string, string>;
   imageId?: string;
   /**
@@ -281,7 +281,7 @@ export class AgentBay {
    *
    * @see {@link get}, {@link list}, {@link Session.delete}
    */
-  async create(params: CreateSessionParams | CreateSeesionWithParams): Promise<SessionResult> {
+  async create(params: CreateSessionParams = {}): Promise<SessionResult> {
     try {
       // Create a deep copy of params to avoid modifying the original object
       const paramsCopy = this.deepCopyParams(params);
@@ -1262,7 +1262,7 @@ export class AgentBay {
    * @param params - The original params object to copy
    * @returns A deep copy of the params object
    */
-  private deepCopyParams(params: CreateSessionParams | CreateSeesionWithParams): CreateSessionParams | CreateSeesionWithParams {
+  private deepCopyParams(params: CreateSessionParams): CreateSessionParams {
     // Use JSON serialization for deep copy (works for plain objects and arrays)
     const copied = JSON.parse(JSON.stringify(params)) as any;
 
@@ -1297,7 +1297,7 @@ export class AgentBay {
       } as BrowserContext;
     }
 
-    return copied as CreateSessionParams | CreateSeesionWithParams;
+    return copied as CreateSessionParams;
   }
 }
 

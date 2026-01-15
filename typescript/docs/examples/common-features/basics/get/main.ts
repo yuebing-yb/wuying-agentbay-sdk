@@ -9,7 +9,7 @@
  * 5. Attempting to get a deleted session (error handling demonstration)
  */
 
-import { AgentBay, CreateSeesionWithParams } from "wuying-agentbay-sdk";
+import { AgentBay, CreateSessionParams } from "wuying-agentbay-sdk";
 
 async function main() {
   // Get API key from environment variable
@@ -23,7 +23,7 @@ async function main() {
 
   // For demonstration, first create a session
   console.log("Creating a session...");
-  const params : CreateSeesionWithParams ={
+  const params : CreateSessionParams ={
     imageId: "linux_latest",
   };
   const createResult = await agentBay.create(params);

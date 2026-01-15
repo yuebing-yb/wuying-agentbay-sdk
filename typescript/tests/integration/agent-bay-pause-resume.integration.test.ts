@@ -1,5 +1,4 @@
-import { AgentBay } from "../../src/agent-bay";
-import { CreateSessionParams } from "../../src/session-params";
+import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
 import { Session } from "../../src/session";
 import { log } from "../../src/utils/logger";
 import * as dotenv from "dotenv";
@@ -24,8 +23,9 @@ describe("AgentBay pause and resume integration tests", () => {
     try {
       log("🚀 Creating a new session for pause/resume testing...");
       // Create session
-      const params = new CreateSessionParams();
-      params.imageId = "linux_latest";
+      const params :CreateSessionParams = {
+        imageId:'linux_latest',
+      }
       const createResult = await agentBay.create(params);
       if (createResult.success && createResult.session) {
         sessionId = createResult.session.sessionId;

@@ -317,9 +317,10 @@ const browserContext: BrowserContext = {
     autoUpload: true
 };
 
-const params = new CreateSessionParams()
-    .withImageId("browser-image-id")
-    .withBrowserContext(browserContext);
+const params :CreateSessionParams = {
+    imageId: "browser-image-id",
+    browserContext: browserContext
+}
 
 const sessionResult = await agentBay.create(params);
 const session = sessionResult.session;
@@ -344,9 +345,10 @@ const browserContext: BrowserContext = {
     autoUpload: true
 };
 
-const params = new CreateSessionParams()
-    .withImageId("browser-image-id")
-    .withBrowserContext(browserContext);
+const params :CreateSessionParams = {
+    imageId:'browser_latest',
+    browserContext:browserContext,
+}
 
 const session1 = (await agentBay.create(params)).session;
 

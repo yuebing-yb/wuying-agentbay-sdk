@@ -1,5 +1,4 @@
-import { AgentBay } from "../../src/agent-bay";
-import { CreateSessionParams } from "../../src/session-params";
+import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
 import { ContextSync } from "../../src/context-sync";
 import * as fs from "fs";
 import * as path from "path";
@@ -30,8 +29,10 @@ describe("File Transfer Integration", () => {
     agentBay = new AgentBay({ apiKey });
 
     // Create session; backend will manage file-transfer context automatically
-    const params = new CreateSessionParams();
-    params.imageId = "linux_latest"; // Use linux image for stable file transfer testing
+    const params :CreateSessionParams = {
+      imageId:'linux_latest',
+      enableBrowserReplay:true,
+    } 
 
     log("Creating session...");
     const sessionResult = await agentBay.create(params);

@@ -1,4 +1,4 @@
-import { AgentBay, CreateSeesionWithParams } from "../../src/agent-bay";
+import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
 import { Session } from "../../src/session";
 import { log } from "../../src/utils/logger";
 
@@ -65,7 +65,7 @@ describe("AgentBay List Status Integration Tests", () => {
     log(`\nCreating test session: ${sessionName}`);
 
     // Create session
-    const params: CreateSeesionWithParams = {
+    const params: CreateSessionParams = {
       labels: { project: "piaoyun-demo", environment: "testing" },
     };
     

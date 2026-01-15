@@ -4,8 +4,8 @@
  * across sessions using the same ContextId and FingerprintContextId.
  */
 
-import { AgentBay } from "../../src";
-import { CreateSessionParams, BrowserContext } from "../../src/session-params";
+import { AgentBay, CreateSessionParams } from "../../src";
+import { BrowserContext } from "../../src/session-params";
 import { BrowserOption, BrowserFingerprint, BrowserFingerprintContext } from "../../src/browser/browser";
 import { FingerprintFormat, BrowserFingerprintGenerator } from "../../src/browser/fingerprint";
 import { getTestApiKey, wait } from "../utils/test-helpers";
@@ -99,8 +99,9 @@ describe("Browser Fingerprint - Integration Tests", () => {
     it("should initialize browser with custom fingerprint configuration", async () => {
       log("===== Test browser fingerprint basic usage =====");
 
-      const params = new CreateSessionParams()
-        .withImageId("browser_latest")
+      const params: CreateSessionParams = {
+        imageId: "browser_latest"
+      }
       
       const sessionResult: SessionResult = await agentBay.create(params);
       expect(sessionResult.success).toBe(true);
@@ -190,9 +191,10 @@ describe("Browser Fingerprint - Integration Tests", () => {
       const fingerprintContextConfig = new BrowserFingerprintContext(fingerprintContext.id);
       const browserContextConfig = new BrowserContext(context.id, true, undefined, fingerprintContextConfig);
       
-      const params1 = new CreateSessionParams()
-        .withImageId("browser_latest")
-        .withBrowserContext(browserContextConfig);
+      const params1: CreateSessionParams = {
+        imageId: "browser_latest",
+        browserContext: browserContextConfig
+      };
 
       const sessionResult = await agentBay.create(params1);
       expect(sessionResult.success).toBe(true);
@@ -283,9 +285,10 @@ describe("Browser Fingerprint - Integration Tests", () => {
       // Step 5: Create second session with same browser context and fingerprint context
       log(`Step 5: Creating second session with same browser context ID: ${context.id} and fingerprint context ID: ${fingerprintContext.id}`);
       
-      const params2 = new CreateSessionParams()
-        .withImageId("browser_latest")
-        .withBrowserContext(browserContextConfig);
+      const params2: CreateSessionParams = {
+        imageId: "browser_latest",
+        browserContext: browserContextConfig
+      };
       
       const sessionResult2 = await agentBay.create(params2);
       expect(sessionResult2.success).toBe(true);
@@ -378,8 +381,9 @@ describe("Browser Fingerprint - Integration Tests", () => {
     it("should sync local chrome browser fingerprint to remote browser", async () => {
       log("===== Test browser fingerprint local sync =====");
 
-      const params = new CreateSessionParams()
-        .withImageId("browser_latest");
+      const params: CreateSessionParams = {
+        imageId: "browser_latest"
+      };
       
       const sessionResult = await agentBay.create(params);
       expect(sessionResult.success).toBe(true);
@@ -471,8 +475,9 @@ describe("Browser Fingerprint - Integration Tests", () => {
     it("should construct browser fingerprint from example file", async () => {
       log("===== Test browser fingerprint construct =====");
 
-      const params = new CreateSessionParams()
-        .withImageId("browser_latest");
+      const params: CreateSessionParams = {
+        imageId: "browser_latest"
+      };
       
       const sessionResult = await agentBay.create(params);
       expect(sessionResult.success).toBe(true);

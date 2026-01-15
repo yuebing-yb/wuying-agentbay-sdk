@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-import { AgentBay, log } from "../../src";
+import { AgentBay, log, CreateSessionParams } from "../../src";
 import { BrowserOptionClass } from "../../src/browser/browser";
-import { CreateSessionParams } from "../../src/session-params";
 
 jest.setTimeout(240_000);
 
@@ -47,9 +46,10 @@ describe("Browser replay integration (env-based)", () => {
     });
 
     async function createSession(): Promise<void> {
-        const sessionParam = new CreateSessionParams()
-            .withImageId("browser_latest")
-            .withEnableBrowserReplay(true);
+        const sessionParam :CreateSessionParams = {
+            imageId: "browser_latest",
+            enableBrowserReplay:true
+        }
 
         log("Creating session with browser recording enabled...");
         const result = await agentBay.create(sessionParam);

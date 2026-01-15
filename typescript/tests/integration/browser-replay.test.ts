@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-import { AgentBay, Browser, BrowserOptionClass, log } from '../../src';
-import { CreateSessionParams } from '../../src/session-params';
+import { AgentBay, CreateSessionParams, BrowserOptionClass, log } from '../../src';
 import { getTestApiKey, wait } from '../utils/test-helpers';
 
 /**
@@ -62,9 +61,11 @@ describe('Browser Replay Integration Tests', () => {
 
     async function createSession(): Promise<void> {
         // Create session parameters with recording enabled
-        const sessionParam = new CreateSessionParams()
-            .withImageId("browser_latest")
-            .withEnableBrowserReplay(true); // Enable browser recording
+        const sessionParam :CreateSessionParams = {
+            imageId:'browser_latest',
+            enableBrowserReplay:true
+        }
+            
 
         log("Creating session with browser recording enabled...");
         const result = await agentBay.create(sessionParam);

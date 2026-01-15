@@ -288,13 +288,15 @@ console.log(`Extension uploaded: ${extension.name} (ID: ${extension.id})`);
 const extOption = extensionsService.createExtensionOption([extension.id]);
 
 // Create browser session with extension
-const sessionParams = new CreateSessionParams()
-    .withLabels({ purpose: "extension_testing" })
-    .withBrowserContext(new BrowserContext(
+const sessionParams :CreateSessionParams = {
+    imageId:'browser_latest',
+    labels:{ purpose: "extension_testing" },
+    browserContext:new BrowserContext(
         "extension_test_session",
         true,
         extOption
-    ));
+    )
+}
 
 // Create session - extension will be automatically synchronized
 const sessionResult = await agentBay.create(sessionParams);
@@ -327,12 +329,13 @@ for (const path of extensionPaths) {
 // Create session with all extensions
 const extOption = extensionsService.createExtensionOption(extensionIds);
 
-const sessionParams = new CreateSessionParams()
-    .withBrowserContext(new BrowserContext(
+const sessionParams:CreateSessionParams = { 
+    browserContext:new BrowserContext(
         "multi_extension_session",
         true,
         extOption
-    ));
+    )
+}
 
 const session = (await agentBay.create(sessionParams)).session;
 

@@ -1,5 +1,4 @@
-import { AgentBay } from "../../src/agent-bay";
-import { CreateSessionParams } from "../../src/session-params";
+import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
 import { GetAdbLinkRequest } from "../../src/api/models/model";
 
 describe("GetAdbLink Integration Test", () => {
@@ -15,8 +14,9 @@ describe("GetAdbLink Integration Test", () => {
   });
 
   it("should get ADB link with a real mobile session", async () => {
-    const params = new CreateSessionParams();
-    params.imageId = "mobile_latest";
+    const params: CreateSessionParams = {
+      imageId: "mobile_latest"
+    };
     const sessionResult = await agentBay.create(params);
 
     expect(sessionResult).not.toBeNull();

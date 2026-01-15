@@ -1,7 +1,6 @@
-import { AgentBay, Session, Context, newContextSync } from "../../src";
+import { AgentBay, Session, Context, newContextSync, CreateSessionParams } from "../../src";
 import { getTestApiKey, randomString } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
-import { CreateSessionParams } from "../../src/session-params";
 
 // Define Node.js process if it's not available
 declare var process: {
@@ -156,9 +155,10 @@ describe("Context Persistence Integration", () => {
     let session1: Session;
     try {
       const contextSync = newContextSync(testContextId, "/home/wuying");
-      const params = new CreateSessionParams();
-      params.imageId = "linux_latest";
-      params.contextSync = [contextSync];
+      const params: CreateSessionParams = {
+        imageId: "linux_latest",
+        contextSync: [contextSync]
+      };
 
       const createSession1Response = await agentBay.create(params);
       session1 = createSession1Response.session!;
@@ -251,9 +251,10 @@ describe("Context Persistence Integration", () => {
     let session2: Session | undefined;
     try {
       const contextSync = newContextSync(testContextId, "/home/wuying");
-      const params = new CreateSessionParams();
-      params.imageId = "linux_latest";
-      params.contextSync = [contextSync];
+      const params: CreateSessionParams = {
+        imageId: "linux_latest",
+        contextSync: [contextSync]
+      };
       const createSession2Response = await agentBay.create(params);
       if (!createSession2Response.session) {
         throw new Error("Failed to create second session: session is null");
@@ -346,9 +347,10 @@ describe("Context Persistence Integration", () => {
       let session1: Session;
       try {
         const contextSync = newContextSync(testContextId, "/home/wuying");
-        const params = new CreateSessionParams();
-        params.imageId = "linux_latest";
-        params.contextSync = [contextSync];
+        const params: CreateSessionParams = {
+          imageId: "linux_latest",
+          contextSync: [contextSync]
+        };
         const createSession1Response = await agentBay.create(params);
         session1 = createSession1Response.session!;
         log(`First session created with ID: ${session1.sessionId}`);
@@ -401,9 +403,10 @@ describe("Context Persistence Integration", () => {
       let session3: Session;
       try {
         const contextSync = newContextSync(secondContext.id, "/home/wuying");
-        const params = new CreateSessionParams();
-        params.imageId = "linux_latest";
-        params.contextSync = [contextSync];
+        const params: CreateSessionParams = {
+          imageId: "linux_latest",
+          contextSync: [contextSync]
+        };
         const createSession3Response = await agentBay.create(params);
         session3 = createSession3Response.session!;
         log(`Third session created with ID: ${session3.sessionId}`);

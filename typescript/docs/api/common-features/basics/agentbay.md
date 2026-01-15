@@ -44,7 +44,7 @@ Creates a new AgentBay session with specified configuration.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `params` | [`CreateSessionParams`](session-params.md) \| `CreateSeesionWithParams` | Configuration parameters for the session: - labels: Key-value pairs for session metadata - imageId: Custom image ID for the session environment - contextSync: Array of context synchronization configurations - browserContext: Browser-specific context configuration - isVpc: Whether to create a VPC session - policyId: Security policy ID - enableBrowserReplay: Enable browser session recording - extraConfigs: Additional configuration options - framework: Framework identifier for tracking |
+| `params` | [`CreateSessionParams`](session-params.md) \| `CreateSessionParams` | Configuration parameters for the session: - labels: Key-value pairs for session metadata - imageId: Custom image ID for the session environment - contextSync: Array of context synchronization configurations - browserContext: Browser-specific context configuration - isVpc: Whether to create a VPC session - policyId: Security policy ID - enableBrowserReplay: Enable browser session recording - extraConfigs: Additional configuration options - framework: Framework identifier for tracking |
 
 #### Returns
 

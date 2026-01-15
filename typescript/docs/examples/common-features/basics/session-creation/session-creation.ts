@@ -1,5 +1,5 @@
 
-import { AgentBay, log, logError, CreateSessionParams, ContextSync, newSyncPolicy, ContextStatusData, newCreateSessionParams, MobileExtraConfig, AppManagerRule, ExtraConfigs, CreateSeesionWithParams } from 'wuying-agentbay-sdk'
+import { AgentBay, log, logError, CreateSessionParams, ContextSync, newSyncPolicy, ContextStatusData, newCreateSessionParams, MobileExtraConfig, AppManagerRule, ExtraConfigs, CreateSessionParams } from 'wuying-agentbay-sdk'
 
 
 
@@ -12,7 +12,7 @@ async function createSessionWithDefaultParams() {
 
   try {
     // Create a session with default parameters
-    const params : CreateSeesionWithParams ={
+    const params : CreateSessionParams ={
     imageId: "linux_latest",
   };
     const result = await agent_bay.create(params);
@@ -52,7 +52,7 @@ async function createSessionWithLabels() {
     };
     
     // Create session parameters with labels
-    const params: CreateSeesionWithParams = {
+    const params: CreateSessionParams = {
       labels
     };
 
@@ -150,7 +150,7 @@ async function createSessionWithContextSync() {
       const contextSync = new ContextSync(contextId,path,policy);
 
       // Create a session with context synchronization
-      const params: CreateSeesionWithParams = {
+      const params: CreateSessionParams = {
         contextSync: [contextSync]
       };
 

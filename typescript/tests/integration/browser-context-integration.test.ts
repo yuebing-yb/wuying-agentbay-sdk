@@ -1,5 +1,5 @@
-import { AgentBay } from "../../src";
-import { CreateSessionParams, BrowserContext } from "../../src/session-params";
+import { AgentBay, CreateSessionParams } from "../../src";
+import { BrowserContext } from "../../src/session-params";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
 import { Context } from "../../src/context";
@@ -89,9 +89,10 @@ describe("Browser Context - Integration Tests", () => {
           true
         );
         
-        const params = new CreateSessionParams()
-          .withImageId("browser_latest")
-          .withBrowserContext(browserContext);
+        const params: CreateSessionParams = {
+          imageId: "browser_latest",
+          browserContext: browserContext
+        };
         
         const sessionResult: SessionResult = await agentBay.create(params);
         expect(sessionResult.success).toBe(true);

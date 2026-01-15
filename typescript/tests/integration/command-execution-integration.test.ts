@@ -1,7 +1,6 @@
 import { log } from 'console';
-import { AgentBay } from '../../src';
+import { AgentBay, CreateSessionParams } from '../../src';
 import { Session } from '../../src/session';
-import { CreateSessionParams } from "../../src/session-params";
 
 describe('Command Execution Integration Tests', () => {
   let agentBay: AgentBay;
@@ -17,8 +16,9 @@ describe('Command Execution Integration Tests', () => {
     beforeAll(async () => {
       // Step 1: Environment preparation
       expect(agentBay).toBeDefined();
-      const params = new CreateSessionParams();
-      params.imageId = 'linux_latest';
+      const params :CreateSessionParams = {
+        imageId:'linux_latest',
+      }
 
       // Step 2: Session creation
       const sessionResult = await agentBay.create(params);
@@ -370,8 +370,9 @@ describe('Command Execution Integration Tests', () => {
       expect(agentBay).toBeDefined();
 
       // Step 2: Create two independent sessions
-      const params = new CreateSessionParams();
-      params.imageId = "code_latest";
+      const params :CreateSessionParams = {
+        imageId:'code_latest',
+      }
       const sessionResult1 = await agentBay.create(params);
       const sessionResult2 = await agentBay.create(params);
 

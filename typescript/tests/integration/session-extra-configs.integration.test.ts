@@ -4,7 +4,7 @@
  */
 
 import { AgentBay } from '../../src/agent-bay';
-import { CreateSessionParams } from '../../src/session-params';
+import { CreateSessionParams } from '../../src/agent-bay';
 import { MobileExtraConfig, AppManagerRule, ExtraConfigs } from '../../src/types/extra-configs';
 
 describe('Session Extra Configurations Integration', () => {
@@ -57,13 +57,14 @@ describe('Session Extra Configurations Integration', () => {
                  `appRule=${mobileConfig.appManagerRule?.ruleType}`);
 
       // Step 2: Create session parameters
-      const params = new CreateSessionParams()
-        .withImageId('mobile_latest')
-        .withLabels({
+      const params: CreateSessionParams = {
+        imageId: 'mobile_latest',
+        labels: {
           test_type: 'mobile_extra_configs_integration',
           created_by: 'integration_test',
-        })
-        .withExtraConfigs(extraConfigs);
+        },
+        extraConfigs: extraConfigs
+      };
 
       console.log(`Session params: imageId=${params.imageId}, labels=${JSON.stringify(params.labels)}`);
 
@@ -177,13 +178,14 @@ describe('Session Extra Configurations Integration', () => {
         mobile: mobileConfig,
       };
 
-      const params = new CreateSessionParams()
-        .withImageId('mobile_latest')
-        .withLabels({
+      const params: CreateSessionParams = {
+        imageId: 'mobile_latest',
+        labels: {
           test_type: 'mobile_blacklist_integration',
           created_by: 'integration_test',
-        })
-        .withExtraConfigs(extraConfigs);
+        },
+        extraConfigs: extraConfigs
+      };
 
       const createResult = await agentBay.create(params);
       expect(createResult.success).toBe(true);

@@ -55,7 +55,7 @@
  */
 
 import { AgentBay } from "wuying-agentbay-sdk";
-import { CreateSeesionWithParams } from 'wuying-agentbay-sdk';
+import { CreateSessionParams } from 'wuying-agentbay-sdk';
 import {
   ContextSync,
   Lifecycle,
@@ -90,7 +90,7 @@ async function example1DefaultRecyclePolicy(): Promise<void> {
   const contextSync = new ContextSync(context.id, "/tmp/default_data", syncPolicy);
 
   // Create session with context sync
-  const params: CreateSeesionWithParams = {};
+  const params: CreateSessionParams = {};
   params.contextSync = [contextSync];
   const sessionResult = await agentBay.create(params);
 
@@ -150,7 +150,7 @@ async function example2OneDayLifecycle(): Promise<void> {
   const contextSync = new ContextSync(context.id, "/tmp/oneday_data", syncPolicy);
 
   // Create session with context sync
-  const params: CreateSeesionWithParams = {};
+  const params: CreateSessionParams = {};
   params.labels = { example: "recycle_policy", lifecycle: "1day" };
   params.contextSync = [contextSync];
   const sessionResult = await agentBay.create(params);
@@ -217,7 +217,7 @@ async function example3SpecificPaths(): Promise<void> {
   );
 
   // Create session
-  const params: CreateSeesionWithParams = {};
+  const params: CreateSessionParams = {};
   params.contextSync = [contextSync];
   const sessionResult = await agentBay.create(params);
 

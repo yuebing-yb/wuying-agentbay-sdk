@@ -120,15 +120,16 @@ try {
   const extOption = extensionsService.createExtensionOption([extension.id]);
   
   // Create browser session with extension
-  const sessionParams = new CreateSessionParams()
-    .withLabels({ purpose: "extension_demo" })
-    .withBrowserContext(new BrowserContext(
+  const sessionParams: CreateSessionParams = {
+    labels: { purpose: "extension_demo" },
+    browserContext: new BrowserContext(
       "browser_session",
       true,
       extOption
-    ));
+    )
+  };
   
-  const sessionResult = await agentBay.create(sessionParams.toJSON());
+  const sessionResult = await agentBay.create(sessionParams);
   const session = sessionResult.session;
   
   console.log(`Session created with extension: ${session.sessionId}`);

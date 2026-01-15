@@ -11,7 +11,7 @@
  */
 
 import { AgentBay } from 'wuying-agentbay-sdk';
-import type { CreateSeesionWithParams } from 'wuying-agentbay-sdk';
+import type { CreateSessionParams } from 'wuying-agentbay-sdk';
 import { chromium } from 'playwright';
 import { writeFile } from 'fs/promises';
 
@@ -29,7 +29,7 @@ async function main() {
 
   // Create a session
   console.log("Creating a new session...");
-  const params: CreateSeesionWithParams = {
+  const params: CreateSessionParams = {
     imageId: "browser_latest",
   };
   const sessionResult = await agentBay.create(params);

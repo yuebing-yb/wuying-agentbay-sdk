@@ -13,7 +13,7 @@
  *     npx ts-node main.ts
  */
 
-import { AgentBay, CreateSeesionWithParams, Session, SessionListResult } from "wuying-agentbay-sdk";
+import { AgentBay, CreateSessionParams, Session, SessionListResult } from "wuying-agentbay-sdk";
 
 async function main() {
   // Get API key from environment variable
@@ -36,7 +36,7 @@ async function main() {
 
   try {
     // Create session 1 with labels
-    const params1: CreateSeesionWithParams = {
+    const params1: CreateSessionParams = {
       labels: {
         project: "list-demo",
         environment: "dev",
@@ -51,7 +51,7 @@ async function main() {
     }
 
     // Create session 2 with labels
-    const params2: CreateSeesionWithParams = {
+    const params2: CreateSessionParams = {
       labels: {
         project: "list-demo",
         environment: "staging",
@@ -66,7 +66,7 @@ async function main() {
     }
 
     // Create session 3 with labels
-    const params3: CreateSeesionWithParams = {
+    const params3: CreateSessionParams = {
       labels: {
         project: "list-demo",
         environment: "prod",
