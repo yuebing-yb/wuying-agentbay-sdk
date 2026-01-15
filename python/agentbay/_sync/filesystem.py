@@ -770,7 +770,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "create_directory",
                 args,
-                server_name="wuying_filesystem",
             )
             _logger.debug(f"📥 create_directory response: {result}")
             if result.success:
@@ -813,7 +812,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "delete_file",
                 args,
-                server_name="wuying_filesystem",
             )
             _logger.debug(f"📥 delete_file response: {result}")
             if result.success:
@@ -862,7 +860,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "edit_file",
                 args,
-                server_name="wuying_filesystem",
             )
             _logger.debug(f"📥 edit_file response: {result}")
             if result.success:
@@ -941,7 +938,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "get_file_info",
                 args,
-                server_name="wuying_filesystem",
             )
             try:
                 response_body = json.dumps(
@@ -1065,7 +1061,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "list_directory",
                 args,
-                server_name="wuying_filesystem",
             )
             try:
                 response_body = json.dumps(
@@ -1122,7 +1117,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "move_file",
                 args,
-                server_name="wuying_filesystem",
             )
             _logger.debug(f"📥 move_file response: {result}")
             if result.success:
@@ -1172,7 +1166,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "read_file",
                 args,
-                server_name="wuying_filesystem",
             )
             try:
                 response_body = json.dumps(
@@ -1323,7 +1316,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "read_multiple_files",
                 args,
-                server_name="wuying_filesystem",
             )
             try:
                 response_body = json.dumps(
@@ -1395,7 +1387,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "search_files",
                 args,
-                server_name="wuying_filesystem",
             )
             _logger.debug(f"📥 search_files response: {result}")
 
@@ -1458,7 +1449,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "write_file",
                 args,
-                server_name="wuying_filesystem",
             )
             _logger.debug(f"📥 write_file response: {result}")
             if result.success:
@@ -1979,7 +1969,6 @@ class FileSystem(BaseService):
             result = self.session.call_mcp_tool(
                 "get_file_change",
                 args,
-                server_name="wuying_filesystem",
             )
             try:
                 print("Response body:")

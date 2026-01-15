@@ -18,6 +18,7 @@ import com.aliyun.agentbay.model.SessionMetricsResult;
 import com.aliyun.agentbay.oss.OSS;
 import com.aliyun.agentbay.code.Code;
 import com.aliyun.agentbay.command.Command;
+import com.aliyun.agentbay.mcp.McpTool;
 import com.aliyun.agentbay.mcp.McpToolsResult;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.*;
@@ -54,6 +55,7 @@ public class Session {
     private String linkUrl;
     private Boolean enableBrowserReplay;
     private String imageId;
+    private List<McpTool> mcpTools = new java.util.ArrayList<>();
 
     public Session(String sessionId, AgentBay agentBay, SessionParams params) {
         this.sessionId = sessionId;
@@ -144,10 +146,13 @@ public class Session {
      * @throws AgentBayException if the call fails
      */
     public CallMcpToolResponse callTool(String toolName, Object args) throws AgentBayException {
-        return callTool(toolName, args, null);
-    }
-
-    public CallMcpToolResponse callTool(String toolName, Object args, String serverName) throws AgentBayException {
+        String serverName = getMcpServerForTool(toolName);
+        if (serverName == null || serverName.isEmpty()) {
+            throw new AgentBayException(
+                "Failed to resolve MCP server for tool: " + toolName +
+                ". Tool list may be missing or tool unavailable in current image"
+            );
+        }
         return agentBay.getApiClient().callMcpTool(sessionId, toolName, args, serverName);
     }
 
@@ -185,7 +190,7 @@ public class Session {
      */
     public SessionMetricsResult getMetrics() {
         try {
-            CallMcpToolResponse toolResponse = callTool("get_metrics", new java.util.HashMap<>(), "wuying_system");
+            CallMcpToolResponse toolResponse = callTool("get_metrics", new java.util.HashMap<>());
 
             if (toolResponse == null || toolResponse.getBody() == null) {
                 return new SessionMetricsResult("", false, null, "No response from get_metrics tool");
@@ -691,14 +696,21 @@ public class Session {
                             Map<String, Object> toolMap = (Map<String, Object>) toolData;
 
                             com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
-                            tool.setName((String) toolMap.get("name"));
+                            tool.setName((String) (toolMap.get("name") != null ? toolMap.get("name") : toolMap.get("Name")));
                             tool.setDescription((String) toolMap.get("description"));
                             
                             // Handle inputSchema - it can be a Map, String, or null
                             Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
                             tool.setInputSchema(inputSchema);
                             
-                            tool.setServer((String) toolMap.get("server"));
+                            Object server = toolMap.get("server");
+                            if (server == null) {
+                                server = toolMap.get("serverName");
+                            }
+                            if (server == null) {
+                                server = toolMap.get("Server");
+                            }
+                            tool.setServer((String) server);
                             tool.setTool((String) toolMap.get("tool"));
                             tools.add(tool);
                         } else if (toolData instanceof String) {
@@ -706,14 +718,21 @@ public class Session {
                             Map<String, Object> toolMap = objectMapper.readValue((String) toolData, Map.class);
 
                             com.aliyun.agentbay.mcp.McpTool tool = new com.aliyun.agentbay.mcp.McpTool();
-                            tool.setName((String) toolMap.get("name"));
+                            tool.setName((String) (toolMap.get("name") != null ? toolMap.get("name") : toolMap.get("Name")));
                             tool.setDescription((String) toolMap.get("description"));
                             
                             // Handle inputSchema - it can be a Map, String, or null
                             Map<String, Object> inputSchema = parseInputSchema(toolMap.get("inputSchema"));
                             tool.setInputSchema(inputSchema);
                             
-                            tool.setServer((String) toolMap.get("server"));
+                            Object server = toolMap.get("server");
+                            if (server == null) {
+                                server = toolMap.get("serverName");
+                            }
+                            if (server == null) {
+                                server = toolMap.get("Server");
+                            }
+                            tool.setServer((String) server);
                             tool.setTool((String) toolMap.get("tool"));
                             tools.add(tool);
                         }
@@ -723,9 +742,34 @@ public class Session {
                 }
             }
 
+            this.mcpTools = tools;
+
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public List<McpTool> getMcpTools() {
+        return mcpTools;
+    }
+
+    public void setMcpTools(List<McpTool> mcpTools) {
+        this.mcpTools = mcpTools != null ? mcpTools : new java.util.ArrayList<>();
+    }
+
+    public String getMcpServerForTool(String toolName) {
+        if (toolName == null || toolName.isEmpty()) {
+            return "";
+        }
+        for (McpTool tool : mcpTools) {
+            if (tool != null && toolName.equals(tool.getName())) {
+                String server = tool.getServer();
+                if (server != null && !server.isEmpty()) {
+                    return server;
+                }
+            }
+        }
+        return "";
     }
 
     /**

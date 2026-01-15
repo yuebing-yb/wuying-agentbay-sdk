@@ -33,10 +33,21 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         from agentbay import Session
+        from agentbay._common.models.mcp_tool import McpTool
 
         self.agent_bay = DummyAgentBay()
         self.session_id = "test_session_id"
         self.session = Session(self.agent_bay, self.session_id)
+        self.session.mcpTools = [
+            McpTool(
+                name="shell",
+                server="wuying_shell",
+            ),
+            McpTool(
+                name="data_processor",
+                server="wuying_data",
+            ),
+        ]
 
     def test_call_mcp_tool_method_exists(self):
         """Test that call_mcp_tool method exists and is public."""
@@ -91,6 +102,7 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         self.assertEqual(call_args[1]["authorization"], "Bearer test_api_key")
         self.assertEqual(call_args[1]["session_id"], "test_session_id")
         self.assertEqual(call_args[1]["name"], "shell")
+        self.assertEqual(call_args[1]["server"], "wuying_shell")
         args_dict = json.loads(call_args[1]["args"])
         self.assertEqual(args_dict["command"], "ls")
         self.assertEqual(args_dict["timeout_ms"], 1000)
@@ -98,43 +110,22 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
     @patch("agentbay._sync.session.CallMcpToolRequest")
     @patch("agentbay._sync.session.extract_request_id")
     @pytest.mark.sync
-    def test_call_mcp_tool_success_non_vpc_with_server_name(
+    def test_call_mcp_tool_fails_when_tool_missing_in_session_tool_list(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
-        """Test non-VPC mode forwards explicit server_name to API request."""
-        # Setup mocks
-        mock_request = MagicMock()
-        mock_response = MagicMock()
-        MockCallMcpToolRequest.return_value = mock_request
+        """Tool calls must fail fast if tool_name cannot be mapped to a server."""
         mock_extract_request_id.return_value = "request-123"
         self.agent_bay.client.call_mcp_tool = MagicMock(
-            return_value=mock_response
+            side_effect=AssertionError("API must not be called when server is unknown")
         )
 
-        # Mock response structure
-        mock_response.to_map.return_value = {
-            "body": {
-                "Data": json.dumps(
-                    {
-                        "content": [{"type": "text", "text": "command output"}],
-                        "isError": False,
-                    }
-                ),
-                "Success": True,
-            }
-        }
-
-        # Call the method with explicit server_name
         result = self.session.call_mcp_tool(
-            "shell",
-            {"command": "ls", "timeout_ms": 1000},
-            server_name="wuying_shell",
+            "unknown_tool",
+            {"a": 1},
         )
-
-        self.assertTrue(result.success)
-        MockCallMcpToolRequest.assert_called_once()
-        call_args = MockCallMcpToolRequest.call_args[1]
-        self.assertEqual(call_args.get("server"), "wuying_shell")
+        self.assertFalse(result.success)
+        self.assertIn("unknown_tool", result.error_message)
+        MockCallMcpToolRequest.assert_not_called()
 
     @patch("agentbay._sync.session.CallMcpToolRequest")
     @patch("agentbay._sync.session.extract_request_id")
@@ -203,10 +194,10 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
 
     @patch("httpx.Client")
     @pytest.mark.sync
-    def test_call_mcp_tool_link_url_success_with_server_name(
+    def test_call_mcp_tool_link_url_success_uses_session_tool_list(
         self, mock_httpx_client
     ):
-        """Test LinkUrl mode uses explicit server_name."""
+        """Test LinkUrl mode uses server resolved from session tool list."""
         self.session.link_url = "http://127.0.0.1:9999/"
         self.session.token = "link_token_123"
 
@@ -234,7 +225,6 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         result = self.session.call_mcp_tool(
             "shell",
             {"command": "echo hello"},
-            server_name="wuying_shell",
         )
 
         self.assertTrue(result.success)
@@ -244,11 +234,54 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         self.assertEqual(call_kwargs["json"]["server"], "wuying_shell")
         self.assertEqual(call_kwargs["headers"]["X-Access-Token"], "link_token_123")
 
+    @patch("agentbay._sync.session._log_api_response_with_details")
+    @patch("httpx.Client")
     @pytest.mark.sync
-    def test_call_mcp_tool_link_url_requires_server_name(self):
-        """Test LinkUrl mode requires server_name."""
+    def test_call_mcp_tool_link_url_success_logs_response_info(
+        self, mock_httpx_client, mock_log_api_response
+    ):
+        """Success responses should log business data at INFO level."""
         self.session.link_url = "http://127.0.0.1:9999/"
         self.session.token = "link_token_123"
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "data": json.dumps(
+                {
+                    "result": {
+                        "isError": False,
+                        "content": [{"type": "text", "text": "metrics payload"}],
+                    }
+                }
+            )
+        }
+        mock_resp.text = ""
+
+        mock_client_instance = MagicMock()
+        mock_httpx_client.return_value.__enter__ = MagicMock(
+            return_value=mock_client_instance
+        )
+        mock_httpx_client.return_value.__exit__ = MagicMock(return_value=None)
+        mock_client_instance.post = MagicMock(return_value=mock_resp)
+
+        result = self.session.call_mcp_tool(
+            "shell",
+            {"command": "echo hello"},
+        )
+
+        self.assertTrue(result.success)
+        mock_log_api_response.assert_called_once()
+        call_kwargs = mock_log_api_response.call_args.kwargs
+        self.assertIn("response_preview", call_kwargs["key_fields"])
+        self.assertEqual(call_kwargs["key_fields"]["response_preview"], "metrics payload")
+
+    @pytest.mark.sync
+    def test_call_mcp_tool_link_url_fails_when_tool_missing_in_tool_list(self):
+        """Test LinkUrl mode fails if tool cannot be mapped to a server."""
+        self.session.link_url = "http://127.0.0.1:9999/"
+        self.session.token = "link_token_123"
+        self.session.mcpTools = []
 
         result = self.session.call_mcp_tool(
             "shell",
@@ -256,7 +289,7 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         )
 
         self.assertFalse(result.success)
-        self.assertIn("server name is required", result.error_message.lower())
+        self.assertIn("shell", result.error_message.lower())
 
     @patch("agentbay._sync.session.CallMcpToolRequest")
     @patch("agentbay._sync.session.extract_request_id")
@@ -351,6 +384,7 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
 
         # Verify args were serialized correctly
         call_args = MockCallMcpToolRequest.call_args[1]
+        self.assertEqual(call_args.get("server"), "wuying_data")
         args_dict = json.loads(call_args["args"])
         self.assertEqual(args_dict["input_data"], "sample")
         self.assertEqual(args_dict["options"]["format"], "json")
@@ -425,10 +459,17 @@ class TestAsyncSessionCallMcpToolApiFallback(unittest.TestCase):
 
     def setUp(self):
         from agentbay import Session
+        from agentbay._common.models.mcp_tool import McpTool
 
         self.agent_bay = DummyAgentBay()
         self.session_id = "test_session_id"
         self.session = Session(self.agent_bay, self.session_id)
+        self.session.mcpTools = [
+            McpTool(
+                name="shell",
+                server="wuying_shell",
+            )
+        ]
 
     @patch("httpx.Client")
     @patch("agentbay._sync.session.CallMcpToolRequest")
@@ -466,7 +507,6 @@ class TestAsyncSessionCallMcpToolApiFallback(unittest.TestCase):
         result = self.session.call_mcp_tool(
             "shell",
             {"command": "ls"},
-            server_name="wuying_shell",
         )
 
         self.assertTrue(result.success)

@@ -48,7 +48,7 @@ public class Command extends BaseService {
                 args.put("envs", envs);
             }
 
-            OperationResult result = callMcpTool("shell", args, SERVER_SHELL);
+            OperationResult result = callMcpTool("shell", args);
 
             if (result.isSuccess()) {
                 return new CommandResult(result.getRequestId(), true, result.getData(), "", 0);

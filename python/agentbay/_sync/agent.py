@@ -127,7 +127,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="flux" if tool_name.startswith("flux_") else "wuying_browseruse",
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -199,7 +198,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="flux" if tool_name.startswith("flux_") else "wuying_browseruse",
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -316,7 +314,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="flux" if tool_name.startswith("flux_") else "wuying_browseruse",
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -385,7 +382,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="flux" if tool_name.startswith("flux_") else "wuying_browseruse",
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -502,7 +498,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="flux" if tool_name.startswith("flux_") else "wuying_browseruse",
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -595,7 +590,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="flux" if tool_name.startswith("flux_") else "wuying_browseruse",
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -748,7 +742,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="wuying_mobile_agent",
                 )
 
                 if result.success:
@@ -843,7 +836,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="wuying_mobile_agent",
                 )
 
                 if not result.success:
@@ -1052,7 +1044,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="wuying_mobile_agent",
                 )
                 if result.success:
                     content = json.loads(result.data)
@@ -1113,7 +1104,6 @@ class Agent(BaseService):
                 result = self.session.call_mcp_tool(
                     tool_name,
                     args,
-                    server_name="wuying_mobile_agent",
                 )
                 if result.success:
                     content = json.loads(result.data)

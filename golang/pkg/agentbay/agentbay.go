@@ -432,6 +432,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if response.Body.Data.LinkUrl != nil {
 		session.LinkUrl = *response.Body.Data.LinkUrl
 	}
+	if response.Body.Data.ToolList != nil {
+		session.McpTools = parseToolListToMcpTools(*response.Body.Data.ToolList)
+	}
 
 	// Set browser recording state
 	session.EnableBrowserReplay = params.EnableBrowserReplay
@@ -450,9 +453,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			logOperationError("ApplyMobileConfiguration", err.Error(), false)
 		}
 	}
-
-	// NOTE: Do not parse/store ToolList or fetch MCP tool list after create.
-	// ToolList may still exist in the API response, but is expected to be empty.
 
 	// If we have persistence data, wait for context synchronization
 	if needsContextSync {
@@ -920,7 +920,70 @@ type GetSessionData struct {
 	VpcResource        bool
 	ResourceUrl        string
 	Status             string
+	ToolList           string
 	Contexts           []ContextInfo
+}
+
+func parseToolListToMcpTools(toolList string) []McpTool {
+	if toolList == "" {
+		return []McpTool{}
+	}
+
+	var items []map[string]interface{}
+	if err := json.Unmarshal([]byte(toolList), &items); err != nil {
+		logOperationError("ParseToolList", fmt.Sprintf("Error unmarshaling ToolList: %v", err), false)
+		return []McpTool{}
+	}
+
+	tools := make([]McpTool, 0, len(items))
+	for _, item := range items {
+		name := ""
+		if v, ok := item["name"].(string); ok && v != "" {
+			name = v
+		} else if v, ok := item["Name"].(string); ok && v != "" {
+			name = v
+		}
+
+		server := ""
+		if v, ok := item["server"].(string); ok && v != "" {
+			server = v
+		} else if v, ok := item["serverName"].(string); ok && v != "" {
+			server = v
+		} else if v, ok := item["Server"].(string); ok && v != "" {
+			server = v
+		}
+
+		description := ""
+		if v, ok := item["description"].(string); ok && v != "" {
+			description = v
+		} else if v, ok := item["Description"].(string); ok && v != "" {
+			description = v
+		}
+
+		inputSchema := map[string]interface{}{}
+		if v, ok := item["inputSchema"].(map[string]interface{}); ok {
+			inputSchema = v
+		} else if v, ok := item["input_schema"].(map[string]interface{}); ok {
+			inputSchema = v
+		}
+
+		toolID := ""
+		if v, ok := item["tool"].(string); ok && v != "" {
+			toolID = v
+		} else if v, ok := item["Tool"].(string); ok && v != "" {
+			toolID = v
+		}
+
+		tools = append(tools, McpTool{
+			Name:        name,
+			Server:      server,
+			Description: description,
+			InputSchema: inputSchema,
+			Tool:        toolID,
+		})
+	}
+
+	return tools
 }
 
 // getSession retrieves session information by session ID (internal).
@@ -1024,6 +1087,9 @@ func (a *AgentBay) getSession(sessionID string) (*GetSessionResult, error) {
 			}
 			if response.Body.Data.GetStatus() != nil {
 				data.Status = *response.Body.Data.GetStatus()
+			}
+			if response.Body.Data.GetToolList() != nil {
+				data.ToolList = *response.Body.Data.GetToolList()
 			}
 			// Extract contexts list from response
 			if response.Body.Data.GetContexts() != nil {
@@ -1136,6 +1202,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	// Set VPC-related information and ResourceUrl from GetSession response
 	if getResult.Data != nil {
 		session.ResourceUrl = getResult.Data.ResourceUrl
+		session.McpTools = parseToolListToMcpTools(getResult.Data.ToolList)
 	}
 
 	// Log successful retrieval

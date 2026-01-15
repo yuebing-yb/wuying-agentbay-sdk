@@ -50,20 +50,17 @@ public class BaseService {
      * @return OperationResult containing the parsed response
      */
     protected OperationResult callMcpTool(String toolName, Object args) {
-        return callMcpTool(toolName, args, null);
-    }
-
-    /**
-     * Call an MCP tool with an explicit server name.
-     * The serverName argument is currently ignored by the OpenAPI route.
-     *
-     * @param toolName The name of the tool to call
-     * @param args The arguments to pass to the tool
-     * @param serverName The MCP server name (e.g. "wuying_filesystem")
-     * @return OperationResult containing the parsed response
-     */
-    protected OperationResult callMcpTool(String toolName, Object args, String serverName) {
         try {
+            String serverName = session.getMcpServerForTool(toolName);
+            if (!isNotEmpty(serverName)) {
+                return new OperationResult(
+                    "",
+                    false,
+                    "",
+                    "Failed to resolve MCP server for tool: " + toolName +
+                        ". Tool list may be missing or tool unavailable in current image"
+                );
+            }
             if (isNotEmpty(session.getLinkUrl()) && isNotEmpty(session.getToken())) {
                 return callMcpToolLinkUrl(toolName, args, serverName);
             }

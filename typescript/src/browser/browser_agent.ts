@@ -557,7 +557,7 @@ export class BrowserAgent {
   }
 
   private async _callMcpTool(toolName: string, args: Record<string, any>) {
-    return this.session.callMcpTool(toolName, args, false, "pageuse-mcp-server");
+    return this.session.callMcpTool(toolName, args, false);
   }
 
   private _delay(ms: number) {

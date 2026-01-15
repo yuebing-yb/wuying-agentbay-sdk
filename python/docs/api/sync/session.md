@@ -192,8 +192,7 @@ def call_mcp_tool(tool_name: str,
                   args: Dict[str, Any],
                   read_timeout: Optional[int] = None,
                   connect_timeout: Optional[int] = None,
-                  auto_gen_session: bool = False,
-                  server_name: Optional[str] = None)
+                  auto_gen_session: bool = False)
 ```
 
 Call an MCP tool directly asynchronously.

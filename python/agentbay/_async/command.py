@@ -109,7 +109,6 @@ class AsyncCommand(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "shell",
                 args,
-                server_name="wuying_shell",
             )
             _logger.debug(f"Execute command response: {result}")
 

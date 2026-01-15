@@ -111,6 +111,7 @@ type Session struct {
 	AgentBay  *AgentBay
 	SessionID string
 	ImageId   string // ImageId used when creating this session
+	McpTools  []McpTool
 
 	// Resource URL for accessing the session
 	ResourceUrl string
@@ -1093,6 +1094,15 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 	}, nil
 }
 
+func (s *Session) getMcpServerForTool(toolName string) string {
+	for _, tool := range s.McpTools {
+		if tool.Name == toolName && tool.Server != "" {
+			return tool.Server
+		}
+	}
+	return ""
+}
+
 // CallMcpTool calls an MCP tool using the OpenAPI route.
 //
 // This is the unified public API for calling MCP tools. All feature modules
@@ -1125,21 +1135,15 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 //	defer result.Session.Delete()
 //	args := map[string]interface{}{"command": "ls -la"}
 //	toolResult, _ := result.Session.CallMcpTool("execute_command", args)
-func (s *Session) CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
-	serverName := ""
-	autoGen := false
-	if len(extra) > 0 {
-		switch v := extra[0].(type) {
-		case string:
-			serverName = v
-			if len(extra) > 1 {
-				if b, ok := extra[1].(bool); ok {
-					autoGen = b
-				}
-			}
-		case bool:
-			autoGen = v
-		}
+func (s *Session) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
+	serverName := s.getMcpServerForTool(toolName)
+	if serverName == "" {
+		return &models.McpToolResult{
+			Success:      false,
+			Data:         "",
+			ErrorMessage: fmt.Sprintf("server not found for tool: %s. Tool list may be missing or tool unavailable in current image", toolName),
+			RequestID:    "",
+		}, nil
 	}
 	// Normalize press_keys arguments for better case compatibility
 	if toolName == "press_keys" {
@@ -1191,7 +1195,7 @@ func (s *Session) CallMcpTool(toolName string, args interface{}, extra ...interf
 	}
 
 	// Use traditional API call
-	return s.callMcpToolAPI(toolName, string(argsJSON), autoGen)
+	return s.callMcpToolAPI(toolName, string(argsJSON), false, serverName)
 }
 
 // callMcpToolLinkUrl handles MCP tool calls via LinkUrl direct connection (POST JSON).
@@ -1390,7 +1394,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 //
 // The underlying service returns a JSON string. This method parses it and returns structured metrics.
 func (s *Session) GetMetrics() (*models.SessionMetricsResult, error) {
-	toolResult, err := s.CallMcpTool("get_metrics", map[string]interface{}{}, "wuying_system")
+	toolResult, err := s.CallMcpTool("get_metrics", map[string]interface{}{})
 	if err != nil {
 		return &models.SessionMetricsResult{
 			Success:      false,
@@ -1404,7 +1408,7 @@ func (s *Session) GetMetrics() (*models.SessionMetricsResult, error) {
 }
 
 // callMcpToolAPI handles traditional API-based MCP tool calls
-func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool) (*models.McpToolResult, error) {
+func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool, serverName string) (*models.McpToolResult, error) {
 	// Helper function to convert string to *string
 	stringPtr := func(s string) *string { return &s }
 	boolPtr := func(b bool) *bool { return &b }
@@ -1417,6 +1421,9 @@ func (s *Session) callMcpToolAPI(toolName, argsJSON string, autoGenSession bool)
 		AutoGenSession: boolPtr(autoGenSession),
 		ExternalUserId: stringPtr(""),
 		ImageId:        stringPtr(""),
+	}
+	if serverName != "" {
+		callToolRequest.Server = stringPtr(serverName)
 	}
 
 	// Log API request

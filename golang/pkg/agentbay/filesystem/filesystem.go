@@ -153,7 +153,7 @@ type FileSystem struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
-		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 
 	// Lazy-loaded file transfer instance
@@ -257,7 +257,7 @@ func NewFileSystem(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *FileSystem {
 	return &FileSystem{
 		Session: session,
@@ -325,7 +325,7 @@ func (fs *FileSystem) CreateDirectory(path string) (*FileDirectoryResult, error)
 		"path": path,
 	}
 
-	result, err := fs.Session.CallMcpTool("create_directory", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("create_directory", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create directory: %w", err)
 	}
@@ -373,7 +373,7 @@ func (fs *FileSystem) DeleteFile(path string) (*FileWriteResult, error) {
 		"path": path,
 	}
 
-	result, err := fs.Session.CallMcpTool("delete_file", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("delete_file", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete file: %w", err)
 	}
@@ -427,7 +427,7 @@ func (fs *FileSystem) EditFile(path string, edits []map[string]string, dryRun bo
 		"dry_run": dryRun,
 	}
 
-	result, err := fs.Session.CallMcpTool("edit_file", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("edit_file", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to edit file: %w", err)
 	}
@@ -475,7 +475,7 @@ func (fs *FileSystem) GetFileInfo(path string) (*FileInfoResult, error) {
 		"path": path,
 	}
 
-	result, err := fs.Session.CallMcpTool("get_file_info", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("get_file_info", args)
 	if err != nil {
 		// Check if it's a "file not found" error
 		if strings.Contains(err.Error(), "No such file or directory") {
@@ -533,7 +533,7 @@ func (fs *FileSystem) ListDirectory(path string) (*DirectoryListResult, error) {
 		"path": path,
 	}
 
-	result, err := fs.Session.CallMcpTool("list_directory", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("list_directory", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list directory: %w", err)
 	}
@@ -589,7 +589,7 @@ func (fs *FileSystem) MoveFile(source, destination string) (*FileWriteResult, er
 		"destination": destination,
 	}
 
-	result, err := fs.Session.CallMcpTool("move_file", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("move_file", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to move file: %w", err)
 	}
@@ -643,7 +643,7 @@ func (fs *FileSystem) readFileChunk(path string, formatType string, optionalPara
 		args["format"] = "binary"
 	}
 
-	result, err := fs.Session.CallMcpTool("read_file", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("read_file", args)
 	if err != nil {
 		if formatType == "binary" {
 			return nil, &BinaryFileReadResult{
@@ -745,7 +745,7 @@ func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, erro
 		"paths": paths,
 	}
 
-	result, err := fs.Session.CallMcpTool("read_multiple_files", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("read_multiple_files", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read multiple files: %w", err)
 	}
@@ -823,7 +823,7 @@ func (fs *FileSystem) SearchFiles(path, pattern string, excludePatterns []string
 		"exclude_patterns": excludePatterns,
 	}
 
-	result, err := fs.Session.CallMcpTool("search_files", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("search_files", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search files: %w", err)
 	}
@@ -869,7 +869,7 @@ func (fs *FileSystem) writeFileChunk(path, content string, mode string) (*FileWr
 		args["mode"] = mode
 	}
 
-	result, err := fs.Session.CallMcpTool("write_file", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("write_file", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to write file: %w", err)
 	}
@@ -962,7 +962,7 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 	args := map[string]string{
 		"path": path,
 	}
-	mcpResult, err := fs.Session.CallMcpTool("get_file_info", args, "wuying_filesystem")
+	mcpResult, err := fs.Session.CallMcpTool("get_file_info", args)
 	if err != nil {
 		// Check if it's a "file not found" error
 		var requestID string
@@ -1347,7 +1347,7 @@ func (fs *FileSystem) GetFileChange(path string) (*FileChangeResult, error) {
 		"path": path,
 	}
 
-	result, err := fs.Session.CallMcpTool("get_file_change", args, "wuying_filesystem")
+	result, err := fs.Session.CallMcpTool("get_file_change", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get file change: %w", err)
 	}

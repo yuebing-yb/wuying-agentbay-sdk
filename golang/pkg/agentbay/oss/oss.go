@@ -31,7 +31,7 @@ type OSSManager struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
-		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 }
 
@@ -40,7 +40,7 @@ func NewOss(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *OSSManager {
 	return &OSSManager{
 		Session: session,
@@ -72,7 +72,7 @@ func (o *OSSManager) EnvInit(accessKeyId, accessKeySecret, securityToken, endpoi
 		args["region"] = region
 	}
 
-	result, err := o.Session.CallMcpTool("oss_env_init", args, "wuying_oss")
+	result, err := o.Session.CallMcpTool("oss_env_init", args)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing OSS environment: %w", err)
 	}
@@ -103,7 +103,7 @@ func (o *OSSManager) Upload(bucket, object, path string) (*UploadResult, error) 
 		"path":   path,
 	}
 
-	result, err := o.Session.CallMcpTool("oss_upload", args, "wuying_oss")
+	result, err := o.Session.CallMcpTool("oss_upload", args)
 	if err != nil {
 		return nil, fmt.Errorf("error uploading to OSS: %w", err)
 	}
@@ -133,7 +133,7 @@ func (o *OSSManager) UploadAnonymous(url, path string) (*UploadResult, error) {
 		"path": path,
 	}
 
-	result, err := o.Session.CallMcpTool("oss_upload_annon", args, "wuying_oss")
+	result, err := o.Session.CallMcpTool("oss_upload_annon", args)
 	if err != nil {
 		return nil, fmt.Errorf("error uploading anonymously: %w", err)
 	}
@@ -164,7 +164,7 @@ func (o *OSSManager) Download(bucket, object, path string) (*DownloadResult, err
 		"path":   path,
 	}
 
-	result, err := o.Session.CallMcpTool("oss_download", args, "wuying_oss")
+	result, err := o.Session.CallMcpTool("oss_download", args)
 	if err != nil {
 		return nil, fmt.Errorf("error downloading from OSS: %w", err)
 	}
@@ -194,7 +194,7 @@ func (o *OSSManager) DownloadAnonymous(url, path string) (*DownloadResult, error
 		"path": path,
 	}
 
-	result, err := o.Session.CallMcpTool("oss_download_annon", args, "wuying_oss")
+	result, err := o.Session.CallMcpTool("oss_download_annon", args)
 	if err != nil {
 		return nil, fmt.Errorf("error downloading anonymously: %w", err)
 	}

@@ -306,7 +306,7 @@ public class Code extends BaseService {
             args.put("code", code);
             args.put("language", language);
             args.put("timeout_s", timeoutS);
-            OperationResult result = callMcpTool("run_code", args, SERVER_CODESPACE);
+            OperationResult result = callMcpTool("run_code", args);
             if (result.isSuccess()) {
                 try {
                     Map<String, Object> responseData = objectMapper.readValue(result.getData(), Map.class);

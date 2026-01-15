@@ -39,6 +39,7 @@ export class GetSessionResponseBodyData extends $dara.Model {
   vpcResource?: boolean;
   resourceUrl?: string;
   status?: string;
+  toolList?: string;
   contexts?: GetSessionResponseBodyDataContexts[];
   static names(): { [key: string]: string } {
     return {
@@ -52,6 +53,7 @@ export class GetSessionResponseBodyData extends $dara.Model {
       vpcResource: 'VpcResource',
       resourceUrl: 'ResourceUrl',
       status: 'Status',
+      toolList: 'ToolList',
       contexts: 'contexts',
     };
   }
@@ -69,6 +71,7 @@ export class GetSessionResponseBodyData extends $dara.Model {
       contexts: { 'type': 'array', 'itemType': GetSessionResponseBodyDataContexts },
       resourceUrl: 'string',
       status: 'string',
+      toolList: 'string',
     };
   }
 

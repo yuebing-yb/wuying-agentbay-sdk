@@ -60,7 +60,7 @@ type Code struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
-		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 }
 
@@ -69,7 +69,7 @@ func NewCode(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Code {
 	return &Code{
 		Session: session,
@@ -271,7 +271,7 @@ func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResu
 	}
 
 	// Use Session's CallMcpTool method
-	result, err := c.Session.CallMcpTool("run_code", args, "wuying_codespace")
+	result, err := c.Session.CallMcpTool("run_code", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute code: %w", err)
 	}

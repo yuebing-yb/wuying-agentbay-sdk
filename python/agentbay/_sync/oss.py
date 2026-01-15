@@ -177,7 +177,6 @@ class Oss(BaseService):
             result = self.session.call_mcp_tool(
                 "oss_env_init",
                 args,
-                server_name="wuying_oss",
             )
 
             if result.success:
@@ -252,7 +251,6 @@ class Oss(BaseService):
             result = self.session.call_mcp_tool(
                 "oss_upload",
                 args,
-                server_name="wuying_oss",
             )
             _logger.debug(f"📥 OSS Response: {result}")
 
@@ -306,7 +304,6 @@ class Oss(BaseService):
             result = self.session.call_mcp_tool(
                 "oss_upload_annon",
                 args,
-                server_name="wuying_oss",
             )
             _logger.debug(f"📥 OSS Response: {result}")
 
@@ -367,7 +364,6 @@ class Oss(BaseService):
             result = self.session.call_mcp_tool(
                 "oss_download",
                 args,
-                server_name="wuying_oss",
             )
             _logger.debug(f"📥 OSS Response: {result}")
 
@@ -421,7 +417,6 @@ class Oss(BaseService):
             result = self.session.call_mcp_tool(
                 "oss_download_annon",
                 args,
-                server_name="wuying_oss",
             )
             _logger.debug(f"📥 OSS Response: {result}")
 

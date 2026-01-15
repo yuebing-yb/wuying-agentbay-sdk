@@ -77,8 +77,7 @@ export class Oss {
       const result = await this.session.callMcpTool(
         "oss_env_init",
         args,
-        false,
-        "wuying_oss"
+        false
       );
       
       if (result.success) {
@@ -161,8 +160,7 @@ export class Oss {
       const result = await this.session.callMcpTool(
         "oss_upload",
         args,
-        false,
-        "wuying_oss"
+        false
       );
 
       return {
@@ -210,8 +208,7 @@ export class Oss {
       const result = await this.session.callMcpTool(
         "oss_upload_annon",
         args,
-        false,
-        "wuying_oss"
+        false
       );
 
       return {
@@ -266,8 +263,7 @@ export class Oss {
       const result = await this.session.callMcpTool(
         "oss_download",
         args,
-        false,
-        "wuying_oss"
+        false
       );
 
       return {
@@ -318,8 +314,7 @@ export class Oss {
       const result = await this.session.callMcpTool(
         "oss_download_annon",
         args,
-        false,
-        "wuying_oss"
+        false
       );
 
       return {

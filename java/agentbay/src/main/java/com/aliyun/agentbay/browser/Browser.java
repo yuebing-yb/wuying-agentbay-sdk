@@ -204,7 +204,7 @@ public class Browser extends BaseService {
         }
 
         try {
-            OperationResult result = callMcpTool("stopChrome", new HashMap<>(), SERVER_CDP);
+            OperationResult result = callMcpTool("stopChrome", new HashMap<>());
             if (!result.isSuccess()) {
             }
         } catch (Exception e) {

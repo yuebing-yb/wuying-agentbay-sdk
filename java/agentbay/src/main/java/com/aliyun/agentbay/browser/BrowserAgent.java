@@ -400,7 +400,7 @@ public class BrowserAgent extends BaseService {
             args.put("context_id", indices.contextIndex);
             args.putAll(options.toMap());
 
-            OperationResult result = callMcpTool("page_use_observe", args, SERVER_BROWSER_USE);
+            OperationResult result = callMcpTool("page_use_observe", args);
             return parseObserveResult(result);
         } catch (Exception e) {
             return new ObserveResultTuple(false, new ArrayList<>());

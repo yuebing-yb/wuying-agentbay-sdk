@@ -50,6 +50,7 @@ context: [`ContextManager`](context-manager.md)
 enableBrowserReplay: `boolean` = `false`
 fileSystem: [`FileSystem`](filesystem.md)
 linkUrl: `string` = `""`
+mcpTools: `McpTool`[] = `[]`
 mobile: [`Mobile`](../../mobile-use/mobile.md)
 oss: [`Oss`](../advanced/oss.md)
 resourceUrl: `string` = `""`
@@ -226,7 +227,7 @@ ___
 
 ### callMcpTool
 
-▸ **callMcpTool**(`toolName`, `args`, `autoGenSession?`, `serverName?`): `Promise`\<``McpToolResult``\>
+▸ **callMcpTool**(`toolName`, `args`, `autoGenSession?`): `Promise`\<``McpToolResult``\>
 
 Call an MCP tool and return the result in a format compatible with Agent.
 
@@ -237,7 +238,6 @@ Call an MCP tool and return the result in a format compatible with Agent.
 | `toolName` | `string` | `undefined` | Name of the MCP tool to call |
 | `args` | `any` | `undefined` | Arguments to pass to the tool |
 | `autoGenSession` | `boolean` | `false` | Whether to automatically generate session if not exists (default: false) |
-| `serverName?` | `string` | `undefined` | - |
 
 #### Returns
 

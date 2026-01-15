@@ -47,9 +47,8 @@ func (m *MockWatchSession) HttpPort() string {
 	return args.String(0)
 }
 
-func (m *MockWatchSession) CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
-	callArgs := append([]interface{}{toolName, args}, extra...)
-	mockArgs := m.Called(callArgs...)
+func (m *MockWatchSession) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockArgs := m.Called(toolName, args)
 	return mockArgs.Get(0).(*models.McpToolResult), mockArgs.Error(1)
 }
 
@@ -153,7 +152,7 @@ func TestFileSystem_GetFileChange_Success(t *testing.T) {
 		]`,
 	}
 
-	mockSession.On("CallMcpTool", "get_file_change", map[string]string{"path": "/tmp/test_dir"}, "wuying_filesystem").Return(mockResult, nil)
+	mockSession.On("CallMcpTool", "get_file_change", map[string]string{"path": "/tmp/test_dir"}).Return(mockResult, nil)
 
 	// Test the method
 	result, err := fs.GetFileChange("/tmp/test_dir")
@@ -181,7 +180,7 @@ func TestFileSystem_GetFileChange_Failure(t *testing.T) {
 		Data:         "",
 	}
 
-	mockSession.On("CallMcpTool", "get_file_change", map[string]string{"path": "/tmp/nonexistent"}, "wuying_filesystem").Return(mockResult, nil)
+	mockSession.On("CallMcpTool", "get_file_change", map[string]string{"path": "/tmp/nonexistent"}).Return(mockResult, nil)
 
 	// Test the method
 	result, err := fs.GetFileChange("/tmp/nonexistent")
@@ -205,7 +204,7 @@ func TestFileSystem_GetFileChange_InvalidJSON(t *testing.T) {
 		Data:      "invalid json data",
 	}
 
-	mockSession.On("CallMcpTool", "get_file_change", map[string]string{"path": "/tmp/test_dir"}, "wuying_filesystem").Return(mockResult, nil)
+	mockSession.On("CallMcpTool", "get_file_change", map[string]string{"path": "/tmp/test_dir"}).Return(mockResult, nil)
 
 	// Test the method
 	result, err := fs.GetFileChange("/tmp/test_dir")
@@ -238,7 +237,7 @@ func TestFileSystem_WatchDirectory_Basic(t *testing.T) {
 		Data:      `[{"eventType": "create", "path": "/tmp/test.txt", "pathType": "file"}]`,
 	}
 
-	mockSession.On("CallMcpTool", "get_file_change", map[string]string{"path": "/tmp/test_dir"}, "wuying_filesystem").Return(mockResult, nil)
+	mockSession.On("CallMcpTool", "get_file_change", map[string]string{"path": "/tmp/test_dir"}).Return(mockResult, nil)
 
 	// Start watching
 	stopCh := make(chan struct{})

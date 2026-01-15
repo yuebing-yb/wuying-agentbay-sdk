@@ -133,7 +133,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "tap",
                 args,
-                server_name="wuying_ui",
             )
 
             if not result.success:
@@ -198,7 +197,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "swipe",
                 args,
-                server_name="wuying_ui",
             )
 
             if not result.success:
@@ -245,7 +243,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "input_text",
                 args,
-                server_name="wuying_ui",
             )
 
             if not result.success:
@@ -298,7 +295,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "send_key",
                 args,
-                server_name="wuying_ui",
             )
 
             if not result.success:
@@ -354,7 +350,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "get_clickable_ui_elements",
                 args,
-                server_name="wuying_ui",
             )
             request_id = result.request_id
 
@@ -463,7 +458,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "get_all_ui_elements",
                 args,
-                server_name="wuying_ui",
             )
             request_id = result.request_id
 
@@ -564,7 +558,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "get_installed_apps",
                 args,
-                server_name="wuying_app",
             )
 
             if not result.success:
@@ -632,7 +625,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "start_app",
                 args,
-                server_name="wuying_app",
             )
 
             if not result.success:
@@ -687,7 +679,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "stop_app_by_cmd",
                 args,
-                server_name="wuying_app",
             )
 
             return AppOperationResult(
@@ -720,7 +711,6 @@ class AsyncMobile(AsyncBaseService):
             result = await self.session.call_mcp_tool(
                 "system_screenshot",
                 args,
-                server_name="mcp-server",
             )
 
             if not result.success:
@@ -761,7 +751,6 @@ class AsyncMobile(AsyncBaseService):
         result = await self.session.call_mcp_tool(
             "screenshot",
             {"format": "png"},
-            server_name="wuying_capture",
         )
         if not result.success:
             raise AgentBayError(f"Failed to take screenshot: {result.error_message}")
@@ -812,7 +801,6 @@ class AsyncMobile(AsyncBaseService):
         result = await self.session.call_mcp_tool(
             "long_screenshot",
             args,
-            server_name="wuying_capture",
         )
         if not result.success:
             raise AgentBayError(f"Failed to take long screenshot: {result.error_message}")

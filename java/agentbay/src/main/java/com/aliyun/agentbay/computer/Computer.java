@@ -42,19 +42,19 @@ public class Computer extends BaseService {
     }
 
     private OperationResult callUiTool(String toolName, Map<String, Object> args) {
-        return callMcpTool(toolName, args, SERVER_UI);
+        return callMcpTool(toolName, args);
     }
 
     private OperationResult callAppTool(String toolName, Map<String, Object> args) {
-        return callMcpTool(toolName, args, SERVER_APP);
+        return callMcpTool(toolName, args);
     }
 
     private OperationResult callCaptureTool(String toolName, Map<String, Object> args) {
-        return callMcpTool(toolName, args, SERVER_CAPTURE);
+        return callMcpTool(toolName, args);
     }
 
     private OperationResult callSystemScreenshotTool() {
-        return callMcpTool("system_screenshot", new HashMap<>(), SERVER_SYSTEM_SCREENSHOT);
+        return callMcpTool("system_screenshot", new HashMap<>());
     }
 
     private static String normalizeImageFormat(String format, String defaultValue) {

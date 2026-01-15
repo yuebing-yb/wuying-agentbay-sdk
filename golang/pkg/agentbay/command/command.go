@@ -34,7 +34,7 @@ type Command struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
-		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 }
 
@@ -43,7 +43,7 @@ func NewCommand(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Command {
 	return &Command{
 		Session: session,
@@ -209,7 +209,7 @@ func (c *Command) executeCommandInternal(
 	}
 
 	// Use Session's CallMcpTool method
-	result, err := c.Session.CallMcpTool("shell", args, "wuying_shell")
+	result, err := c.Session.CallMcpTool("shell", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute command: %w", err)
 	}

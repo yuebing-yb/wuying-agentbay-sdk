@@ -167,7 +167,8 @@ public class AgentBay {
                             responseData.getNetworkInterfaceIp(),
                             responseData.getHttpPort(),
                             responseData.getToken(),
-                            body.getCode() != null ? body.getCode() : ""
+                            body.getCode() != null ? body.getCode() : "",
+                            responseData.getToolList()
                         );
                     }
 
@@ -229,6 +230,9 @@ public class AgentBay {
         if (getResult.getData() != null) {
             GetSessionData data = getResult.getData();
             session.setResourceUrl(data.getResourceUrl());
+            if (data.getToolList() != null && !data.getToolList().isEmpty()) {
+                session.updateMcpTools(data.getToolList());
+            }
             
             // TODO: VPC functionality temporarily disabled
             /*
@@ -536,6 +540,9 @@ public class AgentBay {
                 }
                 if (response.getBody().getData().getLinkUrl() != null) {
                     session.setLinkUrl(response.getBody().getData().getLinkUrl());
+                }
+                if (response.getBody().getData().getToolList() != null) {
+                    session.updateMcpTools(response.getBody().getData().getToolList());
                 }
             }
 

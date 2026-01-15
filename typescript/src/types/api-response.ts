@@ -64,6 +64,8 @@ export interface GetSessionData {
   resourceUrl: string;
   /** Current status of the session */
   status: string;
+  /** Tool list (JSON string) returned by GetSession */
+  toolList?: string;
   /** List of contexts associated with the session */
   contexts?: ContextInfo[];
 }

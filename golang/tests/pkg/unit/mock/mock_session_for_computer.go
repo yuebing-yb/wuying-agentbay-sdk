@@ -49,9 +49,8 @@ func (m *MockSessionForComputer) HttpPort() string {
 }
 
 // CallMcpTool calls an MCP tool with the given arguments
-func (m *MockSessionForComputer) CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
-	callArgs := append([]interface{}{toolName, args}, extra...)
-	mockArgs := m.Called(callArgs...)
+func (m *MockSessionForComputer) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
+	mockArgs := m.Called(toolName, args)
 	return mockArgs.Get(0).(*models.McpToolResult), mockArgs.Error(1)
 }
 

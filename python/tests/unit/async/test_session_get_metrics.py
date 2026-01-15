@@ -73,7 +73,6 @@ class TestAsyncSessionGetMetrics(unittest.IsolatedAsyncioTestCase):
             args={},
             read_timeout=None,
             connect_timeout=None,
-            server_name="wuying_system",
         )
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "req-1")
@@ -107,7 +106,6 @@ class TestAsyncSessionGetMetrics(unittest.IsolatedAsyncioTestCase):
             args={},
             read_timeout=None,
             connect_timeout=None,
-            server_name="wuying_system",
         )
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "req-2")

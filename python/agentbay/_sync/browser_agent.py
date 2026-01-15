@@ -482,5 +482,4 @@ class BrowserAgent(BaseService):
             args,
             read_timeout=60000,
             connect_timeout=60000,
-            server_name="wuying_browseruse",
         )

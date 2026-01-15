@@ -13,7 +13,7 @@ import (
 )
 
 type aliasTestSession struct {
-	callMcpToolFunc func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	callMcpToolFunc func(toolName string, args interface{}) (*models.McpToolResult, error)
 }
 
 func (s *aliasTestSession) GetAPIKey() string                        { return "test-api-key" }
@@ -22,18 +22,17 @@ func (s *aliasTestSession) GetSessionId() string                     { return "t
 func (s *aliasTestSession) IsVpc() bool                              { return false }
 func (s *aliasTestSession) NetworkInterfaceIp() string               { return "" }
 func (s *aliasTestSession) HttpPort() string                         { return "" }
-func (s *aliasTestSession) CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+func (s *aliasTestSession) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	if s.callMcpToolFunc != nil {
-		return s.callMcpToolFunc(toolName, args, extra...)
+		return s.callMcpToolFunc(toolName, args)
 	}
 	return &models.McpToolResult{Success: true, Data: "", RequestID: "request-123"}, nil
 }
 
 func TestCommand_RunAndExecAliases(t *testing.T) {
 	s := &aliasTestSession{}
-	s.callMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+	s.callMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		assert.Equal(t, "shell", toolName)
-		assert.Equal(t, []interface{}{"wuying_shell"}, extra)
 		m, ok := args.(map[string]interface{})
 		assert.True(t, ok)
 		assert.Equal(t, "echo test", m["command"])
@@ -63,9 +62,8 @@ func TestCommand_RunAndExecAliases(t *testing.T) {
 
 func TestCode_RunAndExecuteAliases(t *testing.T) {
 	s := &aliasTestSession{}
-	s.callMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+	s.callMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		assert.Equal(t, "run_code", toolName)
-		assert.Equal(t, []interface{}{"wuying_codespace"}, extra)
 		m, ok := args.(map[string]interface{})
 		assert.True(t, ok)
 		assert.Equal(t, "print('OK')", m["code"])
@@ -85,9 +83,8 @@ func TestFileSystem_Aliases(t *testing.T) {
 	callCount := 0
 	fileDeleted := false
 	s := &aliasTestSession{}
-	s.callMcpToolFunc = func(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+	s.callMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		callCount++
-		assert.Equal(t, []interface{}{"wuying_filesystem"}, extra)
 		switch toolName {
 		case "list_directory":
 			return &models.McpToolResult{Success: true, Data: "[FILE] a.txt", RequestID: "request-123"}, nil

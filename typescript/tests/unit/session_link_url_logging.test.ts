@@ -33,6 +33,7 @@ describe("Session LinkUrl logging", () => {
     const s = new Session({ getAPIKey: () => "ak" } as any, "sess-1");
     s.linkUrl = "http://127.0.0.1:9999";
     s.token = "tok_abcdef";
+    s.mcpTools = [{ name: "long_screenshot", server: "android" }] as any;
 
     fetchStub.resolves({
       ok: false,
@@ -43,8 +44,7 @@ describe("Session LinkUrl logging", () => {
     const result = await s.callMcpTool(
       "long_screenshot",
       { format: "png", max_screens: 2 },
-      false,
-      "android"
+      false
     );
     expect(result.success).to.equal(false);
 

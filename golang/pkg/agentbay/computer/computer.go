@@ -120,7 +120,7 @@ type Computer struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
-		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 }
 
@@ -129,7 +129,7 @@ func NewComputer(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Computer {
 	return &Computer{Session: session}
 }
@@ -168,7 +168,7 @@ func (c *Computer) ClickMouse(x, y int, button MouseButton) *BoolResult {
 		"button": string(button),
 	}
 
-	result, err := c.Session.CallMcpTool("click_mouse", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("click_mouse", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -202,7 +202,7 @@ func (c *Computer) MoveMouse(x, y int) *BoolResult {
 		"y": y,
 	}
 
-	result, err := c.Session.CallMcpTool("move_mouse", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("move_mouse", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -258,7 +258,7 @@ func (c *Computer) DragMouse(fromX, fromY, toX, toY int, button MouseButton) *Bo
 		"button": string(button),
 	}
 
-	result, err := c.Session.CallMcpTool("drag_mouse", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("drag_mouse", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -313,7 +313,7 @@ func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *Bool
 		"amount":    amount,
 	}
 
-	result, err := c.Session.CallMcpTool("scroll", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("scroll", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -344,7 +344,7 @@ func (c *Computer) Scroll(x, y int, direction ScrollDirection, amount int) *Bool
 func (c *Computer) GetCursorPosition() *CursorPosition {
 	args := map[string]interface{}{}
 
-	result, err := c.Session.CallMcpTool("get_cursor_position", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("get_cursor_position", args)
 	if err != nil {
 		return &CursorPosition{
 			ApiResponse: models.ApiResponse{
@@ -400,7 +400,7 @@ func (c *Computer) InputText(text string) *BoolResult {
 		"text": text,
 	}
 
-	result, err := c.Session.CallMcpTool("input_text", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("input_text", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -434,7 +434,7 @@ func (c *Computer) PressKeys(keys []string, hold bool) *BoolResult {
 		"hold": hold,
 	}
 
-	result, err := c.Session.CallMcpTool("press_keys", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("press_keys", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -468,7 +468,7 @@ func (c *Computer) ReleaseKeys(keys []string) *BoolResult {
 		"keys": keys,
 	}
 
-	result, err := c.Session.CallMcpTool("release_keys", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("release_keys", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -499,7 +499,7 @@ func (c *Computer) ReleaseKeys(keys []string) *BoolResult {
 func (c *Computer) GetScreenSize() *ScreenSize {
 	args := map[string]interface{}{}
 
-	result, err := c.Session.CallMcpTool("get_screen_size", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("get_screen_size", args)
 	if err != nil {
 		return &ScreenSize{
 			ApiResponse: models.ApiResponse{
@@ -555,7 +555,7 @@ func (c *Computer) GetScreenSize() *ScreenSize {
 func (c *Computer) Screenshot() *ScreenshotResult {
 	args := map[string]interface{}{}
 
-	result, err := c.Session.CallMcpTool("system_screenshot", args, "mcp-server")
+	result, err := c.Session.CallMcpTool("system_screenshot", args)
 	if err != nil {
 		return &ScreenshotResult{
 			ApiResponse: models.ApiResponse{
@@ -655,7 +655,7 @@ func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
 	args := map[string]interface{}{
 		"format": fmtNorm,
 	}
-	result, err := c.Session.CallMcpTool("screenshot", args, "wuying_capture")
+	result, err := c.Session.CallMcpTool("screenshot", args)
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -698,7 +698,7 @@ func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
 func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error) {
 	args := map[string]interface{}{}
 
-	result, err := c.Session.CallMcpTool("list_root_windows", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("list_root_windows", args)
 	if err != nil {
 		return nil, fmt.Errorf("error listing root windows: %w", err)
 	}
@@ -731,7 +731,7 @@ func (c *Computer) ListRootWindows(timeoutMs ...int) (*WindowListResult, error) 
 func (c *Computer) GetActiveWindow() (*WindowDetailResult, error) {
 	args := map[string]interface{}{}
 
-	result, err := c.Session.CallMcpTool("get_active_window", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("get_active_window", args)
 	if err != nil {
 		return nil, fmt.Errorf("error getting active window: %w", err)
 	}
@@ -767,7 +767,7 @@ func (c *Computer) ActivateWindow(windowID int) (*WindowResult, error) {
 		"window_id": windowID,
 	}
 
-	result, err := c.Session.CallMcpTool("activate_window", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("activate_window", args)
 	if err != nil {
 		return nil, fmt.Errorf("error activating window: %w", err)
 	}
@@ -794,7 +794,7 @@ func (c *Computer) CloseWindow(windowID int) (*WindowResult, error) {
 		"window_id": windowID,
 	}
 
-	result, err := c.Session.CallMcpTool("close_window", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("close_window", args)
 	if err != nil {
 		return nil, fmt.Errorf("error closing window: %w", err)
 	}
@@ -821,7 +821,7 @@ func (c *Computer) MaximizeWindow(windowID int) (*WindowResult, error) {
 		"window_id": windowID,
 	}
 
-	result, err := c.Session.CallMcpTool("maximize_window", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("maximize_window", args)
 	if err != nil {
 		return nil, fmt.Errorf("error maximizing window: %w", err)
 	}
@@ -848,7 +848,7 @@ func (c *Computer) MinimizeWindow(windowID int) (*WindowResult, error) {
 		"window_id": windowID,
 	}
 
-	result, err := c.Session.CallMcpTool("minimize_window", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("minimize_window", args)
 	if err != nil {
 		return nil, fmt.Errorf("error minimizing window: %w", err)
 	}
@@ -867,7 +867,7 @@ func (c *Computer) RestoreWindow(windowID int) (*WindowResult, error) {
 		"window_id": windowID,
 	}
 
-	result, err := c.Session.CallMcpTool("restore_window", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("restore_window", args)
 	if err != nil {
 		return nil, fmt.Errorf("error restoring window: %w", err)
 	}
@@ -888,7 +888,7 @@ func (c *Computer) ResizeWindow(windowID int, width int, height int) (*WindowRes
 		"height":    height,
 	}
 
-	result, err := c.Session.CallMcpTool("resize_window", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("resize_window", args)
 	if err != nil {
 		return nil, fmt.Errorf("error resizing window: %w", err)
 	}
@@ -907,7 +907,7 @@ func (c *Computer) FullscreenWindow(windowID int) (*WindowResult, error) {
 		"window_id": windowID,
 	}
 
-	result, err := c.Session.CallMcpTool("fullscreen_window", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("fullscreen_window", args)
 	if err != nil {
 		return nil, fmt.Errorf("error making window fullscreen: %w", err)
 	}
@@ -933,7 +933,7 @@ func (c *Computer) FocusMode(on bool) (*WindowResult, error) {
 		"on": on,
 	}
 
-	result, err := c.Session.CallMcpTool("focus_mode", args, "wuying_ui")
+	result, err := c.Session.CallMcpTool("focus_mode", args)
 	if err != nil {
 		return nil, fmt.Errorf("error toggling focus mode: %w", err)
 	}
@@ -997,7 +997,7 @@ func (c *Computer) StartApp(startCmd, workDirectory, activity string) (*ProcessL
 		args["activity"] = activity
 	}
 
-	result, err := c.Session.CallMcpTool("start_app", args, "wuying_app")
+	result, err := c.Session.CallMcpTool("start_app", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call start_app: %w", err)
 	}
@@ -1038,7 +1038,7 @@ func (c *Computer) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) (
 		"ignore_system_apps": ignoreSystemApps,
 	}
 
-	result, err := c.Session.CallMcpTool("get_installed_apps", args, "wuying_app")
+	result, err := c.Session.CallMcpTool("get_installed_apps", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call get_installed_apps: %w", err)
 	}
@@ -1075,7 +1075,7 @@ func (c *Computer) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) (
 func (c *Computer) ListVisibleApps() (*ProcessListResult, error) {
 	args := map[string]interface{}{}
 
-	result, err := c.Session.CallMcpTool("list_visible_apps", args, "wuying_app")
+	result, err := c.Session.CallMcpTool("list_visible_apps", args)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call list_visible_apps: %w", err)
 	}
@@ -1111,7 +1111,7 @@ func (c *Computer) StopAppByPName(pname string) *BoolResult {
 		"pname": pname,
 	}
 
-	result, err := c.Session.CallMcpTool("stop_app_by_pname", args, "wuying_app")
+	result, err := c.Session.CallMcpTool("stop_app_by_pname", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -1144,7 +1144,7 @@ func (c *Computer) StopAppByPID(pid int) *BoolResult {
 		"pid": pid,
 	}
 
-	result, err := c.Session.CallMcpTool("stop_app_by_pid", args, "wuying_app")
+	result, err := c.Session.CallMcpTool("stop_app_by_pid", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{
@@ -1177,7 +1177,7 @@ func (c *Computer) StopAppByCmd(stopCmd string) *BoolResult {
 		"stop_cmd": stopCmd,
 	}
 
-	result, err := c.Session.CallMcpTool("stop_app_by_cmd", args, "wuying_app")
+	result, err := c.Session.CallMcpTool("stop_app_by_cmd", args)
 	if err != nil {
 		return &BoolResult{
 			ApiResponse: models.ApiResponse{

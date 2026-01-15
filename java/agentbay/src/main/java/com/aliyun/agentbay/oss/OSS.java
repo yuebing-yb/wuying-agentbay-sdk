@@ -44,7 +44,7 @@ public class OSS extends BaseService {
                 args.put("region", region);
             }
 
-            OperationResult result = callMcpTool("oss_env_init", args, SERVER_OSS);
+            OperationResult result = callMcpTool("oss_env_init", args);
             if (result.isSuccess()) {
                 return new OSSClientResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -84,7 +84,7 @@ public class OSS extends BaseService {
             args.put("object", object);
             args.put("path", path);
 
-            OperationResult result = callMcpTool("oss_upload", args, SERVER_OSS);
+            OperationResult result = callMcpTool("oss_upload", args);
             if (result.isSuccess()) {
                 return new OSSUploadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -119,7 +119,7 @@ public class OSS extends BaseService {
             args.put("url", url);
             args.put("path", path);
 
-            OperationResult result = callMcpTool("oss_upload_annon", args, SERVER_OSS);
+            OperationResult result = callMcpTool("oss_upload_annon", args);
             if (result.isSuccess()) {
                 return new OSSUploadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -159,7 +159,7 @@ public class OSS extends BaseService {
             args.put("object", object);
             args.put("path", path);
 
-            OperationResult result = callMcpTool("oss_download", args, SERVER_OSS);
+            OperationResult result = callMcpTool("oss_download", args);
             if (result.isSuccess()) {
                 return new OSSDownloadResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -194,7 +194,7 @@ public class OSS extends BaseService {
             args.put("url", url);
             args.put("path", path);
 
-            OperationResult result = callMcpTool("oss_download_annon", args, SERVER_OSS);
+            OperationResult result = callMcpTool("oss_download_annon", args);
             if (result.isSuccess()) {
                 return new OSSDownloadResult(result.getRequestId(), true, result.getData(), "");
             } else {

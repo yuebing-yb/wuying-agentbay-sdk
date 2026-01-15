@@ -26,11 +26,11 @@ public class FileSystem extends BaseService {
     }
 
     private OperationResult callFilesystemTool(String toolName, Map<String, Object> args) {
-        return callMcpTool(toolName, args, SERVER_FILESYSTEM);
+        return callMcpTool(toolName, args);
     }
 
     private OperationResult callShellTool(Map<String, Object> args) {
-        return callMcpTool("shell", args, SERVER_SHELL);
+        return callMcpTool("shell", args);
     }
 
     private FileTransfer ensureFileTransfer() {

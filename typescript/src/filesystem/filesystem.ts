@@ -281,8 +281,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "create_directory",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -333,8 +332,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "delete_file",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -445,8 +443,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "edit_file",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -499,8 +496,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "get_file_info",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -586,8 +582,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "list_directory",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -649,8 +644,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "move_file",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -711,8 +705,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "read_file",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -837,8 +830,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "read_multiple_files",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -959,8 +951,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "search_files",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -1032,8 +1023,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "write_file",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {
@@ -1506,8 +1496,7 @@ export class FileSystem {
       const result = await this.session.callMcpTool(
         "get_file_change",
         args,
-        false,
-        "wuying_filesystem"
+        false
       );
 
       if (!result.success) {

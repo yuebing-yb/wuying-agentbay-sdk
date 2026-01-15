@@ -219,7 +219,6 @@ class TestAsyncFileSystemWatchDirectory(unittest.TestCase):
         self.session.call_mcp_tool.assert_called_once_with(
             "get_file_change",
             {"path": "/tmp/test_dir"},
-            server_name="wuying_filesystem",
         )
 
         # Verify the result

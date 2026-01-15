@@ -47,6 +47,7 @@ from ..api.models import (
     ListSessionRequest,
     ResumeSessionAsyncRequest,
 )
+from .._common.models.mcp_tool import McpTool
 from .context import AsyncContextService
 from .beta_network import AsyncBetaNetworkService
 from .beta_volume import AsyncBetaVolumeService
@@ -132,6 +133,41 @@ class AsyncAgentBay:
         except:
             return str(obj)
 
+    def _parse_tool_list_to_mcp_tools(self, tool_list: Any) -> list[McpTool]:
+        """
+        Parse backend ToolList field into a list of McpTool objects.
+
+        Backend may return ToolList as a JSON string or a list of dicts.
+        """
+        if not tool_list:
+            return []
+
+        items: Any = tool_list
+        if isinstance(tool_list, str):
+            try:
+                items = json.loads(tool_list)
+            except Exception as e:
+                _logger.warning(f"Failed to parse ToolList JSON: {e}")
+                return []
+
+        if not isinstance(items, list):
+            return []
+
+        tools: list[McpTool] = []
+        for item in items:
+            if isinstance(item, McpTool):
+                tools.append(item)
+                continue
+            if not isinstance(item, dict):
+                continue
+            tools.append(
+                McpTool(
+                    name=item.get("name", "") or item.get("Name", "") or "",
+                    server=item.get("server", "") or item.get("serverName", "") or item.get("Server", "") or "",
+                )
+            )
+        return tools
+
     async def _build_session_from_response(
         self,
         response_data: dict,
@@ -159,8 +195,9 @@ class AsyncAgentBay:
         # Create Session object
         session = AsyncSession(self, session_id)
 
-        # ToolList (if present) is intentionally ignored.
-        # The server may keep this field for backward compatibility, but clients must not depend on it.
+        # ToolList returned by backend for this session
+        tool_list = response_data.get("ToolList")
+        session.mcpTools = self._parse_tool_list_to_mcp_tools(tool_list)
 
         # Set ResourceUrl
         session.resource_url = resource_url
@@ -974,6 +1011,7 @@ class AsyncAgentBay:
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
                         status=data_dict.get("Status", ""),
+                        tool_list=data_dict.get("ToolList", "") or "",
                     )
 
                 # Log API response with key details
@@ -1071,6 +1109,7 @@ class AsyncAgentBay:
         # Set ResourceUrl from GetSession response
         if get_result.data:
             session.resource_url = get_result.data.resource_url
+            session.mcpTools = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list)
 
         return SessionResult(
             request_id=get_result.request_id,

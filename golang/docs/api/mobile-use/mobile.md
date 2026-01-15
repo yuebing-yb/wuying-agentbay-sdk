@@ -86,7 +86,7 @@ type Mobile struct {
 		GetClient() *mcp.Client
 		GetSessionId() string
 		GetImageID() string
-		CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 	command	*command.Command
 }
@@ -417,7 +417,7 @@ func NewMobile(session interface {
 	GetClient() *mcp.Client
 	GetSessionId() string
 	GetImageID() string
-	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Mobile
 ```
 
@@ -466,7 +466,7 @@ type SessionWithCommand interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command
 }
 ```

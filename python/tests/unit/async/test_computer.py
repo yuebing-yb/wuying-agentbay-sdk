@@ -51,7 +51,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "click_mouse",
             {"x": 100, "y": 200, "button": "left"},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -73,7 +72,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "click_mouse",
             {"x": 100, "y": 200, "button": "right"},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -105,7 +103,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "click_mouse",
             {"x": 100, "y": 200, "button": "right"},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -129,7 +126,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "click_mouse",
             {"x": 100, "y": 200, "button": "double_left"},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -153,7 +149,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "move_mouse",
             {"x": 150, "y": 250},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -177,7 +172,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "drag_mouse",
             {"from_x": 100, "from_y": 100, "to_x": 200, "to_y": 200, "button": "left"},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -201,7 +195,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "scroll",
             {"x": 300, "y": 300, "direction": "up", "amount": 1},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -223,7 +216,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "scroll",
             {"x": 300, "y": 300, "direction": "down", "amount": 3},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -249,7 +241,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_cursor_position",
             {},
-            server_name="wuying_ui",
         )
 
     # Keyboard Operations Tests
@@ -273,7 +264,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "input_text",
             {"text": "Hello World"},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -297,7 +287,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "press_keys",
             {"keys": ["Ctrl", "a"], "hold": False},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -319,7 +308,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "press_keys",
             {"keys": ["Shift"], "hold": True},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -343,7 +331,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "release_keys",
             {"keys": ["Shift"]},
-            server_name="wuying_ui",
         )
 
     # Screen Operations Tests
@@ -373,7 +360,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_screen_size",
             {},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -399,7 +385,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "system_screenshot",
             {},
-            server_name="mcp-server",
         )
 
     @pytest.mark.asyncio
@@ -438,7 +423,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "screenshot",
             {"format": "jpeg"},
-            server_name="wuying_capture",
         )
 
     @pytest.mark.asyncio
@@ -602,7 +586,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "scroll",
             {"x": 300, "y": 300, "direction": "down", "amount": 5},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.asyncio
@@ -633,7 +616,6 @@ class TestComputer:
                 "to_y": 200,
                 "button": "middle",
             },
-            server_name="wuying_ui",
         )
 
     # Application Management Operations Tests
@@ -655,7 +637,6 @@ class TestComputer:
         self.session.call_mcp_tool.assert_called_once_with(
             "list_visible_apps",
             {},
-            server_name="wuying_app",
         )
 
     @pytest.mark.asyncio

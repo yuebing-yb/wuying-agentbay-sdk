@@ -14,6 +14,7 @@ from .._common.logger import (
     _log_operation_error,
     _log_operation_start,
     _log_operation_success,
+    _truncate_string_for_log,
     _log_warning,
     get_logger,
 )
@@ -28,6 +29,7 @@ from .._common.models import (
     SessionResumeResult,
     extract_request_id,
 )
+from .._common.models.mcp_tool import McpTool
 from ..api.models import (
     CallMcpToolRequest,
     DeleteSessionAsyncRequest,
@@ -125,6 +127,9 @@ class AsyncSession:
         self.enableBrowserReplay = (
             True  # Whether browser recording is enabled for this session
         )
+
+        # MCP tool list returned by backend for this session
+        self.mcpTools: list[McpTool] = []
 
         # Initialize file system, command and code handlers
         self.file_system = AsyncFileSystem(self)
@@ -803,11 +808,8 @@ class AsyncSession:
                 tools_data = json.loads(response.body.data)
                 for tool_data in tools_data:
                     tool = McpTool(
-                        name=tool_data.get("name", ""),
-                        description=tool_data.get("description", ""),
-                        input_schema=tool_data.get("inputSchema", {}),
-                        server=tool_data.get("server", ""),
-                        tool=tool_data.get("tool", ""),
+                        name=tool_data.get("name", "") or "",
+                        server=tool_data.get("server", "") or "",
                     )
                     tools.append(tool)
             except json.JSONDecodeError as e:
@@ -823,6 +825,22 @@ class AsyncSession:
 
         return McpToolsResult(request_id=request_id, tools=tools)
 
+    def _get_mcp_server_for_tool(self, tool_name: str) -> Optional[str]:
+        """
+        Resolve MCP server name by tool name from session tool list.
+
+        Returns:
+            Optional[str]: Server name if found, otherwise None.
+        """
+        for t in self.mcpTools or []:
+            try:
+                if t and getattr(t, "name", None) == tool_name:
+                    server = getattr(t, "server", "") or ""
+                    return server if server else None
+            except Exception:
+                continue
+        return None
+
     async def call_mcp_tool(
         self,
         tool_name: str,
@@ -830,7 +848,6 @@ class AsyncSession:
         read_timeout: Optional[int] = None,
         connect_timeout: Optional[int] = None,
         auto_gen_session: bool = False,
-        server_name: Optional[str] = None,
     ):
         """
         Call an MCP tool directly asynchronously.
@@ -843,6 +860,18 @@ class AsyncSession:
                 args = args.copy()  # Don't modify the original args
                 args["keys"] = normalize_keys(args["keys"])
                 _logger.debug(f"Normalized press_keys arguments: {args}")
+
+            server_name = self._get_mcp_server_for_tool(tool_name)
+            if not server_name:
+                return McpToolResult(
+                    request_id="",
+                    success=False,
+                    data="",
+                    error_message=(
+                        f"Failed to resolve MCP server for tool: {tool_name}. "
+                        "This session may not have ToolList populated, or the tool is unavailable in the current image."
+                    ),
+                )
 
             args_json = json.dumps(args, ensure_ascii=False)
 
@@ -874,16 +903,8 @@ class AsyncSession:
         self,
         tool_name: str,
         args: Dict[str, Any],
-        server_name: Optional[str] = None,
+        server_name: str,
     ) -> McpToolResult:
-        if not server_name:
-            return McpToolResult(
-                request_id="",
-                success=False,
-                data="",
-                error_message=f"Server name is required for LinkUrl tool call: {tool_name}",
-            )
-
         link_url = self._get_link_url()
         token = self._get_token()
         if not link_url or not token:
@@ -976,16 +997,24 @@ class AsyncSession:
                 elif isinstance(first, dict):
                     text_content = first.get("text") or first.get("blob") or first.get("data") or ""
 
+            response_preview = ""
+            if text_content:
+                response_preview = _truncate_string_for_log(str(text_content), 2000)
+
+            key_fields = {
+                "tool_name": tool_name,
+                "server": server_name,
+                "is_error": is_error,
+                "data_len": len(str(text_content)),
+            }
+            if response_preview:
+                key_fields["response_preview"] = response_preview
+
             _log_api_response_with_details(
                 api_name="CallMcpTool(LinkUrl) Response",
                 request_id=request_id,
                 success=not is_error,
-                key_fields={
-                    "tool_name": tool_name,
-                    "server": server_name,
-                    "is_error": is_error,
-                    "data_len": len(str(text_content)),
-                },
+                key_fields=key_fields,
                 full_response=str(text_content) if is_error else "",
             )
 
@@ -1033,7 +1062,6 @@ class AsyncSession:
             args={},
             read_timeout=read_timeout,
             connect_timeout=connect_timeout,
-            server_name="wuying_system",
         )
 
         if not tool_result.success:
@@ -1105,7 +1133,7 @@ class AsyncSession:
         read_timeout: Optional[int] = None,
         connect_timeout: Optional[int] = None,
         auto_gen_session: bool = False,
-        server_name: Optional[str] = None,
+        server_name: str = "",
     ):
         """
         Handle traditional API-based MCP tool calls asynchronously.
@@ -1121,9 +1149,8 @@ class AsyncSession:
             "name": tool_name,
             "args": args_json,
             "auto_gen_session": auto_gen_session,
+            "server": server_name,
         }
-        if server_name is not None:
-            request_kwargs["server"] = server_name
 
         request = CallMcpToolRequest(**request_kwargs)
 

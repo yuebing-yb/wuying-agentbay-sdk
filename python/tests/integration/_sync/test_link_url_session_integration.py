@@ -38,7 +38,6 @@ def test_link_url_session_mcp_tools_and_call_tool():
         direct = session.call_mcp_tool(
             "shell",
             {"command": "echo direct-link-url-route-ok"},
-            server_name="wuying_shell",
         )
         assert direct.success, direct.error_message
         assert "direct-link-url-route-ok" in direct.data

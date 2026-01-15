@@ -39,10 +39,6 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         tool_name, args = self.mock_session.call_mcp_tool.call_args.args[:2]
         self.assertEqual(tool_name, "run_code")
         self.assertEqual(args["language"], "python")
-        self.assertEqual(
-            self.mock_session.call_mcp_tool.call_args.kwargs.get("server_name"),
-            "wuying_codespace",
-        )
         
         # Verify the result
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
@@ -67,10 +63,6 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tool_name, "run_code")
         self.assertEqual(args["language"], "python")
         self.assertEqual(args["timeout_s"], 10)
-        self.assertEqual(
-            self.mock_session.call_mcp_tool.call_args.kwargs.get("server_name"),
-            "wuying_codespace",
-        )
 
     @pytest.mark.asyncio
     async def test_execute_alias_calls_run_code(self):
@@ -84,10 +76,6 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         result = await self.code.execute("print('OK')", "python")
         self.assertTrue(result.success)
         self.mock_session.call_mcp_tool.assert_called_once()
-        self.assertEqual(
-            self.mock_session.call_mcp_tool.call_args.kwargs.get("server_name"),
-            "wuying_codespace",
-        )
 
     @pytest.mark.asyncio
     async def test_run_code_success_javascript(self):
@@ -111,10 +99,6 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(tool_name, "run_code")
         self.assertEqual(args["language"], "javascript")
         self.assertEqual(args["timeout_s"], custom_timeout)
-        self.assertEqual(
-            self.mock_session.call_mcp_tool.call_args.kwargs.get("server_name"),
-            "wuying_codespace",
-        )
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)
@@ -141,10 +125,6 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         tool_name, args = self.mock_session.call_mcp_tool.call_args.args[:2]
         self.assertEqual(tool_name, "run_code")
         self.assertEqual(args["language"], "python")
-        self.assertEqual(
-            self.mock_session.call_mcp_tool.call_args.kwargs.get("server_name"),
-            "wuying_codespace",
-        )
 
     @pytest.mark.asyncio
     async def test_run_code_supports_r_and_java(self):
@@ -165,10 +145,6 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         tool_name_r, args_r = self.mock_session.call_mcp_tool.call_args.args[:2]
         self.assertEqual(tool_name_r, "run_code")
         self.assertEqual(args_r["language"], "r")
-        self.assertEqual(
-            self.mock_session.call_mcp_tool.call_args.kwargs.get("server_name"),
-            "wuying_codespace",
-        )
 
         self.mock_session.call_mcp_tool.reset_mock()
         self.mock_session.call_mcp_tool.return_value = McpToolResult(
@@ -185,10 +161,6 @@ class TestAsyncCode(unittest.IsolatedAsyncioTestCase):
         tool_name_java, args_java = self.mock_session.call_mcp_tool.call_args.args[:2]
         self.assertEqual(tool_name_java, "run_code")
         self.assertEqual(args_java["language"], "java")
-        self.assertEqual(
-            self.mock_session.call_mcp_tool.call_args.kwargs.get("server_name"),
-            "wuying_codespace",
-        )
 
     @pytest.mark.asyncio
     async def test_run_code_invalid_language(self):

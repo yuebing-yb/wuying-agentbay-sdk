@@ -193,7 +193,8 @@ export class Session {
   // Context management (matching Go version)
   public context: ContextManager;
 
-  // MCP tools list is intentionally not stored in Session.
+  // MCP tools list returned by backend for this session
+  public mcpTools: McpTool[] = [];
 
   /**
    * Initialize a Session object.
@@ -1279,6 +1280,15 @@ export class Session {
     };
   }
 
+  private getMcpServerForTool(toolName: string): string | null {
+    for (const tool of this.mcpTools || []) {
+      if (tool && tool.name === toolName) {
+        return tool.server || null;
+      }
+    }
+    return null;
+  }
+
   /**
    * Call an MCP tool and return the result in a format compatible with Agent.
    *
@@ -1305,8 +1315,7 @@ export class Session {
   async callMcpTool(
     toolName: string,
     args: any,
-    autoGenSession = false,
-    serverName?: string
+    autoGenSession = false
   ): Promise<import("./agent/agent").McpToolResult> {
     try {
       // Normalize press_keys arguments for better case compatibility
@@ -1315,6 +1324,18 @@ export class Session {
         args = { ...args }; // Don't modify the original args
         args.keys = normalizeKeys(args.keys);
         logDebug(`Normalized press_keys arguments: ${JSON.stringify(args)}`);
+      }
+
+      const serverName = this.getMcpServerForTool(toolName);
+      if (!serverName) {
+        return {
+          success: false,
+          data: "",
+          errorMessage:
+            `Failed to resolve MCP server for tool: ${toolName}. ` +
+            "This session may not have ToolList populated, or the tool is unavailable in the current image.",
+          requestId: "",
+        };
       }
 
       const argsJSON = JSON.stringify(args);
@@ -1330,6 +1351,7 @@ export class Session {
         name: toolName,
         args: argsJSON,
         autoGenSession: autoGenSession,
+        server: serverName,
       });
 
       const response = await this.getClient().callMcpTool(callToolRequest);
@@ -1444,7 +1466,7 @@ export class Session {
   private async callMcpToolLinkUrl(
     toolName: string,
     args: any,
-    serverName?: string
+    serverName: string
   ): Promise<import("./agent/agent").McpToolResult> {
     if (!serverName) {
       return {
@@ -1579,7 +1601,7 @@ export class Session {
    * ```
    */
   async getMetrics(): Promise<SessionMetricsResult> {
-    const toolResult = await this.callMcpTool("get_metrics", {}, false, "wuying_system");
+    const toolResult = await this.callMcpTool("get_metrics", {}, false);
     const requestId = toolResult.requestId || "";
 
     if (!toolResult.success) {

@@ -126,7 +126,7 @@ func (m *MockSessionForCompliance) GetLink(protocolType *string, port *int32, op
 }
 func (m *MockSessionForCompliance) Info() (*agentbay.InfoResult, error)             { return nil, nil }
 func (m *MockSessionForCompliance) ListMcpTools() (*agentbay.McpToolsResult, error) { return nil, nil }
-func (m *MockSessionForCompliance) CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error) {
+func (m *MockSessionForCompliance) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	return &models.McpToolResult{
 		Success:      true,
 		Data:         "",

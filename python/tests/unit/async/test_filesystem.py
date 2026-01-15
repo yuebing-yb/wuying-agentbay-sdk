@@ -171,7 +171,6 @@ class TestAsyncFileSystem(unittest.IsolatedAsyncioTestCase):
         self.session.call_mcp_tool.assert_awaited_once_with(
             "delete_file",
             {"path": "/path/to/file.txt"},
-            server_name="wuying_filesystem",
         )
 
     @patch("agentbay._async.filesystem.AsyncFileSystem.get_file_info")

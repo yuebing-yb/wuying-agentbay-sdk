@@ -45,8 +45,7 @@ export interface McpSession {
   callMcpTool(
     toolName: string,
     args: Record<string, any>,
-    autoGenSession?: boolean,
-    serverName?: string
+    autoGenSession?: boolean
   ): Promise<McpToolResult>;
 }
 
@@ -80,16 +79,6 @@ abstract class BaseTaskAgent {
     return baseName;
   }
 
-  protected getServerName(): string {
-    if (this.toolPrefix === "flux") {
-      return "flux";
-    }
-    if (this.toolPrefix === "browser_use") {
-      return "wuying_browseruse";
-    }
-    return "wuying_mobile_agent";
-  }
-
   /**
    * Execute a specific task described in human language.
    */
@@ -98,7 +87,7 @@ abstract class BaseTaskAgent {
     try {
       const args = {task};
       const result = await this.session.callMcpTool(
-          this.getToolName('execute'), args, false, this.getServerName());
+          this.getToolName('execute'), args, false);
 
       if (!result.success) {
         return {
@@ -284,7 +273,7 @@ abstract class BaseTaskAgent {
     try {
       const args = {task_id: taskId};
       const result = await this.session.callMcpTool(
-          this.getToolName('get_status'), args, false, this.getServerName());
+          this.getToolName('get_status'), args, false);
 
       if (!result.success) {
         return {
@@ -342,7 +331,7 @@ abstract class BaseTaskAgent {
     try {
       const args = {task_id: taskId};
       const result = await this.session.callMcpTool(
-          this.getToolName('terminate'), args, false, this.getServerName());
+          this.getToolName('terminate'), args, false);
 
       let content: Record<string, any>;
       try {

@@ -321,7 +321,6 @@ class AsyncCode(AsyncBaseService):
             result = await self._call_mcp_tool(
                 "run_code",
                 args,
-                server_name="wuying_codespace",
             )
             _logger.debug(f"Run code response: {result}")
 

@@ -139,8 +139,7 @@ export class Command {
       const result = await this.session.callMcpTool(
         "shell",
         args,
-        false,
-        "wuying_shell"
+        false
       );
 
       if (result.success) {

@@ -57,7 +57,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "tap",
             {"x": 100, "y": 200},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -87,7 +86,6 @@ class TestMobile:
                 "end_y": 200,
                 "duration_ms": 300,
             },
-            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -115,7 +113,6 @@ class TestMobile:
                 "end_y": 200,
                 "duration_ms": 500,
             },
-            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -139,7 +136,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "input_text",
             {"text": "Hello Mobile"},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -163,7 +159,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "send_key",
             {"key": 4},
-            server_name="wuying_ui",
         )
 
     # UI Elements Tests
@@ -192,7 +187,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_clickable_ui_elements",
             {"timeout_ms": 2000},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -215,7 +209,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_clickable_ui_elements",
             {"timeout_ms": 5000},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -255,7 +248,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_all_ui_elements",
             {"timeout_ms": 2000, "format": "json"},
-            server_name="wuying_ui",
         )
 
     @pytest.mark.sync
@@ -285,7 +277,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_all_ui_elements",
             {"timeout_ms": 2000, "format": "xml"},
-            server_name="wuying_ui",
         )
 
     # Application Management Tests
@@ -312,7 +303,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
             {"start_menu": False, "desktop": True, "ignore_system_apps": True},
-            server_name="wuying_app",
         )
 
     @pytest.mark.sync
@@ -337,7 +327,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
             {"start_menu": True, "desktop": False, "ignore_system_apps": False},
-            server_name="wuying_app",
         )
 
     @pytest.mark.sync
@@ -362,7 +351,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "start_app",
             {"start_cmd": "com.android.calculator2"},
-            server_name="wuying_app",
         )
 
     @pytest.mark.sync
@@ -387,7 +375,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "start_app",
             {"start_cmd": "com.android.settings", "activity": ".MainActivity"},
-            server_name="wuying_app",
         )
 
     @pytest.mark.sync
@@ -412,7 +399,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "stop_app_by_cmd",
             {"stop_cmd": "com.android.calculator2"},
-            server_name="wuying_app",
         )
 
     # Screenshot Tests
@@ -438,7 +424,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "system_screenshot",
             {},
-            server_name="mcp-server",
         )
 
     @pytest.mark.sync
@@ -470,7 +455,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "screenshot",
             {"format": "png"},
-            server_name="wuying_capture",
         )
 
     @pytest.mark.sync
@@ -525,7 +509,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "long_screenshot",
             {"max_screens": 4, "format": "png"},
-            server_name="wuying_capture",
         )
 
     @pytest.mark.sync
@@ -563,7 +546,6 @@ class TestMobile:
         self.session.call_mcp_tool.assert_called_once_with(
             "long_screenshot",
             {"max_screens": 2, "format": "jpeg", "quality": 80},
-            server_name="wuying_capture",
         )
 
     # ADB URL Tests

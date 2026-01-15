@@ -171,7 +171,6 @@ class TestAsyncFileSystem(unittest.TestCase):
         self.session.call_mcp_tool.assert_called_once_with(
             "delete_file",
             {"path": "/path/to/file.txt"},
-            server_name="wuying_filesystem",
         )
 
     @patch("agentbay._sync.filesystem.FileSystem.get_file_info")

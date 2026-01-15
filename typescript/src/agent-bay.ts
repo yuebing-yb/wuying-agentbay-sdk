@@ -547,6 +547,7 @@ export class AgentBay {
       // LinkUrl/token may be returned by the server for direct tool calls.
       session.token = data.token || "";
       session.linkUrl = data.linkUrl || "";
+      session.mcpTools = this.parseToolListToMcpTools(data.toolList);
 
       // Set browser recording state
       session.enableBrowserReplay = paramsCopy.enableBrowserReplay || false;
@@ -570,9 +571,6 @@ export class AgentBay {
           // Continue with session creation even if mobile config fails
         }
       }
-
-      // NOTE: Do not parse/store ToolList or fetch MCP tool list after create.
-      // ToolList may still exist in the API response, but is expected to be empty.
 
       // If we have persistence data, wait for context synchronization
       if (needsContextSync) {
@@ -973,6 +971,7 @@ export class AgentBay {
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
           status: body.data.status || "",
+          toolList: body.data.toolList || "",
           contexts: contexts.length > 0 ? contexts : undefined,
         };
 
@@ -1073,6 +1072,7 @@ export class AgentBay {
     if (getResult.data) {
       session.resourceUrl = getResult.data.resourceUrl;
       session.token = getResult.data.token || "";
+      session.mcpTools = this.parseToolListToMcpTools(getResult.data.toolList);
     }
 
     return {
@@ -1199,6 +1199,47 @@ export class AgentBay {
         errorMessage: `Failed to resume session ${session.sessionId}: ${error}`,
       };
     }
+  }
+
+  private parseToolListToMcpTools(toolList: any): McpTool[] {
+    if (!toolList) {
+      return [];
+    }
+
+    let items = toolList;
+    if (typeof toolList === "string") {
+      try {
+        items = JSON.parse(toolList);
+      } catch (error) {
+        logDebug(`Failed to parse ToolList JSON: ${error}`);
+        return [];
+      }
+    }
+
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    const tools: McpTool[] = [];
+    for (const item of items) {
+      if (!item || typeof item !== "object") {
+        continue;
+      }
+      const name = item.name || item.Name || "";
+      const server = item.server || item.serverName || item.Server || "";
+      const description = item.description || item.Description || "";
+      const inputSchema = item.inputSchema || item.input_schema || {};
+      const tool = item.tool || item.Tool || "";
+      tools.push({
+        name,
+        server,
+        description,
+        inputSchema,
+        tool,
+      });
+    }
+
+    return tools;
   }
 
   /**

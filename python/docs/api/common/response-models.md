@@ -232,6 +232,7 @@ def __init__(self, app_instance_id: str = "",
              vpc_resource: bool = False,
              resource_url: str = "",
              status: str = "",
+             tool_list: str = "",
              contexts: Optional[List[Dict[str, str]]] = None)
 ```
 

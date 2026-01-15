@@ -104,7 +104,7 @@ func (b *baseTaskAgent) executeTask(task string) *ExecutionResult {
 		"task": task,
 	}
 
-	result, err := b.Session.CallMcpTool(b.getToolName("execute"), args, b.getServerName())
+	result, err := b.Session.CallMcpTool(b.getToolName("execute"), args)
 	if err != nil {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -174,7 +174,7 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 		"task": task,
 	}
 
-	result, err := b.Session.CallMcpTool(b.getToolName("execute"), args, b.getServerName())
+	result, err := b.Session.CallMcpTool(b.getToolName("execute"), args)
 	if err != nil {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -340,7 +340,7 @@ func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 		"task_id": taskID,
 	}
 
-	result, err := b.Session.CallMcpTool(b.getToolName("get_status"), args, b.getServerName())
+	result, err := b.Session.CallMcpTool(b.getToolName("get_status"), args)
 	if err != nil {
 		return &QueryResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -445,7 +445,7 @@ func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
 		"task_id": taskID,
 	}
 
-	result, err := b.Session.CallMcpTool(b.getToolName("terminate"), args, b.getServerName())
+	result, err := b.Session.CallMcpTool(b.getToolName("terminate"), args)
 	if err != nil {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -548,7 +548,7 @@ type Agent struct {
 type McpSession interface {
 	GetAPIKey() string
 	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}, extra ...interface{}) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }
 
 func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {
@@ -707,7 +707,7 @@ func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schem
 		"output_schema": generateJsonSchema(output_schema),
 	}
 	fmt.Println(args)
-	result, err := a.Session.CallMcpTool(a.getToolName("execute"), args, a.getServerName())
+	result, err := a.Session.CallMcpTool(a.getToolName("execute"), args)
 	if err != nil {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -956,7 +956,7 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
 	}
 
 	result, err := a.baseTaskAgent.Session.CallMcpTool(
-		a.baseTaskAgent.getToolName("execute"), args, a.baseTaskAgent.getServerName())
+		a.baseTaskAgent.getToolName("execute"), args)
 	if err != nil {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -1036,7 +1036,7 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 	}
 
 	result, err := a.baseTaskAgent.Session.CallMcpTool(
-		a.baseTaskAgent.getToolName("execute"), args, a.baseTaskAgent.getServerName())
+		a.baseTaskAgent.getToolName("execute"), args)
 	if err != nil {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -1298,7 +1298,7 @@ func (a *MobileUseAgent) GetTaskStatus(taskID string) *QueryResult {
 		"task_id": taskID,
 	}
 
-	result, err := a.baseTaskAgent.Session.CallMcpTool(a.baseTaskAgent.getToolName("get_status"), args, a.baseTaskAgent.getServerName())
+	result, err := a.baseTaskAgent.Session.CallMcpTool(a.baseTaskAgent.getToolName("get_status"), args)
 	if err != nil {
 		return &QueryResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
@@ -1413,7 +1413,7 @@ func (a *MobileUseAgent) TerminateTask(taskID string) *ExecutionResult {
 		"task_id": taskID,
 	}
 
-	result, err := a.baseTaskAgent.Session.CallMcpTool(a.baseTaskAgent.getToolName("terminate"), args, a.baseTaskAgent.getServerName())
+	result, err := a.baseTaskAgent.Session.CallMcpTool(a.baseTaskAgent.getToolName("terminate"), args)
 	if err != nil {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},

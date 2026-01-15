@@ -578,7 +578,7 @@ export class Browser {
    */
   async destroy(): Promise<void> {
     if (this.isInitialized()) {
-      await this.session.callMcpTool("stopChrome", {}, false, "wuying_cdp_mcp_server");
+      await this.session.callMcpTool("stopChrome", {}, false);
     } else {
       throw new BrowserError("Browser is not initialized. Cannot destroy browser.");
     }
@@ -647,7 +647,7 @@ export class Browser {
    */
   private _stopBrowser(): void {
     if (this.isInitialized()) {
-      this.session.callMcpTool("stopChrome", {}, false, "wuying_cdp_mcp_server");
+      this.session.callMcpTool("stopChrome", {}, false);
     } else {
       throw new BrowserError("Browser is not initialized. Cannot stop browser.");
     }

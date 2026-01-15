@@ -11,6 +11,7 @@ type Session struct {
 	AgentBay	*AgentBay
 	SessionID	string
 	ImageId		string	// ImageId used when creating this session
+	McpTools	[]McpTool
 
 	// Resource URL for accessing the session
 	ResourceUrl	string
