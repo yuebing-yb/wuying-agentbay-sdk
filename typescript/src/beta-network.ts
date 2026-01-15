@@ -22,6 +22,7 @@ export class BetaNetworkService {
       try {
         const request = new $_client.CreateNetworkRequest({
           authorization: `Bearer ${this.agentBay.getAPIKey()}`,
+          loginRegionId: this.agentBay.getRegionId(),
           networkId,
         });
 

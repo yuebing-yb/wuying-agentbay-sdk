@@ -10,9 +10,11 @@ class CreateNetworkRequest(DaraModel):
         self,
         authorization: str = None,
         network_id: str = None,
+        login_region_id: str = None,
     ):
         self.authorization = authorization
         self.network_id = network_id
+        self.login_region_id = login_region_id
 
     def validate(self):
         pass
@@ -28,6 +30,9 @@ class CreateNetworkRequest(DaraModel):
         if self.network_id is not None:
             result["NetworkId"] = self.network_id
 
+        if self.login_region_id is not None:
+            result["LoginRegionId"] = self.login_region_id
+
         return result
 
     def from_map(self, m: dict = None):
@@ -37,6 +42,9 @@ class CreateNetworkRequest(DaraModel):
 
         if m.get("NetworkId") is not None:
             self.network_id = m.get("NetworkId")
+
+        if m.get("LoginRegionId") is not None:
+            self.login_region_id = m.get("LoginRegionId")
 
         return self
 

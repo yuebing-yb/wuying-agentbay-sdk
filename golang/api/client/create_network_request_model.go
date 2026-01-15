@@ -11,12 +11,15 @@ type iCreateNetworkRequest interface {
 	GoString() string
 	SetAuthorization(v string) *CreateNetworkRequest
 	GetAuthorization() *string
+	SetLoginRegionId(v string) *CreateNetworkRequest
+	GetLoginRegionId() *string
 	SetNetworkId(v string) *CreateNetworkRequest
 	GetNetworkId() *string
 }
 
 type CreateNetworkRequest struct {
 	Authorization *string `json:"Authorization,omitempty" xml:"Authorization,omitempty"`
+	LoginRegionId *string `json:"LoginRegionId,omitempty" xml:"LoginRegionId,omitempty"`
 	NetworkId     *string `json:"NetworkId,omitempty" xml:"NetworkId,omitempty"`
 }
 
@@ -36,8 +39,17 @@ func (s *CreateNetworkRequest) GetNetworkId() *string {
 	return s.NetworkId
 }
 
+func (s *CreateNetworkRequest) GetLoginRegionId() *string {
+	return s.LoginRegionId
+}
+
 func (s *CreateNetworkRequest) SetAuthorization(v string) *CreateNetworkRequest {
 	s.Authorization = &v
+	return s
+}
+
+func (s *CreateNetworkRequest) SetLoginRegionId(v string) *CreateNetworkRequest {
+	s.LoginRegionId = &v
 	return s
 }
 
