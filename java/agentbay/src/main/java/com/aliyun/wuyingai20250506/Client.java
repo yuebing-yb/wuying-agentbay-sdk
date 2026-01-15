@@ -268,6 +268,9 @@ public class Client extends com.aliyun.teaopenapi.Client {
         if (!com.aliyun.teautil.Common.isUnset(request.authorization)) {
             body.put("Authorization", request.authorization);
         }
+        if (!com.aliyun.teautil.Common.isUnset(request.loginRegionId)) {
+            body.put("LoginRegionId", request.loginRegionId);
+        }
 
         if (!com.aliyun.teautil.Common.isUnset(request.networkId)) {
             body.put("NetworkId", request.networkId);

@@ -1135,6 +1135,7 @@ func (s *Session) getMcpServerForTool(toolName string) string {
 //	defer result.Session.Delete()
 //	args := map[string]interface{}{"command": "ls -la"}
 //	toolResult, _ := result.Session.CallMcpTool("execute_command", args)
+
 func (s *Session) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	serverName := s.getMcpServerForTool(toolName)
 	if serverName == "" {
