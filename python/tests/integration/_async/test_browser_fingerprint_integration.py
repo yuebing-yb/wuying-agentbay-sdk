@@ -235,35 +235,35 @@ class TestBrowserFingerprintIntegration:
         print(
             "Step 3: Opening https://httpbin.org/user-agent and test user agent..."
         )
-        async with async_playwright() as p:
-            browser = await p.chromium.connect_over_cdp(endpoint_url)
-            assert browser is not None, "Failed to connect to browser"
-            context = (
-                browser.contexts[0]
-                if browser.contexts
-                else await browser.new_context()
-            )
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.connect_over_cdp(endpoint_url)
+                print(f"Browser connected to endpoint URL: {browser.contexts}")
+                assert browser is not None, "Failed to connect to browser"
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else await browser.new_context()
+                )
 
-            page = await context.new_page()
-            await page.goto("https://httpbin.org/user-agent", timeout=60000)
-            response = await page.evaluate(
-                "() => JSON.parse(document.querySelector('pre').textContent)"
-            )
-            user_agent = response["user-agent"]
-            print("user_agent =", user_agent)
-            assert user_agent is not None
-            assert is_windows_user_agent(user_agent)
+                page = await context.new_page()
+                await page.goto("https://httpbin.org/user-agent", timeout=60000)
+                response = await page.evaluate(
+                    "() => JSON.parse(document.querySelector('pre').textContent)"
+                )
+                user_agent = response["user-agent"]
+                print("user_agent =", user_agent)
+                assert user_agent is not None
+                assert is_windows_user_agent(user_agent)
 
-            await context.close()
-            print("First session browser operations completed")
-
-        # Step 4: Release first session with syncContext=True
-        print("Step 4: Releasing first session with syncContext=True...")
-        delete_result = await agent_bay.delete(session1, sync_context=True)
-        assert delete_result.success, "Failed to delete first session"
-        print(
-            f"First session deleted successfully (RequestID: {delete_result.request_id})"
-        )
+                await context.close()
+                print("First session browser operations completed")
+                
+        finally:
+            print("Step 4: Releasing first session with syncContext=True...")
+            delete_result = await agent_bay.delete(session1, sync_context=True)
+            assert delete_result.success, "Failed to delete first session"
+            print(f"First session deleted successfully (RequestID: {delete_result.request_id})")
 
         # Wait for context sync to complete
         time.sleep(3)

@@ -458,26 +458,39 @@ print(json.dumps(result))
 
       const jsFileCode = `
 const fs = require('fs');
+const path = require('path');
 
-// Create a test file
-fs.writeFileSync('/tmp/js_test.txt', 'JavaScript file operation test');
-
-// Read the file
-const content = fs.readFileSync('/tmp/js_test.txt', 'utf8');
-
-const result = {
-  operation: "file_write_read",
-  content: content,
-  file_exists: fs.existsSync('/tmp/js_test.txt')
-};
-console.log(JSON.stringify(result));
+try {
+  // Create a test file with error handling
+  const filePath = '/tmp/js_test.txt';
+  const testContent = 'JavaScript file operation test';
+  
+  fs.writeFileSync(filePath, testContent);
+  
+  // Read the file
+  const content = fs.readFileSync(filePath, 'utf8');
+  
+  const result = {
+    operation: "file_write_read",
+    content: content,
+    file_exists: fs.existsSync(filePath)
+  };
+  
+  console.log(JSON.stringify(result));
+} catch (error) {
+  console.error(JSON.stringify({
+    operation: "file_write_read",
+    error: error.message,
+    success: false
+  }));
+}
 `.trim();
 
-      const [pythonFileResult, jsFileResult] = await Promise.all([
-        code1.runCode(pythonFileCode, 'python'),
-        code2.runCode(jsFileCode, 'javascript')
-      ]);
+      // Execute code sequentially to avoid potential race conditions
+      const pythonFileResult = await code1.runCode(pythonFileCode, 'python');
       expect(pythonFileResult.success).toBe(true);
+      
+      const jsFileResult = await code2.runCode(jsFileCode, 'javascript');
       expect(jsFileResult.success).toBe(true);
 
       expect(pythonFileResult.result).toContain('Python file operation test');

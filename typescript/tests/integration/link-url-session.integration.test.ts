@@ -10,7 +10,7 @@ describe("LinkUrl session integration", () => {
     const client = new AgentBay({ apiKey });
 
     const createResult = await client.create({
-      imageId: "imgc-0ab5takhjgjky7htu",
+      imageId: "linux_latest",
       labels: { "test-type": "link-url-integration" },
     });
 

@@ -19,7 +19,7 @@ func TestLinkUrlSessionMcpToolsAndCallTool(t *testing.T) {
 	}
 
 	params := agentbay.NewCreateSessionParams().
-		WithImageId("imgc-0ab5takhjgjky7htu").
+		WithImageId("linux_latest").
 		WithLabels(map[string]string{
 			"test-type": "link-url-integration",
 		})
@@ -52,7 +52,7 @@ func TestLinkUrlSessionMcpToolsAndCallTool(t *testing.T) {
 
 	direct, err := session.CallMcpTool("shell", map[string]interface{}{
 		"command": "echo direct-link-url-route-ok",
-	}, "wuying_shell")
+	})
 	if err != nil {
 		t.Fatalf("CallMcpTool failed: %v", err)
 	}

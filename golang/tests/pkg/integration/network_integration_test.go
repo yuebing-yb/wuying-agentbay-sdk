@@ -42,7 +42,7 @@ func TestNetworkCreateDescribeAndBindSession(t *testing.T) {
 	}
 
 	params := agentbay.NewCreateSessionParams().
-		WithImageId("imgc-0ab5takhjgjky7htu").
+		WithImageId("linux_latest").
 		WithBetaNetworkId(networkResult.NetworkId).
 		WithLabels(map[string]string{"test-type": "network-integration"})
 

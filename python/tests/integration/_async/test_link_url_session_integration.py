@@ -25,7 +25,7 @@ async def test_link_url_session_mcp_tools_and_call_tool():
 
     session = result.session
     try:
-        if session.get_token() == "" or session.get_link_url() == "":
+        if session.getToken() == "" or session.get_link_url() == "":
             pytest.skip("LinkUrl/token not provided by CreateSession response in this environment")
 
         cmd_result = await session.command.execute_command("echo link-url-route-ok")

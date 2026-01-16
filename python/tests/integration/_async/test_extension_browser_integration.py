@@ -732,8 +732,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                 context_id=self.browser_context_id,
                 auto_upload=True,
                 extension_option=extension_option,
-            ),
-            is_vpc=False,
+            )
         )
 
         session_result = await self.agent_bay.create(session_params)

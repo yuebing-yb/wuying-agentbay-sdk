@@ -238,35 +238,36 @@ class TestBrowserFingerprintIntegration:
         print(
             "Step 3: Opening https://httpbin.org/user-agent and test user agent..."
         )
-        with sync_playwright() as p:
-            browser = p.chromium.connect_over_cdp(endpoint_url)
-            assert browser is not None, "Failed to connect to browser"
-            context = (
-                browser.contexts[0]
-                if browser.contexts
-                else browser.new_context()
+        try: 
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
+                assert browser is not None, "Failed to connect to browser"
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
+                )
+
+                page = context.new_page()
+                page.goto("https://httpbin.org/user-agent", timeout=60000)
+                response = page.evaluate(
+                    "() => JSON.parse(document.querySelector('pre').textContent)"
+                )
+                user_agent = response["user-agent"]
+                print("user_agent =", user_agent)
+                assert user_agent is not None
+                assert is_windows_user_agent(user_agent)
+
+                context.close()
+                print("First session browser operations completed")
+        finally:
+            # Step 4: Release first session with syncContext=True
+            print("Step 4: Releasing first session with syncContext=True...")
+            delete_result = agent_bay.delete(session1, sync_context=True)
+            assert delete_result.success, "Failed to delete first session"
+            print(
+                f"First session deleted successfully (RequestID: {delete_result.request_id})"
             )
-
-            page = context.new_page()
-            page.goto("https://httpbin.org/user-agent", timeout=60000)
-            response = page.evaluate(
-                "() => JSON.parse(document.querySelector('pre').textContent)"
-            )
-            user_agent = response["user-agent"]
-            print("user_agent =", user_agent)
-            assert user_agent is not None
-            assert is_windows_user_agent(user_agent)
-
-            context.close()
-            print("First session browser operations completed")
-
-        # Step 4: Release first session with syncContext=True
-        print("Step 4: Releasing first session with syncContext=True...")
-        delete_result = agent_bay.delete(session1, sync_context=True)
-        assert delete_result.success, "Failed to delete first session"
-        print(
-            f"First session deleted successfully (RequestID: {delete_result.request_id})"
-        )
 
         # Wait for context sync to complete
         time.sleep(3)
