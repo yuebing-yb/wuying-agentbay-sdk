@@ -1,4 +1,4 @@
-import { AgentBay, Session, log, logError, newCreateSessionParams } from 'wuying-agentbay-sdk'
+import { AgentBay, Session, log, logError, CreateSessionParams } from 'wuying-agentbay-sdk'
 
 /**
  * Pause and resume a session
@@ -13,11 +13,13 @@ async function pauseAndResumeSession() {
 
   try {
     // Create a session with labels for identification
-    const params = newCreateSessionParams().withLabels({
-      project: 'pause-resume-example',
-      environment: 'development',
-      purpose: 'demonstration'
-    });
+    const params: CreateSessionParams = {
+      labels: {
+        project: 'pause-resume-example',
+        environment: 'development',
+        purpose: 'demonstration'
+      }
+    };
 
     log('Creating session...');
     const createResult = await agentBay.create(params);
@@ -152,11 +154,13 @@ async function pauseAndResumeWithCustomParameters() {
 
   try {
     // Create a session
-    const params = newCreateSessionParams().withLabels({
-      project: 'pause-resume-custom-example',
-      environment: 'development',
-      purpose: 'custom-parameters'
-    });
+    const params: CreateSessionParams = {
+      labels: {
+        project: 'pause-resume-custom-example',
+        environment: 'development',
+        purpose: 'custom-parameters'
+      }
+    };
 
     log('Creating session with custom parameters example...');
     const createResult = await agentBay.create(params);
