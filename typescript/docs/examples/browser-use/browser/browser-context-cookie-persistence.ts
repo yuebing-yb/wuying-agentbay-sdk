@@ -10,7 +10,7 @@
  * 5. Verifying that cookies persist across sessions
  */
 
-import { AgentBay, newCreateSessionParams, BrowserOptionClass, BrowserContext } from 'wuying-agentbay-sdk';
+import { AgentBay, CreateSessionParams, BrowserOptionClass, BrowserContext } from 'wuying-agentbay-sdk';
 import { chromium } from 'playwright';
 
 async function main(): Promise<void> {
@@ -45,9 +45,10 @@ async function main(): Promise<void> {
         console.log("Step 2: Creating first session with Browser Context...");
         const browserContext = new BrowserContext(context.id, true);
 
-        const params = newCreateSessionParams()
-            .withImageId("browser_latest")  // Browser image ID
-            .withBrowserContext(browserContext);
+        const params :CreateSessionParams = {
+            imageId: "browser_latest",  // Browser image ID
+            browserContext: browserContext
+        }
 
         const sessionResult = await agentBay.create(params);
         if (!sessionResult.success || !sessionResult.session) {

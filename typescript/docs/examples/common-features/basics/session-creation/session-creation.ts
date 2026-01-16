@@ -1,5 +1,5 @@
 
-import { AgentBay, log, logError, CreateSessionParams, ContextSync, newSyncPolicy, ContextStatusData, newCreateSessionParams, MobileExtraConfig, AppManagerRule, ExtraConfigs, CreateSessionParams } from 'wuying-agentbay-sdk'
+import { AgentBay, log, logError, CreateSessionParams, ContextSync, newSyncPolicy, ContextStatusData, MobileExtraConfig, AppManagerRule, ExtraConfigs } from 'wuying-agentbay-sdk'
 
 
 
@@ -102,8 +102,10 @@ async function createSessionWithContext() {
       log(`Using context with ID: ${contextResult.context.id}`);
 
       // Create a session linked to the context
-      const params = newCreateSessionParams()
-        .addContextSync(contextResult.context.id, "/home/wuying");
+      const contextSync = new ContextSync(contextResult.context.id, "/home/wuying", newSyncPolicy());
+      const params: CreateSessionParams = {
+        contextSync: [contextSync]
+      };
 
       const sessionResult = await agent_bay.create(params);
 
@@ -226,14 +228,15 @@ async function createMobileSessionWithExtraConfigs() {
     };
 
     // Create session parameters with extra configurations
-    const params = newCreateSessionParams()
-      .withImageId("mobile_latest")
-      .withLabels({
+    const params: CreateSessionParams = {
+      imageId: "mobile_latest",
+      labels: {
         project: "mobile-testing",
         environment: "development",
         config_type: "comprehensive"
-      })
-      .withExtraConfigs(extraConfigs);
+      },
+      extraConfigs: extraConfigs
+    };
 
     // Create session
     const result = await agent_bay.create(params);
