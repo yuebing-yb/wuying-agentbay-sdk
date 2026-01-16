@@ -78,8 +78,10 @@ TEST_PATTERNS = [
     "agent-integration",        # Agent integration related tests
     "agent_test",              # Agent test files
     "test_browser_agent",      # Browser Agent tests
-    "vpc_session_integration_test",    # Requires specific local image for testing
-    "vpc-session-integration.test"     # Requires specific local image for testing
+    "test_network_integration",
+    "network_integration_test",
+    "network.integration.test"
+    
 ]
 
 # State Definition
