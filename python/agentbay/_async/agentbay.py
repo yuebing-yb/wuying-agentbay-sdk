@@ -190,7 +190,7 @@ class AsyncAgentBay:
         resource_url = response_data.get("ResourceUrl", "")
 
         _logger.info(f"🆔 Session created: {session_id}")
-        _logger.info(f"🔗 Resource URL: {resource_url}")
+        _logger.debug(f"🔗 Resource URL: {resource_url}")
 
         # Create Session object
         session = AsyncSession(self, session_id)
