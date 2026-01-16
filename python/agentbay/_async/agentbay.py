@@ -659,8 +659,6 @@ class AsyncAgentBay:
 
             # Log API response with key details
             resource_url = data.get("ResourceUrl", "")
-
-            _logger.info(f"data:{data}")
             _log_api_response_with_details(
                 api_name="CreateSession",
                 request_id=request_id,
@@ -1109,7 +1107,6 @@ class AsyncAgentBay:
         session = AsyncSession(self, session_id)
 
         # Set ResourceUrl from GetSession response
-        print(f"GetSession response: {get_result.data.__dict__}")
         if get_result.data:
             session.resource_url = get_result.data.resource_url
             session.mcpTools = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list)
