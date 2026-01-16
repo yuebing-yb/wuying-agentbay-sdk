@@ -146,12 +146,12 @@ public class Session {
      * @throws AgentBayException if the call fails
      */
     public CallMcpToolResponse callTool(String toolName, Object args) throws AgentBayException {
+        // Server name is optional for API-based tool calls.
+        // Some environments do not return ToolList in CreateSession, and the backend
+        // can resolve the server by tool name.
         String serverName = getMcpServerForTool(toolName);
         if (serverName == null || serverName.isEmpty()) {
-            throw new AgentBayException(
-                "Failed to resolve MCP server for tool: " + toolName +
-                ". Tool list may be missing or tool unavailable in current image"
-            );
+            serverName = null;
         }
         return agentBay.getApiClient().callMcpTool(sessionId, toolName, args, serverName);
     }

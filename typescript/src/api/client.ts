@@ -305,6 +305,9 @@ export class Client extends OpenApi {
     if (!$dara.isNull(request.authorization)) {
       body["Authorization"] = request.authorization;
     }
+    if (!$dara.isNull(request.loginRegionId)) {
+      body["LoginRegionId"] = request.loginRegionId;
+    }
     if (!$dara.isNull(request.networkId)) {
       body["NetworkId"] = request.networkId;
     }

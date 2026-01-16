@@ -22,7 +22,7 @@ class TestSessionGetMetricsIntegration(unittest.TestCase):
 
     @pytest.mark.sync
     def test_get_metrics_returns_structured_data(self):
-        result = self.agent_bay.create(CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp"))
+        result = self.agent_bay.create()
         self.assertTrue(result.success)
         session = result.session
         self.assertIsNotNone(session)

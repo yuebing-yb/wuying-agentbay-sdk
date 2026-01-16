@@ -1135,16 +1135,9 @@ func (s *Session) getMcpServerForTool(toolName string) string {
 //	defer result.Session.Delete()
 //	args := map[string]interface{}{"command": "ls -la"}
 //	toolResult, _ := result.Session.CallMcpTool("execute_command", args)
+
 func (s *Session) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	serverName := s.getMcpServerForTool(toolName)
-	if serverName == "" {
-		return &models.McpToolResult{
-			Success:      false,
-			Data:         "",
-			ErrorMessage: fmt.Sprintf("server not found for tool: %s. Tool list may be missing or tool unavailable in current image", toolName),
-			RequestID:    "",
-		}, nil
-	}
 	// Normalize press_keys arguments for better case compatibility
 	if toolName == "press_keys" {
 		// Try to extract and normalize the keys field
@@ -1190,7 +1183,9 @@ func (s *Session) CallMcpTool(toolName string, args interface{}) (*models.McpToo
 	}
 
 	// Prefer LinkUrl-based direct tool call when LinkUrl/Token are present.
-	if s.GetLinkUrl() != "" && s.GetToken() != "" {
+	// LinkUrl route requires explicit server name. If it's not available,
+	// fall back to API-based call to let backend resolve the server.
+	if s.GetLinkUrl() != "" && s.GetToken() != "" && serverName != "" {
 		return s.callMcpToolLinkUrl(toolName, args, serverName)
 	}
 

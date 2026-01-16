@@ -40,6 +40,9 @@ func (ns *BetaNetworkService) BetaGetNetworkBindToken(networkId string) (*BetaNe
 	if networkId != "" {
 		request.NetworkId = tea.String(networkId)
 	}
+	if ns.AgentBay.config.RegionID != "" {
+		request.LoginRegionId = tea.String(ns.AgentBay.config.RegionID)
+	}
 
 	maxAttempts := 3
 	delay := 200 * time.Millisecond

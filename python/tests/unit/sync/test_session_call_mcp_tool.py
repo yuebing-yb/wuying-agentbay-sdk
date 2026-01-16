@@ -113,19 +113,34 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
     def test_call_mcp_tool_fails_when_tool_missing_in_session_tool_list(
         self, mock_extract_request_id, MockCallMcpToolRequest
     ):
-        """Tool calls must fail fast if tool_name cannot be mapped to a server."""
+        """API tool calls should proceed even when server cannot be resolved locally."""
         mock_extract_request_id.return_value = "request-123"
-        self.agent_bay.client.call_mcp_tool = MagicMock(
-            side_effect=AssertionError("API must not be called when server is unknown")
-        )
+        mock_request = MagicMock()
+        mock_response = MagicMock()
+        MockCallMcpToolRequest.return_value = mock_request
+        self.agent_bay.client.call_mcp_tool = MagicMock(return_value=mock_response)
+        mock_response.to_map.return_value = {
+            "body": {
+                "Data": json.dumps(
+                    {
+                        "content": [{"type": "text", "text": "ok"}],
+                        "isError": False,
+                    }
+                ),
+                "Success": True,
+            }
+        }
 
         result = self.session.call_mcp_tool(
             "unknown_tool",
             {"a": 1},
         )
-        self.assertFalse(result.success)
-        self.assertIn("unknown_tool", result.error_message)
-        MockCallMcpToolRequest.assert_not_called()
+        self.assertTrue(result.success)
+        self.assertEqual(result.data, "ok")
+        MockCallMcpToolRequest.assert_called_once()
+        call_args = MockCallMcpToolRequest.call_args
+        self.assertEqual(call_args[1]["name"], "unknown_tool")
+        self.assertEqual(call_args[1]["server"], "")
 
     @patch("agentbay._sync.session.CallMcpToolRequest")
     @patch("agentbay._sync.session.extract_request_id")
@@ -278,18 +293,45 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
 
     @pytest.mark.sync
     def test_call_mcp_tool_link_url_fails_when_tool_missing_in_tool_list(self):
-        """Test LinkUrl mode fails if tool cannot be mapped to a server."""
+        """LinkUrl mode should fall back to API when server is unknown."""
         self.session.link_url = "http://127.0.0.1:9999/"
         self.session.token = "link_token_123"
         self.session.mcpTools = []
 
-        result = self.session.call_mcp_tool(
-            "shell",
-            {"command": "echo hello"},
-        )
+        with patch("httpx.Client") as mock_httpx_client, patch(
+            "agentbay._sync.session.CallMcpToolRequest"
+        ) as MockCallMcpToolRequest, patch(
+            "agentbay._sync.session.extract_request_id"
+        ) as mock_extract_request_id:
+            mock_extract_request_id.return_value = "request-123"
+            mock_request = MagicMock()
+            mock_response = MagicMock()
+            MockCallMcpToolRequest.return_value = mock_request
+            self.agent_bay.client.call_mcp_tool = MagicMock(return_value=mock_response)
+            mock_response.to_map.return_value = {
+                "body": {
+                    "Data": json.dumps(
+                        {
+                            "content": [{"type": "text", "text": "ok"}],
+                            "isError": False,
+                        }
+                    ),
+                    "Success": True,
+                }
+            }
 
-        self.assertFalse(result.success)
-        self.assertIn("shell", result.error_message.lower())
+            result = self.session.call_mcp_tool(
+                "shell",
+                {"command": "echo hello"},
+            )
+
+            self.assertTrue(result.success)
+            self.assertEqual(result.data, "ok")
+            mock_httpx_client.assert_not_called()
+            MockCallMcpToolRequest.assert_called_once()
+            call_args = MockCallMcpToolRequest.call_args
+            self.assertEqual(call_args[1]["name"], "shell")
+            self.assertEqual(call_args[1]["server"], "")
 
     @patch("agentbay._sync.session.CallMcpToolRequest")
     @patch("agentbay._sync.session.extract_request_id")

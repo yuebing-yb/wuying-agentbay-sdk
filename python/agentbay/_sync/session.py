@@ -863,21 +863,16 @@ class Session:
                 args["keys"] = normalize_keys(args["keys"])
                 _logger.debug(f"Normalized press_keys arguments: {args}")
 
-            server_name = self._get_mcp_server_for_tool(tool_name)
-            if not server_name:
-                return McpToolResult(
-                    request_id="",
-                    success=False,
-                    data="",
-                    error_message=(
-                        f"Failed to resolve MCP server for tool: {tool_name}. "
-                        "This session may not have ToolList populated, or the tool is unavailable in the current image."
-                    ),
-                )
+            # Server name is optional for API-based tool calls.
+            # Some environments do not return ToolList in CreateSession, and the backend
+            # can resolve the server by tool name.
+            server_name = self._get_mcp_server_for_tool(tool_name) or ""
 
             args_json = json.dumps(args, ensure_ascii=False)
 
-            if self._get_link_url() and self._get_token():
+            # LinkUrl route requires explicit server name. If it's not available,
+            # fall back to API-based call to let backend resolve the server.
+            if self._get_link_url() and self._get_token() and server_name:
                 return self._call_mcp_tool_link_url(
                     tool_name=tool_name,
                     args=args,

@@ -354,6 +354,9 @@ func (client *Client) CreateNetworkWithOptions(request *CreateNetworkRequest, ru
 	if !dara.IsNil(request.Authorization) {
 		body["Authorization"] = request.Authorization
 	}
+	if !dara.IsNil(request.LoginRegionId) {
+		body["LoginRegionId"] = request.LoginRegionId
+	}
 	if !dara.IsNil(request.NetworkId) {
 		body["NetworkId"] = request.NetworkId
 	}

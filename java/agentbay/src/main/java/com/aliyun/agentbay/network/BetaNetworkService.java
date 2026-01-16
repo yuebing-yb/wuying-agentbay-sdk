@@ -25,6 +25,9 @@ public class BetaNetworkService {
             if (networkId != null && !networkId.isEmpty()) {
                 request.setNetworkId(networkId);
             }
+            if (agentBay.getRegionId() != null && !agentBay.getRegionId().isEmpty()) {
+                request.setLoginRegionId(agentBay.getRegionId());
+            }
 
             com.aliyun.wuyingai20250506.models.CreateNetworkResponse response =
                 agentBay.getClient().createNetwork(request);

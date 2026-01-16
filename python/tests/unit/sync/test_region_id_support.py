@@ -4,7 +4,11 @@ import unittest
 from unittest.mock import MagicMock, MagicMock, patch
 
 from agentbay import AgentBay, CreateSessionParams, Context, ContextResult, ContextService, Config
-from agentbay.api.models import CreateMcpSessionRequest, GetContextRequest
+from agentbay.api.models import (
+    CreateMcpSessionRequest,
+    CreateNetworkRequest,
+    GetContextRequest,
+)
 
 
 class TestRegionIdSupport(unittest.TestCase):
@@ -253,6 +257,41 @@ class TestRegionIdSupport(unittest.TestCase):
         self.assertIsInstance(call_args, GetContextRequest)
         # LoginRegionId should be None when create=False
         self.assertIsNone(call_args.login_region_id)
+
+    @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})
+    @patch("agentbay._sync.agentbay.mcp_client")
+    @pytest.mark.sync
+    def test_network_bind_token_with_region_id(
+        self, mock_mcp_client
+    ):
+        """Test get_network_bind_token passes LoginRegionId when region_id is set"""
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.to_map.return_value = {"body": {"RequestId": "req-id"}}
+        mock_body = MagicMock()
+        mock_body.success = True
+        mock_body.data = MagicMock(
+            network_id="test-network-id",
+            network_token="test-network-token",
+        )
+        mock_response.body = mock_body
+        mock_client.create_network = MagicMock(return_value=mock_response)
+        mock_mcp_client.return_value = mock_client
+
+        config = Config(
+            endpoint="wuyingai.cn-shanghai.aliyuncs.com",
+            timeout_ms=60000,
+            region_id="cn-hangzhou",
+        )
+        agent_bay = AgentBay(cfg=config)
+
+        result = agent_bay.beta_network.get_network_bind_token()
+
+        mock_client.create_network.assert_called_once()
+        call_args = mock_client.create_network.call_args[0][0]
+        self.assertIsInstance(call_args, CreateNetworkRequest)
+        self.assertEqual(call_args.login_region_id, "cn-hangzhou")
+        self.assertTrue(result.success)
 
 
 if __name__ == "__main__":

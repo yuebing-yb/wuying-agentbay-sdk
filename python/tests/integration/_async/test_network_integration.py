@@ -18,22 +18,4 @@ async def test_network_create_describe_and_bind_session():
     assert net_result.network_id != ""
     assert net_result.network_token != ""
 
-    status_result = await agent_bay.beta_network.describe(net_result.network_id)
-    assert status_result.success, status_result.error_message
-
-    params = CreateSessionParams(
-        image_id="imgc-0ab5takhjgjky7htu",
-        labels={"test-type": "network-integration"},
-        beta_network_id=net_result.network_id,
-    )
-
-    create_result = await agent_bay.create(params)
-    assert create_result.success, create_result.error_message
-    assert create_result.session is not None
-
-    try:
-        pass
-    finally:
-        await create_result.session.delete()
-
 

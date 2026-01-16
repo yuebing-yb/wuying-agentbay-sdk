@@ -205,6 +205,9 @@ public class Client extends com.aliyun.teaopenapi.Client {
         if (!com.aliyun.teautil.Common.isUnset(request.networkId)) {
             body.put("NetworkId", request.networkId);
         }
+        if (!com.aliyun.teautil.Common.isUnset(request.loginRegionId)) {
+            body.put("LoginRegionId", request.loginRegionId);
+        }
 
         if (!com.aliyun.teautil.Common.isUnset(request.persistenceDataListShrink)) {
             body.put("PersistenceDataList", request.persistenceDataListShrink);
@@ -264,6 +267,9 @@ public class Client extends com.aliyun.teaopenapi.Client {
         java.util.Map<String, Object> body = new java.util.HashMap<>();
         if (!com.aliyun.teautil.Common.isUnset(request.authorization)) {
             body.put("Authorization", request.authorization);
+        }
+        if (!com.aliyun.teautil.Common.isUnset(request.loginRegionId)) {
+            body.put("LoginRegionId", request.loginRegionId);
         }
 
         if (!com.aliyun.teautil.Common.isUnset(request.networkId)) {
