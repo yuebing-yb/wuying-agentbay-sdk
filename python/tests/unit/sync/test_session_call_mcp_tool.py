@@ -307,7 +307,9 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
             mock_request = MagicMock()
             mock_response = MagicMock()
             MockCallMcpToolRequest.return_value = mock_request
-            self.agent_bay.client.call_mcp_tool = MagicMock(return_value=mock_response)
+            self.agent_bay.client.call_mcp_tool = MagicMock(
+                return_value=mock_response
+            )
             mock_response.to_map.return_value = {
                 "body": {
                     "Data": json.dumps(

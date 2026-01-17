@@ -27,11 +27,7 @@ Note: This is a beta feature and may change in future releases.
 ### __init__
 
 ```python
-def __init__(self, id: str,
-             name: str,
-             belonging_image_id: Optional[str] = None,
-             status: Optional[str] = None,
-             created_at: Optional[str] = None)
+def __init__(self, id: str, name: str)
 ```
 
 ## VolumeResult

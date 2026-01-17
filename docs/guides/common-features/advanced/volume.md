@@ -4,6 +4,13 @@ The Volume feature provides **block storage volumes (data disks)** that can be m
 
 Typical use cases include sharing large datasets, persisting build artifacts, and reusing environment state across multiple sessions.
 
+## Limitations and access
+
+- This feature currently supports **Mobile Use** scenarios only.
+- Volume is currently in **beta**. Both functionality and APIs may change in future releases.
+- Volume currently works only with **custom images**. In the examples below, use placeholders like `image_xxx` to represent a custom `imageId`.
+- Volume is currently available via **allowlist**. To request access, email `agentbay_dev@alibabacloud.com`.
+
 ## Concepts
 
 - **Volume**: A block storage resource identified by `volumeId`.
@@ -20,21 +27,13 @@ from agentbay import AgentBay, CreateSessionParams
 
 agent = AgentBay(api_key=os.environ["AGENTBAY_API_KEY"])
 
-v = agent.beta_volume.get(name="demo-volume", image_id="linux_latest", create=True)
+v = agent.beta_volume.get(name="demo-volume", image_id="image_xxx", create=True)
 if not v.success:
     raise RuntimeError(v.error_message)
 
-params = CreateSessionParams(image_id="linux_latest", volume=v.volume.id)
+params = CreateSessionParams(image_id="image_xxx", volume=v.volume.id)
 session = agent.create(params).session
 
 session.command.execute_command("ls -la")
 session.delete()
 ```
-
-## Best practices
-
-1. Use descriptive volume names and keep a mapping between name and `volumeId`.
-2. Prefer mounting volumes at session creation time for predictable behavior.
-3. Always validate `success` and handle `errorMessage` for volume operations.
-4. Clean up sessions after use.
-

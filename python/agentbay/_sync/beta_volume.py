@@ -34,15 +34,9 @@ class Volume:
         self,
         id: str,
         name: str,
-        belonging_image_id: Optional[str] = None,
-        status: Optional[str] = None,
-        created_at: Optional[str] = None,
     ):
         self.id = id
         self.name = name
-        self.belonging_image_id = belonging_image_id
-        self.status = status
-        self.created_at = created_at
 
 
 class VolumeResult(ApiResponse):
@@ -199,9 +193,6 @@ class SyncBetaVolumeService:
         volume = Volume(
             id=volume_id_value,
             name=vol_data.get("VolumeName") or "",
-            belonging_image_id=vol_data.get("BelongingImageId"),
-            status=vol_data.get("Status"),
-            created_at=vol_data.get("CreateTime"),
         )
 
         body_json = json.dumps(data, ensure_ascii=False, indent=2)
@@ -281,9 +272,6 @@ class SyncBetaVolumeService:
                     Volume(
                         id=vid,
                         name=it.get("VolumeName") or "",
-                        belonging_image_id=it.get("BelongingImageId"),
-                        status=it.get("Status"),
-                        created_at=it.get("CreateTime"),
                     )
                 )
 

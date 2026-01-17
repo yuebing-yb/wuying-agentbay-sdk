@@ -1,63 +1,28 @@
-# Class: CreateSessionParams
+# Interface: CreateSessionParams
 
-CreateSessionParams provides a way to configure the parameters for creating a new session
-in the AgentBay cloud environment.
-
-## Implements
-
-- ``CreateSessionParamsConfig``
+Parameters for creating a session.
 
 ## Table of contents
-
 
 ### Properties
 
 - [betaNetworkId](#betanetworkid)
 - [browserContext](#browsercontext)
+- [contextSync](#contextsync)
 - [enableBrowserReplay](#enablebrowserreplay)
 - [extraConfigs](#extraconfigs)
 - [framework](#framework)
 - [imageId](#imageid)
+- [labels](#labels)
 - [policyId](#policyid)
 - [volume](#volume)
 - [volumeId](#volumeid)
 
-### Methods
-
-- [addContextSync](#addcontextsync)
-- [addContextSyncConfig](#addcontextsyncconfig)
-- [fromJSON](#fromjson)
-- [toJSON](#tojson)
-- [withBetaNetworkId](#withbetanetworkid)
-- [withBrowserContext](#withbrowsercontext)
-- [withContextSync](#withcontextsync)
-- [withEnableBrowserReplay](#withenablebrowserreplay)
-- [withEnableRecord](#withenablerecord)
-- [withExtraConfigs](#withextraconfigs)
-- [withFramework](#withframework)
-- [withImageId](#withimageid)
-- [withLabels](#withlabels)
-- [withPolicyId](#withpolicyid)
-- [withVolume](#withvolume)
-- [withVolumeId](#withvolumeid)
-
 ## Properties
-
-```typescript
-contextSync: [`ContextSync`](context-sync.md)[]
-labels: `Record`<`string`, `string`>
-```
-
 
 ### betaNetworkId
 
 • `Optional` **betaNetworkId**: `string`
-
-Beta network id to bind this session to.
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`betaNetworkId`
 
 ___
 
@@ -65,17 +30,11 @@ ___
 
 • `Optional` **browserContext**: ``BrowserContext``
 
-Optional configuration for browser data synchronization.
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`browserContext`
-
 ___
 
-#### Implementation of
+### contextSync
 
-`CreateSessionParamsConfig`.`contextSync`
+• `Optional` **contextSync**: [`ContextSync`](context-sync.md)[]
 
 ___
 
@@ -83,23 +42,11 @@ ___
 
 • `Optional` **enableBrowserReplay**: `boolean`
 
-Whether to enable browser recording for the session. Defaults to true.
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`enableBrowserReplay`
-
 ___
 
 ### extraConfigs
 
 • `Optional` **extraConfigs**: ``ExtraConfigs``
-
-Extra configuration settings for different session types (e.g., mobile)
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`extraConfigs`
 
 ___
 
@@ -107,29 +54,17 @@ ___
 
 • `Optional` **framework**: `string`
 
-Framework name for SDK statistics tracking
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`framework`
-
 ___
 
 ### imageId
 
 • `Optional` **imageId**: `string`
 
-Image ID to use for the session.
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`imageId`
-
 ___
 
-#### Implementation of
+### labels
 
-`CreateSessionParamsConfig`.`labels`
+• `Optional` **labels**: `Record`\<`string`, `string`\>
 
 ___
 
@@ -137,23 +72,14 @@ ___
 
 • `Optional` **policyId**: `string`
 
-Policy id to apply when creating the session.
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`policyId`
-
 ___
 
 ### volume
 
 • `Optional` **volume**: `string` \| ``Volume``
 
-Beta: volume object or volume id string to mount during session creation.
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`volume`
+Beta: mount a volume during session creation (static mount).
+Accepts a volume id string or a Volume object.
 
 ___
 
@@ -161,292 +87,5 @@ ___
 
 • `Optional` **volumeId**: `string`
 
-Beta: explicit volume id to mount during session creation.
-
-#### Implementation of
-
-`CreateSessionParamsConfig`.`volumeId`
-
-## Methods
-
-### addContextSync
-
-▸ **addContextSync**(`contextId`, `path`, `policy?`): [`CreateSessionParams`](session-params.md)
-
-AddContextSync adds a context sync configuration to the session parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `contextId` | `string` |
-| `path` | `string` |
-| `policy?` | ``SyncPolicy`` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### addContextSyncConfig
-
-▸ **addContextSyncConfig**(`contextSync`): [`CreateSessionParams`](session-params.md)
-
-AddContextSyncConfig adds a pre-configured context sync to the session parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `contextSync` | [`ContextSync`](context-sync.md) |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### fromJSON
-
-▸ **fromJSON**(`config`): [`CreateSessionParams`](session-params.md)
-
-Create from plain object
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `config` | ``CreateSessionParamsConfig`` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### toJSON
-
-▸ **toJSON**(): ``CreateSessionParamsConfig``
-
-Convert to plain object for JSON serialization
-
-#### Returns
-
-``CreateSessionParamsConfig``
-
-___
-
-### withBetaNetworkId
-
-▸ **withBetaNetworkId**(`betaNetworkId`): [`CreateSessionParams`](session-params.md)
-
-WithBetaNetworkId sets the beta network id for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `betaNetworkId` | `string` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withBrowserContext
-
-▸ **withBrowserContext**(`browserContext`): [`CreateSessionParams`](session-params.md)
-
-WithBrowserContext sets the browser context for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `browserContext` | ``BrowserContext`` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withContextSync
-
-▸ **withContextSync**(`contextSyncs`): [`CreateSessionParams`](session-params.md)
-
-WithContextSync sets the context sync configurations for the session parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `contextSyncs` | [`ContextSync`](context-sync.md)[] |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withEnableBrowserReplay
-
-▸ **withEnableBrowserReplay**(`enableBrowserReplay`): [`CreateSessionParams`](session-params.md)
-
-WithenableBrowserReplay sets the browser recording flag for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `enableBrowserReplay` | `boolean` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withEnableRecord
-
-▸ **withEnableRecord**(`enableRecord`): [`CreateSessionParams`](session-params.md)
-
-Alias for withEnableBrowserReplay for backward compatibility.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `enableRecord` | `boolean` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withExtraConfigs
-
-▸ **withExtraConfigs**(`extraConfigs`): [`CreateSessionParams`](session-params.md)
-
-WithExtraConfigs sets the extra configurations for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `extraConfigs` | ``ExtraConfigs`` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withFramework
-
-▸ **withFramework**(`framework`): [`CreateSessionParams`](session-params.md)
-
-WithFramework sets the framework name for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `framework` | `string` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withImageId
-
-▸ **withImageId**(`imageId`): [`CreateSessionParams`](session-params.md)
-
-WithImageId sets the image ID for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `imageId` | `string` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withLabels
-
-▸ **withLabels**(`labels`): [`CreateSessionParams`](session-params.md)
-
-WithLabels sets the labels for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `labels` | `Record`\<`string`, `string`\> |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withPolicyId
-
-▸ **withPolicyId**(`policyId`): [`CreateSessionParams`](session-params.md)
-
-WithPolicyId sets the policy id for the session parameters and returns the updated parameters.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `policyId` | `string` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withVolume
-
-▸ **withVolume**(`volume`): [`CreateSessionParams`](session-params.md)
-
-WithVolume sets the volume (or volume id string) for mounting when creating the session (beta).
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `volume` | `string` \| ``Volume`` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
-
-___
-
-### withVolumeId
-
-▸ **withVolumeId**(`volumeId`): [`CreateSessionParams`](session-params.md)
-
-WithVolumeId sets the volume id for mounting when creating the session (beta).
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `volumeId` | `string` |
-
-#### Returns
-
-[`CreateSessionParams`](session-params.md)
+Beta: explicit volume id mount during session creation.
+If both volume and volumeId are provided, volume takes precedence.

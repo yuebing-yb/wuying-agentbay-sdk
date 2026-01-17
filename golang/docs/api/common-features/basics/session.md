@@ -129,6 +129,12 @@ result.Session.BetaPause(300, 2.0)
 resumeResult, _ := result.Session.BetaResume(300, 2.0)
 ```
 
+### CallMcpTool
+
+```go
+func (s *Session) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
+```
+
 ### Delete
 
 ```go

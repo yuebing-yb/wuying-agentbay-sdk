@@ -18,9 +18,6 @@ import {
 export interface Volume {
   id: string;
   name: string;
-  belongingImageId?: string;
-  status?: string;
-  createdAt?: string;
 }
 
 export interface VolumeResult {
@@ -125,9 +122,6 @@ export class BetaVolumeService {
     const volume: Volume = {
       id: vid,
       name: data?.volumeName || "",
-      belongingImageId: data?.belongingImageId,
-      status: data?.status,
-      createdAt: data?.createTime,
     };
 
     logAPIResponseWithDetails("GetVolume(beta)", requestId, true, { volume_id: vid }, JSON.stringify(resp?.body || {}));
@@ -174,9 +168,6 @@ export class BetaVolumeService {
       .map((it) => ({
         id: it.volumeId!,
         name: it.volumeName || "",
-        belongingImageId: it.belongingImageId,
-        status: it.status,
-        createdAt: it.createTime,
       }));
 
     return {

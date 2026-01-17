@@ -10,6 +10,13 @@ Typical use cases include:
 - Reusing build artifacts and caches
 - Attaching shared storage to multiple sessions over time
 
+## Limitations and access
+
+- This feature currently supports **Mobile Use** scenarios only.
+- Volume is currently in **beta**. Both functionality and APIs may change in future releases.
+- Volume currently works only with **custom images**. In the examples below, use placeholders like `image_xxx` to represent a custom `imageId`.
+- Volume is currently available via **allowlist**. To request access, email `agentbay_dev@alibabacloud.com`.
+
 ## BetaVolumeService
 
 ```java
@@ -39,7 +46,7 @@ Get a volume by name. If `create` is true, the volume will be created when it do
 **Example:**
 
 ```java
-VolumeResult vol = agentBay.getBetaVolume().get("demo-volume", "linux_latest", true);
+VolumeResult vol = agentBay.getBetaVolume().get("demo-volume", "image_xxx", true);
 if (!vol.isSuccess()) {
     throw new RuntimeException(vol.getErrorMessage());
 }
@@ -86,12 +93,12 @@ To mount a volume into a session, set the volume ID in `CreateSessionParams` whe
 
 ```java
 // Get (or create) a volume
-VolumeResult vol = agentBay.getBetaVolume().get("demo-volume", "linux_latest", true);
+VolumeResult vol = agentBay.getBetaVolume().get("demo-volume", "image_xxx", true);
 String volumeId = vol.getVolume().getId();
 
 // Create a session with the volume mounted
 CreateSessionParams params = new CreateSessionParams();
-params.setImageId("linux_latest");
+params.setImageId("image_xxx");
 params.setVolumeId(volumeId);
 
 SessionResult sessionResult = agentBay.create(params);

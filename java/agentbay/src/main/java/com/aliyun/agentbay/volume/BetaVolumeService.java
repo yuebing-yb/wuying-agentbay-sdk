@@ -69,9 +69,6 @@ public class BetaVolumeService {
             Volume v = new Volume();
             v.setId(resp.getBody().getData().getVolumeId());
             v.setName(resp.getBody().getData().getVolumeName());
-            v.setBelongingImageId(resp.getBody().getData().getBelongingImageId());
-            v.setStatus(resp.getBody().getData().getStatus());
-            v.setCreatedAt(resp.getBody().getData().getCreateTime());
 
             result.setSuccess(true);
             result.setVolume(v);
@@ -134,9 +131,6 @@ public class BetaVolumeService {
                     Volume v = new Volume();
                     v.setId(it.getVolumeId());
                     v.setName(it.getVolumeName());
-                    v.setBelongingImageId(it.getBelongingImageId());
-                    v.setStatus(it.getStatus());
-                    v.setCreatedAt(it.getCreateTime());
                     volumes.add(v);
                 }
             }

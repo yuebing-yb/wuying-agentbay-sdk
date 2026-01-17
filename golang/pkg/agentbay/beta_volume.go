@@ -12,11 +12,8 @@ import (
 // Volume represents a block storage volume (data disk).
 // Note: This is a beta feature and may change in future releases.
 type Volume struct {
-	ID               string
-	Name             string
-	BelongingImageId string
-	Status           string
-	CreatedAt        string
+	ID   string
+	Name string
 }
 
 // BetaVolumeResult wraps volume operation result and RequestID.
@@ -118,17 +115,13 @@ func (vs *BetaVolumeService) BetaGetByName(name string, imageID string, create b
 	}
 
 	vol := &Volume{
-		ID:               tea.StringValue(resp.Body.Data.VolumeId),
-		Name:             tea.StringValue(resp.Body.Data.VolumeName),
-		BelongingImageId: tea.StringValue(resp.Body.Data.BelongingImageId),
-		Status:           tea.StringValue(resp.Body.Data.Status),
-		CreatedAt:        tea.StringValue(resp.Body.Data.CreateTime),
+		ID:   tea.StringValue(resp.Body.Data.VolumeId),
+		Name: tea.StringValue(resp.Body.Data.VolumeName),
 	}
 
 	keyFields := map[string]interface{}{
 		"volume_id":   vol.ID,
 		"volume_name": vol.Name,
-		"image_id":    vol.BelongingImageId,
 	}
 	respJSON, _ := json.MarshalIndent(resp.Body, "", "  ")
 	logAPIResponseWithDetails("GetVolume(beta)", requestID, true, keyFields, string(respJSON))
@@ -266,11 +259,8 @@ func (vs *BetaVolumeService) BetaList(params *BetaListVolumesParams) (*BetaVolum
 				continue
 			}
 			volumes = append(volumes, &Volume{
-				ID:               tea.StringValue(it.VolumeId),
-				Name:             tea.StringValue(it.VolumeName),
-				BelongingImageId: tea.StringValue(it.BelongingImageId),
-				Status:           tea.StringValue(it.Status),
-				CreatedAt:        tea.StringValue(it.CreateTime),
+				ID:   tea.StringValue(it.VolumeId),
+				Name: tea.StringValue(it.VolumeName),
 			})
 		}
 	}

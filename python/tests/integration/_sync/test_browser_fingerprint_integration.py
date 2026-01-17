@@ -238,15 +238,17 @@ class TestBrowserFingerprintIntegration:
         print(
             "Step 3: Opening https://httpbin.org/user-agent and test user agent..."
         )
-        try: 
+        try:
             with sync_playwright() as p:
                 browser = p.chromium.connect_over_cdp(endpoint_url)
+                print(f"Browser connected to endpoint URL: {browser.contexts}")
                 assert browser is not None, "Failed to connect to browser"
                 context = (
                     browser.contexts[0]
                     if browser.contexts
                     else browser.new_context()
                 )
+
                 page = context.new_page()
                 page.goto("https://httpbin.org/user-agent", timeout=60000)
                 response = page.evaluate(
@@ -256,10 +258,11 @@ class TestBrowserFingerprintIntegration:
                 print("user_agent =", user_agent)
                 assert user_agent is not None
                 assert is_windows_user_agent(user_agent)
+
                 context.close()
                 print("First session browser operations completed")
+
         finally:
-            # Step 4: Release first session with syncContext=True
             try:
                 print("Step 4: Releasing first session with syncContext=True...")
                 delete_result = agent_bay.delete(session1, sync_context=True)
@@ -268,7 +271,7 @@ class TestBrowserFingerprintIntegration:
                 print(f"First session deleted successfully (RequestID: {delete_result.request_id})")
             except Exception as e:
                 print(f"Warning: Exception while deleting session: {e}")
-            
+
 
         # Wait for context sync to complete
         time.sleep(3)
