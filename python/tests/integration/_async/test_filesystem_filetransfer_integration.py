@@ -150,7 +150,6 @@ async def test_file_download_integration():
         else:
             # Fallback to default path if context path is not available
             remote_path = "/tmp/file-transfer/download_test.txt"
-            pytest.skip("Failed to get context path")
         test_content = (
             "This is a test file for AgentBay FileTransfer download integration test.\n"
             * 15

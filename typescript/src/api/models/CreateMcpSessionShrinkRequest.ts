@@ -5,6 +5,7 @@ import * as $dara from '@darabonba/typescript';
 export class CreateMcpSessionShrinkRequest extends $dara.Model {
   authorization?: string;
   contextId?: string;
+  enableRecord?: boolean;
   externalUserId?: string;
   imageId?: string;
   labels?: string;
@@ -21,6 +22,7 @@ export class CreateMcpSessionShrinkRequest extends $dara.Model {
     return {
       authorization: 'Authorization',
       contextId: 'ContextId',
+      enableRecord: 'EnableRecord',
       externalUserId: 'ExternalUserId',
       imageId: 'ImageId',
       labels: 'Labels',
@@ -40,6 +42,7 @@ export class CreateMcpSessionShrinkRequest extends $dara.Model {
     return {
       authorization: 'string',
       contextId: 'string',
+      enableRecord: 'boolean',
       externalUserId: 'string',
       imageId: 'string',
       labels: 'string',

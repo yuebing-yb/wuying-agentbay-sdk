@@ -295,6 +295,9 @@ class Client(OpenApiClient):
             body["SdkStats"] = request.sdk_stats
         if not DaraCore.is_null(request.login_region_id):
             body["LoginRegionId"] = request.login_region_id
+        # Add EnableRecord field from tmp_req (not in CreateMcpSessionShrinkRequest)
+        if tmp_req.enable_record is not None:
+            body["EnableRecord"] = tmp_req.enable_record
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="CreateMcpSession",
@@ -354,6 +357,9 @@ class Client(OpenApiClient):
             body["SdkStats"] = request.sdk_stats
         if not DaraCore.is_null(request.login_region_id):
             body["LoginRegionId"] = request.login_region_id
+        # Add EnableRecord field from tmp_req (not in CreateMcpSessionShrinkRequest)
+        if tmp_req.enable_record is not None:
+            body["EnableRecord"] = tmp_req.enable_record
         req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
         params = open_api_util_models.Params(
             action="CreateMcpSession",
