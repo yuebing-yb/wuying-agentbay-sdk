@@ -20,7 +20,7 @@ func TestMobileGetAllUIElementsXMLFormatContract(t *testing.T) {
 	require.NoError(t, err, "Failed to create AgentBay client")
 
 	sessionParams := &agentbay.CreateSessionParams{
-		ImageId: "imgc-0ab5takhnmlvhx9gp",
+		ImageId: "imgc-0ab5ta4mn31wth5lh",
 	}
 	sessionResult, err := agentBay.Create(sessionParams)
 	require.NoError(t, err, "Failed to create session")

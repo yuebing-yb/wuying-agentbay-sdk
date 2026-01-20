@@ -47,7 +47,7 @@ def agent_bay():
 
 @pytest.fixture
 def session(agent_bay):
-    params = CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp")
+    params = CreateSessionParams(image_id="imgc-0ab5ta4mn31wth5lh")
     result = agent_bay.create(params)
     assert result.success, f"Failed to create session: {result.error_message}"
     assert result.session is not None

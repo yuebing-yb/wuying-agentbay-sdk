@@ -17,7 +17,7 @@ async function main() {
   const client = new AgentBay({ apiKey });
 
   const sessionResult = await client.create({
-    imageId: 'imgc-0ab5takhnmlvhx9gp'
+    imageId: 'imgc-0ab5ta4mn31wth5lh'
   });
 
   if (!sessionResult.session) {

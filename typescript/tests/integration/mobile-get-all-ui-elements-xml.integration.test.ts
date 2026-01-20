@@ -30,7 +30,7 @@ describe('Mobile GetAllUIElements XML Integration Tests', () => {
     }
 
     const sessionResult = await agentBay.create({
-      imageId: 'imgc-0ab5takhnmlvhx9gp'
+      imageId: 'imgc-0ab5ta4mn31wth5lh'
     });
 
     expect(sessionResult.session).toBeDefined();
