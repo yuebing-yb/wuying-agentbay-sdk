@@ -27,7 +27,10 @@ async def main() -> None:
         with open(out_path, "wb") as f:
             f.write(screenshot.data)
 
-        print(f"Saved screenshot to: {out_path} ({len(screenshot.data)} bytes, format={screenshot.format})")
+        print(
+            f"Saved screenshot to: {out_path} ({len(screenshot.data)} bytes, format={screenshot.format}, "
+            f"size={screenshot.width}x{screenshot.height})"
+        )
     finally:
         if session is not None:
             await session.delete()

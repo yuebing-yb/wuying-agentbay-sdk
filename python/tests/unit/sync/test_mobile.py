@@ -451,6 +451,8 @@ class TestMobile:
 
         assert result.success is True
         assert result.format == "png"
+        assert result.width == 720
+        assert result.height == 1280
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
         self.session.call_mcp_tool.assert_called_once_with(
             "screenshot",
@@ -505,6 +507,8 @@ class TestMobile:
 
         assert result.success is True
         assert result.format == "png"
+        assert result.width == 720
+        assert result.height == 1280
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
         self.session.call_mcp_tool.assert_called_once_with(
             "long_screenshot",
@@ -542,6 +546,8 @@ class TestMobile:
 
         assert result.success is True
         assert result.format == "jpeg"
+        assert result.width == 720
+        assert result.height == 1280
         assert result.data.startswith(b"\xff\xd8\xff")
         self.session.call_mcp_tool.assert_called_once_with(
             "long_screenshot",

@@ -761,6 +761,8 @@ public class Mobile extends BaseService {
                 true,
                 decoded.bytes,
                 decoded.format,
+                decoded.width,
+                decoded.height,
                 ""
             );
         } catch (Exception e) {
@@ -832,6 +834,8 @@ public class Mobile extends BaseService {
                 true,
                 decoded.bytes,
                 decoded.format,
+                decoded.width,
+                decoded.height,
                 ""
             );
         } catch (Exception e) {
@@ -1110,10 +1114,14 @@ public class Mobile extends BaseService {
     private static class DecodedImage {
         final byte[] bytes;
         final String format;
+        final Integer width;
+        final Integer height;
 
-        DecodedImage(byte[] bytes, String format) {
+        DecodedImage(byte[] bytes, String format, Integer width, Integer height) {
             this.bytes = bytes;
             this.format = format;
+            this.width = width;
+            this.height = height;
         }
     }
 
@@ -1143,12 +1151,28 @@ public class Mobile extends BaseService {
         if (!s.startsWith("{")) {
             throw new IllegalArgumentException("Screenshot tool returned non-JSON data");
         }
+        Integer width = null;
+        Integer height = null;
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> obj = objectMapper.readValue(s, Map.class);
             Object b64Obj = obj.get("data");
             if (!(b64Obj instanceof String) || ((String) b64Obj).trim().isEmpty()) {
                 throw new IllegalArgumentException("Screenshot JSON missing base64 field");
+            }
+            Object widthObj = obj.get("width");
+            Object heightObj = obj.get("height");
+            if (widthObj != null) {
+                if (!(widthObj instanceof Number)) {
+                    throw new IllegalArgumentException("Invalid screenshot JSON: expected integer 'width'");
+                }
+                width = ((Number) widthObj).intValue();
+            }
+            if (heightObj != null) {
+                if (!(heightObj instanceof Number)) {
+                    throw new IllegalArgumentException("Invalid screenshot JSON: expected integer 'height'");
+                }
+                height = ((Number) heightObj).intValue();
             }
             s = ((String) b64Obj).trim();
         } catch (IllegalArgumentException e) {
@@ -1165,7 +1189,7 @@ public class Mobile extends BaseService {
         } else if (startsWith(decoded, JPEG_MAGIC)) {
             fmt = "jpeg";
         }
-        return new DecodedImage(decoded, fmt);
+        return new DecodedImage(decoded, fmt, width, height);
     }
 
     private static boolean startsWith(byte[] data, byte[] prefix) {

@@ -61,6 +61,10 @@ def test_mobile_beta_take_screenshot_png(session):
     result = session.mobile.beta_take_screenshot()
     assert result.success is True
     assert result.format == "png"
+    assert isinstance(result.width, int)
+    assert isinstance(result.height, int)
+    assert result.width > 0
+    assert result.height > 0
     assert isinstance(result.data, (bytes, bytearray))
     assert len(result.data) > 0
     assert bytes(result.data[:8]) == b"\x89PNG\r\n\x1a\n"
@@ -72,6 +76,10 @@ def test_mobile_beta_take_long_screenshot_png(session):
     result = session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
     assert result.success is True
     assert result.format == "png"
+    assert isinstance(result.width, int)
+    assert isinstance(result.height, int)
+    assert result.width > 0
+    assert result.height > 0
     assert isinstance(result.data, (bytes, bytearray))
     assert len(result.data) > 0
     assert bytes(result.data[:8]) == b"\x89PNG\r\n\x1a\n"

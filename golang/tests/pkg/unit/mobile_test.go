@@ -468,6 +468,12 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-screenshot", result.RequestID)
 	assert.Equal(suite.T(), "png", result.Format)
+	if assert.NotNil(suite.T(), result.Width) {
+		assert.Equal(suite.T(), 720, *result.Width)
+	}
+	if assert.NotNil(suite.T(), result.Height) {
+		assert.Equal(suite.T(), 1280, *result.Height)
+	}
 	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
 	assert.Greater(suite.T(), len(result.Data), len(pngHeader))
 }
@@ -555,6 +561,12 @@ func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_SuccessPng() {
 	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-long-screenshot", result.RequestID)
 	assert.Equal(suite.T(), "png", result.Format)
+	if assert.NotNil(suite.T(), result.Width) {
+		assert.Equal(suite.T(), 720, *result.Width)
+	}
+	if assert.NotNil(suite.T(), result.Height) {
+		assert.Equal(suite.T(), 1280, *result.Height)
+	}
 	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
 }
 

@@ -57,6 +57,8 @@ export interface ScreenshotResult extends OperationResult {
 export interface BetaScreenshotResult extends OperationResult {
   data: Uint8Array;
   format: string;
+  width?: number;
+  height?: number;
 }
 
 export interface AdbUrlResult extends OperationResult {
@@ -187,7 +189,10 @@ function detectImageFormat(bytes: Uint8Array): string {
   return "";
 }
 
-function decodeBase64Image(input: string, expectedFormat: string): { bytes: Uint8Array; format: string } {
+function decodeBase64Image(
+  input: string,
+  expectedFormat: string
+): { bytes: Uint8Array; format: string; width?: number; height?: number } {
   const s = String(input || "").trim();
   if (!s) {
     throw new Error("Empty image data");
@@ -209,10 +214,18 @@ function decodeBase64Image(input: string, expectedFormat: string): { bytes: Uint
   if (typeof b64 !== "string" || !b64.trim()) {
     throw new Error("Screenshot JSON missing base64 field");
   }
+  const width = (obj as any).width;
+  const height = (obj as any).height;
+  if (width !== undefined && typeof width !== "number") {
+    throw new Error("Invalid screenshot JSON: expected number 'width'");
+  }
+  if (height !== undefined && typeof height !== "number") {
+    throw new Error("Invalid screenshot JSON: expected number 'height'");
+  }
 
   const bytes = base64ToUint8ArrayStrict(b64);
   const detected = detectImageFormat(bytes);
-  return { bytes, format: detected || expectedFormat };
+  return { bytes, format: detected || expectedFormat, width, height };
 }
 
 export class Mobile {
@@ -755,6 +768,8 @@ export class Mobile {
         errorMessage: "",
         data: decoded.bytes,
         format: decoded.format || "png",
+        width: decoded.width,
+        height: decoded.height,
       };
     } catch (error) {
       return {
@@ -838,6 +853,8 @@ export class Mobile {
         errorMessage: "",
         data: decoded.bytes,
         format: decoded.format || formatNorm,
+        width: decoded.width,
+        height: decoded.height,
       };
     } catch (error) {
       return {

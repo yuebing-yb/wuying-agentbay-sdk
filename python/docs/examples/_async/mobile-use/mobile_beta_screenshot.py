@@ -41,13 +41,17 @@ async def main() -> None:
         s1 = await session.mobile.beta_take_screenshot()
         with open("./tmp/mobile_beta_screenshot.png", "wb") as f:
             f.write(s1.data)
-        print(f"Saved ./tmp/mobile_beta_screenshot.png ({len(s1.data)} bytes)")
+        print(
+            f"Saved ./tmp/mobile_beta_screenshot.png ({len(s1.data)} bytes, size={s1.width}x{s1.height})"
+        )
 
         try:
             s2 = await session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
             with open("./tmp/mobile_beta_long_screenshot.png", "wb") as f:
                 f.write(s2.data)
-            print(f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(s2.data)} bytes)")
+            print(
+                f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(s2.data)} bytes, size={s2.width}x{s2.height})"
+            )
         except AgentBayError as e:
             print(f"Long screenshot failed: {e}")
     finally:

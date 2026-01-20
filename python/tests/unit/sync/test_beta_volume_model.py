@@ -4,7 +4,7 @@ import unittest
 from agentbay._sync.beta_volume import Volume
 
 
-class TestSyncBetaVolumeModel(unittest.TestCase):
+class TestAsyncBetaVolumeModel(unittest.TestCase):
     def test_volume_exposes_only_id_and_name(self):
         volume = Volume(id="vo-test", name="test-volume")
         self.assertEqual(volume.id, "vo-test")

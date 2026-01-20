@@ -707,13 +707,16 @@ class AsyncComputer(AsyncBaseService):
         Takes a screenshot of the Computer.
 
         This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
-        binary image data.
+        binary image data. The backend also returns the captured image dimensions
+        (width/height in pixels), which are exposed on `ScreenshotResult.width`
+        and `ScreenshotResult.height` when available.
 
         Args:
             format: The desired image format (default: "png"). Supported: "png", "jpeg", "jpg".
 
         Returns:
-            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
+                including `width` and `height` when provided by the backend.
 
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
@@ -760,6 +763,12 @@ class AsyncComputer(AsyncBaseService):
         b64 = obj.get("data")
         if not isinstance(b64, str) or not b64.strip():
             raise AgentBayError("Screenshot JSON missing base64 field")
+        width = obj.get("width")
+        height = obj.get("height")
+        if width is not None and not isinstance(width, int):
+            raise AgentBayError("Invalid screenshot JSON: expected integer 'width'")
+        if height is not None and not isinstance(height, int):
+            raise AgentBayError("Invalid screenshot JSON: expected integer 'height'")
         try:
             raw = base64.b64decode(b64, validate=True)
         except Exception as e:
@@ -778,6 +787,8 @@ class AsyncComputer(AsyncBaseService):
             error_message="",
             data=raw,
             format=fmt,
+            width=width,
+            height=height,
         )
 
     # Window Management Operations

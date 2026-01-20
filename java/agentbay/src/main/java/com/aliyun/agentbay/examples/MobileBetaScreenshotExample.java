@@ -9,6 +9,7 @@ import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.model.SessionResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class MobileBetaScreenshotExample {
     public static void main(String[] args) throws Exception {
@@ -43,7 +44,7 @@ public class MobileBetaScreenshotExample {
             session.mobile.startApp("monkey -p com.android.settings 1");
             Thread.sleep(2000);
 
-            Path outDir = Path.of("./tmp");
+            Path outDir = Paths.get("./tmp");
             Files.createDirectories(outDir);
 
             ScreenshotBytesResult s1 = session.mobile.betaTakeScreenshot();
@@ -52,7 +53,11 @@ public class MobileBetaScreenshotExample {
             }
             Path p1 = outDir.resolve("mobile_beta_screenshot.png");
             Files.write(p1, s1.getData());
-            System.out.println("Saved " + p1 + " (" + s1.getData().length + " bytes)");
+            String size1 = "";
+            if (s1.getWidth() != null && s1.getHeight() != null) {
+                size1 = ", size=" + s1.getWidth() + "x" + s1.getHeight();
+            }
+            System.out.println("Saved " + p1 + " (" + s1.getData().length + " bytes" + size1 + ")");
 
             ScreenshotBytesResult s2 = session.mobile.betaTakeLongScreenshot(2, "png");
             if (!s2.isSuccess()) {
@@ -61,7 +66,11 @@ public class MobileBetaScreenshotExample {
             }
             Path p2 = outDir.resolve("mobile_beta_long_screenshot.png");
             Files.write(p2, s2.getData());
-            System.out.println("Saved " + p2 + " (" + s2.getData().length + " bytes)");
+            String size2 = "";
+            if (s2.getWidth() != null && s2.getHeight() != null) {
+                size2 = ", size=" + s2.getWidth() + "x" + s2.getHeight();
+            }
+            System.out.println("Saved " + p2 + " (" + s2.getData().length + " bytes" + size2 + ")");
         } finally {
             agentBay.delete(session, false);
         }

@@ -740,10 +740,13 @@ class AsyncMobile(AsyncBaseService):
         Takes a screenshot of the mobile device (beta).
 
         This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
-        binary image data.
+        binary image data. The backend also returns the captured image dimensions
+        (width/height in pixels), which are exposed on `ScreenshotResult.width`
+        and `ScreenshotResult.height` when available.
 
         Returns:
-            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
+                including `width` and `height` when provided by the backend.
 
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
@@ -755,13 +758,17 @@ class AsyncMobile(AsyncBaseService):
         if not result.success:
             raise AgentBayError(f"Failed to take screenshot: {result.error_message}")
 
-        raw = self._decode_image_from_mcp_text(result.data, expected_format="png")
+        raw, width, height = self._decode_image_from_mcp_text(
+            result.data, expected_format="png"
+        )
         return ScreenshotResult(
             request_id=result.request_id,
             success=True,
             error_message="",
             data=raw,
             format="png",
+            width=width,
+            height=height,
         )
 
     async def beta_take_long_screenshot(
@@ -779,7 +786,8 @@ class AsyncMobile(AsyncBaseService):
             quality: JPEG quality level (1..100). Only applicable when format is JPEG.
 
         Returns:
-            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
+                including `width` and `height` when provided by the backend.
 
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
@@ -805,17 +813,23 @@ class AsyncMobile(AsyncBaseService):
         if not result.success:
             raise AgentBayError(f"Failed to take long screenshot: {result.error_message}")
 
-        raw = self._decode_image_from_mcp_text(result.data, expected_format=fmt)
+        raw, width, height = self._decode_image_from_mcp_text(
+            result.data, expected_format=fmt
+        )
         return ScreenshotResult(
             request_id=result.request_id,
             success=True,
             error_message="",
             data=raw,
             format=fmt,
+            width=width,
+            height=height,
         )
 
     @staticmethod
-    def _decode_image_from_mcp_text(text: Any, expected_format: str) -> bytes:
+    def _decode_image_from_mcp_text(
+        text: Any, expected_format: str
+    ) -> tuple[bytes, Optional[int], Optional[int]]:
         """
         Decode image bytes from MCP tool text output.
 
@@ -850,6 +864,12 @@ class AsyncMobile(AsyncBaseService):
         b64 = obj.get("data")
         if not isinstance(b64, str) or not b64.strip():
             raise AgentBayError("Screenshot JSON missing base64 field")
+        width = obj.get("width")
+        height = obj.get("height")
+        if width is not None and not isinstance(width, int):
+            raise AgentBayError("Invalid screenshot JSON: expected integer 'width'")
+        if height is not None and not isinstance(height, int):
+            raise AgentBayError("Invalid screenshot JSON: expected integer 'height'")
 
         # Step 2: base64 string extracted from JSON field.
         #
@@ -872,7 +892,7 @@ class AsyncMobile(AsyncBaseService):
             magic = b"\xff\xd8\xff"
 
         if raw.startswith(magic):
-            return raw
+            return raw, width, height
         raise AgentBayError("Decoded image does not match expected format")
 
     # Mobile Configuration Operations

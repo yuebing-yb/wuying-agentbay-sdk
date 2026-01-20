@@ -36,6 +36,10 @@ public class ComputerBetaScreenshotIntegrationTest {
             ScreenshotBytesResult s = session.getComputer().betaTakeScreenshot("jpg");
             assertTrue(s.isSuccess());
             assertEquals("jpeg", s.getFormat());
+            assertNotNull(s.getWidth());
+            assertNotNull(s.getHeight());
+            assertTrue(s.getWidth() > 0);
+            assertTrue(s.getHeight() > 0);
             assertNotNull(s.getData());
             assertTrue(s.getData().length > 3);
             assertEquals((byte) 0xff, s.getData()[0]);

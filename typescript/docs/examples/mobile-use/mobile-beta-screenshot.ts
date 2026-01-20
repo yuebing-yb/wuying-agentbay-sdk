@@ -32,6 +32,12 @@ async function main() {
     }
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
+    const nav = await session.command.executeCommand("am start -a android.settings.SETTINGS", 10000);
+    if (!nav.success) {
+      throw new Error(`Command failed: am start -a android.settings.SETTINGS error=${nav.errorMessage || ""}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     const outDir = "./tmp";
     fs.mkdirSync(outDir, { recursive: true });
 
@@ -41,7 +47,9 @@ async function main() {
     }
     const p1 = path.join(outDir, "mobile_beta_screenshot.png");
     fs.writeFileSync(p1, Buffer.from(s1.data));
-    console.log(`Saved ${p1} (${s1.data.length} bytes)`);
+    console.log(
+      `Saved ${p1} (${s1.data.length} bytes, size=${s1.width}x${s1.height})`
+    );
 
     const s2 = await session.mobile.betaTakeLongScreenshot(2, "png");
     if (!s2.success) {
@@ -50,7 +58,9 @@ async function main() {
     }
     const p2 = path.join(outDir, "mobile_beta_long_screenshot.png");
     fs.writeFileSync(p2, Buffer.from(s2.data));
-    console.log(`Saved ${p2} (${s2.data.length} bytes)`);
+    console.log(
+      `Saved ${p2} (${s2.data.length} bytes, size=${s2.width}x${s2.height})`
+    );
   } finally {
     await session.delete();
   }

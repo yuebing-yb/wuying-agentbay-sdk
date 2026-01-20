@@ -272,7 +272,10 @@ try:
         os.makedirs("./tmp", exist_ok=True)
         with open("./tmp/mobile_beta_screenshot.png", "wb") as f:
             f.write(result.data)
-        print(f"Saved ./tmp/mobile_beta_screenshot.png ({len(result.data)} bytes)")
+        print(
+            f"Saved ./tmp/mobile_beta_screenshot.png ({len(result.data)} bytes, "
+            f"size={result.width}x{result.height})"
+        )
     else:
         print(f"Screenshot failed: {result.error_message}")
 finally:
@@ -288,7 +291,10 @@ result = session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
 if result.success:
     with open("./tmp/mobile_beta_long_screenshot.png", "wb") as f:
         f.write(result.data)
-    print(f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(result.data)} bytes)")
+    print(
+        f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(result.data)} bytes, "
+        f"size={result.width}x{result.height})"
+    )
 else:
     print(f"Long screenshot failed: {result.error_message}")
 ```

@@ -41,6 +41,10 @@ def test_take_screenshot_jpg_returns_jpeg_bytes(session):
     result = session.computer.beta_take_screenshot(format="jpg")
     assert result.success is True
     assert result.format == "jpeg"
+    assert isinstance(result.width, int)
+    assert isinstance(result.height, int)
+    assert result.width > 0
+    assert result.height > 0
     assert isinstance(result.data, (bytes, bytearray))
     assert len(result.data) > 0
     assert bytes(result.data[:3]) == b"\xff\xd8\xff"

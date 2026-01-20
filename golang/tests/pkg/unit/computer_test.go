@@ -440,6 +440,12 @@ func (suite *ComputerTestSuite) TestBetaTakeScreenshot_SuccessJpeg() {
 	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-screenshot-jpeg", result.RequestID)
 	assert.Equal(suite.T(), "jpeg", result.Format)
+	if assert.NotNil(suite.T(), result.Width) {
+		assert.Equal(suite.T(), 1280, *result.Width)
+	}
+	if assert.NotNil(suite.T(), result.Height) {
+		assert.Equal(suite.T(), 720, *result.Height)
+	}
 	assert.True(suite.T(), bytes.HasPrefix(result.Data, jpegHeader))
 	assert.Empty(suite.T(), result.ErrorMessage)
 }
@@ -709,7 +715,7 @@ func (suite *ComputerTestSuite) TestClickMouse_AllButtonTypes() {
 			"x":      100,
 			"y":      200,
 			"button": tc.buttonStr,
-	}).Return(expectedResult, nil)
+		}).Return(expectedResult, nil)
 
 		result := suite.computer.ClickMouse(100, 200, tc.button)
 

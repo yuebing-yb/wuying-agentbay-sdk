@@ -291,6 +291,8 @@ describe('Computer', () => {
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-beta-jpg-123');
       expect(result.format).toBe('jpeg');
+      expect(result.width).toBe(1280);
+      expect(result.height).toBe(720);
       expect(Buffer.from(result.data).slice(0, 3).equals(jpgHeader)).toBe(true);
     });
 

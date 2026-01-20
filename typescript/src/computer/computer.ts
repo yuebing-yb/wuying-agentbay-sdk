@@ -15,6 +15,8 @@ export interface ScreenshotResult extends OperationResult {
 export interface BetaScreenshotResult extends OperationResult {
   data: Uint8Array;
   format: string;
+  width?: number;
+  height?: number;
 }
 
 export enum MouseButton {
@@ -81,7 +83,10 @@ export class Computer {
     }
   }
 
-  private static decodeScreenshotJsonToBytesStrict(jsonText: string, expectedFormat: string): Uint8Array {
+  private static decodeScreenshotJsonStrict(
+    jsonText: string,
+    expectedFormat: string
+  ): { bytes: Uint8Array; width?: number; height?: number } {
     const s = String(jsonText || "").trim();
     if (!s) {
       throw new Error("Empty image data");
@@ -103,6 +108,14 @@ export class Computer {
     const b64 = obj.data;
     if (typeof b64 !== "string" || !b64.trim()) {
       throw new Error("Screenshot JSON missing base64 field");
+    }
+    const width = obj.width;
+    const height = obj.height;
+    if (width !== undefined && typeof width !== "number") {
+      throw new Error("Invalid screenshot JSON: expected number 'width'");
+    }
+    if (height !== undefined && typeof height !== "number") {
+      throw new Error("Invalid screenshot JSON: expected number 'height'");
     }
     Computer.validateBase64String(b64);
 
@@ -126,7 +139,7 @@ export class Computer {
           throw new Error("Screenshot data does not match expected format 'png'");
         }
       }
-      return bytes;
+      return { bytes, width, height };
     }
     if (fmt === "jpeg") {
       const jpgMagic = new Uint8Array([0xff, 0xd8, 0xff]);
@@ -135,7 +148,7 @@ export class Computer {
           throw new Error("Screenshot data does not match expected format 'jpeg'");
         }
       }
-      return bytes;
+      return { bytes, width, height };
     }
     throw new Error(`Unsupported format: ${JSON.stringify(expectedFormat)}`);
   }
@@ -658,13 +671,15 @@ export class Computer {
           format: fmt,
         };
       }
-      const bytes = Computer.decodeScreenshotJsonToBytesStrict(String(result.data || ""), fmt);
+      const decoded = Computer.decodeScreenshotJsonStrict(String(result.data || ""), fmt);
       return {
         success: true,
         requestId,
         errorMessage: "",
-        data: bytes,
+        data: decoded.bytes,
         format: fmt,
+        width: decoded.width,
+        height: decoded.height,
       };
     } catch (error) {
       return {

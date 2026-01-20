@@ -419,6 +419,8 @@ class TestComputer:
         assert result.request_id == "test-req"
         assert result.error_message == ""
         assert result.format == "jpeg"
+        assert result.width == 1280
+        assert result.height == 720
         assert result.data == payload
         self.session.call_mcp_tool.assert_called_once_with(
             "screenshot",
@@ -469,6 +471,8 @@ class TestComputer:
         # Assert
         assert result.success is True
         assert result.format == "png"
+        assert result.width == 1280
+        assert result.height == 720
 
     @pytest.mark.sync
     def test_take_screenshot_rejects_json_payload(self):
@@ -496,6 +500,8 @@ class TestComputer:
         result = self.computer.beta_take_screenshot(format="png")
         assert result.success is True
         assert result.format == "png"
+        assert result.width == 1280
+        assert result.height == 720
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
 
     @pytest.mark.sync

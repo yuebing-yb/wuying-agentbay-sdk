@@ -3,6 +3,7 @@ Shared screenshot-related models.
 """
 
 from dataclasses import dataclass
+from typing import Optional
 
 from .response import BaseResult
 
@@ -13,4 +14,6 @@ class ScreenshotResult(BaseResult):
 
     data: bytes = b""
     format: str = "png"
+    width: Optional[int] = None
+    height: Optional[int] = None
 

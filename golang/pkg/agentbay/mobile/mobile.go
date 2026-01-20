@@ -156,6 +156,8 @@ type BetaScreenshotResult struct {
 	Success      bool   `json:"success"`
 	Data         []byte `json:"data"`
 	Format       string `json:"format"`
+	Width        *int   `json:"width,omitempty"`
+	Height       *int   `json:"height,omitempty"`
 	ErrorMessage string `json:"error_message"`
 }
 
@@ -688,7 +690,7 @@ func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
 		}
 	}
 
-	img, fmtNorm, err := decodeBase64Image(result.Data, "png")
+	img, fmtNorm, width, height, err := decodeBase64Image(result.Data, "png")
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -704,6 +706,8 @@ func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
 		Success:      true,
 		Data:         img,
 		Format:       fmtNorm,
+		Width:        width,
+		Height:       height,
 		ErrorMessage: "",
 	}
 }
@@ -774,7 +778,7 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 		}
 	}
 
-	img, fmtDetected, err := decodeBase64Image(result.Data, formatNorm)
+	img, fmtDetected, width, height, err := decodeBase64Image(result.Data, formatNorm)
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -790,6 +794,8 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 		Success:      true,
 		Data:         img,
 		Format:       fmtDetected,
+		Width:        width,
+		Height:       height,
 		ErrorMessage: "",
 	}
 }
@@ -810,55 +816,57 @@ func normalizeImageFormat(format string, defaultValue string) string {
 	return f
 }
 
-func decodeBase64Image(text string, expectedFormat string) ([]byte, string, error) {
+func decodeBase64Image(text string, expectedFormat string) ([]byte, string, *int, *int, error) {
 	s := strings.TrimSpace(text)
 	if s == "" {
-		return nil, expectedFormat, fmt.Errorf("empty image data")
+		return nil, expectedFormat, nil, nil, fmt.Errorf("empty image data")
 	}
 
 	// Backend contract: screenshot tool returns a JSON object string with
 	// top-level field "data" containing base64.
 	if !strings.HasPrefix(s, "{") {
-		return nil, expectedFormat, fmt.Errorf("screenshot tool returned non-JSON data")
+		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot tool returned non-JSON data")
 	}
 	type screenshotJSON struct {
-		Data string `json:"data"`
+		Data   string `json:"data"`
+		Width  *int   `json:"width"`
+		Height *int   `json:"height"`
 	}
 	var payload screenshotJSON
 	if err := json.Unmarshal([]byte(s), &payload); err != nil {
-		return nil, expectedFormat, fmt.Errorf("invalid screenshot JSON: %w", err)
+		return nil, expectedFormat, nil, nil, fmt.Errorf("invalid screenshot JSON: %w", err)
 	}
 	b64 := strings.TrimSpace(payload.Data)
 	if b64 == "" {
-		return nil, expectedFormat, fmt.Errorf("screenshot JSON missing base64 field")
+		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot JSON missing base64 field")
 	}
 
 	b, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
-		return nil, expectedFormat, err
+		return nil, expectedFormat, nil, nil, err
 	}
 
 	exp := normalizeImageFormat(expectedFormat, expectedFormat)
 	if exp == "png" {
 		if !bytes.HasPrefix(b, pngMagic) {
-			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
 		}
-		return b, "png", nil
+		return b, "png", payload.Width, payload.Height, nil
 	}
 	if exp == "jpeg" {
 		if !bytes.HasPrefix(b, jpegMagic) {
-			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
 		}
-		return b, "jpeg", nil
+		return b, "jpeg", payload.Width, payload.Height, nil
 	}
 
 	if bytes.HasPrefix(b, pngMagic) {
-		return b, "png", nil
+		return b, "png", payload.Width, payload.Height, nil
 	}
 	if bytes.HasPrefix(b, jpegMagic) {
-		return b, "jpeg", nil
+		return b, "jpeg", payload.Width, payload.Height, nil
 	}
-	return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+	return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
 }
 
 // Configure configures mobile settings from MobileExtraConfig

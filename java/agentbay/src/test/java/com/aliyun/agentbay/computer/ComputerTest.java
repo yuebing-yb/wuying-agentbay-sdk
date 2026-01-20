@@ -81,6 +81,10 @@ public class ComputerTest {
         assertTrue(result.isSuccess());
         assertEquals("beta-req-1", result.getRequestId());
         assertEquals("jpeg", result.getFormat());
+        assertNotNull(result.getWidth());
+        assertNotNull(result.getHeight());
+        assertEquals(Integer.valueOf(1280), result.getWidth());
+        assertEquals(Integer.valueOf(720), result.getHeight());
         assertNotNull(result.getData());
         assertTrue(result.getData().length >= 3);
 

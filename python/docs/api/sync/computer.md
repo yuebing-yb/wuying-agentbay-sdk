@@ -520,7 +520,9 @@ def beta_take_screenshot(format: str = "png") -> ScreenshotResult
 Takes a screenshot of the Computer.
 
 This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
-binary image data.
+binary image data. The backend also returns the captured image dimensions
+(width/height in pixels), which are exposed on `ScreenshotResult.width`
+and `ScreenshotResult.height` when available.
 
 **Arguments**:
 
@@ -529,7 +531,8 @@ binary image data.
 
 **Returns**:
 
-    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata.
+    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
+  including `width` and `height` when provided by the backend.
   
 
 **Raises**:

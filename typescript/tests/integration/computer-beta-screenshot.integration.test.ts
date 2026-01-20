@@ -34,6 +34,10 @@ describe("Computer beta screenshot integration tests", () => {
       expect(s.format).toBe("jpeg");
       expect(s.data.length).toBeGreaterThan(3);
       expect(Buffer.from(s.data).slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))).toBe(true);
+      expect(typeof s.width).toBe("number");
+      expect(typeof s.height).toBe("number");
+      expect((s.width as number) > 0).toBe(true);
+      expect((s.height as number) > 0).toBe(true);
     } finally {
       await session.delete();
     }

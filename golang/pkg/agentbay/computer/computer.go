@@ -100,6 +100,8 @@ type BetaScreenshotResult struct {
 	Success      bool
 	Data         []byte
 	Format       string
+	Width        *int
+	Height       *int
 	ErrorMessage string
 }
 
@@ -590,46 +592,48 @@ func normalizeImageFormat(format string, defaultValue string) string {
 	return f
 }
 
-func decodeBase64ImageFromJSON(text string, expectedFormat string) ([]byte, string, error) {
+func decodeBase64ImageFromJSON(text string, expectedFormat string) ([]byte, string, *int, *int, error) {
 	s := strings.TrimSpace(text)
 	if s == "" {
-		return nil, expectedFormat, fmt.Errorf("empty image data")
+		return nil, expectedFormat, nil, nil, fmt.Errorf("empty image data")
 	}
 	if !strings.HasPrefix(s, "{") {
-		return nil, expectedFormat, fmt.Errorf("screenshot tool returned non-JSON data")
+		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot tool returned non-JSON data")
 	}
 
 	type screenshotJSON struct {
-		Data string `json:"data"`
+		Data   string `json:"data"`
+		Width  *int   `json:"width"`
+		Height *int   `json:"height"`
 	}
 	var payload screenshotJSON
 	if err := json.Unmarshal([]byte(s), &payload); err != nil {
-		return nil, expectedFormat, fmt.Errorf("invalid screenshot JSON: %w", err)
+		return nil, expectedFormat, nil, nil, fmt.Errorf("invalid screenshot JSON: %w", err)
 	}
 	b64 := strings.TrimSpace(payload.Data)
 	if b64 == "" {
-		return nil, expectedFormat, fmt.Errorf("screenshot JSON missing base64 field")
+		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot JSON missing base64 field")
 	}
 
 	b, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
-		return nil, expectedFormat, err
+		return nil, expectedFormat, nil, nil, err
 	}
 
 	exp := normalizeImageFormat(expectedFormat, expectedFormat)
 	if exp == "png" {
 		if !bytes.HasPrefix(b, pngMagic) {
-			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
 		}
-		return b, "png", nil
+		return b, "png", payload.Width, payload.Height, nil
 	}
 	if exp == "jpeg" {
 		if !bytes.HasPrefix(b, jpegMagic) {
-			return nil, expectedFormat, fmt.Errorf("decoded image does not match expected format")
+			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
 		}
-		return b, "jpeg", nil
+		return b, "jpeg", payload.Width, payload.Height, nil
 	}
-	return nil, expectedFormat, fmt.Errorf("unsupported format: %s", expectedFormat)
+	return nil, expectedFormat, nil, nil, fmt.Errorf("unsupported format: %s", expectedFormat)
 }
 
 // BetaTakeScreenshot captures the current screen and returns raw image bytes.
@@ -675,7 +679,7 @@ func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
 		}
 	}
 
-	img, fmtDetected, err := decodeBase64ImageFromJSON(result.Data, fmtNorm)
+	img, fmtDetected, width, height, err := decodeBase64ImageFromJSON(result.Data, fmtNorm)
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
@@ -690,6 +694,8 @@ func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
 		Success:      true,
 		Data:         img,
 		Format:       fmtDetected,
+		Width:        width,
+		Height:       height,
 		ErrorMessage: "",
 	}
 }

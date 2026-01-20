@@ -330,6 +330,8 @@ describe('Mobile', () => {
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-beta-123');
       expect(result.format).toBe('png');
+      expect(result.width).toBe(720);
+      expect(result.height).toBe(1280);
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
     });
 
@@ -425,6 +427,8 @@ describe('Mobile', () => {
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-long-123');
       expect(result.format).toBe('png');
+      expect(result.width).toBe(720);
+      expect(result.height).toBe(1280);
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
     });
   });

@@ -72,7 +72,11 @@ func main() {
 		fmt.Printf("Failed to write screenshot: %v\n", err)
 		return
 	}
-	fmt.Printf("Saved %s (%d bytes)\n", p1, len(s1.Data))
+	size1 := ""
+	if s1.Width != nil && s1.Height != nil {
+		size1 = fmt.Sprintf(", size=%dx%d", *s1.Width, *s1.Height)
+	}
+	fmt.Printf("Saved %s (%d bytes%s)\n", p1, len(s1.Data), size1)
 
 	s2 := session.Mobile.BetaTakeLongScreenshot(2, "png")
 	if !s2.Success {
@@ -84,5 +88,9 @@ func main() {
 		fmt.Printf("Failed to write long screenshot: %v\n", err)
 		return
 	}
-	fmt.Printf("Saved %s (%d bytes)\n", p2, len(s2.Data))
+	size2 := ""
+	if s2.Width != nil && s2.Height != nil {
+		size2 = fmt.Sprintf(", size=%dx%d", *s2.Width, *s2.Height)
+	}
+	fmt.Printf("Saved %s (%d bytes%s)\n", p2, len(s2.Data), size2)
 }

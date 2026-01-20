@@ -286,8 +286,8 @@ public class MobileTest {
         System.arraycopy(pngHeader, 0, payload, 0, pngHeader.length);
         System.arraycopy("test".getBytes(), 0, payload, pngHeader.length, 4);
         String b64 = Base64.getEncoder().encodeToString(payload);
-
-        CallMcpToolResponse mockResponse = createMockResponse(true, b64, "beta-req-1");
+        String jsonPayload = "{\"type\":\"image\",\"mime_type\":\"image/png\",\"width\":720,\"height\":1280,\"data\":\"" + b64 + "\"}";
+        CallMcpToolResponse mockResponse = createMockResponse(true, jsonPayload, "beta-req-1");
         when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
 
         // Act
@@ -297,6 +297,10 @@ public class MobileTest {
         assertTrue(result.isSuccess());
         assertEquals("beta-req-1", result.getRequestId());
         assertEquals("png", result.getFormat());
+        assertNotNull(result.getWidth());
+        assertNotNull(result.getHeight());
+        assertEquals(Integer.valueOf(720), result.getWidth());
+        assertEquals(Integer.valueOf(1280), result.getHeight());
         assertNotNull(result.getData());
         assertTrue("PNG magic bytes missing", result.getData().length >= 8);
 
@@ -308,14 +312,14 @@ public class MobileTest {
     }
 
     @Test
-    public void testBetaTakeScreenshotRejectsJsonPayload() throws Exception {
+    public void testBetaTakeScreenshotAcceptsJsonPayload() throws Exception {
         // Arrange
         byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
         byte[] payload = new byte[pngHeader.length + 4];
         System.arraycopy(pngHeader, 0, payload, 0, pngHeader.length);
         System.arraycopy("test".getBytes(), 0, payload, pngHeader.length, 4);
         String b64 = Base64.getEncoder().encodeToString(payload);
-        String jsonPayload = "{\"content\":[{\"blob\":\"" + b64 + "\"}]}";
+        String jsonPayload = "{\"type\":\"image\",\"mime_type\":\"image/png\",\"width\":720,\"height\":1280,\"data\":\"" + b64 + "\"}";
 
         CallMcpToolResponse mockResponse = createMockResponse(true, jsonPayload, "beta-json-req-1");
         when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
@@ -326,6 +330,10 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertEquals("png", result.getFormat());
+        assertNotNull(result.getWidth());
+        assertNotNull(result.getHeight());
+        assertEquals(Integer.valueOf(720), result.getWidth());
+        assertEquals(Integer.valueOf(1280), result.getHeight());
         assertNotNull(result.getData());
         assertTrue("PNG magic bytes missing", result.getData().length >= 8);
     }
@@ -338,8 +346,8 @@ public class MobileTest {
         System.arraycopy(pngHeader, 0, payload, 0, pngHeader.length);
         System.arraycopy("long".getBytes(), 0, payload, pngHeader.length, 4);
         String b64 = Base64.getEncoder().encodeToString(payload);
-
-        CallMcpToolResponse mockResponse = createMockResponse(true, b64, "beta-req-2");
+        String jsonPayload = "{\"type\":\"image\",\"mime_type\":\"image/png\",\"width\":720,\"height\":1280,\"data\":\"" + b64 + "\"}";
+        CallMcpToolResponse mockResponse = createMockResponse(true, jsonPayload, "beta-req-2");
         when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
 
         // Act
@@ -349,6 +357,10 @@ public class MobileTest {
         assertTrue(result.isSuccess());
         assertEquals("beta-req-2", result.getRequestId());
         assertEquals("png", result.getFormat());
+        assertNotNull(result.getWidth());
+        assertNotNull(result.getHeight());
+        assertEquals(Integer.valueOf(720), result.getWidth());
+        assertEquals(Integer.valueOf(1280), result.getHeight());
         assertNotNull(result.getData());
         assertTrue("PNG magic bytes missing", result.getData().length >= 8);
 

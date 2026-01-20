@@ -42,6 +42,8 @@ type BetaScreenshotResult struct {
 	Success		bool
 	Data		[]byte
 	Format		string
+	Width		*int
+	Height		*int
 	ErrorMessage	string
 }
 ```

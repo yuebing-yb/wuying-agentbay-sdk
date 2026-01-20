@@ -1003,6 +1003,34 @@ public class Computer extends BaseService {
                     "Screenshot JSON missing base64 field"
                 );
             }
+            Object widthObj = obj.get("width");
+            Object heightObj = obj.get("height");
+            Integer width = null;
+            Integer height = null;
+            if (widthObj != null) {
+                if (!(widthObj instanceof Number)) {
+                    return new ScreenshotBytesResult(
+                        result.getRequestId(),
+                        false,
+                        new byte[0],
+                        fmt,
+                        "Invalid screenshot JSON: expected integer 'width'"
+                    );
+                }
+                width = ((Number) widthObj).intValue();
+            }
+            if (heightObj != null) {
+                if (!(heightObj instanceof Number)) {
+                    return new ScreenshotBytesResult(
+                        result.getRequestId(),
+                        false,
+                        new byte[0],
+                        fmt,
+                        "Invalid screenshot JSON: expected integer 'height'"
+                    );
+                }
+                height = ((Number) heightObj).intValue();
+            }
 
             byte[] decoded = Base64.getDecoder().decode(((String) b64Obj).trim());
             if ("png".equals(fmt) && !startsWith(decoded, PNG_MAGIC)) {
@@ -1029,6 +1057,8 @@ public class Computer extends BaseService {
                 true,
                 decoded,
                 fmt,
+                width,
+                height,
                 ""
             );
         } catch (Exception e) {

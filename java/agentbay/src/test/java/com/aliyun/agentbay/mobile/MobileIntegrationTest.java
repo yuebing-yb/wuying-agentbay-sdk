@@ -103,12 +103,17 @@ public class MobileIntegrationTest {
     @Test
     public void test04_InputText() {
         System.out.println("\nTest: Text input...");
-        
         BoolResult result = mobile.inputText("Hello Mobile Test");
-        
-        assertTrue("Input text failed: " + result.getErrorMessage(), result.isSuccess());
-        assertTrue("Input should return true", result.getData());
-        System.out.println("Text input successful");
+
+        // This API requires a focused editable node. When there is no focused input field,
+        // it should fail with a clear error message instead of silently succeeding.
+        assertFalse("Input should fail when no editable node is focused", result.isSuccess());
+        assertNotNull("Error message should be present", result.getErrorMessage());
+        assertTrue(
+            "Error message should mention no focused editable node: " + result.getErrorMessage(),
+            result.getErrorMessage().contains("No focused editable node found")
+        );
+        System.out.println("Text input failed as expected (no focused editable node)");
     }
     
     @Test
@@ -234,11 +239,19 @@ public class MobileIntegrationTest {
             assertTrue("Failed to start Settings: " + start.getErrorMessage(), start.isSuccess());
             Thread.sleep(2000);
 
+            CommandResult nav = s.getCommand().executeCommand("am start -a android.settings.SETTINGS", 10000);
+            assertTrue("Command failed: " + nav.getErrorMessage(), nav.isSuccess());
+            Thread.sleep(2000);
+
             ScreenshotBytesResult shot = s.mobile.betaTakeScreenshot();
             assertTrue("Beta screenshot failed: " + shot.getErrorMessage(), shot.isSuccess());
             assertNotNull("Image bytes should not be null", shot.getData());
             assertTrue("Image bytes should not be empty", shot.getData().length > 8);
             assertEquals("png", shot.getFormat());
+            assertNotNull("Width should not be null", shot.getWidth());
+            assertNotNull("Height should not be null", shot.getHeight());
+            assertTrue("Width should be > 0", shot.getWidth() > 0);
+            assertTrue("Height should be > 0", shot.getHeight() > 0);
         } catch (Exception e) {
             fail("Beta screenshot test failed: " + e.getMessage());
         } finally {
@@ -278,6 +291,10 @@ public class MobileIntegrationTest {
             assertTrue("Failed to start Settings: " + start.getErrorMessage(), start.isSuccess());
             Thread.sleep(2000);
 
+            CommandResult nav = s.getCommand().executeCommand("am start -a android.settings.SETTINGS", 10000);
+            assertTrue("Command failed: " + nav.getErrorMessage(), nav.isSuccess());
+            Thread.sleep(2000);
+
             ScreenshotBytesResult shot = s.mobile.betaTakeLongScreenshot(2, "png");
             if (!shot.isSuccess() && shot.getErrorMessage() != null && shot.getErrorMessage().contains("Failed to capture long screenshot")) {
                 return;
@@ -286,6 +303,10 @@ public class MobileIntegrationTest {
             assertNotNull("Image bytes should not be null", shot.getData());
             assertTrue("Image bytes should not be empty", shot.getData().length > 8);
             assertEquals("png", shot.getFormat());
+            assertNotNull("Width should not be null", shot.getWidth());
+            assertNotNull("Height should not be null", shot.getHeight());
+            assertTrue("Width should be > 0", shot.getWidth() > 0);
+            assertTrue("Height should be > 0", shot.getHeight() > 0);
         } catch (Exception e) {
             fail("Beta long screenshot test failed: " + e.getMessage());
         } finally {

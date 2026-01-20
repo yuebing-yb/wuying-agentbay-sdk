@@ -34,6 +34,8 @@ type BetaScreenshotResult struct {
 	Success		bool	`json:"success"`
 	Data		[]byte	`json:"data"`
 	Format		string	`json:"format"`
+	Width		*int	`json:"width,omitempty"`
+	Height		*int	`json:"height,omitempty"`
 	ErrorMessage	string	`json:"error_message"`
 }
 ```
