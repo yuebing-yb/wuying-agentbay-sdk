@@ -441,6 +441,15 @@ public class Session {
         return computer;
     }
 
+    /**
+     * Get the mobile service for this session
+     *
+     * @return Mobile instance
+     */
+    public Mobile getMobile() {
+        return mobile;
+    }
+
 
     /**
      * Get the file transfer context ID for this session
