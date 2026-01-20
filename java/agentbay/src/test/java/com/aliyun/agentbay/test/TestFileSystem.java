@@ -230,10 +230,28 @@ public class TestFileSystem {
                    result.isSuccess());
         assertNotNull("Request ID should not be null", result.getRequestId());
         
+        // Create a test file in /tmp for testing isFile() method
+        fs.writeFile("/tmp/file_test.txt", "test content", "overwrite");
+
         // Verify the directory exists by listing parent directory
         DirectoryListResult listResult = fs.listDirectory("/tmp");
         assertTrue("List directory should succeed", listResult.isSuccess());
         
+        // Count files using stream API and isFile() method
+        long fileCount = listResult.getEntries().stream()
+            .filter(f -> {
+                if (f.getName().endsWith(".txt")) {
+                    System.out.println("File: " + f.getName());
+                    System.out.println("File startsWith: " + f.getName().startsWith("file"));
+                    System.out.println("File isFile: " + f.isFile());
+                    return f.isFile() && f.getName().startsWith("file") && f.getName().endsWith(".txt");
+                }
+                return false;
+            })
+            .count();
+
+        System.out.println("   Found " + fileCount + " .txt files starting with 'file'");
+
         boolean found = false;
         String dirName = testDirPath.substring(testDirPath.lastIndexOf('/') + 1);
         for (DirectoryEntry entry : listResult.getEntries()) {

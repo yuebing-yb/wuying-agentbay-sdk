@@ -555,9 +555,11 @@ public class FileSystem extends BaseService {
             Map<String, Object> entryMap = new HashMap<>();
             if (line.startsWith("[DIR]")) {
                 entryMap.put("isDirectory", true);
+                entryMap.put("isFile", false);
                 entryMap.put("name", line.replace("[DIR]", "").trim());
             } else if (line.startsWith("[FILE]")) {
                 entryMap.put("isDirectory", false);
+                entryMap.put("isFile", true);
                 entryMap.put("name", line.replace("[FILE]", "").trim());
             } else {
                 // Skip lines that don't match the expected format
