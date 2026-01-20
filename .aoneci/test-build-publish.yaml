@@ -438,7 +438,7 @@ jobs:
           \`\`\`xml
           <dependency>
               <groupId>com.alibaba</groupId>
-              <artifactId>wuying-agentbay-sdk</artifactId>
+              <artifactId>agentbay-sdk</artifactId>
               <version>${{jobs.java-build.outputs.string-output}}</version>
           </dependency>
           \`\`\`
