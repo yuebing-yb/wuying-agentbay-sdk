@@ -21,7 +21,7 @@ async def main() -> None:
 
     volume_id = vol_result.volume.id
     try:
-        params = CreateSessionParams(image_id=image_id, volume=volume_id)
+        params = CreateSessionParams(image_id=image_id, beta_volume=volume_id)
         session_result = await client.create(params)
         if not session_result.success or not session_result.session:
             raise RuntimeError(f"Failed to create session: {session_result.error_message}")

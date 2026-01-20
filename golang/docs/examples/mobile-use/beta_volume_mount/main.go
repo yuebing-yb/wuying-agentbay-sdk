@@ -46,7 +46,7 @@ func main() {
 
 	params := agentbay.NewCreateSessionParams().
 		WithImageId(imageID).
-		WithVolumeId(volumeID).
+		WithBetaVolumeId(volumeID).
 		WithLabels(map[string]string{"example": "beta-volume-mount"})
 
 	createRes, err := client.Create(params)

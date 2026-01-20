@@ -39,13 +39,13 @@ type CreateSessionParams struct {
 	// persist across sessions.
 	BrowserContext *BrowserContext
 
-	// VolumeId specifies the volume ID to mount when creating the session (beta).
+	// BetaVolumeId specifies the volume ID to mount when creating the session (beta).
 	// This is a trial feature and may change in future releases.
-	VolumeId string
+	BetaVolumeId string
 
-	// Volume specifies the volume object to mount when creating the session (beta).
-	// If both Volume and VolumeId are provided, Volume takes precedence.
-	Volume *Volume
+	// BetaVolume specifies the volume object to mount when creating the session (beta).
+	// If both BetaVolume and BetaVolumeId are provided, BetaVolume takes precedence.
+	BetaVolume *Volume
 }
 
 // NewCreateSessionParams creates a new CreateSessionParams with default values.
@@ -99,15 +99,15 @@ func (p *CreateSessionParams) WithBrowserContext(browserContext *BrowserContext)
 	return p
 }
 
-// WithVolumeId sets the volume ID for mounting when creating the session (beta).
-func (p *CreateSessionParams) WithVolumeId(volumeId string) *CreateSessionParams {
-	p.VolumeId = volumeId
+// WithBetaVolumeId sets the volume ID for mounting when creating the session (beta).
+func (p *CreateSessionParams) WithBetaVolumeId(volumeId string) *CreateSessionParams {
+	p.BetaVolumeId = volumeId
 	return p
 }
 
-// WithVolume sets the volume object for mounting when creating the session (beta).
-func (p *CreateSessionParams) WithVolume(volume *Volume) *CreateSessionParams {
-	p.Volume = volume
+// WithBetaVolume sets the volume object for mounting when creating the session (beta).
+func (p *CreateSessionParams) WithBetaVolume(volume *Volume) *CreateSessionParams {
+	p.BetaVolume = volume
 	return p
 }
 

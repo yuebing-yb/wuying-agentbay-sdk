@@ -37,7 +37,7 @@ public class BetaVolumeIntegrationTest {
 
             CreateSessionParams params = new CreateSessionParams();
             params.setImageId(imageId);
-            params.setVolumeId(volumeId);
+            params.setBetaVolumeId(volumeId);
 
             SessionResult sessionResult = agentBay.create(params);
             assertTrue("expected session create success", sessionResult.isSuccess());

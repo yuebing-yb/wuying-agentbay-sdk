@@ -414,10 +414,10 @@ public class AgentBay {
             }
 
             // Beta: mount volume during session creation (static mount only)
-            if (params.getVolume() != null && params.getVolume().getId() != null && !params.getVolume().getId().isEmpty()) {
-                request.setVolumeId(params.getVolume().getId());
-            } else if (params.getVolumeId() != null && !params.getVolumeId().isEmpty()) {
-                request.setVolumeId(params.getVolumeId());
+            if (params.getBetaVolume() != null && params.getBetaVolume().getId() != null && !params.getBetaVolume().getId().isEmpty()) {
+                request.setVolumeId(params.getBetaVolume().getId());
+            } else if (params.getBetaVolumeId() != null && !params.getBetaVolumeId().isEmpty()) {
+                request.setVolumeId(params.getBetaVolumeId());
             }
             
             // Set labels if provided

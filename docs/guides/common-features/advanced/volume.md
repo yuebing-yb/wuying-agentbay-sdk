@@ -31,7 +31,7 @@ v = agent.beta_volume.get(name="demo-volume", image_id="image_xxx", create=True)
 if not v.success:
     raise RuntimeError(v.error_message)
 
-params = CreateSessionParams(image_id="image_xxx", volume=v.volume.id)
+params = CreateSessionParams(image_id="image_xxx", beta_volume=v.volume.id)
 session = agent.create(params).session
 
 session.command.execute_command("ls -la")

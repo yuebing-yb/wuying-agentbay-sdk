@@ -550,15 +550,15 @@ class AgentBay:
                 request.image_id = params.image_id
 
             # Beta: mount volume during session creation (static mount only)
-            if hasattr(params, "volume") and params.volume:
-                volume_value = params.volume
+            if hasattr(params, "beta_volume") and params.beta_volume:
+                volume_value = params.beta_volume
                 if isinstance(volume_value, str):
                     volume_id = volume_value
                 else:
                     volume_id = getattr(volume_value, "id", "")
                 if not volume_id:
                     raise ValueError(
-                        "volume must be a volume id string or an object with 'id'"
+                        "beta_volume must be a volume id string or an object with 'id'"
                     )
                 request.volume_id = volume_id
 

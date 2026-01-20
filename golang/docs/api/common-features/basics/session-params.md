@@ -34,13 +34,13 @@ type CreateSessionParams struct {
 	// persist across sessions.
 	BrowserContext	*BrowserContext
 
-	// VolumeId specifies the volume ID to mount when creating the session (beta).
+	// BetaVolumeId specifies the volume ID to mount when creating the session (beta).
 	// This is a trial feature and may change in future releases.
-	VolumeId	string
+	BetaVolumeId	string
 
-	// Volume specifies the volume object to mount when creating the session (beta).
-	// If both Volume and VolumeId are provided, Volume takes precedence.
-	Volume	*Volume
+	// BetaVolume specifies the volume object to mount when creating the session (beta).
+	// If both BetaVolume and BetaVolumeId are provided, BetaVolume takes precedence.
+	BetaVolume	*Volume
 }
 ```
 
@@ -89,6 +89,22 @@ func (p *CreateSessionParams) WithBetaNetworkId(betaNetworkId string) *CreateSes
 
 WithBetaNetworkId sets the beta network ID for the session parameters and returns the updated
 parameters.
+
+### WithBetaVolume
+
+```go
+func (p *CreateSessionParams) WithBetaVolume(volume *Volume) *CreateSessionParams
+```
+
+WithBetaVolume sets the volume object for mounting when creating the session (beta).
+
+### WithBetaVolumeId
+
+```go
+func (p *CreateSessionParams) WithBetaVolumeId(volumeId string) *CreateSessionParams
+```
+
+WithBetaVolumeId sets the volume ID for mounting when creating the session (beta).
 
 ### WithBrowserContext
 
@@ -147,22 +163,6 @@ func (p *CreateSessionParams) WithPolicyId(policyId string) *CreateSessionParams
 ```
 
 WithPolicyId sets the policy ID for the session parameters and returns the updated parameters.
-
-### WithVolume
-
-```go
-func (p *CreateSessionParams) WithVolume(volume *Volume) *CreateSessionParams
-```
-
-WithVolume sets the volume object for mounting when creating the session (beta).
-
-### WithVolumeId
-
-```go
-func (p *CreateSessionParams) WithVolumeId(volumeId string) *CreateSessionParams
-```
-
-WithVolumeId sets the volume ID for mounting when creating the session (beta).
 
 ### Related Functions
 

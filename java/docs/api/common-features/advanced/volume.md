@@ -99,7 +99,7 @@ String volumeId = vol.getVolume().getId();
 // Create a session with the volume mounted
 CreateSessionParams params = new CreateSessionParams();
 params.setImageId("image_xxx");
-params.setVolumeId(volumeId);
+params.setBetaVolumeId(volumeId);
 
 SessionResult sessionResult = agentBay.create(params);
 sessionResult.getSession().getCommand().executeCommand("ls -la");

@@ -63,7 +63,7 @@ func TestBetaVolumeCreateListMountAndDelete(t *testing.T) {
 	// 3) Create a session mounted with this volume
 	params := agentbay.NewCreateSessionParams().
 		WithImageId(imageID).
-		WithVolumeId(volumeID).
+		WithBetaVolumeId(volumeID).
 		WithLabels(map[string]string{
 			"test-type": "beta-volume-integration",
 		})
@@ -124,7 +124,7 @@ func TestBetaVolumeCreateListMountAndDelete(t *testing.T) {
 
 	params2 := agentbay.NewCreateSessionParams().
 		WithImageId(imageID).
-		WithVolumeId(volumeID).
+		WithBetaVolumeId(volumeID).
 		WithLabels(map[string]string{
 			"test-type": "beta-volume-integration-2",
 		})

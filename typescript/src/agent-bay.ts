@@ -58,12 +58,12 @@ export interface CreateSessionParams {
    * Beta: mount a volume during session creation (static mount).
    * Accepts a volume id string or a Volume object.
    */
-  volume?: string | Volume;
+  betaVolume?: string | Volume;
   /**
    * Beta: explicit volume id mount during session creation.
-   * If both volume and volumeId are provided, volume takes precedence.
+   * If both betaVolume and betaVolumeId are provided, betaVolume takes precedence.
    */
-  volumeId?: string;
+  betaVolumeId?: string;
   contextSync?: ContextSync[];
   browserContext?: BrowserContext;
   policyId?: string;
@@ -330,8 +330,15 @@ export class AgentBay {
       }
 
       // Beta: mount volume during session creation (static mount only)
-      const volumeValue = (paramsCopy as any).volume;
-      const volumeIdValue = (paramsCopy as any).volumeId;
+      // IMPORTANT: this is a beta feature. We intentionally do NOT support legacy "volume" or "volumeId" params.
+      if ((paramsCopy as any).volume) {
+        throw new Error("CreateSessionParams.volume is not supported. Use CreateSessionParams.betaVolume instead.");
+      }
+      if ((paramsCopy as any).volumeId) {
+        throw new Error("CreateSessionParams.volumeId is not supported. Use CreateSessionParams.betaVolumeId instead.");
+      }
+      const volumeValue = (paramsCopy as any).betaVolume;
+      const volumeIdValue = (paramsCopy as any).betaVolumeId;
       let mountVolumeId: string | undefined = undefined;
       if (volumeValue) {
         mountVolumeId =

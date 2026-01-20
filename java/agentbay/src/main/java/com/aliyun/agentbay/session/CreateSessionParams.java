@@ -36,8 +36,8 @@ public class CreateSessionParams {
     private String betaNetworkId;
 
     // Beta: mount a volume during session creation (static mount only)
-    private String volumeId;
-    private Volume volume;
+    private String betaVolumeId;
+    private Volume betaVolume;
 
     public CreateSessionParams() {
         this.contextSyncs = new ArrayList<>();
@@ -118,20 +118,20 @@ public class CreateSessionParams {
         this.imageId = imageId;
     }
 
-    public String getVolumeId() {
-        return volumeId;
+    public String getBetaVolumeId() {
+        return betaVolumeId;
     }
 
-    public void setVolumeId(String volumeId) {
-        this.volumeId = volumeId;
+    public void setBetaVolumeId(String betaVolumeId) {
+        this.betaVolumeId = betaVolumeId;
     }
 
-    public Volume getVolume() {
-        return volume;
+    public Volume getBetaVolume() {
+        return betaVolume;
     }
 
-    public void setVolume(Volume volume) {
-        this.volume = volume;
+    public void setBetaVolume(Volume betaVolume) {
+        this.betaVolume = betaVolume;
     }
 
     public Map<String, String> getLabels() {

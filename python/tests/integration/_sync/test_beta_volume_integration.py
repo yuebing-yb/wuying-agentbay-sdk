@@ -87,7 +87,7 @@ def test_beta_volume_new_user_write_data():
     volume_id = volume.id
     session = None
     try:
-        params = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        params = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         create_result = agent_bay.create(params)
         assert create_result.success, create_result.error_message
         assert create_result.session is not None
@@ -135,7 +135,7 @@ def test_beta_volume_returning_user_data_persistence():
     test_file = f"{MOUNT_PATH}/returning_user_test.txt"
     test_content = f"Returning user content {int(time.time())}"
     try:
-        params1 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        params1 = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         result1 = agent_bay.create(params1)
         assert result1.success, result1.error_message
         session = result1.session
@@ -151,7 +151,7 @@ def test_beta_volume_returning_user_data_persistence():
         session = None
         time.sleep(20)
 
-        params2 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        params2 = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         result2 = agent_bay.create(params2)
         assert result2.success, result2.error_message
         session = result2.session
@@ -191,7 +191,7 @@ def test_beta_volume_not_destroyed_after_session_disconnect():
     test_file = f"{MOUNT_PATH}/disconnect_test.txt"
     test_content = f"Disconnect content {int(time.time())}"
     try:
-        params1 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        params1 = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         result1 = agent_bay.create(params1)
         assert result1.success, result1.error_message
         session = result1.session
@@ -214,7 +214,7 @@ def test_beta_volume_not_destroyed_after_session_disconnect():
             volume_id=volume_id,
         )
 
-        params2 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        params2 = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         result2 = agent_bay.create(params2)
         assert result2.success, result2.error_message
         session = result2.session
@@ -256,7 +256,7 @@ def test_beta_volume_create_list_mount_and_delete():
         assert list_result.success, list_result.error_message
         assert any(v.id == volume_id for v in list_result.volumes)
 
-        params = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        params = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         create_result = agent_bay.create(params)
         assert create_result.success, create_result.error_message
         assert create_result.session is not None
@@ -310,7 +310,7 @@ def test_beta_volume_multiple_sessions_same_volume():
     content_a = f"Data A {int(time.time())}"
     content_b = f"Data B {int(time.time())}"
     try:
-        params1 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        params1 = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         result1 = agent_bay.create(params1)
         assert result1.success, result1.error_message
         session = result1.session
@@ -324,7 +324,7 @@ def test_beta_volume_multiple_sessions_same_volume():
 
         time.sleep(5)
 
-        params2 = CreateSessionParams(image_id=IMAGE_ID, volume=volume_id)
+        params2 = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume_id)
         result2 = agent_bay.create(params2)
         assert result2.success, result2.error_message
         session = result2.session
@@ -342,7 +342,7 @@ def test_beta_volume_multiple_sessions_same_volume():
 
         time.sleep(5)
 
-        params3 = CreateSessionParams(image_id=IMAGE_ID, volume=volume)
+        params3 = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         result3 = agent_bay.create(params3)
         assert result3.success, result3.error_message
         session = result3.session

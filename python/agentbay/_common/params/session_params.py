@@ -274,6 +274,8 @@ class CreateSessionParams:
     Attributes:
         labels (Optional[Dict[str, str]]): Custom labels for the Session. These can be
             used for organizing and filtering sessions.
+        beta_volume (Optional[object]): Beta: mount a volume during session creation (static mount only).
+            Accepts a volume id string or an object with 'id'.
         context_syncs (Optional[List[ContextSync]]): List of context synchronization
             configurations that define how contexts should be synchronized and mounted.
         browser_context (Optional[BrowserContext]): Optional configuration for browser data synchronization.
@@ -288,7 +290,7 @@ class CreateSessionParams:
         self,
         labels: Optional[Dict[str, str]] = None,
         image_id: Optional[str] = None,
-        volume: Optional[object] = None,
+        beta_volume: Optional[object] = None,
         context_syncs: Optional[List[ContextSync]] = None,
         browser_context: Optional[BrowserContext] = None,
         policy_id: Optional[str] = None,
@@ -324,7 +326,7 @@ class CreateSessionParams:
         self.labels = labels or {}
         self.image_id = image_id
         # Beta: volume mounting during session creation (static mount only)
-        self.volume = volume
+        self.beta_volume = beta_volume
 
         # Start with provided context_syncs
         all_context_syncs = list(context_syncs or [])

@@ -245,10 +245,10 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// Add VolumeId if provided (beta)
-	if params.Volume != nil && params.Volume.ID != "" {
-		createSessionRequest.VolumeId = tea.String(params.Volume.ID)
-	} else if params.VolumeId != "" {
-		createSessionRequest.VolumeId = tea.String(params.VolumeId)
+	if params.BetaVolume != nil && params.BetaVolume.ID != "" {
+		createSessionRequest.VolumeId = tea.String(params.BetaVolume.ID)
+	} else if params.BetaVolumeId != "" {
+		createSessionRequest.VolumeId = tea.String(params.BetaVolumeId)
 	}
 
 	// Add PolicyId if provided
@@ -1327,7 +1327,7 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 		BetaNetworkId:       params.BetaNetworkId,
 		Framework:           params.Framework,
 		EnableBrowserReplay: params.EnableBrowserReplay,
-		VolumeId:            params.VolumeId,
+		BetaVolumeId:        params.BetaVolumeId,
 	}
 
 	// Deep copy Labels map
@@ -1361,8 +1361,8 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 	// Copy BrowserContext (shallow copy is sufficient as it is immutable in typical usage)
 	copy.BrowserContext = params.BrowserContext
 
-	// Copy Volume (shallow copy is sufficient for immutable Volume objects)
-	copy.Volume = params.Volume
+	// Copy BetaVolume (shallow copy is sufficient for immutable Volume objects)
+	copy.BetaVolume = params.BetaVolume
 
 	return copy
 }

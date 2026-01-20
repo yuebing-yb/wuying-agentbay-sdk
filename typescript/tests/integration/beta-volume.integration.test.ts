@@ -32,7 +32,7 @@ describe("Beta volume integration tests", () => {
         log("Creating a new session with mounted volume...");
         const createResult = await agentBay.create({
           imageId,
-          volumeId,
+          betaVolumeId: volumeId,
           labels: { "test-type": "beta-volume-integration" },
         });
         expect(createResult.success).toBe(true);
