@@ -4,7 +4,7 @@ from pathlib import Path
 from agentbay import AsyncAgentBay, CreateSessionParams
 
 
-IMAGE_ID = "imgc-0ab5takhnmlvhx9gp"
+IMAGE_ID = "imgc-0ab5ta4mn31wth5lh"
 
 
 async def main() -> None:

@@ -23,7 +23,7 @@ describe("Mobile beta screenshot integration tests", () => {
       return;
     }
 
-    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5takhnmlvhx9gp" });
+    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5ta4mn31wth5lh" });
     if (!sessionResult.success || !sessionResult.session) {
       throw new Error(`Failed to create session: ${sessionResult.errorMessage || ""}`);
     }
@@ -67,7 +67,7 @@ describe("Mobile beta screenshot integration tests", () => {
       return;
     }
 
-    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5takhnmlvhx9gp" });
+    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5ta4mn31wth5lh" });
     if (!sessionResult.success || !sessionResult.session) {
       throw new Error(`Failed to create session: ${sessionResult.errorMessage || ""}`);
     }
