@@ -437,7 +437,7 @@ jobs:
           Add the following dependency to your `pom.xml`:
           \`\`\`xml
           <dependency>
-              <groupId>com.alibaba</groupId>
+              <groupId>com.aliyun</groupId>
               <artifactId>agentbay-sdk</artifactId>
               <version>${{jobs.java-build.outputs.string-output}}</version>
           </dependency>
