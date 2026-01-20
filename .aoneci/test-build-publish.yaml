@@ -44,7 +44,7 @@ params:
       - "17"
       - "21"
     description: Java version for building Maven package
-    default: "17"
+    default: "11"
   
   maven-version:
     name: "Maven Version"
