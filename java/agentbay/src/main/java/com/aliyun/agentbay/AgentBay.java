@@ -233,7 +233,7 @@ public class AgentBay {
             if (data.getToolList() != null && !data.getToolList().isEmpty()) {
                 session.updateMcpTools(data.getToolList());
             }
-            
+
             // TODO: VPC functionality temporarily disabled
             /*
             if (data.isVpcResource()) {
@@ -362,21 +362,21 @@ public class AgentBay {
             // Add BrowserContext as a ContextSync if provided
             if (params.getBrowserContext() != null) {
                 BrowserContext browserContext = params.getBrowserContext();
-                
+
                 // Create a new SyncPolicy with default values for browser context
                 UploadPolicy uploadPolicy = new UploadPolicy(
                     browserContext.isAutoUpload(),
                     UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
                     30
                 );
-                
+
                 // Create BWList with white lists for browser data paths
                 List<WhiteList> whiteLists = new ArrayList<>();
                 whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
                 whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
                 whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
                 BWList bwList = new BWList(whiteLists);
-                
+
                 SyncPolicy syncPolicy = new SyncPolicy(
                     uploadPolicy,
                     DownloadPolicy.defaultPolicy(),
@@ -385,7 +385,7 @@ public class AgentBay {
                     RecyclePolicy.defaultPolicy(),
                     bwList
                 );
-                
+
                 // Serialize the sync_policy to JSON
                 String policyJson = null;
                 try {
@@ -393,14 +393,14 @@ public class AgentBay {
                     policyJson = objectMapper.writeValueAsString(policyMap);
                 } catch (Exception e) {
                 }
-                
+
                 // Create browser context sync item
                 CreateMcpSessionRequest.CreateMcpSessionRequestPersistenceDataList browserContextSync =
                     new CreateMcpSessionRequest.CreateMcpSessionRequestPersistenceDataList();
                 browserContextSync.setContextId(browserContext.getContextId());
                 browserContextSync.setPath(com.aliyun.agentbay.Config.BROWSER_DATA_PATH);
                 browserContextSync.setPolicy(policyJson);
-                
+
                 // Add to persistence data list or create new one if not exists
                 if (request.getPersistenceDataList() == null) {
                     request.setPersistenceDataList(new ArrayList<>());
@@ -419,7 +419,7 @@ public class AgentBay {
             } else if (params.getBetaVolumeId() != null && !params.getBetaVolumeId().isEmpty()) {
                 request.setVolumeId(params.getBetaVolumeId());
             }
-            
+
             // Set labels if provided
             if (params.getLabels() != null && !params.getLabels().isEmpty()) {
                 try {
@@ -565,10 +565,10 @@ public class AgentBay {
             }
 
             // Handle mobile simulate if configured
-            if (params.getExtraConfigs() != null && 
+            if (params.getExtraConfigs() != null &&
                 params.getExtraConfigs().getMobile() != null &&
                 params.getExtraConfigs().getMobile().getSimulateConfig() != null) {
-                
+
                 MobileSimulateConfig simConfig = params.getExtraConfigs().getMobile().getSimulateConfig();
                 if (simConfig.isSimulate() && simConfig.getSimulatePath() != null) {
                     waitForMobileSimulate(session, simConfig);
@@ -599,15 +599,15 @@ public class AgentBay {
     private void waitForMobileSimulate(Session session, MobileSimulateConfig simConfig) {
         String mobileSimPath = simConfig.getSimulatePath();
         MobileSimulateMode mobileSimMode = simConfig.getSimulateMode();
-        
+
         if (mobileSimPath == null || mobileSimPath.isEmpty()) {
             return;
         }
-        
+
         try {
             String devInfoFilePath = mobileSimPath + "/dev_info.json";
             String wyaApplyOption = "";
-            
+
             if (mobileSimMode == null || mobileSimMode == MobileSimulateMode.PROPERTIES_ONLY) {
                 wyaApplyOption = "";
             } else if (mobileSimMode == MobileSimulateMode.SENSORS_ONLY) {
@@ -619,8 +619,8 @@ public class AgentBay {
             } else if (mobileSimMode == MobileSimulateMode.ALL) {
                 wyaApplyOption = "-all";
             }
-            
-            String command = String.format("chmod -R a+rwx %s; wya apply %s %s", 
+
+            String command = String.format("chmod -R a+rwx %s; wya apply %s %s",
                                           mobileSimPath, wyaApplyOption, devInfoFilePath).trim();
             com.aliyun.agentbay.model.CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
             if (cmdResult.isSuccess()) {
@@ -655,7 +655,7 @@ public class AgentBay {
 
         for (int retry = 0; retry < maxRetries; retry++) {
             boolean shouldContinue = false;
-            
+
             try {
                 // Get context status data
                 com.aliyun.agentbay.context.ContextInfoResult infoResult = session.getContext().info();
@@ -681,7 +681,7 @@ public class AgentBay {
                     }
                     break; // Exit loop, no need to sleep or backoff
                 }
-                
+
                 // Need to continue polling
                 shouldContinue = true;
             } catch (InterruptedException e) {
@@ -691,13 +691,13 @@ public class AgentBay {
                 // On error, continue polling with backoff
                 shouldContinue = true;
             }
-            
+
             // Apply exponential backoff before next retry (if continuing)
             if (shouldContinue && retry < maxRetries - 1) {
                 try {
                     // Sleep with current interval
                     Thread.sleep((long) currentInterval);
-                    
+
                     // Exponential backoff: increase interval for next retry, capped at maxInterval
                     currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
                 } catch (InterruptedException e) {

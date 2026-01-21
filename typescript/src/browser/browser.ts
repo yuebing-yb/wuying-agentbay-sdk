@@ -43,9 +43,9 @@ export class BrowserFingerprintContext {
 
   /**
    * Initialize BrowserFingerprintContext with context id.
-   * 
+   *
    * @param fingerprintContextId - ID of the fingerprint context for browser fingerprint.
-   * 
+   *
    * @throws {Error} If fingerprintContextId is empty.
    */
   constructor(fingerprintContextId: string) {
@@ -454,9 +454,9 @@ export class Browser {
       // Map BrowserOption to API BrowserOption payload
       const browserOptionMap = browserOption.toMap();
 
-      // Enable record if session.enableBrowserReplay is true
-      if (this.session.enableBrowserReplay) {
-        browserOptionMap['enableRecord'] = true;
+      // Set enableRecord based on session.enableBrowserReplay
+      if (this.session.enableBrowserReplay !== undefined) {
+        browserOptionMap['enableRecord'] = this.session.enableBrowserReplay;
       }
 
       if (Object.keys(browserOptionMap).length > 0) {
@@ -527,9 +527,9 @@ export class Browser {
       // Map BrowserOption to API BrowserOption payload
       const browserOptionMap = browserOption.toMap();
 
-      // Enable record if session.enableBrowserReplay is true
-      if (this.session.enableBrowserReplay) {
-        browserOptionMap['enableRecord'] = true;
+      // Set enableRecord based on session.enableBrowserReplay
+      if (this.session.enableBrowserReplay !== undefined) {
+        browserOptionMap['enableRecord'] = this.session.enableBrowserReplay;
       }
 
       if (Object.keys(browserOptionMap).length > 0) {
@@ -749,7 +749,7 @@ export class Browser {
       // Take the screenshot
       const screenshotBuffer = await page.screenshot(enhancedOptions);
       logInfo("Screenshot captured successfully.");
-      
+
       // Convert Buffer to Uint8Array
       return new Uint8Array(screenshotBuffer);
     } catch (error) {

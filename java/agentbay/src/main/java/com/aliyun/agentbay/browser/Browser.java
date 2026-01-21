@@ -53,9 +53,9 @@ public class Browser extends BaseService {
 
             Map<String, Object> browserOptionMap = option.toMap();
 
-            // Enable record if session.enableBrowserReplay is True
-            if (session.getEnableBrowserReplay() != null && session.getEnableBrowserReplay()) {
-                browserOptionMap.put("enableRecord", true);
+            // Set enableRecord based on session.enableBrowserReplay
+            if (session.getEnableBrowserReplay() != null) {
+                browserOptionMap.put("enableRecord", session.getEnableBrowserReplay());
             }
 
             // Convert BrowserOption to JSON string

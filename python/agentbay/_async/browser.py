@@ -65,12 +65,9 @@ class AsyncBrowser(AsyncBaseService):
         try:
             browser_option_dict = option._to_map()
 
-            # Enable record if session.enableBrowserReplay is True
-            if (
-                hasattr(self.session, "enableBrowserReplay")
-                and self.session.enableBrowserReplay
-            ):
-                browser_option_dict["enableRecord"] = True
+            # Set enableRecord based on session.enableBrowserReplay
+            if hasattr(self.session, "enableBrowserReplay"):
+                browser_option_dict["enableRecord"] = self.session.enableBrowserReplay
 
             request = InitBrowserRequest(
                 authorization=f"Bearer {self.session._get_api_key()}",
