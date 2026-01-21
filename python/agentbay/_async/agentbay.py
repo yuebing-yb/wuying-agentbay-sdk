@@ -253,7 +253,13 @@ class AsyncAgentBay:
 
         for retry in range(max_retries):
             # Get context status data
-            info_result = await session.context.info()
+            try:
+                info_result = await session.context.info()
+            except Exception as e:
+                _logger.error(f"Error getting context info on attempt {retry+1}: {e}")
+                await asyncio.sleep(current_interval)
+                current_interval = min(current_interval * backoff_factor, max_interval)
+                continue
 
             # Check if all context items have status "Success" or "Failed"
             all_completed = True
