@@ -684,9 +684,6 @@ public class AgentBay {
 
                 // Need to continue polling
                 shouldContinue = true;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break; // Exit loop on interruption
             } catch (Exception e) {
                 // On error, continue polling with backoff
                 shouldContinue = true;
