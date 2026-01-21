@@ -634,12 +634,24 @@ public class AgentBay {
     /**
      * Wait for context synchronization to complete
      *
+     * Uses exponential backoff to balance between quick response and server load:
+     * - Starts with short intervals (0.5s) for fast completion detection
+     * - Gradually increases intervals (up to 5s max) to reduce server load
+     * - Uses exponential backoff factor of 1.1
+     *
      * @param session The session to wait for context synchronization
      */
     private void waitForContextSynchronization(Session session) {
-        // Wait for context synchronization to complete
-        int maxRetries = 150; // Maximum number of retries
-        int retryInterval = 2000; // 2 seconds in milliseconds
+        // Exponential backoff configuration
+        // Starts with short intervals (0.5s) for fast completion detection
+        // Gradually increases intervals (up to 5s max) to reduce server load
+        // Uses exponential backoff factor of 1.1
+        long initialInterval = 500; // Start with 0.5 seconds (500ms) for quick response
+        long maxInterval = 5000; // Maximum interval (5s) to avoid excessive delays
+        double backoffFactor = 1.1; // Multiply interval by this factor each retry
+        int maxRetries = 50; // Maximum number of retries
+
+        double currentInterval = initialInterval;
 
         for (int retry = 0; retry < maxRetries; retry++) {
             try {
@@ -667,13 +679,22 @@ public class AgentBay {
                     }
                     break;
                 }
-                Thread.sleep(retryInterval);
+
+                // Sleep with current interval
+                Thread.sleep((long) currentInterval);
+
+                // Exponential backoff: increase interval for next retry, capped at maxInterval
+                currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception e) {
                 try {
-                    Thread.sleep(retryInterval);
+                    // Sleep with current interval on error
+                    Thread.sleep((long) currentInterval);
+
+                    // Exponential backoff: increase interval for next retry, capped at maxInterval
+                    currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     break;
