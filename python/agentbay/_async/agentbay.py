@@ -233,14 +233,23 @@ class AsyncAgentBay:
         """
         Wait for context synchronization to complete asynchronously.
 
+        Uses exponential backoff to balance between quick response and server load:
+        - Starts with short intervals (0.5s) for fast completion detection
+        - Gradually increases intervals (up to 5s max) to reduce server load
+        - Uses exponential backoff factor of 1.5
+
         Args:
             session: The session to wait for context synchronization
         """
         _log_operation_start("Context synchronization", "Waiting for completion")
 
-        # Wait for context synchronization to complete
-        max_retries = 150  # Maximum number of retries
-        retry_interval = 2.0  # Seconds to wait between retries
+        # Exponential backoff configuration
+        initial_interval = 0.5  # Start with 0.5 seconds for quick response
+        max_interval = 5.0  # Maximum interval to avoid excessive delays
+        backoff_factor = 1.2  # Multiply interval by this factor each retry
+        max_retries = 50  # Maximum number of retries
+
+        current_interval = initial_interval
 
         for retry in range(max_retries):
             # Get context status data
@@ -273,9 +282,12 @@ class AsyncAgentBay:
                 break
 
             _logger.debug(
-                f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}"
+                f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}, next interval: {current_interval:.2f}s"
             )
-            await asyncio.sleep(retry_interval)
+            await asyncio.sleep(current_interval)
+
+            # Exponential backoff: increase interval for next retry, capped at max_interval
+            current_interval = min(current_interval * backoff_factor, max_interval)
 
     async def _wait_for_mobile_simulate(
         self,
