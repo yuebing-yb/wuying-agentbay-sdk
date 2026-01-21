@@ -29,7 +29,7 @@ Note: This is a beta feature and may change in future releases.
 ### __init__
 
 ```python
-def __init__(self, id: str, name: str)
+def __init__(self, id: str, name: str, status: str = "")
 ```
 
 ## VolumeResult

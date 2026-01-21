@@ -61,6 +61,7 @@ BetaList lists volumes. imageID is required to match the underlying Aliyun SDK r
 type Volume struct {
 	ID	string
 	Name	string
+	Status	string
 }
 ```
 

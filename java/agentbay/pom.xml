@@ -6,7 +6,7 @@
 
     <groupId>com.aliyun</groupId>
     <artifactId>agentbay-sdk</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.15.0</version>
     <packaging>jar</packaging>
 
     <name>AgentBay Java SDK</name>
