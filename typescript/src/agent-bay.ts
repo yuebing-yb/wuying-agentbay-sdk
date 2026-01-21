@@ -586,10 +586,10 @@ export class AgentBay {
         // Exponential backoff configuration
         // Starts with short intervals (0.5s) for fast completion detection
         // Gradually increases intervals (up to 5s max) to reduce server load
-        // Uses exponential backoff factor of 1.2
+        // Uses exponential backoff factor of 1.1
         const initialInterval = 500; // Start with 0.5 seconds (500ms) for quick response
         const maxInterval = 5000; // Maximum interval (5s) to avoid excessive delays
-        const backoffFactor = 1.2; // Multiply interval by this factor each retry
+        const backoffFactor = 1.1; // Multiply interval by this factor each retry
         const maxRetries = 50; // Maximum number of retries
 
         let currentInterval = initialInterval;

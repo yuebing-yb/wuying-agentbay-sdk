@@ -236,7 +236,7 @@ class AsyncAgentBay:
         Uses exponential backoff to balance between quick response and server load:
         - Starts with short intervals (0.5s) for fast completion detection
         - Gradually increases intervals (up to 5s max) to reduce server load
-        - Uses exponential backoff factor of 1.5
+        - Uses exponential backoff factor of 1.1
 
         Args:
             session: The session to wait for context synchronization
@@ -246,7 +246,7 @@ class AsyncAgentBay:
         # Exponential backoff configuration
         initial_interval = 0.5  # Start with 0.5 seconds for quick response
         max_interval = 5.0  # Maximum interval to avoid excessive delays
-        backoff_factor = 1.2  # Multiply interval by this factor each retry
+        backoff_factor = 1.1  # Multiply interval by this factor each retry
         max_retries = 50  # Maximum number of retries
 
         current_interval = initial_interval
