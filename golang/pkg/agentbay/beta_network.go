@@ -33,12 +33,22 @@ type BetaNetworkService struct {
 }
 
 // BetaGetNetworkBindToken creates a network (or reuses provided networkId) and returns networkId + networkToken.
-func (ns *BetaNetworkService) BetaGetNetworkBindToken(networkId string) (*BetaNetworkResult, error) {
+// networkId is optional: pass no args to create a new network; pass one value to reuse an existing network.
+func (ns *BetaNetworkService) BetaGetNetworkBindToken(networkId ...string) (*BetaNetworkResult, error) {
+	if len(networkId) > 1 {
+		return &BetaNetworkResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			NetworkId:    "",
+			NetworkToken: "",
+			ErrorMessage: "network_id accepts at most one value",
+		}, nil
+	}
 	request := &mcp.CreateNetworkRequest{
 		Authorization: tea.String("Bearer " + ns.AgentBay.APIKey),
 	}
-	if networkId != "" {
-		request.NetworkId = tea.String(networkId)
+	if len(networkId) == 1 && networkId[0] != "" {
+		request.NetworkId = tea.String(networkId[0])
 	}
 	if ns.AgentBay.config.RegionID != "" {
 		request.LoginRegionId = tea.String(ns.AgentBay.config.RegionID)

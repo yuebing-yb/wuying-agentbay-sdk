@@ -19,7 +19,7 @@ func TestNetworkCreateDescribeAndBindSession(t *testing.T) {
 		t.Fatalf("client.BetaNetwork is nil")
 	}
 
-	networkResult, err := client.BetaNetwork.BetaGetNetworkBindToken("")
+	networkResult, err := client.BetaNetwork.BetaGetNetworkBindToken()
 	if err != nil {
 		t.Fatalf("BetaGetNetworkBindToken failed: %v", err)
 	}

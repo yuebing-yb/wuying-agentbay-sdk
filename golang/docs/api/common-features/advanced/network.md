@@ -32,7 +32,7 @@ BetaDescribe queries beta network status (online/offline).
 ### BetaGetNetworkBindToken
 
 ```go
-func (ns *BetaNetworkService) BetaGetNetworkBindToken(networkId string) (*BetaNetworkResult, error)
+func (ns *BetaNetworkService) BetaGetNetworkBindToken(networkId ...string) (*BetaNetworkResult, error)
 ```
 
 BetaGetNetworkBindToken creates a network (or reuses provided networkId) and returns networkId +
