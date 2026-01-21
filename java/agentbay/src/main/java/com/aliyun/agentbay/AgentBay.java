@@ -654,6 +654,8 @@ public class AgentBay {
         double currentInterval = initialInterval;
 
         for (int retry = 0; retry < maxRetries; retry++) {
+            boolean shouldContinue = false;
+            
             try {
                 // Get context status data
                 com.aliyun.agentbay.context.ContextInfoResult infoResult = session.getContext().info();
@@ -677,25 +679,28 @@ public class AgentBay {
                     if (hasFailure) {
                     } else {
                     }
-                    break;
+                    break; // Exit loop, no need to sleep or backoff
                 }
-
-                // Sleep with current interval
-                Thread.sleep((long) currentInterval);
-
-                // Exponential backoff: increase interval for next retry, capped at maxInterval
-                currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
+                
+                // Need to continue polling
+                shouldContinue = true;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                break;
+                break; // Exit loop on interruption
             } catch (Exception e) {
+                // On error, continue polling with backoff
+                shouldContinue = true;
+            }
+            
+            // Apply exponential backoff before next retry (if continuing)
+            if (shouldContinue && retry < maxRetries - 1) {
                 try {
-                    // Sleep with current interval on error
+                    // Sleep with current interval
                     Thread.sleep((long) currentInterval);
-
+                    
                     // Exponential backoff: increase interval for next retry, capped at maxInterval
                     currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
-                } catch (InterruptedException ie) {
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
                 }
