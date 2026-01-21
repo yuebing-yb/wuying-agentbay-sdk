@@ -17,6 +17,8 @@ describe("Beta volume integration tests", () => {
       const volResult = await agentBay.betaVolume.create(volumeName, imageId);
       expect(volResult.success).toBe(true);
       expect(volResult.volume?.id).toBeTruthy();
+      expect(typeof volResult.volume?.status).toBe("string");
+      expect(volResult.volume?.status).toBeTruthy();
 
       const volumeId = volResult.volume!.id;
 
@@ -27,7 +29,16 @@ describe("Beta volume integration tests", () => {
           volumeName,
         });
         expect(listResult.success).toBe(true);
-        expect(listResult.volumes.some((v) => v.id === volumeId)).toBe(true);
+        const listed = listResult.volumes.find((v) => v.id === volumeId);
+        expect(listed).toBeTruthy();
+        expect(typeof listed?.status).toBe("string");
+        expect(listed?.status).toBeTruthy();
+
+        const getResult = await agentBay.betaVolume.get({ volumeId, imageId });
+        expect(getResult.success).toBe(true);
+        expect(getResult.volume?.id).toBe(volumeId);
+        expect(typeof getResult.volume?.status).toBe("string");
+        expect(getResult.volume?.status).toBeTruthy();
 
         log("Creating a new session with mounted volume...");
         const createResult = await agentBay.create({

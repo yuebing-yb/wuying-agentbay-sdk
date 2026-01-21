@@ -25,15 +25,29 @@ public class BetaVolumeIntegrationTest {
         assertTrue("expected volume create/get success", createResult.isSuccess());
         assertNotNull("expected volume not null", createResult.getVolume());
         assertNotNull("expected volume id", createResult.getVolume().getId());
+        assertNotNull("expected volume status not null", createResult.getVolume().getStatus());
+        assertFalse("expected volume status not empty", createResult.getVolume().getStatus().isEmpty());
         String volumeId = createResult.getVolume().getId();
 
         try {
             VolumeListResult listResult = agentBay.getBetaVolume().betaList(imageId, 10, null, null, volumeName);
             assertTrue("expected list success", listResult.isSuccess());
             assertTrue(
+                "expected listed volume to have non-empty status",
+                listResult.getVolumes().stream()
+                    .filter(v -> volumeId.equals(v.getId()))
+                    .allMatch(v -> v.getStatus() != null && !v.getStatus().isEmpty())
+            );
+            assertTrue(
                 "expected created volume to be listed",
                 listResult.getVolumes().stream().anyMatch(v -> volumeId.equals(v.getId()))
             );
+
+            VolumeResult getById = agentBay.getBetaVolume().betaGetById(volumeId, imageId);
+            assertTrue("expected get by id success", getById.isSuccess());
+            assertNotNull("expected get by id volume not null", getById.getVolume());
+            assertNotNull("expected get by id volume status not null", getById.getVolume().getStatus());
+            assertFalse("expected get by id volume status not empty", getById.getVolume().getStatus().isEmpty());
 
             CreateSessionParams params = new CreateSessionParams();
             params.setImageId(imageId);

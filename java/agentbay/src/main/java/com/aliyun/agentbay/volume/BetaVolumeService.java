@@ -69,6 +69,7 @@ public class BetaVolumeService {
             Volume v = new Volume();
             v.setId(resp.getBody().getData().getVolumeId());
             v.setName(resp.getBody().getData().getVolumeName());
+            v.setStatus(resp.getBody().getData().getStatus());
 
             result.setSuccess(true);
             result.setVolume(v);
@@ -77,6 +78,31 @@ public class BetaVolumeService {
         } catch (Exception e) {
             throw new AgentBayException("Failed to get volume", e);
         }
+    }
+
+    public VolumeResult betaGetById(String volumeId, String imageId) throws AgentBayException {
+        if (volumeId == null || volumeId.trim().isEmpty()) {
+            throw new IllegalArgumentException("volumeId is required");
+        }
+        VolumeListResult listResult = betaList(imageId, 10, null, Collections.singletonList(volumeId), null);
+        VolumeResult result = new VolumeResult();
+        result.setRequestId(listResult.getRequestId());
+        if (!listResult.isSuccess()) {
+            result.setSuccess(false);
+            result.setErrorMessage(listResult.getErrorMessage());
+            result.setVolume(null);
+            return result;
+        }
+        if (listResult.getVolumes() == null || listResult.getVolumes().isEmpty()) {
+            result.setSuccess(false);
+            result.setErrorMessage("Volume not found");
+            result.setVolume(null);
+            return result;
+        }
+        result.setSuccess(true);
+        result.setVolume(listResult.getVolumes().get(0));
+        result.setErrorMessage("");
+        return result;
     }
 
     public VolumeListResult betaList(String imageId, Integer maxResults, String nextToken, List<String> volumeIds, String volumeName) throws AgentBayException {
@@ -131,6 +157,7 @@ public class BetaVolumeService {
                     Volume v = new Volume();
                     v.setId(it.getVolumeId());
                     v.setName(it.getVolumeName());
+                    v.setStatus(it.getStatus());
                     volumes.add(v);
                 }
             }

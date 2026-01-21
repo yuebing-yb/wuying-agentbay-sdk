@@ -246,13 +246,27 @@ async def test_beta_volume_create_list_mount_and_delete():
 
     volume = vol_result.volume
     volume_id = volume.id
+    assert hasattr(volume, "status")
+    assert isinstance(volume.status, str)
+    assert volume.status
     session = None
     try:
         list_result = await agent_bay.beta_volume.list(
             image_id=IMAGE_ID, max_results=10, volume_name=volume_name
         )
         assert list_result.success, list_result.error_message
-        assert any(v.id == volume_id for v in list_result.volumes)
+        listed_volume = next((v for v in list_result.volumes if v.id == volume_id), None)
+        assert listed_volume is not None
+        assert hasattr(listed_volume, "status")
+        assert isinstance(listed_volume.status, str)
+        assert listed_volume.status
+
+        get_result = await agent_bay.beta_volume.get(volume_id=volume_id, image_id=IMAGE_ID)
+        assert get_result.success, get_result.error_message
+        assert get_result.volume is not None
+        assert hasattr(get_result.volume, "status")
+        assert isinstance(get_result.volume.status, str)
+        assert get_result.volume.status
 
         params = CreateSessionParams(image_id=IMAGE_ID, beta_volume=volume)
         create_result = await agent_bay.create(params)

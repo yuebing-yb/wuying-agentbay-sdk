@@ -12,8 +12,9 @@ import (
 // Volume represents a block storage volume (data disk).
 // Note: This is a beta feature and may change in future releases.
 type Volume struct {
-	ID   string
-	Name string
+	ID     string
+	Name   string
+	Status string
 }
 
 // BetaVolumeResult wraps volume operation result and RequestID.
@@ -115,8 +116,9 @@ func (vs *BetaVolumeService) BetaGetByName(name string, imageID string, create b
 	}
 
 	vol := &Volume{
-		ID:   tea.StringValue(resp.Body.Data.VolumeId),
-		Name: tea.StringValue(resp.Body.Data.VolumeName),
+		ID:     tea.StringValue(resp.Body.Data.VolumeId),
+		Name:   tea.StringValue(resp.Body.Data.VolumeName),
+		Status: tea.StringValue(resp.Body.Data.Status),
 	}
 
 	keyFields := map[string]interface{}{
@@ -259,8 +261,9 @@ func (vs *BetaVolumeService) BetaList(params *BetaListVolumesParams) (*BetaVolum
 				continue
 			}
 			volumes = append(volumes, &Volume{
-				ID:   tea.StringValue(it.VolumeId),
-				Name: tea.StringValue(it.VolumeName),
+				ID:     tea.StringValue(it.VolumeId),
+				Name:   tea.StringValue(it.VolumeName),
+				Status: tea.StringValue(it.Status),
 			})
 		}
 	}

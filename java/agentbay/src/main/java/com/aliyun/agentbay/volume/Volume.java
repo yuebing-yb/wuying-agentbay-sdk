@@ -8,12 +8,19 @@ package com.aliyun.agentbay.volume;
 public class Volume {
     private String id;
     private String name;
+    private String status;
 
     public Volume() {}
 
     public Volume(String id, String name) {
         this.id = id;
         this.name = name;
+    }
+
+    public Volume(String id, String name, String status) {
+        this.id = id;
+        this.name = name;
+        this.status = status;
     }
 
     public String getId() {
@@ -30,6 +37,14 @@ public class Volume {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
 

@@ -34,9 +34,11 @@ class Volume:
         self,
         id: str,
         name: str,
+        status: str = "",
     ):
         self.id = id
         self.name = name
+        self.status = status
 
 
 class VolumeResult(ApiResponse):
@@ -193,6 +195,7 @@ class SyncBetaVolumeService:
         volume = Volume(
             id=volume_id_value,
             name=vol_data.get("VolumeName") or "",
+            status=vol_data.get("Status") or "",
         )
 
         body_json = json.dumps(data, ensure_ascii=False, indent=2)
@@ -272,6 +275,7 @@ class SyncBetaVolumeService:
                     Volume(
                         id=vid,
                         name=it.get("VolumeName") or "",
+                        status=it.get("Status") or "",
                     )
                 )
 
