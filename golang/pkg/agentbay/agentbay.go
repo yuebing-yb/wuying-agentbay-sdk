@@ -458,16 +458,28 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if needsContextSync {
 		fmt.Println("Waiting for context synchronization to complete...")
 
-		// Wait for context synchronization to complete
-		const maxRetries = 150                        // Maximum number of retries
-		const retryInterval = 1500 * time.Millisecond // 1.5 seconds between retries
+		// Exponential backoff configuration
+		// Starts with short intervals (0.5s) for fast completion detection
+		// Gradually increases intervals (up to 5s max) to reduce server load
+		// Uses exponential backoff factor of 1.2
+		const initialInterval = 500 * time.Millisecond  // Start with 0.5 seconds for quick response
+		const maxInterval = 5000 * time.Millisecond     // Maximum interval to avoid excessive delays
+		const backoffFactor = 1.2                       // Multiply interval by this factor each retry
+		const maxRetries = 50                           // Maximum number of retries
+
+		currentInterval := initialInterval
 
 		for retry := 0; retry < maxRetries; retry++ {
 			// Get context status data
 			infoResult, err := session.Context.Info()
 			if err != nil {
 				fmt.Printf("Error getting context info on attempt %d: %v\n", retry+1, err)
-				time.Sleep(retryInterval)
+				time.Sleep(currentInterval)
+				// Exponential backoff: increase interval for next retry, capped at maxInterval
+				currentInterval = time.Duration(float64(currentInterval) * backoffFactor)
+				if currentInterval > maxInterval {
+					currentInterval = maxInterval
+				}
 				continue
 			}
 
@@ -498,8 +510,14 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 				break
 			}
 
-			fmt.Printf("Waiting for context synchronization, attempt %d/%d\n", retry+1, maxRetries)
-			time.Sleep(retryInterval)
+			fmt.Printf("Waiting for context synchronization, attempt %d/%d, next interval: %.2fs\n", retry+1, maxRetries, currentInterval.Seconds())
+			time.Sleep(currentInterval)
+
+			// Exponential backoff: increase interval for next retry, capped at maxInterval
+			currentInterval = time.Duration(float64(currentInterval) * backoffFactor)
+			if currentInterval > maxInterval {
+				currentInterval = maxInterval
+			}
 		}
 	}
 
