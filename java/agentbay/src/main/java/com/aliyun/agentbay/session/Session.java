@@ -138,7 +138,7 @@ public class Session {
     }
 
     /**
-     * Call an MCP tool
+     * Call an MCP tool (legacy method, returns raw API response)
      *
      * @param toolName Tool name
      * @param args Tool arguments
@@ -154,6 +154,258 @@ public class Session {
             serverName = null;
         }
         return agentBay.getApiClient().callMcpTool(sessionId, toolName, args, serverName);
+    }
+
+    /**
+     * Call an MCP tool and return structured OperationResult (similar to Python's call_mcp_tool).
+     * This is the preferred method for calling MCP tools as it provides unified routing logic
+     * (LinkUrl, VPC, API) and consistent error handling.
+     *
+     * @param toolName Tool name
+     * @param args Tool arguments
+     * @return OperationResult containing parsed response with request ID, success status, and data
+     */
+    public OperationResult callMcpTool(String toolName, Object args) {
+        try {
+            String serverName = getMcpServerForTool(toolName);
+
+            // LinkUrl route requires explicit server name. If it's not available,
+            // fall back to API-based call to let backend resolve the server.
+            if (isNotEmpty(linkUrl) && isNotEmpty(token) && isNotEmpty(serverName)) {
+                return callMcpToolLinkUrl(toolName, args, serverName);
+            }
+
+            // Fall back to API route
+            return callMcpToolApi(toolName, args, serverName);
+
+        } catch (Exception e) {
+            return new OperationResult("", false, "",
+                "Failed to call MCP tool " + toolName + ": " + e.getMessage());
+        }
+    }
+
+    private boolean isNotEmpty(String str) {
+        return str != null && !str.isEmpty();
+    }
+
+    /**
+     * Call MCP tool via traditional API route
+     */
+    private OperationResult callMcpToolApi(String toolName, Object args, String serverName) {
+        try {
+            if (serverName == null || serverName.isEmpty()) {
+                serverName = null;
+            }
+
+            CallMcpToolResponse response = agentBay.getApiClient().callMcpTool(sessionId, toolName, args, serverName);
+
+            if (response == null || response.getBody() == null) {
+                return new OperationResult("", false, "", "No response from MCP tool");
+            }
+
+            String requestId = ResponseUtil.extractRequestId(response);
+            Boolean success = response.getBody().getSuccess();
+
+            if (success == null || !success) {
+                String errorMessage = response.getBody().getMessage();
+                return new OperationResult(requestId, false, "",
+                    errorMessage != null ? errorMessage : "MCP tool call failed");
+            }
+
+            Object data = response.getBody().getData();
+            if (data == null) {
+                return new OperationResult(requestId, false, "", "No data in response");
+            }
+
+            String jsonData;
+            if (data instanceof String) {
+                jsonData = (String) data;
+            } else {
+                jsonData = objectMapper.writeValueAsString(data);
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> dataMap = objectMapper.readValue(jsonData, Map.class);
+
+            Boolean isError = (Boolean) dataMap.get("isError");
+            if (isError != null && isError) {
+                String errorMessage = extractErrorMessageFromContent(dataMap);
+                return new OperationResult(requestId, false, "", errorMessage);
+            }
+
+            String textContent = extractTextContentFromData(dataMap);
+            return new OperationResult(requestId, true, textContent, "");
+
+        } catch (Exception e) {
+            return new OperationResult("", false, "",
+                "Failed to call MCP tool via API: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Call MCP tool via LinkUrl route (VPC mode)
+     */
+    private OperationResult callMcpToolLinkUrl(String toolName, Object args, String serverName) {
+        try {
+            if (!isNotEmpty(serverName)) {
+                return new OperationResult("", false, "",
+                    "Server name is required for LinkUrl tool call: " + toolName);
+            }
+
+            String requestId = String.format("link-%d-%09d",
+                System.currentTimeMillis(),
+                new java.util.Random().nextInt(1000000000));
+
+            if (!isNotEmpty(linkUrl) || !isNotEmpty(token)) {
+                return new OperationResult(requestId, false, "", "LinkUrl/token not available");
+            }
+
+            String url = linkUrl.endsWith("/") ? linkUrl + "callTool" : linkUrl + "/callTool";
+
+            Map<String, Object> bodyParams = new java.util.HashMap<>();
+            bodyParams.put("args", args);
+            bodyParams.put("server", serverName);
+            bodyParams.put("requestId", requestId);
+            bodyParams.put("tool", toolName);
+            bodyParams.put("token", token);
+            String bodyJson = objectMapper.writeValueAsString(bodyParams);
+
+            okhttp3.RequestBody requestBody = okhttp3.RequestBody.create(
+                bodyJson,
+                okhttp3.MediaType.parse("application/json")
+            );
+
+            okhttp3.OkHttpClient httpClient = new okhttp3.OkHttpClient.Builder()
+                .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
+
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(url)
+                .header("Content-Type", "application/json")
+                .header("X-Access-Token", token)
+                .post(requestBody)
+                .build();
+
+            try (okhttp3.Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    String respBody = "";
+                    try {
+                        if (response.body() != null) {
+                            respBody = response.body().string();
+                        }
+                    } catch (Exception ignored) {
+                    }
+                    logger.error("❌ API Response Failed: CallMcpTool(LinkUrl) Response, RequestId={}", requestId);
+                    logger.error("📥 Response: {}", respBody);
+                    return new OperationResult(requestId, false, "",
+                        "HTTP request failed with code: " + response.code());
+                }
+
+                String responseBody = response.body() != null ? response.body().string() : "";
+                @SuppressWarnings("unchecked")
+                Map<String, Object> outerData = objectMapper.readValue(responseBody, Map.class);
+
+                Object dataField = outerData.get("data");
+                if (dataField == null) {
+                    return new OperationResult(requestId, false, "", "No data field in LinkUrl response");
+                }
+
+                Map<String, Object> parsedData;
+                if (dataField instanceof String) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> parsed = objectMapper.readValue((String) dataField, Map.class);
+                    parsedData = parsed;
+                } else if (dataField instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> casted = (Map<String, Object>) dataField;
+                    parsedData = casted;
+                } else {
+                    return new OperationResult(requestId, false, "",
+                        "Invalid data field type in LinkUrl response");
+                }
+
+                Object resultField = parsedData.get("result");
+                if (!(resultField instanceof Map)) {
+                    return new OperationResult(requestId, false, "",
+                        "No result field in LinkUrl response data");
+                }
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> resultData = (Map<String, Object>) resultField;
+                Boolean isError = (Boolean) resultData.get("isError");
+                Object contentObj = resultData.get("content");
+
+                String textContent = "";
+                if (contentObj instanceof java.util.List) {
+                    java.util.List<?> content = (java.util.List<?>) contentObj;
+                    if (!content.isEmpty() && content.get(0) instanceof Map) {
+                        Map<?, ?> firstContent = (Map<?, ?>) content.get(0);
+                        Object text = firstContent.get("text");
+                        Object blob = firstContent.get("blob");
+                        Object data = firstContent.get("data");
+                        if (text != null) {
+                            textContent = text.toString();
+                        } else if (blob != null) {
+                            textContent = blob.toString();
+                        } else if (data != null) {
+                            textContent = data.toString();
+                        }
+                    }
+                }
+
+                if (isError != null && isError) {
+                    return new OperationResult(requestId, false, "", textContent);
+                }
+                return new OperationResult(requestId, true, textContent, "");
+            }
+        } catch (java.io.IOException e) {
+            return new OperationResult("", false, "", "HTTP request failed: " + e.getMessage());
+        } catch (Exception e) {
+            return new OperationResult("", false, "", "Unexpected error in LinkUrl call: " + e.getMessage());
+        }
+    }
+
+    private String extractErrorMessageFromContent(Map<String, Object> dataMap) {
+        Object content = dataMap.get("content");
+        if (content instanceof java.util.List && !((java.util.List<?>) content).isEmpty()) {
+            Object firstContent = ((java.util.List<?>) content).get(0);
+            if (firstContent instanceof Map) {
+                Object text = ((Map<?, ?>) firstContent).get("text");
+                if (text != null) {
+                    return text.toString();
+                }
+            }
+        }
+        return "MCP tool execution error";
+    }
+
+    private String extractTextContentFromData(Map<String, Object> dataMap) {
+        Object content = dataMap.get("content");
+        if (content instanceof java.util.List && !((java.util.List<?>) content).isEmpty()) {
+            Object firstContent = ((java.util.List<?>) content).get(0);
+            if (firstContent instanceof Map) {
+                Map<?, ?> contentMap = (Map<?, ?>) firstContent;
+                Object text = contentMap.get("text");
+                if (text != null) {
+                    return text.toString();
+                }
+                Object blob = contentMap.get("blob");
+                if (blob != null) {
+                    return blob.toString();
+                }
+                Object data = contentMap.get("data");
+                if (data != null) {
+                    return data.toString();
+                }
+            }
+        }
+        try {
+            return objectMapper.writeValueAsString(dataMap);
+        } catch (Exception e) {
+            return dataMap.toString();
+        }
     }
 
     /**
@@ -190,92 +442,61 @@ public class Session {
      */
     public SessionMetricsResult getMetrics() {
         try {
-            CallMcpToolResponse toolResponse = callTool("get_metrics", new java.util.HashMap<>());
+            OperationResult result = callMcpTool("get_metrics", new java.util.HashMap<>());
 
-            if (toolResponse == null || toolResponse.getBody() == null) {
-                return new SessionMetricsResult("", false, null, "No response from get_metrics tool");
-            }
-
-            String requestId = ResponseUtil.extractRequestId(toolResponse);
-            Boolean success = toolResponse.getBody().getSuccess();
-
-            if (success == null || !success) {
-                String errorMessage = toolResponse.getBody().getMessage();
-                return new SessionMetricsResult(requestId, false, null,
-                    errorMessage != null ? errorMessage : "get_metrics tool failed");
-            }
-
-            Object data = toolResponse.getBody().getData();
-            if (data == null) {
-                return new SessionMetricsResult(requestId, false, null, "No data in get_metrics response");
-            }
-
-            String jsonData;
-            if (data instanceof String) {
-                jsonData = (String) data;
-            } else {
-                jsonData = objectMapper.writeValueAsString(data);
+            if (!result.isSuccess()) {
+                return new SessionMetricsResult(result.getRequestId(), false, null, result.getErrorMessage());
             }
 
             @SuppressWarnings("unchecked")
-            Map<String, Object> dataMap = objectMapper.readValue(jsonData, Map.class);
+            Map<String, Object> raw = objectMapper.readValue(result.getData(), Map.class);
 
-            Boolean isError = (Boolean) dataMap.get("isError");
-            if (isError != null && isError) {
-                String errorMessage = "Tool returned error";
-                Object content = dataMap.get("content");
-                if (content instanceof java.util.List && !((java.util.List<?>) content).isEmpty()) {
-                    Object firstContent = ((java.util.List<?>) content).get(0);
-                    if (firstContent instanceof Map) {
-                        Object text = ((Map<?, ?>) firstContent).get("text");
-                        if (text != null) {
-                            errorMessage = text.toString();
-                        }
-                    }
-                }
-                return new SessionMetricsResult(requestId, false, null, errorMessage);
-            }
-
-            Object content = dataMap.get("content");
-            if (content == null || !(content instanceof java.util.List) || ((java.util.List<?>) content).isEmpty()) {
-                return new SessionMetricsResult(requestId, false, null, "No content in get_metrics response");
-            }
-
-            Object firstContent = ((java.util.List<?>) content).get(0);
-            if (!(firstContent instanceof Map)) {
-                return new SessionMetricsResult(requestId, false, null, "Invalid content format in get_metrics response");
-            }
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> contentMap = (Map<String, Object>) firstContent;
-            Object textObj = contentMap.get("text");
-            if (textObj == null) {
-                return new SessionMetricsResult(requestId, false, null, "No text in content");
-            }
-
-            String metricsJson = textObj.toString();
-            @SuppressWarnings("unchecked")
-            Map<String, Object> raw = objectMapper.readValue(metricsJson, Map.class);
-
-            SessionMetrics metrics = new SessionMetrics();
-            metrics.setCpuCount(getIntValue(raw, "cpu_count"));
-            metrics.setCpuUsedPct(getDoubleValue(raw, "cpu_used_pct"));
-            metrics.setDiskTotal(getLongValue(raw, "disk_total"));
-            metrics.setDiskUsed(getLongValue(raw, "disk_used"));
-            metrics.setMemTotal(getLongValue(raw, "mem_total"));
-            metrics.setMemUsed(getLongValue(raw, "mem_used"));
-            metrics.setRxRateKBps(getDoubleValue(raw, "rx_rate_kbyte_per_s"));
-            metrics.setTxRateKBps(getDoubleValue(raw, "tx_rate_kbyte_per_s"));
-            metrics.setRxUsedKB(getDoubleValue(raw, "rx_used_kbyte"));
-            metrics.setTxUsedKB(getDoubleValue(raw, "tx_used_kbyte"));
-            metrics.setTimestamp(getStringValue(raw, "timestamp"));
-
-            return new SessionMetricsResult(requestId, true, metrics, "", raw);
+            SessionMetrics metrics = parseMetrics(raw);
+            return new SessionMetricsResult(result.getRequestId(), true, metrics, "", raw);
 
         } catch (Exception e) {
             return new SessionMetricsResult("", false, null,
                 "Failed to get metrics: " + e.getMessage());
         }
+    }
+
+    private SessionMetrics parseMetrics(Map<String, Object> raw) {
+        SessionMetrics metrics = new SessionMetrics();
+        metrics.setCpuCount(getIntValue(raw, "cpu_count"));
+        metrics.setCpuUsedPct(getDoubleValue(raw, "cpu_used_pct"));
+        metrics.setDiskTotal(getLongValue(raw, "disk_total"));
+        metrics.setDiskUsed(getLongValue(raw, "disk_used"));
+        metrics.setMemTotal(getLongValue(raw, "mem_total"));
+        metrics.setMemUsed(getLongValue(raw, "mem_used"));
+
+        metrics.setRxRateKBps(getDoubleValueWithFallback(raw,
+            "rx_rate_kbyte_per_s", "rx_rate_kbps", "rx_rate_KBps"));
+        metrics.setTxRateKBps(getDoubleValueWithFallback(raw,
+            "tx_rate_kbyte_per_s", "tx_rate_kbps", "tx_rate_KBps"));
+        metrics.setRxUsedKB(getDoubleValueWithFallback(raw,
+            "rx_used_kbyte", "rx_used_kb", "rx_used_KB"));
+        metrics.setTxUsedKB(getDoubleValueWithFallback(raw,
+            "tx_used_kbyte", "tx_used_kb", "tx_used_KB"));
+
+        metrics.setTimestamp(getStringValue(raw, "timestamp"));
+        return metrics;
+    }
+
+    private double getDoubleValueWithFallback(Map<String, Object> map, String... keys) {
+        for (String key : keys) {
+            Object value = map.get(key);
+            if (value != null) {
+                if (value instanceof Number) {
+                    return ((Number) value).doubleValue();
+                }
+                try {
+                    return Double.parseDouble(value.toString());
+                } catch (NumberFormatException e) {
+                    // Try next key
+                }
+            }
+        }
+        return 0.0;
     }
 
     private int getIntValue(Map<String, Object> map, String key) {
