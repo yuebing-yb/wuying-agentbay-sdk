@@ -535,6 +535,9 @@ public class AgentBay {
 
             // LinkUrl/token may be returned by the server for direct tool calls.
             if (response.getBody().getData() != null) {
+                if (response.getBody().getData().getResourceUrl() != null) {
+                    session.setResourceUrl(response.getBody().getData().getResourceUrl());
+                }
                 if (response.getBody().getData().getToken() != null) {
                     session.setToken(response.getBody().getData().getToken());
                 }
