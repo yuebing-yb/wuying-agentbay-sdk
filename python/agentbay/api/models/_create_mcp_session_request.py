@@ -25,7 +25,6 @@ class CreateMcpSessionRequest(DaraModel):
             List[main_models.CreateMcpSessionRequestPersistenceDataList]
         ] = None,
         session_id: Optional[str] = None,
-        volume_id: Optional[str] = None,
         vpc_resource: Optional[bool] = None,
         extra_configs: Optional[main_models.ExtraConfigs] = None,
         sdk_stats: Optional[str] = None,
@@ -41,7 +40,6 @@ class CreateMcpSessionRequest(DaraModel):
         self.network_id = network_id
         self.persistence_data_list = persistence_data_list
         self.session_id = session_id
-        self.volume_id = volume_id
         self.vpc_resource = vpc_resource
         self.extra_configs = extra_configs
         self.sdk_stats = sdk_stats
@@ -92,9 +90,6 @@ class CreateMcpSessionRequest(DaraModel):
         if self.session_id is not None:
             result["SessionId"] = self.session_id
 
-        if self.volume_id is not None:
-            result["VolumeId"] = self.volume_id
-
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
 
@@ -143,9 +138,6 @@ class CreateMcpSessionRequest(DaraModel):
 
         if m.get("SessionId") is not None:
             self.session_id = m.get("SessionId")
-
-        if m.get("VolumeId") is not None:
-            self.volume_id = m.get("VolumeId")
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")

@@ -26,7 +26,6 @@ export * from "./types";
 export * from "./context-sync";
 export * from "./context-manager";
 export * from "./session-params";
-export * from "./beta-volume";
 export * from "./browser/eval";
 // Export utility functions
 export {

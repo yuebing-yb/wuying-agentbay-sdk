@@ -1014,7 +1014,6 @@ Advanced capabilities for complex use cases.
 - [Session Link Access](session-link-access.md) - Session connectivity and URL generation
 - [Session Metrics](session-metrics.md) - Retrieve runtime metrics via MCP get_metrics
 - [Network (Beta)](network.md) - Share an isolated network across sessions
-- [Volume (Beta)](volume.md) - Manage and mount block storage volumes
 - [Agent Modules](agent-modules.md) - AI-powered task execution
 - [OSS Integration](oss-integration.md) - Object Storage Service integration
 
@@ -1481,7 +1480,6 @@ This directory is generated. Run `go run scripts/generate_api_docs.go` to refres
 - `common-features/advanced/agent.md` – Agent
 - `common-features/advanced/oss.md` – OSS
 - `common-features/advanced/network.md` – Network
-- `common-features/advanced/volume.md` – Volume
 
 ## Computer Use
 
@@ -3827,7 +3825,7 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
 | **Mobile** | [Mobile](mobile-use/mobile.md), [MobileSimulate](mobile-use/mobile-simulate.md) | Mobile device automation and simulation |
 | **Computer** | [Computer](computer-use/computer.md) | Windows desktop automation |
 | **Code Execution** | [Code](codespace/code.md) | Execute Python, JavaScript code |
-| **Storage** | [OSS](common-features/advanced/oss.md), [Network](common-features/advanced/network.md), [Volume](common-features/advanced/volume.md) | Object storage, network, and volume integration |
+| **Storage** | [OSS](common-features/advanced/oss.md), [Network](common-features/advanced/network.md) | Object storage and network integration |
 | **Configuration** | [Session Params](common-features/basics/session-params.md) | Session configuration parameters |
 
 ## 📚 API Documentation by Category
@@ -3902,10 +3900,6 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
 - [Network](common-features/advanced/network.md) - `com.aliyun.agentbay.network.BetaNetworkService`
   - Create a network and bind sessions to it for intra-network communication
   - Methods: `betaGetNetworkBindToken()`, `betaDescribe()`
-
-- [Volume](common-features/advanced/volume.md) - `com.aliyun.agentbay.volume.BetaVolumeService`
-  - Manage block storage volumes (data disks) and mount them during session creation
-  - Methods: `get()`, `list()`, `delete()`
 
 ### Configuration
 
@@ -3990,8 +3984,6 @@ com.aliyun.agentbay
 │   └── Oss                     # Object storage
 ├── network
 │   └── BetaNetworkService      # Network management (beta)
-├── volume
-│   └── BetaVolumeService       # Volume management (beta)
 └── model
     ├── ExtraConfigs            # Advanced configs
     └── Result classes          # Result types
@@ -4010,7 +4002,6 @@ com.aliyun.agentbay
 - **Run code** → [Code.runCode()](codespace/code.md)
 - **Configure session** → [Session Params](common-features/basics/session-params.md)
 - **Manage networks** → [Network](common-features/advanced/network.md)
-- **Manage volumes** → [Volume](common-features/advanced/volume.md)
 
 ## 📖 Related Documentation
 
@@ -6367,7 +6358,6 @@ All synchronous API classes are in the `sync/` directory:
 
 - [AgentBay](sync/agentbay.md) - `agentbay.agentbay`
 - [Network](sync/network.md) - `agentbay.beta_network`
-- [Volume](sync/volume.md) - `agentbay.beta_volume`
 - [Session](sync/session.md) - `agentbay.session`
 - [Command](sync/command.md) - `agentbay.command`
 - [Context](sync/context.md) - `agentbay.context`
@@ -6391,7 +6381,6 @@ All asynchronous API classes are in the `async/` directory:
 
 - [AsyncAgentBay](async/async-agentbay.md) - `agentbay.agentbay`
 - [AsyncNetwork](async/async-network.md) - `agentbay.beta_network`
-- [AsyncVolume](async/async-volume.md) - `agentbay.beta_volume`
 - [AsyncSession](async/async-session.md) - `agentbay.session`
 - [AsyncCommand](async/async-command.md) - `agentbay.command`
 - [AsyncContext](async/async-context.md) - `agentbay.context`
@@ -12540,7 +12529,6 @@ These documents are generated automatically using TypeDoc. Run `npm run docs:gen
   - mobile-use-agent.md
   - network.md
   - oss.md
-  - volume.md
 - `common-features/basics`
   - agentbay.md
   - command.md

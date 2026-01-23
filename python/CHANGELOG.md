@@ -6,10 +6,6 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
 ### Added
 
-#### 🗄️ Beta Volume (All SDKs)
-- **Beta volume management**: Introduced `BetaVolumeService` for volume lifecycle operations (create/get/list/delete) and **session mounting** support via session params.
-- **Volume status support**: Added status handling for Beta Volume and improved integration coverage.
-
 #### 🌐 Network (All SDKs)
 - **Beta network management APIs**: Introduced beta network lifecycle APIs (create/describe) and `network_id` support in session params.
 

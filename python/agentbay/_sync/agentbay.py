@@ -52,7 +52,6 @@ from ..api.models import (
 from .._common.models.mcp_tool import McpTool
 from .context import ContextService
 from .beta_network import SyncBetaNetworkService
-from .beta_volume import SyncBetaVolumeService
 from .session import Session
 from .._common.params.session_params import CreateSessionParams
 
@@ -106,7 +105,6 @@ class AgentBay:
         # Initialize context service
         self.context = ContextService(self)
         self.beta_network = SyncBetaNetworkService(self)
-        self.beta_volume = SyncBetaVolumeService(self)
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):
@@ -255,7 +253,13 @@ class AgentBay:
 
         for retry in range(max_retries):
             # Get context status data
-            info_result = session.context.info()
+            try:
+                info_result = session.context.info()
+            except Exception as e:
+                _logger.error(f"Error getting context info on attempt {retry+1}: {e}")
+                time.sleep(current_interval)
+                current_interval = min(current_interval * backoff_factor, max_interval)
+                continue
 
             # Check if all context items have status "Success" or "Failed"
             all_completed = True
@@ -560,19 +564,6 @@ class AgentBay:
 
             if params.image_id:
                 request.image_id = params.image_id
-
-            # Beta: mount volume during session creation (static mount only)
-            if hasattr(params, "beta_volume") and params.beta_volume:
-                volume_value = params.beta_volume
-                if isinstance(volume_value, str):
-                    volume_id = volume_value
-                else:
-                    volume_id = getattr(volume_value, "id", "")
-                if not volume_id:
-                    raise ValueError(
-                        "beta_volume must be a volume id string or an object with 'id'"
-                    )
-                request.volume_id = volume_id
 
             # Add extra_configs if provided
             mobile_sim_path = None

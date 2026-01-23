@@ -46,9 +46,6 @@ from ._delete_context_response_body import DeleteContextResponseBody
 from ._delete_session_async_request import DeleteSessionAsyncRequest
 from ._delete_session_async_response import DeleteSessionAsyncResponse
 from ._delete_session_async_response_body import DeleteSessionAsyncResponseBody
-from ._delete_volume_request import DeleteVolumeRequest
-from ._delete_volume_response import DeleteVolumeResponse
-from ._delete_volume_response_body import DeleteVolumeResponseBody
 from ._describe_context_files_request import DescribeContextFilesRequest
 from ._describe_context_files_response import DescribeContextFilesResponse
 from ._describe_context_files_response_body import (
@@ -121,9 +118,6 @@ from ._get_session_detail_response_body import (
     GetSessionDetailResponseBody,
     GetSessionDetailResponseBodyData,
 )
-from ._get_volume_request import GetVolumeRequest
-from ._get_volume_response import GetVolumeResponse
-from ._get_volume_response_body import GetVolumeResponseBody, GetVolumeResponseBodyData
 from ._init_browser_request import InitBrowserRequest
 from ._init_browser_response import InitBrowserResponse
 from ._init_browser_response_body import (
@@ -147,9 +141,6 @@ from ._list_session_response_body import (
     ListSessionResponseBody,
     ListSessionResponseBodyData,
 )
-from ._list_volumes_request import ListVolumesRequest
-from ._list_volumes_response import ListVolumesResponse
-from ._list_volumes_response_body import ListVolumesResponseBody, ListVolumesResponseBodyData
 from ._modify_context_request import ModifyContextRequest
 from ._modify_context_response import ModifyContextResponse
 from ._modify_context_response_body import ModifyContextResponseBody
@@ -192,9 +183,6 @@ __all__ = [
     DeleteSessionAsyncRequest,
     DeleteSessionAsyncResponseBody,
     DeleteSessionAsyncResponse,
-    DeleteVolumeRequest,
-    DeleteVolumeResponseBody,
-    DeleteVolumeResponse,
     GetContextRequest,
     GetContextResponseBody,
     GetContextResponse,
@@ -226,9 +214,6 @@ __all__ = [
     GetSessionDetailRequest,
     GetSessionDetailResponseBody,
     GetSessionDetailResponse,
-    GetVolumeRequest,
-    GetVolumeResponseBody,
-    GetVolumeResponse,
     InitBrowserRequest,
     InitBrowserResponseBody,
     InitBrowserResponse,
@@ -241,9 +226,6 @@ __all__ = [
     ListSessionRequest,
     ListSessionResponseBody,
     ListSessionResponse,
-    ListVolumesRequest,
-    ListVolumesResponseBody,
-    ListVolumesResponse,
     ModifyContextRequest,
     ModifyContextResponseBody,
     ModifyContextResponse,
@@ -278,11 +260,9 @@ __all__ = [
     GetMcpResourceResponseBodyData,
     GetSessionResponseBodyData,
     GetSessionDetailResponseBodyData,
-    GetVolumeResponseBodyData,
     InitBrowserResponseBodyData,
     ListContextsResponseBodyData,
     ListSessionResponseBodyData,
-    ListVolumesResponseBodyData,
     # New context file operations
     DeleteContextFileRequest,
     DeleteContextFileResponseBody,

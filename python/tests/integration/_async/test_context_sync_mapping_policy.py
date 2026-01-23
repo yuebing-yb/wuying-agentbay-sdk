@@ -56,10 +56,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             test_file_name = "cross-platform-test.txt"
             test_content = "This file was created in Windows session and should be accessible in Linux session"
 
-            # ========== Phase 1: Create Windows session and persist data ==========
-            print(
-                "========== Phase 1: Windows Session - Create and Persist Data =========="
-            )
+            print("========== Phase 1: Windows Session - Create and Persist Data ==========")
 
             # Create sync policy for Windows session (no mapping policy needed for first session)
             windows_sync_policy = SyncPolicy(
@@ -137,10 +134,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
                 f"Windows session deleted: {windows_session.session_id} (RequestID: {windows_delete_result.request_id})"
             )
 
-            # ========== Phase 2: Create Linux session with MappingPolicy and verify data ==========
-            print(
-                "========== Phase 2: Linux Session - Access Data via MappingPolicy =========="
-            )
+            print("========== Phase 2: Linux Session - Access Data via MappingPolicy ==========")
 
             # Create mapping policy with Windows path
             mapping_policy = MappingPolicy(path=windows_path)

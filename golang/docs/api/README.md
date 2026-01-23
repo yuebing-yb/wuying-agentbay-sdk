@@ -24,7 +24,6 @@ This directory is generated. Run `go run scripts/generate_api_docs.go` to refres
 - `common-features/advanced/agent.md` – Agent
 - `common-features/advanced/oss.md` – OSS
 - `common-features/advanced/network.md` – Network
-- `common-features/advanced/volume.md` – Volume
 
 ## Computer Use
 

@@ -86,7 +86,6 @@ type AgentBay struct {
 	Context        *ContextService
 	MobileSimulate *MobileSimulateService
 	BetaNetwork    *BetaNetworkService
-	BetaVolume     *BetaVolumeService
 	config         Config
 }
 
@@ -133,14 +132,12 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 		Client:      client,
 		Context:     nil, // Will be initialized after creation
 		BetaNetwork: nil, // Will be initialized after creation
-		BetaVolume:  nil, // Will be initialized after creation
 		config:      config,
 	}
 
 	// Initialize context service
 	agentBay.Context = &ContextService{AgentBay: agentBay}
 	agentBay.BetaNetwork = &BetaNetworkService{AgentBay: agentBay}
-	agentBay.BetaVolume = &BetaVolumeService{AgentBay: agentBay}
 
 	return agentBay, nil
 }
@@ -242,13 +239,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	// Add image_id if provided
 	if params.ImageId != "" {
 		createSessionRequest.ImageId = tea.String(params.ImageId)
-	}
-
-	// Add VolumeId if provided (beta)
-	if params.BetaVolume != nil && params.BetaVolume.ID != "" {
-		createSessionRequest.VolumeId = tea.String(params.BetaVolume.ID)
-	} else if params.BetaVolumeId != "" {
-		createSessionRequest.VolumeId = tea.String(params.BetaVolumeId)
 	}
 
 	// Add PolicyId if provided
@@ -1345,7 +1335,6 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 		BetaNetworkId:       params.BetaNetworkId,
 		Framework:           params.Framework,
 		EnableBrowserReplay: params.EnableBrowserReplay,
-		BetaVolumeId:        params.BetaVolumeId,
 	}
 
 	// Deep copy Labels map
@@ -1378,9 +1367,6 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 
 	// Copy BrowserContext (shallow copy is sufficient as it is immutable in typical usage)
 	copy.BrowserContext = params.BrowserContext
-
-	// Copy BetaVolume (shallow copy is sufficient for immutable Volume objects)
-	copy.BetaVolume = params.BetaVolume
 
 	return copy
 }

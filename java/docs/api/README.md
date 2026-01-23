@@ -13,7 +13,7 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
 | **Mobile** | [Mobile](mobile-use/mobile.md), [MobileSimulate](mobile-use/mobile-simulate.md) | Mobile device automation and simulation |
 | **Computer** | [Computer](computer-use/computer.md) | Windows desktop automation |
 | **Code Execution** | [Code](codespace/code.md) | Execute Python, JavaScript code |
-| **Storage** | [OSS](common-features/advanced/oss.md), [Network](common-features/advanced/network.md), [Volume](common-features/advanced/volume.md) | Object storage, network, and volume integration |
+| **Storage** | [OSS](common-features/advanced/oss.md), [Network](common-features/advanced/network.md) | Object storage and network integration |
 | **Configuration** | [Session Params](common-features/basics/session-params.md) | Session configuration parameters |
 
 ## 📚 API Documentation by Category
@@ -88,10 +88,6 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
 - [Network](common-features/advanced/network.md) - `com.aliyun.agentbay.network.BetaNetworkService`
   - Create a network and bind sessions to it for intra-network communication
   - Methods: `betaGetNetworkBindToken()`, `betaDescribe()`
-
-- [Volume](common-features/advanced/volume.md) - `com.aliyun.agentbay.volume.BetaVolumeService`
-  - Manage block storage volumes (data disks) and mount them during session creation
-  - Methods: `get()`, `list()`, `delete()`
 
 ### Configuration
 
@@ -176,8 +172,6 @@ com.aliyun.agentbay
 │   └── Oss                     # Object storage
 ├── network
 │   └── BetaNetworkService      # Network management (beta)
-├── volume
-│   └── BetaVolumeService       # Volume management (beta)
 └── model
     ├── ExtraConfigs            # Advanced configs
     └── Result classes          # Result types
@@ -196,7 +190,6 @@ com.aliyun.agentbay
 - **Run code** → [Code.runCode()](codespace/code.md)
 - **Configure session** → [Session Params](common-features/basics/session-params.md)
 - **Manage networks** → [Network](common-features/advanced/network.md)
-- **Manage volumes** → [Volume](common-features/advanced/volume.md)
 
 ## 📖 Related Documentation
 

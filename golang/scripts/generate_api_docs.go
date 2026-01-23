@@ -284,20 +284,6 @@ var mappings = []docMapping{
 		},
 	},
 	{
-		Target:      "common-features/advanced/volume.md",
-		Title:       "Volume",
-		PackagePath: "pkg/agentbay",
-		ModuleName:  "volume",
-		TypeNames: []string{
-			"BetaVolumeService",
-			"Volume",
-			"BetaVolumeResult",
-			"BetaVolumeListResult",
-			"BetaOperationResult",
-			"BetaListVolumesParams",
-		},
-	},
-	{
 		Target:          "browser-use/browser.md",
 		Title:           "Browser",
 		PackagePath:     "pkg/agentbay/browser",

@@ -7,8 +7,6 @@ Parameters for creating a session.
 ### Properties
 
 - [betaNetworkId](#betanetworkid)
-- [betaVolume](#betavolume)
-- [betaVolumeId](#betavolumeid)
 - [browserContext](#browsercontext)
 - [contextSync](#contextsync)
 - [enableBrowserReplay](#enablebrowserreplay)
@@ -23,24 +21,6 @@ Parameters for creating a session.
 ### betaNetworkId
 
 • `Optional` **betaNetworkId**: `string`
-
-___
-
-### betaVolume
-
-• `Optional` **betaVolume**: `string` \| ``Volume``
-
-Beta: mount a volume during session creation (static mount).
-Accepts a volume id string or a Volume object.
-
-___
-
-### betaVolumeId
-
-• `Optional` **betaVolumeId**: `string`
-
-Beta: explicit volume id mount during session creation.
-If both betaVolume and betaVolumeId are provided, betaVolume takes precedence.
 
 ___
 

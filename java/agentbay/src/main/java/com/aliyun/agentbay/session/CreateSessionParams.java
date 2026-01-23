@@ -6,7 +6,6 @@ import java.util.Map;
 import com.aliyun.agentbay.browser.BrowserContext;
 import com.aliyun.agentbay.context.ContextSync;
 import com.aliyun.agentbay.model.ExtraConfigs;
-import com.aliyun.agentbay.volume.Volume;
 
 /**
  * Parameters for creating a new session in the AgentBay cloud environment.
@@ -34,10 +33,6 @@ public class CreateSessionParams {
     private ExtraConfigs extraConfigs;
     // Beta: network binding during session creation
     private String betaNetworkId;
-
-    // Beta: mount a volume during session creation (static mount only)
-    private String betaVolumeId;
-    private Volume betaVolume;
 
     public CreateSessionParams() {
         this.contextSyncs = new ArrayList<>();
@@ -116,22 +111,6 @@ public class CreateSessionParams {
 
     public void setImageId(String imageId) {
         this.imageId = imageId;
-    }
-
-    public String getBetaVolumeId() {
-        return betaVolumeId;
-    }
-
-    public void setBetaVolumeId(String betaVolumeId) {
-        this.betaVolumeId = betaVolumeId;
-    }
-
-    public Volume getBetaVolume() {
-        return betaVolume;
-    }
-
-    public void setBetaVolume(Volume betaVolume) {
-        this.betaVolume = betaVolume;
     }
 
     public Map<String, String> getLabels() {

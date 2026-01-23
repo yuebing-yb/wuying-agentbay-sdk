@@ -47,9 +47,6 @@ public class CreateMcpSessionRequest extends TeaModel {
     @NameInMap("SessionId")
     public String sessionId;
 
-    @NameInMap("VolumeId")
-    public String volumeId;
-
     @NameInMap("VpcResource")
     public Boolean vpcResource;
 
@@ -160,14 +157,6 @@ public class CreateMcpSessionRequest extends TeaModel {
     }
     public String getSessionId() {
         return this.sessionId;
-    }
-
-    public CreateMcpSessionRequest setVolumeId(String volumeId) {
-        this.volumeId = volumeId;
-        return this;
-    }
-    public String getVolumeId() {
-        return this.volumeId;
     }
 
     public CreateMcpSessionRequest setVpcResource(Boolean vpcResource) {

@@ -50,7 +50,6 @@ from ..api.models import (
 from .._common.models.mcp_tool import McpTool
 from .context import AsyncContextService
 from .beta_network import AsyncBetaNetworkService
-from .beta_volume import AsyncBetaVolumeService
 from .session import AsyncSession
 from .._common.params.session_params import CreateSessionParams
 
@@ -104,7 +103,6 @@ class AsyncAgentBay:
         # Initialize context service
         self.context = AsyncContextService(self)
         self.beta_network = AsyncBetaNetworkService(self)
-        self.beta_volume = AsyncBetaVolumeService(self)
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):
@@ -564,19 +562,6 @@ class AsyncAgentBay:
 
             if params.image_id:
                 request.image_id = params.image_id
-
-            # Beta: mount volume during session creation (static mount only)
-            if hasattr(params, "beta_volume") and params.beta_volume:
-                volume_value = params.beta_volume
-                if isinstance(volume_value, str):
-                    volume_id = volume_value
-                else:
-                    volume_id = getattr(volume_value, "id", "")
-                if not volume_id:
-                    raise ValueError(
-                        "beta_volume must be a volume id string or an object with 'id'"
-                    )
-                request.volume_id = volume_id
 
             # Add extra_configs if provided
             mobile_sim_path = None

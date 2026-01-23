@@ -50,11 +50,6 @@ const docMappings = [
     symbol: 'BetaNetworkService',
     identifiers: ['Class BetaNetworkService', 'BetaNetworkService', 'beta-network'],
   },
-  {
-    target: 'common-features/advanced/volume.md',
-    symbol: 'BetaVolumeService',
-    identifiers: ['Class BetaVolumeService', 'BetaVolumeService', 'beta-volume'],
-  },
   { target: 'browser-use/browser.md', symbol: 'Browser', identifiers: ['Class Browser', 'Browser'] },
   {
     target: 'browser-use/extension.md',

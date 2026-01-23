@@ -38,14 +38,6 @@ type CreateSessionParams struct {
 	// When set, the session will be bound to the given cloud context and browser state will
 	// persist across sessions.
 	BrowserContext *BrowserContext
-
-	// BetaVolumeId specifies the volume ID to mount when creating the session (beta).
-	// This is a trial feature and may change in future releases.
-	BetaVolumeId string
-
-	// BetaVolume specifies the volume object to mount when creating the session (beta).
-	// If both BetaVolume and BetaVolumeId are provided, BetaVolume takes precedence.
-	BetaVolume *Volume
 }
 
 // NewCreateSessionParams creates a new CreateSessionParams with default values.
@@ -96,18 +88,6 @@ func (p *CreateSessionParams) WithEnableBrowserReplay(enableBrowserReplay bool) 
 // WithBrowserContext sets the browser context configuration for the session parameters.
 func (p *CreateSessionParams) WithBrowserContext(browserContext *BrowserContext) *CreateSessionParams {
 	p.BrowserContext = browserContext
-	return p
-}
-
-// WithBetaVolumeId sets the volume ID for mounting when creating the session (beta).
-func (p *CreateSessionParams) WithBetaVolumeId(volumeId string) *CreateSessionParams {
-	p.BetaVolumeId = volumeId
-	return p
-}
-
-// WithBetaVolume sets the volume object for mounting when creating the session (beta).
-func (p *CreateSessionParams) WithBetaVolume(volume *Volume) *CreateSessionParams {
-	p.BetaVolume = volume
 	return p
 }
 

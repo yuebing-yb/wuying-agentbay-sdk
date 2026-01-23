@@ -172,8 +172,6 @@ Parameters for creating a new session in the AgentBay cloud environment.
 
 - `labels` _Optional[Dict[str, str]]_ - Custom labels for the Session. These can be
   used for organizing and filtering sessions.
-- `beta_volume` _Optional[object]_ - Beta: mount a volume during session creation (static mount only).
-  Accepts a volume id string or an object with 'id'.
 - `context_syncs` _Optional[List[ContextSync]]_ - List of context synchronization
   configurations that define how contexts should be synchronized and mounted.
 - `browser_context` _Optional[BrowserContext]_ - Optional configuration for browser data synchronization.
@@ -188,7 +186,6 @@ Parameters for creating a new session in the AgentBay cloud environment.
 ```python
 def __init__(self, labels: Optional[Dict[str, str]] = None,
              image_id: Optional[str] = None,
-             beta_volume: Optional[object] = None,
              context_syncs: Optional[List[ContextSync]] = None,
              browser_context: Optional[BrowserContext] = None,
              policy_id: Optional[str] = None,

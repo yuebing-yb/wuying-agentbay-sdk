@@ -36,7 +36,8 @@ func (ns *BetaNetworkService) BetaGetNetworkBindToken(networkId ...string) (*Bet
 ```
 
 BetaGetNetworkBindToken creates a network (or reuses provided networkId) and returns networkId +
-networkToken.
+networkToken. networkId is optional: pass no args to create a new network; pass one value to reuse
+an existing network.
 
 ## Type BetaNetworkResult
 

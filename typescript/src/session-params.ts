@@ -2,7 +2,6 @@ import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy, newRecycleP
 import { ExtensionOption } from "./extension";
 import { BrowserFingerprintContext } from "./browser";
 import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
-import type { Volume } from "./beta-volume";
 
 // Browser fingerprint persistent path constant (moved from config.ts)
 const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";

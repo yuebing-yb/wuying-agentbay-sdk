@@ -86,7 +86,8 @@ def __init__(self, instruction: str,
              use_text_extract: Optional[bool] = None,
              use_vision: Optional[bool] = None,
              selector: Optional[str] = None,
-             timeout: Optional[int] = None)
+             timeout: Optional[int] = None,
+             max_page: Optional[int] = 1)
 ```
 
 ## See Also

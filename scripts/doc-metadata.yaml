@@ -294,40 +294,6 @@ modules:
     emoji: 🌐
     category: common-features/advanced
 
-  # Volume module (beta)
-  volume:
-    python: agentbay.beta_volume
-    typescript: beta-volume
-    golang: pkg/agentbay
-
-    tutorial:
-      url: ../../../../../docs/guides/common-features/advanced/volume.md
-      text: Volume (Beta) Guide
-      description: Manage and mount block storage volumes
-
-    overview: |
-      The Volume module provides block storage volumes (data disks) that can be managed independently and mounted into sessions.
-      It is useful for persisting large datasets or reusing artifacts across multiple sessions.
-
-    best_practices:
-      - "Use descriptive volume names and keep a mapping between name and volumeId"
-      - "Prefer mounting volumes at session creation time"
-      - "Always validate success and handle error messages"
-      - "Clean up sessions after use"
-
-    related_resources:
-      - name: AgentBay API Reference
-        module: agentbay
-      - name: Session Params API Reference
-        module: session-params
-      - name: Session API Reference
-        module: session
-      - name: Command API Reference
-        module: command
-
-    emoji: 💾
-    category: common-features/advanced
-
   # Browser module
   browser:
     python: agentbay.browser

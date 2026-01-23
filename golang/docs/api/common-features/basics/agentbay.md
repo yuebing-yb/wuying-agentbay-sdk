@@ -24,7 +24,6 @@ type AgentBay struct {
 	Context		*ContextService
 	MobileSimulate	*MobileSimulateService
 	BetaNetwork	*BetaNetworkService
-	BetaVolume	*BetaVolumeService
 	config		Config
 }
 ```

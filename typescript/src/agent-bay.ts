@@ -15,8 +15,6 @@ import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
 import { BrowserContext } from "./session-params";
-import type { Volume } from "./beta-volume";
-import { BetaVolumeService } from "./beta-volume";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
 import {
@@ -54,16 +52,6 @@ const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 export interface CreateSessionParams {
   labels?: Record<string, string>;
   imageId?: string;
-  /**
-   * Beta: mount a volume during session creation (static mount).
-   * Accepts a volume id string or a Volume object.
-   */
-  betaVolume?: string | Volume;
-  /**
-   * Beta: explicit volume id mount during session creation.
-   * If both betaVolume and betaVolumeId are provided, betaVolume takes precedence.
-   */
-  betaVolumeId?: string;
   contextSync?: ContextSync[];
   browserContext?: BrowserContext;
   policyId?: string;
@@ -98,11 +86,6 @@ export class AgentBay {
    * Beta network service for managing networks.
    */
   betaNetwork: BetaNetworkService;
-
-  /**
-   * Beta volume service (trial feature).
-   */
-  betaVolume: BetaVolumeService;
 
   /**
    * Initialize the AgentBay client.
@@ -149,7 +132,6 @@ export class AgentBay {
 
       // Initialize context service
       this.context = new ContextService(this);
-      this.betaVolume = new BetaVolumeService(this);
       this.betaNetwork = new BetaNetworkService(this);
       // Deprecated alias: network APIs are beta for now
       this.network = this.betaNetwork as any;
@@ -327,27 +309,6 @@ export class AgentBay {
       // Add image_id if provided
       if (paramsCopy.imageId) {
         request.imageId = paramsCopy.imageId;
-      }
-
-      // Beta: mount volume during session creation (static mount only)
-      // IMPORTANT: this is a beta feature. We intentionally do NOT support legacy "volume" or "volumeId" params.
-      if ((paramsCopy as any).volume) {
-        throw new Error("CreateSessionParams.volume is not supported. Use CreateSessionParams.betaVolume instead.");
-      }
-      if ((paramsCopy as any).volumeId) {
-        throw new Error("CreateSessionParams.volumeId is not supported. Use CreateSessionParams.betaVolumeId instead.");
-      }
-      const volumeValue = (paramsCopy as any).betaVolume;
-      const volumeIdValue = (paramsCopy as any).betaVolumeId;
-      let mountVolumeId: string | undefined = undefined;
-      if (volumeValue) {
-        mountVolumeId =
-          typeof volumeValue === "string" ? volumeValue : (volumeValue as any).id;
-      } else if (volumeIdValue) {
-        mountVolumeId = volumeIdValue;
-      }
-      if (mountVolumeId) {
-        request.volumeId = mountVolumeId;
       }
 
       // Add PolicyId if provided

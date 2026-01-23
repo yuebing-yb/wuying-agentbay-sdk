@@ -17,7 +17,6 @@ import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.agentbay.util.Version;
-import com.aliyun.agentbay.volume.BetaVolumeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.wuyingai20250506.Client;
@@ -47,7 +46,6 @@ public class AgentBay {
     private ConcurrentHashMap<String, Session> sessions;
     private MobileSimulate mobileSimulate;
     private BetaNetworkService betaNetwork;
-    private BetaVolumeService betaVolume;
 
     public AgentBay() throws AgentBayException {
         this(null, null);
@@ -89,7 +87,6 @@ public class AgentBay {
             this.apiClient = new ApiClient(this.client, apiKey);
             this.mobileSimulate = new MobileSimulate(this);
             this.betaNetwork = new BetaNetworkService(this);
-            this.betaVolume = new BetaVolumeService(this);
         } catch (Exception e) {
             throw new AgentBayException("Failed to initialize AgentBay client", e);
         }
@@ -290,15 +287,6 @@ public class AgentBay {
     }
 
     /**
-     * Get beta volume service (trial feature).
-     *
-     * @return BetaVolumeService instance
-     */
-    public BetaVolumeService getBetaVolume() {
-        return betaVolume;
-    }
-
-    /**
      * Get the API key
      *
      * @return The API key
@@ -411,13 +399,6 @@ public class AgentBay {
             // Set image ID if provided
             if (params.getImageId() != null) {
                 request.setImageId(params.getImageId());
-            }
-
-            // Beta: mount volume during session creation (static mount only)
-            if (params.getBetaVolume() != null && params.getBetaVolume().getId() != null && !params.getBetaVolume().getId().isEmpty()) {
-                request.setVolumeId(params.getBetaVolume().getId());
-            } else if (params.getBetaVolumeId() != null && !params.getBetaVolumeId().isEmpty()) {
-                request.setVolumeId(params.getBetaVolumeId());
             }
 
             // Set labels if provided
