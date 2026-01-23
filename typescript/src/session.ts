@@ -46,7 +46,53 @@ import {
   setRequestId,
 } from "./utils/logger";
 
-async function fetchCompat(input: any, init: any): Promise<any> {
+async function fetchCompat(input: any, init: any, timeoutMs?: number): Promise<any> {
+  // Add timeout support using AbortController if timeout is specified
+  if (timeoutMs && timeoutMs > 0) {
+    // Use globalThis.AbortController for better compatibility
+    const AbortControllerClass = (globalThis as any).AbortController;
+    if (!AbortControllerClass) {
+      // If AbortController is not available, fallback to fetch without timeout
+      const f = (globalThis as any).fetch;
+      if (typeof f === "function") {
+        return await f(input, init);
+      }
+
+      const mod: any = await import("node-fetch");
+      const nodeFetch = mod.default || mod;
+      return await nodeFetch(input, init);
+    }
+
+    const controller = new AbortControllerClass();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    init = {
+      ...init,
+      signal: controller.signal,
+    };
+    
+    try {
+      const f = (globalThis as any).fetch;
+      if (typeof f === "function") {
+        const response = await f(input, init);
+        clearTimeout(timeoutId);
+        return response;
+      }
+
+      const mod: any = await import("node-fetch");
+      const nodeFetch = mod.default || mod;
+      const response = await nodeFetch(input, init);
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${timeoutMs}ms`);
+      }
+      throw error;
+    }
+  }
+  
   const f = (globalThis as any).fetch;
   if (typeof f === "function") {
     return await f(input, init);
@@ -1510,7 +1556,7 @@ export class Session {
         "X-Access-Token": token,
       },
       body: JSON.stringify(payload),
-    });
+    }, 900000); // 900 seconds timeout
 
     if (!resp.ok) {
       const bodyText = await resp.text().catch(() => "");

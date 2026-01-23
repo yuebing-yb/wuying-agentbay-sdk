@@ -1247,7 +1247,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Access-Token", token)
 
-	httpClient := &http.Client{Timeout: 120 * time.Second}
+	httpClient := &http.Client{Timeout: 900 * time.Second}
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return &models.McpToolResult{

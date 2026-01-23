@@ -928,7 +928,7 @@ class Session:
         }
 
         try:
-            with httpx.Client(timeout=120) as client:
+            with httpx.Client(timeout=900) as client:
                 resp = client.post(
                     url,
                     json=payload,

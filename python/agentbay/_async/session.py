@@ -926,7 +926,7 @@ class AsyncSession:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=120) as client:
+            async with httpx.AsyncClient(timeout=900) as client:
                 resp = await client.post(
                     url,
                     json=payload,

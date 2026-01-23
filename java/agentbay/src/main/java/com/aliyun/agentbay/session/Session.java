@@ -276,8 +276,8 @@ public class Session {
             );
 
             okhttp3.OkHttpClient httpClient = new okhttp3.OkHttpClient.Builder()
-                .readTimeout(1200, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(1200, java.util.concurrent.TimeUnit.SECONDS)
+                .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
                 .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
                 .build();
 
