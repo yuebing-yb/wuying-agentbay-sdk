@@ -97,7 +97,7 @@ class Client(OpenApiClient):
             body_type="json",
         )
         return DaraCore.from_map(
-            main_models.CallMcpToolResponse(), self.call_api(params, req, runtime, "mcp")
+            main_models.CallMcpToolResponse(), self.call_api(params, req, runtime)
         )
 
     async def call_mcp_tool_with_options_async(
@@ -139,7 +139,7 @@ class Client(OpenApiClient):
         )
         return DaraCore.from_map(
             main_models.CallMcpToolResponse(),
-            await self.call_api_async(params, req, runtime, "mcp"),
+            await self.call_api_async(params, req, runtime),
         )
 
     def call_mcp_tool(
