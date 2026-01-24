@@ -97,7 +97,7 @@ class Client(OpenApiClient):
             body_type="json",
         )
         return DaraCore.from_map(
-            main_models.CallMcpToolResponse(), self.call_api(params, req, runtime)
+            main_models.CallMcpToolResponse(), self.call_api(params, req, runtime, "mcp")
         )
 
     async def call_mcp_tool_with_options_async(
@@ -139,7 +139,7 @@ class Client(OpenApiClient):
         )
         return DaraCore.from_map(
             main_models.CallMcpToolResponse(),
-            await self.call_api_async(params, req, runtime),
+            await self.call_api_async(params, req, runtime, "mcp"),
         )
 
     def call_mcp_tool(
@@ -283,8 +283,6 @@ class Client(OpenApiClient):
             body["NetworkId"] = request.network_id
         if not DaraCore.is_null(request.persistence_data_list_shrink):
             body["PersistenceDataList"] = request.persistence_data_list_shrink
-        if not DaraCore.is_null(request.volume_id):
-            body["VolumeId"] = request.volume_id
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
         if not DaraCore.is_null(request.vpc_resource):
@@ -345,8 +343,6 @@ class Client(OpenApiClient):
             body["NetworkId"] = request.network_id
         if not DaraCore.is_null(request.persistence_data_list_shrink):
             body["PersistenceDataList"] = request.persistence_data_list_shrink
-        if not DaraCore.is_null(request.volume_id):
-            body["VolumeId"] = request.volume_id
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
         if not DaraCore.is_null(request.vpc_resource):
