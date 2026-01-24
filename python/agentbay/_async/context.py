@@ -713,6 +713,9 @@ class AsyncContextService:
         Returns:
             FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
 
+        Note:
+            The presigned URL expires in 1 hour by default.
+
         Example:
             ```python
             ctx_result = await agent_bay.context.get(name="my-context", create=True)
@@ -776,6 +779,9 @@ class AsyncContextService:
 
         Returns:
             FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
+
+        Note:
+            The presigned URL expires in 1 hour by default.
 
         Example:
             ```python

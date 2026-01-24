@@ -418,7 +418,15 @@ function isPropertySection(lines, startIndex) {
 
 function isSimpleGetter(methodName) {
   if (/^get[A-Z]/.test(methodName)) {
-    const excludeList = ['getLabels', 'getLink', 'getLinkAsync', 'getMetrics']
+    // Keep non-trivial getters in docs.
+    const excludeList = [
+      'getLabels',
+      'getLink',
+      'getLinkAsync',
+      'getMetrics',
+      'getFileUploadUrl',
+      'getFileDownloadUrl',
+    ]
     return !excludeList.includes(methodName)
   }
   return false

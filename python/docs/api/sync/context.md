@@ -431,6 +431,11 @@ Get a presigned download URL for a file in a context.
     FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
   
 
+**Notes**:
+
+  The presigned URL expires in 1 hour by default.
+  
+
 **Example**:
 
 ```python
@@ -456,6 +461,11 @@ Get a presigned upload URL for a file in a context.
 **Returns**:
 
     FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
+  
+
+**Notes**:
+
+  The presigned URL expires in 1 hour by default.
   
 
 **Example**:
