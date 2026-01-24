@@ -1,5 +1,4 @@
-import { AgentBay } from "../../src/agent-bay";
-import { CreateSessionParams } from "../../src/session-params";
+import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
 import { GetCdpLinkRequest } from "../../src/api/models/model";
 
 describe("GetCdpLink Integration Test", () => {
@@ -14,8 +13,9 @@ describe("GetCdpLink Integration Test", () => {
   });
 
   it("should get CDP link with a real browser session", async () => {
-    const params = new CreateSessionParams();
-    params.imageId = "linux_latest";
+    const params: CreateSessionParams = {
+      imageId: "linux_latest"
+    };
     const sessionResult = await agentBay.create(params);
 
     expect(sessionResult).not.toBeNull();

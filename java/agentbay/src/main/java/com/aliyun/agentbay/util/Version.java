@@ -21,7 +21,7 @@ import java.util.jar.Attributes;
  * 4. Default version constant
  */
 public class Version {
-    private static final String DEFAULT_VERSION = "0.0.3";
+    private static final String DEFAULT_VERSION = "0.15.0";
     private static final String VERSION_PROPERTIES_FILE = "/META-INF/maven/com.aliyun/agentbay-sdk/pom.properties";
     
     private static final String VERSION = getVersion();
@@ -122,11 +122,11 @@ public class Version {
                     try (BufferedReader reader = Files.newBufferedReader(pomPath)) {
                         String line;
                         while ((line = reader.readLine()) != null) {
-                            // Look for: <version>0.0.3</version>
+                            // Look for: <version>0.15.0</version>
                             // Handle both single-line and multi-line formats
                             line = line.trim();
                             
-                            // Single line format: <version>0.0.3</version>
+                            // Single line format: <version>0.15.0</version>
                             if (line.startsWith("<version>") && line.contains("</version>")) {
                                 int start = line.indexOf("<version>") + "<version>".length();
                                 int end = line.indexOf("</version>");
@@ -137,7 +137,7 @@ public class Version {
                                     }
                                 }
                             }
-                            // Multi-line format: <version>\n  0.0.3\n</version>
+                            // Multi-line format: <version>\n  0.15.0\n</version>
                             else if (line.startsWith("<version>") && !line.contains("</version>")) {
                                 // Read next line for version value
                                 String nextLine = reader.readLine();

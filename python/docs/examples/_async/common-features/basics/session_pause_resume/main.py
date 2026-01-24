@@ -60,7 +60,7 @@ async def main_sync():
 
         # Pause the session
         print("\nPausing the session...")
-        pause_result = await agent_bay.pause(session, timeout=300)  # 5 minute timeout
+        pause_result = await agent_bay.beta_pause(session, timeout=300)  # 5 minute timeout
         if pause_result.success:
             print(f"Session paused successfully with status: {pause_result.status}")
             print(f"Request ID: {pause_result.request_id}")
@@ -75,7 +75,7 @@ async def main_sync():
 
         # Resume the session
         print("\nResuming the session...")
-        resume_result = await agent_bay.resume(session, timeout=300)  # 5 minute timeout
+        resume_result = await agent_bay.beta_resume(session, timeout=300)  # 5 minute timeout
         if resume_result.success:
             print(f"Session resumed successfully with status: {resume_result.status}")
             print(f"Request ID: {resume_result.request_id}")
@@ -142,7 +142,7 @@ async def main_async():
 
         # Pause the session asynchronously
         print("\nPausing the session asynchronously...")
-        pause_result = await agent_bay.pause_async(session)
+        pause_result = await agent_bay.beta_pause_async(session)
         if pause_result.success:
             print(f"Session pause request submitted successfully")
             print(f"Request ID: {pause_result.request_id}")
@@ -161,7 +161,7 @@ async def main_async():
 
         # Resume the session asynchronously
         print("\nResuming the session asynchronously...")
-        resume_result = await agent_bay.resume_async(session)
+        resume_result = await agent_bay.beta_resume_async(session)
         if resume_result.success:
             print(f"Session resume request submitted successfully")
             print(f"Request ID: {resume_result.request_id}")
@@ -232,7 +232,7 @@ async def main_direct():
 
         # Pause the session directly using session methods
         print("\nPausing the session directly...")
-        pause_result = await session.pause(timeout=300)  # 5 minute timeout
+        pause_result = await session.beta_pause(timeout=300)  # 5 minute timeout
         if pause_result.success:
             print(f"Session paused successfully with status: {pause_result.status}")
             print(f"Request ID: {pause_result.request_id}")
@@ -247,7 +247,7 @@ async def main_direct():
 
         # Resume the session directly using session methods
         print("\nResuming the session directly...")
-        resume_result = await session.resume(timeout=300)  # 5 minute timeout
+        resume_result = await session.beta_resume(timeout=300)  # 5 minute timeout
         if resume_result.success:
             print(f"Session resumed successfully with status: {resume_result.status}")
             print(f"Request ID: {resume_result.request_id}")

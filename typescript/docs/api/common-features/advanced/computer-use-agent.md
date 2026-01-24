@@ -46,7 +46,7 @@ BaseTaskAgent.toolPrefix
 
 ### executeTask
 
-▸ **executeTask**(`task`, `timeout?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTask**(`task`): `Promise`\<``ExecutionResult``\>
 
 Execute a specific task described in human language.
 
@@ -55,7 +55,6 @@ Execute a specific task described in human language.
 | Name | Type |
 | :------ | :------ |
 | `task` | `string` |
-| `timeout?` | `number` |
 
 #### Returns
 

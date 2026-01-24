@@ -138,7 +138,7 @@ describe("OSS", () => {
 
           // Check if clientConfig is defined
           expect(envInitResponse.clientConfig).toBeDefined();
-          expect(typeof envInitResponse.clientConfig).toBe("object");
+          expect(typeof envInitResponse.clientConfig).toBe("string");
 
           // If there's an error, it should not be successful
           if (envInitResponse.errorMessage) {

@@ -34,6 +34,22 @@ Keyboard modifier keys: Ctrl, Alt, Shift, Win
 - Drag operation requires valid start and end coordinates
 - Screenshot operations may have size limitations
 
+## Type BetaScreenshotResult
+
+```go
+type BetaScreenshotResult struct {
+	models.ApiResponse
+	Success		bool
+	Data		[]byte
+	Format		string
+	Width		*int
+	Height		*int
+	ErrorMessage	string
+}
+```
+
+BetaScreenshotResult represents the result of a beta screenshot operation (binary image bytes).
+
 ## Type BoolResult
 
 ```go
@@ -54,11 +70,7 @@ type Computer struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
-		IsVpc() bool
-		NetworkInterfaceIp() string
-		HttpPort() string
-		FindServerForTool(toolName string) string
-		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 }
 ```
@@ -89,6 +101,16 @@ defer result.Session.Delete()
 windowList, _ := result.Session.Computer.ListRootWindows()
 activateResult, _ := result.Session.Computer.ActivateWindow(windowList.Windows[0].WindowID)
 ```
+
+### BetaTakeScreenshot
+
+```go
+func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult
+```
+
+BetaTakeScreenshot captures the current screen and returns raw image bytes.
+
+Supported formats: - "png" - "jpeg" (or "jpg")
 
 ### ClickMouse
 
@@ -501,11 +523,7 @@ func NewComputer(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Computer
 ```
 

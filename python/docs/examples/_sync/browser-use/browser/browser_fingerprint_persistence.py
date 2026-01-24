@@ -72,7 +72,7 @@ def run_as_first_time():
     if not fingerprint_context_result.success or not fingerprint_context_result.context:
         print("Failed to create fingerprint context")
         return
-    
+
     persistent_fingerprint_context = fingerprint_context_result.context
     print(f"Created fingerprint context: {persistent_fingerprint_context.name} (ID: {persistent_fingerprint_context.id})")
 
@@ -212,7 +212,7 @@ def run_as_second_time():
             context = browser.contexts[0] if browser.contexts else browser.new_context()
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
-            
+
             response_text = page.inner_text("body")
             try:
                 response = json.loads(response_text)

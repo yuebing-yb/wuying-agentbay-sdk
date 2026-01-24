@@ -56,7 +56,7 @@ class AsyncCode(AsyncBaseService):
             if not response_data:
                 # Handle empty data
                 raise AgentBayError("No data field in response")
-            
+
             # First, check if the response is in the legacy format where JSON is in content[0].text
             content = response_data.get("content", [])
             if content and isinstance(content, list) and len(content) > 0:
@@ -72,7 +72,7 @@ class AsyncCode(AsyncBaseService):
                     except json.JSONDecodeError:
                         # If not valid JSON, fall through to legacy handling
                         pass
-            
+
             # 1. New JSON format structure check (based on actual user feedback)
             # {
             #    "executionError": "",
@@ -86,13 +86,13 @@ class AsyncCode(AsyncBaseService):
                     stdout=response_data.get("stdout", []),
                     stderr=response_data.get("stderr", [])
                 )
-                
+
                 # Parse results
                 results = []
                 for res_item in response_data.get("result", []):
                     # Handle both dict (if already parsed) and string (if JSON stringified)
                     parsed_item = res_item
-                    
+
                     if isinstance(res_item, str):
                         try:
                             parsed_item = json.loads(res_item)
@@ -123,7 +123,7 @@ class AsyncCode(AsyncBaseService):
                     else:
                         # Fallback for plain text string
                         results.append(ExecutionResult(text=str(parsed_item)))
-                
+
                 # Parse error if present
                 error_obj = None
                 execution_error = response_data.get("executionError")
@@ -154,7 +154,7 @@ class AsyncCode(AsyncBaseService):
                     stdout=logs_data.get("stdout", []),
                     stderr=logs_data.get("stderr", [])
                 )
-                
+
                 # Parse results
                 results = []
                 for res_data in response_data.get("results", []):
@@ -171,7 +171,7 @@ class AsyncCode(AsyncBaseService):
                         is_main_result=res_data.get("is_main_result", False)
                     )
                     results.append(result_obj)
-                
+
                 # Parse error if present
                 error_obj = None
                 error_data = response_data.get("error")
@@ -181,7 +181,7 @@ class AsyncCode(AsyncBaseService):
                         value=error_data.get("value", ""),
                         traceback=error_data.get("traceback", "")
                     )
-                
+
                 return EnhancedCodeExecutionResult(
                     execution_count=response_data.get("execution_count"),
                     execution_time=response_data.get("execution_time", 0.0),
@@ -267,6 +267,31 @@ class AsyncCode(AsyncBaseService):
                 await result.session.delete()
         """
         try:
+            def _normalize_tool_data_to_response_data(data: Any) -> Dict[str, Any]:
+                """
+                Normalize tool output into a dict shape consumable by _parse_response_body().
+
+                Session.call_mcp_tool may return either:
+                - dict (already structured response data), or
+                - str (plain text, or JSON string with rich output).
+                """
+                if isinstance(data, dict):
+                    return data
+
+                if isinstance(data, str):
+                    text = data
+                    stripped = text.strip()
+                    if stripped:
+                        try:
+                            parsed = json.loads(stripped)
+                            if isinstance(parsed, dict):
+                                return parsed
+                        except json.JSONDecodeError:
+                            pass
+                    return {"content": [{"text": text}]}
+
+                return {"content": [{"text": "" if data is None else str(data)}]}
+
             # Normalize and validate language (case-insensitive)
             raw_language = "" if language is None else str(language)
             normalized_language = raw_language.strip().lower()
@@ -292,32 +317,36 @@ class AsyncCode(AsyncBaseService):
                 )
 
             args = {"code": code, "language": canonical_language, "timeout_s": timeout_s}
-            
-            # Use self._call_mcp_tool to use our overridden _parse_response_body
-            result = await self._call_mcp_tool("run_code", args)
+
+            result = await self._call_mcp_tool(
+                "run_code",
+                args,
+            )
             _logger.debug(f"Run code response: {result}")
 
-            if result.success:
-                if isinstance(result.data, EnhancedCodeExecutionResult):
-                    result.data.request_id = result.request_id
-                    # If success is not set by parse (e.g. legacy path sets it to True), keep it
-                    # Logic in _parse_response_body sets success based on data
-                    return result.data
-                else:
-                    # Should not happen if _parse_response_body works correctly for both cases,
-                    # but as a safety net:
-                    return EnhancedCodeExecutionResult(
-                        request_id=result.request_id,
-                        success=True,
-                        results=[ExecutionResult(text=str(result.data), is_main_result=True)],
-                        logs=ExecutionLogs(stdout=[str(result.data)])
-                    )
-            else:
+            if not result.success:
                 return EnhancedCodeExecutionResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=result.error_message or "Failed to run code",
                 )
+
+            if isinstance(result.data, EnhancedCodeExecutionResult):
+                result.data.request_id = result.request_id
+                return result.data
+
+            response_data = _normalize_tool_data_to_response_data(result.data)
+            parsed = self._parse_response_body({"Data": response_data})
+            if isinstance(parsed, EnhancedCodeExecutionResult):
+                parsed.request_id = result.request_id
+                return parsed
+
+            return EnhancedCodeExecutionResult(
+                request_id=result.request_id,
+                success=True,
+                results=[ExecutionResult(text=str(result.data), is_main_result=True)],
+                logs=ExecutionLogs(stdout=[str(result.data)]),
+            )
         except AgentBayError as e:
             # Handle AgentBayError specifically - these are SDK-level errors
             handled_error = self._handle_error(e)

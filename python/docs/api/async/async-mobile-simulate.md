@@ -8,7 +8,7 @@ class AsyncMobileSimulateService()
 
 Provides methods to manage persistent mobile dev info and sync to the mobile device.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, agent_bay: "AsyncAgentBay")
@@ -20,7 +20,7 @@ Initialize the MobileSimulateService.
 
 - `agent_bay` _AsyncAgentBay_ - The AsyncAgentBay instance.
 
-### set\_simulate\_enable
+### set_simulate_enable
 
 ```python
 def set_simulate_enable(enable: bool)
@@ -32,7 +32,7 @@ Set the simulate enable flag.
 
 - `enable` _bool_ - The simulate feature enable flag.
 
-### get\_simulate\_enable
+### get_simulate_enable
 
 ```python
 def get_simulate_enable() -> bool
@@ -44,7 +44,7 @@ Get the simulate enable flag.
 
     bool: The simulate feature enable flag.
 
-### set\_simulate\_mode
+### set_simulate_mode
 
 ```python
 def set_simulate_mode(mode: MobileSimulateMode)
@@ -61,7 +61,7 @@ Set the simulate mode.
   - ServicesOnly: Simulate only system services.
   - All: Simulate all aspects of the device.
 
-### get\_simulate\_mode
+### get_simulate_mode
 
 ```python
 def get_simulate_mode() -> MobileSimulateMode
@@ -73,7 +73,7 @@ Get the simulate mode.
 
     MobileSimulateMode: The simulate mode.
 
-### set\_simulate\_context\_id
+### set_simulate_context_id
 
 ```python
 def set_simulate_context_id(context_id: str)
@@ -86,7 +86,7 @@ but not user side created context.
 
 - `context_id` _str_ - The context ID of the previously saved mobile simulate context.
 
-### get\_simulate\_context\_id
+### get_simulate_context_id
 
 ```python
 def get_simulate_context_id() -> str
@@ -98,7 +98,7 @@ Get the simulate context id.
 
     str: The context ID of the mobile simulate context.
 
-### get\_simulate\_config
+### get_simulate_config
 
 ```python
 def get_simulate_config() -> MobileSimulateConfig
@@ -115,7 +115,7 @@ Get the simulate config.
   - simulated_context_id (str): The context ID of the mobile info.
   Defaults to "".
 
-### has\_mobile\_info
+### has_mobile_info
 
 ```python
 async def has_mobile_info(context_sync: "ContextSync") -> bool
@@ -143,7 +143,7 @@ Check if the mobile dev info file exists in one context sync. (Only for user pro
   This method can only used when mobile simulate context sync is managed by user side. For internal mobile simulate
   context sync, this method will not work.
 
-### upload\_mobile\_info
+### upload_mobile_info
 
 ```python
 async def upload_mobile_info(

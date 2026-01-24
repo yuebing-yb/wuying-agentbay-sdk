@@ -5,10 +5,12 @@ import * as $dara from '@darabonba/typescript';
 export class CreateMcpSessionShrinkRequest extends $dara.Model {
   authorization?: string;
   contextId?: string;
+  enableRecord?: boolean;
   externalUserId?: string;
   imageId?: string;
   labels?: string;
   mcpPolicyId?: string;
+  networkId?: string;
   persistenceDataListShrink?: string;
   sessionId?: string;
   vpcResource?: boolean;
@@ -19,10 +21,12 @@ export class CreateMcpSessionShrinkRequest extends $dara.Model {
     return {
       authorization: 'Authorization',
       contextId: 'ContextId',
+      enableRecord: 'EnableRecord',
       externalUserId: 'ExternalUserId',
       imageId: 'ImageId',
       labels: 'Labels',
       mcpPolicyId: 'McpPolicyId',
+      networkId: 'NetworkId',
       persistenceDataListShrink: 'PersistenceDataList',
       sessionId: 'SessionId',
       vpcResource: 'VpcResource',
@@ -36,10 +40,12 @@ export class CreateMcpSessionShrinkRequest extends $dara.Model {
     return {
       authorization: 'string',
       contextId: 'string',
+      enableRecord: 'boolean',
       externalUserId: 'string',
       imageId: 'string',
       labels: 'string',
       mcpPolicyId: 'string',
+      networkId: 'string',
       persistenceDataListShrink: 'string',
       sessionId: 'string',
       vpcResource: 'boolean',

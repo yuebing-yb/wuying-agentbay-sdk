@@ -67,15 +67,21 @@ TEST_DIR = os.path.join(PROJECT_ROOT, "python", "tests", "integration")
 LLMS_FULL_PATH = os.path.join(PROJECT_ROOT, "llms-full.txt")
 REPORT_FILE = os.path.join(PROJECT_ROOT, "test_report.md")
 
-# OSS测试跳过配置
-OSS_TEST_PATTERNS = [
-    "test_oss_integration",  # Python OSS测试
-    "oss.test.ts",          # TypeScript OSS测试
-    "oss_test.go",          # Golang OSS测试
-    "TestOss_",             # Golang OSS测试函数前缀
-    "test_agent_integration",
-    "agent-integration",
-    "agent_test"
+# Test file patterns to skip configuration
+# Tests containing the following patterns will be skipped during execution
+TEST_PATTERNS = [
+    "test_oss_integration",     # Python OSS integration tests
+    "oss.test.ts",             # TypeScript OSS test files
+    "oss_test.go",             # Golang OSS test files
+    "TestOss_",                # Golang OSS test function prefix
+    "test_agent_integration",   # Agent integration tests
+    "agent-integration",        # Agent integration related tests
+    "agent_test",              # Agent test files
+    "test_browser_agent",      # Browser Agent tests
+    "test_network_integration",
+    "network_integration_test",
+    "network.integration.test"
+    
 ]
 
 # State Definition
@@ -103,7 +109,7 @@ def should_skip_oss_test(test_id: str, skip_oss: bool = False) -> bool:
         return False
     
     # 检查测试ID是否包含OSS测试模式
-    for pattern in OSS_TEST_PATTERNS:
+    for pattern in TEST_PATTERNS:
         if pattern in test_id:
             return True
     

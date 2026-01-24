@@ -1,5 +1,4 @@
-import { AgentBay } from "../../src";
-import { CreateSessionParams } from "../../src/session-params";
+import { AgentBay, CreateSessionParams } from "../../src";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
 import { Session } from "../../src/session";
@@ -20,8 +19,9 @@ describe("Browser Type - Integration Tests", () => {
     jest.setTimeout(120000); // 120 seconds
     
     // Create a session with computer use image (required for browser type selection)
-    const params = new CreateSessionParams();
-    params.imageId = "linux_latest";
+    const params :CreateSessionParams = {
+      imageId: "linux_latest",
+    }
     
     log("Creating session with computer use image for browser type testing...");
     const sessionResult: SessionResult = await agentBay.create(params);
@@ -228,8 +228,9 @@ describe("Browser Type - Integration Tests", () => {
       log("=== Testing browser type with standard browser image ===");
       
       // Create a new session with standard browser image
-      const params = new CreateSessionParams();
-      params.imageId = "browser_latest";  // Standard browser image
+      const params :CreateSessionParams = {
+        imageId:'browser_latest'
+      };
       
       log("Creating session with standard browser image...");
       const sessionResult: SessionResult = await agentBay.create(params);

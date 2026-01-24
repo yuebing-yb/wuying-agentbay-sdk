@@ -50,7 +50,7 @@ describe("Session Cleanup Integration Test", () => {
         try {
           // Step 2a: Recover session via get() with enhanced error handling
           log(`🔄 Recovering session ${sessionId} via get()...`);
-          const getResult = await agentBay.get(sessionId);
+          const getResult = await agentBay.get(sessionId.sessionId);
 
           if (!getResult.success) {
             log(`❌ Failed to recover session ${sessionId}: ${getResult.errorMessage}`);
@@ -66,12 +66,36 @@ describe("Session Cleanup Integration Test", () => {
             continue;
           }
 
-          const recoveredSession: Session = getResult.session!;
-          log(`✅ Successfully recovered session ${sessionId}`);
+          const recoveredSession:Session  = getResult.session!;
+          log(`✅ Successfully recovered session ${sessionId.sessionId}`);
           log(`Session details - sessionId: ${recoveredSession.sessionId}`);
           log(`Recovery Request ID: ${getResult.requestId}`);
 
-          // Step 2b: Delete the recovered session with enhanced logging
+          // Step 2b: Check session status before deletion
+          log(`📊 Checking status of session ${sessionId} before deletion...`);
+          const sessionStatusResult = await recoveredSession.getStatus();
+          
+          if (sessionStatusResult.success) {
+            const status = sessionStatusResult.status?.toLowerCase();
+            log(`📋 Session ${sessionId} status: ${sessionStatusResult.status}`);
+            
+            if (status === "deleting" || status === "deleted") {
+              log(`⏭️  Session ${sessionId} is already ${sessionStatusResult.status}, skipping deletion`);
+              deleteResults.push({
+                sessionId,
+                recovered: true,
+                deleted: true, // Consider it as successfully handled
+                requestId: sessionStatusResult.requestId,
+                skipped: true,
+                skipReason: `Already ${sessionStatusResult.status}`,
+              });
+              continue;
+            }
+          } else {
+            log(`⚠️  Failed to get status for session ${sessionId}: ${sessionStatusResult.errorMessage}, proceeding with deletion`);
+          }
+
+          // Step 2c: Delete the recovered session with enhanced logging
           log(`🗑️  Deleting recovered session ${sessionId}...`);
           const deleteResult = await agentBay.delete(recoveredSession);
 

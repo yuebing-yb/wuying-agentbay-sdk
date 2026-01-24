@@ -14,26 +14,122 @@ Main class for interacting with the AgentBay cloud runtime environment.
 
 ### Methods
 
+- [betaPauseAsync](#betapauseasync)
+- [betaResumeAsync](#betaresumeasync)
 - [create](#create)
 - [delete](#delete)
 - [get](#get)
 - [list](#list)
-- [pauseAsync](#pauseasync)
-- [resumeAsync](#resumeasync)
 
 ## Properties
 
 ```typescript
+betaNetwork: [`BetaNetworkService`](../advanced/network.md)
 client: ``Client``
 context: [`ContextService`](context.md)
+network: [`BetaNetworkService`](../advanced/network.md)
 ```
 
 
 ## Methods
 
+### betaPauseAsync
+
+▸ **betaPauseAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionPauseResult`\>
+
+Asynchronously pause a session, putting it into a dormant state.
+
+This method directly calls the PauseSessionAsync API without waiting for the session
+to reach the PAUSED state.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `session` | [`Session`](session.md) | `undefined` | The session to pause. |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to pause. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionPauseResult`\>
+
+SessionPauseResult indicating success or failure and request ID
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const session = (await agentBay.create()).session;
+const pauseResult = await agentBay.betaPauseAsync(session);
+await agentBay.betaResumeAsync(session);
+await session.delete();
+```
+
+**`Remarks`**
+
+**Behavior:**
+- This method does not wait for the session to reach the PAUSED state
+- It only submits the pause request to the API
+- The session state transitions from RUNNING -> PAUSING -> PAUSED
+- Paused sessions consume fewer resources but maintain their state
+
+**`See`**
+
+[betaResumeAsync](#betaresumeasync), [Session.betaPauseAsync](session.md#betapauseasync)
+
+___
+
+### betaResumeAsync
+
+▸ **betaResumeAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionResumeResult`\>
+
+Asynchronously resume a session from a paused state.
+
+This method directly calls the ResumeSessionAsync API without waiting for the session
+to reach the RUNNING state.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `session` | [`Session`](session.md) | `undefined` | The session to resume. |
+| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to resume. Defaults to 600 seconds. |
+| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
+
+#### Returns
+
+`Promise`\<`SessionResumeResult`\>
+
+SessionResumeResult indicating success or failure and request ID
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const session = (await agentBay.create()).session;
+await agentBay.betaPauseAsync(session);
+const resumeResult = await agentBay.betaResumeAsync(session);
+await session.delete();
+```
+
+**`Remarks`**
+
+**Behavior:**
+- This method does not wait for the session to reach the RUNNING state
+- It only submits the resume request to the API
+- The session state transitions from PAUSED -> RESUMING -> RUNNING
+- Only sessions in PAUSED state can be resumed
+
+**`See`**
+
+[betaPauseAsync](#betapauseasync), [Session.betaResumeAsync](session.md#betaresumeasync)
+
+___
+
 ### create
 
-▸ **create**(`params`): `Promise`\<`SessionResult`\>
+▸ **create**(`params?`): `Promise`\<`SessionResult`\>
 
 Creates a new AgentBay session with specified configuration.
 
@@ -41,7 +137,7 @@ Creates a new AgentBay session with specified configuration.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `params` | [`CreateSessionParams`](session-params.md) \| `CreateSeesionWithParams` | Configuration parameters for the session: - labels: Key-value pairs for session metadata - imageId: Custom image ID for the session environment - contextSync: Array of context synchronization configurations - browserContext: Browser-specific context configuration - isVpc: Whether to create a VPC session - policyId: Security policy ID - enableBrowserReplay: Enable browser session recording - extraConfigs: Additional configuration options - framework: Framework identifier for tracking |
+| `params` | [`CreateSessionParams`](session-params.md) | Configuration parameters for the session: - labels: Key-value pairs for session metadata - imageId: Custom image ID for the session environment - contextSync: Array of context synchronization configurations - browserContext: Browser-specific context configuration - policyId: Security policy ID - enableBrowserReplay: Enable browser session recording - extraConfigs: Additional configuration options - framework: Framework identifier for tracking |
 
 #### Returns
 
@@ -74,7 +170,6 @@ if (result.success) {
 - Creates a new isolated cloud runtime environment
 - Automatically creates file transfer context if not provided
 - Waits for context synchronization if contextSync is specified
-- For VPC sessions, includes VPC-specific configuration
 - Browser replay creates a separate recording context
 
 **`See`**
@@ -177,100 +272,6 @@ if (result.success) {
   console.log(`Found ${result.sessionIds.length} sessions`);
 }
 ```
-
-___
-
-### pauseAsync
-
-▸ **pauseAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionPauseResult`\>
-
-Asynchronously pause a session, putting it into a dormant state.
-
-This method directly calls the PauseSessionAsync API without waiting for the session
-to reach the PAUSED state.
-
-#### Parameters
-
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `session` | [`Session`](session.md) | `undefined` | The session to pause. |
-| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to pause. Defaults to 600 seconds. |
-| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
-
-#### Returns
-
-`Promise`\<`SessionPauseResult`\>
-
-SessionPauseResult indicating success or failure and request ID
-
-**`Example`**
-
-```typescript
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const session = (await agentBay.create()).session;
-const pauseResult = await agentBay.pauseAsync(session);
-await agentBay.resumeAsync(session);
-await session.delete();
-```
-
-**`Remarks`**
-
-**Behavior:**
-- This method does not wait for the session to reach the PAUSED state
-- It only submits the pause request to the API
-- The session state transitions from RUNNING -> PAUSING -> PAUSED
-- Paused sessions consume fewer resources but maintain their state
-
-**`See`**
-
-[resumeAsync](#resumeasync), [Session.pauseAsync](session.md#pauseasync)
-
-___
-
-### resumeAsync
-
-▸ **resumeAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionResumeResult`\>
-
-Asynchronously resume a session from a paused state.
-
-This method directly calls the ResumeSessionAsync API without waiting for the session
-to reach the RUNNING state.
-
-#### Parameters
-
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `session` | [`Session`](session.md) | `undefined` | The session to resume. |
-| `timeout` | `number` | `600` | Timeout in seconds to wait for the session to resume. Defaults to 600 seconds. |
-| `pollInterval` | `number` | `2.0` | Interval in seconds between status polls. Defaults to 2.0 seconds. |
-
-#### Returns
-
-`Promise`\<`SessionResumeResult`\>
-
-SessionResumeResult indicating success or failure and request ID
-
-**`Example`**
-
-```typescript
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const session = (await agentBay.create()).session;
-await agentBay.pauseAsync(session);
-const resumeResult = await agentBay.resumeAsync(session);
-await session.delete();
-```
-
-**`Remarks`**
-
-**Behavior:**
-- This method does not wait for the session to reach the RUNNING state
-- It only submits the resume request to the API
-- The session state transitions from PAUSED -> RESUMING -> RUNNING
-- Only sessions in PAUSED state can be resumed
-
-**`See`**
-
-[pauseAsync](#pauseasync), [Session.resumeAsync](session.md#resumeasync)
 
 ## Related Resources
 

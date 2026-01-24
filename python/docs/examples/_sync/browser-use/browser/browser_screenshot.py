@@ -26,14 +26,14 @@ from agentbay import Session
 def take_agent_screenshots(session: Session):
     """Take screenshots using the browser agent (returns base64 data)."""
     print("📸 Taking screenshots using browser agent...")
-    
+
     # Navigate to a website
     session.browser.agent.navigate("https://www.aliyun.com")
-    
+
     # Take a simple screenshot (returns base64 data)
     screenshot_b64 = session.browser.agent.screenshot()
     print(f"✅ Agent screenshot captured (base64 length: {len(screenshot_b64)})")
-    
+
     # Save the screenshot to a file
     try:
         if screenshot_b64.startswith("data:image/"):
@@ -47,18 +47,18 @@ def take_agent_screenshots(session: Session):
         print(f"❌ Failed to decode agent screenshot: {e}")
         print(f"Raw response: {screenshot_b64}")
         return
-    
+
     with open("temp_agent_screenshot.png", "wb") as f:
         f.write(agent_screenshot)
     print("✅ Agent screenshot saved as temp_agent_screenshot.png")
-    
+
     # Take a full page screenshot with custom quality
     full_page_b64 = session.browser.agent.screenshot(
         full_page=True,
         quality=75
     )
     print(f"✅ Agent full page screenshot captured (base64 length: {len(full_page_b64)})")
-    
+
     # Save the full page screenshot
     try:
         if full_page_b64.startswith("data:image/"):
@@ -70,7 +70,7 @@ def take_agent_screenshots(session: Session):
         print(f"❌ Failed to decode agent full page screenshot: {e}")
         print(f"Raw response: {full_page_b64}")
         return
-    
+
     with open("temp_agent_full_page_screenshot.png", "wb") as f:
         f.write(image_data)
     print("✅ Agent full page screenshot saved as temp_agent_full_page_screenshot.png")
@@ -79,27 +79,27 @@ def take_agent_screenshots(session: Session):
 def take_browser_screenshots(session: Session):
     """Take screenshots using direct Playwright integration (returns bytes data)."""
     print("📸 Taking screenshots using direct Playwright integration...")
-    
+
     # Get the browser endpoint and connect with Playwright
     endpoint_url = session.browser.get_endpoint_url()
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(endpoint_url)
         context = browser.contexts[0]
         page = context.new_page()
-        
+
         # Navigate to a website
         page.goto("https://www.aliyun.com")
         print("✅ Navigated to website")
-        
+
         # Take a simple screenshot (returns bytes data)
         screenshot_bytes = session.browser.screenshot(page)
         print(f"✅ Browser screenshot captured ({len(screenshot_bytes)} bytes)")
-        
+
         # Save the screenshot to a file
         with open("temp_browser_screenshot.png", "wb") as f:
             f.write(screenshot_bytes)
         print("✅ Browser screenshot saved as temp_browser_screenshot.png")
-        
+
         # Take a full page screenshot with custom options
         full_page_bytes = session.browser.screenshot(
             page,
@@ -108,12 +108,12 @@ def take_browser_screenshots(session: Session):
             quality=80
         )
         print(f"✅ Browser full page screenshot captured ({len(full_page_bytes)} bytes)")
-        
+
         # Save the full page screenshot
         with open("temp_browser_full_page_screenshot.jpg", "wb") as f:
             f.write(full_page_bytes)
         print("✅ Browser full page screenshot saved as temp_browser_full_page_screenshot.jpg")
-        
+
         # Take a screenshot with custom viewport settings
         custom_screenshot = session.browser.screenshot(
             page,
@@ -122,12 +122,12 @@ def take_browser_screenshots(session: Session):
             timeout=30000
         )
         print(f"✅ Browser custom screenshot captured ({len(custom_screenshot)} bytes)")
-        
+
         # Save the custom screenshot
         with open("temp_browser_custom_screenshot.png", "wb") as f:
             f.write(custom_screenshot)
         print("✅ Browser custom screenshot saved as temp_browser_custom_screenshot.png")
-        
+
         browser.close()
 
 
@@ -155,7 +155,7 @@ def main():
     if session is None:
         print("Failed to create session: session is None")
         return
-        
+
     print(f"Session created with ID: {session.session_id}")
 
     try:
@@ -164,17 +164,17 @@ def main():
         if not session.browser.initialize(browser_option):
             print("Failed to initialize browser")
             return
-        
+
         print("Browser initialized successfully")
-        
+
         # Take screenshots using the browser agent
         take_agent_screenshots(session)
-        
+
         print("\n" + "="*50 + "\n")
-        
+
         # Take screenshots using direct Playwright integration
         take_browser_screenshots(session)
-        
+
         print("\n" + "="*50)
         print("✅ All screenshot demos completed successfully!")
         print("📁 Check the current directory for saved screenshot files:")
@@ -186,7 +186,7 @@ def main():
 
     except Exception as e:
         print(f"Error during screenshot demo: {e}")
-    
+
     finally:
         # Clean up: delete the session
         print(f"\n🧹 Cleaning up session {session.session_id}...")

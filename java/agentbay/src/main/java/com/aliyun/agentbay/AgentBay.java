@@ -12,7 +12,7 @@ import com.aliyun.agentbay.model.GetSessionData;
 import com.aliyun.agentbay.model.GetSessionResult;
 import com.aliyun.agentbay.model.SessionParams;
 import com.aliyun.agentbay.model.SessionResult;
-import com.aliyun.agentbay.network.Network;
+import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.util.ResponseUtil;
@@ -22,16 +22,22 @@ import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.wuyingai20250506.Client;
 import com.aliyun.wuyingai20250506.models.CreateMcpSessionRequest;
 import com.aliyun.wuyingai20250506.models.CreateMcpSessionResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+
 /**
  * Main client for interacting with the AgentBay cloud runtime environment
  */
+
 public class AgentBay {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger logger = LoggerFactory.getLogger(AgentBay.class);
 
     private String apiKey;
     private String regionId;
@@ -39,7 +45,7 @@ public class AgentBay {
     private ApiClient apiClient;
     private ConcurrentHashMap<String, Session> sessions;
     private MobileSimulate mobileSimulate;
-    private Network network;
+    private BetaNetworkService betaNetwork;
 
     public AgentBay() throws AgentBayException {
         this(null, null);
@@ -80,7 +86,7 @@ public class AgentBay {
             this.client = new Client(clientConfig);
             this.apiClient = new ApiClient(this.client, apiKey);
             this.mobileSimulate = new MobileSimulate(this);
-            this.network = new Network(this);
+            this.betaNetwork = new BetaNetworkService(this);
         } catch (Exception e) {
             throw new AgentBayException("Failed to initialize AgentBay client", e);
         }
@@ -158,7 +164,8 @@ public class AgentBay {
                             responseData.getNetworkInterfaceIp(),
                             responseData.getHttpPort(),
                             responseData.getToken(),
-                            body.getCode() != null ? body.getCode() : ""
+                            body.getCode() != null ? body.getCode() : "",
+                            responseData.getToolList()
                         );
                     }
 
@@ -220,7 +227,10 @@ public class AgentBay {
         if (getResult.getData() != null) {
             GetSessionData data = getResult.getData();
             session.setResourceUrl(data.getResourceUrl());
-            
+            if (data.getToolList() != null && !data.getToolList().isEmpty()) {
+                session.updateMcpTools(data.getToolList());
+            }
+
             // TODO: VPC functionality temporarily disabled
             /*
             if (data.isVpcResource()) {
@@ -268,12 +278,12 @@ public class AgentBay {
     }
 
     /**
-     * Get network service for this AgentBay instance
+     * Get beta network service (trial feature).
      *
-     * @return Network instance
+     * @return BetaNetworkService instance
      */
-    public Network getNetwork() {
-        return network;
+    public BetaNetworkService getBetaNetwork() {
+        return betaNetwork;
     }
 
     /**
@@ -340,21 +350,21 @@ public class AgentBay {
             // Add BrowserContext as a ContextSync if provided
             if (params.getBrowserContext() != null) {
                 BrowserContext browserContext = params.getBrowserContext();
-                
+
                 // Create a new SyncPolicy with default values for browser context
                 UploadPolicy uploadPolicy = new UploadPolicy(
                     browserContext.isAutoUpload(),
                     UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
                     30
                 );
-                
+
                 // Create BWList with white lists for browser data paths
                 List<WhiteList> whiteLists = new ArrayList<>();
                 whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
                 whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
                 whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
                 BWList bwList = new BWList(whiteLists);
-                
+
                 SyncPolicy syncPolicy = new SyncPolicy(
                     uploadPolicy,
                     DownloadPolicy.defaultPolicy(),
@@ -363,7 +373,7 @@ public class AgentBay {
                     RecyclePolicy.defaultPolicy(),
                     bwList
                 );
-                
+
                 // Serialize the sync_policy to JSON
                 String policyJson = null;
                 try {
@@ -371,31 +381,26 @@ public class AgentBay {
                     policyJson = objectMapper.writeValueAsString(policyMap);
                 } catch (Exception e) {
                 }
-                
+
                 // Create browser context sync item
                 CreateMcpSessionRequest.CreateMcpSessionRequestPersistenceDataList browserContextSync =
                     new CreateMcpSessionRequest.CreateMcpSessionRequestPersistenceDataList();
                 browserContextSync.setContextId(browserContext.getContextId());
                 browserContextSync.setPath(com.aliyun.agentbay.Config.BROWSER_DATA_PATH);
                 browserContextSync.setPolicy(policyJson);
-                
+
                 // Add to persistence data list or create new one if not exists
                 if (request.getPersistenceDataList() == null) {
                     request.setPersistenceDataList(new ArrayList<>());
                 }
                 request.getPersistenceDataList().add(browserContextSync);
-                for (int i = 0; i < request.getPersistenceDataList().size(); i++) {
-                    CreateMcpSessionRequest.CreateMcpSessionRequestPersistenceDataList item = 
-                        request.getPersistenceDataList().get(i);
-
-                }
             }
 
             // Set image ID if provided
             if (params.getImageId() != null) {
                 request.setImageId(params.getImageId());
             }
-            
+
             // Set labels if provided
             if (params.getLabels() != null && !params.getLabels().isEmpty()) {
                 try {
@@ -410,9 +415,9 @@ public class AgentBay {
                 request.setMcpPolicyId(params.getPolicyId());
             }
 
-            // Set network ID if provided
-            if (params.getNetworkId() != null && !params.getNetworkId().isEmpty()) {
-                request.setNetworkId(params.getNetworkId());
+            // Beta: Set network ID if provided
+            if (params.getBetaNetworkId() != null && !params.getBetaNetworkId().isEmpty()) {
+                request.setNetworkId(params.getBetaNetworkId());
             }
 
             // Set enable_browser_replay if explicitly set to false
@@ -502,23 +507,28 @@ public class AgentBay {
             SessionParams sessionParams = new SessionParams();
             sessionParams.setBrowserType(params.getBrowserType());
             Session session = new Session(result.getSessionId(), this, sessionParams);
+            if (params.getImageId() != null) {
+                session.setImageId(params.getImageId());
+            }
 
             // Set browser recording state (default to True if not explicitly set to False)
             session.setEnableBrowserReplay(params.getEnableBrowserReplay() != null ? params.getEnableBrowserReplay() : true);
 
-            // Set VPC-related fields if this is a VPC session
-            /*if (response.getBody().getData() != null) {
-                boolean vpcResource = (response.getBody().getData().getHttpPort() != null && !response.getBody().getData().getHttpPort().isEmpty());
-                if (vpcResource) {
-                    session.setHttpPort(response.getBody().getData().getHttpPort());
-                    session.updateVpcLinkUrl();
-                    session.setToken(response.getBody().getData().getToken());
-                    try {
-                        session.listMcpTools();
-                    } catch (Exception e) {
-                    }
+            // LinkUrl/token may be returned by the server for direct tool calls.
+            if (response.getBody().getData() != null) {
+                if (response.getBody().getData().getResourceUrl() != null) {
+                    session.setResourceUrl(response.getBody().getData().getResourceUrl());
                 }
-            }*/
+                if (response.getBody().getData().getToken() != null) {
+                    session.setToken(response.getBody().getData().getToken());
+                }
+                if (response.getBody().getData().getLinkUrl() != null) {
+                    session.setLinkUrl(response.getBody().getData().getLinkUrl());
+                }
+                if (response.getBody().getData().getToolList() != null) {
+                    session.updateMcpTools(response.getBody().getData().getToolList());
+                }
+            }
 
             sessions.put(result.getSessionId(), session);
             result.setSession(session);
@@ -539,10 +549,10 @@ public class AgentBay {
             }
 
             // Handle mobile simulate if configured
-            if (params.getExtraConfigs() != null && 
+            if (params.getExtraConfigs() != null &&
                 params.getExtraConfigs().getMobile() != null &&
                 params.getExtraConfigs().getMobile().getSimulateConfig() != null) {
-                
+
                 MobileSimulateConfig simConfig = params.getExtraConfigs().getMobile().getSimulateConfig();
                 if (simConfig.isSimulate() && simConfig.getSimulatePath() != null) {
                     waitForMobileSimulate(session, simConfig);
@@ -573,16 +583,15 @@ public class AgentBay {
     private void waitForMobileSimulate(Session session, MobileSimulateConfig simConfig) {
         String mobileSimPath = simConfig.getSimulatePath();
         MobileSimulateMode mobileSimMode = simConfig.getSimulateMode();
-        
+
         if (mobileSimPath == null || mobileSimPath.isEmpty()) {
             return;
         }
-        
+
         try {
-            long startTime = System.currentTimeMillis();
             String devInfoFilePath = mobileSimPath + "/dev_info.json";
             String wyaApplyOption = "";
-            
+
             if (mobileSimMode == null || mobileSimMode == MobileSimulateMode.PROPERTIES_ONLY) {
                 wyaApplyOption = "";
             } else if (mobileSimMode == MobileSimulateMode.SENSORS_ONLY) {
@@ -594,16 +603,12 @@ public class AgentBay {
             } else if (mobileSimMode == MobileSimulateMode.ALL) {
                 wyaApplyOption = "-all";
             }
-            
-            String command = String.format("chmod -R a+rwx %s; wya apply %s %s", 
+
+            String command = String.format("chmod -R a+rwx %s; wya apply %s %s",
                                           mobileSimPath, wyaApplyOption, devInfoFilePath).trim();
             com.aliyun.agentbay.model.CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
             if (cmdResult.isSuccess()) {
-                long endTime = System.currentTimeMillis();
-                double consumeTime = (endTime - startTime) / 1000.0;
-                String modeStr = mobileSimMode != null ? mobileSimMode.getValue() : "PropertiesOnly";
-                if (cmdResult.getOutput() != null && !cmdResult.getOutput().isEmpty()) {
-                }
+                // no-op
             } else {
             }
         } catch (Exception e) {
@@ -613,14 +618,28 @@ public class AgentBay {
     /**
      * Wait for context synchronization to complete
      *
+     * Uses exponential backoff to balance between quick response and server load:
+     * - Starts with short intervals (0.5s) for fast completion detection
+     * - Gradually increases intervals (up to 5s max) to reduce server load
+     * - Uses exponential backoff factor of 1.1
+     *
      * @param session The session to wait for context synchronization
      */
     private void waitForContextSynchronization(Session session) {
-        // Wait for context synchronization to complete
-        int maxRetries = 150; // Maximum number of retries
-        int retryInterval = 2000; // 2 seconds in milliseconds
+        // Exponential backoff configuration
+        // Starts with short intervals (0.5s) for fast completion detection
+        // Gradually increases intervals (up to 5s max) to reduce server load
+        // Uses exponential backoff factor of 1.1
+        long initialInterval = 500; // Start with 0.5 seconds (500ms) for quick response
+        long maxInterval = 5000; // Maximum interval (5s) to avoid excessive delays
+        double backoffFactor = 1.1; // Multiply interval by this factor each retry
+        int maxRetries = 50; // Maximum number of retries
+
+        double currentInterval = initialInterval;
 
         for (int retry = 0; retry < maxRetries; retry++) {
+            boolean shouldContinue = false;
+
             try {
                 // Get context status data
                 com.aliyun.agentbay.context.ContextInfoResult infoResult = session.getContext().info();
@@ -644,16 +663,25 @@ public class AgentBay {
                     if (hasFailure) {
                     } else {
                     }
-                    break;
+                    break; // Exit loop, no need to sleep or backoff
                 }
-                Thread.sleep(retryInterval);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
+
+                // Need to continue polling
+                shouldContinue = true;
             } catch (Exception e) {
+                // On error, continue polling with backoff
+                shouldContinue = true;
+            }
+
+            // Apply exponential backoff before next retry (if continuing)
+            if (shouldContinue && retry < maxRetries - 1) {
                 try {
-                    Thread.sleep(retryInterval);
-                } catch (InterruptedException ie) {
+                    // Sleep with current interval
+                    Thread.sleep((long) currentInterval);
+
+                    // Exponential backoff: increase interval for next retry, capped at maxInterval
+                    currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
                 }

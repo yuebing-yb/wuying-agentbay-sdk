@@ -28,7 +28,7 @@ class BrowserFingerprintContext()
 
 Browser fingerprint context configuration.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, fingerprint_context_id: str)
@@ -55,7 +55,7 @@ Browser proxy configuration.
 Supports two types of proxy: custom proxy, wuying proxy.
 wuying proxy support two strategies: restricted and polling.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, proxy_type: Literal["custom", "wuying"],
@@ -101,7 +101,7 @@ class BrowserViewport()
 
 Browser viewport options.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, width: int = 1920, height: int = 1080)
@@ -115,7 +115,7 @@ class BrowserScreen()
 
 Browser screen options.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, width: int = 1920, height: int = 1080)
@@ -129,7 +129,7 @@ class BrowserFingerprint()
 
 Browser fingerprint options.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, devices: list[Literal["desktop", "mobile"]] = None,
@@ -146,7 +146,7 @@ class BrowserOption()
 
 browser initialization options.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, use_stealth: bool = False,

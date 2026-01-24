@@ -113,6 +113,7 @@ type GetSessionResponseBodyData struct {
 	Status             *string `json:"Status,omitempty" xml:"Status,omitempty"`
 	Success            *bool   `json:"Success,omitempty" xml:"Success,omitempty"`
 	Token              *string `json:"Token,omitempty" xml:"Token,omitempty"`
+	ToolList           *string `json:"ToolList,omitempty" xml:"ToolList,omitempty"`
 	VpcResource        *bool   `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 	Contexts           []*GetSessionResponseBodyDataContexts `json:"contexts,omitempty" xml:"contexts,omitempty" type:"Repeated"`
 }
@@ -159,6 +160,10 @@ func (s *GetSessionResponseBodyData) GetSuccess() *bool {
 
 func (s *GetSessionResponseBodyData) GetToken() *string {
 	return s.Token
+}
+
+func (s *GetSessionResponseBodyData) GetToolList() *string {
+	return s.ToolList
 }
 
 func (s *GetSessionResponseBodyData) GetVpcResource() *bool {
@@ -211,6 +216,11 @@ func (s *GetSessionResponseBodyData) SetSuccess(v bool) *GetSessionResponseBodyD
 
 func (s *GetSessionResponseBodyData) SetToken(v string) *GetSessionResponseBodyData {
 	s.Token = &v
+	return s
+}
+
+func (s *GetSessionResponseBodyData) SetToolList(v string) *GetSessionResponseBodyData {
+	s.ToolList = &v
 	return s
 }
 

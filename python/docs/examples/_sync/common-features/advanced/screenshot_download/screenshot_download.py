@@ -57,11 +57,11 @@ def main():
         # Take screenshot and get URL
         print("\nTaking screenshot...")
         screenshot_result = session.mobile.screenshot()
-        
+
         if not screenshot_result.success:
             print(f"Failed to take screenshot: {screenshot_result.error_message}")
             return
-            
+
         print(f"Screenshot taken successfully")
         print(f"Screenshot URL: {screenshot_result.data}")
         print(f"Request ID: {screenshot_result.request_id}")
@@ -69,22 +69,22 @@ def main():
         # Download screenshot to local file
         if screenshot_result.data:
             print("\nDownloading screenshot from URL...")
-            
+
             # Create downloads directory if it doesn't exist
             download_dir = "downloads"
             os.makedirs(download_dir, exist_ok=True)
-            
+
             # Define local file path
             local_file_path = os.path.join(download_dir, f"screenshot_{session.session_id}.png")
-            
+
             # Download the image
             response = requests.get(screenshot_result.data, timeout=30)
             response.raise_for_status()
-            
+
             # Save to local file
             with open(local_file_path, "wb") as f:
                 f.write(response.content)
-            
+
             print(f"Screenshot downloaded successfully")
             print(f"Saved to: {os.path.abspath(local_file_path)}")
             print(f"File size: {len(response.content)} bytes")

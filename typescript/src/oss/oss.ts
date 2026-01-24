@@ -74,40 +74,51 @@ export class Oss {
         endpoint: endpoint || "",
         region: region || "",
       };
-      const result = await this.session.callMcpTool("oss_env_init", args);
-
-      if (!result.success) {
+      const result = await this.session.callMcpTool(
+        "oss_env_init",
+        args,
+        false
+      );
+      
+      if (result.success) {
+        if (result.data) {
+          const clientConfigRaw = result.data;
+          // Check if data contains "failed" field
+          if (typeof clientConfigRaw === 'string' && clientConfigRaw.toLowerCase().includes('failed')) {
+            return {
+              requestId: result.requestId,
+              success: false,
+              clientConfig: "",
+              errorMessage: `OSS environment initialization failed: ${clientConfigRaw}`,
+            };
+          }
+          return {
+            requestId: result.requestId,
+            success: true,
+            clientConfig: clientConfigRaw,
+            errorMessage: "",
+          };
+        } else {
+          return {
+            requestId: result.requestId,
+            success: false,
+            clientConfig: "",
+            errorMessage: "Failed to initialize OSS environment",
+          };
+        }
+      } else {
         return {
           requestId: result.requestId,
           success: false,
-          clientConfig: {},
-          errorMessage: result.errorMessage,
+          clientConfig: "",
+          errorMessage: result.errorMessage || "Failed to initialize OSS environment",
         };
       }
-
-      let clientConfig: Record<string, any> = {};
-      try {
-        clientConfig = JSON.parse(result.data);
-      } catch (err) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          clientConfig: {},
-          errorMessage: `Failed to parse client config: ${err}`,
-        };
-      }
-
-      return {
-        requestId: result.requestId,
-        success: true,
-        clientConfig,
-        errorMessage: "",
-      };
     } catch (error) {
       return {
         requestId: "",
         success: false,
-        clientConfig: {},
+        clientConfig: "",
         errorMessage: `Failed to initialize OSS environment: ${error}`,
       };
     }
@@ -146,7 +157,11 @@ export class Oss {
         object,
         path,
       };
-      const result = await this.session.callMcpTool("oss_upload", args);
+      const result = await this.session.callMcpTool(
+        "oss_upload",
+        args,
+        false
+      );
 
       return {
         requestId: result.requestId,
@@ -190,7 +205,11 @@ export class Oss {
         url,
         path,
       };
-      const result = await this.session.callMcpTool("oss_upload_annon", args);
+      const result = await this.session.callMcpTool(
+        "oss_upload_annon",
+        args,
+        false
+      );
 
       return {
         requestId: result.requestId,
@@ -241,7 +260,11 @@ export class Oss {
         object,
         path,
       };
-      const result = await this.session.callMcpTool("oss_download", args);
+      const result = await this.session.callMcpTool(
+        "oss_download",
+        args,
+        false
+      );
 
       return {
         requestId: result.requestId,
@@ -288,7 +311,11 @@ export class Oss {
         url,
         path,
       };
-      const result = await this.session.callMcpTool("oss_download_annon", args);
+      const result = await this.session.callMcpTool(
+        "oss_download_annon",
+        args,
+        false
+      );
 
       return {
         requestId: result.requestId,

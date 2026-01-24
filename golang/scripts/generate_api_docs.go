@@ -273,6 +273,17 @@ var mappings = []docMapping{
 		IncludeAllFuncs: true,
 	},
 	{
+		Target:      "common-features/advanced/network.md",
+		Title:       "Network",
+		PackagePath: "pkg/agentbay",
+		ModuleName:  "network",
+		TypeNames: []string{
+			"BetaNetworkService",
+			"BetaNetworkResult",
+			"BetaNetworkStatusResult",
+		},
+	},
+	{
 		Target:          "browser-use/browser.md",
 		Title:           "Browser",
 		PackagePath:     "pkg/agentbay/browser",

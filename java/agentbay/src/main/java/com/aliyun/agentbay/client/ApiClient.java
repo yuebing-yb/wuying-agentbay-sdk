@@ -26,10 +26,11 @@ public class ApiClient {
      * @param sessionId The session ID
      * @param toolName The tool name
      * @param args The tool arguments
+     * @param serverName The MCP server name (optional)
      * @return CallMcpToolResponse
      * @throws AgentBayException if the call fails
      */
-    public CallMcpToolResponse callMcpTool(String sessionId, String toolName, Object args) throws AgentBayException {
+    public CallMcpToolResponse callMcpTool(String sessionId, String toolName, Object args, String serverName) throws AgentBayException {
         try {
             CallMcpToolRequest request = new CallMcpToolRequest();
             request.authorization = "Bearer " + apiKey;
@@ -37,6 +38,9 @@ public class ApiClient {
 
             // Use 'name' field like Python version, with plain tool name
             request.name = toolName;
+            if (serverName != null) {
+                request.server = serverName;
+            }
 
             // Properly serialize arguments to JSON
             String argsJson;
@@ -64,18 +68,24 @@ public class ApiClient {
         }
     }
 
+    public CallMcpToolResponse callMcpTool(String sessionId, String toolName, Object args) throws AgentBayException {
+        return callMcpTool(sessionId, toolName, args, null);
+    }
+
     /**
      * List available MCP tools
      *
-     * @param sessionId The session ID
+     * @param imageId The image ID
      * @return ListMcpToolsResponse
      * @throws AgentBayException if the call fails
      */
-    public ListMcpToolsResponse listMcpTools(String sessionId) throws AgentBayException {
+    public ListMcpToolsResponse listMcpTools(String imageId) throws AgentBayException {
         try {
             ListMcpToolsRequest request = new ListMcpToolsRequest();
             request.authorization = "Bearer " + apiKey;
-            // sessionId is not available in this API request
+            if (imageId != null && !imageId.isEmpty()) {
+                request.imageId = imageId;
+            }
 
             ListMcpToolsResponse response = client.listMcpTools(request);
 

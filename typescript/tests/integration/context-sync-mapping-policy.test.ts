@@ -1,4 +1,4 @@
-import { AgentBay } from "../../src/agent-bay";
+import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
 import {
   newUploadPolicy,
   newDownloadPolicy,
@@ -6,8 +6,8 @@ import {
   newExtractPolicy,
   MappingPolicy,
   SyncPolicy,
+  ContextSync,
 } from "../../src/context-sync";
-import { CreateSessionParams } from "../../src/session-params";
 
 describe("Context Sync with MappingPolicy Integration Tests", () => {
   let agentBay: AgentBay;
@@ -54,10 +54,12 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
       };
 
       // Create Windows session with context sync
-      const windowsSessionParams = new CreateSessionParams();
-      windowsSessionParams.addContextSync(context.id, windowsPath, windowsSyncPolicy);
-      windowsSessionParams.withImageId("windows_latest");
-      windowsSessionParams.withLabels({ test: "mapping-policy-windows" });
+      const windowsContextSync = new ContextSync(context.id, windowsPath, windowsSyncPolicy);
+      const windowsSessionParams: CreateSessionParams = {
+        contextSync: [windowsContextSync],
+        imageId: "windows_latest",
+        labels: { test: "mapping-policy-windows" }
+      };
 
       // Create Windows session
       const windowsSessionResult = await agentBay.create(windowsSessionParams);
@@ -125,10 +127,12 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
       };
 
       // Create Linux session with context sync and mapping policy
-      const linuxSessionParams = new CreateSessionParams();
-      linuxSessionParams.addContextSync(context.id, linuxPath, linuxSyncPolicy);
-      linuxSessionParams.withImageId("linux_latest");
-      linuxSessionParams.withLabels({ test: "mapping-policy-linux" });
+      const linuxContextSync = new ContextSync(context.id, linuxPath, linuxSyncPolicy);
+      const linuxSessionParams: CreateSessionParams = {
+        contextSync: [linuxContextSync],
+        imageId: "linux_latest",
+        labels: { test: "mapping-policy-linux" }
+      };
 
       // Create Linux session
       const linuxSessionResult = await agentBay.create(linuxSessionParams);

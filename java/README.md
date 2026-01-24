@@ -9,13 +9,13 @@
 <dependency>
     <groupId>com.aliyun</groupId>
     <artifactId>agentbay-sdk</artifactId>
-    <version>0.0.7</version>
+    <version>0.15.0</version>
 </dependency>
 ```
 
 ### Gradle
 ```gradle
-implementation 'com.aliyun:agentbay-sdk:0.0.7'
+implementation 'com.aliyun:agentbay-sdk:0.15.0'
 ```
 
 ## 🚀 Prerequisites

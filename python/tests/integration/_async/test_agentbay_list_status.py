@@ -67,7 +67,7 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
                         result = await session.get_status()
                         print(f"  ✓ Resumed session: {session.session_id}{result.status}")
                         if(result.status in ["PAUSED"]):
-                            await session.resume()
+                            await session.beta_resume()
                             print(f"  ✓ Resumed session: {session.session_id}")
                         if result.status not in ["DELETING", "DELETED","RESUMING","PAUSING"]:
                             result = await self.agent_bay.delete(session)
@@ -185,7 +185,7 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
 
         # Pause the session
         print(f"\nStep 2: Pausing session...")
-        pause_result = await self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.beta_pause(session)
 
         # Verify pause result
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -213,7 +213,7 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
 
         # Pause the session first
         print(f"\nStep 1: Pausing session...")
-        pause_result = await self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.beta_pause(session)
         self.assertTrue(
             pause_result.success, f"Pause failed: {pause_result.error_message}"
         )
@@ -235,7 +235,7 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
 
         # Resume the session (asynchronous)
         print(f"\nStep 3: Resuming session asynchronously...")
-        resume_result = await self.agent_bay.resume_async(session)
+        resume_result = await self.agent_bay.beta_resume_async(session)
 
         # Verify async resume result
         self.assertIsInstance(resume_result, SessionResumeResult)
@@ -267,7 +267,7 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
         
         # Pause the session
         print(f"\nStep 2: Pausing session...")
-        pause_result = await self.agent_bay.pause(session)
+        pause_result = await self.agent_bay.beta_pause(session)
 
         # Verify pause result
         self.assertIsInstance(pause_result, SessionPauseResult)
@@ -282,7 +282,7 @@ class TestSessionPauseResumeIntegration(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(2)
 
         print(f"  ✓ Checking session status before resuming")
-        await session.resume()
+        await session.beta_resume()
         print(f"  ✓ Session resumed")
 
         # Session should be PAUSED or PAUSING after pause operation

@@ -27,12 +27,12 @@ async def test_pause_resume_session(agent_bay):
     print(f"Created session: {session.session_id}")
 
     # Try to pause the session (may not be supported by backend)
-    pause_result = await session.pause()
+    pause_result = await session.beta_pause()
     if pause_result.success:
         print("Session paused successfully")
 
         # Resume the session
-        resume_result = await session.resume()
+        resume_result = await session.beta_resume()
         if resume_result.success:
             print("Session resumed successfully")
         else:
@@ -52,16 +52,16 @@ async def test_pause_already_paused(agent_bay):
     create_result = await agent_bay.create()
     session = create_result.session
 
-    await session.pause()
+    await session.beta_pause()
     print("Session paused first time")
 
     # Try to pause again
-    pause_result = await session.pause()
+    pause_result = await session.beta_pause()
     # Should either succeed (idempotent) or fail gracefully
     print(f"Second pause result: {pause_result.success}")
 
     # Clean up
-    await session.resume()
+    await session.beta_resume()
     await session.delete()
 
 
@@ -73,7 +73,7 @@ async def test_resume_running_session(agent_bay):
     session = create_result.session
 
     # Try to resume without pausing first
-    resume_result = await session.resume()
+    resume_result = await session.beta_resume()
     # Should either succeed (idempotent) or fail gracefully
     print(f"Resume running session result: {resume_result.success}")
 
@@ -95,11 +95,11 @@ async def test_pause_resume_with_operations(agent_bay):
     print("Command executed before pause")
 
     # Pause
-    await session.pause()
+    await session.beta_pause()
     print("Session paused")
 
     # Resume
-    await session.resume()
+    await session.beta_resume()
     print("Session resumed")
 
     # Execute a command after resume

@@ -1,4 +1,4 @@
-import { AgentBay, Session } from "../../src";
+import { AgentBay, Session, CreateSessionParams } from "../../src";
 import { APIError } from "../../src/exceptions";
 import * as sinon from "sinon";
 
@@ -245,43 +245,23 @@ describe("Session Parameters", () => {
 
     describe("CreateSessionParams class enableBrowserReplay functionality", () => {
         it("should have enableBrowserReplay field with default true value", () => {
-            const params = new (require("../../src/session-params").CreateSessionParams)();
+            const params:CreateSessionParams = {
+                enableBrowserReplay:true
+            };
 
             expect(params.enableBrowserReplay).toBe(true);
         });
 
-        it("should support withEnableRecord method", () => {
-            const params = new (require("../../src/session-params").CreateSessionParams)();
-
-            const result = params.withEnableRecord(true);
-
-            expect(result.enableBrowserReplay).toBe(true);
-            expect(result).toBe(params); // Should return same instance for chaining
-        });
-
         it("should support method chaining with enableBrowserReplay", () => {
-            const params = new (require("../../src/session-params").CreateSessionParams)();
+            const params :CreateSessionParams = {
+                labels: { project: "test", env: "development" },
+                enableBrowserReplay:true,
+                imageId:"browser_latest"
+            };
 
-            const result = params
-                .withLabels({ project: "test", env: "development" })
-                .withImageId("browser_latest")
-                .withEnableRecord(true)
-                .withIsVpc(false);
-
-            expect(result.labels).toEqual({ project: "test", env: "development" });
-            expect(result.imageId).toBe("browser_latest");
-            expect(result.enableBrowserReplay).toBe(true);
-            expect(result.isVpc).toBe(false);
-            expect(result).toBe(params); // Should return same instance for chaining
-        });
-
-        it("should include enableBrowserReplay in toJSON output", () => {
-            const params = new (require("../../src/session-params").CreateSessionParams)();
-            params.withEnableRecord(true);
-
-            const json = params.toJSON();
-
-            expect(json.enableBrowserReplay).toBe(true);
+            expect(params.labels).toEqual({ project: "test", env: "development" });
+            expect(params.imageId).toBe("browser_latest");
+            expect(params.enableBrowserReplay).toBe(true);
         });
 
         it("should handle enableBrowserReplay in fromJSON", () => {
@@ -289,11 +269,10 @@ describe("Session Parameters", () => {
                 labels: { test: "value" },
                 imageId: "test_image",
                 contextSync: [],
-                isVpc: false,
                 enableBrowserReplay: true,
             };
 
-            const params = (require("../../src/session-params").CreateSessionParams).fromJSON(config);
+            const params :CreateSessionParams = { ...config};
 
             expect(params.enableBrowserReplay).toBe(true);
             expect(params.labels).toEqual({ test: "value" });

@@ -433,6 +433,48 @@ if (result.isSuccess()) {
 }
 ```
 
+### betaTakeScreenshot
+
+```java
+public ScreenshotBytesResult betaTakeScreenshot()
+```
+
+Takes a screenshot of the current screen and returns raw PNG bytes. The backend may also provide the captured image dimensions, exposed as `width` and `height` (in pixels).
+
+**Returns:**
+- `ScreenshotBytesResult`: Result object containing:
+  - `success` (boolean): True if the operation succeeded
+  - `data` (byte[]): Raw image bytes
+  - `format` (String): Image format (currently `png`)
+  - `width` (Integer, optional): Image width in pixels
+  - `height` (Integer, optional): Image height in pixels
+  - `requestId` (String): Unique identifier for this API request
+  - `errorMessage` (String): Error description (if success is false)
+
+**Example:**
+
+```java
+ScreenshotBytesResult s = session.getMobile().betaTakeScreenshot();
+if (s.isSuccess()) {
+    System.out.println("Bytes=" + s.getData().length + ", size=" + s.getWidth() + "x" + s.getHeight());
+}
+```
+
+### betaTakeLongScreenshot
+
+```java
+public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String format)
+```
+
+Takes a long screenshot by scrolling and stitching multiple screens, and returns raw image bytes.
+
+**Parameters:**
+- `maxScreens` (int): Maximum number of screens to capture and stitch
+- `format` (String): Image format (e.g., `png`)
+
+**Returns:**
+- `ScreenshotBytesResult`: Same fields as `betaTakeScreenshot` (including optional `width`/`height`)
+
 ---
 
 ## Mobile Configuration Operations

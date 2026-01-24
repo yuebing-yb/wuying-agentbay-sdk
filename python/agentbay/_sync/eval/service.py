@@ -2287,8 +2287,7 @@ if __name__ == "__main__":
                 exit(1)
         # -----------------
 
-        results = 
-            run_multiple_tasks(
+        results = run_multiple_tasks(
                 tasks=tasks,
                 llm=llm,
                 run_id=run_id,
@@ -2310,7 +2309,7 @@ if __name__ == "__main__":
                 planner_llm=planner_llm,
                 planner_interval=args.planner_interval,
             )
-        
+
 
         _logger.info("Task completed. Saving results...")
         # Save results

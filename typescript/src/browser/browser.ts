@@ -43,9 +43,9 @@ export class BrowserFingerprintContext {
 
   /**
    * Initialize BrowserFingerprintContext with context id.
-   * 
+   *
    * @param fingerprintContextId - ID of the fingerprint context for browser fingerprint.
-   * 
+   *
    * @throws {Error} If fingerprintContextId is empty.
    */
   constructor(fingerprintContextId: string) {
@@ -454,9 +454,9 @@ export class Browser {
       // Map BrowserOption to API BrowserOption payload
       const browserOptionMap = browserOption.toMap();
 
-      // Enable record if session.enableBrowserReplay is true
-      if (this.session.enableBrowserReplay) {
-        browserOptionMap['enableRecord'] = true;
+      // Set enableRecord based on session.enableBrowserReplay
+      if (this.session.enableBrowserReplay !== undefined) {
+        browserOptionMap['enableRecord'] = this.session.enableBrowserReplay;
       }
 
       if (Object.keys(browserOptionMap).length > 0) {
@@ -527,9 +527,9 @@ export class Browser {
       // Map BrowserOption to API BrowserOption payload
       const browserOptionMap = browserOption.toMap();
 
-      // Enable record if session.enableBrowserReplay is true
-      if (this.session.enableBrowserReplay) {
-        browserOptionMap['enableRecord'] = true;
+      // Set enableRecord based on session.enableBrowserReplay
+      if (this.session.enableBrowserReplay !== undefined) {
+        browserOptionMap['enableRecord'] = this.session.enableBrowserReplay;
       }
 
       if (Object.keys(browserOptionMap).length > 0) {
@@ -578,7 +578,7 @@ export class Browser {
    */
   async destroy(): Promise<void> {
     if (this.isInitialized()) {
-      await this.session.callMcpTool("stopChrome", {});
+      await this.session.callMcpTool("stopChrome", {}, false);
     } else {
       throw new BrowserError("Browser is not initialized. Cannot destroy browser.");
     }
@@ -610,22 +610,17 @@ export class Browser {
     }
 
     try {
-      if (this.session.isVpc) {
-        logDebug(`VPC mode, endpoint_router_port: ${this.session.httpPort}`);
-        this._endpointUrl = `ws://${this.session.networkInterfaceIp}:${this.session.httpPort}`;
+      const { GetCdpLinkRequest } = await import('../api/models/model');
+      const request = new GetCdpLinkRequest({
+        authorization: `Bearer ${this.session.getAPIKey()}`,
+        sessionId: this.session.sessionId
+      });
+      const response = await this.session.getAgentBay().getClient().getCdpLink(request);
+      if (response.body && response.body.success && response.body.data) {
+        this._endpointUrl = response.body.data.url || null;
       } else {
-        const { GetCdpLinkRequest } = await import('../api/models/model');
-        const request = new GetCdpLinkRequest({
-          authorization: `Bearer ${this.session.getAPIKey()}`,
-          sessionId: this.session.sessionId
-        });
-        const response = await this.session.getAgentBay().getClient().getCdpLink(request);
-        if (response.body && response.body.success && response.body.data) {
-          this._endpointUrl = response.body.data.url || null;
-        } else {
-          const errorMsg = response.body?.message || "Unknown error";
-          throw new BrowserError(`Failed to get CDP link: ${errorMsg}`);
-        }
+        const errorMsg = response.body?.message || "Unknown error";
+        throw new BrowserError(`Failed to get CDP link: ${errorMsg}`);
       }
       return this._endpointUrl!;
     } catch (error) {
@@ -652,7 +647,7 @@ export class Browser {
    */
   private _stopBrowser(): void {
     if (this.isInitialized()) {
-      this.session.callMcpTool("stopChrome", {});
+      this.session.callMcpTool("stopChrome", {}, false);
     } else {
       throw new BrowserError("Browser is not initialized. Cannot stop browser.");
     }
@@ -754,7 +749,7 @@ export class Browser {
       // Take the screenshot
       const screenshotBuffer = await page.screenshot(enhancedOptions);
       logInfo("Screenshot captured successfully.");
-      
+
       // Convert Buffer to Uint8Array
       return new Uint8Array(screenshotBuffer);
     } catch (error) {

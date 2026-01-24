@@ -17,10 +17,19 @@ from .._common.models.browser_agent import (
     ExtractOptions,
 )
 from .base_service import BaseService as BaseService
+from .._common.trace_manager import TraceManager
 
 _logger = get_logger("browser_agent")
 
 T = TypeVar("T", bound=BaseModel)
+
+ERROR_ACT_START_FAIL = 9000
+ERROR_ACT_TASK_FAILED = 9001
+ERROR_ACT_TIMEOUT = 9002
+ERROR_OBSERVE_FAIL = 9020
+ERROR_EXTRACT_FAIL = 9040
+ERROR_EXTRACT_START_FAIL = 9041
+ERROR_EXTRACT_TIMEOUT = 9042
 
 
 class BrowserAgent(BaseService):
@@ -162,12 +171,46 @@ class BrowserAgent(BaseService):
         context_id: int,
         page_id: Optional[str],
     ) -> "ActResult":
+        # Initialize trace manager and send start trace
+        trace_manager = TraceManager.get_instance()
+        start_time = time.time()
+        event_name = self._execute_act.__name__
+        span_key = f"act.{event_name}"
+        trace_extra = f"{context_id}_{page_id or 'default'}"
+
+        # Determine task_name before using it
+        task_name = "act"
+        if isinstance(action_input, ActOptions):
+            task_name = action_input.action
+        elif isinstance(action_input, ObserveResult):
+            task_name = action_input.method
+
+        # Send start trace
+        trace_manager.send_trace(
+            owner="browser_agent",
+            trace_data={
+                "event": event_name,
+                "context_id": str(context_id),
+                "page_id": page_id or "default",
+                "task_name": task_name,
+                "status": "success",
+            },
+            span_key=span_key,
+            biz_index=0,
+            extra=trace_extra,
+            is_start=True,
+        )
+
+        # Get trace_id from trace_manager
+        trace_id = trace_manager.get_trace_id(0, trace_extra)
+        _logger.info(f"trace id for act: {trace_id}")
+
         _logger.debug(f"Acting page_id: {page_id}, context_id: {context_id}")
         args = {
             "context_id": context_id,
             "page_id": page_id,
+            "trace_id": trace_id,
         }
-        task_name = "act"
         if isinstance(action_input, ActOptions):
             args.update(
                 {
@@ -177,7 +220,6 @@ class BrowserAgent(BaseService):
                     "timeout": action_input.timeout,
                 }
             )
-            task_name = action_input.action
         elif isinstance(action_input, ObserveResult):
             action_dict = {
                 "method": action_input.method,
@@ -188,13 +230,33 @@ class BrowserAgent(BaseService):
                 ),
             }
             args["action"] = json.dumps(action_dict)
-            task_name = action_input.method
         args = {k: v for k, v in args.items() if v is not None}
         _logger.info(f"{task_name}")
 
         response = self._call_mcp_tool_timeout("page_use_act_async", args)
+        request_id = response.request_id if response else ""
         if not response.success:
-            raise BrowserError(f"Failed to start act task: {response.error_message}")
+            error_msg = response.error_message or "Failed to start act task"
+            duration_ms = int((time.time() - start_time) * 1000)
+            trace_manager.send_trace(
+                owner="browser_agent",
+                trace_data={
+                    "event": event_name,
+                    "context_id": str(context_id),
+                    "page_id": page_id or "default",
+                    "task_name": task_name,
+                    "status": "error",
+                    "duration_ms": str(duration_ms),
+                    "errorCode": str(ERROR_ACT_START_FAIL),
+                    "errorMessage": error_msg,
+                    "request_id": request_id,
+                },
+                span_key=span_key,
+                biz_index=0,
+                extra=trace_extra,
+                is_start=False,
+            )
+            raise BrowserError(error_msg)
 
         task_id = json.loads(response.data)["task_id"]
         poll_interval_sec = 5.0
@@ -235,6 +297,27 @@ class BrowserAgent(BaseService):
                     _logger.info(
                         f"Task {task_id}:{task_name} is done. Success: {success}. {task_status}"
                     )
+                    duration_ms = int((time.time() - start_time) * 1000)
+                    result_request_id = result.request_id if result else ""
+                    trace_manager.send_trace(
+                        owner="browser_agent",
+                        trace_data={
+                            "event": event_name,
+                            "context_id": str(context_id),
+                            "page_id": page_id or "default",
+                            "task_id": task_id,
+                            "task_name": task_name,
+                            "status": "success" if success else "error",
+                            "duration_ms": str(duration_ms),
+                            "steps_count": str(len(steps) if steps else 0),
+                            "request_id": result_request_id,
+                            **({"errorCode": str(ERROR_ACT_TASK_FAILED), "errorMessage": task_status} if not success else {}),
+                        },
+                        span_key=span_key,
+                        biz_index=0,
+                        extra=trace_extra,
+                        is_start=False,
+                    )
                     return ActResult(success=success, message=task_status)
                 task_status = (
                     f"{len(steps)} steps done. Details: {steps}"
@@ -245,9 +328,28 @@ class BrowserAgent(BaseService):
             elapsed = time.monotonic() - start_ts
             timeout_s = client_timeout if client_timeout is not None else 300
             if elapsed >= timeout_s:
-                raise BrowserError(
-                    f"Task {task_id}:{task_name} timeout after {timeout_s}s"
+                error_msg = f"Task {task_id}:{task_name} timeout after {timeout_s}s"
+                duration_ms = int((time.time() - start_time) * 1000)
+                trace_manager.send_trace(
+                    owner="browser_agent",
+                    trace_data={
+                        "event": event_name,
+                        "context_id": str(context_id),
+                        "page_id": page_id or "default",
+                        "task_id": task_id,
+                        "task_name": task_name,
+                        "status": "error",
+                        "duration_ms": str(duration_ms),
+                        "errorCode": str(ERROR_ACT_TIMEOUT),
+                        "errorMessage": error_msg,
+                        "request_id": request_id,
+                    },
+                    span_key=span_key,
+                    biz_index=0,
+                    extra=trace_extra,
+                    is_start=False,
                 )
+                raise BrowserError(error_msg)
 
     def observe(
         self,
@@ -280,6 +382,35 @@ class BrowserAgent(BaseService):
         context_id: int,
         page_id: Optional[str],
     ) -> Tuple[bool, List[ObserveResult]]:
+        # Initialize trace manager and send start trace
+        trace_manager = TraceManager.get_instance()
+        start_time = time.time()
+        event_name = self._execute_observe.__name__
+        span_key = f"observe.{event_name}"
+        trace_extra = f"{context_id}_{page_id or 'default'}"
+
+        # Send start trace
+        trace_manager.send_trace(
+            owner="browser_agent",
+            trace_data={
+                "event": event_name,
+                "context_id": str(context_id),
+                "page_id": page_id or "default",
+                "instruction_preview": (options.instruction[:100] if options.instruction else ""),
+                "iframes": str(getattr(options, 'iframes', None)) if getattr(options, 'iframes', None) is not None else "",
+                "use_vision": str(options.use_vision) if options.use_vision is not None else "",
+                "status": "success",
+            },
+            span_key=span_key,
+            biz_index=0,
+            extra=trace_extra,
+            is_start=True,
+        )
+
+        # Get trace_id from trace_manager
+        trace_id = trace_manager.get_trace_id(0, trace_extra)
+        _logger.info(f"trace id for observe: {trace_id}")
+
         _logger.debug(f"Observing page_id: {page_id}, context_id: {context_id}")
         args = {
             "context_id": context_id,
@@ -287,11 +418,32 @@ class BrowserAgent(BaseService):
             "instruction": options.instruction,
             "use_vision": options.use_vision,
             "selector": options.selector,
+            "trace_id": trace_id,
         }
         args = {k: v for k, v in args.items() if v is not None}
         response = self._call_mcp_tool_timeout("page_use_observe_async", args)
+        request_id = response.request_id if response else ""
         if not response.success:
-            raise BrowserError("Failed to start observe task")
+            error_msg = response.error_message or "Failed to start observe task"
+            duration_ms = int((time.time() - start_time) * 1000)
+            trace_manager.send_trace(
+                owner="browser_agent",
+                trace_data={
+                    "event": event_name,
+                    "context_id": str(context_id),
+                    "page_id": page_id or "default",
+                    "status": "error",
+                    "duration_ms": str(duration_ms),
+                    "errorCode": str(ERROR_OBSERVE_FAIL),
+                    "errorMessage": error_msg,
+                    "request_id": request_id,
+                },
+                span_key=span_key,
+                biz_index=0,
+                extra=trace_extra,
+                is_start=False,
+            )
+            raise BrowserError(error_msg)
 
         task_info = (
             json.loads(response.data)
@@ -338,6 +490,24 @@ class BrowserAgent(BaseService):
                         ObserveResult(selector, description, method, arguments_dict)
                     )
 
+                duration_ms = int((time.time() - start_time) * 1000)
+                result_request_id = result.request_id if result else ""
+                trace_manager.send_trace(
+                    owner="browser_agent",
+                    trace_data={
+                        "event": event_name,
+                        "context_id": str(context_id),
+                        "page_id": page_id or "default",
+                        "status": "success",
+                        "duration_ms": str(duration_ms),
+                        "results_count": str(len(results)),
+                        "request_id": result_request_id,
+                    },
+                    span_key=span_key,
+                    biz_index=0,
+                    extra=trace_extra,
+                    is_start=False,
+                )
                 return True, results
             elapsed = time.monotonic() - start_ts
             _logger.debug(
@@ -345,9 +515,26 @@ class BrowserAgent(BaseService):
             )
             timeout_s = client_timeout if client_timeout is not None else 300
             if elapsed >= timeout_s:
-                raise BrowserError(
-                    f"Task {task_id}: Observe timeout after {timeout_s}s"
+                error_msg = f"Task {task_id}: Observe timeout after {timeout_s}s"
+                duration_ms = int((time.time() - start_time) * 1000)
+                trace_manager.send_trace(
+                    owner="browser_agent",
+                    trace_data={
+                        "event": event_name,
+                        "context_id": str(context_id),
+                        "page_id": page_id or "default",
+                        "status": "error",
+                        "duration_ms": str(duration_ms),
+                        "errorCode": str(ERROR_OBSERVE_FAIL),
+                        "errorMessage": error_msg,
+                        "request_id": request_id,
+                    },
+                    span_key=span_key,
+                    biz_index=0,
+                    extra=trace_extra,
+                    is_start=False,
                 )
+                raise BrowserError(error_msg)
 
     def extract(
         self,
@@ -380,6 +567,36 @@ class BrowserAgent(BaseService):
         context_id: int,
         page_id: Optional[str],
     ) -> Tuple[bool, T]:
+        # Initialize trace manager and send start trace
+        trace_manager = TraceManager.get_instance()
+        start_time = time.time()
+        event_name = self._execute_extract.__name__
+        span_key = f"extract.{event_name}"
+        trace_extra = f"{context_id}_{page_id or 'default'}"
+
+        # Send start trace
+        trace_manager.send_trace(
+            owner="browser_agent",
+            trace_data={
+                "event": event_name,
+                "context_id": str(context_id),
+                "page_id": page_id or "default",
+                "instruction_preview": (options.instruction[:100] if options.instruction else ""),
+                "use_text_extract": str(options.use_text_extract) if options.use_text_extract is not None else "",
+                "use_vision": str(options.use_vision) if options.use_vision is not None else "",
+                "selector": options.selector or "",
+                "status": "success",
+            },
+            span_key=span_key,
+            biz_index=0,
+            extra=trace_extra,
+            is_start=True,
+        )
+
+        # Get trace_id from trace_manager
+        trace_id = trace_manager.get_trace_id(0, trace_extra)
+        _logger.info(f"trace id for extract: {trace_id}")
+
         args = {
             "context_id": context_id,
             "page_id": page_id,
@@ -388,12 +605,34 @@ class BrowserAgent(BaseService):
             "use_text_extract": options.use_text_extract,
             "use_vision": options.use_vision,
             "selector": options.selector,
+            "max_page": options.max_page,
+            "trace_id": trace_id,
         }
         args = {k: v for k, v in args.items() if v is not None}
 
         response = self._call_mcp_tool_timeout("page_use_extract_async", args)
+        request_id = response.request_id if response else ""
         if not response.success:
-            raise BrowserError("Failed to start extraction task")
+            error_msg = response.error_message or "Failed to start extraction task"
+            duration_ms = int((time.time() - start_time) * 1000)
+            trace_manager.send_trace(
+                owner="browser_agent",
+                trace_data={
+                    "event": event_name,
+                    "context_id": str(context_id),
+                    "page_id": page_id or "default",
+                    "status": "error",
+                    "duration_ms": str(duration_ms),
+                    "errorCode": str(ERROR_EXTRACT_START_FAIL),
+                    "errorMessage": error_msg,
+                    "request_id": request_id,
+                },
+                span_key=span_key,
+                biz_index=0,
+                extra=trace_extra,
+                is_start=False,
+            )
+            raise BrowserError(error_msg)
 
         task_id = json.loads(response.data)["task_id"]
         client_timeout: Optional[int] = options.timeout
@@ -417,6 +656,25 @@ class BrowserAgent(BaseService):
                     if isinstance(result.data, str)
                     else result.data
                 )
+                duration_ms = int((time.time() - start_time) * 1000)
+                result_request_id = result.request_id if result else ""
+                trace_manager.send_trace(
+                    owner="browser_agent",
+                    trace_data={
+                        "event": event_name,
+                        "context_id": str(context_id),
+                        "page_id": page_id or "default",
+                        "task_id": task_id,
+                        "status": "success",
+                        "duration_ms": str(duration_ms),
+                        "result_length": str(len(str(extract_result))),
+                        "request_id": result_request_id,
+                    },
+                    span_key=span_key,
+                    biz_index=0,
+                    extra=trace_extra,
+                    is_start=False,
+                )
                 return True, options.schema.model_validate(extract_result)
             elapsed = time.monotonic() - start_ts
             _logger.debug(
@@ -424,9 +682,27 @@ class BrowserAgent(BaseService):
             )
             timeout_s = client_timeout if client_timeout is not None else 300
             if elapsed >= timeout_s:
-                raise BrowserError(
-                    f"Task {task_id}: Extract timeout after {timeout_s}s"
+                error_msg = f"Task {task_id}: Extract timeout after {timeout_s}s"
+                duration_ms = int((time.time() - start_time) * 1000)
+                trace_manager.send_trace(
+                    owner="browser_agent",
+                    trace_data={
+                        "event": event_name,
+                        "context_id": str(context_id),
+                        "page_id": page_id or "default",
+                        "task_id": task_id,
+                        "status": "error",
+                        "duration_ms": str(duration_ms),
+                        "errorCode": str(ERROR_EXTRACT_TIMEOUT),
+                        "errorMessage": error_msg,
+                        "request_id": request_id,
+                    },
+                    span_key=span_key,
+                    biz_index=0,
+                    extra=trace_extra,
+                    is_start=False,
                 )
+                raise BrowserError(error_msg)
 
     def _get_page_and_context_index(self, page):
         """
@@ -478,5 +754,8 @@ class BrowserAgent(BaseService):
         """
         # AsyncBaseService.session.call_mcp_tool is async
         return self.session.call_mcp_tool(
-            name, args, read_timeout=60000, connect_timeout=60000
+            name,
+            args,
+            read_timeout=60000,
+            connect_timeout=60000,
         )

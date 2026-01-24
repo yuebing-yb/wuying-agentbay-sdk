@@ -85,7 +85,7 @@ class Command(BaseService):
                     invalid_vars.append(f"key '{key}' (type: {type(key).__name__})")
                 if not isinstance(value, str):
                     invalid_vars.append(f"value for key '{key}' (type: {type(value).__name__})")
-            
+
             if invalid_vars:
                 raise ValueError(
                     f"Invalid environment variables: all keys and values must be strings. "
@@ -109,7 +109,10 @@ class Command(BaseService):
             if envs is not None:
                 args["envs"] = envs
 
-            result = self.session.call_mcp_tool("shell", args)
+            result = self.session.call_mcp_tool(
+                "shell",
+                args,
+            )
             _logger.debug(f"Execute command response: {result}")
 
             if result.success:
@@ -157,7 +160,7 @@ class Command(BaseService):
                         error_data = json.loads(result.error_message)
                     else:
                         error_data = result.error_message
-                    
+
                     if isinstance(error_data, dict):
                         # Extract fields from error JSON
                         stdout = error_data.get("stdout", "")
@@ -167,7 +170,7 @@ class Command(BaseService):
                         trace_id = error_data.get("traceId", "")
                         # For backward compatibility, output should be stdout + stderr
                         output = stdout + stderr
-                        
+
                         return CommandResult(
                             request_id=result.request_id,
                             success=False,
@@ -181,7 +184,7 @@ class Command(BaseService):
                 except (json.JSONDecodeError, TypeError, AttributeError):
                     # If parsing fails, use original error message
                     pass
-                
+
                 return CommandResult(
                     request_id=result.request_id,
                     success=False,

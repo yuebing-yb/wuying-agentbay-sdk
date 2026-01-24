@@ -28,6 +28,7 @@ See [Synchronous vs Asynchronous Guide](../guides/async-programming/sync-vs-asyn
 All synchronous API classes are in the `sync/` directory:
 
 - [AgentBay](sync/agentbay.md) - `agentbay.agentbay`
+- [Network](sync/network.md) - `agentbay.beta_network`
 - [Session](sync/session.md) - `agentbay.session`
 - [Command](sync/command.md) - `agentbay.command`
 - [Context](sync/context.md) - `agentbay.context`
@@ -50,6 +51,7 @@ All synchronous API classes are in the `sync/` directory:
 All asynchronous API classes are in the `async/` directory:
 
 - [AsyncAgentBay](async/async-agentbay.md) - `agentbay.agentbay`
+- [AsyncNetwork](async/async-network.md) - `agentbay.beta_network`
 - [AsyncSession](async/async-session.md) - `agentbay.session`
 - [AsyncCommand](async/async-command.md) - `agentbay.command`
 - [AsyncContext](async/async-context.md) - `agentbay.context`

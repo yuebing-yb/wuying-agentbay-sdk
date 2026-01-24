@@ -37,7 +37,7 @@ func TestMcpToolCallWithActiveSession(t *testing.T) {
 	toolResult, err := session.CallMcpTool("shell", map[string]interface{}{
 		"command":    "echo 'test'",
 		"timeout_ms": 5000,
-	}, false)
+	})
 	if err != nil {
 		t.Fatalf("Failed to call MCP tool: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestMcpToolCallWithDeletedSessionAutoGenFalse(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is deleted
-	listResult, err := client.List("",nil, nil, nil)
+	listResult, err := client.List("", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to list sessions: %v", err)
 	}
@@ -112,7 +112,7 @@ func TestMcpToolCallWithDeletedSessionAutoGenFalse(t *testing.T) {
 	toolResult, err := session.CallMcpTool("shell", map[string]interface{}{
 		"command":    "echo 'test'",
 		"timeout_ms": 5000,
-	}, false)
+	})
 
 	// Expect failure
 	if err != nil {
@@ -160,7 +160,7 @@ func TestMcpToolCallWithDeletedSessionAutoGenTrue(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Verify session is deleted
-	listResult, err := client.List("",nil, nil, nil)
+	listResult, err := client.List("", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to list sessions: %v", err)
 	}
@@ -181,7 +181,7 @@ func TestMcpToolCallWithDeletedSessionAutoGenTrue(t *testing.T) {
 	toolResult, err := session.CallMcpTool("shell", map[string]interface{}{
 		"command":    "echo 'test'",
 		"timeout_ms": 5000,
-	}, true)
+	})
 
 	// The behavior depends on the server implementation
 	// If auto_gen_session is supported, it may succeed by creating a new session

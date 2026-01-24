@@ -14,14 +14,23 @@ import java.util.*;
  */
 public class FileSystem extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SERVER_FILESYSTEM = "wuying_filesystem";
+    private static final String SERVER_SHELL = "wuying_shell";
 
     private static final int DEFAULT_CHUNK_SIZE = 50 * 1024;
-    private static final int DEFAULT_VPC_CHUNK_SIZE = 512 * 1024;
 
     private FileTransfer fileTransfer;
 
     public FileSystem(Session session) {
         super(session);
+    }
+
+    private OperationResult callFilesystemTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args);
+    }
+
+    private OperationResult callShellTool(Map<String, Object> args) {
+        return callMcpTool("shell", args);
     }
 
     private FileTransfer ensureFileTransfer() {
@@ -52,7 +61,7 @@ public class FileSystem extends BaseService {
     public String read(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
-        OperationResult result = callMcpTool("read_file", args);
+        OperationResult result = callFilesystemTool("read_file", args);
         if (result.isSuccess()) {
             return result.getData();
         } else {
@@ -72,7 +81,7 @@ public class FileSystem extends BaseService {
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
         args.put("content", content);
-        OperationResult result = callMcpTool("write_file", args);
+        OperationResult result = callFilesystemTool("write_file", args);
         if (result.isSuccess()) {
             return result.getData();
         } else {
@@ -90,7 +99,7 @@ public class FileSystem extends BaseService {
     public String list(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
-        OperationResult result = callMcpTool("list_directory", args);
+        OperationResult result = callFilesystemTool("list_directory", args);
         if (result.isSuccess()) {
             return result.getData();
         } else {
@@ -109,7 +118,7 @@ public class FileSystem extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("command", "test -e \"" + path + "\" && echo 'exists' || echo 'not exists'");
-            OperationResult result = callMcpTool("shell", args);
+            OperationResult result = callShellTool(args);
             return result.isSuccess() && result.getData() != null && result.getData().trim().equals("exists");
         } catch (Exception e) {
             return false;
@@ -126,7 +135,7 @@ public class FileSystem extends BaseService {
     public String mkdir(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
         args.put("command", "mkdir -p \"" + path + "\"");
-        OperationResult result = callMcpTool("shell", args);
+        OperationResult result = callShellTool(args);
         if (result.isSuccess()) {
             return result.getData();
         } else {
@@ -146,7 +155,7 @@ public class FileSystem extends BaseService {
     public String removeLegacy(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
         args.put("command", "rm -rf \"" + path + "\"");
-        OperationResult result = callMcpTool("shell", args);
+        OperationResult result = callShellTool(args);
         if (result.isSuccess()) {
             return result.getData();
         } else {
@@ -165,7 +174,7 @@ public class FileSystem extends BaseService {
     public String copy(String source, String destination) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
         args.put("command", "cp -r \"" + source + "\" \"" + destination + "\"");
-        OperationResult result = callMcpTool("shell", args);
+        OperationResult result = callShellTool(args);
         if (result.isSuccess()) {
             return result.getData();
         } else {
@@ -184,7 +193,7 @@ public class FileSystem extends BaseService {
     public String move(String source, String destination) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
         args.put("command", "mv \"" + source + "\" \"" + destination + "\"");
-        OperationResult result = callMcpTool("shell", args);
+        OperationResult result = callShellTool(args);
         if (result.isSuccess()) {
             return result.getData();
         } else {
@@ -202,7 +211,7 @@ public class FileSystem extends BaseService {
     public String getInfo(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
         args.put("command", "ls -la \"" + path + "\"");
-        OperationResult result = callMcpTool("shell", args);
+        OperationResult result = callShellTool(args);
         if (result.isSuccess()) {
             return result.getData();
         } else {
@@ -223,9 +232,6 @@ public class FileSystem extends BaseService {
     public BoolResult writeFile(String path, String content, String mode, boolean createParentDir) {
         int contentLength = content.getBytes().length;
         int chunkSize = DEFAULT_CHUNK_SIZE;
-        if (session.isVpcEnabled()) {
-            chunkSize =DEFAULT_VPC_CHUNK_SIZE;
-        }
         // If the content length is less than the chunk size, write it directly
         if (contentLength <= chunkSize) {
             return writeFileChunk(path, content, mode, createParentDir);
@@ -297,7 +303,7 @@ public class FileSystem extends BaseService {
         args.put("create_parent_dir", createParentDir);
 
         try {
-            OperationResult result = callMcpTool("write_file", args);
+            OperationResult result = callFilesystemTool("write_file", args);
             if (result.isSuccess()) {
                 return new BoolResult(result.getRequestId(), true, true, "");
             } else {
@@ -317,7 +323,7 @@ public class FileSystem extends BaseService {
         args.put("path", path);
 
         try {
-            OperationResult result = callMcpTool("read_file", args);
+            OperationResult result = callFilesystemTool("read_file", args);
             if (result.isSuccess()) {
                 return new FileContentResult(result.getRequestId(), true, result.getData(), "");
             } else {
@@ -345,7 +351,7 @@ public class FileSystem extends BaseService {
                 args.put("excludePatterns", excludePatterns);
             }
 
-            OperationResult result = callMcpTool("search_files", args);
+            OperationResult result = callFilesystemTool("search_files", args);
 
             if (result.isSuccess()) {
                 String[] matchingFiles = result.getData() != null && !result.getData().trim().isEmpty()
@@ -374,7 +380,7 @@ public class FileSystem extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("paths", paths);
 
-            OperationResult result = callMcpTool("read_multiple_files", args);
+            OperationResult result = callFilesystemTool("read_multiple_files", args);
 
             if (result.isSuccess()) {
                 Map<String, String> filesContent = parseMultipleFilesResponse(result.getData());
@@ -409,7 +415,7 @@ public class FileSystem extends BaseService {
         args.put("path", path);
 
         try {
-            OperationResult result = callMcpTool("delete_file", args);
+            OperationResult result = callFilesystemTool("delete_file", args);
             if (result.isSuccess()) {
                 return new BoolResult(result.getRequestId(), true, true, "");
             } else {
@@ -426,7 +432,7 @@ public class FileSystem extends BaseService {
         args.put("path", path);
 
         try {
-            OperationResult result = callMcpTool("create_directory", args);
+            OperationResult result = callFilesystemTool("create_directory", args);
             if (result.isSuccess()) {
                 return new BoolResult(result.getRequestId(), true, true, "");
             } else {
@@ -443,7 +449,7 @@ public class FileSystem extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("path", path);
 
-            OperationResult result = callMcpTool("list_directory", args);
+            OperationResult result = callFilesystemTool("list_directory", args);
 
             if (result.isSuccess()) {
                 // Parse the directory listing response like Python SDK does
@@ -464,7 +470,7 @@ public class FileSystem extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("path", path);
 
-            OperationResult result = callMcpTool("get_file_info", args);
+            OperationResult result = callFilesystemTool("get_file_info", args);
 
             if (result.isSuccess()) {
                 Map<String, Object> fileInfo = parseFileInfo(result.getData());
@@ -492,7 +498,7 @@ public class FileSystem extends BaseService {
         args.put("dryRun", dryRun);
 
         try {
-            OperationResult result = callMcpTool("edit_file", args);
+            OperationResult result = callFilesystemTool("edit_file", args);
             if (result.isSuccess()) {
                 return new BoolResult(result.getRequestId(), true, true, "");
             } else {
@@ -510,7 +516,7 @@ public class FileSystem extends BaseService {
             args.put("source", source);
             args.put("destination", destination);
 
-            OperationResult result = callMcpTool("move_file", args);
+            OperationResult result = callFilesystemTool("move_file", args);
 
             if (result.isSuccess()) {
                 return new BoolResult(result.getRequestId(), true, true, "");
@@ -549,9 +555,11 @@ public class FileSystem extends BaseService {
             Map<String, Object> entryMap = new HashMap<>();
             if (line.startsWith("[DIR]")) {
                 entryMap.put("isDirectory", true);
+                entryMap.put("isFile", false);
                 entryMap.put("name", line.replace("[DIR]", "").trim());
             } else if (line.startsWith("[FILE]")) {
                 entryMap.put("isDirectory", false);
+                entryMap.put("isFile", true);
                 entryMap.put("name", line.replace("[FILE]", "").trim());
             } else {
                 // Skip lines that don't match the expected format

@@ -19,11 +19,11 @@ type CreateSessionParams struct {
 	// These configurations define how contexts should be synchronized and mounted.
 	ContextSync []*ContextSync
 
-	// IsVpc specifies whether to create a VPC-based session. Defaults to false.
-	IsVpc bool
-
 	// PolicyId specifies the policy ID to apply when creating the session.
 	PolicyId string
+
+	// BetaNetworkId specifies the beta network ID to bind this session to.
+	BetaNetworkId string
 
 	// ExtraConfigs contains extra configuration settings for different session types
 	ExtraConfigs *models.ExtraConfigs
@@ -61,15 +61,15 @@ func (p *CreateSessionParams) WithImageId(imageId string) *CreateSessionParams {
 	return p
 }
 
-// WithIsVpc sets the VPC flag for the session parameters and returns the updated parameters.
-func (p *CreateSessionParams) WithIsVpc(isVpc bool) *CreateSessionParams {
-	p.IsVpc = isVpc
-	return p
-}
-
 // WithPolicyId sets the policy ID for the session parameters and returns the updated parameters.
 func (p *CreateSessionParams) WithPolicyId(policyId string) *CreateSessionParams {
 	p.PolicyId = policyId
+	return p
+}
+
+// WithBetaNetworkId sets the beta network ID for the session parameters and returns the updated parameters.
+func (p *CreateSessionParams) WithBetaNetworkId(betaNetworkId string) *CreateSessionParams {
+	p.BetaNetworkId = betaNetworkId
 	return p
 }
 

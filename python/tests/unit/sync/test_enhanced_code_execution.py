@@ -1,8 +1,8 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, Mock, MagicMock
+from unittest.mock import MagicMock, MagicMock
 
-from agentbay import Code
+from agentbay import Code, McpToolResult
 from agentbay import (
     EnhancedCodeExecutionResult,
     CodeExecutionResult as ExecutionResult,
@@ -21,10 +21,8 @@ class TestEnhancedCodeExecution(unittest.TestCase):
         self.mock_session._get_api_key.return_value = "test-api-key"
         self.mock_session._get_session_id.return_value = "test-session-id"
         self.mock_session._is_vpc_enabled.return_value = False
-        
-        self.mock_client = MagicMock()
-        self.mock_session._get_client.return_value = self.mock_client
-        
+        self.mock_session.call_mcp_tool = MagicMock()
+
         self.code = Code(self.mock_session)
 
     def test_execution_result_formats(self):
@@ -32,7 +30,7 @@ class TestEnhancedCodeExecution(unittest.TestCase):
         # Test with text only
         result = ExecutionResult(text="Hello World")
         self.assertEqual(result.formats(), ["text"])
-        
+
         # Test with multiple formats
         result = ExecutionResult(
             text="Hello",
@@ -45,7 +43,7 @@ class TestEnhancedCodeExecution(unittest.TestCase):
         self.assertIn("html", formats)
         self.assertIn("png", formats)
         self.assertNotIn("is_main_result", formats)
-        
+
         # Test with no formats
         result = ExecutionResult()
         self.assertEqual(result.formats(), [])
@@ -62,7 +60,7 @@ class TestEnhancedCodeExecution(unittest.TestCase):
             results=results
         )
         self.assertEqual(enhanced_result.result, "primary")
-        
+
         # Test fallback to first result
         results = [
             ExecutionResult(text="first"),
@@ -73,7 +71,7 @@ class TestEnhancedCodeExecution(unittest.TestCase):
             results=results
         )
         self.assertEqual(enhanced_result.result, "first")
-        
+
         # Test fallback to logs
         logs = ExecutionLogs(stdout=["output1", "output2"])
         enhanced_result = EnhancedCodeExecutionResult(
@@ -81,7 +79,7 @@ class TestEnhancedCodeExecution(unittest.TestCase):
             logs=logs
         )
         self.assertEqual(enhanced_result.result, "output1output2")
-        
+
         # Test empty result
         enhanced_result = EnhancedCodeExecutionResult(success=True)
         self.assertEqual(enhanced_result.result, "")
@@ -112,10 +110,12 @@ class TestEnhancedCodeExecution(unittest.TestCase):
             },
             "RequestId": "test-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         result = self.code.run_code("print('Hello World'); 42", "python")
 
@@ -123,11 +123,11 @@ class TestEnhancedCodeExecution(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.execution_count, 5)
         self.assertEqual(result.execution_time, 1.5)
-        
+
         # Check logs
         self.assertEqual(result.logs.stdout, ["Hello World\n"])
         self.assertEqual(result.logs.stderr, ["Warning: test\n"])
-        
+
         # Check results
         self.assertEqual(len(result.results), 2)
         self.assertEqual(result.results[0].text, "42")
@@ -135,7 +135,7 @@ class TestEnhancedCodeExecution(unittest.TestCase):
         self.assertEqual(result.results[1].html, "<div>Chart</div>")
         self.assertEqual(result.results[1].png, "base64imagedata")
         self.assertFalse(result.results[1].is_main_result)
-        
+
         # Check backward compatibility
         self.assertEqual(result.result, "42")
 
@@ -163,10 +163,12 @@ class TestEnhancedCodeExecution(unittest.TestCase):
             },
             "RequestId": "chart-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = """
 import matplotlib.pyplot as plt
@@ -178,7 +180,7 @@ plt.show()
 
         self.assertTrue(result.success)
         self.assertEqual(len(result.results), 1)
-        
+
         chart_result = result.results[0]
         self.assertIsNotNone(chart_result.png)
         self.assertIsNotNone(chart_result.chart)
@@ -206,10 +208,12 @@ plt.show()
             },
             "RequestId": "dataframe-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = """
 import pandas as pd
@@ -220,7 +224,7 @@ df.to_html()
 
         self.assertTrue(result.success)
         self.assertEqual(len(result.results), 1)
-        
+
         df_result = result.results[0]
         self.assertIn("<table>", df_result.html)
         self.assertIn("A  B", df_result.text)
@@ -249,10 +253,12 @@ df.to_html()
             },
             "RequestId": "multi-output-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = """
 from IPython.display import display, HTML
@@ -265,15 +271,15 @@ print('This is standard output')
         self.assertTrue(result.success)
         self.assertEqual(len(result.results), 2)
         self.assertEqual(result.logs.stdout, ["This is standard output\n"])
-        
+
         # Check HTML display output
         self.assertEqual(result.results[0].html, "<h1>Important Result</h1>")
         self.assertFalse(result.results[0].is_main_result)
-        
+
         # Check main result (last expression)
         self.assertEqual(result.results[1].text, "42")
         self.assertTrue(result.results[1].is_main_result)
-        
+
         # Backward compatibility should return main result
         self.assertEqual(result.result, "42")
 
@@ -296,10 +302,12 @@ print('This is standard output')
             },
             "RequestId": "error-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         result = self.code.run_code("print(undefined_var)", "python")
 
@@ -329,10 +337,12 @@ print('This is standard output')
             },
             "RequestId": "json-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = """
 import json
@@ -343,7 +353,7 @@ json.dumps(data)
 
         self.assertTrue(result.success)
         self.assertEqual(len(result.results), 1)
-        
+
         json_result = result.results[0]
         self.assertIsNotNone(json_result.json)
         self.assertEqual(json_result.json["name"], "John")
@@ -369,10 +379,12 @@ json.dumps(data)
             },
             "RequestId": "latex-request-id"
         }
-        
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id=response_body["RequestId"],
+            success=True,
+            data=response_body["Data"],
+            error_message="",
+        )
 
         code = r"""
 from IPython.display import Latex
@@ -382,7 +394,7 @@ Latex(r'$$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$')
 
         self.assertTrue(result.success)
         self.assertEqual(len(result.results), 1)
-        
+
         latex_result = result.results[0]
         self.assertIsNotNone(latex_result.latex)
         self.assertIn(r"\int", latex_result.latex)

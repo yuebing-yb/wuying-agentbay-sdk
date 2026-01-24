@@ -5,14 +5,16 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import * as $_client from "./api";
 import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
+import type { McpTool } from "./session";
 import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
 import { ContextService } from "./context";
+import { BetaNetworkService } from "./beta-network";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
-import { BrowserContext,CreateSessionParams } from "./session-params";
+import { BrowserContext } from "./session-params";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
 import {
@@ -47,13 +49,14 @@ const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 /**
  * Parameters for creating a session.
  */
-export interface CreateSeesionWithParams {
+export interface CreateSessionParams {
   labels?: Record<string, string>;
   imageId?: string;
   contextSync?: ContextSync[];
   browserContext?: BrowserContext;
-  isVpc?: boolean;
   policyId?: string;
+  betaNetworkId?: string;
+  // Note: networkId is not released; do not expose non-beta alias.
   enableBrowserReplay?: boolean;
   extraConfigs?: ExtraConfigs;
   framework?: string;
@@ -72,6 +75,17 @@ export class AgentBay {
    * Context service for managing persistent contexts.
    */
   context: ContextService;
+
+  /**
+   * Network service for managing networks.
+   */
+  /** Deprecated alias: use betaNetwork */
+  network: BetaNetworkService;
+
+  /**
+   * Beta network service for managing networks.
+   */
+  betaNetwork: BetaNetworkService;
 
   /**
    * Initialize the AgentBay client.
@@ -118,6 +132,9 @@ export class AgentBay {
 
       // Initialize context service
       this.context = new ContextService(this);
+      this.betaNetwork = new BetaNetworkService(this);
+      // Deprecated alias: network APIs are beta for now
+      this.network = this.betaNetwork as any;
     } catch (error) {
       logError(`Failed to constructor:`, error);
       throw new AuthenticationError(`Failed to constructor: ${error}`);
@@ -211,7 +228,6 @@ export class AgentBay {
    *                 - imageId: Custom image ID for the session environment
    *                 - contextSync: Array of context synchronization configurations
    *                 - browserContext: Browser-specific context configuration
-   *                 - isVpc: Whether to create a VPC session
    *                 - policyId: Security policy ID
    *                 - enableBrowserReplay: Enable browser session recording
    *                 - extraConfigs: Additional configuration options
@@ -240,12 +256,11 @@ export class AgentBay {
    * - Creates a new isolated cloud runtime environment
    * - Automatically creates file transfer context if not provided
    * - Waits for context synchronization if contextSync is specified
-   * - For VPC sessions, includes VPC-specific configuration
    * - Browser replay creates a separate recording context
    *
    * @see {@link get}, {@link list}, {@link Session.delete}
    */
-  async create(params: CreateSessionParams | CreateSeesionWithParams): Promise<SessionResult> {
+  async create(params: CreateSessionParams = {}): Promise<SessionResult> {
     try {
       // Create a deep copy of params to avoid modifying the original object
       const paramsCopy = this.deepCopyParams(params);
@@ -301,8 +316,10 @@ export class AgentBay {
         request.mcpPolicyId = paramsCopy.policyId;
       }
 
-      // Add VPC resource if specified
-      request.vpcResource = paramsCopy.isVpc || false;
+      // Beta: Add NetworkId if provided
+      if ((paramsCopy as any).betaNetworkId) {
+        (request as any).networkId = (paramsCopy as any).betaNetworkId;
+      }
 
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
@@ -379,7 +396,6 @@ export class AgentBay {
         labels: paramsCopy.labels,
         imageId: paramsCopy.imageId,
         policyId: paramsCopy.policyId,
-        isVpc: paramsCopy.isVpc,
         persistenceDataCount: paramsCopy.contextSync ? paramsCopy.contextSync.length : 0,
       });
 
@@ -493,20 +509,13 @@ export class AgentBay {
 
       const session = new Session(this, sessionId);
 
-      // Set VPC-related information from response
-      session.isVpc = paramsCopy.isVpc || false;
-      if (data.networkInterfaceIp) {
-        session.networkInterfaceIp = data.networkInterfaceIp;
-      }
-      if (data.httpPort) {
-        session.httpPort = data.httpPort;
-      }
-      if (data.token) {
-        session.token = data.token;
-      }
-
       // Set ResourceUrl
       session.resourceUrl = resourceUrl;
+
+      // LinkUrl/token may be returned by the server for direct tool calls.
+      session.token = data.token || "";
+      session.linkUrl = data.linkUrl || "";
+      session.mcpTools = this.parseToolListToMcpTools(data.toolList);
 
       // Set browser recording state
       session.enableBrowserReplay = paramsCopy.enableBrowserReplay || false;
@@ -531,25 +540,20 @@ export class AgentBay {
         }
       }
 
-      // For VPC sessions, automatically fetch MCP tools information
-      if (paramsCopy.isVpc) {
-        logDebug("VPC session detected, automatically fetching MCP tools...");
-        try {
-          const toolsResult = await session.listMcpTools();
-          logDebug(`Successfully fetched ${toolsResult.tools.length} MCP tools for VPC session (RequestID: ${toolsResult.requestId})`);
-        } catch (error) {
-          logError(`Warning: Failed to fetch MCP tools for VPC session: ${error}`);
-          // Continue with session creation even if tools fetch fails
-        }
-      }
-
       // If we have persistence data, wait for context synchronization
       if (needsContextSync) {
         logDebug("Waiting for context synchronization to complete...");
 
-        // Wait for context synchronization to complete
-        const maxRetries = 150; // Maximum number of retries
-        const retryInterval = 1500; // Milliseconds to wait between retries
+        // Exponential backoff configuration
+        // Starts with short intervals (0.5s) for fast completion detection
+        // Gradually increases intervals (up to 5s max) to reduce server load
+        // Uses exponential backoff factor of 1.1
+        const initialInterval = 500; // Start with 0.5 seconds (500ms) for quick response
+        const maxInterval = 5000; // Maximum interval (5s) to avoid excessive delays
+        const backoffFactor = 1.1; // Multiply interval by this factor each retry
+        const maxRetries = 50; // Maximum number of retries
+
+        let currentInterval = initialInterval;
 
         for (let retry = 0; retry < maxRetries; retry++) {
           try {
@@ -583,11 +587,17 @@ export class AgentBay {
               break;
             }
 
-            logDebug(`Waiting for context synchronization, attempt ${retry+1}/${maxRetries}`);
-            await new Promise(resolve => setTimeout(resolve, retryInterval));
+            logDebug(`Waiting for context synchronization, attempt ${retry+1}/${maxRetries}, next interval: ${(currentInterval / 1000).toFixed(2)}s`);
+            await new Promise(resolve => setTimeout(resolve, currentInterval));
+
+            // Exponential backoff: increase interval for next retry, capped at maxInterval
+            currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
           } catch (error) {
             logError(`Error checking context status on attempt ${retry+1}: ${error}`);
-            await new Promise(resolve => setTimeout(resolve, retryInterval));
+            await new Promise(resolve => setTimeout(resolve, currentInterval));
+
+            // Exponential backoff: increase interval for next retry, capped at maxInterval
+            currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
           }
         }
       }
@@ -942,6 +952,7 @@ export class AgentBay {
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
           status: body.data.status || "",
+          toolList: body.data.toolList || "",
           contexts: contexts.length > 0 ? contexts : undefined,
         };
 
@@ -1038,13 +1049,11 @@ export class AgentBay {
     // Create the Session object
     const session = new Session(this, sessionId);
 
-    // Set VPC-related information and ResourceUrl from GetSession response
+    // Set ResourceUrl from GetSession response
     if (getResult.data) {
-      session.isVpc = getResult.data.vpcResource;
-      session.networkInterfaceIp = getResult.data.networkInterfaceIp;
-      session.httpPort = getResult.data.httpPort;
-      session.token = getResult.data.token;
       session.resourceUrl = getResult.data.resourceUrl;
+      session.token = getResult.data.token || "";
+      session.mcpTools = this.parseToolListToMcpTools(getResult.data.toolList);
     }
 
     return {
@@ -1102,8 +1111,8 @@ export class AgentBay {
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const session = (await agentBay.create()).session;
-   * const pauseResult = await agentBay.pauseAsync(session);
-   * await agentBay.resumeAsync(session);
+   * const pauseResult = await agentBay.betaPauseAsync(session);
+   * await agentBay.betaResumeAsync(session);
    * await session.delete();
    * ```
    *
@@ -1114,12 +1123,12 @@ export class AgentBay {
    * - The session state transitions from RUNNING -> PAUSING -> PAUSED
    * - Paused sessions consume fewer resources but maintain their state
    *
-   * @see {@link resumeAsync}, {@link Session.pauseAsync}
+   * @see {@link betaResumeAsync}, {@link Session.betaPauseAsync}
    */
-  async pauseAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionPauseResult> {
+  async betaPauseAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionPauseResult> {
     try {
       // Call session's pause_async method directly
-      return await session.pauseAsync(timeout, pollInterval);
+      return await session.betaPauseAsync(timeout, pollInterval);
     } catch (error) {
       logError("Error calling pause session async:", error);
       return {
@@ -1145,8 +1154,8 @@ export class AgentBay {
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
    * const session = (await agentBay.create()).session;
-   * await agentBay.pauseAsync(session);
-   * const resumeResult = await agentBay.resumeAsync(session);
+   * await agentBay.betaPauseAsync(session);
+   * const resumeResult = await agentBay.betaResumeAsync(session);
    * await session.delete();
    * ```
    *
@@ -1157,12 +1166,12 @@ export class AgentBay {
    * - The session state transitions from PAUSED -> RESUMING -> RUNNING
    * - Only sessions in PAUSED state can be resumed
    *
-   * @see {@link pauseAsync}, {@link Session.resumeAsync}
+   * @see {@link betaPauseAsync}, {@link Session.betaResumeAsync}
    */
-  async resumeAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionResumeResult> {
+  async betaResumeAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionResumeResult> {
     try {
       // Call session's resume_async method directly
-      return await session.resumeAsync(timeout, pollInterval);
+      return await session.betaResumeAsync(timeout, pollInterval);
     } catch (error) {
       logError("Error calling resume session async:", error);
       return {
@@ -1173,12 +1182,53 @@ export class AgentBay {
     }
   }
 
+  private parseToolListToMcpTools(toolList: any): McpTool[] {
+    if (!toolList) {
+      return [];
+    }
+
+    let items = toolList;
+    if (typeof toolList === "string") {
+      try {
+        items = JSON.parse(toolList);
+      } catch (error) {
+        logDebug(`Failed to parse ToolList JSON: ${error}`);
+        return [];
+      }
+    }
+
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    const tools: McpTool[] = [];
+    for (const item of items) {
+      if (!item || typeof item !== "object") {
+        continue;
+      }
+      const name = item.name || item.Name || "";
+      const server = item.server || item.serverName || item.Server || "";
+      const description = item.description || item.Description || "";
+      const inputSchema = item.inputSchema || item.input_schema || {};
+      const tool = item.tool || item.Tool || "";
+      tools.push({
+        name,
+        server,
+        description,
+        inputSchema,
+        tool,
+      });
+    }
+
+    return tools;
+  }
+
   /**
    * Creates a deep copy of CreateSessionParams to avoid modifying the original object.
    * @param params - The original params object to copy
    * @returns A deep copy of the params object
    */
-  private deepCopyParams(params: CreateSessionParams | CreateSeesionWithParams): CreateSessionParams | CreateSeesionWithParams {
+  private deepCopyParams(params: CreateSessionParams): CreateSessionParams {
     // Use JSON serialization for deep copy (works for plain objects and arrays)
     const copied = JSON.parse(JSON.stringify(params)) as any;
 
@@ -1213,7 +1263,7 @@ export class AgentBay {
       } as BrowserContext;
     }
 
-    return copied as CreateSessionParams | CreateSeesionWithParams;
+    return copied as CreateSessionParams;
   }
 }
 

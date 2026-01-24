@@ -1,6 +1,5 @@
 package com.aliyun.agentbay.session;
 
-import com.aliyun.agentbay.model.SessionParams;
 import com.aliyun.agentbay.mcp.McpTool;
 
 import java.util.List;
@@ -8,10 +7,6 @@ import java.util.List;
 public class SessionState {
     private String sessionId;
     private String fileTransferContextId;
-    private String httpPort;
-    private String token;
-    private String vpcLinkUrl;
-    private long vpcLinkUrlTimestamp;
     private List<McpTool> mcpTools;
 
     public SessionState() {
@@ -31,38 +26,6 @@ public class SessionState {
 
     public void setFileTransferContextId(String fileTransferContextId) {
         this.fileTransferContextId = fileTransferContextId;
-    }
-
-    public String getHttpPort() {
-        return httpPort;
-    }
-
-    public void setHttpPort(String httpPort) {
-        this.httpPort = httpPort;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public String getVpcLinkUrl() {
-        return vpcLinkUrl;
-    }
-
-    public void setVpcLinkUrl(String vpcLinkUrl) {
-        this.vpcLinkUrl = vpcLinkUrl;
-    }
-
-    public long getVpcLinkUrlTimestamp() {
-        return vpcLinkUrlTimestamp;
-    }
-
-    public void setVpcLinkUrlTimestamp(long vpcLinkUrlTimestamp) {
-        this.vpcLinkUrlTimestamp = vpcLinkUrlTimestamp;
     }
 
     public List<McpTool> getMcpTools() {

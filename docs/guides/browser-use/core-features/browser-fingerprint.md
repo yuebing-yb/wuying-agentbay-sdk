@@ -902,9 +902,10 @@ async function runAsFirstTime(): Promise<void> {
     const fingerprintContext = new BrowserFingerprintContext(persistentFingerprintContext.id);
     const browserContext = new BrowserContext(persistentContext.id, true, undefined, fingerprintContext);
     
-    const params = new CreateSessionParams()
-        .withImageId("browser_latest")
-        .withBrowserContext(browserContext);
+    const params :CreateSessionParams = {
+      imageId:'browser_latest',
+      browserContext
+    }
 
     const sessionResult = await agentBay.create(params);
     if (!sessionResult.success || !sessionResult.session) {
@@ -982,9 +983,10 @@ async function runAsSecondTime(): Promise<void> {
     const fingerprintContext = new BrowserFingerprintContext(persistentFingerprintContext.id);
     const browserContext = new BrowserContext(persistentContext.id, true, undefined, fingerprintContext);
     
-    const params = new CreateSessionParams()
-        .withImageId("browser_latest")
-        .withBrowserContext(browserContext);
+    const params :CreateSessionParams = {
+        imageId:'browser_latest',
+        browserContext:browserContext,
+    }
 
     const sessionResult = await agentBay.create(params);
     if (!sessionResult.success || !sessionResult.session) {

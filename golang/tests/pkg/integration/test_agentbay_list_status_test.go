@@ -108,7 +108,7 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 				
 				// Resume if paused
 				if currentStatus == "PAUSED" {
-					_, resumeErr := agentBay.Resume(session, 600, 2.0)
+					_, resumeErr := agentBay.BetaResume(session, 600, 2.0)
 					if resumeErr != nil {
 						fmt.Printf("  ⚠ Could not resume session %s: %v\n", session.SessionID, resumeErr)
 					} else {
@@ -154,7 +154,7 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 
 		// Pause the session
 		fmt.Printf("\nStep 2: Pausing session...\n")
-		pauseResult, err := agentBay.Pause(session, 600, 2.0)
+		pauseResult, err := agentBay.BetaPause(session, 600, 2.0)
 		require.NoError(t, err)
 		require.NotNil(t, pauseResult)
 		require.True(t, pauseResult.Success, fmt.Sprintf("Pause failed: %s", pauseResult.ErrorMessage))
@@ -189,7 +189,7 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 
 		// Resume the session
 		fmt.Printf("\nStep 1: Resuming session...\n")
-		resumeResult, err := agentBay.Resume(session, 600, 2.0)
+		resumeResult, err := agentBay.BetaResume(session, 600, 2.0)
 		require.NoError(t, err)
 		require.NotNil(t, resumeResult)
 		require.True(t, resumeResult.Success, fmt.Sprintf("Resume failed: %s", resumeResult.ErrorMessage))

@@ -47,7 +47,9 @@ from ..api.models import (
     ListSessionRequest,
     ResumeSessionAsyncRequest,
 )
+from .._common.models.mcp_tool import McpTool
 from .context import AsyncContextService
+from .beta_network import AsyncBetaNetworkService
 from .session import AsyncSession
 from .._common.params.session_params import CreateSessionParams
 
@@ -100,6 +102,7 @@ class AsyncAgentBay:
 
         # Initialize context service
         self.context = AsyncContextService(self)
+        self.beta_network = AsyncBetaNetworkService(self)
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):
@@ -128,6 +131,41 @@ class AsyncAgentBay:
         except:
             return str(obj)
 
+    def _parse_tool_list_to_mcp_tools(self, tool_list: Any) -> list[McpTool]:
+        """
+        Parse backend ToolList field into a list of McpTool objects.
+
+        Backend may return ToolList as a JSON string or a list of dicts.
+        """
+        if not tool_list:
+            return []
+
+        items: Any = tool_list
+        if isinstance(tool_list, str):
+            try:
+                items = json.loads(tool_list)
+            except Exception as e:
+                _logger.warning(f"Failed to parse ToolList JSON: {e}")
+                return []
+
+        if not isinstance(items, list):
+            return []
+
+        tools: list[McpTool] = []
+        for item in items:
+            if isinstance(item, McpTool):
+                tools.append(item)
+                continue
+            if not isinstance(item, dict):
+                continue
+            tools.append(
+                McpTool(
+                    name=item.get("name", "") or item.get("Name", "") or "",
+                    server=item.get("server", "") or item.get("serverName", "") or item.get("Server", "") or "",
+                )
+            )
+        return tools
+
     async def _build_session_from_response(
         self,
         response_data: dict,
@@ -155,17 +193,18 @@ class AsyncAgentBay:
         # Create Session object
         session = AsyncSession(self, session_id)
 
-        # Set VPC-related information from response
-        session.is_vpc = params.is_vpc
-        if response_data.get("NetworkInterfaceIp"):
-            session.network_interface_ip = response_data["NetworkInterfaceIp"]
-        if response_data.get("HttpPort"):
-            session.http_port = response_data["HttpPort"]
-        if response_data.get("Token"):
-            session.token = response_data["Token"]
+        # ToolList returned by backend for this session
+        tool_list = response_data.get("ToolList")
+        session.mcpTools = self._parse_tool_list_to_mcp_tools(tool_list)
 
         # Set ResourceUrl
         session.resource_url = resource_url
+
+        # LinkUrl/token may be returned by the server for direct tool calls.
+        if "Token" in response_data and response_data.get("Token") is not None:
+            session.token = str(response_data.get("Token") or "")
+        if "LinkUrl" in response_data and response_data.get("LinkUrl") is not None:
+            session.link_url = str(response_data.get("LinkUrl") or "")
 
         # Set browser recording state (default to True if not explicitly set to False)
         session.enableBrowserReplay = params.enable_browser_replay if params.enable_browser_replay is not None else True
@@ -186,40 +225,39 @@ class AsyncAgentBay:
 
         return session
 
-    async def _fetch_mcp_tools_for_vpc_session(self, session: AsyncSession) -> None:
-        """
-        Fetch MCP tools information for VPC sessions asynchronously.
-
-        Args:
-            session: The session to fetch MCP tools for
-        """
-        _log_operation_start("Fetching MCP tools", "VPC session detected")
-        try:
-            tools_result = await session.list_mcp_tools()
-            _log_operation_success(
-                f"Fetched {len(tools_result.tools)} MCP tools",
-                f"RequestID: {tools_result.request_id}",
-            )
-        except Exception as e:
-            _log_warning(f"Failed to fetch MCP tools for VPC session: {e}")
-            # Continue with session creation even if tools fetch fails
+    # NOTE: Do not fetch MCP tool list automatically for any session.
 
     async def _wait_for_context_synchronization(self, session: AsyncSession) -> None:
         """
         Wait for context synchronization to complete asynchronously.
+
+        Uses exponential backoff to balance between quick response and server load:
+        - Starts with short intervals (0.5s) for fast completion detection
+        - Gradually increases intervals (up to 5s max) to reduce server load
+        - Uses exponential backoff factor of 1.1
 
         Args:
             session: The session to wait for context synchronization
         """
         _log_operation_start("Context synchronization", "Waiting for completion")
 
-        # Wait for context synchronization to complete
-        max_retries = 150  # Maximum number of retries
-        retry_interval = 2.0  # Seconds to wait between retries
+        # Exponential backoff configuration
+        initial_interval = 0.5  # Start with 0.5 seconds for quick response
+        max_interval = 5.0  # Maximum interval to avoid excessive delays
+        backoff_factor = 1.1  # Multiply interval by this factor each retry
+        max_retries = 50  # Maximum number of retries
+
+        current_interval = initial_interval
 
         for retry in range(max_retries):
             # Get context status data
-            info_result = await session.context.info()
+            try:
+                info_result = await session.context.info()
+            except Exception as e:
+                _logger.error(f"Error getting context info on attempt {retry+1}: {e}")
+                await asyncio.sleep(current_interval)
+                current_interval = min(current_interval * backoff_factor, max_interval)
+                continue
 
             # Check if all context items have status "Success" or "Failed"
             all_completed = True
@@ -248,9 +286,12 @@ class AsyncAgentBay:
                 break
 
             _logger.debug(
-                f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}"
+                f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}, next interval: {current_interval:.2f}s"
             )
-            await asyncio.sleep(retry_interval)
+            await asyncio.sleep(current_interval)
+
+            # Exponential backoff: increase interval for next retry, capped at max_interval
+            current_interval = min(current_interval * backoff_factor, max_interval)
 
     async def _wait_for_mobile_simulate(
         self,
@@ -418,8 +459,9 @@ class AsyncAgentBay:
             if hasattr(params, "policy_id") and params.policy_id:
                 request.mcp_policy_id = params.policy_id
 
-            # Add VPC resource if specified
-            request.vpc_resource = params.is_vpc
+            # Beta: Add NetworkId if specified
+            if hasattr(params, "beta_network_id") and params.beta_network_id:
+                request.network_id = params.beta_network_id
 
             # Flag to indicate if we need to wait for context synchronization
             needs_context_sync = False
@@ -630,10 +672,6 @@ class AsyncAgentBay:
 
             # Build Session object from response data
             session = await self._build_session_from_response(data, params)
-
-            # For VPC sessions, automatically fetch MCP tools information
-            if params.is_vpc:
-                await self._fetch_mcp_tools_for_vpc_session(session)
 
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
@@ -976,6 +1014,7 @@ class AsyncAgentBay:
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
                         status=data_dict.get("Status", ""),
+                        tool_list=data_dict.get("ToolList", "") or "",
                     )
 
                 # Log API response with key details
@@ -1070,13 +1109,10 @@ class AsyncAgentBay:
         # Create the Session object
         session = AsyncSession(self, session_id)
 
-        # Set VPC-related information and ResourceUrl from GetSession response
+        # Set ResourceUrl from GetSession response
         if get_result.data:
-            session.is_vpc = get_result.data.vpc_resource
-            session.network_interface_ip = get_result.data.network_interface_ip
-            session.http_port = get_result.data.http_port
-            session.token = get_result.data.token
             session.resource_url = get_result.data.resource_url
+            session.mcpTools = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list)
 
         return SessionResult(
             request_id=get_result.request_id,
@@ -1084,37 +1120,23 @@ class AsyncAgentBay:
             session=session,
         )
 
-    async def pause(
+    async def beta_pause(
         self, session: AsyncSession, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionPauseResult:
         """
-        Asynchronously pause a session, putting it into a dormant state.
-
-        This method internally calls the PauseSessionAsync API and then polls the GetSession API
-        to check the session status until it becomes PAUSED or until timeout.
-
-        Args:
-            session (AsyncSession): The session to pause.
-            timeout (int, optional): Timeout in seconds to wait for the session to pause.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionPauseResult: Result containing the request ID, success status, and final session status.
+        Asynchronously pause a session (beta), putting it into a dormant state.
         """
         try:
-            # Call session's pause method
-            return await session.pause(timeout, poll_interval)
+            return await session.beta_pause(timeout, poll_interval)
         except Exception as e:
-            _log_operation_error("pause_session", str(e), exc_info=True)
+            _log_operation_error("beta_pause_session", str(e), exc_info=True)
             return SessionPauseResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to pause session {session.session_id}: {e}",
             )
 
-    async def pause_async(self, session: AsyncSession) -> SessionPauseResult:
+    async def beta_pause_async(self, session: AsyncSession) -> SessionPauseResult:
         """
         Fire-and-return pause: trigger PauseSessionAsync without waiting for PAUSED.
 
@@ -1181,44 +1203,30 @@ class AsyncAgentBay:
             return SessionPauseResult(request_id=request_id, success=True)
 
         except Exception as e:
-            _log_operation_error("pause_session_async", str(e), exc_info=True)
+            _log_operation_error("beta_pause_session_async", str(e), exc_info=True)
             return SessionPauseResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to pause session {session.session_id}: {e}",
             )
 
-    async def resume(
+    async def beta_resume(
         self, session: AsyncSession, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionResumeResult:
         """
-        Asynchronously resume a session from a paused state.
-
-        This method internally calls the ResumeSessionAsync API and then polls the GetSession API
-        to check the session status until it becomes RUNNING or until timeout.
-
-        Args:
-            session (AsyncSession): The session to resume.
-            timeout (int, optional): Timeout in seconds to wait for the session to resume.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionResumeResult: Result containing the request ID, success status, and final session status.
+        Asynchronously resume a session (beta) from a paused state.
         """
         try:
-            # Call session's resume method
-            return await session.resume(timeout, poll_interval)
+            return await session.beta_resume(timeout, poll_interval)
         except Exception as e:
-            _log_operation_error("resume_session", str(e), exc_info=True)
+            _log_operation_error("beta_resume_session", str(e), exc_info=True)
             return SessionResumeResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to resume session {session.session_id}: {e}",
             )
 
-    async def resume_async(self, session: AsyncSession) -> SessionResumeResult:
+    async def beta_resume_async(self, session: AsyncSession) -> SessionResumeResult:
         """
         Fire-and-return resume: trigger ResumeSessionAsync without waiting for RUNNING.
 
@@ -1269,7 +1277,7 @@ class AsyncAgentBay:
             return SessionResumeResult(request_id=request_id, success=True)
 
         except Exception as e:
-            _log_operation_error("resume_session_async", str(e), exc_info=True)
+            _log_operation_error("beta_resume_session_async", str(e), exc_info=True)
             return SessionResumeResult(
                 request_id="",
                 success=False,

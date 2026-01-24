@@ -54,7 +54,7 @@ def main():
         print(f"Session created successfully, Session ID: {session.session_id}")
 
         # ==================== Proxy Configuration Examples ====================
-        
+
         # Example 1: Custom Proxy Configuration
         # Suitable for users who have their own proxy servers
         # browser_proxy = BrowserProxy(
@@ -96,8 +96,7 @@ def main():
                 context = browser.contexts[0]  # Get default browser context
                 page = context.new_page()  # Create new page
 
-                # ==================== Verify Proxy IP ====================
-                print("\n--- Starting proxy public IP check ---")
+                # ==================== Verify Proxy IP ==================== print("\n--- Starting proxy public IP check ---")
                 page.goto("https://httpbin.org/ip")  # Visit IP checking service
 
                 try:
@@ -109,7 +108,7 @@ def main():
                     print(f"Failed to get proxy public IP: {e}")
                     public_ip = None
                 print("--- Proxy IP check completed ---\n")
-                
+
                 # Wait 3 seconds to observe results
                 page.wait_for_timeout(3000)
                 browser.close()

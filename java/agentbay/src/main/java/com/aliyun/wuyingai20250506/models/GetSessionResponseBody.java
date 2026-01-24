@@ -130,6 +130,9 @@ public class GetSessionResponseBody extends TeaModel {
         @NameInMap("Token")
         public String token;
 
+        @NameInMap("ToolList")
+        public String toolList;
+
         @NameInMap("VpcResource")
         public Boolean vpcResource;
 
@@ -203,6 +206,14 @@ public class GetSessionResponseBody extends TeaModel {
         }
         public String getToken() {
             return this.token;
+        }
+
+        public GetSessionResponseBodyData setToolList(String toolList) {
+            this.toolList = toolList;
+            return this;
+        }
+        public String getToolList() {
+            return this.toolList;
         }
 
         public GetSessionResponseBodyData setVpcResource(Boolean vpcResource) {

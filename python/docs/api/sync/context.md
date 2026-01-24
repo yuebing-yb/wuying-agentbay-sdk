@@ -23,7 +23,7 @@ Represents a persistent storage context in the AgentBay cloud environment.
 - `created_at` _str_ - Date and time when the Context was created.
 - `last_used_at` _str_ - Date and time when the Context was last used.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, id: str,
@@ -51,7 +51,7 @@ class ContextResult(ApiResponse)
 
 Result of operations returning a Context.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -79,7 +79,7 @@ class ContextListResult(ApiResponse)
 
 Result of operations returning a list of Contexts.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -111,7 +111,7 @@ class ContextFileEntry()
 
 Represents a file item in a context.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, file_id: str,
@@ -132,7 +132,7 @@ class FileUrlResult(ApiResponse)
 
 Result of a presigned URL request.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -150,7 +150,7 @@ class ContextFileListResult(ApiResponse)
 
 Result of file listing operation.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -179,7 +179,7 @@ Result of context clear operations, including the real-time status.
   - Other values may indicate the context state after clearing
 - `context_id` _Optional[str]_ - The unique identifier of the context being cleared.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, request_id: str = "",
@@ -197,7 +197,7 @@ class ContextListParams()
 
 Parameters for listing contexts with pagination support.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, max_results: Optional[int] = None,
@@ -222,7 +222,7 @@ class ContextService()
 
 Provides methods to manage persistent contexts in the AgentBay cloud environment.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, agent_bay: "AgentBay")
@@ -412,7 +412,7 @@ result = agent_bay.context.get(name="my-context")
 delete_result = agent_bay.context.delete(result.context)
 ```
 
-### get\_file\_download\_url
+### get_file_download_url
 
 ```python
 def get_file_download_url(context_id: str, file_path: str) -> FileUrlResult
@@ -431,6 +431,11 @@ Get a presigned download URL for a file in a context.
     FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
   
 
+**Notes**:
+
+  The presigned URL expires in 1 hour by default.
+  
+
 **Example**:
 
 ```python
@@ -439,7 +444,7 @@ url_result = agent_bay.context.get_file_download_url(ctx_result.context_id, "/pa
 print(url_result.url)
 ```
 
-### get\_file\_upload\_url
+### get_file_upload_url
 
 ```python
 def get_file_upload_url(context_id: str, file_path: str) -> FileUrlResult
@@ -458,6 +463,11 @@ Get a presigned upload URL for a file in a context.
     FileUrlResult: A result object containing the presigned URL, expire time, and request ID.
   
 
+**Notes**:
+
+  The presigned URL expires in 1 hour by default.
+  
+
 **Example**:
 
 ```python
@@ -466,7 +476,7 @@ url_result = agent_bay.context.get_file_upload_url(ctx_result.context_id, "/path
 print(url_result.url)
 ```
 
-### delete\_file
+### delete_file
 
 ```python
 def delete_file(context_id: str, file_path: str) -> OperationResult
@@ -492,7 +502,7 @@ ctx_result = agent_bay.context.get(name="my-context", create=True)
 delete_result = agent_bay.context.delete_file(ctx_result.context_id, "/path/to/file.txt")
 ```
 
-### list\_files
+### list_files
 
 ```python
 def list_files(context_id: str,
@@ -524,7 +534,7 @@ files_result = agent_bay.context.list_files(ctx_result.context_id, "/")
 print(f"Found {len(files_result.entries)} files")
 ```
 
-### clear\_async
+### clear_async
 
 ```python
 def clear_async(context_id: str) -> ClearContextResult
@@ -559,7 +569,7 @@ result = agent_bay.context.get(name="my-context", create=True)
 clear_result = agent_bay.context.clear_async(result.context_id)
 ```
 
-### start\_clear
+### start_clear
 
 ```python
 def start_clear(context_id: str) -> ClearContextResult
@@ -579,7 +589,7 @@ This method is kept for backward compatibility and simply forwards to
 
   ClearContextResult from `clear_async`.
 
-### get\_clear\_status
+### get_clear_status
 
 ```python
 def get_clear_status(context_id: str) -> ClearContextResult

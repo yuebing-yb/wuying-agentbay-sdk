@@ -55,7 +55,7 @@ def main():
         # Create a page with iframes
         print("\n1. Creating test page with iframes...")
         session.browser.agent.navigate("https://example.com")
-        
+
         # Add iframe via JavaScript
         session.browser.agent.act(ActOptions(
             action="Execute JavaScript to add an iframe: "

@@ -85,6 +85,7 @@ type AgentBay struct {
 	Client         *mcp.Client
 	Context        *ContextService
 	MobileSimulate *MobileSimulateService
+	BetaNetwork    *BetaNetworkService
 	config         Config
 }
 
@@ -127,14 +128,16 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Create AgentBay instance
 	agentBay := &AgentBay{
-		APIKey:  apiKey,
-		Client:  client,
-		Context: nil, // Will be initialized after creation
-		config:  config,
+		APIKey:      apiKey,
+		Client:      client,
+		Context:     nil, // Will be initialized after creation
+		BetaNetwork: nil, // Will be initialized after creation
+		config:      config,
 	}
 
 	// Initialize context service
 	agentBay.Context = &ContextService{AgentBay: agentBay}
+	agentBay.BetaNetwork = &BetaNetworkService{AgentBay: agentBay}
 
 	return agentBay, nil
 }
@@ -153,7 +156,6 @@ func NewAgentBayWithDefaults(apiKey string) (*AgentBay, error) {
 //   - params: Configuration parameters for the session (optional)
 //   - Labels: Key-value pairs for session metadata
 //   - ImageId: Custom image ID for the session environment
-//   - IsVpc: Whether to create a VPC session
 //   - PolicyId: Security policy ID
 //   - ExtraConfigs: Additional configuration options
 //
@@ -239,12 +241,14 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		createSessionRequest.ImageId = tea.String(params.ImageId)
 	}
 
-	// Add VPC resource if specified
-	createSessionRequest.VpcResource = tea.Bool(params.IsVpc)
-
 	// Add PolicyId if provided
 	if params.PolicyId != "" {
 		createSessionRequest.McpPolicyId = tea.String(params.PolicyId)
+	}
+
+	// Beta: Add NetworkId if provided
+	if params.BetaNetworkId != "" {
+		createSessionRequest.NetworkId = tea.String(params.BetaNetworkId)
 	}
 
 	// Add labels if provided
@@ -336,9 +340,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// Log API request with all set parameters
-	requestParams := fmt.Sprintf("ImageId=%s, IsVpc=%t",
-		tea.StringValue(createSessionRequest.ImageId),
-		tea.BoolValue(createSessionRequest.VpcResource))
+	requestParams := fmt.Sprintf("ImageId=%s", tea.StringValue(createSessionRequest.ImageId))
 
 	// Add PolicyId if set
 	if createSessionRequest.McpPolicyId != nil && *createSessionRequest.McpPolicyId != "" {
@@ -408,21 +410,20 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	session := NewSession(a, *response.Body.Data.SessionId)
 	session.ImageId = params.ImageId
 
-	// Set VPC-related information from response
-	session.IsVpcEnabled = params.IsVpc
-	if response.Body.Data.NetworkInterfaceIp != nil {
-		session.NetworkInterfaceIP = *response.Body.Data.NetworkInterfaceIp
-	}
-	if response.Body.Data.HttpPort != nil {
-		session.HttpPortNumber = *response.Body.Data.HttpPort
-	}
-	if response.Body.Data.Token != nil {
-		session.Token = *response.Body.Data.Token
-	}
-
 	// Set ResourceUrl
 	if response.Body.Data.ResourceUrl != nil {
 		session.ResourceUrl = *response.Body.Data.ResourceUrl
+	}
+
+	// LinkUrl/token may be returned by the server for direct tool calls.
+	if response.Body.Data.Token != nil {
+		session.Token = *response.Body.Data.Token
+	}
+	if response.Body.Data.LinkUrl != nil {
+		session.LinkUrl = *response.Body.Data.LinkUrl
+	}
+	if response.Body.Data.ToolList != nil {
+		session.McpTools = parseToolListToMcpTools(*response.Body.Data.ToolList)
 	}
 
 	// Set browser recording state
@@ -432,7 +433,6 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	keyFields := map[string]interface{}{
 		"session_id":   session.SessionID,
 		"resource_url": session.ResourceUrl,
-		"is_vpc":       params.IsVpc,
 	}
 	responseJSON, _ := json.MarshalIndent(response.Body, "", "  ")
 	logAPIResponseWithDetails("CreateMcpSession", requestID, true, keyFields, string(responseJSON))
@@ -444,31 +444,32 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 	}
 
-	// For VPC sessions, automatically fetch MCP tools information
-	if params.IsVpc {
-		toolsResult, err := session.ListMcpTools()
-		if err != nil {
-			logOperationError("FetchMCPTools", err.Error(), false)
-		} else if len(toolsResult.Tools) > 0 {
-			fmt.Printf("✅ Successfully fetched %d MCP tools for VPC session (RequestID: %s)\n",
-				len(toolsResult.Tools), toolsResult.RequestID)
-		}
-	}
-
 	// If we have persistence data, wait for context synchronization
 	if needsContextSync {
 		fmt.Println("Waiting for context synchronization to complete...")
 
-		// Wait for context synchronization to complete
-		const maxRetries = 150                        // Maximum number of retries
-		const retryInterval = 1500 * time.Millisecond // 1.5 seconds between retries
+		// Exponential backoff configuration
+		// Starts with short intervals (0.5s) for fast completion detection
+		// Gradually increases intervals (up to 5s max) to reduce server load
+		// Uses exponential backoff factor of 1.1
+		const initialInterval = 500 * time.Millisecond  // Start with 0.5 seconds for quick response
+		const maxInterval = 5000 * time.Millisecond     // Maximum interval to avoid excessive delays
+		const backoffFactor = 1.1                       // Multiply interval by this factor each retry
+		const maxRetries = 50                           // Maximum number of retries
+
+		currentInterval := initialInterval
 
 		for retry := 0; retry < maxRetries; retry++ {
 			// Get context status data
 			infoResult, err := session.Context.Info()
 			if err != nil {
 				fmt.Printf("Error getting context info on attempt %d: %v\n", retry+1, err)
-				time.Sleep(retryInterval)
+				time.Sleep(currentInterval)
+				// Exponential backoff: increase interval for next retry, capped at maxInterval
+				currentInterval = time.Duration(float64(currentInterval) * backoffFactor)
+				if currentInterval > maxInterval {
+					currentInterval = maxInterval
+				}
 				continue
 			}
 
@@ -499,8 +500,14 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 				break
 			}
 
-			fmt.Printf("Waiting for context synchronization, attempt %d/%d\n", retry+1, maxRetries)
-			time.Sleep(retryInterval)
+			fmt.Printf("Waiting for context synchronization, attempt %d/%d, next interval: %.2fs\n", retry+1, maxRetries, currentInterval.Seconds())
+			time.Sleep(currentInterval)
+
+			// Exponential backoff: increase interval for next retry, capped at maxInterval
+			currentInterval = time.Duration(float64(currentInterval) * backoffFactor)
+			if currentInterval > maxInterval {
+				currentInterval = maxInterval
+			}
 		}
 	}
 
@@ -921,7 +928,70 @@ type GetSessionData struct {
 	VpcResource        bool
 	ResourceUrl        string
 	Status             string
+	ToolList           string
 	Contexts           []ContextInfo
+}
+
+func parseToolListToMcpTools(toolList string) []McpTool {
+	if toolList == "" {
+		return []McpTool{}
+	}
+
+	var items []map[string]interface{}
+	if err := json.Unmarshal([]byte(toolList), &items); err != nil {
+		logOperationError("ParseToolList", fmt.Sprintf("Error unmarshaling ToolList: %v", err), false)
+		return []McpTool{}
+	}
+
+	tools := make([]McpTool, 0, len(items))
+	for _, item := range items {
+		name := ""
+		if v, ok := item["name"].(string); ok && v != "" {
+			name = v
+		} else if v, ok := item["Name"].(string); ok && v != "" {
+			name = v
+		}
+
+		server := ""
+		if v, ok := item["server"].(string); ok && v != "" {
+			server = v
+		} else if v, ok := item["serverName"].(string); ok && v != "" {
+			server = v
+		} else if v, ok := item["Server"].(string); ok && v != "" {
+			server = v
+		}
+
+		description := ""
+		if v, ok := item["description"].(string); ok && v != "" {
+			description = v
+		} else if v, ok := item["Description"].(string); ok && v != "" {
+			description = v
+		}
+
+		inputSchema := map[string]interface{}{}
+		if v, ok := item["inputSchema"].(map[string]interface{}); ok {
+			inputSchema = v
+		} else if v, ok := item["input_schema"].(map[string]interface{}); ok {
+			inputSchema = v
+		}
+
+		toolID := ""
+		if v, ok := item["tool"].(string); ok && v != "" {
+			toolID = v
+		} else if v, ok := item["Tool"].(string); ok && v != "" {
+			toolID = v
+		}
+
+		tools = append(tools, McpTool{
+			Name:        name,
+			Server:      server,
+			Description: description,
+			InputSchema: inputSchema,
+			Tool:        toolID,
+		})
+	}
+
+	return tools
 }
 
 // getSession retrieves session information by session ID (internal).
@@ -1025,6 +1095,9 @@ func (a *AgentBay) getSession(sessionID string) (*GetSessionResult, error) {
 			}
 			if response.Body.Data.GetStatus() != nil {
 				data.Status = *response.Body.Data.GetStatus()
+			}
+			if response.Body.Data.GetToolList() != nil {
+				data.ToolList = *response.Body.Data.GetToolList()
 			}
 			// Extract contexts list from response
 			if response.Body.Data.GetContexts() != nil {
@@ -1136,11 +1209,8 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 
 	// Set VPC-related information and ResourceUrl from GetSession response
 	if getResult.Data != nil {
-		session.IsVpcEnabled = getResult.Data.VpcResource
-		session.NetworkInterfaceIP = getResult.Data.NetworkInterfaceIP
-		session.HttpPortNumber = getResult.Data.HttpPort
-		session.Token = getResult.Data.Token
 		session.ResourceUrl = getResult.Data.ResourceUrl
+		session.McpTools = parseToolListToMcpTools(getResult.Data.ToolList)
 	}
 
 	// Log successful retrieval
@@ -1149,7 +1219,6 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		"resource_url": session.ResourceUrl,
 	}
 	if getResult.Data != nil {
-		keyFields["vpc_enabled"] = getResult.Data.VpcResource
 		if getResult.Data.ResourceID != "" {
 			keyFields["resource_id"] = getResult.Data.ResourceID
 		}
@@ -1165,8 +1234,8 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	}, nil
 }
 
-// Pause synchronously pauses a session, putting it into a dormant state to reduce resource usage and costs.
-// Pause puts the session into a PAUSED state where computational resources are significantly reduced.
+// BetaPause synchronously pauses a session (beta), putting it into a dormant state to reduce resource usage and costs.
+// BetaPause puts the session into a PAUSED state where computational resources are significantly reduced.
 // The session state is preserved and can be resumed later to continue work.
 //
 // Parameters:
@@ -1180,7 +1249,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 //
 // Behavior:
 //
-// - Delegates to session's Pause method for actual implementation
+// - Delegates to session's BetaPause method for actual implementation
 // - Returns detailed result with success status and request tracking
 //
 // Exceptions:
@@ -1194,9 +1263,9 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
 //	result, _ := client.Create(nil)
 //	defer result.Session.Delete()
-//	pauseResult, _ := client.Pause(result.Session, 300, 2.0)
-//	client.Resume(result.Session, 300, 2.0)
-func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
+//	pauseResult, _ := client.BetaPause(result.Session, 300, 2.0)
+//	client.BetaResume(result.Session, 300, 2.0)
+func (ab *AgentBay) BetaPause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error) {
 	// Use default values if not provided
 	if timeout <= 0 {
 		timeout = 600
@@ -1205,12 +1274,12 @@ func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (
 		pollInterval = 2.0
 	}
 
-	// Call session's Pause method with provided parameters
-	return session.Pause(timeout, pollInterval)
+	// Call session's BetaPause method with provided parameters
+	return session.BetaPause(timeout, pollInterval)
 }
 
-// Resume synchronously resumes a session from a paused state to continue work.
-// Resume restores the session from PAUSED state back to RUNNING state.
+// BetaResume synchronously resumes a session (beta) from a paused state to continue work.
+// BetaResume restores the session from PAUSED state back to RUNNING state.
 // All previous session state and data are preserved during resume operation.
 //
 // Parameters:
@@ -1224,7 +1293,7 @@ func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (
 //
 // Behavior:
 //
-// - Delegates to session's Resume method for actual implementation
+// - Delegates to session's BetaResume method for actual implementation
 // - Returns detailed result with success status and request tracking
 //
 // Exceptions:
@@ -1238,9 +1307,9 @@ func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (
 //	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
 //	result, _ := client.Create(nil)
 //	defer result.Session.Delete()
-//	client.Pause(result.Session, 300, 2.0)
-//	resumeResult, _ := client.Resume(result.Session, 300, 2.0)
-func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
+//	client.BetaPause(result.Session, 300, 2.0)
+//	resumeResult, _ := client.BetaResume(result.Session, 300, 2.0)
+func (ab *AgentBay) BetaResume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error) {
 	// Use default values if not provided
 	if timeout <= 0 {
 		timeout = 600
@@ -1249,8 +1318,8 @@ func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) 
 		pollInterval = 2.0
 	}
 
-	// Call session's Resume method with provided parameters
-	return session.Resume(timeout, pollInterval)
+	// Call session's BetaResume method with provided parameters
+	return session.BetaResume(timeout, pollInterval)
 }
 
 // GetRegionID returns the region ID from config
@@ -1262,8 +1331,8 @@ func (a *AgentBay) GetRegionID() string {
 func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateSessionParams {
 	copy := &CreateSessionParams{
 		ImageId:             params.ImageId,
-		IsVpc:               params.IsVpc,
 		PolicyId:            params.PolicyId,
+		BetaNetworkId:       params.BetaNetworkId,
 		Framework:           params.Framework,
 		EnableBrowserReplay: params.EnableBrowserReplay,
 	}

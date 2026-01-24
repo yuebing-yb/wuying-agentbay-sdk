@@ -98,6 +98,6 @@ Example completed successfully!
 
 - The `CallMcpTool` method is the unified API for calling any MCP tool
 - Tool discovery is done via `ListMcpTools`
-- Both VPC and non-VPC modes are supported automatically
+- Tool calls use the OpenAPI route
 - Proper error handling and cleanup are demonstrated
 

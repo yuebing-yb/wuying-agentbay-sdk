@@ -28,7 +28,7 @@ class AsyncCode(AsyncBaseService)
 
 Handles code execution operations in the AgentBay cloud environment.
 
-### run\_code
+### run_code
 
 ```python
 async def run_code(code: str,

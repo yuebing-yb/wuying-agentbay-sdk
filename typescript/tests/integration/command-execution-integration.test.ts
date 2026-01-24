@@ -1,7 +1,6 @@
 import { log } from 'console';
-import { AgentBay } from '../../src';
+import { AgentBay, CreateSessionParams } from '../../src';
 import { Session } from '../../src/session';
-import { CreateSessionParams } from "../../src/session-params";
 
 describe('Command Execution Integration Tests', () => {
   let agentBay: AgentBay;
@@ -17,8 +16,9 @@ describe('Command Execution Integration Tests', () => {
     beforeAll(async () => {
       // Step 1: Environment preparation
       expect(agentBay).toBeDefined();
-      const params = new CreateSessionParams();
-      params.imageId = 'linux_latest';
+      const params :CreateSessionParams = {
+        imageId:'linux_latest',
+      }
 
       // Step 2: Session creation
       const sessionResult = await agentBay.create(params);
@@ -370,8 +370,9 @@ describe('Command Execution Integration Tests', () => {
       expect(agentBay).toBeDefined();
 
       // Step 2: Create two independent sessions
-      const params = new CreateSessionParams();
-      params.imageId = "code_latest";
+      const params :CreateSessionParams = {
+        imageId:'code_latest',
+      }
       const sessionResult1 = await agentBay.create(params);
       const sessionResult2 = await agentBay.create(params);
 
@@ -457,26 +458,39 @@ print(json.dumps(result))
 
       const jsFileCode = `
 const fs = require('fs');
+const path = require('path');
 
-// Create a test file
-fs.writeFileSync('/tmp/js_test.txt', 'JavaScript file operation test');
-
-// Read the file
-const content = fs.readFileSync('/tmp/js_test.txt', 'utf8');
-
-const result = {
-  operation: "file_write_read",
-  content: content,
-  file_exists: fs.existsSync('/tmp/js_test.txt')
-};
-console.log(JSON.stringify(result));
+try {
+  // Create a test file with error handling
+  const filePath = '/tmp/js_test.txt';
+  const testContent = 'JavaScript file operation test';
+  
+  fs.writeFileSync(filePath, testContent);
+  
+  // Read the file
+  const content = fs.readFileSync(filePath, 'utf8');
+  
+  const result = {
+    operation: "file_write_read",
+    content: content,
+    file_exists: fs.existsSync(filePath)
+  };
+  
+  console.log(JSON.stringify(result));
+} catch (error) {
+  console.error(JSON.stringify({
+    operation: "file_write_read",
+    error: error.message,
+    success: false
+  }));
+}
 `.trim();
 
-      const [pythonFileResult, jsFileResult] = await Promise.all([
-        code1.runCode(pythonFileCode, 'python'),
-        code2.runCode(jsFileCode, 'javascript')
-      ]);
+      // Execute code sequentially to avoid potential race conditions
+      const pythonFileResult = await code1.runCode(pythonFileCode, 'python');
       expect(pythonFileResult.success).toBe(true);
+      
+      const jsFileResult = await code2.runCode(jsFileCode, 'javascript');
       expect(jsFileResult.success).toBe(true);
 
       expect(pythonFileResult.result).toContain('Python file operation test');

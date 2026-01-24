@@ -19,12 +19,12 @@ def code_session():
     session_result = agent_bay.create(params)
     if not session_result.success or not session_result.session:
         pytest.skip(f"Failed to create session: {session_result.error_message}")
-    
+
     session = session_result.session
     code_obj = session.code
-    
+
     yield code_obj
-    
+
     # Cleanup
     session.delete()
 
@@ -35,7 +35,7 @@ def agent_bay_client():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
-    
+
     return AgentBay(api_key=api_key)
 
 
@@ -177,7 +177,7 @@ def test_run_code_unsupported_language(code_session):
     """Test code execution with unsupported language."""
     code = "print('Hello, world!')"
     language = "ruby"
-    
+
     result = code_session.run_code(code, language)
 
     # Should return failure for unsupported language
@@ -370,7 +370,7 @@ def test_3_2_complex_code_with_file_operations(agent_bay_client):
 
     code1 = session1.code
     code2 = session2.code
-    
+
     try:
 
         # Step 7: Complex code test with file operations
@@ -431,7 +431,7 @@ def test_3_2_code_execution_error_handling(agent_bay_client):
     session = session_result.session
 
     code = session.code
-    
+
     try:
         # Test Python code with syntax error
         bad_python_code = """
@@ -440,8 +440,13 @@ print("Hello"
 """.strip()
 
         bad_result = code.run_code(bad_python_code, "python")
-        assert bad_result.success
-        assert len(bad_result.logs.stderr) > 0
+        assert not bad_result.success
+        assert bad_result.error_message is not None and bad_result.error_message != ""
+        assert (
+            "incomplete input" in bad_result.error_message
+            or "SyntaxError" in bad_result.error_message
+            or "traceId" in bad_result.error_message
+        )
 
         # Test code with runtime error
         runtime_error_code = """
@@ -450,8 +455,12 @@ print(undefined_variable)
 """.strip()
 
         runtime_result = code.run_code(runtime_error_code, "python")
-        assert runtime_result.success
-        assert len(runtime_result.logs.stderr) > 0
+        assert not runtime_result.success
+        stderr_text = "".join(runtime_result.logs.stderr) if runtime_result.logs.stderr else ""
+        assert (
+            "name 'nonexistent_variable' is not defined" in stderr_text
+            or "name 'nonexistent_variable' is not defined" in runtime_result.error_message
+        )
     finally:
         # Cleanup session
         session.delete()

@@ -3,7 +3,7 @@ import json
 import os
 import unittest
 from typing import Optional
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from pydantic import BaseModel, Field
 
@@ -344,7 +344,8 @@ class TestAsyncBrowser(unittest.TestCase):
         page = MagicMock()
         page.context.new_cdp_session = AsyncMock()
 
-        asyncio.run(self.browser.initialize(BrowserOption()))
+        with patch("asyncio.sleep", new=AsyncMock(return_value=None)):
+            asyncio.run(self.browser.initialize(BrowserOption()))
 
         # Mock the MCP tool response for act
         # act calls _execute_act -> _call_mcp_tool_timeout
@@ -359,7 +360,8 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        asyncio.run(self.browser.agent.act(ActOptions(action="Click search button"), page))
+        with patch("asyncio.sleep", new=AsyncMock(return_value=None)):
+            asyncio.run(self.browser.agent.act(ActOptions(action="Click search button"), page))
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_observe_async(self):
@@ -367,7 +369,8 @@ class TestAsyncBrowser(unittest.TestCase):
         page = MagicMock()
         page.context.new_cdp_session = AsyncMock()
 
-        asyncio.run(self.browser.initialize(BrowserOption()))
+        with patch("asyncio.sleep", new=AsyncMock(return_value=None)):
+            asyncio.run(self.browser.initialize(BrowserOption()))
         # observe calls page_use_observe_async -> returns task_id
         # Second call: page_use_get_observe_result -> returns result
         response1 = MagicMock(success=True, data=json.dumps({"task_id": "123"}))
@@ -377,7 +380,8 @@ class TestAsyncBrowser(unittest.TestCase):
         
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        asyncio.run(self.browser.agent.observe(ObserveOptions(instruction="Find the search button"), page))
+        with patch("asyncio.sleep", new=AsyncMock(return_value=None)):
+            asyncio.run(self.browser.agent.observe(ObserveOptions(instruction="Find the search button"), page))
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_extract_async(self):
@@ -385,7 +389,8 @@ class TestAsyncBrowser(unittest.TestCase):
         page = MagicMock()
         page.context.new_cdp_session = AsyncMock()
 
-        asyncio.run(self.browser.initialize(BrowserOption()))
+        with patch("asyncio.sleep", new=AsyncMock(return_value=None)):
+            asyncio.run(self.browser.initialize(BrowserOption()))
 
         # extract calls page_use_extract_async -> returns task_id
         # then page_use_get_extract_result -> returns result
@@ -396,7 +401,8 @@ class TestAsyncBrowser(unittest.TestCase):
 
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
-        asyncio.run(self.browser.agent.extract(ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page))
+        with patch("asyncio.sleep", new=AsyncMock(return_value=None)):
+            asyncio.run(self.browser.agent.extract(ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page))
         self.mock_session.call_mcp_tool.assert_called()
 
 

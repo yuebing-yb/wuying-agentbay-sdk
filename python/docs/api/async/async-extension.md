@@ -52,7 +52,7 @@ browser_context = BrowserContext(
 - If context_id empty or not provided: Generates default name and creates context
 - No need to manually manage context creation
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, agent_bay: "AsyncAgentBay", context_id: str = "")
@@ -215,7 +215,7 @@ success = await extensions_service.delete("ext_abc123.zip")
 print(f"Delete success: {success}")
 ```
 
-### create\_extension\_option
+### create_extension_option
 
 ```python
 async def create_extension_option(extension_ids: List[str]) -> ExtensionOption

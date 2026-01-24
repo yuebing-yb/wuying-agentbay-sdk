@@ -19,6 +19,8 @@ import java.util.Map;
  */
 public class Browser extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SERVER_BROWSER_USE = "wuying_browseruse";
+    private static final String SERVER_CDP = "wuying_cdp_mcp_server";
 
     private String endpointUrl;
     private boolean initialized;
@@ -51,9 +53,9 @@ public class Browser extends BaseService {
 
             Map<String, Object> browserOptionMap = option.toMap();
 
-            // Enable record if session.enableBrowserReplay is True
-            if (session.getEnableBrowserReplay() != null && session.getEnableBrowserReplay()) {
-                browserOptionMap.put("enableRecord", true);
+            // Set enableRecord based on session.enableBrowserReplay
+            if (session.getEnableBrowserReplay() != null) {
+                browserOptionMap.put("enableRecord", session.getEnableBrowserReplay());
             }
 
             // Convert BrowserOption to JSON string
@@ -212,9 +214,10 @@ public class Browser extends BaseService {
 
     /**
      * Get the endpoint URL for browser connection.
+     * When initialized, always fetches the latest CDP url from getCdpLink API.
      *
      * @return Browser endpoint URL
-     * @throws BrowserException if browser is not initialized
+     * @throws BrowserException if browser is not initialized or endpoint URL cannot be retrieved
      */
     public String getEndpointUrl() throws BrowserException {
         if (!isInitialized()) {
@@ -222,29 +225,27 @@ public class Browser extends BaseService {
         }
 
         try {
-            // Get CDP URL from session
-            OperationResult linkResult = getLinkFromSession();
-            if (linkResult.isSuccess()) {
-                this.endpointUrl = linkResult.getData();
+            com.aliyun.wuyingai20250506.models.GetCdpLinkRequest request =
+                new com.aliyun.wuyingai20250506.models.GetCdpLinkRequest();
+            request.setAuthorization("Bearer " + session.getAgentBay().getApiKey());
+            request.setSessionId(session.getSessionId());
+
+            com.aliyun.wuyingai20250506.models.GetCdpLinkResponse response =
+                session.getAgentBay().getClient().getCdpLink(request);
+
+            if (response != null && response.getBody() != null &&
+                response.getBody().getSuccess() && response.getBody().getData() != null) {
+                this.endpointUrl = response.getBody().getData().getUrl();
             } else {
-                throw new BrowserException("Failed to get link from session: " + linkResult.getErrorMessage());
+                String errorMsg = response != null && response.getBody() != null ?
+                    response.getBody().getMessage() : "Unknown error";
+                throw new BrowserException("Failed to get CDP link: " + errorMsg);
             }
 
             return this.endpointUrl;
 
         } catch (Exception e) {
             throw new BrowserException("Failed to get endpoint URL from session: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Get link from session.
-     */
-    private OperationResult getLinkFromSession() {
-        try {
-            return session.getLink();
-        } catch (Exception e) {
-            return new OperationResult("", false, "", "Failed to get link from session: " + e.getMessage());
         }
     }
 

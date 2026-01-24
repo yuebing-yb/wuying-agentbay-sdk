@@ -42,10 +42,10 @@ func main() {
 	fmt.Printf("Session created with ID: %s\n", session.SessionID)
 
 	// Execute a task using the Agent
-	taskDescription := "Calculate the square root of 144"
+	taskDescription := "Open Notepad and input 'Hello, AgentBay!'"
 	fmt.Printf("Executing task: %s\n", taskDescription)
 
-	executionResult := session.Agent.Computer.ExecuteTask(taskDescription, 5)
+	executionResult := session.Agent.Computer.ExecuteTaskAndWait(taskDescription, 100)
 
 	if executionResult.Success {
 		fmt.Println("Task completed successfully!")

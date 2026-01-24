@@ -85,9 +85,9 @@ Complete API documentation for all classes and methods in the AgentBay Java SDK.
   - Alibaba Cloud Object Storage integration
   - Methods: `init()`, `upload()`, `download()`
 
-- [Network](common-features/advanced/network.md) - `com.aliyun.agentbay.network.Network`
-  - Network configuration and management
-  - Methods for VPC and network setup
+- [Network](common-features/advanced/network.md) - `com.aliyun.agentbay.network.BetaNetworkService`
+  - Create a network and bind sessions to it for intra-network communication
+  - Methods: `betaGetNetworkBindToken()`, `betaDescribe()`
 
 ### Configuration
 
@@ -171,7 +171,7 @@ com.aliyun.agentbay
 ├── oss
 │   └── Oss                     # Object storage
 ├── network
-│   └── Network                 # Network management
+│   └── BetaNetworkService      # Network management (beta)
 └── model
     ├── ExtraConfigs            # Advanced configs
     └── Result classes          # Result types
@@ -189,6 +189,7 @@ com.aliyun.agentbay
 - **Manage desktop apps** → [Computer](computer-use/computer.md)
 - **Run code** → [Code.runCode()](codespace/code.md)
 - **Configure session** → [Session Params](common-features/basics/session-params.md)
+- **Manage networks** → [Network](common-features/advanced/network.md)
 
 ## 📖 Related Documentation
 

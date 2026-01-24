@@ -6,6 +6,48 @@
 T = TypeVar("T", bound=BaseModel)
 ```
 
+#### ERROR_ACT_START_FAIL
+
+```python
+ERROR_ACT_START_FAIL = 9000
+```
+
+#### ERROR_ACT_TASK_FAILED
+
+```python
+ERROR_ACT_TASK_FAILED = 9001
+```
+
+#### ERROR_ACT_TIMEOUT
+
+```python
+ERROR_ACT_TIMEOUT = 9002
+```
+
+#### ERROR_OBSERVE_FAIL
+
+```python
+ERROR_OBSERVE_FAIL = 9020
+```
+
+#### ERROR_EXTRACT_FAIL
+
+```python
+ERROR_EXTRACT_FAIL = 9040
+```
+
+#### ERROR_EXTRACT_START_FAIL
+
+```python
+ERROR_EXTRACT_START_FAIL = 9041
+```
+
+#### ERROR_EXTRACT_TIMEOUT
+
+```python
+ERROR_EXTRACT_TIMEOUT = 9042
+```
+
 ## BrowserAgent
 
 ```python
@@ -16,7 +58,7 @@ BrowserAgent handles browser automation and agent logic.
 
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session, browser)

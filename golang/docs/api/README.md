@@ -23,6 +23,7 @@ This directory is generated. Run `go run scripts/generate_api_docs.go` to refres
 - `common-features/basics/logging.md` – Logging
 - `common-features/advanced/agent.md` – Agent
 - `common-features/advanced/oss.md` – OSS
+- `common-features/advanced/network.md` – Network
 
 ## Computer Use
 

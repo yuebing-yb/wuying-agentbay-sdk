@@ -15,7 +15,7 @@ _shared_session = None
 def get_shared_session():
     """Get or create a shared session for all tests."""
     global _shared_session
-    
+
     if _shared_session is None:
         api_key = os.getenv("AGENTBAY_API_KEY")
         if not api_key:
@@ -26,9 +26,9 @@ def get_shared_session():
         session_result = agent_bay.create(params)
         if not session_result.success or not session_result.session:
             pytest.skip(f"Failed to create session: {session_result.error_message}")
-        
+
         _shared_session = session_result.session
-    
+
     return _shared_session
 
 
@@ -45,10 +45,10 @@ print("Hello, enhanced world!")
     assert isinstance(result, EnhancedCodeExecutionResult)
     assert result.success
     assert result.request_id is not None
-    
+
     # Test backward compatibility
     assert "Hello, enhanced world!" in result.result or "42" in result.result
-    
+
     # Test enhanced features
     assert hasattr(result, 'logs')
     assert hasattr(result, 'results')
@@ -71,11 +71,11 @@ print("This goes to stderr", file=sys.stderr)
     assert result.success
     assert isinstance(result.logs.stdout, list)
     assert isinstance(result.logs.stderr, list)
-    
+
     # Check that output is captured (exact format may vary)
     stdout_content = "".join(result.logs.stdout) if result.logs.stdout else ""
     stderr_content = "".join(result.logs.stderr) if result.logs.stderr else ""
-    
+
     # At minimum, some output should be captured
     assert len(stdout_content) > 0 or len(stderr_content) > 0 or len(result.results) > 0
 
@@ -101,10 +101,10 @@ text_result
 
     assert result.success
     assert isinstance(result.results, list)
-    
+
     # Should have at least one result
     assert len(result.results) >= 0
-    
+
     # Test backward compatibility
     assert result.result is not None
 
@@ -145,7 +145,7 @@ print(undefined_variable_that_does_not_exist)
                 result.error_message != "" or
                 (result.logs.stderr and len(result.logs.stderr) > 0))
     assert has_error
-    
+
     if result.error:
         assert hasattr(result.error, 'name')
         assert hasattr(result.error, 'value')
@@ -187,7 +187,7 @@ for i in range(10):
     assert result.success
     assert result.logs is not None
     assert result.results is not None
-    
+
     # Should handle the output without issues
     assert ("Generated list" in result.result or 
             any("Generated list" in str(res.text or "") for res in result.results) or
@@ -200,13 +200,13 @@ def test_execution_count_tracking():
     session = get_shared_session()
     code1 = "print('First execution')"
     code2 = "print('Second execution')"
-    
+
     result1 = session.code.run_code(code1, "python")
     result2 = session.code.run_code(code2, "python")
 
     assert result1.success
     assert result2.success
-    
+
     # execution_count may or may not be provided by the backend
     if result1.execution_count is not None:
         assert isinstance(result1.execution_count, int)
@@ -238,7 +238,7 @@ print("JSON:", json.dumps(json_data))
     assert result.success
     assert result.logs is not None
     assert result.results is not None
-    
+
     # Should capture various types of output
     full_output = result.result
     assert "Starting mixed output test" in full_output or any("Starting mixed output test" in str(log) for log in result.logs.stdout)
@@ -254,7 +254,7 @@ def test_empty_code_execution():
     assert result.success
     assert result.logs is not None
     assert result.results is not None
-    
+
     # Should handle empty execution gracefully
     assert result.result == "" or result.result is not None
 
@@ -271,20 +271,20 @@ final_result
     result = session.code.run_code(code, "python")
 
     assert result.success
-    
+
     # Test all expected properties exist
     assert hasattr(result, 'success')
     assert hasattr(result, 'result')
     assert hasattr(result, 'error_message')
     assert hasattr(result, 'request_id')
-    
+
     # Test new properties exist
     assert hasattr(result, 'logs')
     assert hasattr(result, 'results')
     assert hasattr(result, 'execution_time')
     assert hasattr(result, 'execution_count')
     assert hasattr(result, 'error')
-    
+
     # Test property types
     assert isinstance(result.success, bool)
     assert isinstance(result.result, str)
@@ -432,7 +432,7 @@ display(MockChart())
 """
     result = session.code.run_code(code, "python")
     assert result.success
-    
+
     # Check for chart data - handle both direct attribute and JSON structure
     has_chart = any(
         (hasattr(res, 'chart') and res.chart is not None) or
@@ -442,7 +442,7 @@ display(MockChart())
         (hasattr(res, 'text') and res.text and "application/vnd.vegalite.v4+json" in str(res.text))
         for res in result.results
     )
-    
+
     assert has_chart, "Chart output not found in results"
 
 

@@ -39,11 +39,7 @@ func (m *MockSessionForBinaryTest) HttpPort() string {
 	return ""
 }
 
-func (m *MockSessionForBinaryTest) FindServerForTool(toolName string) string {
-	return ""
-}
-
-func (m *MockSessionForBinaryTest) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+func (m *MockSessionForBinaryTest) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	if m.CallMcpToolFunc != nil {
 		return m.CallMcpToolFunc(toolName, args)
 	}

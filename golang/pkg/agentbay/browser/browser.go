@@ -381,9 +381,6 @@ type SessionInterface interface {
 	GetClient() *client.Client
 	CallMcpToolForBrowser(toolName string, args interface{}) (*McpToolResult, error)
 	GetLinkForBrowser(protocolType *string, port *int32, options *string) (*LinkResult, error)
-	IsVPCEnabled() bool
-	GetNetworkInterfaceIP() string
-	GetHttpPortNumber() string
 }
 
 // Browser provides browser-related operations for the session
@@ -443,14 +440,7 @@ func (b *Browser) GetEndpointURL() (string, error) {
 	if !b.initialized {
 		return "", errors.New("browser is not initialized. Cannot access endpoint URL")
 	}
-
-	if b.session.IsVPCEnabled() {
-		// For VPC mode, construct endpoint URL from VPC IP and port
-		b.endpointURL = fmt.Sprintf("ws://%s:%s", b.session.GetNetworkInterfaceIP(), b.session.GetHttpPortNumber())
-		return b.endpointURL, nil
-	}
-
-	// For non-VPC mode, use GetCdpLink API
+	// Use GetCdpLink API
 	request := &client.GetCdpLinkRequest{
 		Authorization: dara.String(fmt.Sprintf("Bearer %s", b.session.GetAPIKey())),
 		SessionId:     dara.String(b.session.GetSessionID()),
@@ -504,14 +494,12 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	// Convert option to map
 	browserOptionMap := option.toMap()
 
-	// Enable record if session has enableBrowserReplay set to true
+	// Set enableRecord based on session.enableBrowserReplay
 	// Check if session implements GetEnableBrowserReplay method
 	if enableReplayGetter, ok := b.session.(interface {
 		GetEnableBrowserReplay() bool
 	}); ok {
-		if enableReplayGetter.GetEnableBrowserReplay() {
-			browserOptionMap["enableRecord"] = true
-		}
+		browserOptionMap["enableRecord"] = enableReplayGetter.GetEnableBrowserReplay()
 	}
 
 	// Create InitBrowserRequest

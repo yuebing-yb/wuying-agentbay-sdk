@@ -160,7 +160,6 @@ Located in `common-features/basics/` and `common-features/advanced/`
 - `environment_variables/` - Environment variable management
 - `retry_mechanism/` - Retry patterns with circuit breaker
 - `session_pooling/` - Session pooling for efficiency
-- `vpc_session/` - VPC session management
 - `oss_management/` - OSS operations
 
 **Filesystem:**

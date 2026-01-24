@@ -26,7 +26,7 @@ class Browser(BaseService)
 
 Browser provides browser-related operations for the session.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session: "Session")
@@ -112,7 +112,7 @@ Takes a screenshot of the specified page with enhanced options and error handlin
     BrowserError: If browser is not initialized.
     RuntimeError: If screenshot capture fails.
 
-### get\_endpoint\_url
+### get_endpoint_url
 
 ```python
 def get_endpoint_url() -> str
@@ -143,7 +143,7 @@ print(f"CDP Endpoint: {endpoint_url}")
 session.delete()
 ```
 
-### get\_option
+### get_option
 
 ```python
 def get_option() -> Optional["BrowserOption"]
@@ -168,7 +168,7 @@ print(f"Stealth mode: {current_options.use_stealth}")
 session.delete()
 ```
 
-### is\_initialized
+### is_initialized
 
 ```python
 def is_initialized() -> bool

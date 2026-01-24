@@ -5,13 +5,14 @@ export { type Config } from "./config";
 export { VERSION, IS_RELEASE } from "./version";
 
 // Export all public classes and interfaces
-export { AgentBay} from "./agent-bay";
+export { AgentBay, type CreateSessionParams} from "./agent-bay";
 export * from "./agent";
 export * from "./api";
 export * from "./browser";
 export { Code } from "./code";
 export * from "./command";
 export { Context, ContextService } from "./context";
+export { BetaNetworkService } from "./beta-network";
 export { Computer } from "./computer";
 export * from "./exceptions";
 export * from "./extension";
@@ -25,6 +26,7 @@ export * from "./types";
 export * from "./context-sync";
 export * from "./context-manager";
 export * from "./session-params";
+export * from "./browser/eval";
 // Export utility functions
 export {
   log,

@@ -13,7 +13,7 @@ import (
 )
 
 type aliasTestSession struct {
-	callMcpToolFunc func(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	callMcpToolFunc func(toolName string, args interface{}) (*models.McpToolResult, error)
 }
 
 func (s *aliasTestSession) GetAPIKey() string                        { return "test-api-key" }
@@ -22,17 +22,16 @@ func (s *aliasTestSession) GetSessionId() string                     { return "t
 func (s *aliasTestSession) IsVpc() bool                              { return false }
 func (s *aliasTestSession) NetworkInterfaceIp() string               { return "" }
 func (s *aliasTestSession) HttpPort() string                         { return "" }
-func (s *aliasTestSession) FindServerForTool(toolName string) string { return "" }
-func (s *aliasTestSession) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+func (s *aliasTestSession) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	if s.callMcpToolFunc != nil {
-		return s.callMcpToolFunc(toolName, args, autoGenSession...)
+		return s.callMcpToolFunc(toolName, args)
 	}
 	return &models.McpToolResult{Success: true, Data: "", RequestID: "request-123"}, nil
 }
 
 func TestCommand_RunAndExecAliases(t *testing.T) {
 	s := &aliasTestSession{}
-	s.callMcpToolFunc = func(toolName string, args interface{}, _ ...bool) (*models.McpToolResult, error) {
+	s.callMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		assert.Equal(t, "shell", toolName)
 		m, ok := args.(map[string]interface{})
 		assert.True(t, ok)
@@ -63,7 +62,7 @@ func TestCommand_RunAndExecAliases(t *testing.T) {
 
 func TestCode_RunAndExecuteAliases(t *testing.T) {
 	s := &aliasTestSession{}
-	s.callMcpToolFunc = func(toolName string, args interface{}, _ ...bool) (*models.McpToolResult, error) {
+	s.callMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		assert.Equal(t, "run_code", toolName)
 		m, ok := args.(map[string]interface{})
 		assert.True(t, ok)
@@ -84,7 +83,7 @@ func TestFileSystem_Aliases(t *testing.T) {
 	callCount := 0
 	fileDeleted := false
 	s := &aliasTestSession{}
-	s.callMcpToolFunc = func(toolName string, args interface{}, _ ...bool) (*models.McpToolResult, error) {
+	s.callMcpToolFunc = func(toolName string, args interface{}) (*models.McpToolResult, error) {
 		callCount++
 		switch toolName {
 		case "list_directory":

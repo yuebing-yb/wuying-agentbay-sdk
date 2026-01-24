@@ -97,6 +97,7 @@ def generate_sync():
         "AsyncFileSystem": "FileSystem",
         "AsyncContextManager": "ContextManager",
         "AsyncContextService": "ContextService",
+        "AsyncNetwork": "Network",
         "AsyncComputer": "Computer",
         "AsyncMobile": "Mobile",
         "AsyncFileTransfer": "FileTransfer",
@@ -325,6 +326,22 @@ def generate_sync():
 
                     content = remove_asyncio_run(content)
 
+                    # Fix invalid line breaks introduced by removing asyncio.run wrapper.
+                    # Example that must become valid expression:
+                    #   results = asyncio.run(
+                    #       run_multiple_tasks(...)
+                    #   )
+                    # After removing wrapper we may get:
+                    #   results =
+                    #       run_multiple_tasks(...)
+                    # which is invalid Python. Collapse the newline after "=" when the
+                    # next token starts an expression call.
+                    content = re.sub(
+                        r"=\s*\n\s*([A-Za-z_]\w*\()",
+                        r"= \1",
+                        content,
+                    )
+
                     # Replace asyncio.get_event_loop().time() with time.time()
                     content = content.replace("asyncio.get_event_loop().time()", "time.time()")
 
@@ -381,6 +398,9 @@ def generate_sync():
 
                     # Apply custom replacements
                     content = _apply_custom_replacements(content, path)
+
+                    # Remove whitespace-only lines (no semantic effect, keeps style clean)
+                    content = re.sub(r"^[ \t]+\n", "\n", content, flags=re.MULTILINE)
 
                     # Final fix for filesystem.py _sync_monitor function
                     if "filesystem.py" in file and "def _sync_monitor():" in content:

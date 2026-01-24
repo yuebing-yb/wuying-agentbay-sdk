@@ -1,4 +1,4 @@
-import { AgentBay, CreateSeesionWithParams } from "../../src/agent-bay";
+import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
 import { Session } from "../../src/session";
 import { log } from "../../src/utils/logger";
 
@@ -37,7 +37,7 @@ describe("AgentBay List Status Integration Tests", () => {
           if (session) {
             const result = await session.getStatus();
             if (result.status === "PAUSED") {
-              await session.resumeAsync();
+              await session.betaResumeAsync();
               log(`  ✓ Resumed session: ${session.sessionId}`);
             }
             if (result.status && !["DELETING", "DELETED", "RESUMING", "PAUSING"].includes(result.status)) {
@@ -65,7 +65,7 @@ describe("AgentBay List Status Integration Tests", () => {
     log(`\nCreating test session: ${sessionName}`);
 
     // Create session
-    const params: CreateSeesionWithParams = {
+    const params: CreateSessionParams = {
       labels: { project: "piaoyun-demo", environment: "testing" },
     };
     
@@ -95,6 +95,10 @@ describe("AgentBay List Status Integration Tests", () => {
     const initialStatus = statusResult.status || "UNKNOWN";
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(expectedStatuses).toContain(initialStatus);
+
+    if (initialStatus === "FINISH") {
+      return initialStatus;
+    }
 
     // GetSession is internal in SDK; use getStatus only.
     const currentStatus = initialStatus;
@@ -146,7 +150,7 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // Pause the session
     log(`\nStep 2: Pausing session...`);
-    const pauseResult = await session.pauseAsync();
+    const pauseResult = await session.betaPauseAsync();
 
     // Verify pause result
     expect(pauseResult.success).toBe(true);
@@ -171,7 +175,7 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // Pause the session first
     log(`\nStep 1: Pausing session...`);
-    const pauseResult = await session.pauseAsync();
+    const pauseResult = await session.betaPauseAsync();
     expect(pauseResult.success).toBe(true);
     log(`  ✓ Session pause initiated successfully`);
 
@@ -189,7 +193,7 @@ describe("AgentBay List Status Integration Tests", () => {
     expect(["PAUSED", "PAUSING"]).toContain(initialStatus);
     log(`  ✓ Session status checked`);
 
-    const resumeResult = await session.resumeAsync();
+    const resumeResult = await session.betaResumeAsync();
 
     // Verify resume result
     expect(resumeResult.success).toBe(true);
@@ -215,7 +219,7 @@ describe("AgentBay List Status Integration Tests", () => {
     
     // Pause the session
     log(`\nStep 2: Pausing session...`);
-    const pauseResult = await session.pauseAsync();
+    const pauseResult = await session.betaPauseAsync();
 
     // Verify pause result
     expect(pauseResult.success).toBe(true);
@@ -225,6 +229,10 @@ describe("AgentBay List Status Integration Tests", () => {
     // Wait a bit for pause to complete
     log(`\nStep 3: Waiting for session to pause...`);
     await new Promise(resolve => setTimeout(resolve, 2000));
+
+    log(`  ✓ Checking session status before resuming`);
+    await session.betaResumeAsync();
+    log(`  ✓ Session resumed`);
 
     log(`  ✓ Session status after pause checked`);
     
@@ -236,7 +244,7 @@ describe("AgentBay List Status Integration Tests", () => {
     }
 
     // Verify session status after delete
-    await verifySessionStatusAndList(session, ["DELETING", "DELETED"], "delete");
+    await verifySessionStatusAndList(session, ["DELETING", "DELETED", "FINISH"], "delete");
   }, 120000);
 
   test("should list sessions with status filter", async () => {

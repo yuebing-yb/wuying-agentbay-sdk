@@ -567,6 +567,8 @@ type ContextFileDeleteResult struct {
 
 // GetFileDownloadUrl gets a presigned download URL for a file in a context.
 //
+// Note: The presigned URL expires in 1 hour by default.
+//
 // Parameters:
 //   - contextID: The ID of the context
 //   - filePath: The path to the file in the context
@@ -659,6 +661,8 @@ func (cs *ContextService) GetFileDownloadUrl(contextID string, filePath string) 
 }
 
 // GetFileUploadUrl gets a presigned upload URL for a file in a context.
+//
+// Note: The presigned URL expires in 1 hour by default.
 //
 // Parameters:
 //   - contextID: The ID of the context

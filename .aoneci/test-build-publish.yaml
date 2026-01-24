@@ -33,6 +33,25 @@ params:
       - "20"
     description: Node.js version for building npm package
     default: "20"
+  
+  java-version:
+    name: "Java Version"
+    type: string
+    required: false
+    options:
+      - "8"
+      - "11"
+      - "17"
+      - "21"
+    description: Java version for building Maven package
+    default: "11"
+  
+  maven-version:
+    name: "Maven Version"
+    type: string
+    required: false
+    default: "3.9"
+    description: Maven version for building Java package
 
 jobs:
   pypi-build:
@@ -315,9 +334,56 @@ jobs:
           echo "=================================="
           echo "Final pseudo version: $PSEUDO_VERSION"
           echo "${PSEUDO_VERSION}" > ${{outputs.env.path}}
+
+  java-build:
+    image: alios-8u
+    outputs:
+      string-output: ${{steps.java-build.outputs.env}}
+    steps:
+      - uses: checkout
+      - uses: setup-env
+        inputs:
+          java-version: ${{params.java-version}}
+          maven-version: ${{params.maven-version}}
+      
+      - id: check-maven-settings
+        run: |
+          echo "=== Checking Maven Settings ==="
+          ls -la ~
+          echo "directory finally"
+          if [ -f ~/.m2/settings.xml ]; then
+            echo "✅ Found settings.xml in ~/.m2/"
+            ls -la ~/.m2/settings.xml
+          else
+            echo "❌ No settings.xml found in ~/.m2/"
+            echo "📁 Contents of ~/.m2/ directory:"
+            ls -la ~/.m2/ || echo "~/.m2/ directory does not exist"
+          fi
+          echo ""
+      
+      - id: java-build
+        run: |
+          cd java
+          cd agentbay
+          echo "check java version"
+          echo "=== Java Version Check ==="
+          java -version 2>&1 | head -3
+          echo ""
+          echo "=== Maven Version Check ==="
+          mvn -version | head -3
+          echo ""
+          echo "=== Javac Version Check ==="
+          javac -version 2>&1
+          echo "starting maven deploy"
+          mvn deploy -DskipTests
+          
+          # Get version information for output
+          JAVA_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q "-DforceStdout")
+          echo "Java package version: $JAVA_VERSION"
+          echo "${JAVA_VERSION}" > ${{outputs.env.path}}
   summary:
     continue-on-error: true
-    needs: [pypi-build, npm-build, go-build]
+    needs: [pypi-build, npm-build, go-build, java-build]
     steps:
       - run: |
           # Get commit time and hash (using UTC time to ensure consistency with Git)
@@ -362,14 +428,30 @@ jobs:
           go mod tidy
           \`\`\`
 
+          ## ☕ Java/Maven Package
+          ### Basic Information
+          - **Package Version**: ${{jobs.java-build.outputs.string-output}}
+          - **Build Status**: Successfully deployed to Maven repository
+
+          ### Usage
+          Add the following dependency to your `pom.xml`:
+          \`\`\`xml
+          <dependency>
+              <groupId>com.aliyun</groupId>
+              <artifactId>agentbay-sdk</artifactId>
+              <version>${{jobs.java-build.outputs.string-output}}</version>
+          </dependency>
+          \`\`\`
+
           ## Important Notes
           - **Python**: Use the internal PyPI repository for installation
           - **TypeScript/npm**: Package published to NPM registry with test prefix
           - **Go**: Ensure your Git client can access the internal repository
           - **Go**: Remember to execute the cleanup command after testing is complete
+          - **Java**: Package deployed to Maven repository, add dependency to your pom.xml
 
           ---
-          **✅ All three language SDKs have been successfully built and published!**
+          **✅ All four language SDKs have been successfully built and published!**
           EOF
 
           echo "=========================================="

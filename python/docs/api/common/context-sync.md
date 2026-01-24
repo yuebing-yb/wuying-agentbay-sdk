@@ -8,7 +8,7 @@ class UploadStrategy(Enum)
 
 Upload strategy for context synchronization
 
-#### UPLOAD\_BEFORE\_RESOURCE\_RELEASE
+#### UPLOAD_BEFORE_RESOURCE_RELEASE
 
 ```python
 UPLOAD_BEFORE_RESOURCE_RELEASE = "UploadBeforeResourceRelease"
@@ -22,7 +22,7 @@ class DownloadStrategy(Enum)
 
 Download strategy for context synchronization
 
-#### DOWNLOAD\_ASYNC
+#### DOWNLOAD_ASYNC
 
 ```python
 DOWNLOAD_ASYNC = "DownloadAsync"
@@ -56,61 +56,61 @@ class Lifecycle(Enum)
 
 Lifecycle options for recycle policy
 
-#### LIFECYCLE\_1DAY
+#### LIFECYCLE_1DAY
 
 ```python
 LIFECYCLE_1DAY = "Lifecycle_1Day"
 ```
 
-#### LIFECYCLE\_3DAYS
+#### LIFECYCLE_3DAYS
 
 ```python
 LIFECYCLE_3DAYS = "Lifecycle_3Days"
 ```
 
-#### LIFECYCLE\_5DAYS
+#### LIFECYCLE_5DAYS
 
 ```python
 LIFECYCLE_5DAYS = "Lifecycle_5Days"
 ```
 
-#### LIFECYCLE\_10DAYS
+#### LIFECYCLE_10DAYS
 
 ```python
 LIFECYCLE_10DAYS = "Lifecycle_10Days"
 ```
 
-#### LIFECYCLE\_15DAYS
+#### LIFECYCLE_15DAYS
 
 ```python
 LIFECYCLE_15DAYS = "Lifecycle_15Days"
 ```
 
-#### LIFECYCLE\_30DAYS
+#### LIFECYCLE_30DAYS
 
 ```python
 LIFECYCLE_30DAYS = "Lifecycle_30Days"
 ```
 
-#### LIFECYCLE\_90DAYS
+#### LIFECYCLE_90DAYS
 
 ```python
 LIFECYCLE_90DAYS = "Lifecycle_90Days"
 ```
 
-#### LIFECYCLE\_180DAYS
+#### LIFECYCLE_180DAYS
 
 ```python
 LIFECYCLE_180DAYS = "Lifecycle_180Days"
 ```
 
-#### LIFECYCLE\_360DAYS
+#### LIFECYCLE_360DAYS
 
 ```python
 LIFECYCLE_360DAYS = "Lifecycle_360Days"
 ```
 
-#### LIFECYCLE\_FOREVER
+#### LIFECYCLE_FOREVER
 
 ```python
 LIFECYCLE_FOREVER = "Lifecycle_Forever"
@@ -131,19 +131,19 @@ Defines the upload policy for context synchronization
     upload_strategy: Defines the upload strategy
     upload_mode: Defines the upload mode (UploadMode.FILE or UploadMode.ARCHIVE)
 
-#### auto\_upload: `bool`
+#### auto_upload: `bool`
 
 ```python
 auto_upload = True
 ```
 
-#### upload\_strategy: `UploadStrategy`
+#### upload_strategy: `UploadStrategy`
 
 ```python
 upload_strategy = UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
 ```
 
-#### upload\_mode: `UploadMode`
+#### upload_mode: `UploadMode`
 
 ```python
 upload_mode = UploadMode.FILE
@@ -172,13 +172,13 @@ Defines the download policy for context synchronization
     auto_download: Enables automatic download
     download_strategy: Defines the download strategy
 
-#### auto\_download: `bool`
+#### auto_download: `bool`
 
 ```python
 auto_download = True
 ```
 
-#### download\_strategy: `DownloadStrategy`
+#### download_strategy: `DownloadStrategy`
 
 ```python
 download_strategy = DownloadStrategy.DOWNLOAD_ASYNC
@@ -206,7 +206,7 @@ Defines the delete policy for context synchronization
 
     sync_local_file: Enables synchronization of local file deletions
 
-#### sync\_local\_file: `bool`
+#### sync_local_file: `bool`
 
 ```python
 sync_local_file = True
@@ -241,13 +241,13 @@ Defines the extract policy for context synchronization
 extract = True
 ```
 
-#### delete\_src\_file: `bool`
+#### delete_src_file: `bool`
 
 ```python
 delete_src_file = True
 ```
 
-#### extract\_current\_folder: `bool`
+#### extract_current_folder: `bool`
 
 ```python
 extract_current_folder = False
@@ -334,7 +334,7 @@ Defines the white list configuration
 path = ""
 ```
 
-#### exclude\_paths: `List[str]`
+#### exclude_paths: `List[str]`
 
 ```python
 exclude_paths = field(default_factory=list)
@@ -353,7 +353,7 @@ Defines the black and white list configuration
 
     white_lists: Defines the white lists
 
-#### white\_lists: `List[WhiteList]`
+#### white_lists: `List[WhiteList]`
 
 ```python
 white_lists = field(default_factory=list)
@@ -406,43 +406,43 @@ Defines the synchronization policy
     bw_list: Defines the black and white list
     mapping_policy: Defines the mapping policy for cross-platform context synchronization
 
-#### upload\_policy: `Optional[UploadPolicy]`
+#### upload_policy: `Optional[UploadPolicy]`
 
 ```python
 upload_policy = None
 ```
 
-#### download\_policy: `Optional[DownloadPolicy]`
+#### download_policy: `Optional[DownloadPolicy]`
 
 ```python
 download_policy = None
 ```
 
-#### delete\_policy: `Optional[DeletePolicy]`
+#### delete_policy: `Optional[DeletePolicy]`
 
 ```python
 delete_policy = None
 ```
 
-#### extract\_policy: `Optional[ExtractPolicy]`
+#### extract_policy: `Optional[ExtractPolicy]`
 
 ```python
 extract_policy = None
 ```
 
-#### recycle\_policy: `Optional[RecyclePolicy]`
+#### recycle_policy: `Optional[RecyclePolicy]`
 
 ```python
 recycle_policy = None
 ```
 
-#### bw\_list: `Optional[BWList]`
+#### bw_list: `Optional[BWList]`
 
 ```python
 bw_list = None
 ```
 
-#### mapping\_policy: `Optional[MappingPolicy]`
+#### mapping_policy: `Optional[MappingPolicy]`
 
 ```python
 mapping_policy = None
@@ -472,7 +472,7 @@ Defines the context synchronization configuration
     path: Path where the context should be mounted
     policy: Defines the synchronization policy
 
-#### context\_id: `str`
+#### context_id: `str`
 
 ```python
 context_id = None
@@ -499,7 +499,7 @@ def new(cls, context_id: str, path: str, policy: Optional[SyncPolicy] = None)
 
 Creates a new context sync configuration
 
-### with\_policy
+### with_policy
 
 ```python
 def with_policy(policy: SyncPolicy)

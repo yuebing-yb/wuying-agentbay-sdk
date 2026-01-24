@@ -33,7 +33,7 @@ Provides comprehensive mobile automation capabilities including touch operations
 UI element interactions, application management, screenshot capabilities,
 and mobile environment configuration operations.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session)
@@ -112,7 +112,7 @@ session.mobile.swipe(100, 1000, 100, 200, duration_ms=500)
 session.delete()
 ```
 
-### input\_text
+### input_text
 
 ```python
 def input_text(text: str) -> BoolResult
@@ -138,7 +138,7 @@ session.mobile.input_text("Hello Mobile!")
 session.delete()
 ```
 
-### send\_key
+### send_key
 
 ```python
 def send_key(key: int) -> BoolResult
@@ -170,7 +170,7 @@ session.mobile.send_key(4)  # Press BACK button
 session.delete()
 ```
 
-### get\_clickable\_ui\_elements
+### get_clickable_ui_elements
 
 ```python
 def get_clickable_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
@@ -202,10 +202,11 @@ print(f"Found {len(result.elements)} clickable elements")
 session.delete()
 ```
 
-### get\_all\_ui\_elements
+### get_all_ui_elements
 
 ```python
-def get_all_ui_elements(timeout_ms: int = 2000) -> UIElementListResult
+def get_all_ui_elements(timeout_ms: int = 2000,
+                        format: str = "json") -> UIElementListResult
 ```
 
 Retrieves all UI elements within the specified timeout.
@@ -213,6 +214,8 @@ Retrieves all UI elements within the specified timeout.
 **Arguments**:
 
 - `timeout_ms` _int, optional_ - Timeout in milliseconds. Defaults to 2000.
+- `format` _str, optional_ - Output format of the underlying MCP tool.
+  Supported values: "json", "xml". Defaults to "json".
   
 
 **Returns**:
@@ -234,7 +237,7 @@ print(f"Found {len(result.elements)} UI elements")
 session.delete()
 ```
 
-### get\_installed\_apps
+### get_installed_apps
 
 ```python
 def get_installed_apps(start_menu: bool, desktop: bool,
@@ -265,7 +268,7 @@ print(f"Found {len(apps.data)} apps")
 session.delete()
 ```
 
-### start\_app
+### start_app
 
 ```python
 def start_app(start_cmd: str,
@@ -298,7 +301,7 @@ print(f"Started {len(processes.data)} process(es)")
 session.delete()
 ```
 
-### stop\_app\_by\_cmd
+### stop_app_by_cmd
 
 ```python
 def stop_app_by_cmd(stop_cmd: str) -> AppOperationResult
@@ -348,6 +351,57 @@ print(f"Screenshot URL: {result.data}")
 session.delete()
 ```
 
+### beta_take_screenshot
+
+```python
+def beta_take_screenshot()
+```
+
+Takes a screenshot of the mobile device (beta).
+
+This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+binary image data. The backend also returns the captured image dimensions
+(width/height in pixels), which are exposed on `ScreenshotResult.width`
+and `ScreenshotResult.height` when available.
+
+**Returns**:
+
+    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
+  including `width` and `height` when provided by the backend.
+  
+
+**Raises**:
+
+    AgentBayError: If screenshot fails or response cannot be decoded.
+
+### beta_take_long_screenshot
+
+```python
+def beta_take_long_screenshot(max_screens: int = 4,
+                              format: str = "png",
+                              quality: Optional[int] = None)
+```
+
+Takes a long screenshot (scroll + stitch) of the mobile device (beta).
+
+**Arguments**:
+
+    max_screens: Maximum number of screens to capture. Backend schema: 2..10.
+    format: The desired image format (e.g. "png", "jpeg").
+    quality: JPEG quality level (1..100). Only applicable when format is JPEG.
+  
+
+**Returns**:
+
+    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
+  including `width` and `height` when provided by the backend.
+  
+
+**Raises**:
+
+    AgentBayError: If screenshot fails or response cannot be decoded.
+    ValueError: If arguments are invalid.
+
 ### configure
 
 ```python
@@ -396,7 +450,7 @@ agent_bay.delete(session)
 set_resolution_lock, set_app_whitelist, set_app_blacklist,
 set_navigation_bar_visibility, set_uninstall_blacklist
 
-### set\_resolution\_lock
+### set_resolution_lock
 
 ```python
 def set_resolution_lock(enable: bool)
@@ -418,7 +472,7 @@ session.mobile.set_resolution_lock(False)
 session.delete()
 ```
 
-### set\_app\_whitelist
+### set_app_whitelist
 
 ```python
 def set_app_whitelist(package_names: List[str])
@@ -447,7 +501,7 @@ session.delete()
 - System apps may be affected depending on the configuration
 - Whitelist takes precedence over blacklist if both are set
 
-### set\_app\_blacklist
+### set_app_blacklist
 
 ```python
 def set_app_blacklist(package_names: List[str])
@@ -475,7 +529,7 @@ session.delete()
 - Apps in the blacklist will be blocked from running
 - Whitelist takes precedence over blacklist if both are set
 
-### set\_navigation\_bar\_visibility
+### set_navigation_bar_visibility
 
 ```python
 def set_navigation_bar_visibility(hide: bool)
@@ -503,7 +557,7 @@ session.delete()
 - Hiding the navigation bar provides a fullscreen experience
 - The navigation bar can still be accessed by swiping from the edge
 
-### set\_uninstall\_blacklist
+### set_uninstall_blacklist
 
 ```python
 def set_uninstall_blacklist(package_names: List[str])
@@ -532,7 +586,7 @@ session.delete()
 - This is useful for protecting critical applications
 - The protection persists for the session lifetime
 
-### get\_adb\_url
+### get_adb_url
 
 ```python
 def get_adb_url(adbkey_pub: str) -> AdbUrlResult

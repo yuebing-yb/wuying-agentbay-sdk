@@ -115,6 +115,30 @@ describe("Logger", () => {
       expect(output).to.include("❌ API Response Failed");
       expect(output).to.include("DeleteSession");
     });
+
+    it("should log API error response details at ERROR level with masking", () => {
+      setupLogger({ enableConsole: true, level: 'ERROR' });
+      setLogLevel('ERROR');
+
+      logAPIResponseWithDetails(
+        "CallMcpTool(LinkUrl) Response",
+        "link-1",
+        false,
+        { http_status: 502, tool_name: "long_screenshot" },
+        '{"code":"BadGateway","message":"upstream error","token":"tok_123456"}'
+      );
+
+      expect(stderrWriteStub.called).to.be.true;
+      const output = stderrWriteStub.getCalls().map(c => c.args[0]).join("");
+      expect(output).to.include("❌ API Response Failed");
+      expect(output).to.include("CallMcpTool(LinkUrl) Response");
+      expect(output).to.include("RequestId=link-1");
+      expect(output).to.include("http_status=502");
+      expect(output).to.include("tool_name=long_screenshot");
+      expect(output).to.include("📥 Response:");
+      expect(output).to.not.include("tok_123456");
+      expect(output).to.include("to****56");
+    });
   });
 
   describe("Sensitive Data Masking", () => {

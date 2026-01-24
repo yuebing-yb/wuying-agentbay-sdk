@@ -20,6 +20,7 @@ class CreateMcpSessionRequest(DaraModel):
         image_id: Optional[str] = None,
         labels: Optional[str] = None,
         mcp_policy_id: Optional[str] = None,
+        network_id: Optional[str] = None,
         persistence_data_list: Optional[
             List[main_models.CreateMcpSessionRequestPersistenceDataList]
         ] = None,
@@ -36,6 +37,7 @@ class CreateMcpSessionRequest(DaraModel):
         self.image_id = image_id
         self.labels = labels
         self.mcp_policy_id = mcp_policy_id
+        self.network_id = network_id
         self.persistence_data_list = persistence_data_list
         self.session_id = session_id
         self.vpc_resource = vpc_resource
@@ -76,6 +78,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if self.mcp_policy_id is not None:
             result["McpPolicyId"] = self.mcp_policy_id
+
+        if self.network_id is not None:
+            result["NetworkId"] = self.network_id
 
         result["PersistenceDataList"] = []
         if self.persistence_data_list is not None:
@@ -121,6 +126,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if m.get("McpPolicyId") is not None:
             self.mcp_policy_id = m.get("McpPolicyId")
+
+        if m.get("NetworkId") is not None:
+            self.network_id = m.get("NetworkId")
 
         self.persistence_data_list = []
         if m.get("PersistenceDataList") is not None:

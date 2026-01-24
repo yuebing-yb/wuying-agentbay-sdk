@@ -21,7 +21,7 @@ function getVersionFromPackageJson(): string {
   }
   
   // Fallback version if package.json cannot be read
-  return "0.14.0";
+  return "0.15.0";
 }
 
 /**

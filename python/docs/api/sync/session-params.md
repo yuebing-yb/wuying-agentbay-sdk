@@ -62,7 +62,7 @@ Key Features:
     # extension_context_syncs will be None
     ```
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, 
@@ -134,7 +134,7 @@ Initialize BrowserContext with optional extension support.
     # extension_context_syncs will be None
     ```
 
-### get\_extension\_context\_syncs
+### get_extension_context_syncs
 
 ```python
 def get_extension_context_syncs() -> List[ContextSync]
@@ -147,7 +147,7 @@ Get context syncs for extensions.
     List[ContextSync]: Context sync configurations for extensions.
   Returns empty list if no extensions configured.
 
-### get\_fingerprint\_context\_sync
+### get_fingerprint_context_sync
 
 ```python
 def get_fingerprint_context_sync() -> ContextSync
@@ -175,21 +175,21 @@ Parameters for creating a new session in the AgentBay cloud environment.
 - `context_syncs` _Optional[List[ContextSync]]_ - List of context synchronization
   configurations that define how contexts should be synchronized and mounted.
 - `browser_context` _Optional[BrowserContext]_ - Optional configuration for browser data synchronization.
-- `is_vpc` _Optional[bool]_ - Whether to create a VPC-based session. Defaults to False.
 - `policy_id` _Optional[str]_ - Policy id to apply when creating the session.
 - `enable_browser_replay` _Optional[bool]_ - Whether to enable browser recording for the session. It is enabled by default, so if enable_browser_replay is False, set enable_record to False
 - `extra_configs` _Optional[ExtraConfigs]_ - Advanced configuration parameters for mobile environments.
 - `framework` _Optional[str]_ - Framework name for tracking (e.g., "langchain"). Defaults to empty string (direct call).
+- `beta_network_id` _Optional[str]_ - Beta network ID to bind this session to.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, labels: Optional[Dict[str, str]] = None,
              image_id: Optional[str] = None,
              context_syncs: Optional[List[ContextSync]] = None,
              browser_context: Optional[BrowserContext] = None,
-             is_vpc: Optional[bool] = None,
              policy_id: Optional[str] = None,
+             beta_network_id: Optional[str] = None,
              enable_browser_replay: Optional[bool] = None,
              extra_configs: Optional[ExtraConfigs] = None,
              framework: Optional[str] = None)
@@ -208,9 +208,9 @@ Initialize CreateSessionParams.
 - `browser_context` _Optional[BrowserContext], optional_ - Browser context configuration.
   If extension_ids are provided in BrowserContext, extension syncs will be
   automatically added. Defaults to None.
-- `is_vpc` _Optional[bool], optional_ - Whether to create a VPC-based session.
-  Defaults to False.
 - `policy_id` _Optional[str], optional_ - Policy id to apply when creating the session.
+  Defaults to None.
+- `beta_network_id` _Optional[str], optional_ - Beta network ID to bind this session to.
   Defaults to None.
 - `enable_browser_replay` _Optional[bool], optional_ - Whether to enable browser recording for the session.
   Defaults to False.
@@ -233,7 +233,7 @@ Parameters for listing sessions with pagination support.
 - `next_token` _str_ - Token for the next page.
 - `labels` _Dict[str, str]_ - Labels to filter by.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, max_results: int = 10,

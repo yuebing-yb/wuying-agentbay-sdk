@@ -1,10 +1,5 @@
 import json
-import random
-import string
-import time
 from typing import Any, Dict
-
-import requests
 
 from .._common.exceptions import AgentBayError
 from .._common.logger import (
@@ -51,128 +46,6 @@ class BaseService:
         """
         return e
 
-    def _call_mcp_tool_vpc(
-        self, tool_name: str, args_json: str, default_error_msg: str
-    ) -> OperationResult:
-        """
-        Handle VPC-based MCP tool calls using HTTP requests.
-
-        Args:
-            tool_name: Name of the tool to call
-            args_json: JSON string of arguments
-            default_error_msg: Default error message
-
-        Returns:
-            OperationResult: The response from the tool
-        """
-        _log_api_call(f"CallMcpTool (VPC) - {tool_name}", f"Args={args_json}")
-
-        # Find server for this tool
-        server = self.session._find_server_for_tool(tool_name)
-        if not server:
-            return OperationResult(
-                request_id="",
-                success=False,
-                error_message=f"server not found for tool: {tool_name}",
-            )
-
-        # Construct VPC URL with query parameters
-        base_url = f"http://{self.session._get_network_interface_ip()}:{self.session._get_http_port()}/callTool"
-
-        # Prepare query parameters
-        # Add requestId for debugging purposes
-        request_id = f"vpc-{int(time.time() * 1000)}-{''.join(random.choices(string.ascii_lowercase + string.digits, k=9))}"
-        params = {
-            "server": server,
-            "tool": tool_name,
-            "args": args_json,
-            "token": self.session._get_token(),
-            "requestId": request_id,
-        }
-
-        # Set headers
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-        try:
-            # Send HTTP request
-            response = requests.get(
-                base_url, params=params, headers=headers, timeout=30
-            )
-            response.raise_for_status()
-
-            # Parse response
-            response_data = response.json()
-            response_str = json.dumps(response_data, ensure_ascii=False)
-
-            # For run_code tool, extract and log the actual code execution output BEFORE parsing
-            if tool_name == "run_code" and response_data.get("data"):
-                # Try to parse the nested data structure
-                if isinstance(response_data["data"], str):
-                    try:
-                        data_map = json.loads(response_data["data"])
-                        if "result" in data_map:
-                            _log_code_execution_output(
-                                request_id, json.dumps(data_map["result"])
-                            )
-                    except json.JSONDecodeError:
-                        pass
-                elif isinstance(response_data["data"], dict):
-                    if "result" in response_data["data"]:
-                        _log_code_execution_output(
-                            request_id, json.dumps(response_data["data"]["result"])
-                        )
-
-            # Log API response with key details
-            _log_api_response_with_details(
-                api_name=f"CallMcpTool (VPC) - {tool_name}",
-                request_id=request_id,
-                success=True,
-                key_fields={"tool": tool_name},
-                full_response=response_str,
-            )
-
-            # Extract the actual result from the nested VPC response structure
-            actual_result = None
-            if isinstance(response_data.get("data"), str):
-                try:
-                    data_map = json.loads(response_data["data"])
-                    if "result" in data_map:
-                        actual_result = data_map["result"]
-                except json.JSONDecodeError:
-                    pass
-            elif isinstance(response_data.get("data"), dict):
-                actual_result = response_data["data"]
-
-            if actual_result is None:
-                actual_result = response_data
-
-            # For VPC responses, we need to parse the content similar to non-VPC mode
-            # The actual_result contains the parsed response structure
-            if isinstance(actual_result, dict) and "content" in actual_result:
-                # Extract text from content array
-                content = actual_result.get("content", [])
-                if content and isinstance(content, list) and len(content) > 0:
-                    content_item = content[0]
-                    if isinstance(content_item, dict) and "text" in content_item:
-                        actual_result = content_item["text"]
-
-            return OperationResult(
-                request_id="",  # VPC requests don't have traditional request IDs
-                success=True,
-                data=actual_result,
-            )
-
-        except requests.RequestException as e:
-            sanitized_error = self._sanitize_error(str(e))
-            _log_operation_error(
-                f"CallMcpTool (VPC) - {tool_name}", sanitized_error, exc_info=True
-            )
-            return OperationResult(
-                request_id="",
-                success=False,
-                error_message=f"failed to call VPC {tool_name}: {e}",
-            )
-
     def _call_mcp_tool(
         self,
         name: str,
@@ -194,12 +67,6 @@ class BaseService:
         """
         try:
             args_json = json.dumps(args, ensure_ascii=False)
-
-            # Check if this is a VPC session
-            if self.session._is_vpc_enabled():
-                return self._call_mcp_tool_vpc(
-                    name, args_json, f"Failed to call {name}"
-                )
 
             # Non-VPC mode: use traditional API call
             request = CallMcpToolRequest(

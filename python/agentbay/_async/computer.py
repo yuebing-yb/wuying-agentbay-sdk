@@ -5,6 +5,8 @@ application management, and screen operations.
 """
 
 import json
+import base64
+import warnings
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
@@ -17,6 +19,8 @@ from .._common.models.computer import (
     Process,
     ProcessListResult,
     ScrollDirection,
+    ScreenshotMode,
+    ScreenshotResult,
     Window,
     WindowInfoResult,
     WindowListResult,
@@ -99,7 +103,10 @@ class AsyncComputer(AsyncBaseService):
 
         args = {"x": x, "y": y, "button": button_str}
         try:
-            result = await self.session.call_mcp_tool("click_mouse", args)
+            result = await self.session.call_mcp_tool(
+                "click_mouse",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -153,7 +160,10 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {"x": x, "y": y}
         try:
-            result = await self.session.call_mcp_tool("move_mouse", args)
+            result = await self.session.call_mcp_tool(
+                "move_mouse",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -236,7 +246,10 @@ class AsyncComputer(AsyncBaseService):
             "button": button_str,
         }
         try:
-            result = await self.session.call_mcp_tool("drag_mouse", args)
+            result = await self.session.call_mcp_tool(
+                "drag_mouse",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -312,7 +325,10 @@ class AsyncComputer(AsyncBaseService):
 
         args = {"x": x, "y": y, "direction": direction_str, "amount": amount}
         try:
-            result = await self.session.call_mcp_tool("scroll", args)
+            result = await self.session.call_mcp_tool(
+                "scroll",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -363,7 +379,10 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {}
         try:
-            result = await self.session.call_mcp_tool("get_cursor_position", args)
+            result = await self.session.call_mcp_tool(
+                "get_cursor_position",
+                args,
+            )
 
             if not result.success:
                 return OperationResult(
@@ -416,7 +435,10 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {"text": text}
         try:
-            result = await self.session.call_mcp_tool("input_text", args)
+            result = await self.session.call_mcp_tool(
+                "input_text",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -470,7 +492,10 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {"keys": keys, "hold": hold}
         try:
-            result = await self.session.call_mcp_tool("press_keys", args)
+            result = await self.session.call_mcp_tool(
+                "press_keys",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -523,7 +548,10 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {"keys": keys}
         try:
-            result = await self.session.call_mcp_tool("release_keys", args)
+            result = await self.session.call_mcp_tool(
+                "release_keys",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -578,7 +606,10 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {}
         try:
-            result = await self.session.call_mcp_tool("get_screen_size", args)
+            result = await self.session.call_mcp_tool(
+                "get_screen_size",
+                args,
+            )
 
             if not result.success:
                 return OperationResult(
@@ -641,7 +672,10 @@ class AsyncComputer(AsyncBaseService):
         """
         args = {}
         try:
-            result = await self.session.call_mcp_tool("system_screenshot", args)
+            result = await self.session.call_mcp_tool(
+                "system_screenshot",
+                args,
+            )
 
             if not result.success:
                 return OperationResult(
@@ -665,6 +699,98 @@ class AsyncComputer(AsyncBaseService):
                 error_message=f"Failed to take screenshot: {str(e)}",
             )
 
+    async def beta_take_screenshot(
+        self,
+        format: str = "png",
+    ) -> ScreenshotResult:
+        """
+        Takes a screenshot of the Computer.
+
+        This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+        binary image data. The backend also returns the captured image dimensions
+        (width/height in pixels), which are exposed on `ScreenshotResult.width`
+        and `ScreenshotResult.height` when available.
+
+        Args:
+            format: The desired image format (default: "png"). Supported: "png", "jpeg", "jpg".
+
+        Returns:
+            ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
+                including `width` and `height` when provided by the backend.
+
+        Raises:
+            AgentBayError: If screenshot fails or response cannot be decoded.
+            ValueError: If `format` is invalid.
+        """
+        fmt = (format or "").strip().lower()
+        if fmt == "jpg":
+            fmt = "jpeg"
+        if fmt not in ("png", "jpeg"):
+            raise ValueError("Invalid format: must be 'png', 'jpeg', or 'jpg'")
+
+        args = {"format": fmt}
+        result = await self.session.call_mcp_tool(
+            "screenshot",
+            args,
+        )
+
+        if not result.success:
+            raise AgentBayError(
+                f"Failed to take screenshot via MCP tool 'screenshot': {result.error_message}"
+            )
+
+        if not isinstance(result.data, str) or not result.data.strip():
+            raise AgentBayError("Screenshot tool returned empty data")
+
+        text = result.data.strip()
+        # Backend contract: screenshot tool returns a JSON object string with
+        # top-level field "data" containing base64.
+        #
+        # Observed backend payload (real integration run, 2026-01-14):
+        # - json_top_keys: ['data', 'height', 'mime_type', 'type', 'width']
+        # - data_prefix_80:
+        #   '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwg'
+        if not text.startswith("{"):
+            raise AgentBayError("Screenshot tool returned non-JSON data")
+
+        try:
+            obj = json.loads(text)
+        except Exception as e:
+            raise AgentBayError(f"Invalid screenshot JSON: {e}") from e
+
+        if not isinstance(obj, dict):
+            raise AgentBayError("Invalid screenshot JSON: expected object")
+        b64 = obj.get("data")
+        if not isinstance(b64, str) or not b64.strip():
+            raise AgentBayError("Screenshot JSON missing base64 field")
+        width = obj.get("width")
+        height = obj.get("height")
+        if width is not None and not isinstance(width, int):
+            raise AgentBayError("Invalid screenshot JSON: expected integer 'width'")
+        if height is not None and not isinstance(height, int):
+            raise AgentBayError("Invalid screenshot JSON: expected integer 'height'")
+        try:
+            raw = base64.b64decode(b64, validate=True)
+        except Exception as e:
+            raise AgentBayError(f"Failed to decode screenshot data: {e}") from e
+
+        if fmt == "jpeg":
+            magic = b"\xff\xd8\xff"
+        else:
+            magic = b"\x89PNG\r\n\x1a\n"
+        if not raw.startswith(magic):
+            raise AgentBayError(f"Screenshot data does not match expected format '{fmt}'")
+
+        return ScreenshotResult(
+            request_id=result.request_id,
+            success=True,
+            error_message="",
+            data=raw,
+            format=fmt,
+            width=width,
+            height=height,
+        )
+
     # Window Management Operations
     async def list_root_windows(self, timeout_ms: int = 3000) -> WindowListResult:
         """
@@ -687,7 +813,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"timeout_ms": timeout_ms}
-            result = await self.session.call_mcp_tool("list_root_windows", args)
+            result = await self.session.call_mcp_tool(
+                "list_root_windows",
+                args,
+            )
 
             if not result.success:
                 return WindowListResult(
@@ -743,7 +872,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {}
-            result = await self.session.call_mcp_tool("get_active_window", args)
+            result = await self.session.call_mcp_tool(
+                "get_active_window",
+                args,
+            )
 
             if not result.success:
                 return WindowInfoResult(
@@ -810,7 +942,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("activate_window", args)
+            result = await self.session.call_mcp_tool(
+                "activate_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -863,7 +998,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("close_window", args)
+            result = await self.session.call_mcp_tool(
+                "close_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -916,7 +1054,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("maximize_window", args)
+            result = await self.session.call_mcp_tool(
+                "maximize_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -969,7 +1110,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("minimize_window", args)
+            result = await self.session.call_mcp_tool(
+                "minimize_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1024,7 +1168,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("restore_window", args)
+            result = await self.session.call_mcp_tool(
+                "restore_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1081,7 +1228,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id, "width": width, "height": height}
-            result = await self.session.call_mcp_tool("resize_window", args)
+            result = await self.session.call_mcp_tool(
+                "resize_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1135,7 +1285,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"window_id": window_id}
-            result = await self.session.call_mcp_tool("fullscreen_window", args)
+            result = await self.session.call_mcp_tool(
+                "fullscreen_window",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1187,7 +1340,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"on": on}
-            result = await self.session.call_mcp_tool("focus_mode", args)
+            result = await self.session.call_mcp_tool(
+                "focus_mode",
+                args,
+            )
 
             if not result.success:
                 return BoolResult(
@@ -1254,7 +1410,10 @@ class AsyncComputer(AsyncBaseService):
                 "ignore_system_apps": ignore_system_apps,
             }
 
-            result = await self.session.call_mcp_tool("get_installed_apps", args)
+            result = await self.session.call_mcp_tool(
+                "get_installed_apps",
+                args,
+            )
 
             if not result.success:
                 return InstalledAppListResult(
@@ -1323,7 +1482,10 @@ class AsyncComputer(AsyncBaseService):
             if activity:
                 args["activity"] = activity
 
-            result = await self.session.call_mcp_tool("start_app", args)
+            result = await self.session.call_mcp_tool(
+                "start_app",
+                args,
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -1383,7 +1545,10 @@ class AsyncComputer(AsyncBaseService):
             get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
         """
         try:
-            result = await self.session.call_mcp_tool("list_visible_apps", {})
+            result = await self.session.call_mcp_tool(
+                "list_visible_apps",
+                {},
+            )
 
             if not result.success:
                 return ProcessListResult(
@@ -1441,7 +1606,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"pname": pname}
-            result = await self.session.call_mcp_tool("stop_app_by_pname", args)
+            result = await self.session.call_mcp_tool(
+                "stop_app_by_pname",
+                args,
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1481,7 +1649,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"pid": pid}
-            result = await self.session.call_mcp_tool("stop_app_by_pid", args)
+            result = await self.session.call_mcp_tool(
+                "stop_app_by_pid",
+                args,
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1521,7 +1692,10 @@ class AsyncComputer(AsyncBaseService):
         """
         try:
             args = {"stop_cmd": stop_cmd}
-            result = await self.session.call_mcp_tool("stop_app_by_cmd", args)
+            result = await self.session.call_mcp_tool(
+                "stop_app_by_cmd",
+                args,
+            )
 
             return AppOperationResult(
                 request_id=result.request_id,

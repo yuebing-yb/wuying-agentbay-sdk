@@ -1,5 +1,4 @@
-import { AgentBay, Session } from "../../src";
-import { CreateSessionParams } from "../../src/session-params";
+import { AgentBay, Session,CreateSessionParams } from "../../src";
 import { Browser, BrowserOptionClass } from "../../src/browser/browser";
 import * as sinon from "sinon";
 
@@ -55,9 +54,10 @@ describe("Browser Record Integration (Unit Test)", () => {
     mockAgentBay.create.resolves(mockCreateResponse);
 
     // Create session with recording enabled
-    const sessionParam = new CreateSessionParams()
-      .withImageId("browser_latest")
-      .withEnableRecord(true);
+    const sessionParam :CreateSessionParams = {
+      imageId:'browser_latest',
+      enableBrowserReplay:true,
+    }
 
     const result = await mockAgentBay.create(sessionParam);
 
@@ -168,15 +168,14 @@ describe("Browser Record Integration (Unit Test)", () => {
   });
 
   test("should support method chaining with enableBrowserReplay in CreateSessionParams", () => {
-    const params = new CreateSessionParams()
-      .withLabels({ project: "browser-test", type: "recording" })
-      .withImageId("browser_latest")
-      .withEnableRecord(true)
-      .withIsVpc(false);
+    const params : CreateSessionParams  ={
+      imageId:'browser_latest',
+      enableBrowserReplay:true,
+      labels:{project: "browser-test", type: "recording"}
+    }
 
     expect(params.labels).toEqual({ project: "browser-test", type: "recording" });
     expect(params.imageId).toBe("browser_latest");
     expect(params.enableBrowserReplay).toBe(true);
-    expect(params.isVpc).toBe(false);
   });
 });

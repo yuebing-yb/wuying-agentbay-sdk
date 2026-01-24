@@ -263,6 +263,10 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 		body["McpPolicyId"] = request.McpPolicyId
 	}
 
+	if !dara.IsNil(request.NetworkId) {
+		body["NetworkId"] = request.NetworkId
+	}
+
 	if !dara.IsNil(request.PersistenceDataListShrink) {
 		body["PersistenceDataList"] = request.PersistenceDataListShrink
 	}
@@ -321,6 +325,133 @@ func (client *Client) CreateMcpSession(request *CreateMcpSessionRequest) (_resul
 	runtime := &dara.RuntimeOptions{}
 	_result = &CreateMcpSessionResponse{}
 	_body, _err := client.CreateMcpSessionWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// # Create network
+//
+// @param request - CreateNetworkRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return CreateNetworkResponse
+func (client *Client) CreateNetworkWithOptions(request *CreateNetworkRequest, runtime *dara.RuntimeOptions) (_result *CreateNetworkResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.LoginRegionId) {
+		body["LoginRegionId"] = request.LoginRegionId
+	}
+	if !dara.IsNil(request.NetworkId) {
+		body["NetworkId"] = request.NetworkId
+	}
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("CreateNetwork"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &CreateNetworkResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Create network
+//
+// @param request - CreateNetworkRequest
+//
+// @return CreateNetworkResponse
+func (client *Client) CreateNetwork(request *CreateNetworkRequest) (_result *CreateNetworkResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &CreateNetworkResponse{}
+	_body, _err := client.CreateNetworkWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// # Describe network
+//
+// @param request - DescribeNetworkRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return DescribeNetworkResponse
+func (client *Client) DescribeNetworkWithOptions(request *DescribeNetworkRequest, runtime *dara.RuntimeOptions) (_result *DescribeNetworkResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.NetworkId) {
+		body["NetworkId"] = request.NetworkId
+	}
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("DescribeNetwork"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &DescribeNetworkResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Describe network
+//
+// @param request - DescribeNetworkRequest
+//
+// @return DescribeNetworkResponse
+func (client *Client) DescribeNetwork(request *DescribeNetworkRequest) (_result *DescribeNetworkResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &DescribeNetworkResponse{}
+	_body, _err := client.DescribeNetworkWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
 	}

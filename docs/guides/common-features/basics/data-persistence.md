@@ -285,6 +285,8 @@ Context file operations provide direct access to files stored in a context's OSS
 
 Presigned URLs allow you to upload or download files directly to/from the context's OSS storage without going through a session.
 
+**Note:** The presigned URL expires in 1 hour by default.
+
 ```python
 from agentbay import AgentBay
 import requests

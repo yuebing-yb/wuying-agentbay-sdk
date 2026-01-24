@@ -54,10 +54,13 @@ def main():
 
         # Analyze network activity
         print("\n2. Analyzing network activity...")
-        network_result = session.browser.agent.extract(
+        success,network_result = session.browser.agent.extract(
             ExtractOptions(instruction="What resources were loaded on this page? (images, scripts, stylesheets)", schema=NetworkActivity)
         )
-        print(f"Network activity:\n{network_result.extracted_content.content}")
+        if not success:
+            raise Exception("Failed to extract network activity")
+
+        print(f"network_result: {network_result.content}")
 
         # Navigate to a more complex page
         print("\n3. Navigating to news.ycombinator.com...")
@@ -65,55 +68,65 @@ def main():
 
         # Check for API calls
         print("\n4. Checking for API calls...")
-        api_result = session.browser.agent.extract(
+        success,api_result = session.browser.agent.extract(
             ExtractOptions(instruction="Are there any API or AJAX requests being made?", schema=NetworkActivity)
         )
-        print(f"API calls: {api_result.extracted_content.content}")
+        if not success:
+            raise Exception("Failed to extract API calls")
+        print(f"API calls: {api_result.content}")
 
         # Test page with known resources
         print("\n5. Testing resource loading...")
         session.browser.agent.navigate("https://httpbin.org/image/png")
-        
-        resource_result = session.browser.agent.extract(
+
+        success,resource_result = session.browser.agent.extract(
             ExtractOptions(instruction="What type of resource is displayed on this page?", schema=NetworkActivity)
         )
-        print(f"Resource type: {resource_result.extracted_content.content}")
+        if not success:
+            raise Exception("Failed to extract resource type")
+        print(f"Resource type: {resource_result.content}")
 
         # Navigate to JSON endpoint
         print("\n6. Testing JSON API endpoint...")
         session.browser.agent.navigate("https://httpbin.org/json")
-        
-        json_result = session.browser.agent.extract(
+
+        success,json_result = session.browser.agent.extract(
             ExtractOptions(instruction="What is the content type and structure of the response?", schema=NetworkActivity)
         )
-        print(f"JSON response:\n{json_result.extracted_content.content}")
+        if not success:
+            raise Exception("Failed to extract JSON response")
+        print(f"JSON response:\n{json_result.content}")
 
         # Test redirect
         print("\n7. Testing redirect behavior...")
         session.browser.agent.navigate("https://httpbin.org/redirect/1")
-        
-        redirect_result = session.browser.agent.extract(
+
+        success,redirect_result = session.browser.agent.extract(
             ExtractOptions(instruction="What is the final URL after redirect?", schema=NetworkActivity)
         )
-        print(f"Redirect result: {redirect_result.extracted_content.content}")
+        if not success:
+            raise Exception("Failed to extract redirect result")
+        print(f"Redirect result: {redirect_result.content}")
 
         # Test status codes
         print("\n8. Testing different status codes...")
         session.browser.agent.navigate("https://httpbin.org/status/200")
-        
-        status_result = session.browser.agent.extract(
+
+        success,status_result = session.browser.agent.extract(
             ExtractOptions(instruction="What is displayed on this page?", schema=NetworkActivity)
         )
-        print(f"Status 200 result: {status_result.extracted_content.content}")
+        print(f"Status 200 result: {status_result.content}")
 
         # Performance timing
         print("\n9. Analyzing page load performance...")
         session.browser.agent.navigate("https://example.com")
-        
-        perf_result = session.browser.agent.extract(
+
+        success,perf_result = session.browser.agent.extract(
             ExtractOptions(instruction="How long did it take for the page to load? (if timing info is visible)", schema=NetworkActivity)
         )
-        print(f"Performance: {perf_result.extracted_content.content}")
+        if not success:
+            raise Exception("Failed to extract performance")
+        print(f"Performance: {perf_result.content}")
 
         print("\n=== Example completed successfully ===")
 

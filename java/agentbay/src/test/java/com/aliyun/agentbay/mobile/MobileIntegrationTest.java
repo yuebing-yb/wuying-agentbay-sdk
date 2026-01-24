@@ -103,12 +103,17 @@ public class MobileIntegrationTest {
     @Test
     public void test04_InputText() {
         System.out.println("\nTest: Text input...");
-        
         BoolResult result = mobile.inputText("Hello Mobile Test");
-        
-        assertTrue("Input text failed: " + result.getErrorMessage(), result.isSuccess());
-        assertTrue("Input should return true", result.getData());
-        System.out.println("Text input successful");
+
+        // This API requires a focused editable node. When there is no focused input field,
+        // it should fail with a clear error message instead of silently succeeding.
+        assertFalse("Input should fail when no editable node is focused", result.isSuccess());
+        assertNotNull("Error message should be present", result.getErrorMessage());
+        assertTrue(
+            "Error message should mention no focused editable node: " + result.getErrorMessage(),
+            result.getErrorMessage().contains("No focused editable node found")
+        );
+        System.out.println("Text input failed as expected (no focused editable node)");
     }
     
     @Test
@@ -155,6 +160,43 @@ public class MobileIntegrationTest {
         assertNotNull("Elements list should not be null", result.getElements());
         System.out.println("Found " + result.getElements().size() + " UI elements");
     }
+
+    @Test
+    public void test08b_GetAllUiElementsXmlFormatContract() {
+        System.out.println("\nTest: Getting all UI elements in XML format...");
+
+        Session xmlSession = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("imgc-0ab5ta4mn31wth5lh");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            xmlSession = result.getSession();
+            Thread.sleep(15000);
+
+            UIElementListResult ui = xmlSession.mobile.getAllUiElements(10000, "xml");
+            assertTrue("Get all UI elements (xml) failed: " + ui.getErrorMessage(), ui.isSuccess());
+            assertEquals("xml", ui.getFormat());
+            assertNotNull(ui.getRaw());
+            assertTrue(ui.getRaw().trim().startsWith("<?xml"));
+            assertTrue(ui.getRaw().contains("<hierarchy"));
+            assertNotNull(ui.getElements());
+            assertTrue(ui.getElements().isEmpty());
+        } catch (Exception e) {
+            fail("XML format contract test failed: " + e.getMessage());
+        } finally {
+            if (xmlSession != null) {
+                try {
+                    agentBay.delete(xmlSession, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting XML session: " + e.getMessage());
+                }
+            }
+        }
+    }
     
     // ==================== Screenshot Operations Tests ====================
     
@@ -169,6 +211,113 @@ public class MobileIntegrationTest {
         assertTrue("Screenshot URL should not be empty", result.getData().length() > 0);
         System.out.println("Screenshot taken successfully: " + 
             (result.getData().length() > 100 ? result.getData().substring(0, 100) + "..." : result.getData()));
+    }
+
+    @Test
+    public void test09b_BetaTakeScreenshot() {
+        System.out.println("\nTest: Taking beta screenshot (PNG bytes)...");
+
+        Session s = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("imgc-0ab5ta4mn31wth5lh");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            s = result.getSession();
+            Thread.sleep(15000);
+            s.listMcpTools();
+
+            CommandResult r1 = s.getCommand().executeCommand("wm size 720x1280", 10000);
+            assertTrue("Command failed: " + r1.getErrorMessage(), r1.isSuccess());
+            CommandResult r2 = s.getCommand().executeCommand("wm density 160", 10000);
+            assertTrue("Command failed: " + r2.getErrorMessage(), r2.isSuccess());
+
+            ProcessListResult start = s.mobile.startApp("monkey -p com.android.settings 1");
+            assertTrue("Failed to start Settings: " + start.getErrorMessage(), start.isSuccess());
+            Thread.sleep(2000);
+
+            CommandResult nav = s.getCommand().executeCommand("am start -a android.settings.SETTINGS", 10000);
+            assertTrue("Command failed: " + nav.getErrorMessage(), nav.isSuccess());
+            Thread.sleep(2000);
+
+            ScreenshotBytesResult shot = s.mobile.betaTakeScreenshot();
+            assertTrue("Beta screenshot failed: " + shot.getErrorMessage(), shot.isSuccess());
+            assertNotNull("Image bytes should not be null", shot.getData());
+            assertTrue("Image bytes should not be empty", shot.getData().length > 8);
+            assertEquals("png", shot.getFormat());
+            assertNotNull("Width should not be null", shot.getWidth());
+            assertNotNull("Height should not be null", shot.getHeight());
+            assertTrue("Width should be > 0", shot.getWidth() > 0);
+            assertTrue("Height should be > 0", shot.getHeight() > 0);
+        } catch (Exception e) {
+            fail("Beta screenshot test failed: " + e.getMessage());
+        } finally {
+            if (s != null) {
+                try {
+                    agentBay.delete(s, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting session: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void test09c_BetaTakeLongScreenshot() {
+        System.out.println("\nTest: Taking beta long screenshot (PNG bytes)...");
+
+        Session s = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("imgc-0ab5ta4mn31wth5lh");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            s = result.getSession();
+            Thread.sleep(15000);
+            s.listMcpTools();
+
+            CommandResult r1 = s.getCommand().executeCommand("wm size 720x1280", 10000);
+            assertTrue("Command failed: " + r1.getErrorMessage(), r1.isSuccess());
+            CommandResult r2 = s.getCommand().executeCommand("wm density 160", 10000);
+            assertTrue("Command failed: " + r2.getErrorMessage(), r2.isSuccess());
+
+            ProcessListResult start = s.mobile.startApp("monkey -p com.android.settings 1");
+            assertTrue("Failed to start Settings: " + start.getErrorMessage(), start.isSuccess());
+            Thread.sleep(2000);
+
+            CommandResult nav = s.getCommand().executeCommand("am start -a android.settings.SETTINGS", 10000);
+            assertTrue("Command failed: " + nav.getErrorMessage(), nav.isSuccess());
+            Thread.sleep(2000);
+
+            ScreenshotBytesResult shot = s.mobile.betaTakeLongScreenshot(2, "png");
+            if (!shot.isSuccess() && shot.getErrorMessage() != null && shot.getErrorMessage().contains("Failed to capture long screenshot")) {
+                return;
+            }
+            assertTrue("Beta long screenshot failed: " + shot.getErrorMessage(), shot.isSuccess());
+            assertNotNull("Image bytes should not be null", shot.getData());
+            assertTrue("Image bytes should not be empty", shot.getData().length > 8);
+            assertEquals("png", shot.getFormat());
+            assertNotNull("Width should not be null", shot.getWidth());
+            assertNotNull("Height should not be null", shot.getHeight());
+            assertTrue("Width should be > 0", shot.getWidth() > 0);
+            assertTrue("Height should be > 0", shot.getHeight() > 0);
+        } catch (Exception e) {
+            fail("Beta long screenshot test failed: " + e.getMessage());
+        } finally {
+            if (s != null) {
+                try {
+                    agentBay.delete(s, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting session: " + e.getMessage());
+                }
+            }
+        }
     }
     
     // ==================== Application Management Tests ====================

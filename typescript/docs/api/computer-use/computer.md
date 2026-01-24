@@ -41,6 +41,7 @@ Keyboard modifier keys: Ctrl, Alt, Shift, Win
 ### Methods
 
 - [activateWindow](#activatewindow)
+- [betaTakeScreenshot](#betatakescreenshot)
 - [clickMouse](#clickmouse)
 - [closeWindow](#closewindow)
 - [dragMouse](#dragmouse)
@@ -94,6 +95,27 @@ if (result.success) {
   await result.session.delete();
 }
 ```
+
+___
+
+### betaTakeScreenshot
+
+▸ **betaTakeScreenshot**(`format?`): `Promise`\<`BetaScreenshotResult`\>
+
+Capture the current screen and return raw image bytes (beta).
+
+This API uses the MCP tool `screenshot` (wuying_capture) and expects the backend to return
+a JSON string with top-level field `data` containing base64.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `format` | `string` | `"png"` | Output image format ("png", "jpeg", or "jpg"). Default is "png" |
+
+#### Returns
+
+`Promise`\<`BetaScreenshotResult`\>
 
 ___
 

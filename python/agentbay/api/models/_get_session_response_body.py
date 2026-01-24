@@ -90,6 +90,7 @@ class GetSessionResponseBodyData(DaraModel):
         session_id: str = None,
         status: str = None,
         token: str = None,
+        tool_list: str = None,
         vpc_resource: bool = None,
         contexts: List[main_models.GetSessionResponseBodyDataContexts] = None,
     ):
@@ -101,6 +102,7 @@ class GetSessionResponseBodyData(DaraModel):
         self.session_id = session_id
         self.status = status
         self.token = token
+        self.tool_list = tool_list
         self.vpc_resource = vpc_resource
         self.contexts = contexts
 
@@ -139,6 +141,9 @@ class GetSessionResponseBodyData(DaraModel):
         if self.token is not None:
             result["Token"] = self.token
 
+        if self.tool_list is not None:
+            result["ToolList"] = self.tool_list
+
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
 
@@ -174,6 +179,9 @@ class GetSessionResponseBodyData(DaraModel):
 
         if m.get("Token") is not None:
             self.token = m.get("Token")
+
+        if m.get("ToolList") is not None:
+            self.tool_list = m.get("ToolList")
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")

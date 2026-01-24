@@ -30,10 +30,10 @@ async function main() {
       console.log(`Session created with ID: ${session.sessionId}`);
 
       // Execute a task using the Agent
-      const taskDescription = "Calculate the square root of 144";
+      const taskDescription = "Open Notepad, and input 'Hello, World!'";
       console.log(`Executing task: ${taskDescription}`);
       
-      const executionResult = await session.agent.computer.executeTask(taskDescription, 5);
+      const executionResult = await session.agent.computer.executeTaskAndWait(taskDescription, 180);
       
       if (executionResult.success) {
         console.log("Task completed successfully!");

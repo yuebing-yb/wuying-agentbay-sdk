@@ -54,7 +54,10 @@ class TestMobile:
         assert isinstance(result, BoolResult)
         assert result.success is True
         assert result.data is True
-        self.session.call_mcp_tool.assert_called_once_with("tap", {"x": 100, "y": 200})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "tap",
+            {"x": 100, "y": 200},
+        )
 
     @pytest.mark.asyncio
 
@@ -131,7 +134,8 @@ class TestMobile:
         assert isinstance(result, BoolResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "input_text", {"text": "Hello Mobile"}
+            "input_text",
+            {"text": "Hello Mobile"},
         )
 
     @pytest.mark.asyncio
@@ -152,7 +156,10 @@ class TestMobile:
         # Assert
         assert isinstance(result, BoolResult)
         assert result.success is True
-        self.session.call_mcp_tool.assert_called_once_with("send_key", {"key": 4})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "send_key",
+            {"key": 4},
+        )
 
     # UI Elements Tests
     @pytest.mark.asyncio
@@ -178,7 +185,8 @@ class TestMobile:
         assert "bounds_rect" in result.elements[0]
         assert result.elements[0]["bounds_rect"] is None
         self.session.call_mcp_tool.assert_called_once_with(
-            "get_clickable_ui_elements", {"timeout_ms": 2000}
+            "get_clickable_ui_elements",
+            {"timeout_ms": 2000},
         )
 
     @pytest.mark.asyncio
@@ -199,7 +207,8 @@ class TestMobile:
 
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
-            "get_clickable_ui_elements", {"timeout_ms": 5000}
+            "get_clickable_ui_elements",
+            {"timeout_ms": 5000},
         )
 
     @pytest.mark.asyncio
@@ -237,7 +246,37 @@ class TestMobile:
         assert result.elements[1]["bounds_rect"] == {"left": 0, "top": 100, "right": 100, "bottom": 200}
         assert result.elements[1]["children"] == []
         self.session.call_mcp_tool.assert_called_once_with(
-            "get_all_ui_elements", {"timeout_ms": 2000}
+            "get_all_ui_elements",
+            {"timeout_ms": 2000, "format": "json"},
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_all_ui_elements_xml_success(self):
+        """Test successful all UI elements retrieval with XML format."""
+        # Arrange
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "test-123"
+        mock_result.data = (
+            "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>"
+            "<hierarchy rotation=\"0\">"
+            "<node index=\"1\" class=\"android.widget.FrameLayout\" bounds=\"[0,0][1080,1920]\" />"
+            "</hierarchy>"
+        )
+
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
+
+        # Act
+        result = await self.mobile.get_all_ui_elements(format="xml")
+
+        # Assert
+        assert result.success is True
+        assert result.format == "xml"
+        assert result.raw.startswith("<?xml")
+        assert result.elements == []
+        self.session.call_mcp_tool.assert_called_once_with(
+            "get_all_ui_elements",
+            {"timeout_ms": 2000, "format": "xml"},
         )
 
     # Application Management Tests
@@ -310,7 +349,8 @@ class TestMobile:
         assert isinstance(result, ProcessListResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "start_app", {"start_cmd": "com.android.calculator2"}
+            "start_app",
+            {"start_cmd": "com.android.calculator2"},
         )
 
     @pytest.mark.asyncio
@@ -357,7 +397,8 @@ class TestMobile:
         assert isinstance(result, AppOperationResult)
         assert result.success is True
         self.session.call_mcp_tool.assert_called_once_with(
-            "stop_app_by_cmd", {"stop_cmd": "com.android.calculator2"}
+            "stop_app_by_cmd",
+            {"stop_cmd": "com.android.calculator2"},
         )
 
     # Screenshot Tests
@@ -380,7 +421,138 @@ class TestMobile:
         assert isinstance(result, OperationResult)
         assert result.success is True
         assert result.data == "/path/to/mobile_screenshot.png"
-        self.session.call_mcp_tool.assert_called_once_with("system_screenshot", {})
+        self.session.call_mcp_tool.assert_called_once_with(
+            "system_screenshot",
+            {},
+        )
+
+    @pytest.mark.asyncio
+    async def test_beta_take_screenshot_success_png(self):
+        """Test beta_take_screenshot returns PNG bytes."""
+        import base64
+        import json
+
+        png = b"\x89PNG\r\n\x1a\n" + b"payload"
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "req-1"
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/png",
+                "width": 720,
+                "height": 1280,
+                "data": base64.b64encode(png).decode("ascii"),
+            }
+        )
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
+
+        result = await self.mobile.beta_take_screenshot()
+
+        assert result.success is True
+        assert result.format == "png"
+        assert result.width == 720
+        assert result.height == 1280
+        assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
+        self.session.call_mcp_tool.assert_called_once_with(
+            "screenshot",
+            {"format": "png"},
+        )
+
+    @pytest.mark.asyncio
+    async def test_beta_take_screenshot_non_json_payload_raises(self):
+        """Test beta_take_screenshot rejects non-JSON payloads."""
+        import base64
+
+        png = b"\x89PNG\r\n\x1a\n" + b"payload"
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "req-non-json-1"
+        mock_result.data = base64.b64encode(png).decode("ascii")
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
+
+        with pytest.raises(AgentBayError, match="non-JSON"):
+            await self.mobile.beta_take_screenshot()
+
+    @pytest.mark.asyncio
+    async def test_beta_take_long_screenshot_requires_valid_max_screens(self):
+        """Test beta_take_long_screenshot validates max_screens range."""
+        with pytest.raises(ValueError, match="max_screens"):
+            await self.mobile.beta_take_long_screenshot(max_screens=1, format="png")
+        with pytest.raises(ValueError, match="max_screens"):
+            await self.mobile.beta_take_long_screenshot(max_screens=11, format="png")
+
+    @pytest.mark.asyncio
+    async def test_beta_take_long_screenshot_success_png(self):
+        """Test beta_take_long_screenshot returns PNG bytes."""
+        import base64
+        import json
+
+        png = b"\x89PNG\r\n\x1a\n" + b"longpayload"
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "req-2"
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/png",
+                "width": 720,
+                "height": 1280,
+                "data": base64.b64encode(png).decode("ascii"),
+            }
+        )
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
+
+        result = await self.mobile.beta_take_long_screenshot(max_screens=4, format="png")
+
+        assert result.success is True
+        assert result.format == "png"
+        assert result.width == 720
+        assert result.height == 1280
+        assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
+        self.session.call_mcp_tool.assert_called_once_with(
+            "long_screenshot",
+            {"max_screens": 4, "format": "png"},
+        )
+
+    @pytest.mark.asyncio
+    async def test_beta_take_long_screenshot_invalid_format_raises(self):
+        """Test beta_take_long_screenshot rejects invalid format."""
+        with pytest.raises(ValueError, match="Invalid format"):
+            await self.mobile.beta_take_long_screenshot(max_screens=4, format="webp")
+
+    @pytest.mark.asyncio
+    async def test_beta_take_long_screenshot_accepts_jpeg_format(self):
+        """Test beta_take_long_screenshot accepts jpeg format and passes args through."""
+        import base64
+        import json
+
+        jpg = b"\xff\xd8\xff" + b"jpegpayload"
+        mock_result = Mock()
+        mock_result.success = True
+        mock_result.request_id = "req-3"
+        mock_result.data = json.dumps(
+            {
+                "type": "image",
+                "mime_type": "image/jpeg",
+                "width": 720,
+                "height": 1280,
+                "data": base64.b64encode(jpg).decode("ascii"),
+            }
+        )
+        self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
+
+        result = await self.mobile.beta_take_long_screenshot(max_screens=2, format="jpeg", quality=80)
+
+        assert result.success is True
+        assert result.format == "jpeg"
+        assert result.width == 720
+        assert result.height == 1280
+        assert result.data.startswith(b"\xff\xd8\xff")
+        self.session.call_mcp_tool.assert_called_once_with(
+            "long_screenshot",
+            {"max_screens": 2, "format": "jpeg", "quality": 80},
+        )
 
     # ADB URL Tests
     @pytest.mark.asyncio

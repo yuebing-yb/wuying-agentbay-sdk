@@ -468,6 +468,8 @@ export class ContextService {
   /**
    * Get a presigned upload URL for a file in a context.
    *
+   * Note: The presigned URL expires in 1 hour by default.
+   *
    * @param contextId - The ID of the context.
    * @param filePath - The path to the file in the context.
    * @returns FileUrlResult with the presigned URL and expiration time.
@@ -534,6 +536,8 @@ export class ContextService {
 
   /**
    * Get a presigned download URL for a file in a context.
+   *
+   * Note: The presigned URL expires in 1 hour by default.
    *
    * @param contextId - The ID of the context.
    * @param filePath - The path to the file in the context.

@@ -15,7 +15,7 @@ Manages context operations within a session in the AgentBay cloud environment.
 The ContextManager provides methods to get information about context synchronization
 status and to synchronize contexts with the session.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, session)

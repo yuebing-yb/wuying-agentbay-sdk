@@ -31,7 +31,7 @@ func TestComputerAgent_ExecuteTask(t *testing.T) {
 		}
 
 		t.Logf("Executing agent task: %s", task)
-		result := session.Agent.Computer.ExecuteTask(task, timeout)
+		result := session.Agent.Computer.ExecuteTaskAndWait(task, timeout)
 
 		t.Logf("Computer Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
 			result.RequestID, result.Success, result.TaskID, result.TaskStatus)
@@ -52,6 +52,11 @@ func TestComputerAgent_ExecuteTask(t *testing.T) {
 	} else {
 		t.Log("Note: Agent interface is nil, skipping agent test")
 	}
+}
+
+// OutputSchema 定义输出数据的结构
+type OutputSchema struct {
+	ListedDate string `json:"ListedDate" jsonschema:"required"`
 }
 
 func TestBrowserAgent_ExecuteTask(t *testing.T) {
@@ -76,8 +81,7 @@ func TestBrowserAgent_ExecuteTask(t *testing.T) {
 		}
 
 		t.Logf("Executing agent task: %s", task)
-		result := session.Agent.Browser.ExecuteTask(task, timeout)
-
+		result := session.Agent.Browser.ExecuteTaskAndWait(task, timeout, false, &OutputSchema{})
 		t.Logf("Browser Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
 			result.RequestID, result.Success, result.TaskID, result.TaskStatus)
 

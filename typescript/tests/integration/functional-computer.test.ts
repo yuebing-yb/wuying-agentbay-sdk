@@ -3,8 +3,7 @@
  * These tests validate that operations actually work by checking their effects.
  */
 
-import { AgentBay } from '../../src/agent-bay';
-import { CreateSessionParams } from "../../src/session-params";
+import { AgentBay, CreateSessionParams } from '../../src/agent-bay';
 import { Session } from '../../src/session';
 import { log, logInfo } from '../../src/utils/logger';
 import {
@@ -36,8 +35,9 @@ describe('Computer Functional Validation', () => {
 
     // Create AgentBay client and session
     agentBay = new AgentBay({ apiKey });
-    const sessionParams = new CreateSessionParams();
-    sessionParams.imageId = "linux_latest";
+    const sessionParams :CreateSessionParams = {
+      imageId:'linux_latest',
+    }
     const sessionResult = await agentBay.create(sessionParams);
     expect(sessionResult.session).toBeDefined();
 

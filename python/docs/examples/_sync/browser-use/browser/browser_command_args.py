@@ -55,7 +55,7 @@ def main():
 
         if session.browser.initialize(browser_option):
             print("Browser initialized successfully")
-            
+
             # Get browser endpoint URL
             endpoint_url = session.browser.get_endpoint_url()
             print(f"endpoint_url = {endpoint_url}")
@@ -72,7 +72,7 @@ def main():
                     time.sleep(2)  # Wait for navigation
                     current_url = page.url
                     print(f"Current URL: {current_url}")
-                    
+
                     if "chrome://version/" in current_url:
                         print("✓ Browser successfully navigated to default URL")
                     else:
@@ -91,10 +91,10 @@ def main():
                                 };
                             }
                         """)
-                        
+
                         print(f"Chrome Version: {version_info['version']}")
                         print(f"Command Line: {version_info['commandLine']}")
-                        
+
                         if "--disable-features=PrivacySandboxSettings4" in version_info['commandLine']:
                             print("✓ Custom command argument found in browser")
                         else:
@@ -111,6 +111,6 @@ def main():
         agent_bay.delete(session)
     else:
         print("Failed to create session", session_result.error_message)
-    
+
 if __name__ == "__main__":
     main()

@@ -48,14 +48,8 @@ func (m *MockSessionForComputer) HttpPort() string {
 	return args.String(0)
 }
 
-// FindServerForTool searches for the server that provides the given tool
-func (m *MockSessionForComputer) FindServerForTool(toolName string) string {
-	args := m.Called(toolName)
-	return args.String(0)
-}
-
 // CallMcpTool calls an MCP tool with the given arguments
-func (m *MockSessionForComputer) CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error) {
+func (m *MockSessionForComputer) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	mockArgs := m.Called(toolName, args)
 	return mockArgs.Get(0).(*models.McpToolResult), mockArgs.Error(1)
 }

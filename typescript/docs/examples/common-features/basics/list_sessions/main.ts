@@ -13,7 +13,7 @@
  *     npx ts-node main.ts
  */
 
-import { AgentBay, CreateSessionParams, Session } from "wuying-agentbay-sdk";
+import { AgentBay, CreateSessionParams, Session, SessionListResult } from "wuying-agentbay-sdk";
 
 async function main() {
   // Get API key from environment variable
@@ -198,7 +198,7 @@ async function main() {
     const limit = 2;
 
     while (true) {
-      const result = await agentBay.list({ owner: "demo-user" }, page, limit);
+      const result:SessionListResult = await agentBay.list({ owner: "demo-user" }, page, limit);
 
       if (!result.success) {
         console.log(`❌ Error on page ${page}: ${result.errorMessage}`);
@@ -206,7 +206,11 @@ async function main() {
       }
 
       console.log(`📄 Page ${page}: Found ${result.sessionIds.length} session IDs`);
-      allSessionIds.push(...result.sessionIds);
+      // 
+      result.sessionIds.forEach(item =>{
+        allSessionIds.push(item.sessionId)
+      })
+      
 
       // Break if no more pages
       if (!result.nextToken) {

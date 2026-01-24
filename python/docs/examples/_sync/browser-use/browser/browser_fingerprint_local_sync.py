@@ -66,11 +66,11 @@ def main():
                 browser = p.chromium.connect_over_cdp(endpoint_url)
                 context = browser.contexts[0]
                 page = context.new_page()
-                
+
                 # Check user agent.
                 print("\n--- Check User Agent ---")
                 page.goto("https://httpbin.org/user-agent")
-                
+
                 # Wait for page to load completely
                 page.wait_for_load_state("networkidle")
 
@@ -78,7 +78,7 @@ def main():
                 try:
                     response_text = page.evaluate("() => document.body.innerText.trim()")
                     print(f"Raw response: {response_text}")
-                    
+
                     import json
                     response = json.loads(response_text)
                     user_agent = response.get("user-agent", "")
@@ -101,7 +101,7 @@ def main():
 
         # Clean up session
         agent_bay.delete(session)
-    
+
 
 if __name__ == "__main__":
     main()

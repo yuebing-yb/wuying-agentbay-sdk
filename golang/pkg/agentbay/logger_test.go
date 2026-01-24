@@ -2,9 +2,38 @@ package agentbay
 
 import (
 	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
+
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+
+	orig := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed to create pipe: %v", err)
+	}
+	os.Stdout = w
+
+	done := make(chan string, 1)
+	go func() {
+		b, _ := io.ReadAll(r)
+		done <- string(b)
+	}()
+
+	fn()
+
+	_ = w.Close()
+	os.Stdout = orig
+	out := <-done
+	_ = r.Close()
+	return out
+}
 
 // TestLogAPICall verifies logAPICall produces correct formatted output
 func TestLogAPICall(t *testing.T) {
@@ -16,7 +45,7 @@ func TestLogAPICall(t *testing.T) {
 		{
 			name:    "basic API call",
 			apiName: "CreateSession",
-			params:  "ImageId=linux_latest, IsVpc=true",
+			params:  "ImageId=linux_latest",
 		},
 		{
 			name:    "empty params",
@@ -38,7 +67,6 @@ func TestLogAPIResponseWithDetailsSuccess(t *testing.T) {
 	keyFields := map[string]interface{}{
 		"session_id":   "sess_123456",
 		"resource_url": "https://example.com/session/sess_123456",
-		"is_vpc":       true,
 	}
 
 	responseBody := map[string]interface{}{
@@ -66,6 +94,106 @@ func TestLogAPIResponseWithDetailsFailure(t *testing.T) {
 	logAPIResponseWithDetails("GetSession", "req_67890", false, nil, string(fullResponse))
 }
 
+func TestLogAPIResponseWithDetailsFailure_Pretty_ErrorLevelIncludesKeyFieldsAndResponse(t *testing.T) {
+	oldFormat := globalLogFormat
+	oldLevel := globalLogLevel
+	oldConsole := consoleLoggingEnabled
+	defer func() {
+		globalLogFormat = oldFormat
+		globalLogLevel = oldLevel
+		consoleLoggingEnabled = oldConsole
+	}()
+
+	globalLogFormat = LogFormatPretty
+	globalLogLevel = LOG_ERROR
+	consoleLoggingEnabled = true
+
+	keyFields := map[string]interface{}{
+		"http_status": 500,
+		"tool_name":   "long_screenshot",
+	}
+
+	out := captureStdout(t, func() {
+		logAPIResponseWithDetails(
+			"CallMcpTool Response",
+			"link-1",
+			false,
+			keyFields,
+			`{"code":"BadGateway","message":"upstream error","token":"tok_123456"}`,
+		)
+	})
+
+	if !strings.Contains(out, "❌ API Response Failed: CallMcpTool Response") {
+		t.Fatalf("expected failure main line, got: %q", out)
+	}
+	if !strings.Contains(out, "RequestId=link-1") {
+		t.Fatalf("expected RequestId in output, got: %q", out)
+	}
+	if !strings.Contains(out, "http_status=500") || !strings.Contains(out, "tool_name=long_screenshot") {
+		t.Fatalf("expected key fields in output, got: %q", out)
+	}
+	if !strings.Contains(out, "📥 Response:") {
+		t.Fatalf("expected response body line in output, got: %q", out)
+	}
+	if strings.Contains(out, "tok_123456") {
+		t.Fatalf("expected token to be masked, got: %q", out)
+	}
+	if !strings.Contains(out, "to****56") {
+		t.Fatalf("expected masked token pattern in output, got: %q", out)
+	}
+}
+
+func TestCallMcpToolLinkUrl_Non2xx_LogsResponseBody(t *testing.T) {
+	oldFormat := globalLogFormat
+	oldLevel := globalLogLevel
+	oldConsole := consoleLoggingEnabled
+	defer func() {
+		globalLogFormat = oldFormat
+		globalLogLevel = oldLevel
+		consoleLoggingEnabled = oldConsole
+	}()
+
+	globalLogFormat = LogFormatPretty
+	globalLogLevel = LOG_ERROR
+	consoleLoggingEnabled = true
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/callTool" {
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte(`{"code":"NotFound","message":"wrong path"}`))
+			return
+		}
+		w.WriteHeader(http.StatusBadGateway)
+		_, _ = w.Write([]byte(`{"code":"BadGateway","message":"upstream unavailable","token":"tok_123456"}`))
+	}))
+	defer srv.Close()
+
+	s := &Session{
+		LinkUrl: srv.URL,
+		Token:   "tok_abcdef",
+	}
+
+	out := captureStdout(t, func() {
+		_, _ = s.callMcpToolLinkUrl("long_screenshot", map[string]interface{}{"format": "png", "max_screens": 2}, "android")
+	})
+
+	if !strings.Contains(out, "❌ API Response Failed: CallMcpTool(LinkUrl) Response") {
+		t.Fatalf("expected failure response log, got: %q", out)
+	}
+	if !strings.Contains(out, "http_status=502") {
+		t.Fatalf("expected http status in output, got: %q", out)
+	}
+	if !strings.Contains(out, "tool_name=long_screenshot") {
+		t.Fatalf("expected tool_name in output, got: %q", out)
+	}
+	if !strings.Contains(out, "📥 Response:") {
+		t.Fatalf("expected response body line in output, got: %q", out)
+	}
+	if strings.Contains(out, "tok_123456") {
+		t.Fatalf("expected token to be masked, got: %q", out)
+	}
+}
+
 // TestLogOperationErrorWithoutStack verifies error logging without stack trace
 func TestLogOperationErrorWithoutStack(t *testing.T) {
 	// Verify it doesn't panic
@@ -76,6 +204,35 @@ func TestLogOperationErrorWithoutStack(t *testing.T) {
 func TestLogOperationErrorWithStack(t *testing.T) {
 	// Verify it doesn't panic
 	logOperationError("DeleteSession", "Permission denied", true)
+}
+
+func TestLogOperationErrorWithRequestID_SLSIncludesRequestId(t *testing.T) {
+	oldFormat := globalLogFormat
+	oldLevel := globalLogLevel
+	oldConsole := consoleLoggingEnabled
+	defer func() {
+		globalLogFormat = oldFormat
+		globalLogLevel = oldLevel
+		consoleLoggingEnabled = oldConsole
+	}()
+
+	globalLogFormat = LogFormatSLS
+	globalLogLevel = LOG_INFO
+	consoleLoggingEnabled = true
+
+	out := captureStdout(t, func() {
+		logOperationError("CallMcpTool", "Tool returned error: boom", false, "req-123")
+	})
+
+	if !strings.Contains(out, "Failed: CallMcpTool") {
+		t.Fatalf("expected operation name in output, got: %q", out)
+	}
+	if !strings.Contains(out, "RequestId=req-123") {
+		t.Fatalf("expected RequestId in output, got: %q", out)
+	}
+	if !strings.Contains(out, "Tool returned error: boom") {
+		t.Fatalf("expected error message in output, got: %q", out)
+	}
 }
 
 // TestMaskSensitiveDataWithMapApiKey verifies API key masking in maps
@@ -222,7 +379,6 @@ func TestMaskSensitiveDataPreservesNonSensitive(t *testing.T) {
 		"session_id":   "sess_abc123",
 		"resource_url": "https://example.com",
 		"total_count":  100,
-		"is_vpc":       true,
 	}
 
 	masked := maskSensitiveData(data).(map[string]interface{})
@@ -236,7 +392,6 @@ func TestMaskSensitiveDataPreservesNonSensitive(t *testing.T) {
 		{"session_id", "sess_abc123"},
 		{"resource_url", "https://example.com"},
 		{"total_count", 100},
-		{"is_vpc", true},
 	}
 
 	for _, tt := range tests {

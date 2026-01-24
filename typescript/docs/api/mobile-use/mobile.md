@@ -19,6 +19,8 @@ text input, app management, and screenshot capture. It supports Android device a
 
 ### Methods
 
+- [betaTakeLongScreenshot](#betatakelongscreenshot)
+- [betaTakeScreenshot](#betatakescreenshot)
 - [configure](#configure)
 - [inputText](#inputtext)
 - [screenshot](#screenshot)
@@ -34,6 +36,40 @@ text input, app management, and screenshot capture. It supports Android device a
 - [tap](#tap)
 
 ## Methods
+
+### betaTakeLongScreenshot
+
+▸ **betaTakeLongScreenshot**(`maxScreens?`, `format?`, `quality?`): `Promise`\<`BetaScreenshotResult`\>
+
+Capture a long screenshot and return raw image bytes.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `maxScreens` | `number` | `4` | Number of screens to stitch (range: [2, 10]) |
+| `format` | `string` | `"png"` | Output image format ("png", "jpeg", or "jpg"). Default is "png" |
+| `quality?` | `number` | `undefined` | JPEG quality (range: [1, 100]) |
+
+#### Returns
+
+`Promise`\<`BetaScreenshotResult`\>
+
+___
+
+### betaTakeScreenshot
+
+▸ **betaTakeScreenshot**(): `Promise`\<`BetaScreenshotResult`\>
+
+Capture the current screen as a PNG image and return raw image bytes.
+
+#### Returns
+
+`Promise`\<`BetaScreenshotResult`\>
+
+Promise resolving to BetaScreenshotResult containing PNG bytes
+
+___
 
 ### configure
 

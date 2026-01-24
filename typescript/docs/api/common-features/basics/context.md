@@ -17,6 +17,8 @@ Provides methods to manage persistent contexts in the AgentBay cloud environment
 - [delete](#delete)
 - [deleteFile](#deletefile)
 - [get](#get)
+- [getFileDownloadUrl](#getfiledownloadurl)
+- [getFileUploadUrl](#getfileuploadurl)
 - [list](#list)
 - [listFiles](#listfiles)
 - [update](#update)
@@ -239,6 +241,76 @@ if (result.success) {
 **`See`**
 
 [update](#update), [list](#list)
+
+### getFileDownloadUrl
+
+▸ **getFileDownloadUrl**(`contextId`, `filePath`): `Promise`\<`FileUrlResult`\>
+
+Get a presigned download URL for a file in a context.
+
+Note: The presigned URL expires in 1 hour by default.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `contextId` | `string` | The ID of the context. |
+| `filePath` | `string` | The path to the file in the context. |
+
+#### Returns
+
+`Promise`\<`FileUrlResult`\>
+
+FileUrlResult with the presigned URL and expiration time.
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const contextResult = await agentBay.context.get('my-context');
+if (contextResult.success) {
+  const urlResult = await agentBay.context.getFileDownloadUrl(contextResult.context.id, '/data/file.txt');
+  console.log('Download URL:', urlResult.url);
+  console.log('Expires at:', urlResult.expireTime);
+}
+```
+
+___
+
+### getFileUploadUrl
+
+▸ **getFileUploadUrl**(`contextId`, `filePath`): `Promise`\<`FileUrlResult`\>
+
+Get a presigned upload URL for a file in a context.
+
+Note: The presigned URL expires in 1 hour by default.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `contextId` | `string` | The ID of the context. |
+| `filePath` | `string` | The path to the file in the context. |
+
+#### Returns
+
+`Promise`\<`FileUrlResult`\>
+
+FileUrlResult with the presigned URL and expiration time.
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+const contextResult = await agentBay.context.get('my-context', true);
+if (contextResult.success) {
+  const urlResult = await agentBay.context.getFileUploadUrl(contextResult.context.id, '/data/file.txt');
+  console.log('Upload URL:', urlResult.url);
+  console.log('Expires at:', urlResult.expireTime);
+}
+```
+
+___
 
 ### list
 

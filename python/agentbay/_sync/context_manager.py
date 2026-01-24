@@ -12,7 +12,7 @@ from ..api.models import GetContextInfoRequest, SyncContextRequest
 
 # Initialize logger for this module
 _logger = get_logger("context_manager")
-    
+
 
 
 class ContextManager:

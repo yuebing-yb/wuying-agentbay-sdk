@@ -2,6 +2,40 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.15.0] - 2026-01-24
+
+### Added
+
+#### 🌐 Network (All SDKs)
+- **Beta network management APIs**: Introduced beta network lifecycle APIs (create/describe) and `network_id` support in session params.
+
+#### 🔗 MCP Session Routing (All SDKs)
+- **LinkUrl routing**: Added LinkUrl-based routing for MCP sessions (tool calls and command execution), with integration tests and examples.
+- **MCP agent environment variables**: Support passing environment variables when starting Page Use Agent MCP.
+
+#### 📱 Mobile Beta Screenshot & UI Elements
+- **Mobile beta screenshots**: Added beta screenshot APIs (including JSON response handling) and documentation/examples.
+- **UI element formats**: Added support for retrieving all UI elements in **JSON/XML** formats.
+
+#### 🧰 Code Assistant Cookbook
+- **Code generation & analysis tools**: Added Qwen Code Generator and Mistral Codestral Analyzer packages plus integration guides/scripts for data analysis workflows.
+
+#### 🤖 Agent Module
+- **`execute_task` output schema**: Added support for output schema in task execution options across SDKs.
+
+### Changed
+
+#### ⚠️ Breaking Changes
+- **Pause/Resume marked as beta**: Renamed `Pause/Resume` to `BetaPause/BetaResume` (and snake_case equivalents) across SDKs to indicate experimental status.
+- **VPC routing cleanup**: Removed VPC chain/session params and legacy VPC-only logic; keep LinkUrl direct tool-call path as the unified route.
+
+### Fixed
+
+- **Task timeout correctness**: Fixed task execution timeout handling to wait for task termination.
+- **Server recording flag**: Fixed `enableRecord=False` not taking effect (backend behavior exposed via SDK tests).
+- **TypeScript docs/code cleanup**: Removed CDATA artifacts and improved import formatting in agent implementation.
+- **Java SDK fixes**: Added missing `getMobile` API and updated dependency naming cleanup.
+
 ## [0.14.0] - 2026-01-10
 
 ### Added

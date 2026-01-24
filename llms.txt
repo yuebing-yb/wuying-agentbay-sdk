@@ -43,7 +43,7 @@ Directory structure:
     │           │   ├── advanced/
     │           │   │   ├── agent_module/
     │           │   │   │   └── README.md
-    │           │   │   └── vpc_session/
+    │           │   │   └── session_metrics/
     │           │   │       └── README.md
     │           │   └── basics/
     │           │       ├── archive-upload-mode-example/
@@ -79,6 +79,31 @@ Directory structure:
     │               │   └── README.md
     │               └── mobile_simulate_with_ctx/
     │                   └── README.md
+    ├── java/
+    │   ├── README.md
+    │   └── docs/
+    │       ├── api/
+    │       │   └── README.md
+    │       ├── examples/
+    │       │   ├── browser-use/
+    │       │   │   └── README.md
+    │       │   ├── codespace/
+    │       │   │   └── README.md
+    │       │   ├── common-features/
+    │       │   │   ├── advanced/
+    │       │   │   │   ├── README.md
+    │       │   │   │   └── session_metrics/
+    │       │   │   │       └── README.md
+    │       │   │   └── basics/
+    │       │   │       └── README.md
+    │       │   ├── computer-use/
+    │       │   │   └── README.md
+    │       │   ├── mobile-use/
+    │       │   │   └── README.md
+    │       │   └── network_example/
+    │       │       └── README.md
+    │       └── guides/
+    │           └── README.md
     ├── python/
     │   ├── README.md
     │   ├── pyproject.toml
@@ -107,10 +132,12 @@ Directory structure:
     │           │   │   │   │   └── README.md
     │           │   │   │   ├── oss_management/
     │           │   │   │   │   └── README.md
-    │           │   │   │   └── vpc_session/
+    │           │   │   │   └── session_metrics/
     │           │   │   │       └── README.md
     │           │   │   └── basics/
     │           │   │       ├── archive-upload-mode-example/
+    │           │   │       │   └── README.md
+    │           │   │       ├── computer_take_screenshot/
     │           │   │       │   └── README.md
     │           │   │       ├── context_management/
     │           │   │       │   └── README.md
@@ -135,6 +162,8 @@ Directory structure:
     │           │   │       └── README.md
     │           │   └── mobile-use/
     │           │       ├── README.md
+    │           │       ├── get_all_ui_elements_xml/
+    │           │       │   └── README.md
     │           │       └── mobile_system/
     │           │           └── README.md
     │           └── _sync/
@@ -153,10 +182,12 @@ Directory structure:
     │               │   │   │   └── README.md
     │               │   │   ├── oss_management/
     │               │   │   │   └── README.md
-    │               │   │   └── vpc_session/
+    │               │   │   └── session_metrics/
     │               │   │       └── README.md
     │               │   └── basics/
     │               │       ├── archive-upload-mode-example/
+    │               │       │   └── README.md
+    │               │       ├── computer_take_screenshot/
     │               │       │   └── README.md
     │               │       ├── context_management/
     │               │       │   └── README.md
@@ -180,6 +211,8 @@ Directory structure:
     │               │       └── README.md
     │               └── mobile-use/
     │                   ├── README.md
+    │                   ├── get_all_ui_elements_xml/
+    │                   │   └── README.md
     │                   └── mobile_system/
     │                       └── README.md
     └── typescript/
@@ -201,7 +234,7 @@ Directory structure:
                 │   │   │   └── README.md
                 │   │   ├── archive-upload-mode-example/
                 │   │   │   └── README.md
-                │   │   └── vpc-session-example/
+                │   │   └── session-metrics/
                 │   │       └── README.md
                 │   └── basics/
                 │       ├── archive-upload-mode-example/
@@ -237,6 +270,7 @@ FILE: README.md
 [![PyPI Downloads](https://img.shields.io/pypi/dm/wuying-agentbay-sdk?label=PyPI%20Downloads&logo=python&logoColor=white&cacheSeconds=86400)](https://pypi.org/project/wuying-agentbay-sdk/)
 [![NPM Downloads](https://img.shields.io/npm/dm/wuying-agentbay-sdk?label=NPM%20Downloads&logo=npm)](https://www.npmjs.com/package/wuying-agentbay-sdk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aliyun/wuying-agentbay-sdk/golang)](https://goreportcard.com/report/github.com/aliyun/wuying-agentbay-sdk/golang)
+[![Maven Central](https://img.shields.io/maven-central/v/com.aliyun/agentbay-sdk?color=blue&logo=apache-maven)](https://central.sonatype.com/artifact/com.aliyun/agentbay-sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/LICENSE)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/aliyun/wuying-agentbay-sdk)
 
@@ -268,6 +302,7 @@ FILE: README.md
 | Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) |
 | TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) |
 | Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) |
+| Java | Maven/Gradle (see docs) | [Java Docs](java/README.md) |
 
 ## 🚀 Prerequisites
 
@@ -332,6 +367,24 @@ fmt.Println(res.Output)  // Hello AgentBay
 
 // Clean up
 client.Delete(session, false)
+```
+
+### Java
+```java
+import com.aliyun.agentbay.*;
+
+// Create session and execute code
+AgentBay agentBay = new AgentBay();
+CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
+Session session = agentBay.create(params).getSession();
+
+CodeExecutionResult result = session.getCode().runCode("print('Hello AgentBay')", "python");
+if (result.isSuccess()) {
+    System.out.println(result.getResult());  // Hello AgentBay
+}
+
+// Clean up
+agentBay.delete(session, false);
 ```
 
 
@@ -431,7 +484,7 @@ Welcome to visit our product website and join our community!
 
 - 🌐 **AgentBay International Website**: [https://www.alibabacloud.com/product/agentbay](https://www.alibabacloud.com/product/agentbay)  
 - 🇨🇳 **AgentBay China Website (Chinese)**: [https://www.aliyun.com/product/agentbay](https://www.aliyun.com/product/agentbay)  
-- 💬 **Discord Community**: [Join on Discord](https://discord.gg/kW55nTcT)  
+- 💬 **Discord Community**: [Join on Discord](https://discord.gg/tzX52463Cp)  
 - 💼 **DingTalk Group**: [Click to join](https://qr.dingtalk.com/action/joingroup?code=v1,k1,ZlCDtu+p3xq2MqVoIA3nYrvEWA21Gq86N91t9OuythQ=&_dt_no_comment=1&origin=11)
 
 ## 📄 License
@@ -677,7 +730,6 @@ FILE: docs/README.md
 #### Advanced
 - [Custom Images](guides/common-features/advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](guides/common-features/advanced/session-link-access.md) - Session connectivity and URL generation
-- [VPC Sessions](guides/common-features/advanced/vpc-sessions.md) - Secure isolated network environments
 - [Agent Modules](guides/common-features/advanced/agent-modules.md) - AI-powered task automation
 - [OSS Integration](guides/common-features/advanced/oss-integration.md) - Object Storage Service integration
 
@@ -794,7 +846,6 @@ Already familiar with browser automation, computer use, or mobile testing? Start
 **What makes AgentBay different:**
 - [Session Link](guides/common-features/advanced/session-link-access.md) - Direct URL access to services running in cloud sessions
 - [Agent Modules](guides/common-features/advanced/agent-modules.md) - AI-powered automation capabilities
-- [VPC Sessions](guides/common-features/advanced/vpc-sessions.md) - Secure isolated network environments
 
 **Need more details?** See [Advanced Features](guides/common-features/advanced/README.md) or language-specific API docs: [Python](../python/README.md) | [TypeScript](../typescript/README.md) | [Golang](../golang/README.md)
 
@@ -833,7 +884,6 @@ Features available across all environments:
 **Advanced**
 - [Custom Images](common-features/advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](common-features/advanced/session-link-access.md) - Session connectivity and URL generation
-- [VPC Sessions](common-features/advanced/vpc-sessions.md) - Virtual private cloud session configuration
 - [Agent Modules](common-features/advanced/agent-modules.md) - AI-driven automation capabilities
 - [OSS Integration](common-features/advanced/oss-integration.md) - Object Storage Service integration
 
@@ -928,7 +978,6 @@ Advanced capabilities for complex use cases:
 
 - [Custom Images](advanced/custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](advanced/session-link-access.md) - Session connectivity and URL generation
-- [VPC Sessions](advanced/vpc-sessions.md) - Isolated network environments
 - [Agent Modules](advanced/agent-modules.md) - AI-powered task execution
 - [OSS Integration](advanced/oss-integration.md) - Object Storage Service integration
 
@@ -963,7 +1012,8 @@ Advanced capabilities for complex use cases.
 
 - [Custom Images](custom-images.md) - Create tailored environments with specific configurations
 - [Session Link Access](session-link-access.md) - Session connectivity and URL generation
-- [VPC Sessions](vpc-sessions.md) - Isolated network environments
+- [Session Metrics](session-metrics.md) - Retrieve runtime metrics via MCP get_metrics
+- [Network (Beta)](network.md) - Share an isolated network across sessions
 - [Agent Modules](agent-modules.md) - AI-powered task execution
 - [OSS Integration](oss-integration.md) - Object Storage Service integration
 
@@ -1031,6 +1081,10 @@ This directory contains practical use cases and examples for the AgentBay SDK. E
 ### Data Persistence
 
 - **[Cross-Platform Data Persistence](cross-platform-persistence.md)** - Enable context data created on one OS to be accessible on another using MappingPolicy
+
+### Environment Patterns
+
+- **[Computer Linux as an All-in-One Sandbox](computer-linux-all-in-one-sandbox-use-cases.md)** - Use `linux_latest` as a single sandbox that supports Computer + Browser + Code APIs
 
 ## How to Use This Directory
 
@@ -1168,7 +1222,7 @@ from agentbay import AgentBay
 
 agent_bay = AgentBay()
 session = agent_bay.create().session
-result = session.command.execute_command("echo 'Hello'")
+result = session.command.run("echo 'Hello'")
 print(result.output)
 agent_bay.delete(session)
 ```
@@ -1189,7 +1243,7 @@ from agentbay import AsyncAgentBay
 async def main():
     agent_bay = AsyncAgentBay()
     session = (await agent_bay.create()).session
-    result = await session.command.execute_command("echo 'Hello'")
+    result = await session.command.run("echo 'Hello'")
     print(result.output)
     await agent_bay.delete(session)
 
@@ -1425,6 +1479,7 @@ This directory is generated. Run `go run scripts/generate_api_docs.go` to refres
 - `common-features/basics/logging.md` – Logging
 - `common-features/advanced/agent.md` – Agent
 - `common-features/advanced/oss.md` – OSS
+- `common-features/advanced/network.md` – Network
 
 ## Computer Use
 
@@ -1758,8 +1813,9 @@ In this refactored version:
 ## Features Demonstrated
 
 1. **Python Code Execution**: Execute Python code in the cloud environment
-2. **JavaScript Code Execution**: Execute JavaScript/Node.js code 
-3. **Shell Command Execution**: Traditional command execution still works via `Command` module
+2. **JavaScript Code Execution**: Execute JavaScript/Node.js code
+3. **R and Java Code Execution**: Execute R and Java code in the cloud environment (supported by `RunCode`)
+4. **Shell Command Execution**: Traditional command execution still works via `Command` module
 
 ## Usage
 
@@ -1835,55 +1891,20 @@ Try modifying the task description to perform different operations, such as:
 
 
 ================================================
-FILE: golang/docs/examples/common-features/advanced/vpc_session/README.md
+FILE: golang/docs/examples/common-features/advanced/session_metrics/README.md
 ================================================
-# VPC Session Example
+# Session Metrics
 
-This example demonstrates how to create and use VPC (Virtual Private Cloud) sessions with the AgentBay SDK.
+This example demonstrates how to retrieve **runtime metrics** for a session using `GetMetrics()`.
 
-## Overview
-
-VPC sessions provide enhanced security and networking capabilities by running your cloud sessions within a private network environment. This example shows how to create a VPC session and use its available modules.
-
-## Running the Example
-
-1. Ensure you have the AgentBay SDK installed
-2. Set the `AGENTBAY_API_KEY` environment variable with your valid API key
-3. Run the example:
+## Run
 
 ```bash
-cd docs/examples/golang/vpc_session
 go run main.go
 ```
 
-## What the Example Does
 
-1. Initializes the AgentBay client with your API key
-2. Creates a new VPC session with specific parameters
-3. Tests FileSystem operations by writing and reading a file
-4. Tests Command operations by executing system commands
-5. Cleans up by deleting the session
 
-## Key Concepts
-
-- **VPC Session Creation**: VPC sessions are created by setting the `IsVpc` parameter to `true`
-- **Module Availability**: VPC sessions have limited module availability compared to standard sessions
-- **Resource Management**: VPC sessions should be properly deleted when no longer needed
-- **Security**: VPC sessions provide network isolation for sensitive operations
-
-## Available Modules in VPC Sessions
-
-1. **FileSystem**: File and directory operations
-2. **Command**: Command execution
-3. **System Tools**: Specialized system-level tools
-4. **Browser Tools**: Browser automation capabilities
-
-## Next Steps
-
-Try modifying the example to:
-- Use context synchronization with VPC sessions
-- Test different command executions
-- Implement error handling for unavailable modules
 
 
 ================================================
@@ -2702,7 +2723,7 @@ Example completed successfully!
 
 - The `CallMcpTool` method is the unified API for calling any MCP tool
 - Tool discovery is done via `ListMcpTools`
-- Both VPC and non-VPC modes are supported automatically
+- Tool calls use the OpenAPI route
 - Proper error handling and cleanup are demonstrated
 
 
@@ -2845,13 +2866,13 @@ For more details on session parameters, see the [Session API Reference](../../..
 ================================================
 FILE: golang/docs/examples/common-features/basics/session_pause_resume/README.md
 ================================================
-# Session Pause and Resume Example
+# Session BetaPause and BetaResume Example
 
-This example demonstrates how to use the `Pause` and `Resume` APIs to manage session lifecycle and reduce resource consumption.
+This example demonstrates how to use the `BetaPause` and `BetaResume` APIs to manage session lifecycle and reduce resource consumption.
 
 ## Description
 
-The pause/resume feature allows you to temporarily suspend a session to reduce computational resource usage and costs, and then restore it later to continue work. This is particularly useful for long-running sessions where work may be intermittent.
+The beta pause/resume feature allows you to temporarily suspend a session to reduce computational resource usage and costs, and then restore it later to continue work. This is particularly useful for long-running sessions where work may be intermittent.
 
 ## Prerequisites
 
@@ -2903,7 +2924,7 @@ func main() {
     fmt.Printf("Command output: %s\n", commandResult.Output)
 
     // Pause the session to save resources
-    pauseResult, err := client.Pause(session, 300, 2.0)
+    pauseResult, err := client.BetaPause(session, 300, 2.0)
     if err != nil {
         log.Fatalf("Failed to pause session: %v", err)
     }
@@ -2914,11 +2935,11 @@ func main() {
 
     // Wait and verify session is paused
     time.Sleep(2 * time.Second)
-    getResult, _ := client.GetSession(session.SessionID)
-    fmt.Printf("Session status: %s\n", getResult.Data.Status)
+    getResult, _ := session.GetStatus()
+    fmt.Printf("Session status: %s\n", getResult.Status)
 
     // Resume the session
-    resumeResult, err := client.Resume(session, 300, 2.0)
+    resumeResult, err := client.BetaResume(session, 300, 2.0)
     if err != nil {
         log.Fatalf("Failed to resume session: %v", err)
     }
@@ -2935,10 +2956,10 @@ func main() {
 
 ## API Reference
 
-### Pause
+### BetaPause
 
 ```go
-func (ab *AgentBay) Pause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
+func (ab *AgentBay) BetaPause(session *Session, timeout int, pollInterval float64) (*models.SessionPauseResult, error)
 ```
 
 Synchronously pauses a session, putting it into a dormant state to reduce resource usage and costs.
@@ -2956,10 +2977,10 @@ Synchronously pauses a session, putting it into a dormant state to reduce resour
   - `Status` (string): Final session status
 - `error`: An error if a critical operation fails
 
-### Resume
+### BetaResume
 
 ```go
-func (ab *AgentBay) Resume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
+func (ab *AgentBay) BetaResume(session *Session, timeout int, pollInterval float64) (*models.SessionResumeResult, error)
 ```
 
 Synchronously resumes a session from a paused state to continue work.
@@ -3017,7 +3038,7 @@ Session session-xxxxxxxxxxxxx deleted successfully
 
 - Sessions in PAUSED state consume significantly fewer resources
 - Operations on paused sessions will typically fail or wait until the session is resumed
-- Both Pause and Resume are synchronous operations that wait for the session to reach the target state
+- Both BetaPause and BetaResume are synchronous operations that wait for the session to reach the target state
 - Use appropriate timeout values based on your workload requirements
 - Always handle errors appropriately in production code
 
@@ -3596,6 +3617,2250 @@ Session deleted successfully (RequestID: <request_id>)
 
 
 ================================================
+FILE: java/README.md
+================================================
+# AgentBay SDK for Java
+
+> Execute commands, operate files, and run code in cloud environments
+
+## 📦 Installation
+
+### Maven
+```xml
+<dependency>
+    <groupId>com.aliyun</groupId>
+    <artifactId>agentbay-sdk</artifactId>
+    <version>0.15.0</version>
+</dependency>
+```
+
+### Gradle
+```gradle
+implementation 'com.aliyun:agentbay-sdk:0.15.0'
+```
+
+## 🚀 Prerequisites
+
+Before using the SDK, you need to:
+
+1. Register an Alibaba Cloud account: [https://aliyun.com](https://aliyun.com)
+2. Get API credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+3. Set environment variable: `export AGENTBAY_API_KEY=your_api_key`
+
+## 🚀 Quick Start
+
+```java
+import com.aliyun.agentbay.*;
+
+// Create session
+AgentBay agentBay = new AgentBay();
+CreateSessionParams params = new CreateSessionParams();
+SessionResult result = agentBay.create(params);
+
+if (result.isSuccess()) {
+    Session session = result.getSession();
+
+    // Execute command
+    CommandResult cmdResult = session.getCommand().executeCommand("ls -la");
+    System.out.println(cmdResult.getOutput());
+
+    // File operations
+    session.getFileSystem().writeFile("/tmp/test.txt", "Hello World");
+    FileContentResult content = session.getFileSystem().readFile("/tmp/test.txt");
+    System.out.println(content.getContent());  // Hello World
+
+    // Clean up
+    session.delete();
+}
+```
+
+## ⚙️ Configuration
+
+### Using Environment Variables (Recommended)
+
+The SDK automatically reads configuration from environment variables:
+
+```bash
+export AGENTBAY_API_KEY=your_api_key
+export AGENTBAY_ENDPOINT=wuyingai.cn-shanghai.aliyuncs.com  # Optional
+export AGENTBAY_REGION_ID=cn-shanghai                       # Optional
+export AGENTBAY_TIMEOUT_MS=60000                            # Optional
+```
+
+```java
+AgentBay agentBay = new AgentBay();
+```
+
+### Explicit Configuration
+
+You can also provide configuration explicitly:
+
+```java
+String apiKey = "your_api_key";
+Config config = new Config("cn-shanghai", "wuyingai.cn-shanghai.aliyuncs.com", 60000);
+AgentBay agentBay = new AgentBay(apiKey, config);
+```
+
+Or just override the API key:
+
+```java
+AgentBay agentBay = new AgentBay("your_api_key");
+```
+
+### Configuration Priority
+
+The SDK uses the following precedence order (highest to lowest):
+1. Explicitly passed configuration in code
+2. Environment variables
+3. Default configuration
+
+## 📖 Complete Documentation
+
+### 🆕 New Users
+- [📚 Quick Start Tutorial](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/README.md) - Get started in 5 minutes
+- [🎯 Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understand cloud environments and sessions
+
+### 🚀 Experienced Users
+**Choose Your Cloud Environment:**
+- 🌐 [Browser Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/browser-use/README.md) - Web scraping, browser testing, form automation
+- 🖥️ [Computer Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/computer-use/README.md) - Windows desktop automation, UI testing
+- 📱 [Mobile Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/mobile-use/README.md) - Android UI testing, mobile app automation
+- 💻 [CodeSpace](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/codespace/README.md) - Code execution, development environments
+
+**Additional Resources:**
+- [📖 Feature Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Complete feature introduction
+- [🔧 Java API Reference](docs/api/README.md) - Detailed API documentation
+- [💻 Java Examples](docs/examples/README.md) - Complete example code
+- [📋 Logging Configuration](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
+
+## 🔧 Core Features Quick Reference
+
+### Session Management
+```java
+// Create session
+SessionResult result = agentBay.create(new CreateSessionParams());
+Session session = result.getSession();
+
+// List sessions by labels
+Map<String, String> labels = new HashMap<>();
+labels.put("environment", "production");
+SessionListResult listResult = agentBay.list(labels, 10);
+
+// Delete session
+session.delete();
+```
+
+### File Operations
+```java
+// Read and write files
+session.getFileSystem().writeFile("/path/file.txt", "content");
+FileContentResult content = session.getFileSystem().readFile("/path/file.txt");
+System.out.println(content.getContent());
+
+// List directory
+DirectoryListResult files = session.getFileSystem().listDirectory("/path");
+```
+
+### Command Execution
+```java
+// Execute command
+CommandResult result = session.getCommand().executeCommand("java MyClass.java");
+System.out.println(result.getOutput());
+```
+
+### Data Persistence
+```java
+// Create context
+Context context = agentBay.getContext().get("my-project", true).getContext();
+
+// Create session with context
+ContextSync contextSync = ContextSync.create(
+    context.getId(),
+    "/tmp/data",
+    SyncPolicy.defaultPolicy()
+);
+CreateSessionParams params = new CreateSessionParams()
+    .setContextSyncs(Arrays.asList(contextSync));
+Session session = agentBay.create(params).getSession();
+```
+
+### Code Execution
+```java
+// Run code in isolated environment
+CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
+Session session = agentBay.create(params).getSession();
+
+CodeExecutionResult result = session.getCode().runCode("print('Hello World')", "python");
+if (result.isSuccess()) {
+    System.out.println(result.getResult());  // Hello World
+}
+```
+
+## 🆘 Get Help
+
+- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [Documentation](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/README.md)
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](../LICENSE) file for details.
+
+
+
+================================================
+FILE: java/docs/api/README.md
+================================================
+# AgentBay Java SDK API Reference
+
+Complete API documentation for all classes and methods in the AgentBay Java SDK.
+
+## 📖 Quick Links
+
+| Category | APIs | Description |
+|----------|------|-------------|
+| **Core** | [AgentBay](common-features/basics/agentbay.md), [Session](common-features/basics/session.md) | Main client and session management |
+| **File Operations** | [FileSystem](common-features/basics/filesystem.md), [Command](common-features/basics/command.md) | File and command operations |
+| **Data Persistence** | [Context](common-features/basics/context.md), [ContextSync](common-features/basics/context-sync.md) | Context management and synchronization |
+| **Browser** | [Browser](browser-use/browser.md) | Web automation with Playwright |
+| **Mobile** | [Mobile](mobile-use/mobile.md), [MobileSimulate](mobile-use/mobile-simulate.md) | Mobile device automation and simulation |
+| **Computer** | [Computer](computer-use/computer.md) | Windows desktop automation |
+| **Code Execution** | [Code](codespace/code.md) | Execute Python, JavaScript code |
+| **Storage** | [OSS](common-features/advanced/oss.md), [Network](common-features/advanced/network.md) | Object storage and network integration |
+| **Configuration** | [Session Params](common-features/basics/session-params.md) | Session configuration parameters |
+
+## 📚 API Documentation by Category
+
+### Core APIs
+
+**AgentBay Client:**
+- [AgentBay](common-features/basics/agentbay.md) - `com.aliyun.agentbay.AgentBay`
+  - Main client class for creating and managing sessions
+  - Methods: `create()`, `delete()`, `list()`, `get()`
+
+**Session Management:**
+- [Session](common-features/basics/session.md) - `com.aliyun.agentbay.session.Session`
+  - Represents a cloud environment instance
+  - Access to all session capabilities (command, filesystem, browser, etc.)
+
+### File and Command Operations
+
+- [Command](common-features/basics/command.md) - `com.aliyun.agentbay.command.Command`
+  - Execute shell commands in sessions
+  - Methods: `executeCommand(String command)`, `executeCommand(String command, int timeout)`
+
+- [FileSystem](common-features/basics/filesystem.md) - `com.aliyun.agentbay.filesystem.FileSystem`
+  - Read, write, search, and manage files
+  - Methods: `readFile()`, `writeFile()`, `listDirectory()`, `searchFiles()`, `editFile()`
+
+### Data Persistence
+
+- [Context](common-features/basics/context.md) - `com.aliyun.agentbay.context.Context`
+  - Manage persistent contexts for data storage
+  - Methods: `get()`, `delete()`, `list()`, `sync()`, `syncAndWait()`
+
+- [ContextSync](common-features/basics/context-sync.md) - `com.aliyun.agentbay.context.ContextSync`
+  - Configure context synchronization policies
+  - Static methods: `create()`, `defaultPolicy()`
+
+### Browser Automation
+
+- [Browser](browser-use/browser.md) - `com.aliyun.agentbay.browser.Browser`
+  - Initialize and control browsers
+  - Playwright integration for web automation
+  - Methods: `init()`, `getBrowser()`, `getCdpUrl()`
+
+### Mobile Automation
+
+- [Mobile](mobile-use/mobile.md) - `com.aliyun.agentbay.mobile.Mobile`
+  - Mobile device UI automation
+  - Methods: `tap()`, `swipe()`, `inputText()`, `sendKey()`, `screenshot()`, `startApp()`, `stopApp()`
+
+- [MobileSimulate](mobile-use/mobile-simulate.md) - `com.aliyun.agentbay.mobile.MobileSimulate`
+  - Simulate different mobile devices
+  - Methods: `uploadMobileInfo()`, `setSimulateMode()`
+
+### Computer/Desktop Automation
+
+- [Computer](computer-use/computer.md) - `com.aliyun.agentbay.computer.Computer`
+  - Windows desktop application management
+  - Methods: `startApp()`, `stopAppByPID()`, `stopAppByPName()`, `listVisibleApps()`, `getInstalledApps()`
+
+### Code Execution
+
+- [Code](codespace/code.md) - `com.aliyun.agentbay.code.Code`
+  - Execute Python, JavaScript, R, Java, and other languages
+  - Methods: `runCode(String code, String language)`, `runCode(String code, String language, int timeout)`, `execute(String code, String language)`
+
+### Storage and Network
+
+- [OSS](common-features/advanced/oss.md) - `com.aliyun.agentbay.oss.Oss`
+  - Alibaba Cloud Object Storage integration
+  - Methods: `init()`, `upload()`, `download()`
+
+- [Network](common-features/advanced/network.md) - `com.aliyun.agentbay.network.BetaNetworkService`
+  - Create a network and bind sessions to it for intra-network communication
+  - Methods: `betaGetNetworkBindToken()`, `betaDescribe()`
+
+### Configuration
+
+- [Session Params](common-features/basics/session-params.md) - `com.aliyun.agentbay.session.CreateSessionParams`
+  - Configure session creation parameters
+  - Properties: `imageId`, `labels`, `contextSyncs`, `browserContext`, `extraConfigs`, `policyId`, `enableBrowserReplay`
+
+## 🎯 Quick Start by Use Case
+
+### File Operations
+```java
+AgentBay agentBay = new AgentBay();
+Session session = agentBay.create().getSession();
+
+// Write and read files
+session.getFileSystem().writeFile("/tmp/test.txt", "Hello");
+String content = session.getFileSystem().readFile("/tmp/test.txt");
+```
+📖 See: [FileSystem API](common-features/basics/filesystem.md)
+
+### Command Execution
+```java
+CommandResult result = session.getCommand().executeCommand("ls -la");
+System.out.println(result.getOutput());
+```
+📖 See: [Command API](common-features/basics/command.md)
+
+### Browser Automation
+```java
+session.getBrowser().init();
+Browser browser = session.getBrowser().getBrowser();
+Page page = browser.newContext().newPage();
+page.navigate("https://example.com");
+```
+📖 See: [Browser API](browser-use/browser.md)
+
+### Mobile Automation
+```java
+session.getMobile().tap(500, 800);
+session.getMobile().swipe(500, 1000, 500, 500);
+session.getMobile().inputText("Hello");
+```
+📖 See: [Mobile API](mobile-use/mobile.md)
+
+### Data Persistence
+```java
+ContextResult contextResult = agentBay.getContext().get("my-context", true);
+ContextSync sync = ContextSync.create(contextResult.getContext().getId(),
+    "/tmp/data", SyncPolicy.defaultPolicy());
+
+CreateSessionParams params = new CreateSessionParams();
+params.setContextSyncs(Arrays.asList(sync));
+Session session = agentBay.create(params).getSession();
+```
+📖 See: [Context API](common-features/basics/context.md), [ContextSync API](common-features/basics/context-sync.md)
+
+## 📦 Package Structure
+
+```
+com.aliyun.agentbay
+├── AgentBay                    # Main client
+├── session
+│   ├── Session                 # Session management
+│   └── CreateSessionParams     # Session configuration
+├── command
+│   └── Command                 # Command execution
+├── filesystem
+│   └── FileSystem              # File operations
+├── context
+│   ├── Context                 # Context management
+│   └── ContextSync             # Context synchronization
+├── browser
+│   └── Browser                 # Browser automation
+├── mobile
+│   ├── Mobile                  # Mobile automation
+│   └── MobileSimulate          # Device simulation
+├── computer
+│   └── Computer                # Desktop automation
+├── code
+│   └── Code                    # Code execution
+├── oss
+│   └── Oss                     # Object storage
+├── network
+│   └── BetaNetworkService      # Network management (beta)
+└── model
+    ├── ExtraConfigs            # Advanced configs
+    └── Result classes          # Result types
+```
+
+## 🔍 Finding the Right API
+
+**I want to...**
+- **Create a session** → [AgentBay.create()](common-features/basics/agentbay.md)
+- **Execute commands** → [Command.executeCommand()](common-features/basics/command.md)
+- **Read/write files** → [FileSystem](common-features/basics/filesystem.md)
+- **Persist data** → [Context](common-features/basics/context.md) + [ContextSync](common-features/basics/context-sync.md)
+- **Automate browser** → [Browser](browser-use/browser.md)
+- **Control mobile device** → [Mobile](mobile-use/mobile.md)
+- **Manage desktop apps** → [Computer](computer-use/computer.md)
+- **Run code** → [Code.runCode()](codespace/code.md)
+- **Configure session** → [Session Params](common-features/basics/session-params.md)
+- **Manage networks** → [Network](common-features/advanced/network.md)
+
+## 📖 Related Documentation
+
+- [Examples](../examples/README.md) - Practical code examples
+- [Guides](../guides/README.md) - Feature guides and tutorials
+- [Java README](../../README.md) - SDK overview and quick start
+- [Main Documentation](../../../docs/README.md) - Platform documentation
+
+## 🔄 Documentation Maintenance
+
+This documentation is maintained manually. If you notice any discrepancies with the actual API implementation, please:
+1. Report an issue on [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+2. Submit a pull request with corrections
+
+## 💡 Tips
+
+- All methods return Result objects - always check `result.isSuccess()` before accessing data
+- Sessions must be explicitly deleted with `session.delete()` or `agentBay.delete(session)`
+- Use try-finally blocks to ensure proper resource cleanup
+- Context synchronization is asynchronous - use `syncAndWait()` for blocking behavior
+
+
+
+
+================================================
+FILE: java/docs/examples/browser-use/README.md
+================================================
+# Browser Use Examples
+
+This directory contains Java examples demonstrating browser automation with Playwright integration in AgentBay sessions.
+
+## Examples
+
+### 1. PlaywrightExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/PlaywrightExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/PlaywrightExample.java)
+
+Basic Playwright browser automation:
+- Initializing browser in session
+- Page navigation and interaction
+- Element selection and manipulation
+- Taking screenshots
+
+**Key features demonstrated:**
+```java
+// Initialize browser
+session.getBrowser().init();
+Browser browser = session.getBrowser().getBrowser();
+
+// Create page and navigate
+Page page = browser.newContext().newPage();
+page.navigate("https://example.com");
+
+// Interact with elements
+page.locator("#button").click();
+page.fill("input[name='search']", "query");
+```
+
+### 2. BrowserContextExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserContextExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserContextExample.java)
+
+Persistent browser context management:
+- Creating browser contexts
+- Context persistence across sessions
+- Cookie and storage management
+- Context lifecycle
+
+**Key features demonstrated:**
+```java
+// Create browser context configuration
+BrowserContext browserContext = new BrowserContext();
+browserContext.setContextId("my-browser-context");
+
+CreateSessionParams params = new CreateSessionParams();
+params.setBrowserContext(browserContext);
+
+Session session = agentBay.create(params).getSession();
+```
+
+### 3. BrowserContextLoginPersistenceExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserContextLoginPersistenceExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserContextLoginPersistenceExample.java)
+
+Login state persistence across sessions:
+- Logging into websites
+- Saving login state
+- Reusing authenticated sessions
+- Cookie persistence
+
+**Key features demonstrated:**
+```java
+// First session: Login
+session1.getBrowser().init();
+Page page = browser.newContext().newPage();
+page.navigate("https://example.com/login");
+page.fill("input[name='username']", "user");
+page.fill("input[name='password']", "pass");
+page.click("button[type='submit']");
+
+// Second session with same context: Already logged in
+Session session2 = agentBay.create(paramsWithSameContext).getSession();
+// Browser context automatically restored
+```
+
+### 4. BrowserAgentAsyncExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserAgentAsyncExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserAgentAsyncExample.java)
+
+Asynchronous browser automation:
+- Async browser operations
+- Parallel page handling
+- Non-blocking navigation
+- Concurrent browser tasks
+
+### 5. VisitAliyunExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/VisitAliyunExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/VisitAliyunExample.java)
+
+Real-world browser automation example:
+- Navigating to Alibaba Cloud website
+- Interacting with dynamic content
+- Data extraction from web pages
+
+### 6. Game2048Example.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/Game2048Example.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/Game2048Example.java)
+
+Advanced browser interaction:
+- Complex game automation
+- Real-time decision making
+- Advanced element interaction
+
+## Running the Examples
+
+### Prerequisites
+
+1. Set your API key:
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+```
+
+2. Ensure you have Playwright dependencies in your project:
+```xml
+<dependency>
+    <groupId>com.microsoft.playwright</groupId>
+    <artifactId>playwright</artifactId>
+    <version>1.40.0</version>
+</dependency>
+```
+
+### Running from Maven
+
+```bash
+cd java/agentbay
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.PlaywrightExample"
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.BrowserContextExample"
+```
+
+## Common Patterns
+
+### Basic Browser Initialization
+```java
+// Create session with browser support
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("browser_latest");
+
+Session session = agentBay.create(params).getSession();
+
+// Initialize browser
+session.getBrowser().init();
+Browser browser = session.getBrowser().getBrowser();
+```
+
+### Persistent Browser Context
+```java
+// Configure persistent context
+BrowserContext browserContext = new BrowserContext();
+browserContext.setContextId("my-persistent-context");
+
+CreateSessionParams params = new CreateSessionParams();
+params.setBrowserContext(browserContext);
+params.setImageId("browser_latest");
+
+Session session = agentBay.create(params).getSession();
+```
+
+### Page Navigation and Interaction
+```java
+// Create browser context and page
+BrowserContext context = browser.newContext();
+Page page = context.newPage();
+
+// Navigate
+page.navigate("https://example.com");
+
+// Wait for elements
+page.waitForSelector("#content");
+
+// Interact
+page.click("button#submit");
+page.fill("input[name='email']", "user@example.com");
+
+// Get content
+String title = page.title();
+String content = page.content();
+
+// Screenshot
+page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("/tmp/screenshot.png")));
+```
+
+### Browser Replay
+```java
+// Enable browser recording
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("browser_latest");
+params.setEnableBrowserReplay(true);  // Default is true
+
+Session session = agentBay.create(params).getSession();
+// All browser actions will be recorded
+```
+
+## Related Documentation
+
+- [Browser API](../../api/browser-use/browser.md)
+- [Playwright Documentation](https://playwright.dev/java/)
+
+## Troubleshooting
+
+**Browser initialization fails:**
+- Ensure image is "browser_latest"
+- Check session is active
+- Verify network connectivity
+
+**Elements not found:**
+- Use `page.waitForSelector()` before interaction
+- Check element selectors are correct
+- Verify page has loaded completely
+
+**Context persistence not working:**
+- Use consistent `contextId` across sessions
+- Ensure context is synced before session deletion
+- Check context storage limits
+
+**Replay not recording:**
+- Verify `enableBrowserReplay` is true (default)
+- Check session was created with browser image
+- Ensure browser was initialized properly
+
+
+
+================================================
+FILE: java/docs/examples/codespace/README.md
+================================================
+# Codespace Examples
+
+This directory contains Java examples demonstrating code execution capabilities in AgentBay sessions.
+
+## Examples
+
+### 1. CodeExecutionExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/CodeExecutionExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/CodeExecutionExample.java)
+
+Execute code in multiple programming languages:
+- Python code execution
+- JavaScript/Node.js execution
+- Java code execution
+- R code execution
+- Shell script execution
+
+**Key features demonstrated:**
+```java
+// Execute Python code
+CodeResult result = session.getCode().runCode(
+    "print('Hello from Python')\nresult = 2 + 2\nprint(result)",
+    "python"
+);
+System.out.println(result.getOutput());
+
+// Execute JavaScript
+CodeResult jsResult = session.getCode().runCode(
+    "console.log('Hello from Node.js');\nlet sum = 2 + 2;\nconsole.log(sum);",
+    "javascript"
+);
+
+// Execute Java
+String javaCode = """
+    public class Main {
+        public static void main(String[] args) {
+            System.out.println("Hello from Java");
+        }
+    }
+    """;
+CodeResult javaResult = session.getCode().runCode(javaCode, "java");
+
+// Execute R
+CodeResult rResult = session.getCode().runCode(
+    "print('Hello from R')\nresult <- 2 + 2\nprint(result)",
+    "r"
+);
+```
+
+## Running the Examples
+
+### Prerequisites
+
+1. Set your API key:
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+```
+
+2. Use an appropriate image (linux_latest supports most languages):
+```java
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("linux_latest");
+```
+
+### Running from Maven
+
+```bash
+cd java/agentbay
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.CodeExecutionExample"
+```
+
+## Supported Languages
+
+| Language | Code Type | Example |
+|----------|-----------|---------|
+| Python | `"python"` | `session.getCode().runCode("print('Hello')", "python")` |
+| JavaScript/Node.js | `"javascript"` or `"node"` | `session.getCode().runCode("console.log('Hello')", "javascript")` |
+| Java | `"java"` | `session.getCode().runCode(javaCode, "java")` |
+| R | `"r"` | `session.getCode().runCode("print('Hello')", "r")` |
+| Shell/Bash | `"shell"` or `"bash"` | `session.getCode().runCode("echo 'Hello'", "shell")` |
+
+## Common Patterns
+
+### Basic Code Execution
+```java
+// Execute code with default timeout
+CodeResult result = session.getCode().runCode(code, language);
+
+if (result.isSuccess()) {
+    System.out.println("Output: " + result.getOutput());
+} else {
+    System.err.println("Error: " + result.getError());
+}
+```
+
+### Code Execution with Timeout
+```java
+// Execute with custom timeout (in seconds)
+CodeResult result = session.getCode().runCode(
+    code,
+    language,
+    30  // 30 second timeout
+);
+```
+
+### Python with File I/O
+```java
+String pythonCode = """
+    # Write to file
+    with open('/tmp/data.txt', 'w') as f:
+        f.write('Hello from Python')
+
+    # Read from file
+    with open('/tmp/data.txt', 'r') as f:
+        content = f.read()
+        print(content)
+    """;
+
+CodeResult result = session.getCode().runCode(pythonCode, "python");
+```
+
+### JavaScript with NPM Packages
+```java
+// First install package via command
+session.getCommand().executeCommand("npm install lodash");
+
+// Then use it in code
+String jsCode = """
+    const _ = require('lodash');
+    const array = [1, 2, 3, 4, 5];
+    const sum = _.sum(array);
+    console.log('Sum:', sum);
+    """;
+
+CodeResult result = session.getCode().runCode(jsCode, "javascript");
+```
+
+### Multi-step Data Processing
+```java
+// Step 1: Generate data with Python
+String pythonCode = """
+    import json
+    data = {'numbers': [1, 2, 3, 4, 5]}
+    with open('/tmp/data.json', 'w') as f:
+        json.dump(data, f)
+    print('Data generated')
+    """;
+session.getCode().runCode(pythonCode, "python");
+
+// Step 2: Process with JavaScript
+String jsCode = """
+    const fs = require('fs');
+    const data = JSON.parse(fs.readFileSync('/tmp/data.json'));
+    const sum = data.numbers.reduce((a, b) => a + b, 0);
+    console.log('Sum:', sum);
+    """;
+session.getCode().runCode(jsCode, "javascript");
+```
+
+### Execute Method (Alternative API)
+```java
+// Alternative method with similar functionality
+ExecuteResult result = session.getCode().execute(code, language);
+System.out.println(result.getStdout());
+System.err.println(result.getStderr());
+```
+
+## Error Handling
+
+```java
+try {
+    CodeResult result = session.getCode().runCode(code, language, timeout);
+
+    if (result.isSuccess()) {
+        System.out.println("Success: " + result.getOutput());
+    } else {
+        System.err.println("Execution failed: " + result.getError());
+        System.err.println("Exit code: " + result.getExitCode());
+    }
+} catch (AgentBayException e) {
+    System.err.println("Exception: " + e.getMessage());
+}
+```
+
+## Best Practices
+
+1. **Always set timeout** for long-running code:
+   ```java
+   session.getCode().runCode(code, language, 60); // 60 second timeout
+   ```
+
+2. **Use file system** for data exchange between executions:
+   ```java
+   // Write results to /tmp/ for persistence
+   session.getCode().runCode("with open('/tmp/result.txt', 'w') as f: f.write(str(result))", "python");
+   ```
+
+3. **Check execution result**:
+   ```java
+   if (result.isSuccess()) {
+       // Process output
+   } else {
+       // Handle error
+   }
+   ```
+
+4. **Install dependencies** first:
+   ```java
+   // Install Python packages
+   session.getCommand().executeCommand("pip install pandas numpy");
+
+   // Then use them
+   session.getCode().runCode("import pandas as pd; print(pd.__version__)", "python");
+   ```
+
+## Related Documentation
+
+- [Code API](../../api/codespace/code.md)
+- [Command API](../../api/common-features/basics/command.md)
+
+## Troubleshooting
+
+**Code execution timeout:**
+- Increase timeout parameter
+- Optimize code for better performance
+- Split into smaller chunks
+
+**Module not found errors:**
+- Install required packages first using Command API
+- Check package is available in the image
+- Use virtual environments if needed
+
+**Permission errors:**
+- Use /tmp/ directory for file operations
+- Check file paths are correct
+- Ensure sufficient permissions
+
+**Out of memory:**
+- Reduce data size
+- Process data in chunks
+- Use more efficient algorithms
+
+
+
+================================================
+FILE: java/docs/examples/common-features/advanced/README.md
+================================================
+# Common Features - Advanced Examples
+
+This directory contains Java examples demonstrating advanced features of the AgentBay SDK.
+
+## Examples
+
+### 1. SessionMetricsExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/SessionMetricsExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/SessionMetricsExample.java)
+
+Monitor session performance and usage metrics:
+- Retrieving session metrics
+- Analyzing resource usage
+- Performance monitoring
+
+**Key features demonstrated:**
+```java
+// Get session metrics
+SessionMetrics metrics = session.getMetrics();
+System.out.println("CPU Usage: " + metrics.getCpuUsage());
+System.out.println("Memory Usage: " + metrics.getMemoryUsage());
+System.out.println("Network I/O: " + metrics.getNetworkIO());
+```
+
+### 2. NetworkExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/NetworkExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/NetworkExample.java)
+
+Network configuration and VPC integration:
+- VPC session creation
+- Network configuration
+- Custom network settings
+
+**Key features demonstrated:**
+```java
+CreateSessionParams params = new CreateSessionParams();
+params.setIsVpc(true);
+params.setPolicyId("vpc-policy-id");
+
+SessionResult result = agentBay.create(params);
+```
+
+### 3. OSSManagementExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/OSSManagementExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/OSSManagementExample.java)
+
+Alibaba Cloud OSS integration:
+- Initializing OSS in session
+- Uploading files to OSS
+- Downloading files from OSS
+- OSS bucket operations
+
+**Key features demonstrated:**
+```java
+// Initialize OSS
+session.getOss().init();
+
+// Upload to OSS
+session.getOss().upload("/local/path/file.txt", "bucket-name", "remote/key");
+
+// Download from OSS
+session.getOss().download("bucket-name", "remote/key", "/local/path/file.txt");
+```
+
+### 4. AgentExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/AgentExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/AgentExample.java)
+
+Advanced agent automation patterns:
+- Multi-step agent workflows
+- Complex automation scenarios
+- Agent orchestration
+
+### 5. AliasMethodsExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/AliasMethodsExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/AliasMethodsExample.java)
+
+Convenience methods and aliases:
+- Shorthand method usage
+- Alternative API patterns
+- Simplified workflows
+
+## Running the Examples
+
+### Prerequisites
+
+Set your API key:
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+```
+
+### Running from Maven
+
+```bash
+cd java/agentbay
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.SessionMetricsExample"
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.NetworkExample"
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.OSSManagementExample"
+```
+
+## Advanced Patterns
+
+### VPC Sessions
+```java
+CreateSessionParams params = new CreateSessionParams();
+params.setIsVpc(true);
+params.setPolicyId("your-vpc-policy-id");
+
+SessionResult result = agentBay.create(params);
+Session session = result.getSession();
+```
+
+### OSS Integration
+```java
+// Initialize OSS capability
+session.getOss().init();
+
+// Upload file
+OssUploadResult uploadResult = session.getOss().upload(
+    localPath,
+    bucketName,
+    objectKey
+);
+
+// Download file
+OssDownloadResult downloadResult = session.getOss().download(
+    bucketName,
+    objectKey,
+    localPath
+);
+```
+
+### Session Metrics Monitoring
+```java
+// Get real-time metrics
+SessionMetrics metrics = session.getMetrics();
+
+// Monitor resource usage
+System.out.println("CPU: " + metrics.getCpuUsage() + "%");
+System.out.println("Memory: " + metrics.getMemoryUsage() + "MB");
+System.out.println("Disk I/O: " + metrics.getDiskIO());
+System.out.println("Network I/O: " + metrics.getNetworkIO());
+```
+
+## Related Documentation
+
+- [OSS API](../../../api/common-features/advanced/oss.md)
+- [Network API](../../../api/common-features/advanced/network.md)
+- [Agent API](../../../api/common-features/advanced/agent.md)
+
+## Troubleshooting
+
+**VPC session creation fails:**
+- Verify policy ID is correct
+- Check VPC configuration
+- Ensure VPC permissions are set
+
+**OSS operations fail:**
+- Initialize OSS with `session.getOss().init()` first
+- Verify bucket permissions
+- Check file paths and bucket names
+
+**Metrics not available:**
+- Ensure session is active
+- Some metrics require time to populate
+- Check session type supports metrics
+
+
+
+================================================
+FILE: java/docs/examples/common-features/advanced/session_metrics/README.md
+================================================
+# Session Metrics Example
+
+This example demonstrates how to retrieve **runtime metrics** for a session using `getMetrics()`.
+
+## Overview
+
+The `getMetrics()` method retrieves real-time metrics from a session including:
+
+- CPU usage and core count
+- Memory usage (total and used)
+- Disk usage (total and used)
+- Network statistics (RX/TX rate and total usage)
+- Timestamp of the metrics snapshot
+
+## Running the Example
+
+```bash
+mvn exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.SessionMetricsExample"
+```
+
+Or compile and run directly:
+
+```bash
+mvn clean package
+java -cp target/agentbay-sdk-0.15.0.jar com.aliyun.agentbay.examples.SessionMetricsExample
+```
+
+## Code Example
+
+```java
+import com.aliyun.agentbay.AgentBay;
+import com.aliyun.agentbay.model.SessionMetrics;
+import com.aliyun.agentbay.model.SessionMetricsResult;
+import com.aliyun.agentbay.model.SessionResult;
+import com.aliyun.agentbay.session.CreateSessionParams;
+
+public class SessionMetricsExample {
+    public static void main(String[] args) throws Exception {
+        AgentBay agentBay = new AgentBay();
+
+        // Create session with linux_latest image
+        CreateSessionParams params = new CreateSessionParams();
+        params.setImageId("linux_latest");
+        SessionResult result = agentBay.create(params);
+
+        if (!result.isSuccess()) {
+            System.err.println("Failed to create session");
+            return;
+        }
+
+        // Get metrics
+        SessionMetricsResult metricsResult = result.getSession().getMetrics();
+
+        if (metricsResult.isSuccess()) {
+            SessionMetrics metrics = metricsResult.getMetrics();
+
+            System.out.println("CPU Count: " + metrics.getCpuCount());
+            System.out.println("CPU Usage: " + metrics.getCpuUsedPct() + "%");
+            System.out.println("Memory: " + metrics.getMemUsed() + " / " + metrics.getMemTotal());
+            System.out.println("Disk: " + metrics.getDiskUsed() + " / " + metrics.getDiskTotal());
+            System.out.println("Network RX Rate: " + metrics.getRxRateKBps() + " KB/s");
+            System.out.println("Network TX Rate: " + metrics.getTxRateKBps() + " KB/s");
+        }
+
+        result.getSession().delete();
+    }
+}
+```
+
+## Expected Output
+
+```
+Creating session with linux_latest image...
+Session created: mcp-xxxxx
+
+Retrieving session metrics...
+
+=== Session Metrics ===
+Timestamp: 2025-12-29T20:00:00+08:00
+
+CPU:
+  CPU Count: 4
+  CPU Used: 1.23%
+
+Memory:
+  Total: 7.38 GB
+  Used: 1.99 GB
+  Usage: 26.97%
+
+Disk:
+  Total: 98.07 GB
+  Used: 28.19 GB
+  Usage: 28.74%
+
+Network:
+  RX Rate: 0.22 KB/s
+  TX Rate: 0.38 KB/s
+  RX Total: 1247.27 KB
+  TX Total: 120.13 KB
+```
+
+## Notes
+
+- The `get_metrics` MCP tool is available on `linux_latest` and future images
+- Metrics are returned as a snapshot at the time of the call
+- All sizes are in bytes (memory and disk) or KB (network)
+- Network rates are in KB/s
+
+
+
+================================================
+FILE: java/docs/examples/common-features/basics/README.md
+================================================
+# Common Features - Basics Examples
+
+This directory contains Java examples demonstrating basic features of the AgentBay SDK.
+
+## Examples
+
+### 1. FileSystemExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/FileSystemExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/FileSystemExample.java)
+
+Demonstrates comprehensive file system operations:
+- Reading and writing files
+- Directory listing and operations
+- File information retrieval
+- File editing and searching
+- Multiple file operations
+- Large file handling
+
+**Key features demonstrated:**
+```java
+// Write a file
+session.getFileSystem().writeFile("/tmp/test.txt", "Hello, World!");
+
+// Read a file
+String content = session.getFileSystem().readFile("/tmp/test.txt");
+
+// List directory
+ListDirectoryResult result = session.getFileSystem().listDirectory("/tmp");
+
+// Edit file
+session.getFileSystem().editFile("/tmp/test.txt", "old", "new");
+
+// Search files
+SearchFilesResult searchResult = session.getFileSystem().searchFiles(
+    "/tmp", "*.txt", false
+);
+```
+
+### 2. ContextSyncLifecycleExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ContextSyncLifecycleExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ContextSyncLifecycleExample.java)
+
+Complete lifecycle management of context synchronization:
+- Creating and managing contexts
+- Synchronizing data across sessions
+- Context lifecycle operations
+- Data persistence patterns
+
+**Key features demonstrated:**
+```java
+// Get or create a context
+ContextResult contextResult = agentBay.getContext().get("my-context", true);
+
+// Create context sync configuration
+ContextSync sync = ContextSync.create(
+    contextResult.getContext().getId(),
+    "/tmp/data",
+    SyncPolicy.defaultPolicy()
+);
+
+// Use in session
+CreateSessionParams params = new CreateSessionParams();
+params.setContextSyncs(Arrays.asList(sync));
+Session session = agentBay.create(params).getSession();
+```
+
+### 3. SessionConfigurationExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/SessionConfigurationExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/SessionConfigurationExample.java)
+
+Session creation and configuration patterns:
+- Creating sessions with custom parameters
+- Image selection and configuration
+- Label management
+- Session lifecycle management
+
+**Key features demonstrated:**
+```java
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("linux_latest");
+
+Map<String, String> labels = new HashMap<>();
+labels.put("project", "my-project");
+params.setLabels(labels);
+
+SessionResult result = agentBay.create(params);
+```
+
+### 4. LabelManagementExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/LabelManagementExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/LabelManagementExample.java)
+
+Session labeling and filtering:
+- Adding labels to sessions
+- Filtering sessions by labels
+- Label management best practices
+
+### 5. ListSessionsExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ListSessionsExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ListSessionsExample.java)
+
+Listing and managing multiple sessions:
+- Listing all sessions
+- Filtering by labels
+- Pagination handling
+
+### 6. DeleteFileExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/DeleteFileExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/DeleteFileExample.java)
+
+File deletion operations:
+- Single file deletion
+- Directory deletion
+- Error handling for file operations
+
+### 7. FileTransferExample.java
+**Source**: [`../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/FileTransferExample.java`](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/FileTransferExample.java)
+
+File upload and download:
+- Uploading local files to session
+- Downloading files from session
+- Archive mode file transfer
+
+## Running the Examples
+
+### Prerequisites
+
+1. Set your API key:
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+```
+
+2. Make sure you have the AgentBay SDK dependency in your project:
+```xml
+<dependency>
+    <groupId>com.aliyun</groupId>
+    <artifactId>agentbay</artifactId>
+    <version>latest</version>
+</dependency>
+```
+
+### Running from Source
+
+Navigate to the SDK root directory and run:
+
+```bash
+cd java/agentbay
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.FileSystemExample"
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.ContextSyncLifecycleExample"
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.SessionConfigurationExample"
+```
+
+Or compile and run directly:
+```bash
+cd java/agentbay/src/main/java
+javac -cp "path/to/agentbay.jar" com/aliyun/agentbay/examples/FileSystemExample.java
+java -cp ".:path/to/agentbay.jar" com.aliyun.agentbay.examples.FileSystemExample
+```
+
+## Common Patterns
+
+### Session Creation and Cleanup
+```java
+AgentBay agentBay = new AgentBay();
+Session session = null;
+
+try {
+    SessionResult result = agentBay.create();
+    session = result.getSession();
+
+    // Use session
+
+} finally {
+    if (session != null) {
+        session.delete();
+    }
+}
+```
+
+### Error Handling
+```java
+try {
+    FileReadResult result = session.getFileSystem().readFile("/path/to/file");
+    if (result.isSuccess()) {
+        String content = result.getContent();
+        // Process content
+    } else {
+        System.err.println("Error: " + result.getMessage());
+    }
+} catch (AgentBayException e) {
+    System.err.println("Exception: " + e.getMessage());
+}
+```
+
+## Related Documentation
+
+- [FileSystem API](../../../api/common-features/basics/filesystem.md)
+- [Context API](../../../api/common-features/basics/context.md)
+- [Session API](../../../api/common-features/basics/session.md)
+
+## Troubleshooting
+
+**Session creation fails:**
+- Verify API key is set correctly
+- Check network connectivity
+- Ensure sufficient quota
+
+**File operations fail:**
+- Check file paths (must be absolute in session)
+- Verify file permissions
+- Ensure session is active
+
+**Context sync not working:**
+- Wait for sync to complete with `syncAndWait()`
+- Check context exists and is accessible
+- Verify sync policy configuration
+
+
+
+================================================
+FILE: java/docs/examples/computer-use/README.md
+================================================
+# Computer Use Examples
+
+This directory contains Java examples demonstrating Windows desktop automation capabilities of the AgentBay SDK.
+
+## Examples
+
+### 1. ComputerStartAppExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ComputerStartAppExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ComputerStartAppExample.java)
+
+Windows desktop application management:
+- Starting desktop applications
+- Stopping applications by PID
+- Stopping applications by process name
+- Listing visible applications
+- Getting installed applications
+
+**Key features demonstrated:**
+```java
+// Start an application
+session.getComputer().startApp("notepad.exe");
+
+// List visible applications
+ListResult visibleApps = session.getComputer().listVisibleApps();
+for (App app : visibleApps.getApps()) {
+    System.out.println("App: " + app.getName() + " (PID: " + app.getPid() + ")");
+}
+
+// Stop by PID
+session.getComputer().stopAppByPID(12345);
+
+// Stop by process name
+session.getComputer().stopAppByPName("notepad.exe");
+
+// Get all installed apps
+List<InstalledApp> installedApps = session.getComputer().getInstalledApps();
+```
+
+## Running the Examples
+
+### Prerequisites
+
+1. Set your API key:
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+```
+
+2. Use Windows image for session:
+```java
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("windows_latest");  // Or specific Windows image
+```
+
+### Running from Maven
+
+```bash
+cd java/agentbay
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.ComputerStartAppExample"
+```
+
+## Common Patterns
+
+### Basic Computer Session
+```java
+// Create Windows session
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("windows_latest");
+
+Session session = agentBay.create(params).getSession();
+
+// Start application
+session.getComputer().startApp("notepad.exe");
+```
+
+### Application Lifecycle Management
+```java
+// Start application
+StartAppResult result = session.getComputer().startApp("calculator.exe");
+if (result.isSuccess()) {
+    int pid = result.getPid();
+    System.out.println("Started app with PID: " + pid);
+
+    // Do some work...
+
+    // Stop by PID
+    session.getComputer().stopAppByPID(pid);
+}
+```
+
+### Listing Applications
+```java
+// Get visible (running) applications
+ListResult visibleApps = session.getComputer().listVisibleApps();
+System.out.println("Running applications:");
+for (App app : visibleApps.getApps()) {
+    System.out.println("  - " + app.getName() + " (PID: " + app.getPid() + ")");
+}
+
+// Get all installed applications
+List<InstalledApp> installedApps = session.getComputer().getInstalledApps();
+System.out.println("Installed applications:");
+for (InstalledApp app : installedApps) {
+    System.out.println("  - " + app.getName() + " (" + app.getVersion() + ")");
+}
+```
+
+### Process Management
+```java
+// Stop application by process name
+StopResult result = session.getComputer().stopAppByPName("notepad.exe");
+if (result.isSuccess()) {
+    System.out.println("Successfully stopped notepad.exe");
+} else {
+    System.err.println("Failed to stop: " + result.getMessage());
+}
+
+// Stop specific instance by PID
+session.getComputer().stopAppByPID(12345);
+```
+
+### Application Discovery
+```java
+// Check if specific app is installed
+List<InstalledApp> apps = session.getComputer().getInstalledApps();
+boolean hasChrome = apps.stream()
+    .anyMatch(app -> app.getName().contains("Chrome"));
+
+if (hasChrome) {
+    session.getComputer().startApp("chrome.exe");
+}
+```
+
+## Supported Applications
+
+The Computer API works with standard Windows applications:
+
+- **Built-in Apps**: notepad.exe, calc.exe, mspaint.exe, etc.
+- **Installed Apps**: chrome.exe, firefox.exe, vscode.exe, etc.
+- **Custom Apps**: Any installed Windows application
+
+## Error Handling
+
+```java
+try {
+    StartAppResult result = session.getComputer().startApp("myapp.exe");
+
+    if (result.isSuccess()) {
+        System.out.println("App started with PID: " + result.getPid());
+    } else {
+        System.err.println("Failed to start app: " + result.getMessage());
+    }
+} catch (AgentBayException e) {
+    System.err.println("Exception: " + e.getMessage());
+}
+```
+
+## Best Practices
+
+1. **Check application existence** before starting:
+   ```java
+   List<InstalledApp> apps = session.getComputer().getInstalledApps();
+   boolean exists = apps.stream()
+       .anyMatch(app -> app.getName().equalsIgnoreCase("myapp.exe"));
+
+   if (exists) {
+       session.getComputer().startApp("myapp.exe");
+   }
+   ```
+
+2. **Clean up applications**:
+   ```java
+   try {
+       StartAppResult result = session.getComputer().startApp("app.exe");
+       int pid = result.getPid();
+
+       // Use application...
+
+   } finally {
+       session.getComputer().stopAppByPID(pid);
+   }
+   ```
+
+3. **Handle process names carefully**:
+   ```java
+   // Use exact process name with extension
+   session.getComputer().stopAppByPName("notepad.exe");  // Correct
+   // Not: stopAppByPName("notepad")  // May not work
+   ```
+
+4. **Wait for application startup**:
+   ```java
+   session.getComputer().startApp("slowapp.exe");
+   Thread.sleep(2000);  // Wait for app to fully start
+   // Then interact with the app
+   ```
+
+## Related Documentation
+
+- [Computer API](../../api/computer-use/computer.md)
+
+## Troubleshooting
+
+**Application fails to start:**
+- Verify application is installed
+- Check application path and name are correct
+- Ensure Windows image is being used
+- Check for permission issues
+
+**Cannot stop application:**
+- Verify PID is correct and process exists
+- Check process name includes .exe extension
+- Ensure process is not protected by system
+
+**List operations fail:**
+- Check session is active and Windows-based
+- Verify Computer API is available in image
+- Ensure sufficient permissions
+
+**Application not found:**
+- Use `getInstalledApps()` to verify installation
+- Check application name spelling
+- Ensure application is in system PATH or use full path
+
+
+
+================================================
+FILE: java/docs/examples/mobile-use/README.md
+================================================
+# Mobile Use Examples
+
+This directory contains Java examples demonstrating mobile device automation capabilities of the AgentBay SDK.
+
+## Examples
+
+### 1. MobileUiAutomationExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileUiAutomationExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileUiAutomationExample.java)
+
+Basic mobile UI automation:
+- Tapping on screen coordinates
+- Swiping gestures
+- Text input
+- Taking screenshots
+
+**Key features demonstrated:**
+```java
+// Tap at coordinates
+session.getMobile().tap(500, 800);
+
+// Swipe gesture
+session.getMobile().swipe(500, 1000, 500, 500, 500);
+
+// Input text
+session.getMobile().inputText("Hello World");
+
+// Screenshot
+session.getMobile().screenshot("/tmp/screenshot.png");
+```
+
+### 2. MobileAppOperationsExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileAppOperationsExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileAppOperationsExample.java)
+
+Application lifecycle management:
+- Starting applications
+- Stopping applications
+- Managing app states
+- App package handling
+
+**Key features demonstrated:**
+```java
+// Start an application
+session.getMobile().startApp("com.android.chrome");
+
+// Stop an application
+session.getMobile().stopApp("com.android.chrome");
+
+// Check app status
+boolean isRunning = session.getMobile().isAppRunning("com.android.chrome");
+```
+
+### 3. MobileSystemExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileSystemExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileSystemExample.java)
+
+System-level mobile operations:
+- Send key events
+- System UI interactions
+- Device information
+- System settings
+
+**Key features demonstrated:**
+```java
+// Send key event (e.g., home button)
+session.getMobile().sendKey(KeyEvent.KEYCODE_HOME);
+
+// Back button
+session.getMobile().sendKey(KeyEvent.KEYCODE_BACK);
+
+// Get device info
+DeviceInfo info = session.getMobile().getDeviceInfo();
+```
+
+### 4. MobileGetAdbUrlExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileGetAdbUrlExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileGetAdbUrlExample.java)
+
+ADB connection and debugging:
+- Getting ADB connection URL
+- Remote ADB access
+- Debugging mobile sessions
+
+**Key features demonstrated:**
+```java
+// Get ADB connection URL
+String adbUrl = session.getMobile().getAdbUrl();
+System.out.println("ADB URL: " + adbUrl);
+
+// Use with local ADB
+// adb connect <adb-url>
+```
+
+### 5. MobileSimulateExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileSimulateExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileSimulateExample.java)
+
+Device simulation and fingerprinting:
+- Upload device information
+- Simulate specific device models
+- Device fingerprinting
+- Anti-detection techniques
+
+**Key features demonstrated:**
+```java
+// Upload device info
+session.getMobileSimulate().uploadMobileInfo("/path/to/device_info.json");
+
+// Set simulation mode
+session.getMobileSimulate().setSimulateMode(MobileSimulateMode.ALL);
+```
+
+### 6. MobileExtraConfigExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileExtraConfigExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileExtraConfigExample.java)
+
+Advanced mobile session configuration:
+- Lock resolution settings
+- App manager rules (whitelist/blacklist)
+- Hide navigation bar
+- Uninstall protection
+- Simulation configuration
+
+**Key features demonstrated:**
+```java
+// Create app whitelist
+AppManagerRule whitelist = new AppManagerRule(
+    "White",
+    Arrays.asList("com.android.settings", "com.android.chrome")
+);
+
+// Configure mobile session
+MobileExtraConfig mobileConfig = new MobileExtraConfig();
+mobileConfig.setLockResolution(true);
+mobileConfig.setAppManagerRule(whitelist);
+mobileConfig.setHideNavigationBar(true);
+
+ExtraConfigs extraConfigs = new ExtraConfigs(mobileConfig);
+
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("mobile_latest");
+params.setExtraConfigs(extraConfigs);
+
+Session session = agentBay.create(params).getSession();
+```
+
+## Running the Examples
+
+### Prerequisites
+
+1. Set your API key:
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+```
+
+2. Use mobile image for session:
+```java
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("mobile_latest");
+```
+
+### Running from Maven
+
+```bash
+cd java/agentbay
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.MobileUiAutomationExample"
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.MobileAppOperationsExample"
+mvn compile exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.MobileExtraConfigExample"
+```
+
+## Common Patterns
+
+### Basic Mobile Session
+```java
+// Create mobile session
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("mobile_latest");
+
+Session session = agentBay.create(params).getSession();
+
+// Interact with device
+session.getMobile().tap(500, 800);
+session.getMobile().swipe(500, 1000, 500, 500, 500);
+```
+
+### App Management
+```java
+// Start app
+session.getMobile().startApp("com.example.app");
+
+// Perform operations
+session.getMobile().tap(500, 800);
+session.getMobile().inputText("test");
+
+// Stop app
+session.getMobile().stopApp("com.example.app");
+```
+
+### Device Simulation
+```java
+// Create simulation config
+MobileSimulateConfig simulateConfig = new MobileSimulateConfig(
+    true,                              // Enable simulation
+    "/tmp/device_info.json",           // Device info path
+    MobileSimulateMode.ALL,            // Simulate all properties
+    "device-context-id"                // Context ID for device info
+);
+
+MobileExtraConfig mobileConfig = new MobileExtraConfig();
+mobileConfig.setSimulateConfig(simulateConfig);
+
+ExtraConfigs extraConfigs = new ExtraConfigs(mobileConfig);
+
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("mobile_latest");
+params.setExtraConfigs(extraConfigs);
+```
+
+### App Whitelist/Blacklist
+```java
+// Create whitelist (only allow these apps)
+AppManagerRule whitelist = new AppManagerRule(
+    "White",
+    Arrays.asList("com.android.settings", "com.android.chrome")
+);
+
+// Or create blacklist (block these apps)
+AppManagerRule blacklist = new AppManagerRule(
+    "Black",
+    Arrays.asList("com.malicious.app")
+);
+
+MobileExtraConfig mobileConfig = new MobileExtraConfig();
+mobileConfig.setAppManagerRule(whitelist);
+```
+
+## Related Documentation
+
+- [Mobile API](../../api/mobile-use/mobile.md)
+- [MobileSimulate API](../../api/mobile-use/mobile-simulate.md)
+
+## Troubleshooting
+
+**Mobile operations fail:**
+- Ensure image is "mobile_latest"
+- Check session is active
+- Verify coordinates are within screen bounds
+
+**App start fails:**
+- Check app package name is correct
+- Verify app is installed in the image
+- Check app is not in blacklist
+
+**ADB connection issues:**
+- Get fresh ADB URL with `getAdbUrl()`
+- Check network connectivity
+- Verify ADB is installed locally
+
+**Simulation not working:**
+- Upload device info before starting session
+- Check simulation mode is set correctly
+- Verify device info format is valid
+
+**App manager rules not applied:**
+- Set rules in `ExtraConfigs` before session creation
+- Cannot modify rules after session is created
+- Check package names are correct
+
+
+
+================================================
+FILE: java/docs/examples/network_example/README.md
+================================================
+# Network Example
+
+This example demonstrates how to use the Network API to create shared networks and enable communication between multiple sessions.
+
+## Overview
+
+The Network API allows you to:
+- Create isolated networks
+- Bind multiple sessions to the same network
+- Enable communication between sessions on the same network
+- Maintain network isolation between different networks
+
+## Running the Example
+
+### Prerequisites
+
+1. Set your API key as an environment variable:
+```bash
+export AGENTBAY_API_KEY="your-api-key-here"
+```
+
+2. Ensure you have the AgentBay SDK installed
+
+### Run the Example
+
+```bash
+cd java/agentbay
+mvn exec:java -Dexec.mainClass="com.aliyun.agentbay.examples.NetworkExample"
+```
+
+Or compile and run directly:
+
+```bash
+cd java/agentbay
+mvn clean compile
+java -cp target/classes:$(mvn dependency:build-classpath | grep -v '\[INFO\]') \
+  com.aliyun.agentbay.examples.NetworkExample
+```
+
+## What the Example Does
+
+### Example 1: Create a Network
+- Creates a new network with auto-generated ID
+- Displays network ID and token
+- Shows request ID for tracking
+
+### Example 2: Check Network Status
+- Queries the network status
+- Displays whether the network is online
+- Useful for monitoring network health
+
+### Example 3: Create Sessions on Same Network
+- Creates two sessions bound to the same network
+- Both sessions can communicate with each other
+- Demonstrates basic network setup
+
+### Example 4: Test Network Communication
+- Starts an HTTP server on session 1
+- Session 2 connects to the server on session 1
+- Demonstrates actual inter-session communication
+- Cleans up by stopping the server
+
+### Example 5: Verify Network Isolation
+- Creates a second network
+- Creates session 3 on the new network
+- Shows that sessions on different networks are isolated
+- Session 3 cannot communicate with sessions 1 & 2
+
+## Key Concepts
+
+### Network Creation
+
+```java
+// Create network with auto-generated ID
+NetworkResult result = agentBay.getBetaNetwork().betaGetNetworkBindToken();
+String networkId = result.getNetworkId();
+String networkToken = result.getNetworkToken();
+
+// Or create with custom ID
+NetworkResult result = agentBay.getBetaNetwork().betaGetNetworkBindToken("my-network-id");
+```
+
+### Binding Sessions to Network
+
+```java
+CreateSessionParams params = new CreateSessionParams();
+params.setImageId("linux_latest");
+params.setBetaNetworkId(networkId);  // Bind to beta network
+
+SessionResult session = agentBay.create(params);
+```
+
+### Checking Network Status
+
+```java
+NetworkStatusResult status = agentBay.getBetaNetwork().betaDescribe(networkId);
+boolean isOnline = status.isOnline();
+```
+
+## Use Cases
+
+### 1. Distributed Workflows
+- Create multiple sessions that need to communicate
+- Use for microservices testing
+- Simulate distributed systems
+
+### 2. Multi-Tenant Isolation
+- Create separate networks for different projects/users
+- Ensure complete isolation between tenants
+- Manage network resources per project
+
+### 3. Network Testing
+- Test network connectivity between services
+- Verify firewall rules
+- Simulate network conditions
+
+## Best Practices
+
+1. **Reuse Networks**: Create one network for related sessions rather than creating multiple networks
+2. **Meaningful IDs**: Use descriptive network IDs like "project-name-network" for easier management
+3. **Status Checks**: Verify network is online before binding sessions
+4. **Cleanup**: Sessions will be automatically deleted, and networks cleaned up when all sessions are gone
+5. **Error Handling**: Always check `isSuccess()` on results and handle errors appropriately
+
+## Troubleshooting
+
+### Network Creation Fails
+- Verify your API key is valid
+- Check network quota limits
+- Review error message in `result.getErrorMessage()`
+
+### Sessions Cannot Communicate
+- Verify both sessions are on the same network ID
+- Check if network is online using `describe()`
+- Ensure proper ports are used in communication
+
+### Network Not Found
+- Network may have been automatically cleaned up
+- Verify network ID is correct
+- Create a new network if needed
+
+## Related Documentation
+
+- [Network API Reference](../../api/common-features/advanced/network.md)
+- [CreateSessionParams](../../api/common-features/basics/session-params.md)
+- [Session Management](../../api/common-features/basics/session.md)
+
+## Example Output
+
+```
+Creating AgentBay client...
+
+============================================================
+Example 1: Create a network
+============================================================
+✅ Network created successfully!
+   Network ID: network-abc123
+   Network Token: token-xyz789
+   Request ID: req-12345
+
+============================================================
+Example 2: Check network status
+============================================================
+✅ Network status retrieved successfully!
+   Network ID: network-abc123
+   Online: true
+   Request ID: req-12346
+
+============================================================
+Example 3: Create sessions on the same network
+============================================================
+
+Creating session 1...
+✅ Session 1 created successfully!
+   Session ID: session-111
+   Network ID: network-abc123
+
+Creating session 2...
+✅ Session 2 created successfully!
+   Session ID: session-222
+   Network ID: network-abc123
+
+============================================================
+Example 4: Test network communication between sessions
+============================================================
+
+🌐 Starting HTTP server on session 1...
+✅ HTTP server started on session 1
+   PID: 12345
+
+📡 Testing connection from session 2 to session 1...
+✅ Successfully connected from session 2 to session 1!
+   Response preview:
+   <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+   <html>
+   <head>
+   <meta http-equiv="Content-Type" content="text/html;
+
+🛑 Stopping HTTP server on session 1...
+✅ HTTP server stopped
+
+============================================================
+Example 5: Verify network isolation
+============================================================
+
+🔒 Creating session 3 on a different network...
+✅ Second network created: network-def456
+✅ Session 3 created on different network: session-333
+
+🔍 Verifying network isolation...
+   Session 1 & 2 are on network: network-abc123
+   Session 3 is on network: network-def456
+   Sessions on different networks cannot communicate with each other
+
+============================================================
+Cleaning up...
+============================================================
+✅ Session 1 deleted
+✅ Session 2 deleted
+✅ Session 3 deleted
+
+✅ All examples completed successfully!
+```
+
+
+
+================================================
+FILE: java/docs/guides/README.md
+================================================
+# AgentBay Java SDK Guides
+
+Complete guides for using the AgentBay Java SDK effectively.
+
+## 📚 Getting Started
+
+- [Quick Start](../../README.md#quick-start) - Get up and running in 5 minutes
+- [Core Concepts](../../../docs/guides/README.md) - Understand sessions, contexts, and cloud environments
+
+## 🎯 Feature Guides
+
+### Common Features
+
+**Basics:**
+- [Session Management](../../../docs/guides/common-features/basics/session-management.md) - Create, list, pause, and delete sessions
+- [Data Persistence](../../../docs/guides/common-features/basics/data-persistence.md) - Context synchronization and data persistence
+- [File Operations](../api/common-features/basics/filesystem.md) - Read, write, and manage files in cloud environments
+
+**Advanced:**
+- [OSS Integration](../../../docs/guides/common-features/advanced/oss-integration.md) - Object storage integration
+- [Custom Images](../../../docs/guides/common-features/advanced/custom-images.md) - Use custom Docker images
+
+**Configuration:**
+- [Logging Configuration](../../../docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
+- [Session Configuration](../api/common-features/basics/session-params.md) - Complete session parameter reference
+- [MobileExtraConfig Usage Guide](../examples/mobile-extra-config-usage.md) - Advanced mobile configurations
+
+### Environment-Specific Guides
+
+**Browser Use:**
+- [Browser Use Overview](../../../docs/guides/browser-use/README.md) - Web automation and testing
+- [Core Features](../../../docs/guides/browser-use/core-features.md) - Browser automation capabilities
+- [Browser Extensions](../../../docs/guides/browser-use/browser-extensions.md) - Extension testing and development
+- [Advanced Features](../../../docs/guides/browser-use/advance-features.md) - Browser agents and automation
+
+**Mobile Use:**
+- [Mobile Use Overview](../../../docs/guides/mobile-use/README.md) - Android device automation
+- [Mobile UI Automation](../../../docs/guides/mobile-use/mobile-ui-automation.md) - Touch, swipe, and gesture automation
+- [Mobile Device Management](../../../docs/guides/mobile-use/mobile-application-management.md) - Install, start, stop apps
+- [ADB Connection](../../../docs/guides/mobile-use/adb-connection.md) - Connect via ADB for debugging
+- [Mobile Device Simulation](../../../docs/guides/mobile-use/mobile-simulate.md) - Simulate different device models
+
+**Computer Use:**
+- [Computer Use Overview](../../../docs/guides/computer-use/README.md) - Windows desktop automation
+- [Computer UI Automation](../../../docs/guides/computer-use/computer-ui-automation.md) - Desktop UI interaction
+- [Window Management](../../../docs/guides/computer-use/window-management.md) - Manage application windows
+- [Computer Application Management](../../../docs/guides/computer-use/computer-application-management.md) - Start/stop desktop apps
+
+**CodeSpace:**
+- [CodeSpace Overview](../../../docs/guides/codespace/README.md) - Code execution environments
+- [Code Execution](../api/codespace/code.md) - Run Python, JavaScript, and more
+
+## 💻 Examples
+
+Comprehensive examples demonstrating SDK capabilities:
+
+- [Example Index](../examples/README.md) - Complete list of runnable examples
+- [Basic Examples](../examples/README.md#core-features) - File operations, session management
+- [Browser Examples](../examples/README.md#browser-automation) - Playwright integration, browser automation
+- [Mobile Examples](../examples/README.md#mobile-use) - Mobile UI automation, ADB connection
+- [Computer Examples](../examples/README.md#computer-use--application-management) - Desktop app management
+
+## 🔍 API Reference
+
+Detailed API documentation for all SDK classes:
+
+- [API Documentation](../api/README.md) - Complete API reference
+- [AgentBay Client](../api/common-features/basics/agentbay.md) - Main client class
+- [Session](../api/common-features/basics/session.md) - Session management
+- [Command](../api/common-features/basics/command.md) - Execute commands
+- [FileSystem](../api/common-features/basics/filesystem.md) - File operations
+- [Context](../api/common-features/basics/context.md) - Context management
+- [Browser](../api/browser-use/browser.md) - Browser automation
+- [Mobile](../api/mobile-use/mobile.md) - Mobile automation
+- [Computer](../api/computer-use/computer.md) - Computer automation
+
+## 🎓 Use Cases
+
+Learn how to solve real-world problems:
+
+- [Session Info Use Cases](../../../docs/guides/common-features/use-cases/session-info-use-cases.md) - Get session URLs, credentials, and info
+- [Session Link Use Cases](../../../docs/guides/common-features/use-cases/session-link-use-cases.md) - Share session access with team members
+- [Cross-Platform Persistence](../../../docs/guides/common-features/use-cases/cross-platform-persistence.md) - Share data across different environments
+
+## 🤝 Best Practices
+
+### Error Handling
+
+Always check result success status:
+
+```java
+SessionResult result = agentBay.create(params);
+if (result.isSuccess()) {
+    Session session = result.getSession();
+    // Use session
+} else {
+    System.err.println("Error: " + result.getErrorMessage());
+}
+```
+
+### Resource Cleanup
+
+Always clean up sessions:
+
+```java
+Session session = null;
+try {
+    session = agentBay.create().getSession();
+    // Use session
+} finally {
+    if (session != null) {
+        session.delete();
+    }
+}
+```
+
+### Context Synchronization
+
+Sync context before deleting session to persist data:
+
+```java
+// Sync context and wait for completion
+session.getContext().syncAndWait();
+
+// Delete session with context sync enabled
+agentBay.delete(session, true);  // sync_context=true
+```
+
+## 📖 Additional Resources
+
+- [Java README](../../README.md) - SDK overview and quick start
+- [Main Documentation](../../../docs/README.md) - Complete platform documentation
+- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues) - Report issues and get support
+
+## 🚀 Next Steps
+
+1. **New to AgentBay?** Start with the [Quick Start](../../README.md#quick-start)
+2. **Need examples?** Browse the [Example Index](../examples/README.md)
+3. **Looking for specific features?** Check the [API Reference](../api/README.md)
+4. **Want to understand concepts?** Read the [Feature Guides](../../../docs/guides/README.md)
+
+
+
+================================================
 FILE: python/README.md
 ================================================
 # AgentBay SDK for Python
@@ -3958,7 +6223,7 @@ FILE: python/pyproject.toml
 ================================================
 [tool.poetry]
 name = "wuying-agentbay-sdk"
-version = "0.13.0"
+version = "0.15.0"
 description = "Python SDK for interacting with the Wuying AgentBay cloud runtime environment"
 readme = ["README.md", "CHANGELOG.md"]
 packages = [{include = "agentbay"}]
@@ -3990,6 +6255,7 @@ python-dotenv = "^1.0.0"
 pydantic = "^2.0"
 playwright = ">=1.5.0"
 loguru = "^0.7.0"
+aliyun-log-python-sdk = "^0.8.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
@@ -4091,6 +6357,7 @@ See [Synchronous vs Asynchronous Guide](../guides/async-programming/sync-vs-asyn
 All synchronous API classes are in the `sync/` directory:
 
 - [AgentBay](sync/agentbay.md) - `agentbay.agentbay`
+- [Network](sync/network.md) - `agentbay.beta_network`
 - [Session](sync/session.md) - `agentbay.session`
 - [Command](sync/command.md) - `agentbay.command`
 - [Context](sync/context.md) - `agentbay.context`
@@ -4106,13 +6373,14 @@ All synchronous API classes are in the `sync/` directory:
 - [Mobile](sync/mobile.md) - `agentbay.mobile`
 - [BrowserFingerprint](sync/fingerprint.md) - `agentbay.fingerprint`
 - [MobileSimulate](sync/mobile-simulate.md) - `agentbay.mobile_simulate`
-- [SessionParams](sync/session-params.md) - `agentbay.session_params`
+- [SessionParams](sync/session-params.md) - `agentbay.agentbay._common.params.session_params`
 
 ## Asynchronous API
 
 All asynchronous API classes are in the `async/` directory:
 
 - [AsyncAgentBay](async/async-agentbay.md) - `agentbay.agentbay`
+- [AsyncNetwork](async/async-network.md) - `agentbay.beta_network`
 - [AsyncSession](async/async-session.md) - `agentbay.session`
 - [AsyncCommand](async/async-command.md) - `agentbay.command`
 - [AsyncContext](async/async-context.md) - `agentbay.context`
@@ -4128,7 +6396,7 @@ All asynchronous API classes are in the `async/` directory:
 - [AsyncMobile](async/async-mobile.md) - `agentbay.mobile`
 - [AsyncBrowserFingerprint](async/async-fingerprint.md) - `agentbay.fingerprint`
 - [AsyncMobileSimulate](async/async-mobile-simulate.md) - `agentbay.mobile_simulate`
-- [AsyncSessionParams](async/async-session-params.md) - `agentbay.session_params`
+- [AsyncSessionParams](async/async-session-params.md) - `agentbay.agentbay._common.params.session_params`
 
 ## Common Classes
 
@@ -4313,7 +6581,6 @@ Located in `common-features/basics/` and `common-features/advanced/`
 - `environment_variables/` - Environment variable management
 - `retry_mechanism/` - Retry patterns with circuit breaker
 - `session_pooling/` - Session pooling for efficiency
-- `vpc_session/` - VPC session management
 - `oss_management/` - OSS operations
 
 **Filesystem:**
@@ -4993,7 +7260,7 @@ This directory contains examples demonstrating code execution capabilities in Ag
 ## Overview
 
 Codespace environment (`linux_latest` image) provides cloud-based code execution with:
-- Python and JavaScript runtime support
+- Python, JavaScript, R, and Java runtime support
 - File system operations
 - Command execution
 - Package installation and management
@@ -5004,6 +7271,7 @@ Codespace environment (`linux_latest` image) provides cloud-based code execution
 ### Code Execution
 - **code_execution_example.py**: Basic Python and JavaScript code execution
 - **jupyter_context_persistence.py**: Jupyter-like Python context persistence across consecutive `run_code()` calls within the same session
+- **jupyter_context_persistence_r_java.py**: Jupyter-like R and Java context persistence across consecutive `run_code()` calls within the same session
 - **python_development.py**: Python development workflow
 - **nodejs_development.py**: Node.js development setup
 - **web_server_setup.py**: Web server configuration
@@ -5040,7 +7308,7 @@ python code_execution_example.py
 
 | Method | Purpose |
 |--------|---------|
-| `session.code.run_code()` | Execute Python or JavaScript code |
+| `session.code.run_code()` | Execute Python, JavaScript, R, or Java code |
 | `session.file_system.write_file()` | Write content to a file |
 | `session.file_system.read_file()` | Read content from a file |
 | `session.command.execute_command()` | Execute shell commands |
@@ -5180,12 +7448,6 @@ Object Storage Service integration:
 - File upload to OSS
 - File download from OSS
 - Anonymous upload/download
-
-### [vpc_session](advanced/vpc_session/)
-Secure isolated network environments:
-- Creating VPC sessions
-- VPC network configuration
-- Secure session management
 
 ### [screenshot_download](advanced/screenshot_download/)
 Screenshot capture and download:
@@ -5377,55 +7639,20 @@ For more details on OSS integration, see the [OSS API Reference](../../../../../
 
 
 ================================================
-FILE: python/docs/examples/_async/common-features/advanced/vpc_session/README.md
+FILE: python/docs/examples/_async/common-features/advanced/session_metrics/README.md
 ================================================
-# VPC Session Example
+# Session Metrics
 
-This example demonstrates how to create and use VPC (Virtual Private Cloud) sessions with the AgentBay SDK.
+This example demonstrates how to retrieve **runtime metrics** for a session using `get_metrics`.
 
-## Overview
-
-VPC sessions provide enhanced security and networking capabilities by running your cloud sessions within a private network environment. This example shows how to create a VPC session and use its available modules.
-
-## Running the Example
-
-1. Ensure you have the AgentBay SDK installed
-2. Set the `AGENTBAY_API_KEY` environment variable with your valid API key
-3. Run the example:
+## Run
 
 ```bash
-cd docs/examples/python/vpc_session
 python main.py
 ```
 
-## What the Example Does
 
-1. Initializes the AgentBay client with your API key
-2. Creates a new VPC session with specific parameters
-3. Tests FileSystem operations by writing and reading a file
-4. Tests Command operations by executing system commands
-5. Cleans up by deleting the session
 
-## Key Concepts
-
-- **VPC Session Creation**: VPC sessions are created by setting the `is_vpc` parameter to `True`
-- **Module Availability**: VPC sessions have limited module availability compared to standard sessions
-- **Resource Management**: VPC sessions should be properly deleted when no longer needed
-- **Security**: VPC sessions provide network isolation for sensitive operations
-
-## Available Modules in VPC Sessions
-
-1. **FileSystem**: File and directory operations
-2. **Command**: Command execution
-3. **System Tools**: Specialized system-level tools
-4. **Browser Tools**: Browser automation capabilities
-
-## Next Steps
-
-Try modifying the example to:
-- Use context synchronization with VPC sessions
-- Test different command executions
-- Implement error handling for unavailable modules
 
 
 ================================================
@@ -5666,6 +7893,35 @@ The example will output detailed logs showing:
 For additional help:
 - [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
 - [Documentation Home](../../../../README.md)
+
+
+================================================
+FILE: python/docs/examples/_async/common-features/basics/computer_take_screenshot/README.md
+================================================
+## Computer Take Screenshot (Async)
+
+This example demonstrates how to take a desktop screenshot using the MCP `screenshot` tool via `AsyncComputer.beta_take_screenshot()`.
+
+### Prerequisites
+
+- Python 3.10+
+- Set `AGENTBAY_API_KEY` environment variable
+
+### Run
+
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+python main.py
+```
+
+### What it does
+
+- Creates a `linux_latest` session
+- Takes a screenshot in `jpg` format (normalized to `jpeg`)
+- Saves the result to `./tmp/computer_take_screenshot.jpg`
+- Deletes the session
+
+
 
 
 ================================================
@@ -7151,6 +9407,32 @@ If screenshots fail or are corrupted:
 
 
 ================================================
+FILE: python/docs/examples/_async/mobile-use/get_all_ui_elements_xml/README.md
+================================================
+## Get All UI Elements (XML)
+
+This example demonstrates how to retrieve the full UI hierarchy in **XML** format.
+
+### Prerequisites
+
+- Python 3.8+
+- `AGENTBAY_API_KEY` environment variable
+
+### Run
+
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+python main.py
+```
+
+### What you get
+
+- `ui_dump.xml` saved in the current directory
+- A short preview printed to stdout
+
+
+
+================================================
 FILE: python/docs/examples/_async/mobile-use/mobile_system/README.md
 ================================================
 # Mobile System Example
@@ -7749,7 +10031,7 @@ This directory contains examples demonstrating code execution capabilities in Ag
 ## Overview
 
 Codespace environment (`linux_latest` image) provides cloud-based code execution with:
-- Python and JavaScript runtime support
+- Python, JavaScript, R, and Java runtime support
 - File system operations
 - Command execution
 - Package installation and management
@@ -7760,6 +10042,7 @@ Codespace environment (`linux_latest` image) provides cloud-based code execution
 ### Code Execution
 - **code_execution_example.py**: Basic Python and JavaScript code execution
 - **jupyter_context_persistence.py**: Jupyter-like Python context persistence across consecutive `run_code()` calls within the same session
+- **jupyter_context_persistence_r_java.py**: Jupyter-like R and Java context persistence across consecutive `run_code()` calls within the same session
 - **python_development.py**: Python development workflow
 - **nodejs_development.py**: Node.js development setup
 - **web_server_setup.py**: Web server configuration
@@ -7796,7 +10079,7 @@ python code_execution_example.py
 
 | Method | Purpose |
 |--------|---------|
-| `session.code.run_code()` | Execute Python or JavaScript code |
+| `session.code.run_code()` | Execute Python, JavaScript, R, or Java code |
 | `session.file_system.write_file()` | Write content to a file |
 | `session.file_system.read_file()` | Read content from a file |
 | `session.command.execute_command()` | Execute shell commands |
@@ -7936,12 +10219,6 @@ Object Storage Service integration:
 - File upload to OSS
 - File download from OSS
 - Anonymous upload/download
-
-### [vpc_session](advanced/vpc_session/)
-Secure isolated network environments:
-- Creating VPC sessions
-- VPC network configuration
-- Secure session management
 
 ### [screenshot_download](advanced/screenshot_download/)
 Screenshot capture and download:
@@ -8133,55 +10410,20 @@ For more details on OSS integration, see the [OSS API Reference](../../../../../
 
 
 ================================================
-FILE: python/docs/examples/_sync/common-features/advanced/vpc_session/README.md
+FILE: python/docs/examples/_sync/common-features/advanced/session_metrics/README.md
 ================================================
-# VPC Session Example
+# Session Metrics
 
-This example demonstrates how to create and use VPC (Virtual Private Cloud) sessions with the AgentBay SDK.
+This example demonstrates how to retrieve **runtime metrics** for a session using `get_metrics`.
 
-## Overview
-
-VPC sessions provide enhanced security and networking capabilities by running your cloud sessions within a private network environment. This example shows how to create a VPC session and use its available modules.
-
-## Running the Example
-
-1. Ensure you have the AgentBay SDK installed
-2. Set the `AGENTBAY_API_KEY` environment variable with your valid API key
-3. Run the example:
+## Run
 
 ```bash
-cd docs/examples/python/vpc_session
 python main.py
 ```
 
-## What the Example Does
 
-1. Initializes the AgentBay client with your API key
-2. Creates a new VPC session with specific parameters
-3. Tests FileSystem operations by writing and reading a file
-4. Tests Command operations by executing system commands
-5. Cleans up by deleting the session
 
-## Key Concepts
-
-- **VPC Session Creation**: VPC sessions are created by setting the `is_vpc` parameter to `True`
-- **Module Availability**: VPC sessions have limited module availability compared to standard sessions
-- **Resource Management**: VPC sessions should be properly deleted when no longer needed
-- **Security**: VPC sessions provide network isolation for sensitive operations
-
-## Available Modules in VPC Sessions
-
-1. **FileSystem**: File and directory operations
-2. **Command**: Command execution
-3. **System Tools**: Specialized system-level tools
-4. **Browser Tools**: Browser automation capabilities
-
-## Next Steps
-
-Try modifying the example to:
-- Use context synchronization with VPC sessions
-- Test different command executions
-- Implement error handling for unavailable modules
 
 
 ================================================
@@ -8422,6 +10664,35 @@ The example will output detailed logs showing:
 For additional help:
 - [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
 - [Documentation Home](../../../../README.md)
+
+
+================================================
+FILE: python/docs/examples/_sync/common-features/basics/computer_take_screenshot/README.md
+================================================
+## Computer Take Screenshot (Async)
+
+This example demonstrates how to take a desktop screenshot using the MCP `screenshot` tool via `AsyncComputer.beta_take_screenshot()`.
+
+### Prerequisites
+
+- Python 3.10+
+- Set `AGENTBAY_API_KEY` environment variable
+
+### Run
+
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+python main.py
+```
+
+### What it does
+
+- Creates a `linux_latest` session
+- Takes a screenshot in `jpg` format (normalized to `jpeg`)
+- Saves the result to `./tmp/computer_take_screenshot.jpg`
+- Deletes the session
+
+
 
 
 ================================================
@@ -9901,6 +12172,32 @@ If screenshots fail or are corrupted:
 
 
 ================================================
+FILE: python/docs/examples/_sync/mobile-use/get_all_ui_elements_xml/README.md
+================================================
+## Get All UI Elements (XML)
+
+This example demonstrates how to retrieve the full UI hierarchy in **XML** format.
+
+### Prerequisites
+
+- Python 3.8+
+- `AGENTBAY_API_KEY` environment variable
+
+### Run
+
+```bash
+export AGENTBAY_API_KEY=your_api_key_here
+python main.py
+```
+
+### What you get
+
+- `ui_dump.xml` saved in the current directory
+- A short preview printed to stdout
+
+
+
+================================================
 FILE: python/docs/examples/_sync/mobile-use/mobile_system/README.md
 ================================================
 # Mobile System Example
@@ -10111,7 +12408,7 @@ FILE: typescript/package.json
 ================================================
 {
     "name": "wuying-agentbay-sdk",
-    "version": "0.13.0",
+    "version": "0.15.0",
     "description": "TypeScript SDK for interacting with the Wuying AgentBay cloud runtime environment",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",
@@ -10229,6 +12526,8 @@ These documents are generated automatically using TypeDoc. Run `npm run docs:gen
   - agent.md
   - browser-use-agent.md
   - computer-use-agent.md
+  - mobile-use-agent.md
+  - network.md
   - oss.md
 - `common-features/basics`
   - agentbay.md
@@ -10273,7 +12572,7 @@ examples/
 │   │   └── get/                   # Session retrieval
 │   └── advanced/                  # Advanced features
 │       ├── agent-module-example/  # AI-powered automation
-│       ├── vpc-session-example/   # Secure isolated network environments
+│       ├── session-metrics/       # Runtime metrics via MCP get_metrics
 │       └── archive-upload-mode-example/ # Archive upload mode
 ├── browser-use/                   # Browser automation (browser_latest)
 │   ├── browser/                   # Browser automation examples
@@ -10283,7 +12582,9 @@ examples/
 ├── mobile-use/                    # Mobile UI automation (mobile_latest)
 │   └── mobile-get-adb-url/        # ADB URL retrieval
 └── codespace/                     # Code execution (code_latest)
-    └── automation/                # Automation workflows
+    ├── automation/                # Automation workflows
+    ├── enhanced_code/             # Enhanced runCode() output (logs/results/error)
+    └── jupyter_context_persistence_r_java/ # Jupyter-like context persistence for R and Java
 ```
 
 ## 🚀 Quick Start
@@ -10324,7 +12625,6 @@ Features available across all environment types (browser, computer, mobile, code
 
 **Advanced:**
 - **Agent Module**: AI-powered task automation with natural language
-- **VPC Sessions**: Secure isolated network environments
 - **Archive Upload**: Archive upload mode configuration
 
 ### [Browser Use](browser-use/browser/README.md)
@@ -10514,6 +12814,8 @@ await browser.close();
 
 **Code Execution:**
 - Automation: `codespace/automation/automation-example.ts`
+- Enhanced code result: `codespace/enhanced_code/index.ts`
+- Jupyter-like context persistence (R/Java): `codespace/jupyter_context_persistence_r_java/index.ts`
 
 **Data Management:**
 - File operations: `common-features/basics/filesystem-example/filesystem-example.ts`
@@ -10522,7 +12824,6 @@ await browser.close();
 
 **Advanced Features:**
 - AI Agent: `common-features/advanced/agent-module-example/agent-module-example.ts`
-- VPC sessions: `common-features/advanced/vpc-session-example/vpc-session-example.ts`
 
 ## 🆘 Troubleshooting
 
@@ -10809,10 +13110,12 @@ const option = new BrowserOptionClass();
 ### Basic Browser Initialization
 
 ```typescript
-import { AgentBay, CreateSessionParams, BrowserOptionClass } from '@wuying-org/agentbay-sdk';
+import { AgentBay, CreateSessionParams, BrowserOptionClass } from 'wuying-agentbay-sdk';
 
 const agentBay = new AgentBay(process.env.AGENTBAY_API_KEY!);
-const params = new CreateSessionParams({ imageId: 'browser_latest' });
+const params :CreateSessionParams = { 
+  imageId: 'browser_latest'
+}
 const result = await agentBay.create(params);
 
 if (!result.success || !result.session) {
@@ -11072,15 +13375,16 @@ try {
   const extOption = extensionsService.createExtensionOption([extension.id]);
   
   // Create browser session with extension
-  const sessionParams = new CreateSessionParams()
-    .withLabels({ purpose: "extension_demo" })
-    .withBrowserContext(new BrowserContext(
+  const sessionParams: CreateSessionParams = {
+    labels: { purpose: "extension_demo" },
+    browserContext: new BrowserContext(
       "browser_session",
       true,
       extOption
-    ));
+    )
+  };
   
-  const sessionResult = await agentBay.create(sessionParams.toJSON());
+  const sessionResult = await agentBay.create(sessionParams);
   const session = sessionResult.session;
   
   console.log(`Session created with extension: ${session.sessionId}`);
@@ -11468,55 +13772,28 @@ For additional help:
 
 
 ================================================
-FILE: typescript/docs/examples/common-features/advanced/vpc-session-example/README.md
+FILE: typescript/docs/examples/common-features/advanced/session-metrics/README.md
 ================================================
-# VPC Session Example
+# Session Metrics Example (TypeScript)
 
-This example demonstrates how to create and use VPC (Virtual Private Cloud) sessions with the AgentBay SDK.
+This example demonstrates how to retrieve **runtime metrics** for a session using `session.getMetrics()`.
 
-## Overview
+## Prerequisites
 
-VPC sessions provide enhanced security and networking capabilities by running your cloud sessions within a private network environment. This example shows how to create a VPC session and use its available modules.
+- Node.js 16+
+- AgentBay API Key (set as environment variable `AGENTBAY_API_KEY`)
 
-## Running the Example
-
-1. Ensure you have the AgentBay SDK installed
-2. Set the `AGENTBAY_API_KEY` environment variable with your valid API key
-3. Run the example:
+## Run
 
 ```bash
-cd docs/examples/typescript
-npx ts-node vpc-session-example.ts
+export AGENTBAY_API_KEY=your_api_key_here
+
+cd typescript/docs/examples/common-features/advanced/session-metrics
+npx ts-node main.ts
 ```
 
-## What the Example Does
 
-1. Initializes the AgentBay client with your API key
-2. Creates a new VPC session with specific parameters
-3. Tests FileSystem operations by writing and reading a file
-4. Tests Command operations by executing system commands
-5. Cleans up by deleting the session
 
-## Key Concepts
-
-- **VPC Session Creation**: VPC sessions are created by setting the `isVpc` parameter to `true`
-- **Module Availability**: VPC sessions have limited module availability compared to standard sessions
-- **Resource Management**: VPC sessions should be properly deleted when no longer needed
-- **Security**: VPC sessions provide network isolation for sensitive operations
-
-## Available Modules in VPC Sessions
-
-1. **FileSystem**: File and directory operations
-2. **Command**: Command execution
-3. **System Tools**: Specialized system-level tools
-4. **Browser Tools**: Browser automation capabilities
-
-## Next Steps
-
-Try modifying the example to:
-- Use context synchronization with VPC sessions
-- Test different command executions
-- Implement error handling for unavailable modules
 
 
 ================================================

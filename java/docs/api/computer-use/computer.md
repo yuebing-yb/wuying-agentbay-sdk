@@ -336,6 +336,38 @@ if (startResult.isSuccess()) {
 session.delete();
 ```
 
+## Beta Screenshot Operations
+
+### betaTakeScreenshot
+
+```java
+public ScreenshotBytesResult betaTakeScreenshot(String format)
+```
+
+Captures the current screen and returns raw image bytes. The backend may also provide the captured image dimensions, exposed as `width` and `height` (in pixels).
+
+**Parameters:**
+- `format` (String): Image format (`png` or `jpg`)
+
+**Returns:**
+- `ScreenshotBytesResult`: Result object containing:
+  - `success` (boolean): True if the operation succeeded
+  - `data` (byte[]): Raw image bytes
+  - `format` (String): Image format (`png` or `jpeg`)
+  - `width` (Integer, optional): Image width in pixels
+  - `height` (Integer, optional): Image height in pixels
+  - `requestId` (String): Unique identifier for this API request
+  - `errorMessage` (String): Error description (if success is false)
+
+**Example:**
+
+```java
+ScreenshotBytesResult s = session.getComputer().betaTakeScreenshot("jpg");
+if (s.isSuccess()) {
+    System.out.println("Bytes=" + s.getData().length + ", size=" + s.getWidth() + "x" + s.getHeight());
+}
+```
+
 ## Related Resources
 
 - [Session API Reference](../common-features/basics/session.md)

@@ -34,6 +34,7 @@ METADATA_PATH = PROJECT_ROOT.parent / "scripts" / "doc-metadata.yaml"
 # Sync API docs
 DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("sync/agentbay.md", "AgentBay", ("agentbay._sync.agentbay",)),
+    DocMapping("sync/network.md", "Network", ("agentbay._sync.beta_network",)),
     DocMapping("sync/session.md", "Session", ("agentbay._sync.session",)),
     DocMapping("sync/command.md", "Command", ("agentbay._sync.command",)),
     DocMapping("sync/context.md", "Context", ("agentbay._sync.context",)),
@@ -55,6 +56,7 @@ DOC_MAPPINGS: Sequence[DocMapping] = (
 # Async API docs
 ASYNC_DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("async/async-agentbay.md", "AsyncAgentBay", ("agentbay._async.agentbay",)),
+    DocMapping("async/async-network.md", "AsyncNetwork", ("agentbay._async.beta_network",)),
     DocMapping("async/async-session.md", "AsyncSession", ("agentbay._async.session",)),
     DocMapping("async/async-command.md", "AsyncCommand", ("agentbay._async.command",)),
     DocMapping("async/async-context.md", "AsyncContext", ("agentbay._async.context",)),
@@ -275,6 +277,8 @@ def get_module_name_from_path(module_path: str) -> str:
     # Special handling for common models
     if module_path == "agentbay._common.models.code":
         return "code-models"
+    if module_path.endswith(".beta_network"):
+        return "network"
     return module_path.split('.')[-1]
 
 
@@ -285,6 +289,7 @@ def get_async_note_section(module_name: str, metadata: dict[str, Any]) -> str:
 
     async_class_map = {
         "agentbay": ("AsyncAgentBay", "../async/async-agentbay.md"),
+        "network": ("AsyncNetwork", "../async/async-network.md"),
         "session": ("AsyncSession", "../async/async-session.md"),
         "command": ("AsyncCommand", "../async/async-command.md"),
         "context": ("AsyncContextService", "../async/async-context.md"),
@@ -314,6 +319,7 @@ def get_sync_note_section(module_name: str, metadata: dict[str, Any]) -> str:
     # Map async module names back to sync
     sync_class_map = {
         "agentbay": ("AgentBay", "../sync/agentbay.md"),
+        "network": ("Network", "../sync/network.md"),
         "session": ("Session", "../sync/session.md"),
         "command": ("Command", "../sync/command.md"),
         "context": ("ContextService", "../sync/context.md"),
@@ -486,6 +492,7 @@ def calculate_resource_path(resource: dict[str, Any], module_config: dict[str, A
 
 
 SYNC_ASYNC_MODULES = {
+    'agentbay',
     'session',
     'command',
     'filesystem',
@@ -498,7 +505,28 @@ SYNC_ASYNC_MODULES = {
     'code',
     'computer',
     'mobile',
+    'session-params',
+    'network',
 }
+
+
+def unescape_underscores_in_headings(content: str) -> str:
+    """
+    Remove backslash escaping for underscores in markdown headings.
+
+    pydoc-markdown escapes underscores (e.g., `beta\\_take\\_screenshot`) which makes headings
+    harder to read. We only change heading lines, leaving inline/code content unchanged.
+    """
+    lines = content.splitlines()
+    for i, line in enumerate(lines):
+        match = re.match(r"^(#{1,6})\s+(.+)$", line)
+        if not match:
+            continue
+        hashes, title = match.group(1), match.group(2)
+        # NOTE: Keep backslashes out of f-string expression for Python 3.10 compatibility.
+        cleaned_title = title.replace(r"\\_", "_").replace(r"\_", "_")
+        lines[i] = f"{hashes} {cleaned_title}"
+    return "\n".join(lines)
 
 
 def get_see_also_section(module_name: str, metadata: dict[str, Any], doc_group: str = "sync") -> str:
@@ -1090,6 +1118,9 @@ def format_markdown(
 
     # Standardize Deprecated sections into a consistent markdown block
     content = standardize_deprecated_sections(content)
+
+    # Unescape underscores in headings (e.g., beta_take_screenshot)
+    content = unescape_underscores_in_headings(content)
 
     # Only fix async references for sync docs
     if not is_async:

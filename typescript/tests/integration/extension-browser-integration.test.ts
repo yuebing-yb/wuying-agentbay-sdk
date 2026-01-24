@@ -22,9 +22,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { AgentBay } from "../../src";
+import { AgentBay, CreateSessionParams } from "../../src";
 import { ExtensionsService, Extension, ExtensionOption } from "../../src/extension";
-import { CreateSessionParams, BrowserContext } from "../../src/session-params";
+import { BrowserContext } from "../../src/session-params";
 import { Context } from "../../src/context";
 import { Session } from "../../src/session";
 import { SessionResult, ContextResult } from "../../src/types/api-response";
@@ -858,7 +858,6 @@ describe("Extension Service Integration Tests", () => {
       try {
         // Phase 1: Extension Synchronization
         log("\nPhase 1: Extension Synchronization");
-        await waitForSync(session);
         const lsResult_before = await session.command.executeCommand("ls -la /tmp/extensions/");
         if (!lsResult_before.success) {
           log("    ❌ lsResult_before Extensions directory not found");
@@ -937,15 +936,15 @@ describe("Extension Service Integration Tests", () => {
       extensionOption
     );
     
-    const sessionParams = new CreateSessionParams()
-      .withLabels({ test_type: "extension_integration" })
-      .withImageId("browser_latest")
-      .withBrowserContext(browserContext)
-      .withIsVpc(false);
+    const sessionParams: CreateSessionParams = {
+      labels: { test_type: "extension_integration" },
+      imageId: "browser_latest",
+      browserContext: browserContext,
+    };
 
-      log("\nCreating session with browser context...", sessionParams.toJSON());
+      log("\nCreating session with browser context...", sessionParams);
     
-    const sessionResult: SessionResult = await agentBay.create(sessionParams.toJSON());
+    const sessionResult: SessionResult = await agentBay.create(sessionParams);
     log(`  ✅ Created session: ${sessionResult.session.id}`);
     expect(sessionResult.success).toBe(true);
     const session = sessionResult.session;
@@ -959,56 +958,6 @@ describe("Extension Service Integration Tests", () => {
     log(`  ✅ Session created with extension support: ${sessionId}`);
     log(`  ✅ Extension IDs configured: ${extensionIds}`);
     return session;
-  }
-
-  async function waitForSync(session: Session): Promise<void> {
-    const maxRetries = 30;
-    for (let retry = 0; retry < maxRetries; retry++) {
-      const contextInfo = await session.context.info();
-      
-      for (const item of contextInfo.contextStatusData) {
-        if (item.path === "/tmp/extensions/") {
-          log(`  📊 Sync status: ${item.status} (attempt ${retry+1}/${maxRetries})`);
-          
-          if (item.status === "Success") {
-            log("  ✅ Extension synchronization completed successfully");
-            return;
-          } else if (item.status === "Failed") {
-            const errorMsg = item.errorMessage || "Unknown sync error";
-            log(`  ❌ Sync failed: ${errorMsg}`);
-            
-            // Check if this is a retryable error
-            const retryableErrors = [
-              "network timeout",
-              "temporary unavailable", 
-              "rate limit",
-              "connection reset"
-            ];
-            
-            const isRetryable = retryableErrors.some(err => 
-              errorMsg.toLowerCase().includes(err)
-            );
-            
-            if (isRetryable && retry < maxRetries - 5) {
-              log(`  🔄 Retryable error detected, continuing to retry...`);
-              continue;
-            } else {
-              // Non-retryable error or too many retries
-              throw new Error(`Extension sync failed: ${errorMsg}. Context: path=${item.path}, taskType=${item.taskType}, startTime=${item.startTime}`);
-            }
-          } else if (item.status === "Running" || item.status === "Pending") {
-            log(`  ⏳ Sync in progress: ${item.status}`);
-          } else {
-            log(`  ⚠️ Unknown sync status: ${item.status}`);
-          }
-        }
-      }
-      
-      log(`  Waiting for sync, attempt ${retry+1}/${maxRetries}`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-    
-    throw new Error("Extension synchronization timeout");
   }
 
   async function initializeBrowserWithExtensions(session: Session): Promise<boolean> {

@@ -22,10 +22,11 @@ _logger = get_logger("local_page_agent")
 
 
 class LocalMCPClient:
-    def __init__(self, server: str, command: str, args: list[str]) -> None:
+    def __init__(self, server: str, command: str, args: list[str], env: dict[str, str] | None = None) -> None:
         self.server = server
         self.command = command
         self.args = args
+        self.env = env
         self.session: ClientSession | None = None
         self.worker_thread: concurrent.futures.Future | None = None
         self._tool_call_queue: asyncio.Queue | None = None
@@ -41,9 +42,20 @@ class LocalMCPClient:
                     _logger.info("Start connect to mcp server")
                     try:
                         _logger.debug(f"command = {self.command}, args = {self.args}")
-                        server_params = StdioServerParameters(
-                            command=self.command, args=self.args
-                        )
+                        try:
+                            if self.env is not None:
+                                server_params = StdioServerParameters(
+                                    command=self.command, args=self.args, env=self.env
+                                )
+                            else:
+                                server_params = StdioServerParameters(
+                                    command=self.command, args=self.args
+                                )
+                        except TypeError:
+                            _logger.debug("StdioServerParameters does not support env parameter, using default inheritance")
+                            server_params = StdioServerParameters(
+                                command=self.command, args=self.args
+                            )
                         async with stdio_client(server_params) as (
                             read_stream,
                             write_stream,
@@ -162,8 +174,9 @@ class LocalPageAgent(BrowserAgent):
         mcp_script = os.environ.get("PAGE_TASK_MCP_SERVER_SCRIPT", "")
 
         if mcp_script:
+            env = dict(os.environ)
             self.mcp_client: LocalMCPClient | None = LocalMCPClient(
-                server="PageUseAgent", command=sys.executable, args=[mcp_script]
+                server="PageUseAgent", command=sys.executable, args=[mcp_script], env=env
             )
         else:
             self.mcp_client = None
@@ -236,8 +249,12 @@ class LocalBrowser(Browser):
                                 f"browser_user_data_{os.getpid()}_{uuid.uuid4().hex}",
                             )
 
+                            # Read env variable HEADLESS_MODE
+                            headless_mode = os.environ.get("HEADLESS", "false")
+                            headless = headless_mode.lower() == "true"
+
                             self._browser = await p.chromium.launch_persistent_context(
-                                headless=False,
+                                headless=headless,
                                 viewport={"width": 1280, "height": 1200},
                                 args=[
                                     f"--remote-debugging-port={self._cdp_port}",

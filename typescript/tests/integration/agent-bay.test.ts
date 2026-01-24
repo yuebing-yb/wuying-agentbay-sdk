@@ -4,11 +4,11 @@ import {
   AuthenticationError,
   APIError,
   ListSessionParams,
+  CreateSessionParams,
 } from "../../src";
 import { ContextSync, SyncPolicy, newSyncPolicy, Lifecycle } from "../../src/context-sync";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
-import { CreateSessionParams } from "../../src/session-params";
 // Define Node.js process if it's not available
 declare namespace NodeJS {
   interface ProcessEnv {
@@ -76,8 +76,9 @@ describe("AgentBay", () => {
     it("should create, list, and delete a session with requestId", async () => {
       // Create a session
       log("Creating a new session...");
-      const params = new CreateSessionParams();
-      params.imageId = "linux_latest";
+      const params: CreateSessionParams = {
+        imageId: "linux_latest"
+      };
       const createResponse = await agentBay.create(params);
 
       // Verify SessionResult structure
@@ -106,7 +107,7 @@ describe("AgentBay", () => {
       expect(listResult.sessionIds.length).toBeGreaterThanOrEqual(1);
 
       // Check if our created session is in the list
-      const found = listResult.sessionIds.some((sid) => sid === session.sessionId);
+      const found = listResult.sessionIds.some((sid) => sid.sessionId === session.sessionId);
       expect(found).toBe(true);
 
       // Delete the session
@@ -128,7 +129,7 @@ describe("AgentBay", () => {
 
       // Check if the deleted session is not in the list
       const stillExists = listResultAfterDelete.sessionIds.some(
-        (sid) => sid === session.sessionId
+        (sid) => sid.sessionId === session.sessionId
       );
       expect(stillExists).toBe(false);
     });
@@ -250,7 +251,7 @@ describe("AgentBay", () => {
 
         // Verify that session A is in the results
         const foundSessionA = devSessionsResponse.sessionIds.some(
-          (sessionId) => sessionId === sessionA.sessionId
+          (sid) => sid.sessionId === sessionA.sessionId
         );
         expect(foundSessionA).toBe(true);
       } catch (error) {
@@ -279,7 +280,7 @@ describe("AgentBay", () => {
 
         // Verify that session B is in the results
         const foundSessionB = teamBSessionsResponse.sessionIds.some(
-          (sessionId) => sessionId === sessionB.sessionId
+          (sid) => sid.sessionId === sessionB.sessionId
         );
         expect(foundSessionB).toBe(true);
       } catch (error) {
@@ -314,10 +315,10 @@ describe("AgentBay", () => {
 
         // Verify that session B is in the results and session A is not
         const foundSessionA = multiLabelSessionsResponse.sessionIds.some(
-          (s) => s === sessionA.sessionId
+          (s) => s.sessionId === sessionA.sessionId
         );
         const foundSessionB = multiLabelSessionsResponse.sessionIds.some(
-          (s) => s === sessionB.sessionId
+          (s) => s.sessionId === sessionB.sessionId
         );
 
         expect(foundSessionA).toBe(false);

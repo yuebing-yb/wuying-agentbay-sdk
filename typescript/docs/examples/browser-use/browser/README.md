@@ -218,10 +218,12 @@ const option = new BrowserOptionClass();
 ### Basic Browser Initialization
 
 ```typescript
-import { AgentBay, CreateSessionParams, BrowserOptionClass } from '@wuying-org/agentbay-sdk';
+import { AgentBay, CreateSessionParams, BrowserOptionClass } from 'wuying-agentbay-sdk';
 
 const agentBay = new AgentBay(process.env.AGENTBAY_API_KEY!);
-const params = new CreateSessionParams({ imageId: 'browser_latest' });
+const params :CreateSessionParams = { 
+  imageId: 'browser_latest'
+}
 const result = await agentBay.create(params);
 
 if (!result.success || !result.session) {

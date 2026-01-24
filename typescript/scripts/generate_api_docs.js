@@ -45,6 +45,11 @@ const docMappings = [
   { target: 'common-features/advanced/computer-use-agent.md', symbol: 'ComputerUseAgent', identifiers: ['Class ComputerUseAgent', 'ComputerUseAgent'] },
   { target: 'common-features/advanced/mobile-use-agent.md', symbol: 'MobileUseAgent', identifiers: ['Class MobileUseAgent', 'MobileUseAgent'] },
   { target: 'common-features/advanced/oss.md', symbol: 'Oss', identifiers: ['Class Oss', 'Oss'] },
+  {
+    target: 'common-features/advanced/network.md',
+    symbol: 'BetaNetworkService',
+    identifiers: ['Class BetaNetworkService', 'BetaNetworkService', 'beta-network'],
+  },
   { target: 'browser-use/browser.md', symbol: 'Browser', identifiers: ['Class Browser', 'Browser'] },
   {
     target: 'browser-use/extension.md',
@@ -413,7 +418,15 @@ function isPropertySection(lines, startIndex) {
 
 function isSimpleGetter(methodName) {
   if (/^get[A-Z]/.test(methodName)) {
-    const excludeList = ['getLabels', 'getLink', 'getLinkAsync', 'getMetrics']
+    // Keep non-trivial getters in docs.
+    const excludeList = [
+      'getLabels',
+      'getLink',
+      'getLinkAsync',
+      'getMetrics',
+      'getFileUploadUrl',
+      'getFileDownloadUrl',
+    ]
     return !excludeList.includes(methodName)
   }
   return false

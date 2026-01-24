@@ -65,7 +65,6 @@ def prepare_android_sdk_config(session):
         android_config = {
             "CONFIG_DESKTOP_ID": info.resource_id,      # Desktop ID for connection
             "CONFIG_CONNECTION_TICKET": info.ticket,    # Connection ticket for authentication
-            "CONFIG_USE_VPC": False,                     # VPC configuration (set based on your network setup)
             "OS_TYPE": "android",                        # OS type for the connection
             "CONFIG_USER": "",                           # User identifier (optional)
             "CONFIG_UUID": ""                            # UUID identifier (optional)
@@ -74,7 +73,6 @@ def prepare_android_sdk_config(session):
         print("Android SDK Configuration:")
         print(f"CONFIG_DESKTOP_ID: {info.resource_id}")
         print(f"CONFIG_CONNECTION_TICKET: {info.ticket[:50]}...")  # Truncated for security
-        print(f"CONFIG_USE_VPC: {android_config['CONFIG_USE_VPC']}")
         print(f"OS_TYPE: {android_config['OS_TYPE']}")
         
         return android_config
@@ -91,7 +89,6 @@ if android_config:
     # Map<String, Object> mConfigs = new HashMap<>();
     # mConfigs.put("CONFIG_DESKTOP_ID", android_config.get("CONFIG_DESKTOP_ID"));
     # mConfigs.put("CONFIG_CONNECTION_TICKET", android_config.get("CONFIG_CONNECTION_TICKET"));
-    # mConfigs.put("CONFIG_USE_VPC", android_config.get("CONFIG_USE_VPC"));
     # mConfigs.put("OS_TYPE", android_config.get("OS_TYPE"));
     # mConfigs.put("CONFIG_USER", android_config.get("CONFIG_USER"));
     # mConfigs.put("CONFIG_UUID", android_config.get("CONFIG_UUID"));
@@ -101,7 +98,6 @@ if android_config:
     # ConnectionConfig cc = new ConnectionConfig();
     # cc.id = android_config.get("CONFIG_DESKTOP_ID");
     # cc.connectionTicket = android_config.get("CONFIG_CONNECTION_TICKET");
-    # cc.useVPC = android_config.get("CONFIG_USE_VPC");
     # cc.type = android_config.get("OS_TYPE");
     # cc.user = android_config.get("CONFIG_USER");
     # cc.uuid = android_config.get("CONFIG_UUID");
@@ -112,7 +108,6 @@ if android_config:
 
 - **`info.resource_id`** maps to **`CONFIG_DESKTOP_ID`** - This is the unique identifier for the cloud desktop/resource that the Android client will connect to
 - **`info.ticket`** maps to **`CONFIG_CONNECTION_TICKET`** - This is the authentication ticket required to establish a secure connection to the cloud environment
-- **`CONFIG_USE_VPC`** - Set to `true` if your cloud environment uses VPC networking, `false` for standard networking
 - **`OS_TYPE`** - Specifies the OS type, typically set to "android" for mobile connections
 - **`CONFIG_USER`** and **`CONFIG_UUID`** - Optional parameters that can be set based on your specific requirements
 - The Android SDK supports two connection methods:

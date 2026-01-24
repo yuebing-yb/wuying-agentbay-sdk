@@ -72,12 +72,12 @@ java -cp target/classes:$(mvn dependency:build-classpath | grep -v '\[INFO\]') \
 
 ```java
 // Create network with auto-generated ID
-NetworkResult result = agentBay.getNetwork().create();
+NetworkResult result = agentBay.getBetaNetwork().betaGetNetworkBindToken();
 String networkId = result.getNetworkId();
 String networkToken = result.getNetworkToken();
 
 // Or create with custom ID
-NetworkResult result = agentBay.getNetwork().create("my-network-id");
+NetworkResult result = agentBay.getBetaNetwork().betaGetNetworkBindToken("my-network-id");
 ```
 
 ### Binding Sessions to Network
@@ -85,7 +85,7 @@ NetworkResult result = agentBay.getNetwork().create("my-network-id");
 ```java
 CreateSessionParams params = new CreateSessionParams();
 params.setImageId("linux_latest");
-params.setNetworkId(networkId);  // Bind to network
+params.setBetaNetworkId(networkId);  // Bind to beta network
 
 SessionResult session = agentBay.create(params);
 ```
@@ -93,7 +93,7 @@ SessionResult session = agentBay.create(params);
 ### Checking Network Status
 
 ```java
-NetworkStatusResult status = agentBay.getNetwork().describe(networkId);
+NetworkStatusResult status = agentBay.getBetaNetwork().betaDescribe(networkId);
 boolean isOnline = status.isOnline();
 ```
 

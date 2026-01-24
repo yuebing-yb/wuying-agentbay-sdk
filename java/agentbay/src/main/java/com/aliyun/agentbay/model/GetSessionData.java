@@ -14,13 +14,14 @@ public class GetSessionData {
     private String token;
     private String status;
     private String code;
+    private String toolList;
 
     public GetSessionData() {
     }
 
-    public GetSessionData(String sessionId, String appInstanceId, String resourceId, 
+    public GetSessionData(String sessionId, String appInstanceId, String resourceId,
                          String resourceUrl, boolean vpcResource, String networkInterfaceIp,
-                         String httpPort, String token, String code) {
+                         String httpPort, String token, String code, String toolList) {
         this.sessionId = sessionId;
         this.appInstanceId = appInstanceId;
         this.resourceId = resourceId;
@@ -30,6 +31,7 @@ public class GetSessionData {
         this.httpPort = httpPort;
         this.token = token;
         this.code = code;
+        this.toolList = toolList;
     }
 
     public String getSessionId() {
@@ -110,6 +112,14 @@ public class GetSessionData {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getToolList() {
+        return toolList;
+    }
+
+    public void setToolList(String toolList) {
+        this.toolList = toolList;
     }
 }
 

@@ -43,12 +43,12 @@ def main():
         # Display first 10 tools
         print("\n  Available tools (showing first 10):")
         for i, tool in enumerate(tools_result.tools[:10], 1):
-            print(f"  {i}. {tool.name}")
-            print(f"     Description: {tool.description}")
-            print(f"     Server: {tool.server}")
-            if tool.input_schema.get('required'):
+            print(f"get tool:{tool}")
+            print(f"  {i}. {getattr(tool, 'name', 'n/a')}")
+            print(f"     Description: {getattr(tool, 'description', 'n/a')}")
+            print(f"     Server: {getattr(tool, 'server', 'n/a')}")
+            if hasattr(tool, 'input_schema') and tool.input_schema.get('required'):
                 print(f"     Required params: {', '.join(tool.input_schema['required'])}")
-            print()
 
         # Find and display the shell tool details
         print("\n3. Finding 'shell' tool details...")
@@ -60,10 +60,10 @@ def main():
 
         if shell_tool:
             print(f"✓ Found 'shell' tool")
-            print(f"  Description: {shell_tool.description}")
-            print(f"  Server: {shell_tool.server}")
+            print(f"  Description: {getattr(shell_tool, 'description', 'n/a')}")
+            print(f"  Server: {getattr(shell_tool, 'server', 'n/a')}")
             print(f"  Input Schema:")
-            print(f"    {json.dumps(shell_tool.input_schema, indent=4)}")
+            print(f"    {json.dumps(getattr(shell_tool, 'input_schema', {}), indent=4)}")
         else:
             print("✗ 'shell' tool not found")
             return

@@ -1,10 +1,8 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, Mock, MagicMock
-import json
+from unittest.mock import MagicMock, MagicMock
 
-from agentbay import Code
-from agentbay import EnhancedCodeExecutionResult, CodeExecutionResult
+from agentbay import Code, EnhancedCodeExecutionResult, McpToolResult
 
 
 class TestAsyncCode(unittest.TestCase):
@@ -17,10 +15,8 @@ class TestAsyncCode(unittest.TestCase):
         self.mock_session._get_api_key.return_value = "test-api-key"
         self.mock_session._get_session_id.return_value = "test-session-id"
         self.mock_session._is_vpc_enabled.return_value = False
-        
-        self.mock_client = MagicMock()
-        self.mock_session._get_client.return_value = self.mock_client
-        
+        self.mock_session.call_mcp_tool = MagicMock()
+
         # AsyncCode constructor calls super which stores session
         self.code = Code(self.mock_session)
 
@@ -29,28 +25,21 @@ class TestAsyncCode(unittest.TestCase):
         """
         Test run_code method with Python code.
         """
-        # Setup mock client response
-        # Legacy format simulation
-        response_body = {
-            "Success": True,
-            "Data": {
-                "content": [{"text": "Hello, world!\n2\n"}],
-                "execution_count": 1
-            },
-            "RequestId": "test-request-id"
-        }
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id="test-request-id",
+            success=True,
+            data="Hello, world!\n2\n",
+            error_message="",
+        )
 
         code = "print('Hello, world!')\nx = 1 + 1\nprint(x)"
         result = self.code.run_code(code, "python")
 
-        # Verify the call to client
-        # We need to verify args passed to call_mcp_tool_async
-        # This is harder to verify exactly due to Request object, but we can verify called
-        self.mock_client.call_mcp_tool.assert_called_once()
-        
+        self.mock_session.call_mcp_tool.assert_called_once()
+        tool_name, args = self.mock_session.call_mcp_tool.call_args.args[:2]
+        self.assertEqual(tool_name, "run_code")
+        self.assertEqual(args["language"], "python")
+
         # Verify the result
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)
@@ -59,63 +48,57 @@ class TestAsyncCode(unittest.TestCase):
 
     @pytest.mark.sync
     def test_run_alias_calls_run_code(self):
-        response_body = {
-            "Success": True,
-            "Data": {"content": [{"text": "OK\n"}], "execution_count": 1},
-            "RequestId": "test-request-id",
-        }
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id="test-request-id",
+            success=True,
+            data="OK\n",
+            error_message="",
+        )
 
         result = self.code.run("print('OK')", "python", timeout_s=10)
         self.assertTrue(result.success)
-        self.mock_client.call_mcp_tool.assert_called_once()
+        self.mock_session.call_mcp_tool.assert_called_once()
 
-        request = self.mock_client.call_mcp_tool.call_args[0][0]
-        self.assertEqual(request.name, "run_code")
-        args = json.loads(request.args)
+        tool_name, args = self.mock_session.call_mcp_tool.call_args.args[:2]
+        self.assertEqual(tool_name, "run_code")
         self.assertEqual(args["language"], "python")
         self.assertEqual(args["timeout_s"], 10)
 
     @pytest.mark.sync
     def test_execute_alias_calls_run_code(self):
-        response_body = {
-            "Success": True,
-            "Data": {"content": [{"text": "OK\n"}], "execution_count": 1},
-            "RequestId": "test-request-id",
-        }
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id="test-request-id",
+            success=True,
+            data="OK\n",
+            error_message="",
+        )
 
         result = self.code.execute("print('OK')", "python")
         self.assertTrue(result.success)
-        self.mock_client.call_mcp_tool.assert_called_once()
+        self.mock_session.call_mcp_tool.assert_called_once()
 
     @pytest.mark.sync
     def test_run_code_success_javascript(self):
         """
         Test run_code method with JavaScript code.
         """
-        response_body = {
-            "Success": True,
-            "Data": {
-                "content": [{"text": "Hello, world!\n2\n"}],
-                "execution_count": 1
-            },
-            "RequestId": "test-request-id"
-        }
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id="test-request-id",
+            success=True,
+            data="Hello, world!\n2\n",
+            error_message="",
+        )
 
         code = "console.log('Hello, world!');\nconst x = 1 + 1;\nconsole.log(x);"
         custom_timeout = 120
 
         result = self.code.run_code(code, "javascript", timeout_s=custom_timeout)
 
-        self.mock_client.call_mcp_tool.assert_called_once()
+        self.mock_session.call_mcp_tool.assert_called_once()
+        tool_name, args = self.mock_session.call_mcp_tool.call_args.args[:2]
+        self.assertEqual(tool_name, "run_code")
+        self.assertEqual(args["language"], "javascript")
+        self.assertEqual(args["timeout_s"], custom_timeout)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)
@@ -127,26 +110,20 @@ class TestAsyncCode(unittest.TestCase):
         """
         Test run_code method supports case-insensitive language input.
         """
-        response_body = {
-            "Success": True,
-            "Data": {
-                "content": [{"text": "OK\n"}],
-                "execution_count": 1,
-            },
-            "RequestId": "test-request-id",
-        }
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id="test-request-id",
+            success=True,
+            data="OK\n",
+            error_message="",
+        )
 
         result = self.code.run_code("print('OK')", "PyThOn")
 
         self.assertTrue(result.success)
-        self.mock_client.call_mcp_tool.assert_called_once()
+        self.mock_session.call_mcp_tool.assert_called_once()
 
-        request = self.mock_client.call_mcp_tool.call_args[0][0]
-        self.assertEqual(request.name, "run_code")
-        args = json.loads(request.args)
+        tool_name, args = self.mock_session.call_mcp_tool.call_args.args[:2]
+        self.assertEqual(tool_name, "run_code")
         self.assertEqual(args["language"], "python")
 
     @pytest.mark.sync
@@ -154,35 +131,35 @@ class TestAsyncCode(unittest.TestCase):
         """
         Test run_code method supports R and Java.
         """
-        response_body = {
-            "Success": True,
-            "Data": {
-                "content": [{"text": "OK\n"}],
-                "execution_count": 1,
-            },
-            "RequestId": "test-request-id",
-        }
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id="test-request-id",
+            success=True,
+            data="OK\n",
+            error_message="",
+        )
 
         # R (case-insensitive)
         result_r = self.code.run_code('cat("OK\\n")', "R")
         self.assertTrue(result_r.success)
 
-        request_r = self.mock_client.call_mcp_tool.call_args[0][0]
-        args_r = json.loads(request_r.args)
+        tool_name_r, args_r = self.mock_session.call_mcp_tool.call_args.args[:2]
+        self.assertEqual(tool_name_r, "run_code")
         self.assertEqual(args_r["language"], "r")
 
-        self.mock_client.call_mcp_tool.reset_mock()
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.reset_mock()
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id="test-request-id",
+            success=True,
+            data="OK\n",
+            error_message="",
+        )
 
         # Java (case-insensitive)
         result_java = self.code.run_code('System.out.println("OK");', "Java")
         self.assertTrue(result_java.success)
 
-        request_java = self.mock_client.call_mcp_tool.call_args[0][0]
-        args_java = json.loads(request_java.args)
+        tool_name_java, args_java = self.mock_session.call_mcp_tool.call_args.args[:2]
+        self.assertEqual(tool_name_java, "run_code")
         self.assertEqual(args_java["language"], "java")
 
     @pytest.mark.sync
@@ -201,24 +178,17 @@ class TestAsyncCode(unittest.TestCase):
         """
         Test run_code method with error response.
         """
-        # Simulate error response from tool (isError=True)
-        response_body = {
-            "Success": True,
-            "Data": {
-                "isError": True,
-                "content": [{"text": "Execution failed"}]
-            },
-            "RequestId": "test-request-id"
-        }
-        mock_response = MagicMock()
-        mock_response.to_map.return_value = {"body": response_body}
-        self.mock_client.call_mcp_tool.return_value = mock_response
+        self.mock_session.call_mcp_tool.return_value = McpToolResult(
+            request_id="test-request-id",
+            success=False,
+            data="",
+            error_message="Execution failed",
+        )
 
         result = self.code.run_code("print('test')", "python")
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertFalse(result.success)
-        # Parse logic raises AgentBayError("Error in response: ..."), which is caught and returned as EnhancedCodeExecutionResult with error_message
         self.assertIn("Execution failed", result.error_message)
         self.assertEqual(result.request_id, "test-request-id")
 
@@ -227,7 +197,7 @@ class TestAsyncCode(unittest.TestCase):
         """
         Test run_code method with exception.
         """
-        self.mock_client.call_mcp_tool.side_effect = Exception("Network error")
+        self.mock_session.call_mcp_tool.side_effect = Exception("Network error")
 
         result = self.code.run_code("print('test')", "python")
 

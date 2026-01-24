@@ -41,7 +41,7 @@ unique_id = None
 def setup_session():
     """Set up test fixtures once for the entire test module."""
     global session, agent_bay, unique_id
-    
+
     api_key = get_test_api_key()
     agent_bay = AgentBay(api_key=api_key)
 
@@ -62,9 +62,9 @@ def setup_session():
     # Generate a unique identifier for this test run
     unique_id = generate_unique_id()
     print(f"Using unique ID for test labels: {unique_id}")
-    
+
     yield
-    
+
     # Cleanup
     print("Cleaning up: Deleting the session...")
     try:

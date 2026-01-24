@@ -179,26 +179,26 @@ mobileSimulate.setSimulateMode(MobileSimulateMode.ALL);
 **See Also:**
 - [MobileSimulate API Reference](../../mobile-use/mobile-simulate.md)
 
-### getNetwork
+### getBetaNetwork
 
 ```java
-public Network getNetwork()
+public BetaNetworkService getBetaNetwork()
 ```
 
-Get the network service for VPC and network configuration.
+Get the beta network service (trial feature).
 
 **Returns:**
-- `Network`: Network service instance
+- `BetaNetworkService`: Beta network service instance
 
 **Example:**
 
 ```java
-Network network = agentBay.getNetwork();
-// Configure network settings
+BetaNetworkService network = agentBay.getBetaNetwork();
+// Configure beta network settings
 ```
 
 **See Also:**
-- [Network API Reference](../advanced/network.md)
+- [Beta Network API Reference](../advanced/network.md)
 
 ## Session Retrieval Methods
 

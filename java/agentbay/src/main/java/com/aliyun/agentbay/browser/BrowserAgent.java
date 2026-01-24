@@ -20,6 +20,7 @@ import java.util.*;
  */
 public class BrowserAgent extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SERVER_BROWSER_USE = "wuying_browseruse";
 
     private final Browser browser;
 

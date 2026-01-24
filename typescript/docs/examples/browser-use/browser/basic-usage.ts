@@ -31,9 +31,9 @@ async function main() {
 
     // Create a session with browser image
     console.log("Creating a new session...");
-    const params: CreateSessionParams = {
-      imageId: "browser_latest",
-    };
+    const params :CreateSessionParams = {
+      imageId:'browser_latest',
+    }
     const sessionResult = await agentBay.create(params);
 
     if (!sessionResult.success) {

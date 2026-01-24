@@ -81,12 +81,6 @@ Object Storage Service integration:
 - File download from OSS
 - Anonymous upload/download
 
-### [vpc_session](advanced/vpc_session/)
-Secure isolated network environments:
-- Creating VPC sessions
-- VPC network configuration
-- Secure session management
-
 ### [screenshot_download](advanced/screenshot_download/)
 Screenshot capture and download:
 - Taking screenshots

@@ -163,7 +163,7 @@ Retrieve all UI elements in the current screen hierarchy:
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
 
-result = session.mobile.get_all_ui_elements(timeout_ms=2000)
+result = session.mobile.get_all_ui_elements(timeout_ms=2000, format="json")
 if result.success:
     print(f"Found {len(result.elements)} UI elements")  # Output: Found 2172 UI elements
     for element in result.elements:
@@ -181,6 +181,19 @@ agent_bay.delete(session)
 
 **Parameters:**
 - `timeout_ms`: Timeout in milliseconds to wait for UI elements (default: 2000)
+- `format`: Output format of the underlying MCP tool. Supported values: `"json"`, `"xml"` (default: `"json"`)
+
+#### Get UI Elements as XML
+
+If you need the raw UI hierarchy XML instead of parsed elements:
+
+```python
+result = session.mobile.get_all_ui_elements(timeout_ms=10000, format="xml")
+if result.success:
+    print(result.raw[:200])  # Raw XML prefix
+else:
+    print(f"Failed: {result.error_message}")
+```
 
 ### Get Clickable UI Elements
 
@@ -229,6 +242,74 @@ else:
 
 agent_bay.delete(session)
 ```
+
+### Beta Take Screenshot (PNG Bytes)
+
+Capture a screenshot and get the raw PNG bytes:
+
+```python
+import os
+import time
+
+from agentbay import AgentBay, CreateSessionParams
+
+
+def _prepare_for_screenshots(session) -> None:
+    session.command.execute_command("wm size 720x1280", timeout_ms=10000)
+    session.command.execute_command("wm density 160", timeout_ms=10000)
+    start = session.mobile.start_app("monkey -p com.android.settings 1")
+    if not start.success:
+        raise RuntimeError(f"Failed to start Settings: {start.error_message}")
+    time.sleep(2)
+
+
+agent_bay = AgentBay()
+session = agent_bay.create(CreateSessionParams(image_id="imgc-0ab5ta4mn31wth5lh")).session
+try:
+    _prepare_for_screenshots(session)
+    result = session.mobile.beta_take_screenshot()
+    if result.success:
+        os.makedirs("./tmp", exist_ok=True)
+        with open("./tmp/mobile_beta_screenshot.png", "wb") as f:
+            f.write(result.data)
+        print(
+            f"Saved ./tmp/mobile_beta_screenshot.png ({len(result.data)} bytes, "
+            f"size={result.width}x{result.height})"
+        )
+    else:
+        print(f"Screenshot failed: {result.error_message}")
+finally:
+    agent_bay.delete(session)
+```
+
+### Beta Take Long Screenshot (PNG/JPEG Bytes)
+
+Capture a long screenshot and get the raw image bytes:
+
+```python
+result = session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
+if result.success:
+    with open("./tmp/mobile_beta_long_screenshot.png", "wb") as f:
+        f.write(result.data)
+    print(
+        f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(result.data)} bytes, "
+        f"size={result.width}x{result.height})"
+    )
+else:
+    print(f"Long screenshot failed: {result.error_message}")
+```
+
+**Parameters:**
+- `max_screens`: Number of screens to stitch (range: [2, 10])
+- `format`: Output image format. Supported values: `"png"`, `"jpeg"` (or `"jpg"`)
+- `quality`: JPEG quality (range: [1, 100]). Only used when `format="jpeg"`
+
+### Long Screenshot Supported Resolutions
+
+Long screenshot capture only supports the following screen resolutions:
+
+- **720p**: `720x1280`, `800x1280`
+- **1080p**: `1080x1920`, `1080x2160`, `1080x2280`, `1080x2340`, `1080x2400`
 
 <a id="best-practices"></a>
 ## 💡 Best Practices

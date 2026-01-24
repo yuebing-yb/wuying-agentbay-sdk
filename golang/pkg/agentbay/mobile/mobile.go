@@ -1,6 +1,8 @@
 package mobile
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -92,6 +94,8 @@ type UIBounds struct {
 type UIElementsResult struct {
 	models.ApiResponse
 	Elements     []*UIElement `json:"elements"`
+	Raw          string       `json:"raw"`
+	Format       string       `json:"format"`
 	ErrorMessage string       `json:"error_message"`
 }
 
@@ -146,6 +150,17 @@ type ScreenshotResult struct {
 	ErrorMessage string `json:"error_message"`
 }
 
+// BetaScreenshotResult represents the result of a beta screenshot operation (binary image bytes).
+type BetaScreenshotResult struct {
+	models.ApiResponse
+	Success      bool   `json:"success"`
+	Data         []byte `json:"data"`
+	Format       string `json:"format"`
+	Width        *int   `json:"width,omitempty"`
+	Height       *int   `json:"height,omitempty"`
+	ErrorMessage string `json:"error_message"`
+}
+
 // Mobile handles mobile UI automation operations and configuration in the AgentBay cloud environment.
 // Provides touch operations, UI element interactions, application management, screenshot capabilities,
 // and mobile environment configuration.
@@ -157,11 +172,7 @@ type Mobile struct {
 		GetClient() *mcp.Client
 		GetSessionId() string
 		GetImageID() string
-		IsVpc() bool
-		NetworkInterfaceIp() string
-		HttpPort() string
-		FindServerForTool(toolName string) string
-		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 	command *command.Command
 }
@@ -171,11 +182,7 @@ type SessionWithCommand interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command
 }
 
@@ -185,11 +192,7 @@ func NewMobile(session interface {
 	GetClient() *mcp.Client
 	GetSessionId() string
 	GetImageID() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Mobile {
 	mobile := &Mobile{
 		Session: session,
@@ -400,9 +403,20 @@ func (m *Mobile) GetClickableUIElements(timeoutMs int) *UIElementsResult {
 //	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("mobile_latest"))
 //	defer result.Session.Delete()
 //	elementsResult := result.Session.Mobile.GetAllUIElements(5000)
-func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
+func (m *Mobile) GetAllUIElements(timeoutMs int, formats ...string) *UIElementsResult {
+	formatNorm := "json"
+	formatArg := ""
+	if len(formats) > 0 {
+		formatArg = formats[0]
+		formatNorm = strings.TrimSpace(strings.ToLower(formatArg))
+	}
+	if formatNorm == "" {
+		formatNorm = "json"
+	}
+
 	args := map[string]interface{}{
 		"timeout_ms": timeoutMs,
+		"format":     formatNorm,
 	}
 
 	result, err := m.Session.CallMcpTool("get_all_ui_elements", args)
@@ -411,6 +425,8 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
 			},
+			Raw:          "",
+			Format:       formatNorm,
 			ErrorMessage: fmt.Sprintf("failed to call get_all_ui_elements: %v", err),
 		}
 	}
@@ -420,7 +436,33 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 			ApiResponse: models.ApiResponse{
 				RequestID: result.RequestID,
 			},
+			Raw:          result.Data,
+			Format:       formatNorm,
 			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	if formatNorm == "xml" {
+		return &UIElementsResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			Elements:     []*UIElement{},
+			Raw:          result.Data,
+			Format:       "xml",
+			ErrorMessage: "",
+		}
+	}
+
+	if formatNorm != "json" {
+		return &UIElementsResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: result.RequestID,
+			},
+			Elements:     []*UIElement{},
+			Raw:          result.Data,
+			Format:       formatNorm,
+			ErrorMessage: fmt.Sprintf("unsupported UI elements format: %q. Supported values: \"json\", \"xml\".", formatArg),
 		}
 	}
 
@@ -431,6 +473,8 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 			ApiResponse: models.ApiResponse{
 				RequestID: result.RequestID,
 			},
+			Raw:          result.Data,
+			Format:       "json",
 			ErrorMessage: fmt.Sprintf("failed to parse UI elements: %v", err),
 		}
 	}
@@ -440,6 +484,8 @@ func (m *Mobile) GetAllUIElements(timeoutMs int) *UIElementsResult {
 			RequestID: result.RequestID,
 		},
 		Elements:     elements,
+		Raw:          result.Data,
+		Format:       "json",
 		ErrorMessage: result.ErrorMessage,
 	}
 }
@@ -613,6 +659,214 @@ func (m *Mobile) Screenshot() *ScreenshotResult {
 		Data:         result.Data,
 		ErrorMessage: result.ErrorMessage,
 	}
+}
+
+// BetaTakeScreenshot captures the current screen as a PNG image and returns raw image bytes.
+//
+// It calls the MCP tool "screenshot" with format="png".
+func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
+	args := map[string]interface{}{
+		"format": "png",
+	}
+
+	result, err := m.Session.CallMcpTool("screenshot", args)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       "png",
+			ErrorMessage: fmt.Sprintf("failed to call screenshot: %v", err),
+		}
+	}
+
+	if !result.Success {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       "png",
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	img, fmtNorm, width, height, err := decodeBase64Image(result.Data, "png")
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       "png",
+			ErrorMessage: fmt.Sprintf("failed to decode screenshot data: %v", err),
+		}
+	}
+
+	return &BetaScreenshotResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      true,
+		Data:         img,
+		Format:       fmtNorm,
+		Width:        width,
+		Height:       height,
+		ErrorMessage: "",
+	}
+}
+
+// BetaTakeLongScreenshot captures a long screenshot and returns raw image bytes.
+//
+// Supported formats:
+// - "png"
+// - "jpeg" (or "jpg")
+func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality ...int) *BetaScreenshotResult {
+	if maxScreens < 2 || maxScreens > 10 {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       "",
+			ErrorMessage: "invalid maxScreens: must be in range [2, 10]",
+		}
+	}
+
+	formatNorm := normalizeImageFormat(format, "png")
+	if formatNorm != "png" && formatNorm != "jpeg" {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       formatNorm,
+			ErrorMessage: fmt.Sprintf("unsupported format: %q. Supported values: \"png\", \"jpeg\".", format),
+		}
+	}
+
+	args := map[string]interface{}{
+		"max_screens": maxScreens,
+		"format":      formatNorm,
+	}
+	if len(quality) > 0 {
+		q := quality[0]
+		if q < 1 || q > 100 {
+			return &BetaScreenshotResult{
+				ApiResponse:  models.ApiResponse{RequestID: ""},
+				Success:      false,
+				Data:         nil,
+				Format:       formatNorm,
+				ErrorMessage: "invalid quality: must be in range [1, 100]",
+			}
+		}
+		args["quality"] = q
+	}
+
+	result, err := m.Session.CallMcpTool("long_screenshot", args)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       formatNorm,
+			ErrorMessage: fmt.Sprintf("failed to call long_screenshot: %v", err),
+		}
+	}
+
+	if !result.Success {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       formatNorm,
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	img, fmtDetected, width, height, err := decodeBase64Image(result.Data, formatNorm)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       formatNorm,
+			ErrorMessage: fmt.Sprintf("failed to decode long screenshot data: %v", err),
+		}
+	}
+
+	return &BetaScreenshotResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      true,
+		Data:         img,
+		Format:       fmtDetected,
+		Width:        width,
+		Height:       height,
+		ErrorMessage: "",
+	}
+}
+
+var (
+	pngMagic  = []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	jpegMagic = []byte{0xff, 0xd8, 0xff}
+)
+
+func normalizeImageFormat(format string, defaultValue string) string {
+	f := strings.TrimSpace(strings.ToLower(format))
+	if f == "" {
+		return defaultValue
+	}
+	if f == "jpg" {
+		return "jpeg"
+	}
+	return f
+}
+
+func decodeBase64Image(text string, expectedFormat string) ([]byte, string, *int, *int, error) {
+	s := strings.TrimSpace(text)
+	if s == "" {
+		return nil, expectedFormat, nil, nil, fmt.Errorf("empty image data")
+	}
+
+	// Backend contract: screenshot tool returns a JSON object string with
+	// top-level field "data" containing base64.
+	if !strings.HasPrefix(s, "{") {
+		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot tool returned non-JSON data")
+	}
+	type screenshotJSON struct {
+		Data   string `json:"data"`
+		Width  *int   `json:"width"`
+		Height *int   `json:"height"`
+	}
+	var payload screenshotJSON
+	if err := json.Unmarshal([]byte(s), &payload); err != nil {
+		return nil, expectedFormat, nil, nil, fmt.Errorf("invalid screenshot JSON: %w", err)
+	}
+	b64 := strings.TrimSpace(payload.Data)
+	if b64 == "" {
+		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot JSON missing base64 field")
+	}
+
+	b, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return nil, expectedFormat, nil, nil, err
+	}
+
+	exp := normalizeImageFormat(expectedFormat, expectedFormat)
+	if exp == "png" {
+		if !bytes.HasPrefix(b, pngMagic) {
+			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
+		}
+		return b, "png", payload.Width, payload.Height, nil
+	}
+	if exp == "jpeg" {
+		if !bytes.HasPrefix(b, jpegMagic) {
+			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
+		}
+		return b, "jpeg", payload.Width, payload.Height, nil
+	}
+
+	if bytes.HasPrefix(b, pngMagic) {
+		return b, "png", payload.Width, payload.Height, nil
+	}
+	if bytes.HasPrefix(b, jpegMagic) {
+		return b, "jpeg", payload.Width, payload.Height, nil
+	}
+	return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
 }
 
 // Configure configures mobile settings from MobileExtraConfig

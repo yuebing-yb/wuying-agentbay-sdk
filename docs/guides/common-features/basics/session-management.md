@@ -350,13 +350,13 @@ For detailed practical examples and use cases of session information, including 
 
 
 
-## Session Pause and Resume
+## Session Beta Pause and Beta Resume
 
 Sessions can be temporarily paused to suspend resource usage and resumed later to continue work. This feature is useful for reducing costs during inactive periods and preserving session state for later continuation.
 
-### Pausing a Session
+### Beta Pausing a Session
 
-To pause a session, use the `pause()` method:
+To pause a session, use the `beta_pause()` method:
 
 ```python
 from agentbay import AgentBay
@@ -369,7 +369,7 @@ session = session_result.session
 # Perform your tasks...
 
 # Pause the session to suspend resource usage
-pause_result = session.pause()
+pause_result = session.beta_pause()
 if pause_result.success:
     print("Session paused successfully")
     print(f"Request ID: {pause_result.request_id}")
@@ -377,9 +377,9 @@ else:
     print(f"Failed to pause session: {pause_result.error_message}")
 ```
 
-### Resuming a Session
+### Beta Resuming a Session
 
-To resume a paused session, use the `resume()` method:
+To resume a paused session, use the `beta_resume()` method:
 
 ```python
 from agentbay import AgentBay
@@ -392,7 +392,7 @@ if get_result.success:
     session = get_result.session
     
     # Resume the session to continue work
-    resume_result = session.resume()
+    resume_result = session.beta_resume()
     if resume_result.success:
         print("Session resumed successfully")
         print(f"Request ID: {resume_result.request_id}")
@@ -409,9 +409,9 @@ else:
 ### Important Notes
 
 - **Resource Usage and Costs**: During pause, both resource usage and costs are lower
-- **Session State**: All session state is preserved during pause and resume operations
-- **Optional Operations**: Pause and resume are optional - you can also directly delete a session
-- **Paused Session Restrictions**: When a session is in a paused state, it cannot perform operations such as deletion, task execution, or other actions. You must resume the session first before performing these operations
+- **Session State**: All session state is preserved during beta pause and beta resume operations
+- **Optional Operations**: Beta pause and beta resume are optional - you can also directly delete a session
+- **Paused Session Restrictions**: When a session is in a paused state, it cannot perform operations such as deletion, task execution, or other actions. You must beta resume the session first before performing these operations
 
 ## Session Release
 
@@ -588,7 +588,6 @@ For detailed API documentation, see:
 - [Data Persistence](data-persistence.md) - Persistent data storage across sessions
 - [File Operations](file-operations.md) - File handling and management
 - [Command Execution](command-execution.md) - Execute shell commands
-- [VPC Sessions](../advanced/vpc-sessions.md) - Isolated network environments
 
 ## 🆘 Getting Help
 

@@ -19,7 +19,7 @@ class AsyncAgentBay()
 AsyncAgentBay represents the main client for interacting with the AgentBay cloud runtime
 environment asynchronously.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, api_key: str = "",
@@ -140,36 +140,20 @@ Get a session by its ID asynchronously.
 
     SessionResult: Result containing the Session instance, request ID, and success status.
 
-### pause
+### beta_pause
 
 ```python
-async def pause(session: AsyncSession,
-                timeout: int = 600,
-                poll_interval: float = 2.0) -> SessionPauseResult
+async def beta_pause(session: AsyncSession,
+                     timeout: int = 600,
+                     poll_interval: float = 2.0) -> SessionPauseResult
 ```
 
-Asynchronously pause a session, putting it into a dormant state.
+Asynchronously pause a session (beta), putting it into a dormant state.
 
-This method internally calls the PauseSessionAsync API and then polls the GetSession API
-to check the session status until it becomes PAUSED or until timeout.
-
-**Arguments**:
-
-- `session` _AsyncSession_ - The session to pause.
-- `timeout` _int, optional_ - Timeout in seconds to wait for the session to pause.
-  Defaults to 600 seconds.
-- `poll_interval` _float, optional_ - Interval in seconds between status polls.
-  Defaults to 2.0 seconds.
-  
-
-**Returns**:
-
-    SessionPauseResult: Result containing the request ID, success status, and final session status.
-
-### pause\_async
+### beta_pause_async
 
 ```python
-async def pause_async(session: AsyncSession) -> SessionPauseResult
+async def beta_pause_async(session: AsyncSession) -> SessionPauseResult
 ```
 
 Fire-and-return pause: trigger PauseSessionAsync without waiting for PAUSED.
@@ -187,36 +171,20 @@ use the pause() method instead.
 
     SessionPauseResult: Result containing the request ID and success status.
 
-### resume
+### beta_resume
 
 ```python
-async def resume(session: AsyncSession,
-                 timeout: int = 600,
-                 poll_interval: float = 2.0) -> SessionResumeResult
+async def beta_resume(session: AsyncSession,
+                      timeout: int = 600,
+                      poll_interval: float = 2.0) -> SessionResumeResult
 ```
 
-Asynchronously resume a session from a paused state.
+Asynchronously resume a session (beta) from a paused state.
 
-This method internally calls the ResumeSessionAsync API and then polls the GetSession API
-to check the session status until it becomes RUNNING or until timeout.
-
-**Arguments**:
-
-- `session` _AsyncSession_ - The session to resume.
-- `timeout` _int, optional_ - Timeout in seconds to wait for the session to resume.
-  Defaults to 600 seconds.
-- `poll_interval` _float, optional_ - Interval in seconds between status polls.
-  Defaults to 2.0 seconds.
-  
-
-**Returns**:
-
-    SessionResumeResult: Result containing the request ID, success status, and final session status.
-
-### resume\_async
+### beta_resume_async
 
 ```python
-async def resume_async(session: AsyncSession) -> SessionResumeResult
+async def beta_resume_async(session: AsyncSession) -> SessionResumeResult
 ```
 
 Fire-and-return resume: trigger ResumeSessionAsync without waiting for RUNNING.

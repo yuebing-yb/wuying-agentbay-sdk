@@ -5,7 +5,8 @@ import { FileUrlResult, OperationResult } from "../types/api-response";
 import * as fs from "fs";
 import * as path from "path";
 import fetch from "node-fetch";
-import { log, logDebug, logInfo } from "../utils/logger";
+import { log, logDebug, logError, logInfo } from "../utils/logger";
+import { GetAndLoadInternalContextRequest } from "../api/models/GetAndLoadInternalContextRequest";
 
 /**
  * Result structure for file upload operations.
@@ -122,13 +123,14 @@ export class FileTransfer {
 
       // Check if getAndLoadInternalContext method exists
     try {
-        const req: any = {
+        const req: any = new GetAndLoadInternalContextRequest({
         authorization: `Bearer ${this.agentBay.getAPIKey()}`,
         sessionId: sid,
         contextTypes: ["file_transfer"],
-        };
-        response = await (client as any).getAndLoadInternalContext(req);
+        })
+        response = await client.getAndLoadInternalContext(req);
     } catch (e: any) {
+        logError(`getAndLoadInternalContext error:${e}`);
         return [false, e?.message || String(e)];
     }
 

@@ -85,23 +85,27 @@ class CreateMcpSessionResponseBodyData(DaraModel):
         app_instance_id: Optional[str] = None,
         err_msg: Optional[str] = None,
         http_port: Optional[str] = None,
+        link_url: Optional[str] = None,
         network_interface_ip: Optional[str] = None,
         resource_id: Optional[str] = None,
         resource_url: Optional[str] = None,
         session_id: Optional[str] = None,
         success: Optional[bool] = None,
         token: Optional[str] = None,
+        tool_list: Optional[str] = None,
         vpc_resource: Optional[bool] = None,
     ):
         self.app_instance_id = app_instance_id
         self.err_msg = err_msg
         self.http_port = http_port
+        self.link_url = link_url
         self.network_interface_ip = network_interface_ip
         self.resource_id = resource_id
         self.resource_url = resource_url
         self.session_id = session_id
         self.success = success
         self.token = token
+        self.tool_list = tool_list
         self.vpc_resource = vpc_resource
 
     def validate(self):
@@ -121,6 +125,9 @@ class CreateMcpSessionResponseBodyData(DaraModel):
         if self.http_port is not None:
             result["HttpPort"] = self.http_port
 
+        if self.link_url is not None:
+            result["LinkUrl"] = self.link_url
+
         if self.network_interface_ip is not None:
             result["NetworkInterfaceIp"] = self.network_interface_ip
 
@@ -139,6 +146,9 @@ class CreateMcpSessionResponseBodyData(DaraModel):
         if self.token is not None:
             result["Token"] = self.token
 
+        if self.tool_list is not None:
+            result["ToolList"] = self.tool_list
+
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
 
@@ -154,6 +164,9 @@ class CreateMcpSessionResponseBodyData(DaraModel):
 
         if m.get("HttpPort") is not None:
             self.http_port = m.get("HttpPort")
+
+        if m.get("LinkUrl") is not None:
+            self.link_url = m.get("LinkUrl")
 
         if m.get("NetworkInterfaceIp") is not None:
             self.network_interface_ip = m.get("NetworkInterfaceIp")
@@ -172,6 +185,9 @@ class CreateMcpSessionResponseBodyData(DaraModel):
 
         if m.get("Token") is not None:
             self.token = m.get("Token")
+
+        if m.get("ToolList") is not None:
+            self.tool_list = m.get("ToolList")
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")

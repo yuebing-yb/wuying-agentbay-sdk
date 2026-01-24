@@ -23,6 +23,18 @@ from ._create_mcp_session_response_body import (
     CreateMcpSessionResponseBodyData,
 )
 from ._create_mcp_session_shrink_request import CreateMcpSessionShrinkRequest
+from ._create_network_request import CreateNetworkRequest
+from ._create_network_response import CreateNetworkResponse
+from ._create_network_response_body import (
+    CreateNetworkResponseBody,
+    CreateNetworkResponseBodyData,
+)
+from ._describe_network_request import DescribeNetworkRequest
+from ._describe_network_response import DescribeNetworkResponse
+from ._describe_network_response_body import (
+    DescribeNetworkResponseBody,
+    DescribeNetworkResponseBodyData,
+)
 
 # New context file operations
 from ._delete_context_file_request import DeleteContextFileRequest

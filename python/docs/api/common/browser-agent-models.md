@@ -16,7 +16,7 @@ class ActOptions()
 
 Options for configuring the behavior of the act method.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, action: str,
@@ -33,7 +33,7 @@ class ActResult()
 
 Result of the act method.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, success: bool, message: str)
@@ -47,7 +47,7 @@ class ObserveOptions()
 
 Options for configuring the behavior of the observe method.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, instruction: str,
@@ -64,7 +64,7 @@ class ObserveResult()
 
 Result of the observe method.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, selector: str, description: str, method: str, arguments: dict)
@@ -78,7 +78,7 @@ class ExtractOptions(Generic[T])
 
 Options for configuring the behavior of the extract method.
 
-### \_\_init\_\_
+### __init__
 
 ```python
 def __init__(self, instruction: str,
@@ -86,7 +86,8 @@ def __init__(self, instruction: str,
              use_text_extract: Optional[bool] = None,
              use_vision: Optional[bool] = None,
              selector: Optional[str] = None,
-             timeout: Optional[int] = None)
+             timeout: Optional[int] = None,
+             max_page: Optional[int] = 1)
 ```
 
 ## See Also

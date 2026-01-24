@@ -7,6 +7,7 @@ import com.aliyun.agentbay.model.InstalledAppListResult;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.Process;
 import com.aliyun.agentbay.model.ProcessListResult;
+import com.aliyun.agentbay.model.ScreenshotBytesResult;
 import com.aliyun.agentbay.model.Window;
 import com.aliyun.agentbay.model.WindowInfoResult;
 import com.aliyun.agentbay.model.WindowListResult;
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Base64;
 
 /**
  * Computer module for desktop UI automation.
@@ -28,9 +30,54 @@ import java.util.Map;
  */
 public class Computer extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String SERVER_UI = "wuying_ui";
+    private static final String SERVER_APP = "wuying_app";
+    private static final String SERVER_CAPTURE = "wuying_capture";
+    private static final String SERVER_SYSTEM_SCREENSHOT = "mcp-server";
+    private static final byte[] PNG_MAGIC = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+    private static final byte[] JPEG_MAGIC = new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff};
 
     public Computer(Session session) {
         super(session);
+    }
+
+    private OperationResult callUiTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args);
+    }
+
+    private OperationResult callAppTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args);
+    }
+
+    private OperationResult callCaptureTool(String toolName, Map<String, Object> args) {
+        return callMcpTool(toolName, args);
+    }
+
+    private OperationResult callSystemScreenshotTool() {
+        return callMcpTool("system_screenshot", new HashMap<>());
+    }
+
+    private static String normalizeImageFormat(String format, String defaultValue) {
+        String f = format == null ? "" : format.trim().toLowerCase();
+        if (f.isEmpty()) {
+            return defaultValue;
+        }
+        if ("jpg".equals(f)) {
+            return "jpeg";
+        }
+        return f;
+    }
+
+    private static boolean startsWith(byte[] data, byte[] prefix) {
+        if (data == null || prefix == null || data.length < prefix.length) {
+            return false;
+        }
+        for (int i = 0; i < prefix.length; i++) {
+            if (data[i] != prefix[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -52,7 +99,7 @@ public class Computer extends BaseService {
                 args.put("activity", activity);
             }
 
-            OperationResult result = callMcpTool("start_app", args);
+            OperationResult result = callAppTool("start_app", args);
 
             if (!result.isSuccess()) {
                 return new ProcessListResult(
@@ -154,7 +201,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("pname", pname);
 
-            OperationResult result = callMcpTool("stop_app_by_pname", args);
+            OperationResult result = callAppTool("stop_app_by_pname", args);
 
             return new AppOperationResult(
                 result.getRequestId(),
@@ -181,7 +228,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("pid", pid);
 
-            OperationResult result = callMcpTool("stop_app_by_pid", args);
+            OperationResult result = callAppTool("stop_app_by_pid", args);
 
             return new AppOperationResult(
                 result.getRequestId(),
@@ -208,7 +255,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("stop_cmd", stopCmd);
 
-            OperationResult result = callMcpTool("stop_app_by_cmd", args);
+            OperationResult result = callAppTool("stop_app_by_cmd", args);
 
             return new AppOperationResult(
                 result.getRequestId(),
@@ -232,7 +279,7 @@ public class Computer extends BaseService {
     public ProcessListResult listVisibleApps() {
         try {
 
-            OperationResult result = callMcpTool("list_visible_apps", new HashMap<>());
+            OperationResult result = callAppTool("list_visible_apps", new HashMap<>());
 
             if (!result.isSuccess()) {
                 return new ProcessListResult(
@@ -317,7 +364,7 @@ public class Computer extends BaseService {
             args.put("desktop", desktop);
             args.put("ignore_system_apps", ignoreSystemApps);
 
-            OperationResult result = callMcpTool("get_installed_apps", args);
+            OperationResult result = callAppTool("get_installed_apps", args);
 
             if (!result.isSuccess()) {
                 return new InstalledAppListResult(
@@ -450,7 +497,7 @@ public class Computer extends BaseService {
             args.put("y", y);
             args.put("button", button);
 
-            OperationResult result = callMcpTool("click_mouse", args);
+            OperationResult result = callUiTool("click_mouse", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -490,7 +537,7 @@ public class Computer extends BaseService {
             args.put("x", x);
             args.put("y", y);
 
-            OperationResult result = callMcpTool("move_mouse", args);
+            OperationResult result = callUiTool("move_mouse", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -569,7 +616,7 @@ public class Computer extends BaseService {
             args.put("to_x", toX);
             args.put("to_y", toY);
             args.put("button", button);
-            OperationResult result = callMcpTool("drag_mouse", args);
+            OperationResult result = callUiTool("drag_mouse", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -643,7 +690,7 @@ public class Computer extends BaseService {
             args.put("y", y);
             args.put("direction", direction);
             args.put("amount", amount);
-            OperationResult result = callMcpTool("scroll", args);
+            OperationResult result = callUiTool("scroll", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -677,7 +724,7 @@ public class Computer extends BaseService {
      */
     public OperationResult getCursorPosition() {
         try {
-            OperationResult result = callMcpTool("get_cursor_position", new HashMap<>());
+            OperationResult result = callUiTool("get_cursor_position", new HashMap<>());
 
             if (!result.isSuccess()) {
                 return new OperationResult(
@@ -716,7 +763,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("text", text);
-            OperationResult result = callMcpTool("input_text", args);
+            OperationResult result = callUiTool("input_text", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -755,7 +802,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("keys", keys);
             args.put("hold", hold);
-            OperationResult result = callMcpTool("press_keys", args);
+            OperationResult result = callUiTool("press_keys", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -802,7 +849,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("keys", keys);
-            OperationResult result = callMcpTool("release_keys", args);
+            OperationResult result = callUiTool("release_keys", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -839,7 +886,7 @@ public class Computer extends BaseService {
      */
     public OperationResult getScreenSize() {
         try {
-            OperationResult result = callMcpTool("get_screen_size", new HashMap<>());
+            OperationResult result = callUiTool("get_screen_size", new HashMap<>());
 
             if (!result.isSuccess()) {
                 return new OperationResult(
@@ -873,7 +920,7 @@ public class Computer extends BaseService {
      */
     public OperationResult screenshot() {
         try {
-            OperationResult result = callMcpTool("system_screenshot", new HashMap<>());
+            OperationResult result = callSystemScreenshotTool();
 
             if (!result.isSuccess()) {
                 return new OperationResult(
@@ -900,6 +947,135 @@ public class Computer extends BaseService {
         }
     }
 
+    /**
+     * Capture the current screen and return raw image bytes (beta).
+     *
+     * This API uses the MCP tool `screenshot` (wuying_capture) and expects the backend to return
+     * a JSON string with top-level field `data` containing base64.
+     *
+     * Supported formats:
+     * - "png"
+     * - "jpeg" (or "jpg")
+     *
+     * @param format Output image format ("png", "jpeg", or "jpg")
+     * @return ScreenshotBytesResult containing image bytes and error message if any
+     */
+    public ScreenshotBytesResult betaTakeScreenshot(String format) {
+        String fmt = normalizeImageFormat(format, "png");
+        if (!"png".equals(fmt) && !"jpeg".equals(fmt)) {
+            return new ScreenshotBytesResult("", false, new byte[0], fmt, "Unsupported format: " + format);
+        }
+
+        try {
+            Map<String, Object> args = new HashMap<>();
+            args.put("format", fmt);
+            OperationResult result = callCaptureTool("screenshot", args);
+            if (!result.isSuccess()) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    new byte[0],
+                    fmt,
+                    result.getErrorMessage()
+                );
+            }
+
+            String s = result.getData() == null ? "" : result.getData().trim();
+            if (!s.startsWith("{")) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    new byte[0],
+                    fmt,
+                    "Screenshot tool returned non-JSON data"
+                );
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> obj = objectMapper.readValue(s, Map.class);
+            Object b64Obj = obj.get("data");
+            if (!(b64Obj instanceof String) || ((String) b64Obj).trim().isEmpty()) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    new byte[0],
+                    fmt,
+                    "Screenshot JSON missing base64 field"
+                );
+            }
+            Object widthObj = obj.get("width");
+            Object heightObj = obj.get("height");
+            Integer width = null;
+            Integer height = null;
+            if (widthObj != null) {
+                if (!(widthObj instanceof Number)) {
+                    return new ScreenshotBytesResult(
+                        result.getRequestId(),
+                        false,
+                        new byte[0],
+                        fmt,
+                        "Invalid screenshot JSON: expected integer 'width'"
+                    );
+                }
+                width = ((Number) widthObj).intValue();
+            }
+            if (heightObj != null) {
+                if (!(heightObj instanceof Number)) {
+                    return new ScreenshotBytesResult(
+                        result.getRequestId(),
+                        false,
+                        new byte[0],
+                        fmt,
+                        "Invalid screenshot JSON: expected integer 'height'"
+                    );
+                }
+                height = ((Number) heightObj).intValue();
+            }
+
+            byte[] decoded = Base64.getDecoder().decode(((String) b64Obj).trim());
+            if ("png".equals(fmt) && !startsWith(decoded, PNG_MAGIC)) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    new byte[0],
+                    fmt,
+                    "Screenshot data does not match expected format 'png'"
+                );
+            }
+            if ("jpeg".equals(fmt) && !startsWith(decoded, JPEG_MAGIC)) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    new byte[0],
+                    fmt,
+                    "Screenshot data does not match expected format 'jpeg'"
+                );
+            }
+
+            return new ScreenshotBytesResult(
+                result.getRequestId(),
+                true,
+                decoded,
+                fmt,
+                width,
+                height,
+                ""
+            );
+        } catch (Exception e) {
+            return new ScreenshotBytesResult(
+                "",
+                false,
+                new byte[0],
+                fmt,
+                "Failed to take screenshot: " + e.getMessage()
+            );
+        }
+    }
+
+    public ScreenshotBytesResult betaTakeScreenshot() {
+        return betaTakeScreenshot("png");
+    }
+
     // ==================== Window Management Operations ====================
 
     /**
@@ -912,7 +1088,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-            OperationResult result = callMcpTool("list_root_windows", args);
+            OperationResult result = callUiTool("list_root_windows", args);
 
             if (!result.isSuccess()) {
                 return new WindowListResult(
@@ -987,7 +1163,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("timeout_ms", timeoutMs);
-            OperationResult result = callMcpTool("get_active_window", args);
+            OperationResult result = callUiTool("get_active_window", args);
 
             if (!result.isSuccess()) {
                 return new WindowInfoResult(
@@ -1113,7 +1289,7 @@ public class Computer extends BaseService {
             args.put("window_id", windowId);
             args.put("width", width);
             args.put("height", height);
-            OperationResult result = callMcpTool("resize_window", args);
+            OperationResult result = callUiTool("resize_window", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(
@@ -1160,7 +1336,7 @@ public class Computer extends BaseService {
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("on", on);
-            OperationResult result = callMcpTool("focus_mode", args);
+            OperationResult result = callUiTool("focus_mode", args);
 
             if (!result.isSuccess()) {
                 return new BoolResult(

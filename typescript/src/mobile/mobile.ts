@@ -27,6 +27,8 @@ export interface UIElement {
 
 export interface UIElementsResult extends OperationResult {
   elements: UIElement[];
+  raw: string;
+  format: 'json' | 'xml';
 }
 
 export interface InstalledApp {
@@ -52,6 +54,13 @@ export interface ScreenshotResult extends OperationResult {
   data: string; // Screenshot URL
 }
 
+export interface BetaScreenshotResult extends OperationResult {
+  data: Uint8Array;
+  format: string;
+  width?: number;
+  height?: number;
+}
+
 export interface AdbUrlResult extends OperationResult {
   data?: string; // ADB connection URL (e.g., "adb connect xx.xx.xx.xx:xxxxx")
   url?: string; // Alternative field name for compatibility
@@ -59,7 +68,11 @@ export interface AdbUrlResult extends OperationResult {
 
 // Session interface for Mobile module
 interface MobileSession {
-  callMcpTool(toolName: string, args: Record<string, any>): Promise<any>;
+  callMcpTool(
+    toolName: string,
+    args: Record<string, any>,
+    autoGenSession?: boolean
+  ): Promise<any>;
   sessionId: string;
   getAPIKey(): string;
   getAgentBay(): any;
@@ -103,6 +116,118 @@ function normalizeUIElement(element: any): UIElement {
   return element;
 }
 
+const PNG_MAGIC = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const JPEG_MAGIC = new Uint8Array([0xff, 0xd8, 0xff]);
+
+function normalizeImageFormat(format: string, defaultValue: string): string {
+  const f = String(format || "").trim().toLowerCase();
+  if (!f) {
+    return defaultValue;
+  }
+  if (f === "jpg") {
+    return "jpeg";
+  }
+  return f;
+}
+
+function validateBase64String(base64String: string): void {
+  const s = String(base64String || "");
+  if (!s) {
+    throw new Error("Empty base64 string");
+  }
+
+  const base64WithoutPadding = s.replace(/=+$/, "");
+  if (!/^[A-Za-z0-9+/]+$/.test(base64WithoutPadding)) {
+    throw new Error("Invalid base64 string format");
+  }
+
+  if (s.length % 4 !== 0) {
+    throw new Error("Invalid base64 string length");
+  }
+
+  const paddingMatch = s.match(/=+$/);
+  if (paddingMatch && paddingMatch[0].length > 2) {
+    throw new Error("Invalid base64 padding format");
+  }
+}
+
+function base64ToUint8ArrayStrict(input: string): Uint8Array {
+  const s = String(input || "").trim();
+  validateBase64String(s);
+
+  if (typeof Buffer !== "undefined") {
+    return new Uint8Array(Buffer.from(s, "base64"));
+  }
+
+  const binary = atob(s);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    out[i] = binary.charCodeAt(i);
+  }
+  return out;
+}
+
+function startsWithMagic(bytes: Uint8Array, magic: Uint8Array): boolean {
+  if (bytes.length < magic.length) {
+    return false;
+  }
+  for (let i = 0; i < magic.length; i++) {
+    if (bytes[i] !== magic[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function detectImageFormat(bytes: Uint8Array): string {
+  if (startsWithMagic(bytes, PNG_MAGIC)) {
+    return "png";
+  }
+  if (startsWithMagic(bytes, JPEG_MAGIC)) {
+    return "jpeg";
+  }
+  return "";
+}
+
+function decodeBase64Image(
+  input: string,
+  expectedFormat: string
+): { bytes: Uint8Array; format: string; width?: number; height?: number } {
+  const s = String(input || "").trim();
+  if (!s) {
+    throw new Error("Empty image data");
+  }
+  if (!s.startsWith("{")) {
+    throw new Error("Screenshot tool returned non-JSON data");
+  }
+
+  let obj: any;
+  try {
+    obj = JSON.parse(s);
+  } catch (e) {
+    throw new Error(`Invalid screenshot JSON: ${e instanceof Error ? e.message : String(e)}`);
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    throw new Error("Invalid screenshot JSON: expected object");
+  }
+  const b64 = (obj as any).data;
+  if (typeof b64 !== "string" || !b64.trim()) {
+    throw new Error("Screenshot JSON missing base64 field");
+  }
+  const width = (obj as any).width;
+  const height = (obj as any).height;
+  if (width !== undefined && typeof width !== "number") {
+    throw new Error("Invalid screenshot JSON: expected number 'width'");
+  }
+  if (height !== undefined && typeof height !== "number") {
+    throw new Error("Invalid screenshot JSON: expected number 'height'");
+  }
+
+  const bytes = base64ToUint8ArrayStrict(b64);
+  const detected = detectImageFormat(bytes);
+  return { bytes, format: detected || expectedFormat, width, height };
+}
+
 export class Mobile {
   private session: MobileSession;
 
@@ -132,7 +257,7 @@ export class Mobile {
   async tap(x: number, y: number): Promise<BoolResult> {
     const args = { x, y };
     try {
-      const result = await this.session.callMcpTool('tap', args);
+      const result = await this.session.callMcpTool('tap', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -173,7 +298,7 @@ export class Mobile {
   async swipe(startX: number, startY: number, endX: number, endY: number, durationMs = 300): Promise<BoolResult> {
     const args = { start_x: startX, start_y: startY, end_x: endX, end_y: endY, duration_ms: durationMs };
     try {
-      const result = await this.session.callMcpTool('swipe', args);
+      const result = await this.session.callMcpTool('swipe', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -210,7 +335,7 @@ export class Mobile {
   async inputText(text: string): Promise<BoolResult> {
     const args = { text };
     try {
-      const result = await this.session.callMcpTool('input_text', args);
+      const result = await this.session.callMcpTool('input_text', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -247,7 +372,7 @@ export class Mobile {
   async sendKey(key: number): Promise<BoolResult> {
     const args = { key };
     try {
-      const result = await this.session.callMcpTool('send_key', args);
+      const result = await this.session.callMcpTool('send_key', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -270,14 +395,16 @@ export class Mobile {
   async getClickableUIElements(timeoutMs = 5000): Promise<UIElementsResult> {
     const args = { timeout_ms: timeoutMs };
     try {
-      const result = await this.session.callMcpTool('get_clickable_ui_elements', args);
+      const result = await this.session.callMcpTool('get_clickable_ui_elements', args, false);
 
       if (!result.success) {
         return {
           success: false,
           requestId: result.requestId || '',
           errorMessage: result.errorMessage || 'Failed to get clickable UI elements',
-          elements: []
+          elements: [],
+          raw: result.data || '',
+          format: 'json'
         };
       }
 
@@ -286,7 +413,9 @@ export class Mobile {
           success: true,
           requestId: result.requestId || '',
           errorMessage: '',
-          elements: []
+          elements: [],
+          raw: '',
+          format: 'json'
         };
       }
 
@@ -298,14 +427,18 @@ export class Mobile {
           success: true,
           requestId: result.requestId || '',
           errorMessage: '',
-          elements: normalizedElements
+          elements: normalizedElements,
+          raw: result.data || '',
+          format: 'json'
         };
       } catch (parseError) {
         return {
           success: false,
           requestId: result.requestId || '',
           errorMessage: `Failed to parse UI elements: ${parseError}`,
-          elements: []
+          elements: [],
+          raw: result.data || '',
+          format: 'json'
         };
       }
     } catch (error) {
@@ -313,7 +446,9 @@ export class Mobile {
         success: false,
         requestId: '',
         errorMessage: `Failed to get clickable UI elements: ${error instanceof Error ? error.message : String(error)}`,
-        elements: []
+        elements: [],
+        raw: '',
+        format: 'json'
       };
     }
   }
@@ -321,17 +456,20 @@ export class Mobile {
   /**
    * Get all UI elements.
    */
-  async getAllUIElements(timeoutMs = 3000): Promise<UIElementsResult> {
-    const args = { timeout_ms: timeoutMs };
+  async getAllUIElements(timeoutMs = 3000, format: 'json' | 'xml' = 'json'): Promise<UIElementsResult> {
+    const formatNorm = ((format || 'json') as string).trim().toLowerCase() || 'json';
+    const args = { timeout_ms: timeoutMs, format: formatNorm };
     try {
-      const result = await this.session.callMcpTool('get_all_ui_elements', args);
+      const result = await this.session.callMcpTool('get_all_ui_elements', args, false);
 
       if (!result.success) {
         return {
           success: false,
           requestId: result.requestId || '',
           errorMessage: result.errorMessage || 'Failed to get all UI elements',
-          elements: []
+          elements: [],
+          raw: result.data || '',
+          format: (formatNorm === 'xml' ? 'xml' : 'json')
         };
       }
 
@@ -340,7 +478,31 @@ export class Mobile {
           success: true,
           requestId: result.requestId || '',
           errorMessage: '',
-          elements: []
+          elements: [],
+          raw: '',
+          format: (formatNorm === 'xml' ? 'xml' : 'json')
+        };
+      }
+
+      if (formatNorm === 'xml') {
+        return {
+          success: true,
+          requestId: result.requestId || '',
+          errorMessage: '',
+          elements: [],
+          raw: result.data || '',
+          format: 'xml'
+        };
+      }
+
+      if (formatNorm !== 'json') {
+        return {
+          success: false,
+          requestId: result.requestId || '',
+          errorMessage: `Unsupported UI elements format: ${JSON.stringify(format)}. Supported values: "json", "xml".`,
+          elements: [],
+          raw: result.data || '',
+          format: 'json'
         };
       }
 
@@ -352,14 +514,18 @@ export class Mobile {
           success: true,
           requestId: result.requestId || '',
           errorMessage: '',
-          elements: normalizedElements
+          elements: normalizedElements,
+          raw: result.data || '',
+          format: 'json'
         };
       } catch (parseError) {
         return {
           success: false,
           requestId: result.requestId || '',
           errorMessage: `Failed to parse UI elements: ${parseError}`,
-          elements: []
+          elements: [],
+          raw: result.data || '',
+          format: 'json'
         };
       }
     } catch (error) {
@@ -367,7 +533,9 @@ export class Mobile {
         success: false,
         requestId: '',
         errorMessage: `Failed to get all UI elements: ${error instanceof Error ? error.message : String(error)}`,
-        elements: []
+        elements: [],
+        raw: '',
+        format: (formatNorm === 'xml' ? 'xml' : 'json')
       };
     }
   }
@@ -378,7 +546,7 @@ export class Mobile {
   async getInstalledApps(startMenu = false, desktop = true, ignoreSystemApps = true): Promise<InstalledAppsResult> {
     const args = { start_menu: startMenu, desktop, ignore_system_apps: ignoreSystemApps };
     try {
-      const result = await this.session.callMcpTool('get_installed_apps', args);
+      const result = await this.session.callMcpTool('get_installed_apps', args, false);
       
       if (!result.success) {
         return {
@@ -446,7 +614,7 @@ export class Mobile {
   async startApp(startCmd: string, workDirectory = '', activity = ''): Promise<ProcessResult> {
     const args = { start_cmd: startCmd, work_directory: workDirectory, activity };
     try {
-      const result = await this.session.callMcpTool('start_app', args);
+      const result = await this.session.callMcpTool('start_app', args, false);
       
       if (!result.success) {
         return {
@@ -513,7 +681,7 @@ export class Mobile {
   async stopAppByCmd(stopCmd: string): Promise<BoolResult> {
     const args = { stop_cmd: stopCmd };
     try {
-      const result = await this.session.callMcpTool('stop_app_by_cmd', args);
+      const result = await this.session.callMcpTool('stop_app_by_cmd', args, false);
       return {
         success: result.success || false,
         requestId: result.requestId || '',
@@ -548,7 +716,7 @@ export class Mobile {
    */
   async screenshot(): Promise<ScreenshotResult> {
     try {
-      const result = await this.session.callMcpTool('system_screenshot', {});
+      const result = await this.session.callMcpTool('system_screenshot', {}, false);
       
       if (!result.success) {
         return {
@@ -571,6 +739,130 @@ export class Mobile {
         requestId: '',
         errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
         data: ''
+      };
+    }
+  }
+
+  /**
+   * Capture the current screen as a PNG image and return raw image bytes.
+   *
+   * @returns Promise resolving to BetaScreenshotResult containing PNG bytes
+   */
+  async betaTakeScreenshot(): Promise<BetaScreenshotResult> {
+    try {
+      const result = await this.session.callMcpTool("screenshot", { format: "png" }, false);
+      const requestId = result.requestId || "";
+      if (!result.success) {
+        return {
+          success: false,
+          requestId,
+          errorMessage: result.errorMessage || "Failed to take screenshot",
+          data: new Uint8Array(),
+          format: "png",
+        };
+      }
+      const decoded = decodeBase64Image(String(result.data || ""), "png");
+      return {
+        success: true,
+        requestId,
+        errorMessage: "",
+        data: decoded.bytes,
+        format: decoded.format || "png",
+        width: decoded.width,
+        height: decoded.height,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
+        data: new Uint8Array(),
+        format: "png",
+      };
+    }
+  }
+
+  /**
+   * Capture a long screenshot and return raw image bytes.
+   *
+   * @param maxScreens - Number of screens to stitch (range: [2, 10])
+   * @param format - Output image format ("png", "jpeg", or "jpg"). Default is "png"
+   * @param quality - JPEG quality (range: [1, 100])
+   */
+  async betaTakeLongScreenshot(
+    maxScreens = 4,
+    format = "png",
+    quality?: number
+  ): Promise<BetaScreenshotResult> {
+    const formatNorm = normalizeImageFormat(format, "png");
+    if (!Number.isInteger(maxScreens) || maxScreens < 2 || maxScreens > 10) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: "Invalid maxScreens: must be an integer in the range [2, 10]",
+        data: new Uint8Array(),
+        format: formatNorm,
+      };
+    }
+    if (formatNorm !== "png" && formatNorm !== "jpeg") {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
+        data: new Uint8Array(),
+        format: formatNorm,
+      };
+    }
+    if (quality !== undefined) {
+      if (!Number.isInteger(quality) || quality < 1 || quality > 100) {
+        return {
+          success: false,
+          requestId: "",
+          errorMessage: "Invalid quality: must be an integer in the range [1, 100]",
+          data: new Uint8Array(),
+          format: formatNorm,
+        };
+      }
+    }
+
+    try {
+      const args: Record<string, any> = {
+        max_screens: maxScreens,
+        format: formatNorm,
+      };
+      if (quality !== undefined) {
+        args.quality = quality;
+      }
+
+      const result = await this.session.callMcpTool("long_screenshot", args, false);
+      const requestId = result.requestId || "";
+      if (!result.success) {
+        return {
+          success: false,
+          requestId,
+          errorMessage: result.errorMessage || "Failed to take long screenshot",
+          data: new Uint8Array(),
+          format: formatNorm,
+        };
+      }
+
+      const decoded = decodeBase64Image(String(result.data || ""), formatNorm);
+      return {
+        success: true,
+        requestId,
+        errorMessage: "",
+        data: decoded.bytes,
+        format: decoded.format || formatNorm,
+        width: decoded.width,
+        height: decoded.height,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Failed to take long screenshot: ${error instanceof Error ? error.message : String(error)}`,
+        data: new Uint8Array(),
+        format: formatNorm,
       };
     }
   }

@@ -1,8 +1,11 @@
 package computer
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
@@ -91,6 +94,17 @@ type ScreenshotResult struct {
 	ErrorMessage string `json:"error_message"`
 }
 
+// BetaScreenshotResult represents the result of a beta screenshot operation (binary image bytes).
+type BetaScreenshotResult struct {
+	models.ApiResponse
+	Success      bool
+	Data         []byte
+	Format       string
+	Width        *int
+	Height       *int
+	ErrorMessage string
+}
+
 // BoolResult represents a boolean operation result
 type BoolResult struct {
 	models.ApiResponse
@@ -108,11 +122,7 @@ type Computer struct {
 		GetAPIKey() string
 		GetClient() *mcp.Client
 		GetSessionId() string
-		IsVpc() bool
-		NetworkInterfaceIp() string
-		HttpPort() string
-		FindServerForTool(toolName string) string
-		CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
 }
 
@@ -121,11 +131,7 @@ func NewComputer(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
 	GetSessionId() string
-	IsVpc() bool
-	NetworkInterfaceIp() string
-	HttpPort() string
-	FindServerForTool(toolName string) string
-	CallMcpTool(toolName string, args interface{}, autoGenSession ...bool) (*models.McpToolResult, error)
+	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Computer {
 	return &Computer{Session: session}
 }
@@ -567,6 +573,130 @@ func (c *Computer) Screenshot() *ScreenshotResult {
 		},
 		Data:         result.Data,
 		ErrorMessage: result.ErrorMessage,
+	}
+}
+
+var (
+	pngMagic  = []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
+	jpegMagic = []byte{0xff, 0xd8, 0xff}
+)
+
+func normalizeImageFormat(format string, defaultValue string) string {
+	f := strings.TrimSpace(strings.ToLower(format))
+	if f == "" {
+		return defaultValue
+	}
+	if f == "jpg" {
+		return "jpeg"
+	}
+	return f
+}
+
+func decodeBase64ImageFromJSON(text string, expectedFormat string) ([]byte, string, *int, *int, error) {
+	s := strings.TrimSpace(text)
+	if s == "" {
+		return nil, expectedFormat, nil, nil, fmt.Errorf("empty image data")
+	}
+	if !strings.HasPrefix(s, "{") {
+		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot tool returned non-JSON data")
+	}
+
+	type screenshotJSON struct {
+		Data   string `json:"data"`
+		Width  *int   `json:"width"`
+		Height *int   `json:"height"`
+	}
+	var payload screenshotJSON
+	if err := json.Unmarshal([]byte(s), &payload); err != nil {
+		return nil, expectedFormat, nil, nil, fmt.Errorf("invalid screenshot JSON: %w", err)
+	}
+	b64 := strings.TrimSpace(payload.Data)
+	if b64 == "" {
+		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot JSON missing base64 field")
+	}
+
+	b, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		return nil, expectedFormat, nil, nil, err
+	}
+
+	exp := normalizeImageFormat(expectedFormat, expectedFormat)
+	if exp == "png" {
+		if !bytes.HasPrefix(b, pngMagic) {
+			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
+		}
+		return b, "png", payload.Width, payload.Height, nil
+	}
+	if exp == "jpeg" {
+		if !bytes.HasPrefix(b, jpegMagic) {
+			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
+		}
+		return b, "jpeg", payload.Width, payload.Height, nil
+	}
+	return nil, expectedFormat, nil, nil, fmt.Errorf("unsupported format: %s", expectedFormat)
+}
+
+// BetaTakeScreenshot captures the current screen and returns raw image bytes.
+//
+// Supported formats:
+// - "png"
+// - "jpeg" (or "jpg")
+func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
+	fmtNorm := "png"
+	if len(format) > 0 {
+		fmtNorm = normalizeImageFormat(format[0], "png")
+	}
+	if fmtNorm != "png" && fmtNorm != "jpeg" {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       "",
+			ErrorMessage: "unsupported format: supported values: png, jpeg",
+		}
+	}
+
+	args := map[string]interface{}{
+		"format": fmtNorm,
+	}
+	result, err := c.Session.CallMcpTool("screenshot", args)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Data:         nil,
+			Format:       fmtNorm,
+			ErrorMessage: fmt.Sprintf("failed to call screenshot: %v", err),
+		}
+	}
+	if !result.Success {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       fmtNorm,
+			ErrorMessage: result.ErrorMessage,
+		}
+	}
+
+	img, fmtDetected, width, height, err := decodeBase64ImageFromJSON(result.Data, fmtNorm)
+	if err != nil {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+			Success:      false,
+			Data:         nil,
+			Format:       fmtNorm,
+			ErrorMessage: fmt.Sprintf("failed to decode screenshot data: %v", err),
+		}
+	}
+	return &BetaScreenshotResult{
+		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+		Success:      true,
+		Data:         img,
+		Format:       fmtDetected,
+		Width:        width,
+		Height:       height,
+		ErrorMessage: "",
 	}
 }
 

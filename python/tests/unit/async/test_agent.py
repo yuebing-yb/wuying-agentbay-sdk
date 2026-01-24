@@ -2,7 +2,7 @@ import os
 import pytest
 import time
 import unittest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from agentbay import get_logger
 from agentbay import OperationResult
@@ -11,6 +11,8 @@ from agentbay import ExecutionResult
 
 logger = get_logger("agentbay-unit-test")
 
+from dotenv import load_dotenv
+load_dotenv()
 
 class DummySession:
     def __init__(self):
@@ -36,7 +38,7 @@ class TestAsyncAgentComputer(unittest.IsolatedAsyncioTestCase):
         self.agent = AsyncAgent(self.session)
         timeout = os.environ.get("AGENT_TASK_TIMEOUT")
         if not timeout:
-            timeout = 180
+            timeout = 30
         self.timeout = int(timeout)
 
     @pytest.mark.asyncio
@@ -151,23 +153,26 @@ class TestAsyncAgentComputer(unittest.IsolatedAsyncioTestCase):
 
         retry_times: int = 0
         max_poll_attempts = self.timeout // 3
-        while retry_times < max_poll_attempts:
-            mock_query_result = OperationResult(
-                request_id="request-123",
-                success=True,
-                data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task is runnning."}""",
-            )
-            self.session.call_mcp_tool.return_value = mock_query_result
-            query_result = await self.agent.computer.get_task_status(result.task_id)
-            self.assertTrue(query_result.success)
-            logger.info(
-                f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
-            )
-            if query_result.task_status == "finished":
-                break
-            retry_times += 1
-            time.sleep(3)
+        with patch("time.sleep", return_value=None) as sleep_mock:
+            while retry_times < max_poll_attempts:
+                mock_query_result = OperationResult(
+                    request_id="request-123",
+                    success=True,
+                    data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task is runnning."}""",
+                )
+                self.session.call_mcp_tool.return_value = mock_query_result
+                query_result = await self.agent.computer.get_task_status(result.task_id)
+                self.assertTrue(query_result.success)
+                logger.info(
+                    f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
+                )
+                if query_result.task_status == "finished":
+                    break
+                retry_times += 1
+                time.sleep(3)
         self.assertTrue(retry_times >= max_poll_attempts)
+        self.assertEqual(sleep_mock.call_count, max_poll_attempts)
+        sleep_mock.assert_called_with(3)
 
     @pytest.mark.asyncio
 
@@ -226,7 +231,7 @@ class TestAsyncAgentBrowser(unittest.IsolatedAsyncioTestCase):
         self.agent = AsyncAgent(self.session)
         timeout = os.environ.get("AGENT_TASK_TIMEOUT")
         if not timeout:
-            timeout = 180
+            timeout = 30
         self.timeout = int(timeout)
 
     @pytest.mark.asyncio
@@ -341,23 +346,26 @@ class TestAsyncAgentBrowser(unittest.IsolatedAsyncioTestCase):
 
         retry_times: int = 0
         max_poll_attempts = self.timeout // 3
-        while retry_times < max_poll_attempts:
-            mock_query_result = OperationResult(
-                request_id="request-123",
-                success=True,
-                data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task is runnning."}""",
-            )
-            self.session.call_mcp_tool.return_value = mock_query_result
-            query_result = await self.agent.browser.get_task_status(result.task_id)
-            self.assertTrue(query_result.success)
-            logger.info(
-                f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
-            )
-            if query_result.task_status == "finished":
-                break
-            retry_times += 1
-            time.sleep(3)
+        with patch("time.sleep", return_value=None) as sleep_mock:
+            while retry_times < max_poll_attempts:
+                mock_query_result = OperationResult(
+                    request_id="request-123",
+                    success=True,
+                    data="""{"task_id": "task-123", "status": "running", "result":"", "product": "Task is runnning."}""",
+                )
+                self.session.call_mcp_tool.return_value = mock_query_result
+                query_result = await self.agent.browser.get_task_status(result.task_id)
+                self.assertTrue(query_result.success)
+                logger.info(
+                    f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_product}."
+                )
+                if query_result.task_status == "finished":
+                    break
+                retry_times += 1
+                time.sleep(3)
         self.assertTrue(retry_times >= max_poll_attempts)
+        self.assertEqual(sleep_mock.call_count, max_poll_attempts)
+        sleep_mock.assert_called_with(3)
 
     @pytest.mark.asyncio
 
@@ -417,7 +425,7 @@ class TestAsyncAgentMobile(unittest.IsolatedAsyncioTestCase):
         self.agent = AsyncAgent(self.session)
         timeout = os.environ.get("AGENT_TASK_TIMEOUT")
         if not timeout:
-            timeout = 180
+            timeout = 30
         self.timeout = int(timeout)
 
     @pytest.mark.asyncio
@@ -538,9 +546,10 @@ class TestAsyncAgentMobile(unittest.IsolatedAsyncioTestCase):
             mock_result_status,
         ]
 
-        result = await self.agent.mobile.execute_task_and_wait(
-            "Open WeChat app", timeout=6, max_steps=50
-        )
+        with patch("asyncio.sleep", new=AsyncMock(return_value=None)) as sleep_mock:
+            result = await self.agent.mobile.execute_task_and_wait(
+                "Open WeChat app", timeout=6, max_steps=50
+            )
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "request-123")
@@ -548,6 +557,9 @@ class TestAsyncAgentMobile(unittest.IsolatedAsyncioTestCase):
         self.assertIn("task-123", result.error_message)
         self.assertIn("Polled 2 times (max: 2)", result.error_message)
         self.assertEqual(result.task_status, "failed")
+        sleep_args = [call.args[0] for call in sleep_mock.call_args_list if call.args]
+        self.assertIn(3, sleep_args)
+        self.assertIn(1, sleep_args)
 
     @pytest.mark.asyncio
     async def test_mobile_task_terminate_success(self):

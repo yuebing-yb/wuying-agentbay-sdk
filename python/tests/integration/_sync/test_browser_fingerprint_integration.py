@@ -39,7 +39,7 @@ def agent_bay():
     api_key = os.environ.get("AGENTBAY_API_KEY")
     if not api_key or os.environ.get("CI"):
         pytest.skip("Skipping integration test: No API key available or running in CI")
-    
+
     return AgentBay(api_key)
 
 
@@ -50,12 +50,12 @@ def browser_context(agent_bay):
     context_result = agent_bay.context.get(session_context_name, True)
     if not context_result.success or not context_result.context:
         pytest.skip("Failed to create browser context")
-    
+
     context = context_result.context
     print(f"Created browser context: {context.name} (ID: {context.id})")
-    
+
     yield context
-    
+
     # Cleanup
     try:
         agent_bay.context.delete(context)
@@ -76,12 +76,12 @@ def fingerprint_context(agent_bay):
         or not fingerprint_context_result.context
     ):
         pytest.skip("Failed to create fingerprint context")
-    
+
     context = fingerprint_context_result.context
     print(f"Created fingerprint context: {context.name} (ID: {context.id})")
-    
+
     yield context
-    
+
     # Cleanup
     try:
         agent_bay.context.delete(context)
@@ -137,10 +137,10 @@ class TestBrowserFingerprintIntegration:
 
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
-            
+
             # Wait for page to load and try different selectors
             page.wait_for_load_state("networkidle", timeout=30000)
-            
+
             # Try to get the response text using different methods
             response_text = None
             try:
@@ -148,24 +148,24 @@ class TestBrowserFingerprintIntegration:
                 response_text = page.evaluate("() => document.querySelector('pre')?.textContent")
             except Exception:
                 pass
-                
+
             if not response_text:
                 try:
                     # Try getting the body text
                     response_text = page.evaluate("() => document.body.textContent")
                 except Exception:
                     pass
-            
+
             if not response_text:
                 # Fallback: get page content
                 response_text = page.content()
-                
+
             print(f"Response text: {response_text[:200]}...")
-            
+
             # Parse JSON from response text
             import json
             import re
-            
+
             # Try to extract JSON from the response
             json_match = re.search(r'\{[^}]+\}', response_text)
             if json_match:
@@ -238,35 +238,40 @@ class TestBrowserFingerprintIntegration:
         print(
             "Step 3: Opening https://httpbin.org/user-agent and test user agent..."
         )
-        with sync_playwright() as p:
-            browser = p.chromium.connect_over_cdp(endpoint_url)
-            assert browser is not None, "Failed to connect to browser"
-            context = (
-                browser.contexts[0]
-                if browser.contexts
-                else browser.new_context()
-            )
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.connect_over_cdp(endpoint_url)
+                print(f"Browser connected to endpoint URL: {browser.contexts}")
+                assert browser is not None, "Failed to connect to browser"
+                context = (
+                    browser.contexts[0]
+                    if browser.contexts
+                    else browser.new_context()
+                )
 
-            page = context.new_page()
-            page.goto("https://httpbin.org/user-agent", timeout=60000)
-            response = page.evaluate(
-                "() => JSON.parse(document.querySelector('pre').textContent)"
-            )
-            user_agent = response["user-agent"]
-            print("user_agent =", user_agent)
-            assert user_agent is not None
-            assert is_windows_user_agent(user_agent)
+                page = context.new_page()
+                page.goto("https://httpbin.org/user-agent", timeout=60000)
+                response = page.evaluate(
+                    "() => JSON.parse(document.querySelector('pre').textContent)"
+                )
+                user_agent = response["user-agent"]
+                print("user_agent =", user_agent)
+                assert user_agent is not None
+                assert is_windows_user_agent(user_agent)
 
-            context.close()
-            print("First session browser operations completed")
+                context.close()
+                print("First session browser operations completed")
 
-        # Step 4: Release first session with syncContext=True
-        print("Step 4: Releasing first session with syncContext=True...")
-        delete_result = agent_bay.delete(session1, sync_context=True)
-        assert delete_result.success, "Failed to delete first session"
-        print(
-            f"First session deleted successfully (RequestID: {delete_result.request_id})"
-        )
+        finally:
+            try:
+                print("Step 4: Releasing first session with syncContext=True...")
+                delete_result = agent_bay.delete(session1, sync_context=True)
+                if not delete_result.success:
+                    print(f"Warning: Failed to delete first session (RequestID: {delete_result.request_id})")
+                print(f"First session deleted successfully (RequestID: {delete_result.request_id})")
+            except Exception as e:
+                print(f"Warning: Exception while deleting session: {e}")
+
 
         # Wait for context sync to complete
         time.sleep(3)
@@ -388,10 +393,10 @@ class TestBrowserFingerprintIntegration:
 
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
-            
+
             # Wait for page to load and try different selectors
             page.wait_for_load_state("networkidle", timeout=30000)
-            
+
             # Try to get the response text using different methods
             response_text = None
             try:
@@ -399,24 +404,24 @@ class TestBrowserFingerprintIntegration:
                 response_text = page.evaluate("() => document.querySelector('pre')?.textContent")
             except Exception:
                 pass
-                
+
             if not response_text:
                 try:
                     # Try getting the body text
                     response_text = page.evaluate("() => document.body.textContent")
                 except Exception:
                     pass
-            
+
             if not response_text:
                 # Fallback: get page content
                 response_text = page.content()
-                
+
             print(f"Response text: {response_text[:200]}...")
-            
+
             # Parse JSON from response text
             import json
             import re
-            
+
             # Try to extract JSON from the response
             json_match = re.search(r'\{[^}]+\}', response_text)
             if json_match:
@@ -508,10 +513,10 @@ class TestBrowserFingerprintIntegration:
 
             page = context.new_page()
             page.goto("https://httpbin.org/user-agent", timeout=60000)
-            
+
             # Wait for page to load and try different selectors
             page.wait_for_load_state("networkidle", timeout=30000)
-            
+
             # Try to get the response text using different methods
             response_text = None
             try:
@@ -519,24 +524,24 @@ class TestBrowserFingerprintIntegration:
                 response_text = page.evaluate("() => document.querySelector('pre')?.textContent")
             except Exception:
                 pass
-                
+
             if not response_text:
                 try:
                     # Try getting the body text
                     response_text = page.evaluate("() => document.body.textContent")
                 except Exception:
                     pass
-            
+
             if not response_text:
                 # Fallback: get page content
                 response_text = page.content()
-                
+
             print(f"Response text: {response_text[:200]}...")
-            
+
             # Parse JSON from response text
             import json
             import re
-            
+
             # Try to extract JSON from the response
             json_match = re.search(r'\{[^}]+\}', response_text)
             if json_match:

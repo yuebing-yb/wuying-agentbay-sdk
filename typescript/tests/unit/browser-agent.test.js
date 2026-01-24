@@ -21,7 +21,6 @@ describe('Browser Unit Tests', () => {
       getAPIKey: jest.fn().mockReturnValue('test-api-key'),
       getSessionId: jest.fn().mockReturnValue('test-session-id'),
       sessionId: 'test-session-id',
-      isVpc: false,
       getClient: jest.fn().mockReturnValue({
         initBrowser: jest.fn().mockResolvedValue({
           body: {
