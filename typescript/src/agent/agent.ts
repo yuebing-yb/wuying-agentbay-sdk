@@ -418,7 +418,7 @@ export class BrowserUseAgent extends BaseTaskAgent {
      * }
      * ```
      */
-  async executeTask<TSchema extends ZodTypeAny>(task: string, use_vision: boolean = true, output_schema?: TSchema):
+  async executeTask<TSchema extends ZodTypeAny>(task: string, use_vision = true, output_schema?: TSchema):
     Promise<ExecutionResult> {
     try {
       let json_schema = null;
@@ -536,7 +536,7 @@ export class BrowserUseAgent extends BaseTaskAgent {
        * }
        * ```
        */
-  async executeTaskAndWait<TSchema extends ZodTypeAny>(task: string, timeout: number, use_vision: boolean = true, output_schema?: TSchema):
+  async executeTaskAndWait<TSchema extends ZodTypeAny>(task: string, timeout: number, use_vision = true, output_schema?: TSchema):
     Promise<ExecutionResult> {
     const result = await this.executeTask(task, use_vision, output_schema);
     if (!result.success) {

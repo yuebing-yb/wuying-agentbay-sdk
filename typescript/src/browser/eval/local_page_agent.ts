@@ -26,7 +26,7 @@ class LocalMCPClient {
     resolve: (result: OperationResult) => void;
     reject: (error: Error) => void;
   }> = [];
-  private isConnected: boolean = false;
+  private isConnected = false;
   private connectPromise: Promise<void> | null = null;
 
   /**
@@ -344,7 +344,7 @@ export class LocalPageAgent extends BrowserAgent {
  * Local Browser implementation that uses Playwright directly
  */
 export class LocalBrowser extends Browser {
-  private _cdpPort: number = 9222;
+  private _cdpPort = 9222;
   private _browser: PlaywrightBrowser | BrowserContext | null = null;
   private _workerThread: ChildProcess | null = null;
   private _playwrightInteractiveLoopAbortSignal: AbortSignal | null = null;
@@ -355,7 +355,7 @@ export class LocalBrowser extends Browser {
     // Create a minimal mock session if none provided (static method to avoid using 'this')
     const tempSession = session || LocalBrowser._createMinimalMockSession();
     super(tempSession);
-    // @ts-ignore - Access protected member
+    // @ts-expect-error - Access protected member
     this.contexts = [];
     // @ts-expect-error - LocalBrowser uses async initialize, incompatible with base Browser type
     this.agent = new LocalPageAgent(tempSession, this);
@@ -542,7 +542,7 @@ export class LocalSession extends Session {
   /**
    * Delete the session (no-op for local mode)
    */
-  async delete(syncContext: boolean = false): Promise<DeleteResult> {
+  async delete(syncContext = false): Promise<DeleteResult> {
     this.browser.abortPlaywrightInteractiveLoop();
     
     // No-op for local session

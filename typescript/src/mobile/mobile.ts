@@ -791,7 +791,7 @@ export class Mobile {
    */
   async betaTakeLongScreenshot(
     maxScreens = 4,
-    format: string = "png",
+    format = "png",
     quality?: number
   ): Promise<BetaScreenshotResult> {
     const formatNorm = normalizeImageFormat(format, "png");

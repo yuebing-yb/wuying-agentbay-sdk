@@ -647,7 +647,7 @@ export class Computer {
    *
    * @param format - Output image format ("png", "jpeg", or "jpg"). Default is "png"
    */
-  async betaTakeScreenshot(format: string = "png"): Promise<BetaScreenshotResult> {
+  async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
     const fmt = Computer.normalizeImageFormat(format, "png");
     if (fmt !== "png" && fmt !== "jpeg") {
       return {
