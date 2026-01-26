@@ -98,6 +98,11 @@ func TestBrowserProxy_NewBrowserProxy(t *testing.T) {
 		password  *string
 		strategy  *string
 		pollSize  *int
+		userID    *string
+		isp       *string
+		country   *string
+		province  *string
+		city      *string
 		expectErr bool
 		errMsg    string
 	}{
@@ -133,10 +138,72 @@ func TestBrowserProxy_NewBrowserProxy(t *testing.T) {
 			errMsg:    "strategy is required for wuying proxy type",
 		},
 		{
+			name:      "valid managed proxy with sticky strategy",
+			proxyType: "managed",
+			strategy:  stringPtr("sticky"),
+			userID:    stringPtr("user123"),
+			expectErr: false,
+		},
+		{
+			name:      "valid managed proxy with rotating strategy",
+			proxyType: "managed",
+			strategy:  stringPtr("rotating"),
+			userID:    stringPtr("user123"),
+			expectErr: false,
+		},
+		{
+			name:      "valid managed proxy with polling strategy",
+			proxyType: "managed",
+			strategy:  stringPtr("polling"),
+			userID:    stringPtr("user123"),
+			expectErr: false,
+		},
+		{
+			name:      "valid managed proxy with matched strategy",
+			proxyType: "managed",
+			strategy:  stringPtr("matched"),
+			userID:    stringPtr("user123"),
+			isp:       stringPtr("China Telecom"),
+			country:   stringPtr("China"),
+			province:  stringPtr("Beijing"),
+			city:      stringPtr("Beijing"),
+			expectErr: false,
+		},
+		{
+			name:      "managed proxy without strategy",
+			proxyType: "managed",
+			userID:    stringPtr("user123"),
+			expectErr: true,
+			errMsg:    "strategy is required for managed proxy type",
+		},
+		{
+			name:      "managed proxy without userID",
+			proxyType: "managed",
+			strategy:  stringPtr("sticky"),
+			expectErr: true,
+			errMsg:    "user_id is required for managed proxy type",
+		},
+		{
+			name:      "managed proxy with invalid strategy",
+			proxyType: "managed",
+			strategy:  stringPtr("invalid"),
+			userID:    stringPtr("user123"),
+			expectErr: true,
+			errMsg:    "strategy must be polling, sticky, rotating, or matched for managed proxy type",
+		},
+		{
+			name:      "managed proxy with matched strategy but no filters",
+			proxyType: "managed",
+			strategy:  stringPtr("matched"),
+			userID:    stringPtr("user123"),
+			expectErr: true,
+			errMsg:    "at least one of isp, country, province, or city is required for matched strategy",
+		},
+		{
 			name:      "invalid proxy type",
 			proxyType: "invalid",
 			expectErr: true,
-			errMsg:    "proxy_type must be custom or wuying",
+			errMsg:    "proxy_type must be custom, wuying, or managed",
 		},
 	}
 
@@ -149,6 +216,11 @@ func TestBrowserProxy_NewBrowserProxy(t *testing.T) {
 				tt.password,
 				tt.strategy,
 				tt.pollSize,
+				tt.userID,
+				tt.isp,
+				tt.country,
+				tt.province,
+				tt.city,
 			)
 
 			if tt.expectErr {

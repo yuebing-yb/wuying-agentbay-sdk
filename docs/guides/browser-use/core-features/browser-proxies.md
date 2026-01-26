@@ -20,6 +20,16 @@ Leverage Alibaba Cloud's integrated proxy service with advanced management featu
 - **Polling Strategy**: Rotates through a pool of proxy nodes for IP diversity
 - **Managed Infrastructure**: No need to maintain your own proxy servers
 
+### 3. Managed Proxy Service
+Use your own proxy resources with Wuying's intelligent management:
+- **Bring Your Own Proxies**: Upload and manage your existing proxy infrastructure
+- **Intelligent Allocation**: Multiple strategies for different use cases (polling, sticky, rotating, matched)
+- **Health Monitoring**: Automatic health checks and failover
+- **Geographic Filtering**: Select proxies by country, province, city, and ISP
+- **User-based Management**: Maintain consistent or rotating IPs per user
+
+> **📞 Getting Started with Managed Proxy**: Contact us or your account manager to set up your managed proxy pool.
+
 ## Proxy Types and Strategies
 
 ### Custom Proxy
@@ -44,6 +54,52 @@ Provided by the Wuying Proxy Service integrated in AgentBay SDK
 - Provides IP diversity for each request
 - Suitable for scenarios requiring frequent IP changes
 - Configurable pool size via `pollsize` parameter
+
+### Managed Proxy
+Client-provided proxies managed by Wuying platform. This allows you to use your own proxy resources while leveraging Wuying's intelligent management capabilities.
+
+> **📞 Contact Us**: To use managed proxy features, please contact us or reach out to your account manager to set up your proxy pool.
+
+**Key Features:**
+- **Centralized Management**: Upload and manage your proxy resources through Wuying platform
+- **Intelligent Allocation**: Automatic proxy allocation based on your chosen strategy
+- **Health Monitoring**: Automatic health checks and failover for your proxies
+- **Flexible Strategies**: Multiple allocation strategies to fit different use cases
+
+**Available Strategies:**
+
+1. **Polling Strategy** (Pool-based, Round-robin)
+   - Allocates one proxy per session from the pool
+   - Round-robin selection ensures even distribution
+   - `user_id`: Used for tracking allocation records, each session gets an independent allocation
+   - Suitable for general purpose web scraping
+
+2. **Sticky Strategy** (User-based, Consistent IP)
+   - Keep the same IP for a specific user across sessions
+   - `user_id`: Associates with historical allocations to maintain consistent IP
+   - Ideal for maintaining session continuity per user
+
+3. **Rotating Strategy** (User-based, Force New IP)
+   - Force a different IP for a specific user each time
+   - `user_id`: Associates with historical allocations to rotate through different IPs
+   - Best for scenarios requiring IP diversity per user
+
+4. **Matched Strategy** (Attribute-based Filtering)
+   - Filter proxies by geographic and ISP attributes
+   - `user_id`: Used for tracking allocation records, each session gets an independent allocation
+   - Supports filtering by: ISP, country, province, city
+   - Perfect for geo-targeted scraping or testing
+
+**Configuration Parameters:**
+- `proxy_type`: Set to `"managed"`
+- `strategy`: One of `"polling"`, `"sticky"`, `"rotating"`, `"matched"`
+- `user_id`: Custom user identifier for tracking proxy allocation records (**Required** for managed type)
+  - `sticky`/`rotating` strategies: Associates with historical allocations to maintain or rotate IPs per user
+  - `polling`/`matched` strategies: Each session gets an independent allocation
+- `isp`: ISP filter (optional for matched strategy)
+- `country`: Country filter (optional for matched strategy)
+- `province`: Province filter (optional for matched strategy)
+- `city`: City filter (optional for matched strategy)
 
 ## Python Implementation
 
@@ -101,6 +157,45 @@ def main():
         # browser_proxy = BrowserProxy(
         #     proxy_type="wuying",    # Proxy type: wuying proxy
         #     strategy="restricted"   # Strategy: restricted (fixed nodes)
+        # )
+
+        # ==================== Managed Proxy Examples ====================
+        # Note: To use managed proxy, please contact us first to set up your proxy pool
+        
+        # Example 4: Managed Proxy - Polling Strategy
+        # Pool-based allocation, round-robin selection
+        # browser_proxy = BrowserProxy(
+        #     proxy_type="managed",   # Proxy type: managed proxy
+        #     strategy="polling",     # Strategy: polling (round-robin)
+        #     user_id="user123"       # REQUIRED: custom user identifier (independent allocation per session)
+        # )
+        
+        # Example 5: Managed Proxy - Sticky Strategy
+        # User-based allocation, keep same IP for specific user
+        # browser_proxy = BrowserProxy(
+        #     proxy_type="managed",   # Proxy type: managed proxy
+        #     strategy="sticky",      # Strategy: sticky (consistent IP per user)
+        #     user_id="user123"       # REQUIRED: custom user identifier (associates with historical allocations)
+        # )
+        
+        # Example 6: Managed Proxy - Rotating Strategy
+        # User-based allocation, force different IP for specific user
+        # browser_proxy = BrowserProxy(
+        #     proxy_type="managed",   # Proxy type: managed proxy
+        #     strategy="rotating",    # Strategy: rotating (new IP per request)
+        #     user_id="user123"       # REQUIRED: custom user identifier (rotates from historical allocations)
+        # )
+        
+        # Example 7: Managed Proxy - Matched Strategy
+        # Attribute-based filtering, select proxies by location/ISP
+        # browser_proxy = BrowserProxy(
+        #     proxy_type="managed",   # Proxy type: managed proxy
+        #     strategy="matched",     # Strategy: matched (attribute filtering)
+        #     user_id="user123",      # REQUIRED: custom user identifier (independent allocation per session)
+        #     isp="China Telecom",    # Filter by ISP (optional)
+        #     country="China",        # Filter by country (optional)
+        #     province="Beijing",     # Filter by province (optional)
+        #     city="Beijing"          # Filter by city (optional)
         # )
 
         # Create browser options with proxy configuration, now only support one proxy
@@ -230,6 +325,73 @@ async function proxyExample(): Promise<void> {
         //     }
         // };
 
+        // ==================== Managed Proxy Examples ====================
+        // Note: To use managed proxy, please contact us first to set up your proxy pool
+        
+        // Example 4: Managed Proxy - Polling Strategy
+        // const browserProxy: BrowserProxy = {
+        //     type: 'managed',
+        //     strategy: 'polling',
+        //     userId: 'user123',  // REQUIRED: custom user identifier (independent allocation per session)
+        //     toMap: function() {
+        //         return {
+        //             type: this.type,
+        //             strategy: this.strategy,
+        //             userId: this.userId
+        //         };
+        //     }
+        // };
+        
+        // Example 5: Managed Proxy - Sticky Strategy
+        // const browserProxy: BrowserProxy = {
+        //     type: 'managed',
+        //     strategy: 'sticky',
+        //     userId: 'user123',  // REQUIRED: custom user identifier (associates with historical allocations)
+        //     toMap: function() {
+        //         return {
+        //             type: this.type,
+        //             strategy: this.strategy,
+        //             userId: this.userId
+        //         };
+        //     }
+        // };
+        
+        // Example 6: Managed Proxy - Rotating Strategy
+        // const browserProxy: BrowserProxy = {
+        //     type: 'managed',
+        //     strategy: 'rotating',
+        //     userId: 'user123',  // REQUIRED: custom user identifier (rotates from historical allocations)
+        //     toMap: function() {
+        //         return {
+        //             type: this.type,
+        //             strategy: this.strategy,
+        //             userId: this.userId
+        //         };
+        //     }
+        // };
+        
+        // Example 7: Managed Proxy - Matched Strategy
+        // const browserProxy: BrowserProxy = {
+        //     type: 'managed',
+        //     strategy: 'matched',
+        //     userId: 'user123',  // REQUIRED: custom user identifier (independent allocation per session)
+        //     isp: 'China Telecom',
+        //     country: 'China',
+        //     province: 'Beijing',
+        //     city: 'Beijing',
+        //     toMap: function() {
+        //         return {
+        //             type: this.type,
+        //             strategy: this.strategy,
+        //             userId: this.userId,
+        //             isp: this.isp,
+        //             country: this.country,
+        //             province: this.province,
+        //             city: this.city
+        //         };
+        //     }
+        // };
+
         // Create browser option with proxy configuration
         const browserOption: BrowserOption = {
             proxies: [browserProxy]
@@ -272,6 +434,196 @@ async function proxyExample(): Promise<void> {
 proxyExample().catch(console.error);
 ```
 
+## Managed Proxy Deep Dive
+
+### What is Managed Proxy?
+
+Managed Proxy allows you to use your own proxy resources while benefiting from Wuying's intelligent management platform. Instead of maintaining complex proxy allocation logic in your code, you simply upload your proxies to Wuying, and the platform handles:
+
+- **Automatic allocation** based on your chosen strategy
+- **Health monitoring** with automatic failover
+- **Load balancing** across your proxy pool
+- **Geographic filtering** for location-specific requirements
+- **User session management** for consistent user experiences
+
+### Getting Started
+
+#### Step 1: Contact Us for Setup
+
+Before using managed proxy, you need to set up your proxy pool with our team:
+
+1. **Contact Support**: Reach out to us or your account manager
+2. **Provide Proxy Details**: Share your proxy list with the following information:
+   - Proxy server addresses (IP:Port)
+   - Authentication credentials (if required)
+   - Geographic information (country, province, city)
+   - ISP information (e.g., China Telecom, China Unicom)
+3. **Configure Pool**: Our team will help you configure your managed proxy pool
+4. **Get Pool ID**: You'll receive a pool identifier to use in your code
+
+#### Step 2: Choose Your Strategy
+
+Select the strategy that best fits your use case:
+
+| Strategy | Best For | Use Case |
+|----------|----------|----------|
+| **Polling** | General purpose | Web scraping with even load distribution |
+| **Sticky** | User consistency | Maintaining login sessions per user |
+| **Rotating** | Maximum diversity | Aggressive scraping to avoid detection |
+| **Matched** | Geographic targeting | Testing region-specific content |
+
+**Polling Strategy** - General Purpose
+```python
+# Best for: Even distribution, general web scraping
+BrowserProxy(
+    proxy_type="managed",
+    strategy="polling"
+)
+```
+- Round-robin selection from your proxy pool
+- Each session gets a different proxy
+- Simple and effective for most use cases
+
+**Sticky Strategy** - User Consistency
+```python
+# Best for: Maintaining user sessions, login persistence
+BrowserProxy(
+    proxy_type="managed",
+    strategy="sticky",
+    user_id="user123"  # Same user_id = same proxy
+)
+```
+- Same user always gets the same proxy
+- Perfect for maintaining login sessions
+- Useful for user-specific testing
+
+**Rotating Strategy** - Maximum Diversity
+```python
+# Best for: Avoiding detection, maximum IP diversity
+BrowserProxy(
+    proxy_type="managed",
+    strategy="rotating",
+    user_id="user123"  # Same user_id = different proxy each time
+)
+```
+- Same user gets a different proxy each time
+- Maximum IP diversity per user
+- Ideal for aggressive scraping scenarios
+
+**Matched Strategy** - Geographic Targeting
+```python
+# Best for: Location-specific content, geo-testing
+BrowserProxy(
+    proxy_type="managed",
+    strategy="matched",
+    country="China",
+    province="Beijing",
+    isp="China Telecom"
+)
+```
+- Filter proxies by location and ISP
+- Perfect for testing region-specific features
+- Ideal for accessing geo-restricted content
+
+### Use Cases and Examples
+
+#### Use Case 1: E-commerce Price Monitoring
+Monitor prices across different regions:
+
+```python
+# Monitor prices from different cities
+beijing_proxy = BrowserProxy(
+    proxy_type="managed",
+    strategy="matched",
+    country="China",
+    province="Beijing"
+)
+
+shanghai_proxy = BrowserProxy(
+    proxy_type="managed",
+    strategy="matched",
+    country="China",
+    province="Shanghai"
+)
+```
+
+#### Use Case 2: User Session Testing
+Test multi-user scenarios with consistent IPs:
+
+```python
+# User A always gets the same IP
+user_a_proxy = BrowserProxy(
+    proxy_type="managed",
+    strategy="sticky",
+    user_id="user_a"
+)
+
+# User B always gets the same IP (different from A)
+user_b_proxy = BrowserProxy(
+    proxy_type="managed",
+    strategy="sticky",
+    user_id="user_b"
+)
+```
+
+#### Use Case 3: Large-scale Web Scraping
+Maximize IP diversity to avoid rate limiting:
+
+```python
+# Each request uses a different proxy
+scraping_proxy = BrowserProxy(
+    proxy_type="managed",
+    strategy="polling"  # Round-robin through all proxies
+)
+```
+
+### Monitoring and Debugging
+
+When using managed proxy, you can verify the proxy is working correctly:
+
+```python
+# Check the current proxy IP
+page.goto("https://httpbin.org/ip")
+response = page.evaluate("() => JSON.parse(document.body.textContent)")
+current_ip = response.get("origin", "")
+print(f"Current proxy IP: {current_ip}")
+
+# Check geographic location
+page.goto("https://ipapi.co/json/")
+geo_info = page.evaluate("() => JSON.parse(document.body.textContent)")
+print(f"Location: {geo_info.get('city')}, {geo_info.get('country_name')}")
+print(f"ISP: {geo_info.get('org')}")
+```
+
+### Common Questions
+
+**Q: Do I need my own proxies?**  
+A: Yes, managed proxy is for using your existing proxy infrastructure with our management platform.
+
+**Q: How long does setup take?**  
+A: Typically 1-2 business days after providing your proxy list.
+
+**Q: Can I update my proxy list later?**  
+A: Yes, contact us to update your proxy pool at any time.
+
+**Q: What if a proxy goes down?**  
+A: Our platform automatically detects unhealthy proxies and removes them from rotation.
+
+**Q: Can I mix strategies?**  
+A: Currently, one strategy per session. Different sessions can use different strategies.
+
+### Comparison: Managed vs Wuying vs Custom
+
+| Feature | Custom | Wuying | Managed |
+|---------|--------|--------|---------|
+| **Setup Required** | None | None | Yes (Contact Us) |
+| **Own Proxies** | ✅ | ❌ | ✅ |
+| **Health Monitoring** | ❌ | ✅ | ✅ |
+| **Geographic Filtering** | ❌ | ❌ | ✅ |
+| **User-based Allocation** | ❌ | ❌ | ✅ |
+| **Automatic Failover** | ❌ | ✅ | ✅ |
+| **Pool Management** | Manual | Automatic | Automatic |
+
 ## Best Practices
 
 ### 1. Proxy Selection Strategy
@@ -303,6 +655,32 @@ wuying_proxy = BrowserProxy(
     proxy_type="wuying",
     strategy="polling",
     pollsize=3  # Adjust based on your needs
+)
+```
+
+**Managed Proxy Usage:**
+- Contact us first to set up your proxy pool
+- Choose strategy based on your requirements:
+  - **Polling**: General purpose, even distribution
+  - **Sticky**: Maintain user sessions with consistent IPs
+  - **Rotating**: Maximum IP diversity per user
+  - **Matched**: Geographic or ISP-specific requirements
+
+```python
+# ✅ Correct - Managed proxy with user-based strategy
+managed_proxy = BrowserProxy(
+    proxy_type="managed",
+    strategy="sticky",
+    user_id="user123"  # Required for user-based strategies
+)
+
+# ✅ Correct - Managed proxy with geographic filtering
+managed_proxy = BrowserProxy(
+    proxy_type="managed",
+    strategy="matched",
+    country="China",
+    province="Beijing",
+    isp="China Telecom"
 )
 ```
 
@@ -344,6 +722,7 @@ def robust_proxy_usage():
 ## Limitations
 - **Single Proxy Support**: Although BrowserOption accepts an array in proxies, only the first proxy is currently applied per session.
 - **Global Proxy Scope**: The proxy applies globally, meaning all browser requests will be routed through the proxy
+- **Managed Proxy Setup**: Managed proxy requires prior setup. Contact us to configure your proxy pool before use
 
 ## 📚 Related Guides
 

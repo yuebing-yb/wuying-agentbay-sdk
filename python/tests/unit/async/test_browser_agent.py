@@ -215,7 +215,7 @@ class TestBrowser(unittest.TestCase):
         # Test invalid proxy type should fail
         with self.assertRaises(ValueError) as context:
             BrowserProxy(proxy_type="invalid")
-        self.assertIn("proxy_type must be custom or wuying", str(context.exception))
+        self.assertIn("proxy_type must be custom, wuying, or managed", str(context.exception))
 
         # Test custom proxy without server should fail
         with self.assertRaises(ValueError) as context:
@@ -252,6 +252,47 @@ class TestBrowser(unittest.TestCase):
         self.assertIn(
             "pollsize must be greater than 0 for polling strategy",
             str(context.exception),
+        )
+
+        # Test managed proxy without strategy should fail
+        with self.assertRaises(ValueError) as context:
+            BrowserProxy(proxy_type="managed", user_id="user123")
+        self.assertIn(
+            "strategy is required for managed proxy type", str(context.exception)
+        )
+
+        # Test managed proxy with invalid strategy should fail
+        with self.assertRaises(ValueError) as context:
+            BrowserProxy(proxy_type="managed", strategy="invalid", user_id="user123")
+        self.assertIn(
+            "strategy must be polling, sticky, rotating, or matched for managed proxy type",
+            str(context.exception),
+        )
+
+        # Test managed proxy without user_id should fail
+        with self.assertRaises(ValueError) as context:
+            BrowserProxy(proxy_type="managed", strategy="sticky")
+        self.assertIn(
+            "user_id is required for managed proxy type", str(context.exception)
+        )
+
+        # Test managed proxy with matched strategy but no filters should fail
+        with self.assertRaises(ValueError) as context:
+            BrowserProxy(proxy_type="managed", strategy="matched", user_id="user123")
+        self.assertIn(
+            "At least one of isp, country, province, or city is required for matched strategy",
+            str(context.exception),
+        )
+
+        # Test valid managed proxies should succeed
+        BrowserProxy(proxy_type="managed", strategy="sticky", user_id="user123")
+        BrowserProxy(proxy_type="managed", strategy="rotating", user_id="user123")
+        BrowserProxy(proxy_type="managed", strategy="polling", user_id="user123")
+        BrowserProxy(
+            proxy_type="managed",
+            strategy="matched",
+            user_id="user123",
+            isp="China Telecom",
         )
 
     def test_fingerprint_format(self):

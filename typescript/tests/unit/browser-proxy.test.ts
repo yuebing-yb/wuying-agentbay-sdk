@@ -46,7 +46,7 @@ describe('BrowserProxy Unit Tests', () => {
     test('should throw error for invalid proxy type', () => {
       expect(() => {
         new BrowserProxyClass('invalid' as any);
-      }).toThrow('proxy_type must be custom or wuying');
+      }).toThrow('proxy_type must be custom, wuying, or managed');
     });
 
     test('should throw error for custom proxy without server', () => {
@@ -77,6 +77,76 @@ describe('BrowserProxy Unit Tests', () => {
       expect(() => {
         new BrowserProxyClass('wuying', undefined, undefined, undefined, 'polling', -1);
       }).toThrow('pollsize must be greater than 0 for polling strategy');
+    });
+
+    test('should create managed proxy with sticky strategy', () => {
+      const proxy = new BrowserProxyClass('managed', undefined, undefined, undefined, 'sticky', undefined, 'user123');
+
+      expect(proxy.type).toBe('managed');
+      expect(proxy.strategy).toBe('sticky');
+      expect(proxy.userId).toBe('user123');
+    });
+
+    test('should create managed proxy with rotating strategy', () => {
+      const proxy = new BrowserProxyClass('managed', undefined, undefined, undefined, 'rotating', undefined, 'user123');
+
+      expect(proxy.type).toBe('managed');
+      expect(proxy.strategy).toBe('rotating');
+      expect(proxy.userId).toBe('user123');
+    });
+
+    test('should create managed proxy with polling strategy', () => {
+      const proxy = new BrowserProxyClass('managed', undefined, undefined, undefined, 'polling', undefined, 'user123');
+
+      expect(proxy.type).toBe('managed');
+      expect(proxy.strategy).toBe('polling');
+      expect(proxy.userId).toBe('user123');
+    });
+
+    test('should create managed proxy with matched strategy', () => {
+      const proxy = new BrowserProxyClass(
+        'managed',
+        undefined, undefined, undefined,
+        'matched',
+        undefined,
+        'user123',
+        'China Telecom',
+        'China',
+        'Beijing',
+        'Beijing'
+      );
+
+      expect(proxy.type).toBe('managed');
+      expect(proxy.strategy).toBe('matched');
+      expect(proxy.userId).toBe('user123');
+      expect(proxy.isp).toBe('China Telecom');
+      expect(proxy.country).toBe('China');
+      expect(proxy.province).toBe('Beijing');
+      expect(proxy.city).toBe('Beijing');
+    });
+
+    test('should throw error for managed proxy without strategy', () => {
+      expect(() => {
+        new BrowserProxyClass('managed', undefined, undefined, undefined, undefined, undefined, 'user123');
+      }).toThrow('strategy is required for managed proxy type');
+    });
+
+    test('should throw error for managed proxy with invalid strategy', () => {
+      expect(() => {
+        new BrowserProxyClass('managed', undefined, undefined, undefined, 'invalid' as any, undefined, 'user123');
+      }).toThrow('strategy must be polling, sticky, rotating, or matched for managed proxy type');
+    });
+
+    test('should throw error for managed proxy without userId', () => {
+      expect(() => {
+        new BrowserProxyClass('managed', undefined, undefined, undefined, 'sticky');
+      }).toThrow('userId is required for managed proxy type');
+    });
+
+    test('should throw error for managed proxy with matched strategy but no filters', () => {
+      expect(() => {
+        new BrowserProxyClass('managed', undefined, undefined, undefined, 'matched', undefined, 'user123');
+      }).toThrow('at least one of isp, country, province, or city is required for matched strategy');
     });
   });
 
@@ -131,6 +201,43 @@ describe('BrowserProxy Unit Tests', () => {
       expect(proxyMap.type).toBe('wuying');
       expect(proxyMap.strategy).toBe('polling');
       expect(proxyMap.pollsize).toBe(15);
+    });
+
+    test('should serialize managed sticky proxy correctly', () => {
+      const proxy = new BrowserProxyClass('managed', undefined, undefined, undefined, 'sticky', undefined, 'user123');
+
+      const proxyMap = proxy.toMap();
+
+      expect(proxyMap.type).toBe('managed');
+      expect(proxyMap.strategy).toBe('sticky');
+      expect(proxyMap.userId).toBe('user123');
+      expect(proxyMap.server).toBeUndefined();
+      expect(proxyMap.username).toBeUndefined();
+      expect(proxyMap.password).toBeUndefined();
+    });
+
+    test('should serialize managed matched proxy correctly', () => {
+      const proxy = new BrowserProxyClass(
+        'managed',
+        undefined, undefined, undefined,
+        'matched',
+        undefined,
+        'user123',
+        'China Telecom',
+        'China',
+        'Beijing',
+        'Beijing'
+      );
+
+      const proxyMap = proxy.toMap();
+
+      expect(proxyMap.type).toBe('managed');
+      expect(proxyMap.strategy).toBe('matched');
+      expect(proxyMap.userId).toBe('user123');
+      expect(proxyMap.isp).toBe('China Telecom');
+      expect(proxyMap.country).toBe('China');
+      expect(proxyMap.province).toBe('Beijing');
+      expect(proxyMap.city).toBe('Beijing');
     });
   });
 
@@ -209,6 +316,44 @@ describe('BrowserProxy Unit Tests', () => {
       expect(() => {
         BrowserProxyClass.fromMap(proxyMap);
       }).toThrow('Unsupported proxy type: unsupported');
+    });
+
+    test('should deserialize managed sticky proxy correctly', () => {
+      const proxyMap = {
+        type: 'managed',
+        strategy: 'sticky',
+        userId: 'user123'
+      };
+
+      const proxy = BrowserProxyClass.fromMap(proxyMap);
+
+      expect(proxy).not.toBeNull();
+      expect(proxy?.type).toBe('managed');
+      expect(proxy?.strategy).toBe('sticky');
+      expect(proxy?.userId).toBe('user123');
+    });
+
+    test('should deserialize managed matched proxy correctly', () => {
+      const proxyMap = {
+        type: 'managed',
+        strategy: 'matched',
+        userId: 'user123',
+        isp: 'China Telecom',
+        country: 'China',
+        province: 'Beijing',
+        city: 'Beijing'
+      };
+
+      const proxy = BrowserProxyClass.fromMap(proxyMap);
+
+      expect(proxy).not.toBeNull();
+      expect(proxy?.type).toBe('managed');
+      expect(proxy?.strategy).toBe('matched');
+      expect(proxy?.userId).toBe('user123');
+      expect(proxy?.isp).toBe('China Telecom');
+      expect(proxy?.country).toBe('China');
+      expect(proxy?.province).toBe('Beijing');
+      expect(proxy?.city).toBe('Beijing');
     });
   });
 });
@@ -341,5 +486,110 @@ describe('BrowserOption with Proxies', () => {
     expect(() => {
       option.fromMap(browserOption as Record<string, any>);
     }).toThrow('proxies list length must be limited to 1');
+  });
+
+  test('should create BrowserOption with managed sticky proxy', () => {
+    const managedProxy = new BrowserProxyClass('managed', undefined, undefined, undefined, 'sticky', undefined, 'user123');
+    const browserOption: BrowserOption = {
+      useStealth: true,
+      userAgent: 'Managed Sticky Test Agent',
+      viewport: { width: 1920, height: 1080 },
+      screen: { width: 1920, height: 1080 },
+      fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['en-US'] },
+      proxies: [managedProxy]
+    };
+    const option = new BrowserOptionClass();
+    option.fromMap(browserOption as Record<string, any>);
+
+    expect(option.useStealth).toBe(true);
+    expect(option.userAgent).toBe('Managed Sticky Test Agent');
+    expect(option.proxies).toHaveLength(1);
+    expect(option.proxies?.[0].type).toBe('managed');
+    expect(option.proxies?.[0].strategy).toBe('sticky');
+    expect(option.proxies?.[0].userId).toBe('user123');
+  });
+
+  test('should create BrowserOption with managed matched proxy', () => {
+    const managedProxy = new BrowserProxyClass(
+      'managed',
+      undefined, undefined, undefined,
+      'matched',
+      undefined,
+      'user123',
+      'China Telecom',
+      'China',
+      'Beijing',
+      'Beijing'
+    );
+    const browserOption: BrowserOption = {
+      useStealth: false,
+      userAgent: 'Managed Matched Test Agent',
+      viewport: { width: 1366, height: 768 },
+      screen: { width: 1366, height: 768 },
+      fingerprint: { devices: ['desktop'], operatingSystems: ['linux'], locales: ['zh-CN'] },
+      proxies: [managedProxy]
+    };
+    const option = new BrowserOptionClass();
+    option.fromMap(browserOption as Record<string, any>);
+
+    expect(option.useStealth).toBe(false);
+    expect(option.userAgent).toBe('Managed Matched Test Agent');
+    expect(option.proxies).toHaveLength(1);
+    expect(option.proxies?.[0].type).toBe('managed');
+    expect(option.proxies?.[0].strategy).toBe('matched');
+    expect(option.proxies?.[0].userId).toBe('user123');
+    expect(option.proxies?.[0].isp).toBe('China Telecom');
+    expect(option.proxies?.[0].country).toBe('China');
+    expect(option.proxies?.[0].province).toBe('Beijing');
+    expect(option.proxies?.[0].city).toBe('Beijing');
+  });
+
+  test('should serialize BrowserOption with managed proxy correctly', () => {
+    const managedProxy = new BrowserProxyClass('managed', undefined, undefined, undefined, 'rotating', undefined, 'user123');
+    const browserOption: BrowserOption = {
+      useStealth: true,
+      userAgent: 'Managed Serialization Test Agent',
+      viewport: { width: 1280, height: 720 },
+      screen: { width: 1280, height: 720 },
+      fingerprint: { devices: ['desktop'], operatingSystems: ['macos'], locales: ['fr-FR'] },
+      proxies: [managedProxy]
+    };
+    const option = new BrowserOptionClass();
+    option.fromMap(browserOption as Record<string, any>);
+
+    const optionMap = option.toMap();
+
+    expect(optionMap.useStealth).toBe(true);
+    expect(optionMap.userAgent).toBe('Managed Serialization Test Agent');
+    expect(optionMap.proxies).toBeDefined();
+    expect(optionMap.proxies).toHaveLength(1);
+    expect(optionMap.proxies[0].type).toBe('managed');
+    expect(optionMap.proxies[0].strategy).toBe('rotating');
+    expect(optionMap.proxies[0].userId).toBe('user123');
+  });
+
+  test('should deserialize BrowserOption with managed proxy correctly', () => {
+    const browserOption: BrowserOption = {
+      useStealth: true,
+      userAgent: 'Managed Deserialization Test Agent',
+      viewport: { width: 1600, height: 900 },
+      screen: { width: 1600, height: 900 },
+      fingerprint: { devices: ['desktop'], operatingSystems: ['windows'], locales: ['de-DE'] },
+      proxies: [
+        new BrowserProxyClass('managed', undefined, undefined, undefined, 'polling', undefined, 'user123')
+      ]
+    };
+
+    const option = new BrowserOptionClass();
+    option.fromMap(browserOption as Record<string, any>);
+
+    expect(option.useStealth).toBe(true);
+    expect(option.userAgent).toBe('Managed Deserialization Test Agent');
+    expect(option.viewport?.width).toBe(1600);
+    expect(option.viewport?.height).toBe(900);
+    expect(option.proxies).toHaveLength(1);
+    expect(option.proxies?.[0].type).toBe('managed');
+    expect(option.proxies?.[0].strategy).toBe('polling');
+    expect(option.proxies?.[0].userId).toBe('user123');
   });
 }); 

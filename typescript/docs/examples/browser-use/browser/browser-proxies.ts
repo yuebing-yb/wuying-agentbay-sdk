@@ -2,7 +2,7 @@
  * Example demonstrating Browser Proxy configuration with AgentBay SDK.
  *
  * This example shows how to use proxy functionality with AgentBay SDK. 
- * AgentBay supports two types of proxies:
+ * AgentBay supports three types of proxies:
  *
  * 1. Custom Proxy:
  *    - Uses user-provided proxy servers
@@ -14,6 +14,15 @@
  *    - Supports two strategies:
  *      * restricted: Uses fixed proxy nodes
  *      * polling: Rotates through proxy pool nodes
+ *
+ * 3. Managed Proxy:
+ *    - Uses your own proxy resources managed by Wuying platform
+ *    - Note: Contact us or your account manager to set up your managed proxy pool
+ *    - Supports four strategies:
+ *      * polling: Round-robin selection, independent allocation per session
+ *      * sticky: Same userId always gets the same proxy IP
+ *      * rotating: Same userId gets different proxy IPs each time
+ *      * matched: Filter proxies by geographic and ISP attributes
  *
  * This example demonstrates:
  * - Create AIBrowser session with proxy configuration
@@ -101,6 +110,73 @@ async function main(): Promise<void> {
         //         return {
         //             type: this.type,
         //             strategy: this.strategy
+        //         };
+        //     }
+        // };
+
+        // ==================== Managed Proxy Examples ====================
+        // Note: Contact us or your account manager to set up your managed proxy pool first
+        
+        // Example 4: Managed Proxy - Polling Strategy
+        // const browserProxy: BrowserProxy = {
+        //     type: 'managed',
+        //     strategy: 'polling',
+        //     userId: 'user123',  // REQUIRED: independent allocation per session
+        //     toMap: function() {
+        //         return {
+        //             type: this.type,
+        //             strategy: this.strategy,
+        //             user_id: this.userId
+        //         };
+        //     }
+        // };
+        
+        // Example 5: Managed Proxy - Sticky Strategy
+        // const browserProxy: BrowserProxy = {
+        //     type: 'managed',
+        //     strategy: 'sticky',
+        //     userId: 'user123',  // REQUIRED: associates with historical allocations
+        //     toMap: function() {
+        //         return {
+        //             type: this.type,
+        //             strategy: this.strategy,
+        //             user_id: this.userId
+        //         };
+        //     }
+        // };
+        
+        // Example 6: Managed Proxy - Rotating Strategy
+        // const browserProxy: BrowserProxy = {
+        //     type: 'managed',
+        //     strategy: 'rotating',
+        //     userId: 'user123',  // REQUIRED: rotates from historical allocations
+        //     toMap: function() {
+        //         return {
+        //             type: this.type,
+        //             strategy: this.strategy,
+        //             user_id: this.userId
+        //         };
+        //     }
+        // };
+        
+        // Example 7: Managed Proxy - Matched Strategy
+        // const browserProxy: BrowserProxy = {
+        //     type: 'managed',
+        //     strategy: 'matched',
+        //     userId: 'user123',  // REQUIRED: independent allocation per session
+        //     isp: 'China Telecom',
+        //     country: 'China',
+        //     province: 'Beijing',
+        //     city: 'Beijing',
+        //     toMap: function() {
+        //         return {
+        //             type: this.type,
+        //             strategy: this.strategy,
+        //             user_id: this.userId,
+        //             isp: this.isp,
+        //             country: this.country,
+        //             province: this.province,
+        //             city: this.city
         //         };
         //     }
         // };

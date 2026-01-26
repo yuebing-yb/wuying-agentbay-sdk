@@ -911,15 +911,70 @@ session.getBrowser().initialize(option);
 
 ### Proxy Configuration
 
+AgentBay supports three types of proxies:
+- **Custom proxy**: User-provided proxy servers
+- **Wuying proxy**: Alibaba Cloud proxy service
+- **Managed proxy**: Client-provided proxies managed by Wuying platform
+
+> **📞 Note**: To use managed proxy, please contact us or your account manager to set up your proxy pool first.
+
+#### Custom Proxy
+
 ```java
-BrowserProxy proxy = new BrowserProxy();
-proxy.setType("http");
-proxy.setServer("proxy.example.com:8080");
-proxy.setUsername("user");
-proxy.setPassword("password");
+BrowserProxy proxy = new BrowserProxy("custom", "proxy.example.com:8080", "user", "password");
 
 BrowserOption option = new BrowserOption();
 option.setProxies(Arrays.asList(proxy));
+
+session.getBrowser().initialize(option);
+```
+
+#### Wuying Proxy
+
+```java
+// Polling strategy
+BrowserProxy wuyingProxy = new BrowserProxy("wuying", "polling", 10);
+
+// Restricted strategy
+// BrowserProxy wuyingProxy = new BrowserProxy("wuying", "restricted", 10);
+
+BrowserOption option = new BrowserOption();
+option.setProxies(Arrays.asList(wuyingProxy));
+
+session.getBrowser().initialize(option);
+```
+
+#### Managed Proxy
+
+**Parameters for managed proxy:**
+- `userId`: Custom user identifier for tracking proxy allocation records (**Required**)
+  - `sticky`/`rotating` strategies: Associates with historical allocations to maintain or rotate IPs per user
+  - `polling`/`matched` strategies: Each session gets an independent allocation
+- `isp`, `country`, `province`, `city`: Filters for matched strategy (at least one required for matched)
+
+```java
+// Sticky strategy - Same user always gets the same proxy
+BrowserProxy stickyProxy = new BrowserProxy("managed", "sticky", "user123", null, null, null, null);
+
+// Rotating strategy - Same user gets different proxies each time
+BrowserProxy rotatingProxy = new BrowserProxy("managed", "rotating", "user123", null, null, null, null);
+
+// Polling strategy - Round-robin from pool
+BrowserProxy pollingProxy = new BrowserProxy("managed", "polling", "user123", null, null, null, null);
+
+// Matched strategy - Filter by geography and ISP
+BrowserProxy matchedProxy = new BrowserProxy(
+    "managed", 
+    "matched", 
+    "user123", 
+    "China Telecom",  // isp
+    "China",          // country
+    "Beijing",        // province
+    "Beijing"         // city
+);
+
+BrowserOption option = new BrowserOption();
+option.setProxies(Arrays.asList(matchedProxy));
 
 session.getBrowser().initialize(option);
 ```

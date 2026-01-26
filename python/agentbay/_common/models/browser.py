@@ -32,45 +32,111 @@ class BrowserFingerprintContext:
 class BrowserProxy:
     """
     Browser proxy configuration.
-    Supports two types of proxy: custom proxy, wuying proxy.
-    wuying proxy support two strategies: restricted and polling.
+    Supports three types of proxy: custom proxy, wuying proxy, and managed proxy.
+    
+    - custom proxy: User-provided proxy server
+    - wuying proxy: Wuying built-in proxy service
+      * restricted: Fixed IP per session
+      * polling: Allocates multiple proxies per session (size controlled by pollsize)
+    - managed proxy: Client-provided proxies managed by Wuying platform
+      * polling: Allocates one proxy per session from pool (round-robin)
+      * sticky: Keep same IP for specific user
+      * rotating: Force different IP for specific user
+      * matched: Filter proxies by ISP/country/province/city attributes
+    
+    Note: The "polling" strategy has different semantics for wuying vs managed types.
     """
 
     def __init__(
         self,
-        proxy_type: Literal["custom", "wuying"],
+        proxy_type: Literal["custom", "wuying", "managed"],
         server: Optional[str] = None,
         username: Optional[str] = None,
         password: Optional[str] = None,
-        strategy: Optional[Literal["restricted", "polling"]] = None,
+        strategy: Optional[Literal["restricted", "polling", "sticky", "rotating", "matched"]] = None,
         pollsize: int = 10,
+        user_id: Optional[str] = None,
+        isp: Optional[str] = None,
+        country: Optional[str] = None,
+        province: Optional[str] = None,
+        city: Optional[str] = None,
     ):
         """
         Initialize a BrowserProxy.
 
         Args:
-            proxy_type: Type of proxy - "custom" or "wuying"
+            proxy_type: Type of proxy - "custom", "wuying", or "managed"
             server: Proxy server address (required for custom type)
             username: Proxy username (optional for custom type)
             password: Proxy password (optional for custom type)
-            strategy: Strategy for wuying support "restricted" and "polling"
-            pollsize: Pool size (optional for proxy_type wuying and strategy polling)
+            strategy: Proxy allocation strategy:
+                - For wuying: "restricted" (fixed IP) or "polling" (allocates multiple proxies per session)
+                - For managed: "polling" (allocates one proxy per session from pool), 
+                               "sticky" (keep same IP for user), 
+                               "rotating" (force different IP for user), 
+                               "matched" (filter by ISP/country/province/city attributes)
+            pollsize: Pool size for wuying polling strategy (default: 10). Not used for managed type.
+            user_id: Custom user identifier for tracking proxy allocation records (required for managed type).
+                     - sticky/rotating strategies: Associates with historical allocations to maintain or rotate IPs per user
+                     - polling/matched strategies: Each session gets an independent allocation
+            isp: ISP filter for managed matched strategy (e.g., "China Telecom", "China Unicom")
+            country: Country filter for managed matched strategy (e.g., "China", "United States")
+            province: Province filter for managed matched strategy (e.g., "Beijing", "Guangdong")
+            city: City filter for managed matched strategy (e.g., "Beijing", "Shenzhen")
 
-            example:
-            # custom proxy
-            proxy_type: custom
-            server: "127.0.0.1:9090"
-            username: "username"
-            password: "password"
+        Examples:
+            # Custom proxy
+            BrowserProxy(
+                proxy_type="custom",
+                server="127.0.0.1:9090",
+                username="username",
+                password="password"
+            )
 
-            # wuying proxy with polling strategy
-            proxy_type: wuying
-            strategy: "polling"
-            pollsize: 10
+            # Wuying proxy with polling strategy
+            BrowserProxy(
+                proxy_type="wuying",
+                strategy="polling",
+                pollsize=10
+            )
 
-            # wuying proxy with restricted strategy
-            proxy_type: wuying
-            strategy: "restricted"
+            # Wuying proxy with restricted strategy
+            BrowserProxy(
+                proxy_type="wuying",
+                strategy="restricted"
+            )
+
+            # Managed proxy with polling strategy (pool-based, one proxy per session)
+            BrowserProxy(
+                proxy_type="managed",
+                strategy="polling",
+                user_id="user123"
+            )
+
+            # Managed proxy with sticky strategy (user-based, keep same IP)
+            BrowserProxy(
+                proxy_type="managed",
+                strategy="sticky",
+                user_id="user123"
+            )
+
+            # Managed proxy with rotating strategy (user-based, force new IP)
+            BrowserProxy(
+                proxy_type="managed",
+                strategy="rotating",
+                user_id="user123"
+            )
+
+            # Managed proxy with matched strategy (pool-based, attribute filter)
+            BrowserProxy(
+                proxy_type="managed",
+                strategy="matched",
+                user_id="user123",
+                isp="China Telecom",
+                country="China",
+                province="Guangdong",
+                city="Shenzhen"
+            )
         """
         self.type = proxy_type
         self.server = server
@@ -78,24 +144,42 @@ class BrowserProxy:
         self.password = password
         self.strategy = strategy
         self.pollsize = pollsize
+        self.user_id = user_id
+        self.isp = isp
+        self.country = country
+        self.province = province
+        self.city = city
 
         # Validation
-        if proxy_type not in ["custom", "wuying"]:
-            raise ValueError("proxy_type must be custom or wuying")
+        if proxy_type not in ["custom", "wuying", "managed"]:
+            raise ValueError("proxy_type must be custom, wuying, or managed")
 
         if proxy_type == "custom" and not server:
             raise ValueError("server is required for custom proxy type")
 
-        if proxy_type == "wuying" and not strategy:
-            raise ValueError("strategy is required for wuying proxy type")
+        if proxy_type == "wuying":
+            if not strategy:
+                raise ValueError("strategy is required for wuying proxy type")
+            if strategy not in ["restricted", "polling"]:
+                raise ValueError(
+                    "strategy must be restricted or polling for wuying proxy type"
+                )
+            if strategy == "polling" and pollsize <= 0:
+                raise ValueError("pollsize must be greater than 0 for polling strategy")
 
-        if proxy_type == "wuying" and strategy not in ["restricted", "polling"]:
-            raise ValueError(
-                "strategy must be restricted or polling for wuying proxy type"
-            )
-
-        if proxy_type == "wuying" and strategy == "polling" and pollsize <= 0:
-            raise ValueError("pollsize must be greater than 0 for polling strategy")
+        if proxy_type == "managed":
+            if not strategy:
+                raise ValueError("strategy is required for managed proxy type")
+            if strategy not in ["polling", "sticky", "rotating", "matched"]:
+                raise ValueError(
+                    "strategy must be polling, sticky, rotating, or matched for managed proxy type"
+                )
+            # user_id is required for all managed proxy strategies
+            if not user_id:
+                raise ValueError("user_id is required for managed proxy type")
+            # Note: managed polling does not use pollsize (allocates one proxy per session from pool)
+            if strategy == "matched" and not (isp or country or province or city):
+                raise ValueError("At least one of isp, country, province, or city is required for matched strategy")
 
     def _to_map(self):
         """
@@ -123,6 +207,20 @@ class BrowserProxy:
             proxy_map["strategy"] = self.strategy
             if self.strategy == "polling":
                 proxy_map["pollsize"] = self.pollsize
+        elif self.type == "managed":
+            proxy_map["strategy"] = self.strategy
+            # Note: managed polling does not use pollsize (allocates one proxy per session)
+            # Only include pollsize for other strategies if provided
+            if self.user_id:
+                proxy_map["userId"] = self.user_id
+            if self.isp:
+                proxy_map["isp"] = self.isp
+            if self.country:
+                proxy_map["country"] = self.country
+            if self.province:
+                proxy_map["province"] = self.province
+            if self.city:
+                proxy_map["city"] = self.city
 
         return proxy_map
 
@@ -166,6 +264,17 @@ class BrowserProxy:
                 proxy_type=proxy_type,
                 strategy=m.get("strategy"),
                 pollsize=m.get("pollsize", 10),
+            )
+        elif proxy_type == "managed":
+            return cls(
+                proxy_type=proxy_type,
+                strategy=m.get("strategy"),
+                pollsize=m.get("pollsize", 10),
+                user_id=m.get("userId"),
+                isp=m.get("isp"),
+                country=m.get("country"),
+                province=m.get("province"),
+                city=m.get("city"),
             )
         else:
             raise ValueError(f"Unsupported proxy type: {proxy_type}")

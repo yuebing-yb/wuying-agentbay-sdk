@@ -3,7 +3,7 @@
 AgentBay SDK Browser Proxy Example
 
 This example demonstrates how to use proxy functionality with AgentBay SDK. 
-AgentBay supports two types of proxies:
+AgentBay supports three types of proxies:
 
 1. Custom Proxy:
    - Uses user-provided proxy servers
@@ -15,6 +15,15 @@ AgentBay supports two types of proxies:
    - Supports two strategies:
      * restricted: Uses fixed proxy nodes
      * polling: Rotates through proxy pool nodes
+
+3. Managed Proxy:
+   - Uses your own proxy resources managed by Wuying platform
+   - Note: Contact us or your account manager to set up your managed proxy pool
+   - Supports four strategies:
+     * polling: Round-robin selection, independent allocation per session
+     * sticky: Same user_id always gets the same proxy IP
+     * rotating: Same user_id gets different proxy IPs each time
+     * matched: Filter proxies by geographic and ISP attributes
 
 This example demonstrates:
 - Creating a browser session with proxy configuration
@@ -76,6 +85,41 @@ async def main():
         # browser_proxy = BrowserProxy(
         #     proxy_type="wuying",    # Proxy type: wuying proxy
         #     strategy="restricted"   # Strategy: restricted (fixed nodes)
+        # )
+
+        # ==================== Managed Proxy Examples ====================
+        # Note: Contact us or your account manager to set up your managed proxy pool first
+        
+        # Example 4: Managed Proxy - Polling Strategy
+        # browser_proxy = BrowserProxy(
+        #     proxy_type="managed",
+        #     strategy="polling",
+        #     user_id="user123"  # REQUIRED: independent allocation per session
+        # )
+        
+        # Example 5: Managed Proxy - Sticky Strategy
+        # browser_proxy = BrowserProxy(
+        #     proxy_type="managed",
+        #     strategy="sticky",
+        #     user_id="user123"  # REQUIRED: associates with historical allocations
+        # )
+        
+        # Example 6: Managed Proxy - Rotating Strategy
+        # browser_proxy = BrowserProxy(
+        #     proxy_type="managed",
+        #     strategy="rotating",
+        #     user_id="user123"  # REQUIRED: rotates from historical allocations
+        # )
+        
+        # Example 7: Managed Proxy - Matched Strategy
+        # browser_proxy = BrowserProxy(
+        #     proxy_type="managed",
+        #     strategy="matched",
+        #     user_id="user123",  # REQUIRED: independent allocation per session
+        #     isp="China Telecom",
+        #     country="China",
+        #     province="Beijing",
+        #     city="Beijing"
         # )
 
         # Create browser options with proxy configuration, now only support one proxy

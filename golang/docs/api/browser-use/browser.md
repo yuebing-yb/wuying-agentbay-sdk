@@ -275,17 +275,32 @@ option.UseStealth = true
 
 ```go
 type BrowserProxy struct {
-	Type		string	`json:"type"`			// Type of proxy - "custom" or "wuying"
+	Type		string	`json:"type"`			// Type of proxy - "custom", "wuying", or "managed"
 	Server		*string	`json:"server,omitempty"`	// Proxy server address (required for custom type)
 	Username	*string	`json:"username,omitempty"`	// Proxy username (optional for custom type)
 	Password	*string	`json:"password,omitempty"`	// Proxy password (optional for custom type)
-	Strategy	*string	`json:"strategy,omitempty"`	// Strategy for wuying: "restricted" or "polling"
+	Strategy	*string	`json:"strategy,omitempty"`	// Strategy for wuying: "restricted" or "polling"; for managed: "polling", "sticky", "rotating", "matched"
 	PollSize	*int	`json:"pollsize,omitempty"`	// Pool size (optional for wuying with polling strategy)
+	UserID		*string	`json:"user_id,omitempty"`	// Custom user identifier for tracking proxy allocation records (required for managed type)
+	ISP		*string	`json:"isp,omitempty"`		// ISP filter (optional for managed matched strategy)
+	Country		*string	`json:"country,omitempty"`	// Country filter (optional for managed matched strategy)
+	Province	*string	`json:"province,omitempty"`	// Province filter (optional for managed matched strategy)
+	City		*string	`json:"city,omitempty"`		// City filter (optional for managed matched strategy)
 }
 ```
 
-BrowserProxy represents browser proxy configuration. Supports two types of proxy: custom proxy and
-wuying proxy. Wuying proxy supports two strategies: restricted and polling.
+BrowserProxy represents browser proxy configuration. Supports three types of proxy:
+- **Custom proxy**: User-provided proxy servers
+- **Wuying proxy**: Alibaba Cloud proxy service (strategies: restricted, polling)
+- **Managed proxy**: Client-provided proxies managed by Wuying platform (strategies: polling, sticky, rotating, matched)
+
+> **📞 Note**: To use managed proxy, please contact us or your account manager to set up your proxy pool first.
+
+**Parameters for managed proxy:**
+- `UserID`: Custom user identifier for tracking proxy allocation records (**Required** for managed type)
+  - `sticky`/`rotating` strategies: Associates with historical allocations to maintain or rotate IPs per user
+  - `polling`/`matched` strategies: Each session gets an independent allocation
+- `ISP`, `Country`, `Province`, `City`: Filters for matched strategy (at least one required for matched)
 
 **Example:**
 
@@ -319,6 +334,31 @@ pollingProxy := &browser.BrowserProxy{
     Strategy: &pollingStrategy,
     PollSize: &pollSize,
 }
+
+// Managed proxy with sticky strategy
+
+managedStrategy := "sticky"
+userID := "user123"
+managedProxy := &browser.BrowserProxy{
+    Type:     "managed",
+    Strategy: &managedStrategy,
+    UserID:   &userID,
+}
+
+// Managed proxy with matched strategy
+
+matchedStrategy := "matched"
+isp := "China Telecom"
+country := "China"
+province := "Beijing"
+matchedProxy := &browser.BrowserProxy{
+    Type:     "managed",
+    Strategy: &matchedStrategy,
+    UserID:   &userID,
+    ISP:      &isp,
+    Country:  &country,
+    Province: &province,
+}
 ```
 
 ### Related Functions
@@ -326,7 +366,7 @@ pollingProxy := &browser.BrowserProxy{
 ### NewBrowserProxy
 
 ```go
-func NewBrowserProxy(proxyType string, server, username, password, strategy *string, pollSize *int) (*BrowserProxy, error)
+func NewBrowserProxy(proxyType string, server, username, password, strategy *string, pollSize *int, userID, isp, country, province, city *string) (*BrowserProxy, error)
 ```
 
 NewBrowserProxy creates a new BrowserProxy with validation

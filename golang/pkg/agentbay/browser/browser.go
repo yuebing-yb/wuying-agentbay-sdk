@@ -11,8 +11,10 @@ import (
 )
 
 // BrowserProxy represents browser proxy configuration.
-// Supports two types of proxy: custom proxy and wuying proxy.
-// Wuying proxy supports two strategies: restricted and polling.
+// Supports three types of proxy: custom proxy, wuying proxy, and managed proxy.
+// - Custom proxy: User-provided proxy servers
+// - Wuying proxy: Alibaba Cloud proxy service (strategies: restricted, polling)
+// - Managed proxy: Client-provided proxies managed by Wuying platform (strategies: polling, sticky, rotating, matched)
 //
 // Example:
 //
@@ -42,17 +44,45 @@ import (
 //	    Strategy: &pollingStrategy,
 //	    PollSize: &pollSize,
 //	}
+//
+//	// Managed proxy with sticky strategy
+//	managedStrategy := "sticky"
+//	userID := "user123"
+//	managedProxy := &browser.BrowserProxy{
+//	    Type:     "managed",
+//	    Strategy: &managedStrategy,
+//	    UserID:   &userID,
+//	}
+//
+//	// Managed proxy with matched strategy
+//	matchedStrategy := "matched"
+//	isp := "China Telecom"
+//	country := "China"
+//	province := "Beijing"
+//	matchedProxy := &browser.BrowserProxy{
+//	    Type:     "managed",
+//	    Strategy: &matchedStrategy,
+//	    UserID:   &userID,
+//	    ISP:      &isp,
+//	    Country:  &country,
+//	    Province: &province,
+//	}
 type BrowserProxy struct {
-	Type     string  `json:"type"`               // Type of proxy - "custom" or "wuying"
+	Type     string  `json:"type"`               // Type of proxy - "custom", "wuying", or "managed"
 	Server   *string `json:"server,omitempty"`   // Proxy server address (required for custom type)
 	Username *string `json:"username,omitempty"` // Proxy username (optional for custom type)
 	Password *string `json:"password,omitempty"` // Proxy password (optional for custom type)
-	Strategy *string `json:"strategy,omitempty"` // Strategy for wuying: "restricted" or "polling"
+	Strategy *string `json:"strategy,omitempty"` // Strategy for wuying: "restricted" or "polling"; for managed: "polling", "sticky", "rotating", "matched"
 	PollSize *int    `json:"pollsize,omitempty"` // Pool size (optional for wuying with polling strategy)
+	UserID   *string `json:"user_id,omitempty"`  // Custom user identifier for tracking proxy allocation records (required for managed type)
+	ISP      *string `json:"isp,omitempty"`      // ISP filter (optional for managed matched strategy)
+	Country  *string `json:"country,omitempty"`  // Country filter (optional for managed matched strategy)
+	Province *string `json:"province,omitempty"` // Province filter (optional for managed matched strategy)
+	City     *string `json:"city,omitempty"`     // City filter (optional for managed matched strategy)
 }
 
 // NewBrowserProxy creates a new BrowserProxy with validation
-func NewBrowserProxy(proxyType string, server, username, password, strategy *string, pollSize *int) (*BrowserProxy, error) {
+func NewBrowserProxy(proxyType string, server, username, password, strategy *string, pollSize *int, userID, isp, country, province, city *string) (*BrowserProxy, error) {
 	proxy := &BrowserProxy{
 		Type:     proxyType,
 		Server:   server,
@@ -60,27 +90,47 @@ func NewBrowserProxy(proxyType string, server, username, password, strategy *str
 		Password: password,
 		Strategy: strategy,
 		PollSize: pollSize,
+		UserID:   userID,
+		ISP:      isp,
+		Country:  country,
+		Province: province,
+		City:     city,
 	}
 
 	// Validation
-	if proxyType != "custom" && proxyType != "wuying" {
-		return nil, errors.New("proxy_type must be custom or wuying")
+	if proxyType != "custom" && proxyType != "wuying" && proxyType != "managed" {
+		return nil, errors.New("proxy_type must be custom, wuying, or managed")
 	}
 
 	if proxyType == "custom" && (server == nil || *server == "") {
 		return nil, errors.New("server is required for custom proxy type")
 	}
 
-	if proxyType == "wuying" && (strategy == nil || *strategy == "") {
-		return nil, errors.New("strategy is required for wuying proxy type")
+	if proxyType == "wuying" {
+		if strategy == nil || *strategy == "" {
+			return nil, errors.New("strategy is required for wuying proxy type")
+		}
+		if *strategy != "restricted" && *strategy != "polling" {
+			return nil, errors.New("strategy must be restricted or polling for wuying proxy type")
+		}
+		if *strategy == "polling" && pollSize != nil && *pollSize <= 0 {
+			return nil, errors.New("pollsize must be greater than 0 for polling strategy")
+		}
 	}
 
-	if proxyType == "wuying" && strategy != nil && *strategy != "restricted" && *strategy != "polling" {
-		return nil, errors.New("strategy must be restricted or polling for wuying proxy type")
-	}
-
-	if proxyType == "wuying" && strategy != nil && *strategy == "polling" && pollSize != nil && *pollSize <= 0 {
-		return nil, errors.New("pollsize must be greater than 0 for polling strategy")
+	if proxyType == "managed" {
+		if strategy == nil || *strategy == "" {
+			return nil, errors.New("strategy is required for managed proxy type")
+		}
+		if *strategy != "polling" && *strategy != "sticky" && *strategy != "rotating" && *strategy != "matched" {
+			return nil, errors.New("strategy must be polling, sticky, rotating, or matched for managed proxy type")
+		}
+		if userID == nil || *userID == "" {
+			return nil, errors.New("user_id is required for managed proxy type")
+		}
+		if *strategy == "matched" && (isp == nil || *isp == "") && (country == nil || *country == "") && (province == nil || *province == "") && (city == nil || *city == "") {
+			return nil, errors.New("at least one of isp, country, province, or city is required for matched strategy")
+		}
 	}
 
 	return proxy, nil
@@ -108,6 +158,25 @@ func (p *BrowserProxy) toMap() map[string]interface{} {
 		}
 		if p.Strategy != nil && *p.Strategy == "polling" && p.PollSize != nil {
 			proxyMap["pollsize"] = *p.PollSize
+		}
+	} else if p.Type == "managed" {
+		if p.Strategy != nil {
+			proxyMap["strategy"] = *p.Strategy
+		}
+		if p.UserID != nil {
+			proxyMap["userId"] = *p.UserID
+		}
+		if p.ISP != nil {
+			proxyMap["isp"] = *p.ISP
+		}
+		if p.Country != nil {
+			proxyMap["country"] = *p.Country
+		}
+		if p.Province != nil {
+			proxyMap["province"] = *p.Province
+		}
+		if p.City != nil {
+			proxyMap["city"] = *p.City
 		}
 	}
 

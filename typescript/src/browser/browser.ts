@@ -58,30 +58,45 @@ export class BrowserFingerprintContext {
 }
 
 export interface BrowserProxy {
-  type: 'custom' | 'wuying';
+  type: 'custom' | 'wuying' | 'managed';
   server?: string;
   username?: string;
   password?: string;
-  strategy?: 'restricted' | 'polling';
+  strategy?: 'restricted' | 'polling' | 'sticky' | 'rotating' | 'matched';
   pollsize?: number;
+  userId?: string;
+  isp?: string;
+  country?: string;
+  province?: string;
+  city?: string;
   toMap(): Record<string, any>;
 }
 
 export class BrowserProxyClass implements BrowserProxy {
-  type: 'custom' | 'wuying';
+  type: 'custom' | 'wuying' | 'managed';
   server?: string;
   username?: string;
   password?: string;
-  strategy?: 'restricted' | 'polling';
+  strategy?: 'restricted' | 'polling' | 'sticky' | 'rotating' | 'matched';
   pollsize?: number;
+  userId?: string;
+  isp?: string;
+  country?: string;
+  province?: string;
+  city?: string;
 
   constructor(
-    proxyType: 'custom' | 'wuying',
+    proxyType: 'custom' | 'wuying' | 'managed',
     server?: string,
     username?: string,
     password?: string,
-    strategy?: 'restricted' | 'polling',
-    pollsize?: number
+    strategy?: 'restricted' | 'polling' | 'sticky' | 'rotating' | 'matched',
+    pollsize?: number,
+    userId?: string,
+    isp?: string,
+    country?: string,
+    province?: string,
+    city?: string
   ) {
     this.type = proxyType;
     this.server = server;
@@ -89,26 +104,46 @@ export class BrowserProxyClass implements BrowserProxy {
     this.password = password;
     this.strategy = strategy;
     this.pollsize = pollsize;
+    this.userId = userId;
+    this.isp = isp;
+    this.country = country;
+    this.province = province;
+    this.city = city;
 
     // Validation
-    if (proxyType !== 'custom' && proxyType !== 'wuying') {
-      throw new Error('proxy_type must be custom or wuying');
+    if (proxyType !== 'custom' && proxyType !== 'wuying' && proxyType !== 'managed') {
+      throw new Error('proxy_type must be custom, wuying, or managed');
     }
 
     if (proxyType === 'custom' && !server) {
       throw new Error('server is required for custom proxy type');
     }
 
-    if (proxyType === 'wuying' && !strategy) {
-      throw new Error('strategy is required for wuying proxy type');
+    if (proxyType === 'wuying') {
+      if (!strategy) {
+        throw new Error('strategy is required for wuying proxy type');
+      }
+      if (strategy !== 'restricted' && strategy !== 'polling') {
+        throw new Error('strategy must be restricted or polling for wuying proxy type');
+      }
+      if (strategy === 'polling' && pollsize !== undefined && pollsize <= 0) {
+        throw new Error('pollsize must be greater than 0 for polling strategy');
+      }
     }
 
-    if (proxyType === 'wuying' && strategy !== 'restricted' && strategy !== 'polling') {
-      throw new Error('strategy must be restricted or polling for wuying proxy type');
-    }
-
-    if (proxyType === 'wuying' && strategy === 'polling' && pollsize !== undefined && pollsize <= 0) {
-      throw new Error('pollsize must be greater than 0 for polling strategy');
+    if (proxyType === 'managed') {
+      if (!strategy) {
+        throw new Error('strategy is required for managed proxy type');
+      }
+      if (strategy !== 'polling' && strategy !== 'sticky' && strategy !== 'rotating' && strategy !== 'matched') {
+        throw new Error('strategy must be polling, sticky, rotating, or matched for managed proxy type');
+      }
+      if (!userId) {
+        throw new Error('userId is required for managed proxy type');
+      }
+      if (strategy === 'matched' && !isp && !country && !province && !city) {
+        throw new Error('at least one of isp, country, province, or city is required for matched strategy');
+      }
     }
   }
 
@@ -129,6 +164,23 @@ export class BrowserProxyClass implements BrowserProxy {
       proxyMap.strategy = this.strategy;
       if (this.strategy === 'polling') {
         proxyMap.pollsize = this.pollsize;
+      }
+    } else if (this.type === 'managed') {
+      proxyMap.strategy = this.strategy;
+      if (this.userId) {
+        proxyMap.userId = this.userId;
+      }
+      if (this.isp) {
+        proxyMap.isp = this.isp;
+      }
+      if (this.country) {
+        proxyMap.country = this.country;
+      }
+      if (this.province) {
+        proxyMap.province = this.province;
+      }
+      if (this.city) {
+        proxyMap.city = this.city;
       }
     }
 
@@ -160,6 +212,20 @@ export class BrowserProxyClass implements BrowserProxy {
         undefined,
         m.strategy,
         m.pollsize || 10
+      );
+    } else if (proxyType === 'managed') {
+      return new BrowserProxyClass(
+        proxyType,
+        undefined,
+        undefined,
+        undefined,
+        m.strategy,
+        undefined,
+        m.userId,
+        m.isp,
+        m.country,
+        m.province,
+        m.city
       );
     } else {
       throw new Error(`Unsupported proxy type: ${proxyType}`);
