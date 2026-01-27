@@ -42,7 +42,7 @@ class TestBrowser(unittest.TestCase):
         # Ideally we mock what Browser calls.
         # Browser (sync) calls session.client.init_browser (sync) presumably.
         self.browser = Browser(self.mock_session)
-        self.browser.agent = MagicMock()
+        self.browser.operator = MagicMock()
 
     def test_initialize(self):
         """Test initialize method."""
@@ -327,9 +327,9 @@ class TestBrowser(unittest.TestCase):
             "body": {"Data": {"Port": 9333}}
         }
         self.browser.initialize(BrowserOption())
-        # self.browser.agent is MagicMock in setUp
-        self.browser.agent.act(ActOptions(action="Click search button"), page)
-        self.browser.agent.act.assert_called()
+        # self.browser.operator is MagicMock in setUp
+        self.browser.operator.act(ActOptions(action="Click search button"), page)
+        self.browser.operator.act.assert_called()
 
     def test_observe(self):
         """Test observe method."""
@@ -338,10 +338,10 @@ class TestBrowser(unittest.TestCase):
             "body": {"Data": {"Port": 9333}}
         }
         self.browser.initialize(BrowserOption())
-        self.browser.agent.observe(
+        self.browser.operator.observe(
             ObserveOptions(instruction="Find the search button"), page
         )
-        self.browser.agent.observe.assert_called()
+        self.browser.operator.observe.assert_called()
 
     def test_extract(self):
         """Test extract method."""
@@ -350,10 +350,10 @@ class TestBrowser(unittest.TestCase):
             "body": {"Data": {"Port": 9333}}
         }
         self.browser.initialize(BrowserOption())
-        self.browser.agent.extract(
+        self.browser.operator.extract(
             ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page
         )
-        self.browser.agent.extract.assert_called()
+        self.browser.operator.extract.assert_called()
 
 
 class TestAsyncBrowser(unittest.TestCase):
@@ -368,11 +368,11 @@ class TestAsyncBrowser(unittest.TestCase):
             "body": {"Data": {"Port": 9333}}
         }
         self.mock_session._get_client.return_value = mock_client
-        # Mock session.call_mcp_tool as it is used by agent
+        # Mock session.call_mcp_tool as it is used by operator
         self.mock_session.call_mcp_tool = MagicMock()
 
         self.browser = Browser(self.mock_session)
-        # We are testing real AsyncBrowserAgent, so we don't mock self.browser.agent
+        # We are testing real AsyncBrowserOperator, so we don't mock self.browser.operator
         # But we need to ensure dependencies work.
 
     def test_initialize_async(self):
@@ -402,7 +402,7 @@ class TestAsyncBrowser(unittest.TestCase):
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
         with patch("time.sleep", new=MagicMock(return_value=None)):
-            self.browser.agent.act(ActOptions(action="Click search button"), page)
+            self.browser.operator.act(ActOptions(action="Click search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_observe_async(self):
@@ -422,7 +422,7 @@ class TestAsyncBrowser(unittest.TestCase):
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
         with patch("time.sleep", new=MagicMock(return_value=None)):
-            self.browser.agent.observe(ObserveOptions(instruction="Find the search button"), page)
+            self.browser.operator.observe(ObserveOptions(instruction="Find the search button"), page)
         self.mock_session.call_mcp_tool.assert_called()
 
     def test_extract_async(self):
@@ -443,7 +443,7 @@ class TestAsyncBrowser(unittest.TestCase):
         self.mock_session.call_mcp_tool.side_effect = [response1, response2]
 
         with patch("time.sleep", new=MagicMock(return_value=None)):
-            self.browser.agent.extract(ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page)
+            self.browser.operator.extract(ExtractOptions(instruction="Extract the title", schema=SchemaForTest), page)
         self.mock_session.call_mcp_tool.assert_called()
 
 

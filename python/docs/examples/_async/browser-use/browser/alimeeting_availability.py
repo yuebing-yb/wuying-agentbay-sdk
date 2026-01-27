@@ -22,22 +22,22 @@ async def main():
     session = session_result.session
     try:
         assert await session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
-        await agent.navigate("https://meeting.alibaba-inc.com/")
-        await agent.act(
+        operator = session.browser.operator
+        await operator.navigate("https://meeting.alibaba-inc.com/")
+        await operator.act(
             ActOptions(
                 action="帮我登陆",
                 variables={"用户名": "xxxx", "密码": "123456"},
             )
         )
-        await agent.act(
+        await operator.act(
             ActOptions(
                 action="帮我找下下周三朝阳科技园C3六楼10点到12点有没有可用的会议室，如果有弹窗，帮我关掉",
             )
         )
         await asyncio.sleep(2)
     finally:
-        await session.browser.agent.close()
+        await session.browser.operator.close()
         await agent_bay.delete(session)
 
 

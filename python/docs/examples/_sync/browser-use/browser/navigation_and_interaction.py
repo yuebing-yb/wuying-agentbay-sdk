@@ -55,38 +55,38 @@ def main():
 
         # Navigate to a test page
         print("\n1. Navigating to example.com...")
-        session.browser.agent.navigate("https://example.com")
+        session.browser.operator.navigate("https://example.com")
         print("Navigation successful")
 
         # Take a screenshot
         print("\n2. Taking screenshot...")
-        screenshot_path = session.browser.agent.screenshot()
+        screenshot_path = session.browser.operator.screenshot()
         print(f"Screenshot saved to: {screenshot_path}")
 
         # Navigate to another page
         print("\n3. Navigating to httpbin.org/forms/post...")
-        session.browser.agent.navigate("https://httpbin.org/forms/post")
+        session.browser.operator.navigate("https://httpbin.org/forms/post")
 
         # Interact with form elements
         print("\n4. Filling form...")
-        session.browser.agent.act(ActOptions(action="Fill in the customer name field with 'John Doe'"))
-        session.browser.agent.act(ActOptions(action="Fill in the telephone field with '1234567890'"))
-        session.browser.agent.act(ActOptions(action="Fill in the email field with 'john@example.com'"))
+        session.browser.operator.act(ActOptions(action="Fill in the customer name field with 'John Doe'"))
+        session.browser.operator.act(ActOptions(action="Fill in the telephone field with '1234567890'"))
+        session.browser.operator.act(ActOptions(action="Fill in the email field with 'john@example.com'"))
         print("Form filled successfully")
 
         # Navigate back
         print("\n5. Navigating back...")
-        session.browser.agent.navigate("back")
+        session.browser.operator.navigate("back")
         print("Navigated back to previous page")
 
         # Navigate forward
         print("\n6. Navigating forward...")
-        session.browser.agent.navigate("forward")
+        session.browser.operator.navigate("forward")
         print("Navigated forward")
 
         # Get current URL
         print("\n7. Extracting current URL...")
-        success, url_result = session.browser.agent.extract(ExtractOptions(
+        success, url_result = session.browser.operator.extract(ExtractOptions(
             instruction="What is the current page URL?",
             schema=TextContent
         ))
@@ -97,7 +97,7 @@ def main():
 
         # Verify page state
         print("\n8. Verifying page state...")
-        success2, state_result = session.browser.agent.extract(ExtractOptions(
+        success2, state_result = session.browser.operator.extract(ExtractOptions(
             instruction="Is there a form on this page?",
             schema=TextContent
         ))

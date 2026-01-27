@@ -54,10 +54,10 @@ def main():
 
         # Create a page with iframes
         print("\n1. Creating test page with iframes...")
-        session.browser.agent.navigate("https://example.com")
+        session.browser.operator.navigate("https://example.com")
 
         # Add iframe via JavaScript
-        session.browser.agent.act(ActOptions(
+        session.browser.operator.act(ActOptions(
             action="Execute JavaScript to add an iframe: "
             "var iframe = document.createElement('iframe'); "
             "iframe.src = 'https://httpbin.org/html'; "
@@ -70,12 +70,12 @@ def main():
 
         # Take screenshot
         print("\n2. Taking screenshot with iframe...")
-        screenshot_path = session.browser.agent.screenshot()
+        screenshot_path = session.browser.operator.screenshot()
         print(f"Screenshot saved: {screenshot_path}")
 
         # Detect iframes
         print("\n3. Detecting iframes on page...")
-        success, iframe_result = session.browser.agent.extract(ExtractOptions(
+        success, iframe_result = session.browser.operator.extract(ExtractOptions(
             instruction="Are there any iframes on this page? How many?",
             schema=TextContent
         ))
@@ -86,7 +86,7 @@ def main():
 
         # Get iframe information
         print("\n4. Getting iframe information...")
-        success, iframe_info = session.browser.agent.extract(ExtractOptions(
+        success, iframe_info = session.browser.operator.extract(ExtractOptions(
             instruction="What is the source URL of the iframe?",
             schema=TextContent
         ))
@@ -97,12 +97,12 @@ def main():
 
         # Switch to iframe context
         print("\n5. Switching to iframe context...")
-        session.browser.agent.act(ActOptions(action="Focus on the iframe content"))
+        session.browser.operator.act(ActOptions(action="Focus on the iframe content"))
         print("Switched to iframe context")
 
         # Extract content from iframe
         print("\n6. Extracting content from iframe...")
-        success, iframe_content = session.browser.agent.extract(ExtractOptions(
+        success, iframe_content = session.browser.operator.extract(ExtractOptions(
             instruction="What content is displayed inside the iframe?",
             schema=TextContent
         ))
@@ -113,17 +113,17 @@ def main():
 
         # Interact with iframe content
         print("\n7. Interacting with iframe content...")
-        session.browser.agent.act(ActOptions(action="Scroll down within the iframe"))
+        session.browser.operator.act(ActOptions(action="Scroll down within the iframe"))
         print("Scrolled within iframe")
 
         # Switch back to main context
         print("\n8. Switching back to main context...")
-        session.browser.agent.act(ActOptions(action="Switch focus back to the main page"))
+        session.browser.operator.act(ActOptions(action="Switch focus back to the main page"))
         print("Switched back to main context")
 
         # Verify we're back in main context
         print("\n9. Verifying main context...")
-        success, main_content = session.browser.agent.extract(ExtractOptions(
+        success, main_content = session.browser.operator.extract(ExtractOptions(
             instruction="What is the main page title (not the iframe)?",
             schema=TextContent
         ))
@@ -134,7 +134,7 @@ def main():
 
         # Test nested iframes
         print("\n10. Testing nested iframes...")
-        session.browser.agent.act(ActOptions(
+        session.browser.operator.act(ActOptions(
             action="Execute JavaScript to add a nested iframe: "
             "var iframes = document.getElementsByTagName('iframe'); "
             "if (iframes.length > 0) { "
@@ -149,7 +149,7 @@ def main():
 
         # Count total iframes
         print("\n11. Counting total iframes...")
-        success, total_iframes = session.browser.agent.extract(ExtractOptions(
+        success, total_iframes = session.browser.operator.extract(ExtractOptions(
             instruction="How many iframes are now on the page?",
             schema=TextContent
         ))

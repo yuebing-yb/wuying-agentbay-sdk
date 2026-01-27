@@ -63,23 +63,23 @@ def main():
 
         # Navigate to file upload test page
         print("\n2. Navigating to file upload test page...")
-        session.browser.agent.navigate("https://httpbin.org/forms/post")
+        session.browser.operator.navigate("https://httpbin.org/forms/post")
 
         # Upload file (note: actual file upload may require specific handling)
         print("\n3. Preparing file for upload...")
         # In a real scenario, you would use the browser's file upload mechanism
         # This is a demonstration of the workflow
-        session.browser.agent.act(ActOptions(action="Locate the file upload input field"))
+        session.browser.operator.act(ActOptions(action="Locate the file upload input field"))
         print("File upload field located")
 
         # Download a file
         print("\n4. Navigating to download test page...")
-        session.browser.agent.navigate("https://httpbin.org/image/png")
+        session.browser.operator.navigate("https://httpbin.org/image/png")
         print("Navigated to image download page")
 
         # Take screenshot of the downloaded content
         print("\n5. Taking screenshot of downloaded content...")
-        screenshot_path = session.browser.agent.screenshot()
+        screenshot_path = session.browser.operator.screenshot()
         print(f"Screenshot saved: {screenshot_path}")
 
         # Verify file operations
@@ -89,12 +89,12 @@ def main():
 
         # Test downloading text content
         print("\n7. Testing text content download...")
-        session.browser.agent.navigate("https://httpbin.org/robots.txt")
+        session.browser.operator.navigate("https://httpbin.org/robots.txt")
         extract_options = ExtractOptions(
             instruction="What is the content of this page?", 
             schema=TextContent
         )
-        success, content_result = session.browser.agent.extract(extract_options)
+        success, content_result = session.browser.operator.extract(extract_options)
         if success:
             print(f"Downloaded content:\n{content_result.content}")
             content_to_save = content_result.content

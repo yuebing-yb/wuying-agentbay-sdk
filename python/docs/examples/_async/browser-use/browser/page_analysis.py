@@ -52,11 +52,11 @@ async def main():
 
         # Navigate to a page
         print("\n1. Navigating to example.com...")
-        await session.browser.agent.navigate("https://example.com")
+        await session.browser.operator.navigate("https://example.com")
 
         # Extract page title
         print("\n2. Extracting page title...")
-        success, title_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent,timeout=600))
+        success, title_result = await session.browser.operator.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent,timeout=600))
         if success:
             print(f"Page title: {title_result.content}")
         else:
@@ -64,7 +64,7 @@ async def main():
 
         # Extract page description
         print("\n3. Extracting page description...")
-        success, desc_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the main content or description on this page?", schema=TextContent,timeout=600))
+        success, desc_result = await session.browser.operator.extract(ExtractOptions(instruction="What is the main content or description on this page?", schema=TextContent,timeout=600))
         if success:
             print(f"Page description: {desc_result.content}")
         else:
@@ -72,11 +72,11 @@ async def main():
 
         # Navigate to a more complex page
         print("\n4. Navigating to www.baidu.com...")
-        await session.browser.agent.navigate("https://www.baidu.com")
+        await session.browser.operator.navigate("https://www.baidu.com")
 
         # Extract structured data
         print("\n5. Extracting top 5 story titles...")
-        success, stories_result = await session.browser.agent.extract(ExtractOptions(
+        success, stories_result = await session.browser.operator.extract(ExtractOptions(
             instruction="List the titles of the top 5 stories on the page",
             schema=TextContent,
             timeout=600
@@ -88,7 +88,7 @@ async def main():
 
         # Analyze page structure
         print("\n6. Analyzing page structure...")
-        success, structure_result = await session.browser.agent.extract(ExtractOptions(
+        success, structure_result = await session.browser.operator.extract(ExtractOptions(
             instruction="Describe the main sections and layout of this page",
             schema=TextContent,
             timeout=600
@@ -100,7 +100,7 @@ async def main():
 
         # Find specific elements
         print("\n7. Finding navigation elements...")
-        success, nav_result = await session.browser.agent.extract(ExtractOptions(
+        success, nav_result = await session.browser.operator.extract(ExtractOptions(
             instruction="What navigation options are available on this page?",
             schema=TextContent,
             timeout=600
@@ -112,7 +112,7 @@ async def main():
 
         # Extract metadata
         print("\n8. Extracting page metadata...")
-        success, meta_result = await session.browser.agent.extract(ExtractOptions(
+        success, meta_result = await session.browser.operator.extract(ExtractOptions(
             instruction="What is the page URL and any visible metadata?",
             schema=TextContent,
             timeout=600

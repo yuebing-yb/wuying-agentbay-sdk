@@ -40,13 +40,13 @@ async def main():
 
     try:
         assert await session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
-        await agent.navigate(url="https://www.baidu.com/")
+        operator = session.browser.operator
+        await operator.navigate(url="https://www.baidu.com/")
 
-        await agent.act(ActOptions(action="搜索框输入小米手机，并回车"))
-        await agent.act(ActOptions(action="点击 资讯（或 新闻/资讯 tab）"))
+        await operator.act(ActOptions(action="搜索框输入小米手机，并回车"))
+        await operator.act(ActOptions(action="点击 资讯（或 新闻/资讯 tab）"))
 
-        ok, results = await agent.extract(
+        ok, results = await operator.extract(
             ExtractOptions(
                 instruction="提取搜索结果中所有的标题和链接",
                 schema=PageLinkList,
@@ -58,7 +58,7 @@ async def main():
         logger.info("Final extract results count=%d", len(results.results))
 
         await asyncio.sleep(1)
-        await agent.close()
+        await operator.close()
 
     finally:
         await agent_bay.delete(session)

@@ -23,7 +23,7 @@ The Agentbay AIBrowser API offers simple primitives to control browsers, practic
 - Secure and scalable infrastructure: Managed sessions, isolation, and elastic resource allocation
 - Observability: Session Replay, Session Inspector, and Live Mode for real-time debugging
 - Advanced capabilities: Context management, IP proxy, and stealth/fingerprinting options
-- AI-powered PageUseAgent: Execute natural-language tasks for complex web workflows
+- AI-powered BrowserOperator: Execute natural-language tasks for complex web workflows
 - Rich APIs: Clean primitives for sessions, browser lifecycle, and agent operations
 
 ### Quick Start (Python)
@@ -436,11 +436,11 @@ The `browser_type` (Python), `browserType` (TypeScript), or `BrowserType` (Golan
 
 If you want to explore more configurable capabilities, see Core Features: [core-features.md](core-features.md).
 
-## Utilizing PageUseAgent
+## Utilizing BrowserOperator
 
-PageUseAgent lets you speak to the browser in natural language and have it carry out intent-driven actions. Instead of meticulously crafting selectors and sequences, you describe the goal; the agent interprets it, maps it to DOM operations, and executes the steps reliably—with optional timeouts, iframe awareness, and variable injection for dynamic prompts.
+BrowserOperator lets you speak to the browser in natural language and have it carry out intent-driven actions. Instead of meticulously crafting selectors and sequences, you describe the goal; the agent interprets it, maps it to DOM operations, and executes the steps reliably—with optional timeouts, iframe awareness, and variable injection for dynamic prompts.
 
-Below we'll demonstrate how to use PageUseAgent without Playwright. The agent can directly control the browser through natural language commands.
+Below we'll demonstrate how to use BrowserOperator without Playwright. The agent can directly control the browser through natural language commands.
 
 ```python
 import os
@@ -465,18 +465,18 @@ def main():
         raise RuntimeError("Browser initialization failed")
 
     # navigate to Google
-    nav_msg = session.browser.agent.navigate("https://www.google.com")
+    nav_msg = session.browser.operator.navigate("https://www.google.com")
     print("Navigation result:", nav_msg)
 
     # ask the agent to act: type the book name into the search box
-    act_result = session.browser.agent.act(ActOptions(
+    act_result = session.browser.operator.act(ActOptions(
         action=f"Type '{BOOK_QUERY}' into the search box and submit",
         use_vision=True
     ))
     print("act_result:", act_result.success, act_result.message)
 
     # let the agent open the first result
-    open_first = session.browser.agent.act(ActOptions(
+    open_first = session.browser.operator.act(ActOptions(
         action="Click the first result in the search results",
         use_vision=True
     ))
@@ -490,17 +490,17 @@ if __name__ == "__main__":
 
 First we create and initialize a browser session as before; then, rather than hand-writing selectors, we simply tell the agent what to do—navigate to a URL, type a query and proceed to the first result. After that, the agent translates our intent into concrete interactions on the page. Now the browser flows from search box to results like a guided hand. Finally, we release the session.
 
-About `PageUseAgent.act`:
+About `BrowserOperator.act`:
 - Can interpolate dynamic values using `variables` for reusable prompts
 - Works directly without Playwright by using the browser's internal context
 - Returns a structured `ActResult` with `success`, `message`, useful for logging and recovery flows
 - Use `SyncActOptions` for synchronous code, `ActOptions` for asynchronous code
 
-If you want to explore full capability of PageUseAgent, or other more advance features, see Advance Features: [advance-features.md](advance-features.md).
+If you want to explore full capability of BrowserOperator, or other more advance features, see Advance Features: [advance-features.md](advance-features.md).
 
 ### Limitations
 
-PageUseAgent does not include a long-horizon planner and won’t orchestrate multi-step schedules by itself. It relies on your invoker (or a higher-level agent) to break a project into steps and call `act` or other PageUseAgent method for each one. Its strength is in precise, atomic web operations—clicking, filling, scrolling, etc.—executed quickly and consistently. This narrow focus is deliberate: it prioritizes throughput and accuracy of each step while leaving complex task planning and branching logic to external controllers.
+BrowserOperator does not include a long-horizon planner and won’t orchestrate multi-step schedules by itself. It relies on your invoker (or a higher-level agent) to break a project into steps and call `act` or other BrowserOperator method for each one. Its strength is in precise, atomic web operations—clicking, filling, scrolling, etc.—executed quickly and consistently. This narrow focus is deliberate: it prioritizes throughput and accuracy of each step while leaving complex task planning and branching logic to external controllers.
 
 
 

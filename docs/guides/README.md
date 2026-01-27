@@ -39,7 +39,7 @@ Core concepts for building high-performance applications:
   - [Extensions](browser-use/core-features/extension.md) - Browser extension support
   - [Call for User](browser-use/core-features/call-for-user.md) - User interaction handling
 - [Advanced Features](browser-use/advance-features.md) - Advanced browser capabilities
-  - [Page Agent](browser-use/advance-features/page-use-agent.md) - AI-powered page automation
+  - [Browser Operator](browser-use/advance-features/browser-operator.md) - AI-powered page automation
 - [Browser Extensions](browser-use/browser-extensions.md) - Extension development
 - [Browser Replay](browser-use/browser-replay.md) - Session recording and replay
 - [Code Examples](browser-use/code-example.md) - Browser automation code examples

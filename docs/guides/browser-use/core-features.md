@@ -25,7 +25,7 @@
 ## 📚 Related Guides
 
 - [Browser Use Overview](README.md) - Complete browser automation features
-- [Advanced Features](advance-features.md) - PageUseAgent and advanced capabilities
+- [Advanced Features](advance-features.md) - BrowserOperator and advanced capabilities
 - [Code Examples](code-example.md) - Code examples for browser automation
 
 ## 🆘 Getting Help

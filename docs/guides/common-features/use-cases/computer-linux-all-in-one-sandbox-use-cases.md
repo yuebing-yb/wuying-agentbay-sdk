@@ -83,8 +83,8 @@ def main() -> None:
         if not session.browser.initialize(BrowserOption()):
             raise RuntimeError("Failed to initialize browser")
 
-        session.browser.agent.navigate("https://example.com")
-        data = session.browser.agent.screenshot(full_page=False)
+        session.browser.operator.navigate("https://example.com")
+        data = session.browser.operator.screenshot(full_page=False)
         print("Screenshot data prefix:", data[:30])
     finally:
         session.delete()

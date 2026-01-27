@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from .._common.exceptions import AgentBayError, BrowserError
 from .._common.logger import get_logger
 from .._common.models import OperationResult
-from .._common.models.browser_agent import (
+from .._common.models.browser_operator import (
     ActOptions,
     ActResult,
     ObserveOptions,
@@ -17,7 +17,7 @@ from .._common.models.browser_agent import (
 from .base_service import AsyncBaseService as BaseService
 from .._common.trace_manager import TraceManager
 
-_logger = get_logger("browser_agent")
+_logger = get_logger("browser_operator")
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -30,9 +30,9 @@ ERROR_EXTRACT_START_FAIL = 9041
 ERROR_EXTRACT_TIMEOUT = 9042
 
 
-class AsyncBrowserAgent(BaseService):
+class AsyncBrowserOperator(BaseService):
     """
-    BrowserAgent handles browser automation and agent logic.
+    BrowserOperator handles browser automation and small parts of agentic logic.
 
     > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
     """
@@ -76,7 +76,7 @@ class AsyncBrowserAgent(BaseService):
 
         Args:
             page (Optional[Page]): The Playwright Page object to take a screenshot of. If None,
-                                   the agent's currently focused page will be used.
+                                   the operator's currently focused page will be used.
             full_page (bool): Whether to capture the full scrollable page.
             quality (int): The quality of the image (0-100), for JPEG format.
             clip (Optional[Dict[str, float]]): An object specifying the clipping region {x, y, width, height}.
@@ -123,8 +123,8 @@ class AsyncBrowserAgent(BaseService):
 
     async def close(self) -> bool:
         """
-        Asynchronously closes the remote browser agent session.
-        This will terminate the browser process managed by the agent.
+        Asynchronously closes the remote browser operator session.
+        This will terminate the browser process managed by the operator.
         """
         try:
             response = await self._call_mcp_tool_timeout(
@@ -148,7 +148,7 @@ class AsyncBrowserAgent(BaseService):
         Asynchronously perform an action on a web page.
 
         Args:
-            page (Optional[Page]): The Playwright Page object to act on. If None, the agent's
+            page (Optional[Page]): The Playwright Page object to act on. If None, the operator's
                                    currently focused page will be used automatically.
             action_input (Union[ObserveResult, ActOptions]): The action to perform.
 
@@ -358,7 +358,7 @@ class AsyncBrowserAgent(BaseService):
         Asynchronously observe elements or state on a web page.
 
         Args:
-            page (Optional[Page]): The Playwright Page object to observe. If None, the agent's
+            page (Optional[Page]): The Playwright Page object to observe. If None, the operator's
                                    currently focused page will be used.
             options (ObserveOptions): Options to configure the observation behavior.
 
@@ -543,7 +543,7 @@ class AsyncBrowserAgent(BaseService):
         Asynchronously extract information from a web page.
 
         Args:
-            page (Optional[Page]): The Playwright Page object to extract from. If None, the agent's
+            page (Optional[Page]): The Playwright Page object to extract from. If None, the operator's
                                    currently focused page will be used.
             options (ExtractOptions): Options to configure the extraction, including schema.
 

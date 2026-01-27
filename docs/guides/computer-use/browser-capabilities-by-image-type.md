@@ -185,5 +185,5 @@ result, err := agentBay.Create(params)
 - [Computer Use Guide](README.md) - Desktop automation guide
 - [Browser Core Features](../browser-use/core-features.md) - Essential browser features
 - [Browser Advanced Features](../browser-use/advance-features.md) - Advanced capabilities
-- [Page Use Agent](../browser-use/advance-features/page-use-agent.md) - AI-powered automation
+- [Page Use Agent](../browser-use/advance-features/browser-operator.md) - AI-powered automation
 

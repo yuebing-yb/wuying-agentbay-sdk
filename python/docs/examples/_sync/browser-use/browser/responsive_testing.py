@@ -53,18 +53,18 @@ def main():
 
         # Navigate to a responsive website
         print("\n1. Navigating to test website...")
-        session.browser.agent.navigate("https://example.com")
+        session.browser.operator.navigate("https://example.com")
 
         # Test desktop viewport
         print("\n2. Testing desktop viewport (1920x1080)...")
-        session.browser.agent.act(
+        session.browser.operator.act(
             ActOptions(action="Set the browser viewport size to 1920x1080 pixels")
         )
-        desktop_screenshot = session.browser.agent.screenshot()
+        desktop_screenshot = session.browser.operator.screenshot()
         print(f"Desktop screenshot saved: {desktop_screenshot}")
 
         # Extract desktop layout info
-        success, desktop_result = session.browser.agent.extract(
+        success, desktop_result = session.browser.operator.extract(
             ExtractOptions(instruction="Describe the layout and visible elements on this page", schema=TextContent)
         )
         if success:
@@ -74,14 +74,14 @@ def main():
 
         # Test tablet viewport
         print("\n3. Testing tablet viewport (768x1024)...")
-        session.browser.agent.act(
+        session.browser.operator.act(
             ActOptions(action="Set the browser viewport size to 768x1024 pixels")
         )
-        tablet_screenshot = session.browser.agent.screenshot()
+        tablet_screenshot = session.browser.operator.screenshot()
         print(f"Tablet screenshot saved: {tablet_screenshot}")
 
         # Extract tablet layout info
-        success, tablet_result = session.browser.agent.extract(
+        success, tablet_result = session.browser.operator.extract(
             ExtractOptions(instruction="Describe the layout and visible elements on this page", schema=TextContent)
         )
         if success:
@@ -91,14 +91,14 @@ def main():
 
         # Test mobile viewport
         print("\n4. Testing mobile viewport (375x667)...")
-        session.browser.agent.act(
+        session.browser.operator.act(
             ActOptions(action="Set the browser viewport size to 375x667 pixels")
         )
-        mobile_screenshot = session.browser.agent.screenshot()
+        mobile_screenshot = session.browser.operator.screenshot()
         print(f"Mobile screenshot saved: {mobile_screenshot}")
 
         # Extract mobile layout info
-        success, mobile_result = session.browser.agent.extract(
+        success, mobile_result = session.browser.operator.extract(
             ExtractOptions(instruction="Describe the layout and visible elements on this page", schema=TextContent)
         )
         if success:
@@ -108,17 +108,17 @@ def main():
 
         # Test a more complex responsive site
         print("\n5. Testing responsive design on news site...")
-        session.browser.agent.navigate("https://news.ycombinator.com")
+        session.browser.operator.navigate("https://news.ycombinator.com")
 
         # Mobile view
         print("\n6. Checking mobile view...")
-        session.browser.agent.act(
+        session.browser.operator.act(
             ActOptions(action="Set the browser viewport size to 375x667 pixels")
         )
-        mobile_news_screenshot = session.browser.agent.screenshot()
+        mobile_news_screenshot = session.browser.operator.screenshot()
         print(f"Mobile news screenshot saved: {mobile_news_screenshot}")
 
-        success, mobile_news_result = session.browser.agent.extract(
+        success, mobile_news_result = session.browser.operator.extract(
             ExtractOptions(instruction="How many story items are visible on the mobile view?", schema=TextContent)
         )
         if success:
@@ -128,13 +128,13 @@ def main():
 
         # Desktop view
         print("\n7. Checking desktop view...")
-        session.browser.agent.act(
+        session.browser.operator.act(
             ActOptions(action="Set the browser viewport size to 1920x1080 pixels")
         )
-        desktop_news_screenshot = session.browser.agent.screenshot()
+        desktop_news_screenshot = session.browser.operator.screenshot()
         print(f"Desktop news screenshot saved: {desktop_news_screenshot}")
 
-        success, desktop_news_result = session.browser.agent.extract(
+        success, desktop_news_result = session.browser.operator.extract(
             ExtractOptions(instruction="How many story items are visible on the desktop view?", schema=TextContent)
         )
         if success:
@@ -144,10 +144,10 @@ def main():
 
         # Test orientation change
         print("\n8. Testing landscape orientation...")
-        session.browser.agent.act(
+        session.browser.operator.act(
             ActOptions(action="Set the browser viewport size to 667x375 pixels (landscape)")
         )
-        landscape_screenshot = session.browser.agent.screenshot()
+        landscape_screenshot = session.browser.operator.screenshot()
         print(f"Landscape screenshot saved: {landscape_screenshot}")
 
         print("\n=== Example completed successfully ===")

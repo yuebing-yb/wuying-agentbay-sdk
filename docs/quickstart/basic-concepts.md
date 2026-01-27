@@ -144,7 +144,7 @@ session = agent_bay.create(params).session
 # Initialize and navigate
 from agentbay import BrowserOption
 session.browser.initialize(BrowserOption())
-session.browser.agent.navigate("https://www.baidu.com")
+session.browser.operator.navigate("https://www.baidu.com")
 print("Web navigation successful")
 
 agent_bay.delete(session)

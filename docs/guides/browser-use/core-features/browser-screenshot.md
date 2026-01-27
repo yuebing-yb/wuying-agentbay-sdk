@@ -23,7 +23,7 @@ All language implementations provide the following core features:
 
 The Python SDK provides two screenshot methods:
 
-1. **Browser Agent Screenshot** - `session.browser.agent.screenshot()`
+1. **Browser Operator Screenshot** - `session.browser.operator.screenshot()`
    - Returns base64 encoded data
    - Works with or without a page object
    - Suitable for agent-based workflows
@@ -123,8 +123,8 @@ All implementations include enhanced functionality to ensure high-quality screen
 # Direct Browser
 screenshot_data = session.browser.screenshot(page)
 
-# Browser Agent
-screenshot_data = session.browser.agent.screenshot()
+# Browser Operator
+screenshot_data = session.browser.operator.screenshot()
 ```
 
 **TypeScript**
@@ -144,8 +144,8 @@ screenshotData, err := browser.Screenshot(page, nil)
 # Direct Browser
 screenshot_data = session.browser.screenshot(page, full_page=True)
 
-# Browser Agent
-screenshot_data = session.browser.agent.screenshot(full_page=True)
+# Browser Operator
+screenshot_data = session.browser.operator.screenshot(full_page=True)
 ```
 
 **TypeScript**

@@ -1,6 +1,6 @@
-# Browser Agent Models API Reference
+# Browser Operator Models API Reference
 
-BrowserAgent module data models.
+BrowserOperator module data models.
 
 #### T
 

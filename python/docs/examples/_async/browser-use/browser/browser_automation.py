@@ -34,7 +34,7 @@ async def main():
         # 1. Navigate
         url = "https://www.bing.com"
         print(f"Navigating to {url}...")
-        nav_msg = await session.browser.agent.navigate(url)
+        nav_msg = await session.browser.operator.navigate(url)
         print(f"Navigation result: {nav_msg}")
 
         # 2. Act (Type search query)
@@ -43,7 +43,7 @@ async def main():
             action="type 'AgentBay SDK' into the search box and press Enter",
             use_vision=True
         )
-        act_result = await session.browser.agent.act(search_box_act)
+        act_result = await session.browser.operator.act(search_box_act)
         print(f"Act result: {act_result.message}")
 
         # Wait for results to load
@@ -51,7 +51,7 @@ async def main():
 
         # 3. Screenshot
         print("Taking screenshot...")
-        screenshot_data = await session.browser.agent.screenshot(full_page=False)
+        screenshot_data = await session.browser.operator.screenshot(full_page=False)
         print(f"Screenshot taken (length: {len(screenshot_data)})")
 
         # 4. Extract
@@ -61,7 +61,7 @@ async def main():
             schema=SearchResult,
             use_text_extract=True
         )
-        success, data = await session.browser.agent.extract(extract_options)
+        success, data = await session.browser.operator.extract(extract_options)
         if success:
             print(f"Extraction successful: {data}")
         else:

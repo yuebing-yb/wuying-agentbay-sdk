@@ -53,22 +53,22 @@ async def main():
 
         # Navigate to a test login page (using httpbin for demonstration)
         print("\n1. Navigating to login form...")
-        await session.browser.agent.navigate("https://httpbin.org/forms/post")
+        await session.browser.operator.navigate("https://httpbin.org/forms/post")
 
         # Fill in login credentials (demonstration only)
         print("\n2. Filling in authentication form...")
-        await session.browser.agent.act(ActOptions(action="Fill in the customer name field with 'testuser'"))
-        await session.browser.agent.act(ActOptions(action="Fill in the email field with 'test@example.com'"))
+        await session.browser.operator.act(ActOptions(action="Fill in the customer name field with 'testuser'"))
+        await session.browser.operator.act(ActOptions(action="Fill in the email field with 'test@example.com'"))
         print("Form filled with test credentials")
 
         # Take screenshot of filled form
         print("\n3. Taking screenshot of filled form...")
-        screenshot_path = await session.browser.agent.screenshot()
+        screenshot_path = await session.browser.operator.screenshot()
         print(f"Screenshot saved: {screenshot_path}")
 
         # Verify form state
         print("\n4. Verifying form state...")
-        success, form_result = await session.browser.agent.extract(
+        success, form_result = await session.browser.operator.extract(
             ExtractOptions(
                 instruction="What values are filled in the form fields?",
                 schema=TextContent
@@ -81,7 +81,7 @@ async def main():
 
         # Simulate checking authentication state
         print("\n5. Checking authentication state...")
-        success, auth_result = await session.browser.agent.extract(
+        success, auth_result = await session.browser.operator.extract(
             ExtractOptions(
                 instruction="Is there a submit button on this form?",
                 schema=TextContent
@@ -94,10 +94,10 @@ async def main():
 
         # Navigate to a page that might require authentication
         print("\n6. Testing authenticated navigation...")
-        await session.browser.agent.navigate("https://httpbin.org/basic-auth/user/passwd")
+        await session.browser.operator.navigate("https://httpbin.org/basic-auth/user/passwd")
         
         # Check if authentication is required
-        success, auth_check = await session.browser.agent.extract(
+        success, auth_check = await session.browser.operator.extract(
             ExtractOptions(
                 instruction="Does this page require authentication? What is displayed?",
                 schema=TextContent
@@ -110,7 +110,7 @@ async def main():
 
         # Demonstrate cookie-based authentication
         print("\n7. Setting authentication cookie...")
-        await session.browser.agent.act(ActOptions(
+        await session.browser.operator.act(ActOptions(
             action="Execute JavaScript to set a cookie: "
             "document.cookie = 'auth_token=demo_token_12345; path=/'"
         ))
@@ -118,7 +118,7 @@ async def main():
 
         # Verify cookie was set
         print("\n8. Verifying cookie...")
-        success, cookie_result = await session.browser.agent.extract(
+        success, cookie_result = await session.browser.operator.extract(
             ExtractOptions(
                 instruction="What cookies are set for this page?",
                 schema=TextContent
@@ -131,11 +131,11 @@ async def main():
 
         # Navigate back to main page
         print("\n9. Navigating to main page...")
-        await session.browser.agent.navigate("https://httpbin.org")
+        await session.browser.operator.navigate("https://httpbin.org")
 
         # Verify authentication persists
         print("\n10. Verifying authentication persistence...")
-        success, persist_result = await session.browser.agent.extract(
+        success, persist_result = await session.browser.operator.extract(
             ExtractOptions(
                 instruction="Are there any cookies set for this domain?",
                 schema=TextContent

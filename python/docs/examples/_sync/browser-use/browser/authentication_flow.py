@@ -55,22 +55,22 @@ def main():
 
         # Navigate to a test login page (using httpbin for demonstration)
         print("\n1. Navigating to login form...")
-        session.browser.agent.navigate("https://httpbin.org/forms/post")
+        session.browser.operator.navigate("https://httpbin.org/forms/post")
 
         # Fill in login credentials (demonstration only)
         print("\n2. Filling in authentication form...")
-        session.browser.agent.act(ActOptions(action="Fill in the customer name field with 'testuser'"))
-        session.browser.agent.act(ActOptions(action="Fill in the email field with 'test@example.com'"))
+        session.browser.operator.act(ActOptions(action="Fill in the customer name field with 'testuser'"))
+        session.browser.operator.act(ActOptions(action="Fill in the email field with 'test@example.com'"))
         print("Form filled with test credentials")
 
         # Take screenshot of filled form
         print("\n3. Taking screenshot of filled form...")
-        screenshot_path = session.browser.agent.screenshot()
+        screenshot_path = session.browser.operator.screenshot()
         print(f"Screenshot saved: {screenshot_path}")
 
         # Verify form state
         print("\n4. Verifying form state...")
-        success, form_result = session.browser.agent.extract(
+        success, form_result = session.browser.operator.extract(
             ExtractOptions(
                 instruction="What values are filled in the form fields?",
                 schema=TextContent
@@ -83,7 +83,7 @@ def main():
 
         # Simulate checking authentication state
         print("\n5. Checking authentication state...")
-        success, auth_result = session.browser.agent.extract(
+        success, auth_result = session.browser.operator.extract(
             ExtractOptions(
                 instruction="Is there a submit button on this form?",
                 schema=TextContent
@@ -96,10 +96,10 @@ def main():
 
         # Navigate to a page that might require authentication
         print("\n6. Testing authenticated navigation...")
-        session.browser.agent.navigate("https://httpbin.org/basic-auth/user/passwd")
+        session.browser.operator.navigate("https://httpbin.org/basic-auth/user/passwd")
 
         # Check if authentication is required
-        success, auth_check = session.browser.agent.extract(
+        success, auth_check = session.browser.operator.extract(
             ExtractOptions(
                 instruction="Does this page require authentication? What is displayed?",
                 schema=TextContent
@@ -112,7 +112,7 @@ def main():
 
         # Demonstrate cookie-based authentication
         print("\n7. Setting authentication cookie...")
-        session.browser.agent.act(ActOptions(
+        session.browser.operator.act(ActOptions(
             action="Execute JavaScript to set a cookie: "
             "document.cookie = 'auth_token=demo_token_12345; path=/'"
         ))
@@ -120,7 +120,7 @@ def main():
 
         # Verify cookie was set
         print("\n8. Verifying cookie...")
-        success, cookie_result = session.browser.agent.extract(
+        success, cookie_result = session.browser.operator.extract(
             ExtractOptions(
                 instruction="What cookies are set for this page?",
                 schema=TextContent
@@ -133,11 +133,11 @@ def main():
 
         # Navigate back to main page
         print("\n9. Navigating to main page...")
-        session.browser.agent.navigate("https://httpbin.org")
+        session.browser.operator.navigate("https://httpbin.org")
 
         # Verify authentication persists
         print("\n10. Verifying authentication persistence...")
-        success, persist_result = session.browser.agent.extract(
+        success, persist_result = session.browser.operator.extract(
             ExtractOptions(
                 instruction="Are there any cookies set for this domain?",
                 schema=TextContent

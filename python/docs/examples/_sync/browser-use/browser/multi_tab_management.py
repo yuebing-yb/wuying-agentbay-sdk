@@ -59,8 +59,8 @@ def main():
 
         # Open first tab
         print("\n1. Opening first tab (example.com)...")
-        session.browser.agent.navigate("https://example.com")
-        success, tab1_result = session.browser.agent.extract(ExtractOptions(
+        session.browser.operator.navigate("https://example.com")
+        success, tab1_result = session.browser.operator.extract(ExtractOptions(
             instruction="What is the page title?",
             schema=TextContent
         ))
@@ -71,8 +71,8 @@ def main():
 
         # Open second tab by navigating to a new URL
         print("\n2. Opening second tab (httpbin.org)...)")
-        session.browser.agent.act(ActOptions(action="Open a new tab and navigate to https://httpbin.org"))
-        success, tab2_result = session.browser.agent.extract(ExtractOptions(
+        session.browser.operator.act(ActOptions(action="Open a new tab and navigate to https://httpbin.org"))
+        success, tab2_result = session.browser.operator.extract(ExtractOptions(
             instruction="What is the page title?",
             schema=TextContent
         ))
@@ -83,7 +83,7 @@ def main():
 
         # Extract information from current tab
         print("\n3. Extracting information from current tab...")
-        success, info_result = session.browser.agent.extract(ExtractOptions(instruction="What HTTP testing endpoints are available?", schema=TextContent))
+        success, info_result = session.browser.operator.extract(ExtractOptions(instruction="What HTTP testing endpoints are available?", schema=TextContent))
         if success:
             print(f"Available endpoints:\n{info_result.content}")
         else:
@@ -91,8 +91,8 @@ def main():
 
         # Switch back to first tab
         print("\n4. Switching back to first tab...")
-        session.browser.agent.act(ActOptions(action="Switch to the first tab"))
-        success, current_result = session.browser.agent.extract(ExtractOptions(instruction="What is the current page URL?", schema=TextContent))
+        session.browser.operator.act(ActOptions(action="Switch to the first tab"))
+        success, current_result = session.browser.operator.extract(ExtractOptions(instruction="What is the current page URL?", schema=TextContent))
         if success:
             print(f"Current URL: {current_result.content}")
         else:
@@ -100,8 +100,8 @@ def main():
 
         # Open third tab - use a more reliable site
         print("\n5. Opening third tab (jsonplaceholder.typicode.com)...")
-        session.browser.agent.act(ActOptions(action="Open a new tab and navigate to https://jsonplaceholder.typicode.com"))
-        success, tab3_result = session.browser.agent.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent))
+        session.browser.operator.act(ActOptions(action="Open a new tab and navigate to https://jsonplaceholder.typicode.com"))
+        success, tab3_result = session.browser.operator.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent))
         if success:
             print(f"Tab 3 title: {tab3_result.content}")
         else:
@@ -111,7 +111,7 @@ def main():
         print("\n6. Listing all open tabs...")
         try:
             success, tabs_result = asyncio.wait_for(
-                session.browser.agent.extract(ExtractOptions(instruction="How many tabs are open and what are their URLs?", schema=TextContent)),
+                session.browser.operator.extract(ExtractOptions(instruction="How many tabs are open and what are their URLs?", schema=TextContent)),
                 timeout=30.0  # 30 second timeout
             )
             if success:
@@ -123,8 +123,8 @@ def main():
 
         # Close a specific tab
         print("\n7. Closing the second tab...")
-        session.browser.agent.act(ActOptions(action="Close the tab with httpbin.org"))
-        success, remaining_result = session.browser.agent.extract(ExtractOptions(instruction="How many tabs are now open?", schema=TextContent))
+        session.browser.operator.act(ActOptions(action="Close the tab with httpbin.org"))
+        success, remaining_result = session.browser.operator.extract(ExtractOptions(instruction="How many tabs are now open?", schema=TextContent))
         if success:
             print(f"Remaining tabs: {remaining_result.content}")
         else:

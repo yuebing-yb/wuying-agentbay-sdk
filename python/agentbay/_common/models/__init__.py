@@ -5,7 +5,7 @@ from .code import *
 from .command import *
 from .computer import *
 from .browser import *
-from .browser_agent import *
+from .browser_operator import *
 from .context import *
 from .fingerprint import *
 from .filesystem import *

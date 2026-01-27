@@ -1,4 +1,4 @@
-"""Integration tests for Browser Agent functionality."""
+"""Integration tests for Browser Operator functionality."""
 
 import asyncio
 import os
@@ -12,7 +12,7 @@ from playwright.async_api import async_playwright
 from pydantic import BaseModel
 
 from agentbay import AsyncAgentBay
-from agentbay._async.browser_agent import ActOptions, ExtractOptions, ObserveOptions
+from agentbay._async.browser_operator import ActOptions, ExtractOptions, ObserveOptions
 from agentbay import CreateSessionParams
 from agentbay import BrowserFingerprint, BrowserOption, BrowserProxy
 
@@ -57,7 +57,7 @@ async def browser_session():
     print("api_key =", _mask_secret(api_key))
     agent_bay = AsyncAgentBay(api_key=api_key)
 
-    print("Creating a new session for browser agent testing...")
+    print("Creating a new session for browser operator testing...")
     session_param = CreateSessionParams(image_id="browser_latest")
     result = await agent_bay.create(session_param)
     assert result.success
@@ -134,9 +134,9 @@ async def test_initialize_browser_with_fingerprint(browser_session):
         assert default_context is not None
 
         page = await default_context.new_page()
-        await page.goto("https://httpbin.org/user-agent", timeout=60000)
+        await page.goto("https://httpbin.org/user-operator", timeout=60000)
         response = await page.evaluate("() => JSON.parse(document.body.textContent)")
-        user_agent = response["user-agent"]
+        user_agent = response["user-operator"]
         print("user_agent =", user_agent)
         assert user_agent is not None
         is_windows = is_windows_user_agent(user_agent)
@@ -220,7 +220,7 @@ async def test_act_success(browser_session):
         await page.goto("http://www.baidu.com")
         assert await page.title() is not None
 
-        result = await browser.agent.act(ActOptions(action="Click search button"), page)
+        result = await browser.operator.act(ActOptions(action="Click search button"), page)
         print("result =", result)
 
         assert result.success
@@ -248,7 +248,7 @@ async def test_observe_success(browser_session):
         await page.goto("http://www.baidu.com")
         assert await page.title() is not None
 
-        result, observe_results = await browser.agent.observe(
+        result, observe_results = await browser.operator.observe(
             ObserveOptions(instruction="Find the search button"), page
         )
         print(f"result = {result}")
@@ -281,7 +281,7 @@ async def test_extract_success(browser_session):
         await page.goto("http://www.baidu.com")
         assert await page.title() is not None
 
-        result, obj = await browser.agent.extract(
+        result, obj = await browser.operator.extract(
             ExtractOptions(instruction="Extract the title", schema=DummySchema), page
         )
         print(f"result = {result}")

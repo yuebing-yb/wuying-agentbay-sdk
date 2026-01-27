@@ -43,7 +43,7 @@ def main():
 
     try:
         assert session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
         endpoint_url = session.browser.get_endpoint_url()
         print("endpoint_url =", endpoint_url)
@@ -69,7 +69,7 @@ Each cell should be a number (1-9) if filled, or 0 if empty.
                     schema=SudokuBoard,
                     use_text_extract=False,
                 )
-                success, board_obj = agent.extract(options=options, page=page)
+                success, board_obj = operator.extract(options=options, page=page)
                 if not success:
                     print("❌ Failed to extract sudoku board, retry extracting")
                     time.sleep(3)

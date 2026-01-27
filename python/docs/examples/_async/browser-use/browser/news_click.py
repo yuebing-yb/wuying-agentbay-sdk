@@ -46,7 +46,7 @@ class TestRunner:
             async with page.context.expect_page() as new_page_info:
                 action_str = "点击页面顶部的'新闻'链接"
 
-                act_result = await browser.agent.act(
+                act_result = await browser.operator.act(
                     ActOptions(action=action_str), page=page
                 )
                 self.logger.info("点击动作结果: %s", act_result)
@@ -61,7 +61,7 @@ class TestRunner:
                 await new_page.wait_for_load_state("networkidle")
                 await new_page.wait_for_timeout(1000)
 
-                result, objs = await browser.agent.extract(
+                result, objs = await browser.operator.extract(
                     ExtractOptions(instruction="提取页面标题", schema=DummySchema),
                     page=new_page,
                 )

@@ -40,7 +40,7 @@ async def main():
 
     try:
         assert await session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
         endpoint_url = await session.browser.get_endpoint_url()
         print("endpoint_url =", endpoint_url)
@@ -66,7 +66,7 @@ Each cell should be a number (1-9) if filled, or 0 if empty.
                     schema=SudokuBoard,
                     use_text_extract=False,
                 )
-                success, board_obj = await agent.extract(options=options, page=page)
+                success, board_obj = await operator.extract(options=options, page=page)
                 if not success:
                     print("❌ Failed to extract sudoku board, retry extracting")
                     await asyncio.sleep(3)

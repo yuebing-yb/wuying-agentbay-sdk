@@ -1,6 +1,6 @@
-# PageUseAgent Guide 
+# BrowserOperator Guide 
 
-An AI-powered, natural-language web agent that performs precise, reliable page operations via AgentBay’s managed browser. It exposes simple SDK methods to navigate, observe, act, extract.
+An AI-powered, natural-language browser operator that performs precise, reliable page operations via AgentBay’s managed browser. It exposes simple SDK methods to navigate, observe, act, extract.
 
 - Works with natural language instructions
 - Supports structured extraction via Pydantic schemas
@@ -9,7 +9,7 @@ An AI-powered, natural-language web agent that performs precise, reliable page o
 
 ## Table of Contents
 
-- [PageUseAgent Guide](#pageuseagent-guide)
+- [BrowserOperator Guide](#browseroperator-guide)
   - [Table of Contents](#table-of-contents)
   - [Quick Start](#quick-start)
     - [Prerequisites](#prerequisites)
@@ -52,7 +52,7 @@ from pydantic import BaseModel, Field
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import BrowserAgent, ActOptions, ExtractOptions
+from agentbay import BrowserOperator, ActOptions, ExtractOptions
 
 class Product(BaseModel):
     name: str = Field(..., description="Product name")
@@ -79,16 +79,16 @@ async def main():
         print("Browser initialization failed")
         return
 
-    agent: BrowserAgent = session.browser.agent
+    operator: BrowserOperator = session.browser.operator
 
     # Navigate
-    print(await agent.navigate("https://example.com"))
+    print(await operator.navigate("https://example.com"))
 
     # Act (natural language)
-    await agent.act(action_input=ActOptions(action="go to products or shop page"))
+    await operator.act(action_input=ActOptions(action="go to products or shop page"))
 
     # Extract structured data
-    ok, data = await agent.extract(
+    ok, data = await operator.extract(
         options=ExtractOptions(
             instruction="Extract all products with name, optional price, and relative link",
             schema=ProductList,
@@ -101,7 +101,7 @@ async def main():
         print("Extraction failed")
 
     # Clean up
-    await agent.close()
+    await operator.close()
     session.delete()
 
 if __name__ == "__main__":
@@ -116,7 +116,7 @@ Notes:
 
 ## Architecture Overview
 
-- Your code calls `BrowserAgent` (SDK).
+- Your code calls `BrowserOperator` (SDK).
 - SDK invokes MCP tools within the managed browser image:
   - `page_use_navigate`
   - `page_use_observe`
@@ -145,7 +145,7 @@ async def navigate(self, url: str) -> str
 
 Example:
 ```python
-await agent.navigate("https://example.com")
+await operator.navigate("https://example.com")
 ```
 
 ---
@@ -173,7 +173,7 @@ Parameters:
 
 Example (robust decode for both formats):
 ```python
-data = await agent.screenshot()
+data = await operator.screenshot()
 if data.startswith("data:image/"):
     header, encoded = data.split(",", 1)
     png_bytes = base64.b64decode(encoded)
@@ -204,7 +204,7 @@ async def observe(self, options: ObserveOptions, page) -> tuple[bool, list[Obser
 
 Example:
 ```python
-ok, items = await agent.observe(
+ok, items = await operator.observe(
     options=ObserveOptions(
         instruction="find the Add to Cart button",
     )
@@ -236,12 +236,12 @@ async def act(self, action_input: Union[ObserveResult, ActOptions], page) -> Act
 Examples:
 ```python
 # Natural language
-await agent.act(action_input=ActOptions(action="type 'ipad' in the search bar and press enter"))
+await operator.act(action_input=ActOptions(action="type 'ipad' in the search bar and press enter"))
 
 # Act on observed element
-ok, items = await agent.observe(options=ObserveOptions(instruction="find the sign in button"))
+ok, items = await operator.observe(options=ObserveOptions(instruction="find the sign in button"))
 if ok and items:
-    await agent.act(action_input=items[0])
+    await operator.act(action_input=items[0])
 ```
 
 ---
@@ -279,7 +279,7 @@ class Item(BaseModel):
 class ItemList(BaseModel):
     products: list[Item]
 
-ok, result = await agent.extract(
+ok, result = await operator.extract(
     options=ExtractOptions(
         instruction="extract all products with name, price and link",
         schema=ItemList,
@@ -297,7 +297,7 @@ ok, result = await agent.extract(
 async def close(self) -> bool
 ```
 
-- Gracefully closes the remote browser agent session.
+- Gracefully closes the remote browser operator session.
 
 ---
 
@@ -313,11 +313,11 @@ class RecipeDetails(BaseModel):
     title: str = Field(..., description="Recipe title")
     total_ratings: int | None
 
-await agent.navigate("https://www.allrecipes.com/")
-await agent.act(action_input=ActOptions(action='type "chocolate chip cookies" in the search bar'))
-await agent.act(action_input=ActOptions(action="press enter"))
+await operator.navigate("https://www.allrecipes.com/")
+await operator.act(action_input=ActOptions(action='type "chocolate chip cookies" in the search bar'))
+await operator.act(action_input=ActOptions(action="press enter"))
 
-ok, data = await agent.extract(
+ok, data = await operator.extract(
     options=ExtractOptions(
         instruction="extract the title and the total number of ratings from the first recipe",
         schema=RecipeDetails,
@@ -340,7 +340,7 @@ actions = [
 ]
 
 for a in actions:
-    await agent.act(action_input=ActOptions(action=a))
+    await operator.act(action_input=ActOptions(action=a))
 ```
 
 ### 3) Amazon Demo (Observe → Act → Assert)
@@ -348,22 +348,22 @@ for a in actions:
 ```python
 from agentbay import ObserveOptions
 
-ok, obs1 = await agent.observe(
+ok, obs1 = await operator.observe(
     options=ObserveOptions(instruction="Find and click the 'Add to Cart' button")
 )
 if ok and obs1:
-    await agent.act(action_input=obs1[0])
+    await operator.act(action_input=obs1[0])
 
-ok, obs2 = await agent.observe(
+ok, obs2 = await operator.observe(
     options=ObserveOptions(instruction="Find and click the 'Proceed to checkout' button")
 )
 if ok and obs2:
-    await agent.act(action_input=obs2[0])
+    await operator.act(action_input=obs2[0])
 ```
 
 ### 4) Multi-page Extraction (Pagination)
 ```python
-ok, data = await agent.extract(
+ok, data = await operator.extract(
   options=ExtractOptions(
     instruction="Extract all news titles and links",
     schema=NewsList,
@@ -404,7 +404,7 @@ ok, data = await agent.extract(
 ## FAQ
 
 - Do I need Playwright locally?
-  - The agent runs in a managed browser session. Local Playwright is optional for your custom checks via CDP.
+  - The operator runs in a managed browser session. Local Playwright is optional for your custom checks via CDP.
 
 - How do I pass variables into actions?
   - Use `ActOptions.variables` (dict) and ensure your backend/tooling supports placeholders.
@@ -418,7 +418,7 @@ ok, data = await agent.extract(
 
 - [Browser Use Overview](../README.md) - Complete browser automation features
 - [Session Management](../../common-features/basics/session-management.md) - Session lifecycle and configuration
-- [Code Examples](../code-example.md) - PageUseAgent example code
+- [Code Examples](../code-example.md) - BrowserOperator example code
 
 ## Getting Help
 

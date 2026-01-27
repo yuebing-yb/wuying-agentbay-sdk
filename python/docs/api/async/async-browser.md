@@ -34,6 +34,25 @@ Browser provides browser-related operations for the session.
 def __init__(self, session: "AsyncSession")
 ```
 
+### agent
+
+```python
+@property
+def agent()
+```
+
+**Deprecated**: Use `operator` instead. This property will be removed in a future version.
+
+**Example**:
+
+```python
+# Old way (deprecated):
+# await session.browser.operator.navigate(url)
+
+# New way (recommended):
+await session.browser.operator.navigate(url)
+```
+
 ### initialize
 
 ```python

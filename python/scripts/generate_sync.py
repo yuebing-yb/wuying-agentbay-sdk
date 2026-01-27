@@ -103,7 +103,7 @@ def generate_sync():
         "AsyncFileTransfer": "FileTransfer",
         "AsyncOss": "Oss",
         "AsyncAgent": "Agent",
-        "AsyncBrowserAgent": "BrowserAgent",
+        "AsyncBrowserOperator": "BrowserOperator",
         "AsyncBrowserFingerprintGenerator": "BrowserFingerprintGenerator",
         "AsyncBaseService": "BaseService",
         "AsyncMobileSimulateService": "MobileSimulateService",
@@ -128,7 +128,7 @@ def generate_sync():
         "list_mcp_tools_async": "list_mcp_tools",
         "get_adb_link_async": "get_adb_link",
 
-        # Browser Agent specific
+        # Browser Operator specific
         "navigate_async": "navigate",
         "screenshot_async": "screenshot",
         "act_async": "act",
@@ -494,7 +494,7 @@ def generate_sync():
                             content
                         )
 
-                    if "browser_agent.py" in file:
+                    if "browser_operator.py" in file:
                         content = content.replace("asyncio.get_event_loop().run_until_complete(", "")
                         pass
 

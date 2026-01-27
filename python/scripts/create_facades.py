@@ -18,7 +18,7 @@ FACADES = {
     "command/command.py": "from .._sync.command import *",
     "agent/agent.py": "from .._sync.agent import *",
     "browser/browser.py": "from .._sync.browser import *",
-    "browser/browser_agent.py": "from .._sync.browser_agent import *",
+    "browser/browser_operator.py": "from .._sync.browser_operator import *",
     "browser/fingerprint.py": "from .._sync.fingerprint import *",
 }
 

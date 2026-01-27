@@ -59,7 +59,7 @@
 
 ## Advanced Features
 
-### PageUseAgent
+### BrowserOperator
 
 - [Aliyun search & help (Async)](../../../python/docs/examples/_async/browser-use/browser/search_agentbay_doc_by_agent.py) - Search on aliyun.com and open Help docs using PageUse Agent
 - [Aliyun search & help (Sync)](../../../python/docs/examples/_sync/browser-use/browser/search_agentbay_doc_by_agent.py) - Sync version of Aliyun search & help example
@@ -86,7 +86,7 @@
 
 - [Browser Use Overview](README.md) - Complete browser automation features
 - [Core Features](core-features.md) - Browser core capabilities
-- [Advanced Features](advance-features.md) - PageUseAgent and advanced capabilities
+- [Advanced Features](advance-features.md) - BrowserOperator and advanced capabilities
 
 ## 🆘 Getting Help
 

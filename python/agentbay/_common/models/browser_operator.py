@@ -1,5 +1,5 @@
 """
-BrowserAgent module data models.
+BrowserOperator module data models.
 """
 
 from typing import Dict, Generic, Optional, Type, TypeVar

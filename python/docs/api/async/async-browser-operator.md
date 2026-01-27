@@ -1,4 +1,4 @@
-# AsyncBrowserAgent API Reference
+# AsyncBrowserOperator API Reference
 
 #### T
 
@@ -48,13 +48,13 @@ ERROR_EXTRACT_START_FAIL = 9041
 ERROR_EXTRACT_TIMEOUT = 9042
 ```
 
-## AsyncBrowserAgent
+## AsyncBrowserOperator
 
 ```python
-class AsyncBrowserAgent(BaseService)
+class AsyncBrowserOperator(BaseService)
 ```
 
-BrowserAgent handles browser automation and agent logic.
+BrowserOperator handles browser automation and small parts of agentic logic.
 
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
@@ -96,7 +96,7 @@ Asynchronously takes a screenshot of the specified page.
 **Arguments**:
 
 - `page` _Optional[Page]_ - The Playwright Page object to take a screenshot of. If None,
-  the agent's currently focused page will be used.
+  the operator's currently focused page will be used.
 - `full_page` _bool_ - Whether to capture the full scrollable page.
 - `quality` _int_ - The quality of the image (0-100), for JPEG format.
 - `clip` _Optional[Dict[str, float]]_ - An object specifying the clipping region {x, y, width, height}.
@@ -113,8 +113,8 @@ Asynchronously takes a screenshot of the specified page.
 async def close() -> bool
 ```
 
-Asynchronously closes the remote browser agent session.
-This will terminate the browser process managed by the agent.
+Asynchronously closes the remote browser operator session.
+This will terminate the browser process managed by the operator.
 
 ### act
 
@@ -127,7 +127,7 @@ Asynchronously perform an action on a web page.
 
 **Arguments**:
 
-- `page` _Optional[Page]_ - The Playwright Page object to act on. If None, the agent's
+- `page` _Optional[Page]_ - The Playwright Page object to act on. If None, the operator's
   currently focused page will be used automatically.
 - `action_input` _Union[ObserveResult, ActOptions]_ - The action to perform.
   
@@ -147,7 +147,7 @@ Asynchronously observe elements or state on a web page.
 
 **Arguments**:
 
-- `page` _Optional[Page]_ - The Playwright Page object to observe. If None, the agent's
+- `page` _Optional[Page]_ - The Playwright Page object to observe. If None, the operator's
   currently focused page will be used.
 - `options` _ObserveOptions_ - Options to configure the observation behavior.
   
@@ -167,7 +167,7 @@ Asynchronously extract information from a web page.
 
 **Arguments**:
 
-- `page` _Optional[Page]_ - The Playwright Page object to extract from. If None, the agent's
+- `page` _Optional[Page]_ - The Playwright Page object to extract from. If None, the operator's
   currently focused page will be used.
 - `options` _ExtractOptions_ - Options to configure the extraction, including schema.
   

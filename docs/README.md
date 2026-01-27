@@ -56,7 +56,7 @@ Complete browser automation for web scraping, testing, and form filling.
 - [Extension Support](guides/browser-use/core-features/extension.md) - Browser extension management
 - [Browser Fingerprint](guides/browser-use/core-features/browser-fingerprint.md) - Simulate browser fingerprint
 - [Call for User](guides/browser-use/core-features/call-for-user.md) - User interaction requests
-- [Page Agent](guides/browser-use/advance-features/page-use-agent.md) - AI-driven page operations
+- [Browser Operator](guides/browser-use/advance-features/browser-operator.md) - AI-driven page operations
 
 #### [Computer Use](guides/computer-use/README.md)
 Windows desktop automation for application control and window management.

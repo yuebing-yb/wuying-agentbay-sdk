@@ -27,7 +27,7 @@ def main():
     session = session_result.session
     try:
         assert session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
         endpoint_url = session.browser.get_endpoint_url()
         with sync_playwright() as p:
@@ -45,14 +45,14 @@ def main():
             )
 
             # 让 Agent 跟上当前 Playwright 页面（显式传 page）
-            agent.act(
+            operator.act(
                 ActOptions(action="搜索框输入'AgentBay帮助文档'并回车"), page=page
             )
 
             # Playwright 等待新页面打开
             with page.context.expect_page() as new_page_info:
                 # 在之前的页面上使用Agent
-                agent.act(
+                operator.act(
                     ActOptions(action="点击搜索结果中的第一项"),
                     page=page,
                 )
@@ -60,12 +60,12 @@ def main():
                 new_page.wait_for_load_state("domcontentloaded")
 
             # 方式一： 在新页面上继续用 Agent（传 page=new_page，确保焦点一致）
-            agent.act(ActOptions(action="点击'帮助文档'"), page=new_page)
-            agent.act(ActOptions(action="滚动页面到底部"), page=new_page)
+            operator.act(ActOptions(action="点击'帮助文档'"), page=new_page)
+            operator.act(ActOptions(action="滚动页面到底部"), page=new_page)
 
             # 方式二： 也可不传page参数， 因上一步动作由Agent发起，Agent默认将焦点切到新打开的页面
-            # agent.act(ActOptions(action="点击'帮助文档'"))
-            # agent.act(ActOptions(action="滚动页面到底部"))
+            # operator.act(ActOptions(action="点击'帮助文档'"))
+            # operator.act(ActOptions(action="滚动页面到底部"))
 
             playwright_browser.close()
     finally:

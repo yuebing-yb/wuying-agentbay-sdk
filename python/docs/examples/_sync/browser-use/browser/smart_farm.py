@@ -31,32 +31,32 @@ def main():
     if session_result.success:
         session = session_result.session
         session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
-        agent.navigate("https://cphengshuifarm10.connect.farmonline.net/")
-        agent.act(
+        operator.navigate("https://cphengshuifarm10.connect.farmonline.net/")
+        operator.act(
             ActOptions(action="输入用户名 'guest' 密码不用输，点击 login按钮登录")
         )
 
-        agent.act(
+        operator.act(
             ActOptions(
                 action="点击网页最右侧蓝色背景条上的绿色眼睛图标按钮，并点击搜索结果中的第一项",
                 use_vision=True,
             )
         )
-        agent.act(ActOptions(action="在页面中点击 '气候' 选项"))
-        agent.act(ActOptions(action="点击 'CO2' 选项，然后点击页面空白处"))
-        agent.act(
+        operator.act(ActOptions(action="在页面中点击 '气候' 选项"))
+        operator.act(ActOptions(action="点击 'CO2' 选项，然后点击页面空白处"))
+        operator.act(
             ActOptions(action="点击 'CO2' 下方的 'CO2' 文本区域", use_vision=True)
         )
-        agent.act(
+        operator.act(
             ActOptions(
                 action="点击页面弹窗中间位置的蓝色矩形 '>' 箭头按钮，将关键字添加到右侧框",
                 use_vision=True,
             )
         )
-        agent.act(ActOptions(action="点击 OK 按钮"))
-        ok, data = agent.extract(
+        operator.act(ActOptions(action="点击 OK 按钮"))
+        ok, data = operator.extract(
             ExtractOptions(
                 instruction="总结并分析当前网页中的环境监测数据和页面信息",
                 schema=PageContent,
@@ -67,7 +67,7 @@ def main():
 
         time.sleep(2)
 
-    agent.close()
+    operator.close()
     agent_bay.delete(session)
 
 

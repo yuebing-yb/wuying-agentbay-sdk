@@ -14,7 +14,7 @@ from agentbay import AsyncBrowser as Browser
 from agentbay import AsyncSession as Session
 from agentbay.api.base_service import OperationResult
 
-from agentbay import AsyncBrowserAgent as BrowserAgent
+from agentbay import AsyncBrowserOperator as BrowserOperator
 from agentbay import BrowserOption
 
 # Use the AgentBay _logger instead of the standard _logger
@@ -167,7 +167,7 @@ class LocalMCPClient:
                 await asyncio.sleep(1)
 
 
-class LocalPageAgent(BrowserAgent):
+class LocalPageAgent(BrowserOperator):
     def __init__(self, session, browser):
         super().__init__(session, browser)
 
@@ -353,7 +353,7 @@ class LocalSession(Session):
         browser agent, which awaits session.call_mcp_tool. We return a real
         OperationResult instance to avoid 'await OperationResult' errors.
         """
-        return await self.browser.agent._call_mcp_tool_async(name, args)
+        return await self.browser.operator._call_mcp_tool_async(name, args)
 
     def delete(self, sync_context: bool = False) -> None:
         pass
