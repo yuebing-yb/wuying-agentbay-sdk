@@ -1410,8 +1410,8 @@ public class Computer extends BaseService {
                 window.setWindowId(((Number) windowIdObj).intValue());
             }
         }
-        if (windowData.containsKey("title")) {
-            window.setTitle(String.valueOf(windowData.get("title")));
+        if (windowData.containsKey("window_title")) {
+            window.setTitle(String.valueOf(windowData.get("window_title")));
         }
         if (windowData.containsKey("absolute_upper_left_x")) {
             Object xObj = windowData.get("absolute_upper_left_x");

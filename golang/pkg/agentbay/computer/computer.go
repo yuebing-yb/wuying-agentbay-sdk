@@ -34,7 +34,7 @@ const (
 // Window represents a window in the system
 type Window struct {
 	WindowID           int      `json:"window_id"`
-	Title              string   `json:"title"`
+	Title              string   `json:"window_title"`
 	AbsoluteUpperLeftX int      `json:"absolute_upper_left_x,omitempty"`
 	AbsoluteUpperLeftY int      `json:"absolute_upper_left_y,omitempty"`
 	Width              int      `json:"width,omitempty"`
@@ -47,7 +47,7 @@ type Window struct {
 // WindowInfo represents window information
 type WindowInfo struct {
 	WindowID int    `json:"window_id"`
-	Title    string `json:"title"`
+	Title    string `json:"window_title"`
 	PID      int    `json:"pid"`
 	PName    string `json:"pname"`
 }

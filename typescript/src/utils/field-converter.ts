@@ -65,8 +65,12 @@ export function convertObjectKeys<T = any>(obj: any): T {
  */
 export function convertWindowData(rawWindow: any): any {
   if (!rawWindow) return rawWindow;
-  
-  return convertObjectKeys(rawWindow);
+
+  const converted = convertObjectKeys(rawWindow);
+  if (converted && converted.windowTitle !== undefined) {
+    converted.title = converted.windowTitle;
+  }
+  return converted;
 }
 
 /**

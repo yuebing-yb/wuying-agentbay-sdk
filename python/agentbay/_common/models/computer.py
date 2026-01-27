@@ -115,7 +115,7 @@ class Window:
             child_windows = [cls._from_dict(child) for child in data["child_windows"]]
         return cls(
             window_id=data.get("window_id", 0),
-            title=data.get("title", ""),
+            title=data.get("window_title", ""),
             absolute_upper_left_x=data.get("absolute_upper_left_x"),
             absolute_upper_left_y=data.get("absolute_upper_left_y"),
             width=data.get("width"),
