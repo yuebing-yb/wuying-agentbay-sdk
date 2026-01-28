@@ -16,7 +16,9 @@ const EXTENSIONS_BASE_PATH = "/tmp/extensions";
 // ==============================================================================
 // 1. Data Models
 // ==============================================================================
-
+interface FileSystemError extends Error {
+  code?: string;
+}
 /**
  * Represents a browser extension as a cloud resource.
  */
@@ -294,8 +296,8 @@ export class ExtensionsService {
       }
       
       // Handle filesystem errors specifically
-      if (error instanceof Error && (error as any).code) {
-        const errorCode = (error as any).code;
+     if (error instanceof Error && 'code' in error) {
+        const errorCode = (error as FileSystemError).code;
         if (errorCode === 'ENOENT') {
           throw new AgentBayError(`File not found: ${localPath}`);
         } else if (errorCode === 'EACCES') {

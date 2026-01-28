@@ -6,7 +6,7 @@ import { AgentBay,CreateSessionParams, CreateSessionParamsClass,BrowserContext,C
 
 
 async function demonstrateUsage() {
-  const agentBay = new AgentBay({ apiKey: "your-api-key" });
+  const agentBay = new AgentBay({ apiKey: process.env.API_KEY || "your-api-key" });
 
   // Method 1: Using interface-style object (plain object)
   console.log("=== Method 1: Interface-style usage ===");
@@ -47,9 +47,9 @@ async function demonstrateUsage() {
   });
 
   // You can also add additional properties that don't exist in the class
-  (classParams as any).enableBrowserReplay = false;
-  (classParams as any).framework = "langchain";
-  (classParams as any).betaNetworkId = "network-456";
+  classParams.enableBrowserReplay = false;
+  classParams.framework = "langchain";
+  classParams.betaNetworkId = "network-456";
 
   try {
     const result2 = await agentBay.create(classParams);

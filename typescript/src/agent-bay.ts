@@ -1241,7 +1241,7 @@ export class AgentBay {
         framework: params.framework,
       };
     } else {
-      // For plain objects, use JSON serialization for deep copy and then apply extension merging logic
+      // Use any type for JSON.parse result since params could be either interface or class instance
       const copied = JSON.parse(JSON.stringify(params)) as any;
       result = copied as CreateSessionParamsInterface;
       if(!result.enableBrowserReplay || !("enableBrowserReplay" in result)){
@@ -1255,7 +1255,7 @@ export class AgentBay {
         result.contextSync = [...allContextSyncs, ...result.browserContext.extensionContextSyncs];
       }
       if (params?.browserContext && params.browserContext.fingerprintContextSync) {
-        result.contextSync = [...allContextSyncs, params.browserContext.fingerprintContextSync];
+        result.contextSync = [...(result.contextSync || []), params.browserContext.fingerprintContextSync];
         log("Added fingerprint context sync from BrowserContext");
       }
       // Reconstruct ContextSync objects if they exist (since they might be class instances)

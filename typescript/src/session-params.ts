@@ -269,34 +269,6 @@ export class BrowserContext {
 }
 
 /**
- * Configuration interface for CreateSessionParams
- */
-export interface CreateSessionParamsConfig {
-   /** Custom labels for the Session. These can be used for organizing and filtering sessions. */
-  labels?: Record<string, string>;
-  /** Image ID to use for the session. */
-  imageId?: string;
-  /** List of context synchronization configurations. */
-  contextSync?: ContextSync[];
-  /** Optional configuration for browser data synchronization. */
-  browserContext?: BrowserContext;
-  /** Security policy ID (interface field name). */
-  policyId?: string;
-  /** Beta network ID to bind this session to. */
-  betaNetworkId?: string;
-  /** Whether to enable browser session recording. */
-  enableBrowserReplay?: boolean;
-  /** Additional configuration options. */
-  extraConfigs?: ExtraConfigs;
-  /** Framework identifier for tracking. */
-  framework?: string;
-  /** Whether to create a VPC-based session. Defaults to false. */
-  isVpc?: boolean;
-  /** MCP policy id to apply when creating the session (class field name). */
-  mcpPolicyId?: string;
-}
-
-/**
  * Parameters for creating a session.
  * This interface defines all possible fields that can be used when creating a session.
  */
@@ -366,13 +338,13 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
   public browserContext?: BrowserContext;
   
 
-  constructor(params?: CreateSessionParamsConfig) {
+  constructor(params?: CreateSessionParamsInterface) {
     this.labels = params?.labels || {};
     this.imageId = params?.imageId;
     this.isVpc = params?.isVpc || false;
     // Handle policyId mapping - if policyId is provided, use it, otherwise use mcpPolicyId
-    this.mcpPolicyId = params?.policyId || params?.mcpPolicyId;
-    this.policyId = params?.policyId || params?.mcpPolicyId;
+    this.mcpPolicyId = params?.mcpPolicyId ? params.mcpPolicyId :'';
+    this.policyId = params?.policyId ? params.policyId : '';
     this.betaNetworkId = params?.betaNetworkId;
     // Default to true like Python version
     this.enableBrowserReplay = params?.enableBrowserReplay ? params.enableBrowserReplay : true;
@@ -385,13 +357,13 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
     // Add extension context syncs from browserContext if available
     if (params?.browserContext && params.browserContext.extensionContextSyncs) {
       allContextSyncs = [...allContextSyncs, ...params.browserContext.extensionContextSyncs];
-      console.log(`Added ${params.browserContext.extensionContextSyncs.length} extension context sync(s) from BrowserContext`);
+      log(`Added ${params.browserContext.extensionContextSyncs.length} extension context sync(s) from BrowserContext`);
     }
     
     // Add fingerprint context sync from browserContext if available
     if (params?.browserContext && params.browserContext.fingerprintContextSync) {
       allContextSyncs = [...allContextSyncs, params.browserContext.fingerprintContextSync];
-      console.log("Added fingerprint context sync from BrowserContext");
+      log("Added fingerprint context sync from BrowserContext");
     }
 
     this.contextSync = allContextSyncs;
