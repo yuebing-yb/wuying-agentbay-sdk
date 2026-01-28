@@ -90,28 +90,28 @@ def main():
 
         # ==================== Managed Proxy Examples ====================
         # Note: Contact us or your account manager to set up your managed proxy pool first
-        
+
         # Example 4: Managed Proxy - Polling Strategy
         # browser_proxy = BrowserProxy(
         #     proxy_type="managed",
         #     strategy="polling",
         #     user_id="user123"  # REQUIRED: independent allocation per session
         # )
-        
+
         # Example 5: Managed Proxy - Sticky Strategy
         # browser_proxy = BrowserProxy(
         #     proxy_type="managed",
         #     strategy="sticky",
         #     user_id="user123"  # REQUIRED: associates with historical allocations
         # )
-        
+
         # Example 6: Managed Proxy - Rotating Strategy
         # browser_proxy = BrowserProxy(
         #     proxy_type="managed",
         #     strategy="rotating",
         #     user_id="user123"  # REQUIRED: rotates from historical allocations
         # )
-        
+
         # Example 7: Managed Proxy - Matched Strategy
         # browser_proxy = BrowserProxy(
         #     proxy_type="managed",
@@ -140,8 +140,7 @@ def main():
                 context = browser.contexts[0]  # Get default browser context
                 page = context.new_page()  # Create new page
 
-                # ==================== Verify Proxy IP ====================
-                print("\n--- Starting proxy public IP check ---")
+                # ==================== Verify Proxy IP ==================== print("\n--- Starting proxy public IP check ---")
                 page.goto("https://httpbin.org/ip")  # Visit IP checking service
 
                 try:

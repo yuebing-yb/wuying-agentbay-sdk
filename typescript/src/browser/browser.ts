@@ -645,6 +645,10 @@ export class Browser {
   async destroy(): Promise<void> {
     if (this.isInitialized()) {
       await this.session.callMcpTool("stopChrome", {}, false);
+      // Reset browser state
+      this._initialized = false;
+      this._option = null;
+      this._endpointUrl = null;
     } else {
       throw new BrowserError("Browser is not initialized. Cannot destroy browser.");
     }

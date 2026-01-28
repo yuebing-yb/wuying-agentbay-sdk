@@ -104,6 +104,10 @@ public class Browser extends BaseService {
         if (isInitialized()) {
             try {
                 stopBrowser();
+                // Reset browser state
+                this.initialized = false;
+                this.endpointUrl = null;
+                this.option = null;
             } catch (BrowserException e) {
             }
         }

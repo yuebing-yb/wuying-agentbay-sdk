@@ -640,6 +640,11 @@ func (b *Browser) Destroy() error {
 		return fmt.Errorf("failed to destroy browser: %w", err)
 	}
 
+	// Reset browser state
+	b.initialized = false
+	b.option = nil
+	b.endpointURL = ""
+
 	return nil
 }
 

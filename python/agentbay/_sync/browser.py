@@ -233,6 +233,10 @@ class Browser(BaseService):
                 "stopChrome",
                 {},
             )
+            self._initialized = False
+            self._endpoint_router_port = None
+            self._endpoint_url = None
+            self._option = None
         else:
             raise BrowserError("Browser is not initialized. Cannot stop browser.")
 
