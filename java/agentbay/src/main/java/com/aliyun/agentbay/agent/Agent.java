@@ -8,6 +8,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.aliyun.agentbay.browser.BrowserOption;
 import com.aliyun.agentbay.model.ExecutionResult;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.QueryResult;
@@ -475,9 +476,46 @@ public class Agent extends BaseService {
      */
     public static class Browser extends BaseService {
         private static final Logger logger = LoggerFactory.getLogger(Browser.class);
+        private boolean initialized = false;
 
         public Browser(Session session) {
             super(session);
+        }
+
+        /**
+         * Initialize the browser on which the agent performs tasks.
+         * <p>
+         * This method must be called before {@code executeTask} is invoked. It initializes
+         * the browser instance with the specified options. If the browser is already initialized,
+         * this method returns {@code true} immediately without re-initialization.
+         * </p>
+         * <p>
+         * For hybrid browser usage scenarios (combining BrowserUseAgent with BrowserOperator),
+         * you must call this method before executing any browser tasks to ensure the browser
+         * is properly configured and ready.
+         * </p>
+         *
+         * @param option the browser initialization options. If {@code null}, default options will be used.
+         * @return {@code true} if the browser is successfully initialized or already initialized;
+         *         {@code false} if initialization fails.
+         * @throws IllegalStateException if the browser session is not available
+         * 
+         * @see BrowserOption
+         * @see #executeTask(String, int)
+         * @see #executeTaskAndWait(String, int)
+         */
+        public boolean initialize(BrowserOption option) {
+
+            if (this.initialized) {
+                return true;
+            }
+
+            if (option == null) {
+                option = new BrowserOption();
+            }
+            boolean success = session.getBrowser().initialize(option);
+            this.initialized = success;
+            return success;
         }
 
         /**
@@ -517,6 +555,15 @@ public class Agent extends BaseService {
          */
         public ExecutionResult executeTask(String task, boolean useVision,
                 Object output_schema) {
+            if (!this.initialized) {
+                logger.info("Browser is not initialized. Initialize browser first.");
+                boolean success = initialize(new BrowserOption());
+                if (!success) {
+                    return new ExecutionResult("", false,
+                            "Browser initialization failed.",
+                            "", "failed");
+                }
+            }
             try {
                 String schemaJson = "";
                 if (output_schema instanceof String) {
@@ -585,80 +632,88 @@ public class Agent extends BaseService {
          * </pre>
          */
         public ExecutionResult executeTaskAndWait(String task, int timeout,
-                                                  boolean useVision,
-                                                  Object output_schema) {
-          try {
-            ExecutionResult result =
-                executeTask(task, useVision, output_schema);
-            if (result.isSuccess()) {
-              String taskId = result.getTaskId();
-              int pollInterval = 3;
-              int maxPollAttempts = timeout / pollInterval;
-              int triedTime = 0;
-              while (triedTime < maxPollAttempts) {
-                QueryResult query = getTaskStatus(taskId);
-
-                if ("finished".equals(query.getTaskStatus())) {
-                  return new ExecutionResult(result.getRequestId(), true, "",
-                                             taskId, query.getTaskStatus(),
-                                             query.getTaskProduct());
-                } else if ("failed".equals(query.getTaskStatus())) {
-                  String errorMsg = query.getErrorMessage();
-                  if (errorMsg == null || errorMsg.isEmpty()) {
-                    errorMsg = "Failed to execute task.";
-                  }
-                  return new ExecutionResult(result.getRequestId(), false,
-                                             errorMsg, taskId,
-                                             query.getTaskStatus(), "");
-                } else if ("unsupported".equals(query.getTaskStatus())) {
-                  String errorMsg = query.getErrorMessage();
-                  if (errorMsg == null || errorMsg.isEmpty()) {
-                    errorMsg = "Unsupported task.";
-                  }
-                  return new ExecutionResult(result.getRequestId(), false,
-                                             errorMsg, taskId,
-                                             query.getTaskStatus(), "");
+                boolean useVision,
+                Object output_schema) {
+            if (!this.initialized) {
+                logger.info("Browser is not initialized. Initialize browser first.");
+                boolean success = initialize(new BrowserOption());
+                if (!success) {
+                    return new ExecutionResult("", false,
+                            "Browser initialization failed.",
+                            "", "failed");
                 }
-                Thread.sleep(3000);
-                triedTime++;
-              }
-              // Automatically terminate the task on timeout
-              try {
-                ExecutionResult terminateResult = terminateTask(taskId);
-                if (terminateResult.isSuccess()) {
-                  logger.info("✅ Task {} terminated successfully after timeout",
-                              taskId);
-                } else {
-                  logger.warn(
-                      "⚠️ Failed to terminate task {} after timeout: {}",
-                      taskId, terminateResult.getErrorMessage());
-                }
-              } catch (Exception e) {
-                logger.warn(
-                    "⚠️ Exception while terminating task {} after timeout: {}",
-                    taskId, e.getMessage());
-              }
-              String timeoutErrorMsg = String.format(
-                  "Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).",
-                  timeout, taskId, triedTime, maxPollAttempts);
-              return new ExecutionResult(
-                  result.getRequestId(), false, timeoutErrorMsg, taskId,
-                  "failed",
-                  String.format("Task execution timed out after %d seconds.",
-                                timeout));
-            } else {
-              return result;
             }
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new ExecutionResult("", false,
-                                       "Task interrupted: " + e.getMessage(),
-                                       "", "failed", "Task Failed");
-          } catch (Exception e) {
-            return new ExecutionResult("", false,
-                                       "Failed to execute: " + e.getMessage(),
-                                       "", "failed", "Task Failed");
-          }
+            try {
+                ExecutionResult result = executeTask(task, useVision, output_schema);
+                if (result.isSuccess()) {
+                    String taskId = result.getTaskId();
+                    int pollInterval = 3;
+                    int maxPollAttempts = timeout / pollInterval;
+                    int triedTime = 0;
+                    while (triedTime < maxPollAttempts) {
+                        QueryResult query = getTaskStatus(taskId);
+
+                        if ("finished".equals(query.getTaskStatus())) {
+                            return new ExecutionResult(result.getRequestId(), true, "",
+                                    taskId, query.getTaskStatus(),
+                                    query.getTaskProduct());
+                        } else if ("failed".equals(query.getTaskStatus())) {
+                            String errorMsg = query.getErrorMessage();
+                            if (errorMsg == null || errorMsg.isEmpty()) {
+                                errorMsg = "Failed to execute task.";
+                            }
+                            return new ExecutionResult(result.getRequestId(), false,
+                                    errorMsg, taskId,
+                                    query.getTaskStatus(), "");
+                        } else if ("unsupported".equals(query.getTaskStatus())) {
+                            String errorMsg = query.getErrorMessage();
+                            if (errorMsg == null || errorMsg.isEmpty()) {
+                                errorMsg = "Unsupported task.";
+                            }
+                            return new ExecutionResult(result.getRequestId(), false,
+                                    errorMsg, taskId,
+                                    query.getTaskStatus(), "");
+                        }
+                        Thread.sleep(3000);
+                        triedTime++;
+                    }
+                    // Automatically terminate the task on timeout
+                    try {
+                        ExecutionResult terminateResult = terminateTask(taskId);
+                        if (terminateResult.isSuccess()) {
+                            logger.info("✅ Task {} terminated successfully after timeout",
+                                    taskId);
+                        } else {
+                            logger.warn(
+                                    "⚠️ Failed to terminate task {} after timeout: {}",
+                                    taskId, terminateResult.getErrorMessage());
+                        }
+                    } catch (Exception e) {
+                        logger.warn(
+                                "⚠️ Exception while terminating task {} after timeout: {}",
+                                taskId, e.getMessage());
+                    }
+                    String timeoutErrorMsg = String.format(
+                            "Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).",
+                            timeout, taskId, triedTime, maxPollAttempts);
+                    return new ExecutionResult(
+                            result.getRequestId(), false, timeoutErrorMsg, taskId,
+                            "failed",
+                            String.format("Task execution timed out after %d seconds.",
+                                    timeout));
+                } else {
+                    return result;
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return new ExecutionResult("", false,
+                        "Task interrupted: " + e.getMessage(),
+                        "", "failed", "Task Failed");
+            } catch (Exception e) {
+                return new ExecutionResult("", false,
+                        "Failed to execute: " + e.getMessage(),
+                        "", "failed", "Task Failed");
+            }
         }
 
         /**

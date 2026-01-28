@@ -152,7 +152,7 @@ class OutputSchema(BaseModel):
 
 @pytest.mark.sync
 def test_browser_execute_task_and_wait_success(browser_agent_session):
-    """Test executing a flux task successfully."""
+    """Test executing a browser task successfully."""
     agent = browser_agent_session.agent
 
     task = "Navigate to baidu.com and Query the date when Alibaba listed in the U.S"
@@ -179,7 +179,7 @@ class WeatherSchema(BaseModel):
 
 @pytest.mark.sync
 def test_browser_execute_task_success(browser_agent_session):
-    """Test executing a flux task successfully."""
+    """Test executing a browser task successfully."""
     agent = browser_agent_session.agent
 
     task = "Navigate to baidu.com and Query the weather in Shanghai"

@@ -194,6 +194,14 @@ func (s *Session) Fs() *filesystem.FileSystem
 
 Fs returns the FileSystem module (alias of FileSystem).
 
+### GetBrowser
+
+```go
+func (s *Session) GetBrowser() *browser.Browser
+```
+
+GetBrowser returns the Browser instance for this session.
+
 ### GetEnableBrowserReplay
 
 ```go

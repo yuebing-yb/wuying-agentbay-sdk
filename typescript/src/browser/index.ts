@@ -1,6 +1,6 @@
 export { Browser, BrowserViewport, BrowserScreen, BrowserFingerprint, BrowserFingerprintContext, BrowserProxy, BrowserProxyClass, BrowserOption, BrowserOptionClass } from './browser';
-export { BrowserAgent } from './browser_agent';
-export type { ActOptions, ActResult, ObserveOptions, ObserveResult, ExtractOptions } from './browser_agent';
+export { BrowserOperator } from './browser_operator';
+export type { ActOptions, ActResult, ObserveOptions, ObserveResult, ExtractOptions } from './browser_operator';
 export { 
   FingerprintFormat, 
   BrowserFingerprintGenerator,

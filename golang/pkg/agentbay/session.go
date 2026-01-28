@@ -390,6 +390,11 @@ func (s *Session) GetSessionId() string {
 	return s.SessionID
 }
 
+// GetBrowser returns the Browser instance for this session.
+func (s *Session) GetBrowser() *browser.Browser {
+	return s.Browser
+}
+
 // GetImageID returns the image ID for this session.
 func (s *Session) GetImageID() string {
 	return s.ImageId

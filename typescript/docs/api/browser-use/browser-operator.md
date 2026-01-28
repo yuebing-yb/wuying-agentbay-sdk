@@ -1,12 +1,12 @@
-# Class: BrowserAgent
+# Class: BrowserOperator
 
-BrowserAgent to perform tasks on the browser.
+BrowserOperator to perform tasks on the browser.
 
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ## Hierarchy
 
-- **`BrowserAgent`**
+- **`BrowserOperator`**
 
   ↳ ``LocalPageAgent``
 

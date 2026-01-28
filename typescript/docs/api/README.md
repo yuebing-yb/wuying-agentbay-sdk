@@ -4,7 +4,7 @@ These documents are generated automatically using TypeDoc. Run `npm run docs:gen
 
 ## Structure
 - `browser-use`
-  - browser-agent.md
+  - browser-operator.md
   - browser.md
   - extension.md
   - fingerprint.md

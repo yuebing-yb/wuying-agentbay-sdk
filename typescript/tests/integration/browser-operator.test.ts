@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-// Browser agent integration tests
-import { AgentBay, Browser, BrowserAgent, log } from '../../src';
+// Browser operator integration tests
+import 'dotenv/config';
+import { AgentBay, Browser, BrowserOperator, log } from '../../src';
 
 function getTestApiKey(): string {
   const apiKey = process.env.AGENTBAY_API_KEY;
@@ -23,7 +24,7 @@ function isWindowsUserAgent(userAgent: any): boolean {
   return ['windows nt','win32','win64','windows','wow64'].some(x => lower.includes(x));
 }
 
-describe('BrowserAgent Integration Tests', () => {
+describe('BrowserOperator Integration Tests', () => {
   let agentBay: any;
   let session: any;
 
@@ -33,7 +34,7 @@ describe('BrowserAgent Integration Tests', () => {
     agentBay = new AgentBay({ apiKey });
 
     // Create a session
-    log("Creating a new session for browser agent testing...");
+    log("Creating a new session for browser operator testing...");
     const sessionParam = {
       imageId: "browser_latest"
     };
@@ -72,7 +73,7 @@ describe('BrowserAgent Integration Tests', () => {
     const browser = session.browser;
     expect(browser).toBeDefined();
     expect(browser).toBeInstanceOf(Browser);
-    expect(browser.agent).toBeInstanceOf(BrowserAgent);
+    expect(browser.operator).toBeInstanceOf(BrowserOperator);
   });
 
   test('initialize browser', async () => {
@@ -138,7 +139,7 @@ describe('BrowserAgent Integration Tests', () => {
     };
 
     try {
-      const result = await browser.agent.act({ action: "Click search button" }, mockPage);
+      const result = await browser.operator.act({ action: "Click search button" }, mockPage);
       log("Act result:", result);
       expect(result).toBeDefined();
     } catch (error: any) {
@@ -167,7 +168,7 @@ describe('BrowserAgent Integration Tests', () => {
 
     // Test observe operation
     try {
-      const [success, observeResults] = await browser.agent.observe({ instruction: "Find the search button" }, mockPage);
+      const [success, observeResults] = await browser.operator.observe({ instruction: "Find the search button" }, mockPage);
       log("Observe success:", success);
       log("Observe results count:", observeResults.length);
       expect(typeof success).toBe('boolean');
@@ -205,7 +206,7 @@ describe('BrowserAgent Integration Tests', () => {
         } 
       }
 
-      const [success, objects] = await browser.agent.extract({ 
+      const [success, objects] = await browser.operator.extract({ 
         instruction: "Extract the title", 
         schema: TestSchema 
       }, mockPage);

@@ -2,7 +2,7 @@
 
 ## BrowserOperator
 
-- [PageUseagent](advance-features/browser-operator.md) - An AI-powered, natural-language describing task supported web agent for precise, reliable page operations 
+- [BrowserOperator](advance-features/browser-operator.md) - An AI-powered, natural-language describing task supported web operator for precise, reliable page operations 
 ## 📚 Related Guides
 
 - [BrowserOperator Guide](advance-features/browser-operator.md) - AI-powered web automation

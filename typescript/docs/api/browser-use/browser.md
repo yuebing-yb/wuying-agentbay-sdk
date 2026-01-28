@@ -37,7 +37,7 @@ screenshot capture, and content extraction. It enables automated testing and web
 ## Properties
 
 ```typescript
-agent: [`BrowserAgent`](browser-agent.md)
+operator: [`BrowserOperator`](browser-operator.md)
 ```
 
 

@@ -34,6 +34,7 @@ NewAgent creates a new Agent instance
 ```go
 type BrowserUseAgent struct {
 	*baseTaskAgent
+	initialized	bool
 }
 ```
 
@@ -194,6 +195,17 @@ execResult := sessionResult.Session.Agent.Browser.ExecuteTask("Find weather in N
 statusResult := sessionResult.Session.Agent.Browser.GetTaskStatus(execResult.TaskID)
 ```
 
+### Initialize
+
+```go
+func (a *BrowserUseAgent) Initialize(option *browser.BrowserOption) (bool, error)
+```
+
+* * You are supposed to call this API before executeTask is called, but is't optional.
+Initialize the browser on which the agent performs tasks. * @param option Browser option *
+@return True if the browser is successfully initialized, False otherwise.
+
+
 ### TerminateTask
 
 ```go
@@ -350,6 +362,7 @@ type McpSession interface {
 	GetAPIKey() string
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
+	GetBrowser() *browser.Browser
 }
 ```
 

@@ -1,5 +1,5 @@
 import { Session } from '../session';
-import { BrowserAgent } from './browser_agent';
+import { BrowserOperator } from './browser_operator';
 import { BrowserError } from '../exceptions';
 import { InitBrowserRequest } from '../api/models/InitBrowserRequest';
 import { FingerprintFormat } from './fingerprint';
@@ -483,11 +483,11 @@ export class Browser {
   private _endpointUrl: string | null = null;
   private _initialized = false;
   private _option: BrowserOptionClass | null = null;
-  public agent: BrowserAgent;
+  public operator: BrowserOperator;
 
   constructor(session: Session) {
     this.session = session;
-    this.agent = new BrowserAgent(this.session, this);
+    this.operator = new BrowserOperator(this.session, this);
   }
 
   /**

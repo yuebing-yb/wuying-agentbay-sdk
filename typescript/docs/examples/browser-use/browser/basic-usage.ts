@@ -76,7 +76,7 @@ async function main() {
         timeout: 5,
       };
 
-      const actResult = await session.browser.agent.act(actOptions, mockPage);
+      const actResult = await session.browser.operator.act(actOptions, mockPage);
       console.log("Action result:", {
         success: actResult.success,
         message: actResult.message,
@@ -93,7 +93,7 @@ async function main() {
       };
 
       const [observeSuccess, observations] =
-        await session.browser.agent.observe(observeOptions, mockPage);
+        await session.browser.operator.observe(observeOptions, mockPage);
       console.log("Observe success:", observeSuccess);
       console.log("Number of observations:", observations.length);
 
@@ -117,7 +117,7 @@ async function main() {
         use_text_extract: false,
       };
 
-      const [extractSuccess, extracted] = await session.browser.agent.extract(
+      const [extractSuccess, extracted] = await session.browser.operator.extract(
         extractOptions,
         mockPage
       );

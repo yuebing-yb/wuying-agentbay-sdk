@@ -80,7 +80,7 @@ func TestBrowserAgent_ExecuteTask(t *testing.T) {
 			}
 		}
 
-		t.Logf("Executing agent task: %s", task)
+		t.Logf("Executing agent task: %s timeout %d", task, timeout)
 		result := session.Agent.Browser.ExecuteTaskAndWait(task, timeout, false, &OutputSchema{})
 		t.Logf("Browser Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
 			result.RequestID, result.Success, result.TaskID, result.TaskStatus)

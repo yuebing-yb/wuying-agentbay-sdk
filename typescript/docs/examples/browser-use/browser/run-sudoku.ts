@@ -81,7 +81,7 @@ async function main() {
           };
 
           const [extractSuccess, boardObj] =
-            await session.browser.agent.extract(options, page);
+            await session.browser.operator.extract(options, page);
           if (extractSuccess && boardObj) {
             success = true;
             board = boardObj.board;
@@ -120,7 +120,7 @@ Return:
         };
 
         const [solutionSuccess, solutionObj] =
-          await session.browser.agent.extract(solutionOptions, page);
+          await session.browser.operator.extract(solutionOptions, page);
         if (!solutionSuccess || !solutionObj) {
           console.log("❌ Failed to solve sudoku");
           return;
@@ -146,7 +146,7 @@ Return:
                 action: `Enter '${solution[row][col]}' into the input element where the attribute id is exactly '${inputId}' (for example, if id='f53', you must match the full string 'f53', not just the number 53; do not split or extract numbers from the id)`,
               };
 
-              await session.browser.agent.act(actOptions, page);
+              await session.browser.operator.act(actOptions, page);
               await new Promise((resolve) => setTimeout(resolve, 500));
             }
           }

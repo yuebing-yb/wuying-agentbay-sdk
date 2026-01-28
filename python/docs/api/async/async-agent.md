@@ -48,8 +48,6 @@ def __init__(self, session: "AsyncSession")
 class Browser(_BaseTaskAgent)
 ```
 
-An Agent(⚠️ Still in BETA) to perform tasks on the browser
-
 > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ### __init__
@@ -57,6 +55,20 @@ An Agent(⚠️ Still in BETA) to perform tasks on the browser
 ```python
 def __init__(self, session: "AsyncSession")
 ```
+
+### initialize
+
+```python
+async def initialize(option: Optional[BrowserOption] = None) -> bool
+```
+
+Initialize the browser on which the agent performs tasks.
+You are supposed to call this API before executeTask is called, but it's not optional.
+If you want perform a hybrid usage of browser, you must call this API before executeTask is called.
+
+**Returns**:
+
+    bool: True if the browser is successfully initialized, False otherwise.
 
 ### execute_task
 

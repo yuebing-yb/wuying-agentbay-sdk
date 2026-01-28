@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { Browser, BrowserAgent } = require('../../dist/index.cjs');
+const { Browser, BrowserOperator } = require('../../dist/index.cjs');
 const { FingerprintFormat } = require('../../dist/index.cjs');
 const fs = require('fs');
 const path = require('path');
@@ -60,7 +60,7 @@ describe('Browser Unit Tests', () => {
 
   test('should create browser instance', () => {
     expect(browser).toBeDefined();
-    expect(browser.agent).toBeInstanceOf(BrowserAgent);
+    expect(browser.operator).toBeInstanceOf(BrowserOperator);
   });
 
   test('should initialize browser', async () => {
@@ -99,7 +99,7 @@ describe('Browser Unit Tests', () => {
     const mockPage = { url: () => 'http://example.com' };
     const options = { action: 'Click search button' };
     
-    const result = await browser.agent.act(options, mockPage);
+    const result = await browser.operator.act(options, mockPage);
     
     expect(result.success).toBe(true);
     expect(mockSession.callMcpTool).toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe('Browser Unit Tests', () => {
     const mockPage = { url: () => 'http://example.com' };
     const options = { instruction: 'Find the search button' };
     
-    const [success, results] = await browser.agent.observe(options, mockPage);
+    const [success, results] = await browser.operator.observe(options, mockPage);
     
     expect(success).toBe(true);
     expect(Array.isArray(results)).toBe(true);
@@ -153,7 +153,7 @@ describe('Browser Unit Tests', () => {
       schema: TestSchema 
     };
     
-    const [success, result] = await browser.agent.extract(options, mockPage);
+    const [success, result] = await browser.operator.extract(options, mockPage);
     
     expect(success).toBe(true);
     expect(result).toBeDefined();
@@ -177,7 +177,7 @@ describe('Browser Unit Tests', () => {
     const mockPage = { url: () => 'http://example.com' };
     const options = { action: 'Click search button' };
     
-    const result = await browser.agent.act(options, mockPage);
+    const result = await browser.operator.act(options, mockPage);
     
     expect(result.success).toBe(false);
     expect(result.message).toBe('Test error');
@@ -186,9 +186,9 @@ describe('Browser Unit Tests', () => {
   test('should throw error when browser not initialized for operations', async () => {
     const mockPage = { url: () => 'http://example.com' };
     
-    await expect(browser.agent.act({ action: 'test' }, mockPage)).rejects.toThrow('Browser must be initialized');
-    await expect(browser.agent.observe({ instruction: 'test' }, mockPage)).rejects.toThrow('Browser must be initialized');
-    await expect(browser.agent.extract({ instruction: 'test', schema: TestSchema }, mockPage)).rejects.toThrow('Browser must be initialized');
+    await expect(browser.operator.act({ action: 'test' }, mockPage)).rejects.toThrow('Browser must be initialized');
+    await expect(browser.operator.observe({ instruction: 'test' }, mockPage)).rejects.toThrow('Browser must be initialized');
+    await expect(browser.operator.extract({ instruction: 'test', schema: TestSchema }, mockPage)).rejects.toThrow('Browser must be initialized');
   });
 
   describe('Browser Options', () => {

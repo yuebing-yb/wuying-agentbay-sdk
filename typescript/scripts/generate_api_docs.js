@@ -56,7 +56,7 @@ const docMappings = [
     symbol: 'ExtensionsService',
     identifiers: ['Class ExtensionsService', 'Class Extension', 'ExtensionsService', 'Extension'],
   },
-  { target: 'browser-use/browser-agent.md', symbol: 'BrowserAgent', identifiers: ['Class BrowserAgent', 'BrowserAgent', 'browser_agent'] },
+  { target: 'browser-use/browser-operator.md', symbol: 'BrowserOperator', identifiers: ['Class BrowserOperator', 'BrowserOperator', 'browser_operator'] },
   { target: 'browser-use/fingerprint.md', symbol: 'FingerprintFormat', identifiers: ['Class FingerprintFormat', 'FingerprintFormat', 'Fingerprint', 'browser/fingerprint'] },
   { target: 'codespace/code.md', symbol: 'Code', identifiers: ['Class Code', 'Code'] },
   { target: 'computer-use/computer.md', symbol: 'Computer', identifiers: ['Class Computer', 'Computer'] },

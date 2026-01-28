@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import { chromium, Browser as PlaywrightBrowser, BrowserContext } from 'playwright';
 import { Session } from '../../session';
 import { Browser } from '../browser';
-import { BrowserAgent } from '../browser_agent';
+import { BrowserOperator } from '../browser_operator';
 import { OperationResult, DeleteResult } from '../../types/api-response';
 import { McpToolResult } from '../../agent/agent';
 import { logInfo, logDebug, logWarn, logError } from '../../utils/logger';
@@ -289,12 +289,12 @@ class RuntimeError extends Error {
 }
 
 /**
- * Local Page Agent that extends BrowserAgent for local execution
+ * Local Page Agent that extends BrowserOperator for local execution
  * 
- * Note: Since BrowserAgent._callMcpTool is private, we route through the session instead.
+ * Note: Since BrowserOperator._callMcpTool is private, we route through the session instead.
  * The LocalSession.callMcpTool method routes to this agent's MCP client.
  */
-export class LocalPageAgent extends BrowserAgent {
+export class LocalPageAgent extends BrowserOperator {
   private mcpClient: LocalMCPClient | null = null;
 
   constructor(session: Session, browser: Browser) {
@@ -528,7 +528,7 @@ export class LocalSession extends Session {
      * Async stub for local mode. Keeps call signature compatible with the base
      * Session.callMcpTool signature. Routes through LocalPageAgent's MCP client.
      */
-    const localAgent = this.browser.agent as LocalPageAgent;
+    const localAgent = this.browser.operator as LocalPageAgent;
     const result = await localAgent._callMcpToolAsync(toolName, args);
     // Convert OperationResult to McpToolResult format
     return {

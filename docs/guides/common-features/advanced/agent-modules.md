@@ -136,5 +136,6 @@ If you encounter issues with Agent modules:
 1. Check the [Documentation](../../README.md) for detailed information
 2. Search [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues) for similar problems
 3. Contact support with detailed error information and reproduction steps
-4. Please refer to the [Agent Task Execution Example](../../../../python/docs/examples/_async/common-features/advanced/agent_module/main.py) to see how to use the Agent.
-5. Please refer to the [Agent API Definition](../../../../python/docs/api/async/async-agent.md) for more details.
+4. Please refer to the [BrowserUseAgent Example](../../../../python/docs/examples/_async/common-features/advanced/agent_module/browser_use_agent.py) to see how to use the Agent.
+5. Please refer to the [ComputerUseAgent Example](../../../../python/docs/examples/_async/common-features/advanced/agent_module/computer_use_agent.py) to see how to use the Agent.
+6. Please refer to the [Agent API Definition](../../../../python/docs/api/async/async-agent.md) for more details.
