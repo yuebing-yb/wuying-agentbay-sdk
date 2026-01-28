@@ -14,7 +14,7 @@ import { BetaNetworkService } from "./beta-network";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
-import { BrowserContext } from "./session-params";
+import { BrowserContext, CreateSessionParamsInterface, CreateSessionParams as CreateSessionParamsClass } from "./session-params";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
 import {
@@ -46,22 +46,13 @@ import { VERSION, IS_RELEASE } from "./version";
 const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 
 
+
 /**
  * Parameters for creating a session.
+ * Can be either a plain object conforming to the interface or a CreateSessionParams class instance.
  */
-export interface CreateSessionParams {
-  labels?: Record<string, string>;
-  imageId?: string;
-  contextSync?: ContextSync[];
-  browserContext?: BrowserContext;
-  policyId?: string;
-  betaNetworkId?: string;
-  // Note: networkId is not released; do not expose non-beta alias.
-  enableBrowserReplay?: boolean;
-  extraConfigs?: ExtraConfigs;
-  framework?: string;
-}
-
+export type CreateSessionParams = CreateSessionParamsInterface;
+export { CreateSessionParams as CreateSessionParamsClass } from "./session-params";
 /**
  * Main class for interacting with the AgentBay cloud runtime environment.
  */
@@ -638,7 +629,7 @@ export class AgentBay {
    * const agentBay = new AgentBay({ apiKey: "your_api_key" });
    * const result = await agentBay.list({ project: "demo" }, 1, 10, "RUNNING");
    * if (result.success) {
-   *   console.log(`Found ${result.sessionIds.length} sessions`);
+   *  log(`Found ${result.sessionIds.length} sessions`);
    * }
    * ```
    */
@@ -1225,45 +1216,71 @@ export class AgentBay {
 
   /**
    * Creates a deep copy of CreateSessionParams to avoid modifying the original object.
+   * Extension contexts are automatically merged when browserContext is set in the class.
    * @param params - The original params object to copy
-   * @returns A deep copy of the params object
+   * @returns A deep copy of the params object as interface with merged context syncs
    */
-  private deepCopyParams(params: CreateSessionParams): CreateSessionParams {
-    // Use JSON serialization for deep copy (works for plain objects and arrays)
-    const copied = JSON.parse(JSON.stringify(params)) as any;
+  private deepCopyParams(params: CreateSessionParams): CreateSessionParamsInterface {
+    let result: CreateSessionParamsInterface;
+    
+    // Check if params is a CreateSessionParams class instance
+    if (params instanceof CreateSessionParamsClass) {
+      // For class instances, extension contexts are already merged automatically when browserContext was set
+      // We can directly use the class properties without needing toJSON()
+      result = {
+        labels: params.labels,
+        imageId: params.imageId,
+        contextSync: params.contextSync, // Already contains merged extension contexts
+        browserContext: params.browserContext,
+        isVpc: params.isVpc,
+        mcpPolicyId: params.mcpPolicyId,
+        policyId: params.policyId,
+        betaNetworkId: params.betaNetworkId,
+        enableBrowserReplay: params.enableBrowserReplay,
+        extraConfigs: params.extraConfigs,
+        framework: params.framework,
+      };
+    } else {
+      // For plain objects, use JSON serialization for deep copy and then apply extension merging logic
+      const copied = JSON.parse(JSON.stringify(params)) as any;
+      result = copied as CreateSessionParamsInterface;
+      if(!result.enableBrowserReplay || !("enableBrowserReplay" in result)){
+        result.enableBrowserReplay = true;
+      }
+      let allContextSyncs = params?.contextSync ? [...params.contextSync] : [];
+      // **IMPORTANT: Apply extension context merging for plain objects automatically**
+      // Check if browserContext exists and has extension syncs to merge
+      if (result.browserContext && result.browserContext.extensionContextSyncs) {
+        // Merge with extension syncs (equivalent to automatic merging in class)
+        result.contextSync = [...allContextSyncs, ...result.browserContext.extensionContextSyncs];
+      }
+      if (params?.browserContext && params.browserContext.fingerprintContextSync) {
+        result.contextSync = [...allContextSyncs, params.browserContext.fingerprintContextSync];
+        log("Added fingerprint context sync from BrowserContext");
+      }
+      // Reconstruct ContextSync objects if they exist (since they might be class instances)
+      if (result.contextSync && Array.isArray(result.contextSync)) {
+        result.contextSync = result.contextSync.map((cs: any) => {
+          // Reconstruct from plain object (JSON.parse converts class instances to plain objects)
+          return new ContextSync(cs.contextId, cs.path, cs.policy);
+        });
+      }
 
-    // Reconstruct ContextSync objects if they exist (since they might be class instances)
-    if (copied.contextSync && Array.isArray(copied.contextSync)) {
-      copied.contextSync = copied.contextSync.map((cs: any) => {
-        // Reconstruct from plain object (JSON.parse converts class instances to plain objects)
-        return new ContextSync(cs.contextId, cs.path, cs.policy);
-      });
+      // Reconstruct BrowserContext if it exists
+      if (result.browserContext) {
+        const bc = result.browserContext as any;
+        // Use the BrowserContext constructor to properly recreate the instance
+        result.browserContext = new BrowserContext(
+          bc.contextId,
+          bc.autoUpload,
+          bc.extensionOption
+        );
+      }
     }
 
-    // Reconstruct BrowserContext if it exists
-    if (copied.browserContext) {
-      const bc = copied.browserContext as any;
-      // Create a shallow copy of BrowserContext properties
-      copied.browserContext = {
-        contextId: bc.contextId,
-        autoUpload: bc.autoUpload,
-        fingerprintContext: bc.fingerprintContext,
-        fingerprintContextId: bc.fingerprintContextId,
-        fingerprintContextSync: bc.fingerprintContextSync ? new ContextSync(
-          bc.fingerprintContextSync.contextId,
-          bc.fingerprintContextSync.path,
-          bc.fingerprintContextSync.policy
-        ) : undefined,
-        extensionOption: bc.extensionOption,
-        extensionContextId: bc.extensionContextId,
-        extensionIds: bc.extensionIds ? [...bc.extensionIds] : undefined,
-        extensionContextSyncs: bc.extensionContextSyncs ? bc.extensionContextSyncs.map((cs: any) =>
-          new ContextSync(cs.contextId, cs.path, cs.policy)
-        ) : undefined,
-      } as BrowserContext;
-    }
+    
 
-    return copied as CreateSessionParams;
+    return result;
   }
 }
 

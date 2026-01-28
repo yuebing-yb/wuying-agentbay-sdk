@@ -8,7 +8,7 @@
  */
 
 import { AgentBay, CreateSessionParams } from 'wuying-agentbay-sdk';
-import { BrowserOption } from 'wuying-agentbay-sdk/dist/browser';
+import { BrowserOption } from 'wuying-agentbay-sdk';
 import { chromium, Page, ConsoleMessage } from 'playwright';
 
 // Polling detection function, continuously checks until condition is met or timeout

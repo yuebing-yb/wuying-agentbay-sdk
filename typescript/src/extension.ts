@@ -275,20 +275,42 @@ export class ExtensionsService {
       const preSignedUrl = urlResult.url;
 
       // 2. Use the presigned URL to upload the file directly
-      const fileBuffer = fs.readFileSync(localPath);
+      // Using async file reading for better performance with large files
+      const fileBuffer = await fs.promises.readFile(localPath);
       
       const response = await fetch(preSignedUrl, {
         method: 'PUT',
         body: fileBuffer,
       });
 
+      // Check response status and handle errors appropriately
       if (!response.ok) {
         throw new AgentBayError(`HTTP error uploading file: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
+      // Provide more specific error handling based on error types
       if (error instanceof AgentBayError) {
         throw error;
       }
+      
+      // Handle filesystem errors specifically
+      if (error instanceof Error && (error as any).code) {
+        const errorCode = (error as any).code;
+        if (errorCode === 'ENOENT') {
+          throw new AgentBayError(`File not found: ${localPath}`);
+        } else if (errorCode === 'EACCES') {
+          throw new AgentBayError(`Permission denied accessing file: ${localPath}`);
+        } else {
+          throw new AgentBayError(`File system error: ${error.message}`);
+        }
+      }
+      
+      // Handle network/HTTP errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new AgentBayError(`Network error during file upload: ${error.message}`);
+      }
+      
+      // Generic error handler
       throw new AgentBayError(`An error occurred while uploading the file: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

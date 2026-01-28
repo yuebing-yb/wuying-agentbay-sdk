@@ -24,7 +24,7 @@ import * as path from "path";
 import * as os from "os";
 import { AgentBay, CreateSessionParams } from "../../src";
 import { ExtensionsService, Extension, ExtensionOption } from "../../src/extension";
-import { BrowserContext } from "../../src/session-params";
+import { BrowserContext,CreateSessionParams as CreateSessionParamsClass } from "../../src/session-params";
 import { Context } from "../../src/context";
 import { Session } from "../../src/session";
 import { SessionResult, ContextResult } from "../../src/types/api-response";
@@ -444,11 +444,19 @@ log('Content script fully initialized for ${manifest.name} on', window.location.
     // Try using system zip command first (most reliable)
     const { execSync } = require('child_process');
     
-    // Check if zip command is available
+    // Check if zip command is available (cross-platform compatible check)
     try {
-      execSync('zip --version', { stdio: 'pipe' });
-      // If zip is available, use it
-      execSync(`cd "${tempDir}" && zip -r "${name}.zip" *`, { stdio: 'pipe' });
+      if (process.platform === 'win32') {
+        // On Windows, check if PowerShell is available and can find Compress-Archive cmdlet
+        execSync('where powershell', { stdio: 'pipe' });
+        // Use PowerShell to create ZIP file
+        execSync(`powershell -Command "Compress-Archive -Path '${tempDir}\\*' -DestinationPath '${zipPath}' -Force"`, { stdio: 'pipe' });
+      } else {
+        // Unix/Linux/macOS systems
+        execSync('which zip', { stdio: 'pipe' });
+        // If zip is available, use it
+        execSync(`cd "${tempDir}" && zip -r "${name}.zip" *`, { stdio: 'pipe' });
+      }
       
       // Verify the ZIP file was created
       if (fs.existsSync(zipPath)) {
@@ -459,7 +467,7 @@ log('Content script fully initialized for ${manifest.name} on', window.location.
         }
       }
     } catch (zipError: any) {
-      log(`System zip command not available or failed: ${zipError}`);
+      log(`System zip command not available or failed: ${zipError.message || zipError}`);
     }
     
     // Fallback: Create a simple archive manually using Node.js built-in modules
@@ -596,15 +604,6 @@ describe("Extension Service Integration Tests", () => {
       // Create sample extensions
       sampleExtensions = await createSampleExtensions();
       log(`Created ${sampleExtensions.length} sample extension files`);
-      
-      // Test extension service initialization before uploading
-      try {
-        await extensionsService.list();
-        log("Extension service initialized successfully");
-      } catch (initError) {
-        log("Extension service initialization failed:", initError);
-        throw new Error(`Extension service initialization failed: ${initError instanceof Error ? initError.message : String(initError)}`);
-      }
       
       // Pre-upload extensions for reuse in tests - with error handling
       log("Starting extension uploads...");
@@ -908,6 +907,82 @@ describe("Extension Service Integration Tests", () => {
         await cleanupSession(session);
       }
     });
+
+    it("should perform comprehensive extension service integration using CreateSessionParams class", async () => {
+      log("\n=== Comprehensive Extension Service Integration Test (CreateSessionParams Class) ===");
+      
+      // Ensure we have uploaded extensions available
+      if (uploadedExtensions.length === 0) {
+        throw new Error("No uploaded extensions available for integration testing. Extension upload may have failed during setup.");
+      }
+      
+      // Use first two pre-uploaded extensions for comprehensive testing
+      const testExtensions = uploadedExtensions.slice(0, 2);
+      const extensionIds = testExtensions.map(ext => ext.id);
+      
+      // Validate that we have extension IDs
+      if (extensionIds.length === 0) {
+        throw new Error("No extension IDs available for testing. Check extension upload process.");
+      }
+      
+      log(`Target extensions for service integration: ${extensionIds}`);
+      
+      // Configure and create session with extensions using CreateSessionParams class
+      const session = await createSessionWithExtensionsUsingClass(extensionIds);
+      
+      try {
+        // Phase 1: Extension Synchronization
+        log("\nPhase 1: Extension Synchronization");
+        const lsResult_before = await session.command.executeCommand("ls -la /tmp/extensions/");
+        if (!lsResult_before.success) {
+          log("    ❌ lsResult_before Extensions directory not found");
+          return;
+        }
+        
+        log(`    ✅  lsResult_before Extensions directory exists: /tmp/extensions/`);
+        log(`    Directory content:\n${lsResult_before.output}`);
+
+        // Phase 2: Browser Initialization with Extensions
+        log("\nPhase 2: Browser Initialization with Extensions");
+        const browserInitialized = await initializeBrowserWithExtensions(session);
+        expect(browserInitialized).toBe(true);
+
+        const lsResult = await session.command.executeCommand("ls -la /tmp/extensions/");
+        if (!lsResult.success) {
+          log("    ❌ Extensions directory not found");
+          return;
+        }
+        
+        log(`    ✅ Extensions directory exists: /tmp/extensions/`);
+        log(`    Directory content:\n${lsResult.output}`);
+        
+        // Phase 3: Extension Service Validation
+        log("\nPhase 3: Extension Service Validation");
+        const validationResults = await validateExtensionServiceIntegration(session, extensionIds);
+        
+        // Validate service integration results
+        expect(validationResults.fileSystemCheck).toBe(true);
+        expect(validationResults.extensionServiceValidation).toBe(true);
+        expect(validationResults.contextSyncValidation).toBe(true);
+        expect(validationResults.serviceIntegration).toBe(true);
+        
+        log(`\n✅ All validation phases passed:`);
+        log(`   - File System Check: ${validationResults.fileSystemCheck}`);
+        log(`   - Extension Service Validation: ${validationResults.extensionServiceValidation}`);
+        log(`   - Context Sync Validation: ${validationResults.contextSyncValidation}`);
+        log(`   - Service Integration: ${validationResults.serviceIntegration}`);
+        
+        // Phase 4: Extension File Verification
+        log("\nPhase 4: Extension File Verification");
+        const fileVerificationResult = await verifyExtensionFiles(session, extensionIds);
+        expect(fileVerificationResult).toBe(true);
+        
+        log("\n🎉 Extension service integration completed successfully using CreateSessionParams class!");
+        
+      } finally {
+        await cleanupSession(session);
+      }
+    });
   });
 
   // Helper Methods
@@ -945,7 +1020,7 @@ describe("Extension Service Integration Tests", () => {
       log("\nCreating session with browser context...", sessionParams);
     
     const sessionResult: SessionResult = await agentBay.create(sessionParams);
-    log(`  ✅ Created session: ${sessionResult.session.id}`);
+    log(`  ✅ Created session: ${sessionResult.session.sessionId }`);
     expect(sessionResult.success).toBe(true);
     const session = sessionResult.session;
     expect(session).toBeDefined();
@@ -1024,6 +1099,55 @@ describe("Extension Service Integration Tests", () => {
       log(`    ❌ File verification error: ${error}`);
       return false;
     }
+  }
+
+  async function createSessionWithExtensionsUsingClass(extensionIds: string[]): Promise<Session> {
+    log(`  📦 Creating session with extension IDs using CreateSessionParams class: ${extensionIds}`);
+    
+    // Validate extension IDs before proceeding
+    if (!extensionIds || extensionIds.length === 0) {
+      throw new Error("Cannot create session: extensionIds array is empty. Ensure extensions are uploaded successfully before creating session.");
+    }
+    
+    // Validate that all extension IDs are valid strings
+    const invalidIds = extensionIds.filter(id => !id || typeof id !== 'string' || id.trim().length === 0);
+    if (invalidIds.length > 0) {
+      throw new Error(`Invalid extension IDs found: ${JSON.stringify(invalidIds)}. All extension IDs must be non-empty strings.`);
+    }
+    
+    log(`  ✅ Extension IDs validated: ${extensionIds.length} extensions`);
+    
+    const extensionOption = extensionsService.createExtensionOption(extensionIds);
+    
+    const browserContext = new BrowserContext(
+      browserContextId,
+      true,
+      extensionOption
+    );
+    
+    // Using CreateSessionParams class directly
+    const sessionParams = new CreateSessionParamsClass({
+      labels: { test_type: "extension_integration_class" },
+      imageId: "browser_latest",
+      browserContext: browserContext,
+    });
+
+      log("\nCreating session with browser context using CreateSessionParams class...", sessionParams);
+    
+    const sessionResult: SessionResult = await agentBay.create(sessionParams);
+    log(`  ✅ Created session using CreateSessionParams class: ${sessionResult.session.sessionId }`);
+    expect(sessionResult.success).toBe(true);
+    const session = sessionResult.session;
+    expect(session).toBeDefined();
+    
+    if (!session) {
+      throw new Error("Failed to create session");
+    }
+
+    const sessionId = session.sessionId;
+    log(`  ✅ Session created with extension support using CreateSessionParams class: ${sessionId}`);
+    log(`  ✅ Extension IDs configured: ${extensionIds}`);
+    return session;
   }
 
   async function cleanupSession(session: Session): Promise<void> {

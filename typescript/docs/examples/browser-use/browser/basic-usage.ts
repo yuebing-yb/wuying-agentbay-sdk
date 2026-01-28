@@ -5,7 +5,7 @@
 
 import {
   AgentBay,
-  CreateSessionParams,
+  CreateSessionParamsClass,
   ActOptions,
   ObserveOptions,
   ExtractOptions,
@@ -31,9 +31,12 @@ async function main() {
 
     // Create a session with browser image
     console.log("Creating a new session...");
-    const params :CreateSessionParams = {
+    // const params :CreateSessionParams = {
+    //   imageId:'browser_latest',
+    // }
+    const params = new CreateSessionParamsClass({
       imageId:'browser_latest',
-    }
+    })
     const sessionResult = await agentBay.create(params);
 
     if (!sessionResult.success) {
