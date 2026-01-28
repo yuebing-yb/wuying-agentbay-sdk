@@ -58,6 +58,61 @@ global:
     # Exclude internal helpers (check docstring for "internal" or "helper")
     exclude_internal_helpers: true
 
+  # Java-specific configuration
+  java:
+    # Java Object基础方法排除
+    exclude_object_methods:
+      - toString
+      - hashCode
+      - equals
+      - getClass
+      - notify
+      - notifyAll
+      - wait
+      - finalize
+
+    # Java Bean风格的getter/setter排除
+    exclude_bean_methods:
+      - getName
+      - setName
+      - getId
+      - setId
+      - getContextId
+      - setContextId
+      - getExtensionIds
+      - setExtensionIds
+      - getBrowserType
+      - setBrowserType
+      - isHeadless
+      - setHeadless
+      - getUserAgent
+      - setUserAgent
+      - getWindowSize
+      - setWindowSize
+      - isEnableCookie
+      - setEnableCookie
+      - getTimeZone
+      - setTimeZone
+      - getLanguage
+      - setLanguage
+
+    # Java序列化相关方法排除
+    exclude_serialization_methods:
+      - readObject
+      - writeObject
+      - readResolve
+      - writeReplace
+      - readObjectNoData
+
+    # Java工具方法排除
+    exclude_utility_methods:
+      - validate
+      - validateConfig
+      - validateParams
+      - clone
+      - compareTo
+      - callTool
+
 modules:
   # Session module
   session:
@@ -65,6 +120,7 @@ modules:
     python: agentbay.session
     typescript: session
     golang: pkg/agentbay
+    java: com.aliyun.agentbay.session
 
     # Related tutorial
     tutorial:
@@ -76,16 +132,21 @@ modules:
     related_resources:
       - name: FileSystem API Reference
         module: filesystem
+        category: common-features/basics
       - name: Command API Reference
         module: command
+        category: common-features/basics
       - name: Context API Reference
         module: context
+        category: common-features/basics
       - name: Context Manager API Reference
         module: context-manager
+        category: common-features/basics
       - name: OSS API Reference
         module: oss
         category: common-features/advanced
-
+    overview: |
+      The Session class represents an active cloud environment instance in AgentBay. It provides access to all service modules (filesystem, command, browser, code, etc.) and manages the lifecycle of the cloud environment.
     # Decoration
     emoji: 🔧
     category: common-features/basics
@@ -95,6 +156,7 @@ modules:
     python: agentbay.agentbay
     typescript: agent-bay
     golang: pkg/agentbay
+    java: com.aliyun.agentbay
 
     tutorial:
       url: ../../../../../docs/quickstart/first-session.md
@@ -104,8 +166,10 @@ modules:
     related_resources:
       - name: Session API Reference
         module: session
+        category: common-features/basics
       - name: Context API Reference
         module: context
+        category: common-features/basics
 
     emoji: 🚀
     category: common-features/basics
@@ -115,6 +179,7 @@ modules:
     python: agentbay.filesystem
     typescript: filesystem
     golang: pkg/agentbay/filesystem
+    java: com.aliyun.agentbay.filesystem
 
     tutorial:
       url: ../../../../../docs/guides/common-features/basics/file-operations.md
@@ -124,8 +189,10 @@ modules:
     related_resources:
       - name: Session API Reference
         module: session
+        category: common-features/basics
       - name: Command API Reference
         module: command
+        category: common-features/basics
 
     emoji: 📁
     category: common-features/basics
@@ -135,6 +202,7 @@ modules:
     python: agentbay.command
     typescript: command
     golang: pkg/agentbay/command
+    java: com.aliyun.agentbay.command
 
     tutorial:
       url: ../../../../../docs/guides/common-features/basics/command-execution.md
@@ -155,8 +223,10 @@ modules:
     related_resources:
       - name: Session API Reference
         module: session
+        category: common-features/basics
       - name: FileSystem API Reference
         module: filesystem
+        category: common-features/basics
 
     emoji: ⚡
     category: common-features/basics
@@ -166,6 +236,7 @@ modules:
     python: agentbay.context
     typescript: context
     golang: pkg/agentbay
+    java: com.aliyun.agentbay.context
 
     tutorial:
       url: ../../../../../docs/guides/common-features/basics/data-persistence.md
@@ -175,8 +246,10 @@ modules:
     related_resources:
       - name: Session API Reference
         module: session
+        category: common-features/basics
       - name: Context Manager API Reference
         module: context-manager
+        category: common-features/basics
 
     emoji: 💾
     category: common-features/basics
@@ -186,6 +259,7 @@ modules:
     python: agentbay.context_manager
     typescript: context-manager
     golang: pkg/agentbay
+    java: com.aliyun.agentbay.context
 
     tutorial:
       url: ../../../../../docs/guides/common-features/basics/data-persistence.md
@@ -195,8 +269,10 @@ modules:
     related_resources:
       - name: Context API Reference
         module: context
+        category: common-features/basics
       - name: Session API Reference
         module: session
+        category: common-features/basics
 
     emoji: 🗂️
     category: common-features/basics
@@ -206,6 +282,7 @@ modules:
     python: agentbay.logger
     typescript: logger
     golang: pkg/agentbay
+    java: com.aliyun.agentbay.util
 
     tutorial:
       url: ../../../../../docs/guides/common-features/configuration/logging.md
@@ -215,6 +292,7 @@ modules:
     related_resources:
       - name: AgentBay API Reference
         module: agentbay
+        category: common-features/basics
 
     emoji: 📝
     category: common-features/basics
@@ -224,6 +302,7 @@ modules:
     python: agentbay.agent
     typescript: agent
     golang: pkg/agentbay/agent
+    java: com.aliyun.agentbay.agent
 
     tutorial:
       url: ../../../../../docs/guides/common-features/advanced/agent-modules.md
@@ -243,6 +322,7 @@ modules:
     python: agentbay.oss
     typescript: oss
     golang: pkg/agentbay/oss
+    java: com.aliyun.agentbay.oss
 
     tutorial:
       url: ../../../../../docs/guides/common-features/advanced/oss-integration.md
@@ -265,6 +345,7 @@ modules:
     python: agentbay.beta_network
     typescript: beta-network
     golang: pkg/agentbay
+    java: com.aliyun.agentbay.network
 
     tutorial:
       url: ../../../../../docs/guides/common-features/advanced/network.md
@@ -284,12 +365,16 @@ modules:
     related_resources:
       - name: AgentBay API Reference
         module: agentbay
+        category: common-features/basics
       - name: Session Params API Reference
         module: session-params
+        category: common-features/basics
       - name: Session API Reference
         module: session
+        category: common-features/basics
       - name: Command API Reference
         module: command
+        category: common-features/basics
 
     emoji: 🌐
     category: common-features/advanced
@@ -299,7 +384,8 @@ modules:
     python: agentbay.browser
     typescript: browser
     golang: pkg/agentbay/browser
-
+    java: com.aliyun.agentbay.browser
+    
     tutorial:
       url: ../../../../docs/guides/browser-use/README.md
       text: Browser Use Guide
@@ -332,6 +418,7 @@ modules:
     python: agentbay.extension
     typescript: extension
     golang: pkg/agentbay
+    java: com.aliyun.agentbay.extension
 
     tutorial:
       url: ../../../../../docs/guides/browser-use/core-features/extension.md
@@ -351,6 +438,7 @@ modules:
     python: agentbay.code
     typescript: code
     golang: pkg/agentbay/code
+    java: com.aliyun.agentbay.code
 
     tutorial:
       url: ../../../../docs/guides/codespace/code-execution.md
@@ -384,6 +472,7 @@ modules:
     python: agentbay.computer
     typescript: computer
     golang: pkg/agentbay/computer
+    java: com.aliyun.agentbay.computer
 
     tutorial:
       url: ../../../../docs/guides/computer-use/README.md
@@ -421,75 +510,13 @@ modules:
 
     emoji: 🖥️
     category: computer-use
-
-  # Application module
-  application:
-    python: agentbay.application
-    typescript: application
-    golang: pkg/agentbay/application
-
-    tutorial:
-      url: ../../../../../docs/guides/computer-use/computer-application-management.md
-      text: Application Management Guide
-      description: Manage desktop applications
-
-    related_resources:
-      - name: Computer API Reference
-        module: computer
-        category: computer-use
-      - name: Window API Reference
-        module: window
-        category: computer-use
-
-    emoji: 📱
-    category: computer-use
-
-  # UI module
-  ui:
-    python: agentbay.ui
-    typescript: ui
-    golang: pkg/agentbay/ui
-
-    tutorial:
-      url: ../../../../../docs/guides/computer-use/computer-ui-automation.md
-      text: UI Automation Guide
-      description: Automate UI interactions
-
-    related_resources:
-      - name: Computer API Reference
-        module: computer
-        category: computer-use
-
-    emoji: 🎨
-    category: computer-use
-
-  # Window module
-  window:
-    python: agentbay.window
-    typescript: window
-    golang: pkg/agentbay/window
-
-    tutorial:
-      url: ../../../../../docs/guides/computer-use/window-management.md
-      text: Window Management Guide
-      description: Manage application windows
-
-    related_resources:
-      - name: Computer API Reference
-        module: computer
-        category: computer-use
-      - name: Application API Reference
-        module: application
-        category: computer-use
-
-    emoji: 🪟
-    category: computer-use
-
+    
   # Mobile module
   mobile:
     python: agentbay.mobile
     typescript: mobile
     golang: pkg/agentbay/mobile
+    java: com.aliyun.agentbay.mobile
 
     tutorial:
       url: ../../../../docs/guides/mobile-use/README.md
@@ -524,6 +551,7 @@ modules:
     python: agentbay._common.models.code
     typescript: models/code
     golang: pkg/models/code
+    java: com.aliyun.agentbay.models.code
 
     overview: |
       The Code Execution Models define data structures for code execution results, logs, and errors.
@@ -542,3 +570,36 @@ modules:
     emoji: 🔧
     category: common-features/basics
 
+  # Session Parameters module
+  session-params:
+    python: agentbay.model
+    typescript: model
+    golang: pkg/agentbay/model
+    java: com.aliyun.agentbay.model
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/basics/session-management.md
+      text: Session Configuration Guide
+      description: Learn how to configure session parameters for different use cases
+
+    overview: |
+      The SessionParams class provides configuration options for creating and customizing AgentBay sessions. 
+      It allows you to specify browser settings, UI preferences, localization options, and other session-specific parameters.
+
+    best_practices:
+      - "Configure browser type based on your automation needs (Chrome for compatibility, Firefox for specific features)"
+      - "Use headless mode for server environments and headed mode for debugging"
+      - "Set appropriate user agent strings for web scraping to avoid detection"
+      - "Configure timezone and language settings to match your target audience"
+      - "Enable cookies when session state persistence is required"
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+        category: common-features/basics
+      - name: AgentBay API Reference
+        module: agentbay
+        category: common-features/basics
+
+    emoji: ⚙️
+    category: common-features/basics

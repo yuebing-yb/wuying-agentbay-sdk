@@ -55,7 +55,7 @@ public class FileSystem extends BaseService {
      * Read a file
      *
      * @param path File path
-     * @return File content
+     * @return File content as string
      * @throws AgentBayException if reading fails
      */
     public String read(String path) throws AgentBayException {
@@ -74,7 +74,7 @@ public class FileSystem extends BaseService {
      *
      * @param path File path
      * @param content Content to write
-     * @return Write result
+     * @return Write result as string
      * @throws AgentBayException if writing fails
      */
     public String write(String path, String content) throws AgentBayException {
@@ -93,8 +93,8 @@ public class FileSystem extends BaseService {
      * List directory contents
      *
      * @param path Directory path
-     * @return Directory listing
-     * @throws AgentBayException if listing fails
+     * @return Directory listing as string
+     * @throws AgentBayException if listing fails or directory does not exist
      */
     public String list(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
@@ -128,9 +128,9 @@ public class FileSystem extends BaseService {
     /**
      * Create a directory
      *
-     * @param path Directory path
-     * @return Creation result
-     * @throws AgentBayException if creation fails
+     * @param path Directory path to create
+     * @return Creation result as string
+     * @throws AgentBayException if creation fails or path is invalid
      */
     public String mkdir(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
@@ -166,10 +166,10 @@ public class FileSystem extends BaseService {
     /**
      * Copy a file or directory
      *
-     * @param source Source path
-     * @param destination Destination path
-     * @return Copy result
-     * @throws AgentBayException if copy fails
+     * @param source Source path to copy from
+     * @param destination Destination path to copy to
+     * @return Copy result as string
+     * @throws AgentBayException if copy fails, source does not exist, or destination is invalid
      */
     public String copy(String source, String destination) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
@@ -185,10 +185,10 @@ public class FileSystem extends BaseService {
     /**
      * Move a file or directory
      *
-     * @param source Source path
-     * @param destination Destination path
-     * @return Move result
-     * @throws AgentBayException if move fails
+     * @param source Source path to move from
+     * @param destination Destination path to move to
+     * @return Move result as string
+     * @throws AgentBayException if move fails, source does not exist, or destination is invalid
      */
     public String move(String source, String destination) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
@@ -204,9 +204,9 @@ public class FileSystem extends BaseService {
     /**
      * Get file information
      *
-     * @param path File path
-     * @return File information
-     * @throws AgentBayException if getting info fails
+     * @param path File path to inspect
+     * @return File information as string (ls -la output)
+     * @throws AgentBayException if getting info fails or file does not exist
      */
     public String getInfo(String path) throws AgentBayException {
         Map<String, Object> args = new HashMap<>();
@@ -317,6 +317,9 @@ public class FileSystem extends BaseService {
 
     /**
      * Read file content using FileContentResult
+     *
+     * @param path File path to read
+     * @return FileContentResult containing success status, file content, and error message if any
      */
     public FileContentResult readFile(String path) {
         Map<String, Object> args = new HashMap<>();
@@ -337,6 +340,10 @@ public class FileSystem extends BaseService {
 
     /**
      * Search for files matching a pattern
+     *
+     * @param directory Directory to search in
+     * @param pattern File pattern to match (e.g., "*.java", "test*")
+     * @return FileSearchResult containing list of matching file paths and error message if any
      */
     public FileSearchResult searchFiles(String directory, String pattern) {
         return searchFiles(directory, pattern, null);
@@ -374,6 +381,9 @@ public class FileSystem extends BaseService {
 
     /**
      * Read multiple files at once
+     *
+     * @param paths List of file paths to read
+     * @return MultipleFileContentResult containing map of file paths to their content and error message if any
      */
     public MultipleFileContentResult readMultipleFiles(List<String> paths) {
         try {
@@ -400,15 +410,6 @@ public class FileSystem extends BaseService {
      * @param path The path of the file to delete
      * @return BoolResult containing success status and error message if any
      *
-     * Example:
-     * <pre>
-     * AgentBay agentBay = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
-     * SessionResult result = agentBay.create(new CreateSessionParams());
-     * Session session = result.getSession();
-     * session.getFileSystem().writeFile("/tmp/to_delete.txt", "hello");
-     * BoolResult deleteResult = session.getFileSystem().deleteFile("/tmp/to_delete.txt");
-     * session.delete();
-     * </pre>
      */
     public BoolResult  deleteFile(String path) {
         Map<String, Object> args = new HashMap<>();
@@ -427,6 +428,13 @@ public class FileSystem extends BaseService {
         }
     }
 
+    /**
+     * Create a new directory at the specified path.
+     *
+     * @param path The path of the directory to create
+     * @return BoolResult containing success status and error message if any
+     *
+     */
     public BoolResult createDirectory(String path) {
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
@@ -444,6 +452,13 @@ public class FileSystem extends BaseService {
         }
     }
 
+    /**
+     * List the contents of a directory.
+     *
+     * @param path The path of the directory to list
+     * @return DirectoryListResult containing directory entries and error message if any.
+     *
+     */
     public com.aliyun.agentbay.model.DirectoryListResult listDirectory(String path) {
         try {
             Map<String, Object> args = new HashMap<>();
@@ -465,6 +480,13 @@ public class FileSystem extends BaseService {
         }
     }
 
+    /**
+     * Get information about a file or directory.
+     *
+     * @param path The path of the file or directory to inspect
+     * @return FileInfoResult containing file info and error message if any
+     *
+     */
     public com.aliyun.agentbay.model.FileInfoResult getFileInfo(String path) {
         try {
             Map<String, Object> args = new HashMap<>();
@@ -487,10 +509,26 @@ public class FileSystem extends BaseService {
         }
     }
 
+    /**
+     * Edit a file by replacing occurrences of oldText with newText.
+     *
+     * @param path The path of the file to edit
+     * @param edits A list of maps specifying oldText and newText for replacements
+     * @return BoolResult containing success status and error message if any
+     *
+     */
     public BoolResult editFile(String path, java.util.List<java.util.Map<String, String>> edits) {
         return editFile(path, edits, false);
     }
 
+    /**
+     * Edit a file by replacing occurrences of oldText with newText.
+     *
+     * @param path The path of the file to edit
+     * @param edits A list of maps specifying oldText and newText for replacements
+     * @param dryRun If true, preview changes without applying them
+     * @return BoolResult containing success status and error message if any
+     */
     public BoolResult editFile(String path, java.util.List<java.util.Map<String, String>> edits, boolean dryRun) {
         Map<String, Object> args = new HashMap<>();
         args.put("path", path);
@@ -510,6 +548,13 @@ public class FileSystem extends BaseService {
         }
     }
 
+    /**
+     * Move a file from source to destination path.
+     *
+     * @param source Source file path to move from
+     * @param destination Destination file path to move to
+     * @return BoolResult containing success status and error message if any
+     */
     public BoolResult moveFile(String source, String destination) {
         try {
             Map<String, Object> args = new HashMap<>();
@@ -682,6 +727,17 @@ public class FileSystem extends BaseService {
         return result;
     }
 
+    /**
+     * Upload a local file to remote path using pre-signed URLs.
+     *
+     * @param localPath Local file path to upload from
+     * @param remotePath Remote file path to upload to
+     * @param contentType Optional content type for the file (can be null)
+     * @param wait Whether to wait for the sync operation to complete
+     * @param waitTimeout Timeout for waiting for sync completion (seconds)
+     * @param pollInterval Interval between polling for sync completion (seconds)
+     * @return UploadResult containing the result of the upload operation
+     */
     public UploadResult uploadFile(
         String localPath,
         String remotePath,
@@ -714,10 +770,28 @@ public class FileSystem extends BaseService {
         }
     }
 
+    /**
+     * Upload a local file to remote path with default parameters.
+     *
+     * @param localPath Local file path to upload from
+     * @param remotePath Remote file path to upload to
+     * @return UploadResult containing the result of the upload operation
+     */
     public UploadResult uploadFile(String localPath, String remotePath) {
         return uploadFile(localPath, remotePath, null, true, 30.0f, 1.5f);
     }
 
+    /**
+     * Download a file from remote path to local path using pre-signed URLs.
+     *
+     * @param remotePath Remote file path to download from
+     * @param localPath Local file path to download to
+     * @param overwrite Whether to overwrite existing local file
+     * @param wait Whether to wait for the sync operation to complete
+     * @param waitTimeout Timeout for waiting for sync completion (seconds)
+     * @param pollInterval Interval between polling for sync completion (seconds)
+     * @return DownloadResult containing the result of the download operation
+     */
     public DownloadResult downloadFile(
         String remotePath,
         String localPath,
@@ -729,6 +803,18 @@ public class FileSystem extends BaseService {
         return downloadFile(remotePath, localPath, overwrite, wait, waitTimeout, pollInterval, null);
     }
 
+    /**
+     * Download a file from remote path to local path using pre-signed URLs.
+     *
+     * @param remotePath Remote file path to download from
+     * @param localPath Local file path to download to
+     * @param overwrite Whether to overwrite existing local file
+     * @param wait Whether to wait for the sync operation to complete
+     * @param waitTimeout Timeout for waiting for sync completion (seconds)
+     * @param pollInterval Interval between polling for sync completion (seconds)
+     * @param progressCallback  Callback for download progress updates
+     * @return DownloadResult containing the result of the download operation
+     */
     public DownloadResult downloadFile(
         String remotePath,
         String localPath,
@@ -750,10 +836,23 @@ public class FileSystem extends BaseService {
         }
     }
 
+    /**
+     * Download a file from remote path to local path with default parameters.
+     *
+     * @param remotePath Remote file path to download from
+     * @param localPath Local file path to download to
+     * @return DownloadResult containing the result of the download operation
+     */
     public DownloadResult downloadFile(String remotePath, String localPath) {
         return downloadFile(remotePath, localPath, true, true, 30.0f, 1.5f);
     }
 
+    /**
+     * Download a file from remote path with auto-generated local path.
+     *
+     * @param remotePath Remote file path to download from
+     * @return DownloadResult containing the result of the download operation
+     */
     public DownloadResult downloadFile(String remotePath) {
         return downloadFile(remotePath, null);
     }
@@ -832,7 +931,6 @@ public class FileSystem extends BaseService {
             );
         }
     }
-
     /**
      * Download file from remote path to byte array with default parameters.
      *
@@ -843,18 +941,42 @@ public class FileSystem extends BaseService {
         return downloadFileBytes(remotePath, true, 30.0f, 1.5f, null);
     }
 
+    /**
+     * Delete a file at the specified path. Alias for deleteFile().
+     *
+     * @param path The path of the file to delete
+     * @return BoolResult containing success status and error message if any
+     */
     public BoolResult delete(String path) {
         return deleteFile(path);
     }
 
+    /**
+     * Remove a file at the specified path. Alias for deleteFile().
+     *
+     * @param path The path of the file to remove
+     * @return BoolResult containing success status and error message if any
+     */
     public BoolResult remove(String path) {
         return deleteFile(path);
     }
 
+    /**
+     * Remove a file at the specified path. Alias for deleteFile().
+     *
+     * @param path The path of the file to remove
+     * @return BoolResult containing success status and error message if any
+     */
     public BoolResult rm(String path) {
         return deleteFile(path);
     }
 
+    /**
+     * List directory contents. Alias for listDirectory().
+     *
+     * @param path The path of the directory to list
+     * @return DirectoryListResult containing directory entries and error message if any
+     */
     public com.aliyun.agentbay.model.DirectoryListResult ls(String path) {
         return listDirectory(path);
     }

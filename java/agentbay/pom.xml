@@ -129,6 +129,24 @@
             <version>1.45.0</version>
         </dependency>
 
+        <!-- JavaParser for AST parsing and documentation generation -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.25.7</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-symbol-solver-core</artifactId>
+            <version>3.25.7</version>
+        </dependency>
+
+        <!-- YAML processing for metadata -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.0</version>
+        </dependency>
 
         <!-- 测试依赖 -->
         <dependency>
@@ -159,7 +177,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <release>8</release>
+                    <source>8</source>
+                    <target>8</target>
+                    <encoding>UTF-8</encoding>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>
@@ -217,6 +237,18 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Exec插件 - 用于运行文档生成脚本 -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>scripts.GenerateApiDocs</mainClass>
+                    <includeProjectDependencies>true</includeProjectDependencies>
+                    <includePluginDependencies>false</includePluginDependencies>
+                </configuration>
             </plugin>
 
             <!-- JavaDoc插件 -->
