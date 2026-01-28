@@ -1,6 +1,16 @@
 package com.aliyun.agentbay.agent;
 
-import com.aliyun.agentbay.model.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.aliyun.agentbay.model.ExecutionResult;
+import com.aliyun.agentbay.model.OperationResult;
+import com.aliyun.agentbay.model.QueryResult;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,13 +21,6 @@ import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Agent for natural language driven task execution.
@@ -513,11 +516,17 @@ public class Agent extends BaseService {
          * </pre>
          */
         public ExecutionResult executeTask(String task, boolean useVision,
-                Class<?> output_schema) {
+                Object output_schema) {
             try {
-                String schemaJson = SchemaHelper.generateJsonSchema(output_schema);
+                String schemaJson = "";
+                if (output_schema instanceof String) {
+                    System.out.println("-------String schemaJson: " + output_schema);
+                    schemaJson = (String) output_schema;
+                } else if (output_schema instanceof Class) {
+                    schemaJson = SchemaHelper.generateJsonSchema((Class<?>) output_schema);
+                    System.out.println("-------Class schemaJson: " + schemaJson);
+                }
                 logger.info("Output schema: {}", schemaJson);
-                System.out.println("----------------schemaJson: " + schemaJson);
 
                 Map<String, Object> args = new HashMap<>();
                 args.put("task", task);
@@ -577,7 +586,7 @@ public class Agent extends BaseService {
          */
         public ExecutionResult executeTaskAndWait(String task, int timeout,
                                                   boolean useVision,
-                                                  Class<?> output_schema) {
+                                                  Object output_schema) {
           try {
             ExecutionResult result =
                 executeTask(task, useVision, output_schema);

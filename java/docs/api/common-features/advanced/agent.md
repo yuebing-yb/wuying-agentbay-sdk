@@ -26,11 +26,11 @@ Session
         └── terminateTask(String taskId)
 ```
 
-## Differences: agent.browser vs browser.agent
+## Differences: agent.browser vs browser.operator
 
-| Feature | `session.getAgent().getBrowser()` | `session.getBrowser().getAgent()` |
+| Feature | `session.getAgent().getBrowser()` | `session.getBrowser().getOperator()` |
 |---------|----------------------------------|-----------------------------------|
-| Access Path | `session.getAgent().getBrowser()` | `session.getBrowser().getAgent()` |
+| Access Path | `session.getAgent().getBrowser()` | `session.getBrowser().getOperator()` |
 | Framework | browser-use | Playwright + PageUse |
 | MCP Tools | `browser_use_*` | `page_use_*` |
 | Operation Style | Natural language tasks | Specific operations (act, extract, observe) |

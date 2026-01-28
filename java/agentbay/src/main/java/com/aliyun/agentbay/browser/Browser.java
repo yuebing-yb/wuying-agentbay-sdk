@@ -1,7 +1,9 @@
 package com.aliyun.agentbay.browser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.aliyun.agentbay.Config;
-import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.exception.BrowserException;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.service.BaseService;
@@ -11,8 +13,6 @@ import com.aliyun.wuyingai20250506.models.InitBrowserRequest;
 import com.aliyun.wuyingai20250506.models.InitBrowserResponse;
 import com.aliyun.wuyingai20250506.models.InitBrowserResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Browser provides browser-related operations for the session.
@@ -25,12 +25,25 @@ public class Browser extends BaseService {
     private String endpointUrl;
     private boolean initialized;
     private BrowserOption option;
+    
+    /**
+     * The browser operator instance (recommended).
+     */
+    private BrowserOperator operator;
+    /**
+     * The browser agent instance (deprecated).
+     */
+    @Deprecated
     private BrowserAgent agent;
+    
     private Integer endpointRouterPort;
+    private volatile boolean agentDeprecationWarned = false;
 
     public Browser(Session session) {
         super(session);
         this.initialized = false;
+        
+        this.operator = new BrowserOperator(session, this);
         this.agent = new BrowserAgent(session, this);
     }
 
@@ -272,11 +285,52 @@ public class Browser extends BaseService {
     }
 
     /**
+     * Get the browser operator for browser operations (recommended).
+     * 
+     * <p>Example usage:</p>
+     * <pre>{@code
+     * BrowserOperator operator = browser.getOperator();
+     * operator.navigate("https://example.com");
+     * operator.screenshot(null, true, null);
+     * }</pre>
+     *
+     * @return BrowserOperator instance
+     */
+    public BrowserOperator getOperator() {
+        return operator;
+    }
+
+    /**
      * Get the browser agent for advanced browser operations.
+     * 
+     * @deprecated Use {@link #getOperator()} instead. This method will be removed in a future version.
+     * 
+     * <p>Migration example:</p>
+     * <pre>{@code
+     * // Old way (deprecated):
+     * BrowserAgent agent = browser.getAgent();
+     * agent.navigate(url);
+     * 
+     * // New way (recommended):
+     * BrowserOperator operator = browser.getOperator();
+     * operator.navigate(url);
+     * }</pre>
      *
      * @return BrowserAgent instance
      */
+    @Deprecated
     public BrowserAgent getAgent() {
+        if (!agentDeprecationWarned) {
+            synchronized (this) {
+                if (!agentDeprecationWarned) {
+                    System.err.println(
+                        "[⚠️ DeprecationWarning] BrowserAgent is deprecated and will be removed in a future version. "
+                        + "Please use BrowserOperator (browser.getOperator()) instead."
+                    );
+                    agentDeprecationWarned = true;
+                }
+            }
+        }
         return agent;
     }
 

@@ -1,7 +1,18 @@
 package com.aliyun.agentbay.test;
 
+import java.util.List;
+
+import org.junit.AfterClass;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.browser.BrowserAgent;
+import com.aliyun.agentbay.browser.BrowserOperator;
 import com.aliyun.agentbay.browser.BrowserOption;
 import com.aliyun.agentbay.browser.ExtractOptions;
 import com.aliyun.agentbay.exception.AgentBayException;
@@ -10,13 +21,9 @@ import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.microsoft.playwright.*;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import java.util.List;
-
-import static org.junit.Assert.*;
+import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
 
 /**
  * Test cases for Game2048Example functionality
@@ -154,20 +161,20 @@ public class TestGame2048Example {
     }
 
     @Test
-    public void test06_BrowserAgentAccess() {
+    public void test06_BrowserOperatorAccess() {
         assertNotNull("Session must be created before testing agent", session);
         assertNotNull("Browser object should not be null", session.getBrowser());
         
         // Initialize browser first
         session.getBrowser().initialize(new BrowserOption());
         
-        BrowserAgent agent = session.getBrowser().getAgent();
+        BrowserOperator operator = session.getBrowser().getOperator();
         
-        assertNotNull("Browser agent should not be null", agent);
+        assertNotNull("Browser operator should not be null", operator);
     }
 
     @Test
-    public void test07_BrowserAgentExtract() {
+    public void test07_BrowserOperatorExtract() {
         assertNotNull("Session must be created before testing extract", session);
         
         try {
@@ -179,7 +186,7 @@ public class TestGame2048Example {
                 com.microsoft.playwright.Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 page.navigate("https://ovolve.github.io/2048-AI/",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
@@ -204,7 +211,7 @@ public class TestGame2048Example {
                 ExtractOptions<GameState> extractOptions = new ExtractOptions<>(instruction, GameState.class);
                 extractOptions.setUseTextExtract(false);
                 
-                BrowserAgent.ExtractResultTuple<GameState> extractResult = agent.extract(page, extractOptions);
+                BrowserOperator.ExtractResultTuple<GameState> extractResult = operator.extract(page, extractOptions);
                 
                 assertNotNull("Extract result should not be null", extractResult);
                 assertTrue("Extract operation should succeed", extractResult.isSuccess());

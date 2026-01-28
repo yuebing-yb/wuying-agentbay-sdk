@@ -18,27 +18,17 @@ import com.microsoft.playwright.CDPSession;
 import com.microsoft.playwright.Page;
 
 /**
- * BrowserAgent provides AI-powered browser automation capabilities
- * Matches Python BrowserAgent functionality completely
+ * BrowserOperator provides AI-powered browser automation capabilities
+ * Matches Python BrowserOperator functionality completely
  * 
- * @deprecated Use {@link BrowserOperator} instead. This class will be removed in a future version.
- *             For migration, simply replace BrowserAgent with BrowserOperator:
- *             <pre>{@code
- *             // Old way (deprecated):
- *             BrowserAgent agent = browser.getAgent();
- *             
- *             // New way (recommended):
- *             BrowserOperator operator = browser.getOperator();
- *             }</pre>
  */
-@Deprecated
-public class BrowserAgent extends BaseService {
+public class BrowserOperator extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String SERVER_BROWSER_USE = "wuying_browseruse";
 
     private final Browser browser;
 
-    public BrowserAgent(Session session, Browser browser) {
+    public BrowserOperator(Session session, Browser browser) {
         super(session);
         this.browser = browser;
     }

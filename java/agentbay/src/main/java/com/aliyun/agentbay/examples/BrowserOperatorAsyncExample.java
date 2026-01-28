@@ -1,7 +1,13 @@
 package com.aliyun.agentbay.examples;
 
+import java.util.List;
+
 import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.browser.*;
+import com.aliyun.agentbay.browser.ActOptions;
+import com.aliyun.agentbay.browser.ActResult;
+import com.aliyun.agentbay.browser.BrowserOperator;
+import com.aliyun.agentbay.browser.BrowserOption;
+import com.aliyun.agentbay.browser.ExtractOptions;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
@@ -11,10 +17,8 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 
-import java.util.List;
-
 /**
- * Example demonstrating the use of async browser agent methods (actAsync and extractAsync)
+ * Example demonstrating the use of async browser operator methods (actAsync and extractAsync)
  *
  * This example shows how to use the asynchronous variants of browser automation methods
  * which use page_use_act_async and page_use_extract_async for long-running tasks.
@@ -24,9 +28,9 @@ import java.util.List;
  * - Internet connection for accessing web pages
  *
  * Usage:
- * mvn clean compile exec:java -Dexec.mainClass="examples.BrowserAgentAsyncExample"
+ * mvn clean compile exec:java -Dexec.mainClass="examples.BrowserOperatorAsyncExample"
  */
-public class BrowserAgentAsyncExample {
+public class BrowserOperatorAsyncExample {
 
     /**
      * Data model for extracting game state from 2048 game
@@ -52,7 +56,7 @@ public class BrowserAgentAsyncExample {
     }
 
     public static void main(String[] args) {
-        System.out.println("=== BrowserAgent Async Methods Example ===\n");
+        System.out.println("=== BrowserOperator Async Methods Example ===\n");
 
         // Get API key from environment variable
         String apiKey = System.getenv("AGENTBAY_API_KEY");
@@ -102,7 +106,7 @@ public class BrowserAgentAsyncExample {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
 
                 // 5. Example 1: Using actAsync for navigation
                 System.out.println("\n5. Example 1: Using actAsync for navigation");
@@ -111,7 +115,7 @@ public class BrowserAgentAsyncExample {
                 ActOptions navOptions = new ActOptions("goto('https://ovolve.github.io/2048-AI/')");
                 navOptions.setTimeoutMS(60000);
 
-                ActResult navResult = agent.actAsync(navOptions, page);
+                ActResult navResult = operator.actAsync(navOptions, page);
                 System.out.println("   Navigation result: " +
                     (navResult.isSuccess() ? "Success" : "Failed"));
                 System.out.println("   Message: " + navResult.getMessage());
@@ -140,8 +144,8 @@ public class BrowserAgentAsyncExample {
                 extractOptions.setUseTextExtract(false);
                 extractOptions.setUseVision(true);
 
-                BrowserAgent.ExtractResultTuple<GameState> extractResult =
-                    agent.extractAsync(extractOptions, page);
+                BrowserOperator.ExtractResultTuple<GameState> extractResult =
+                    operator.extractAsync(extractOptions, page);
 
                 if (extractResult.isSuccess()) {
                     GameState gameState = extractResult.getData();
@@ -169,7 +173,7 @@ public class BrowserAgentAsyncExample {
                 for (String move : moves) {
                     ActOptions moveOptions = new ActOptions(
                         "keyboard.press('" + move + "')");
-                    ActResult moveResult = agent.actAsync(moveOptions, page);
+                    ActResult moveResult = operator.actAsync(moveOptions, page);
 
                     System.out.println("   Move " + move + ": " +
                         (moveResult.isSuccess() ? "Success" : "Failed"));
@@ -182,8 +186,8 @@ public class BrowserAgentAsyncExample {
 
                 Thread.sleep(1000);
 
-                BrowserAgent.ExtractResultTuple<GameState> finalResult =
-                    agent.extractAsync(extractOptions, page);
+                BrowserOperator.ExtractResultTuple<GameState> finalResult =
+                    operator.extractAsync(extractOptions, page);
 
                 if (finalResult.isSuccess()) {
                     GameState finalState = finalResult.getData();
@@ -200,8 +204,8 @@ public class BrowserAgentAsyncExample {
                 // Test sync method
                 System.out.println("   Testing synchronous extract...");
                 long syncStart = System.currentTimeMillis();
-                BrowserAgent.ExtractResultTuple<GameState> syncResult =
-                    agent.extract(page, extractOptions);
+                BrowserOperator.ExtractResultTuple<GameState> syncResult =
+                    operator.extract(page, extractOptions);
                 long syncDuration = System.currentTimeMillis() - syncStart;
                 System.out.println("   Sync extract completed in: " + syncDuration + "ms");
 
@@ -210,8 +214,8 @@ public class BrowserAgentAsyncExample {
                 // Test async method
                 System.out.println("   Testing asynchronous extractAsync...");
                 long asyncStart = System.currentTimeMillis();
-                BrowserAgent.ExtractResultTuple<GameState> asyncResult =
-                    agent.extractAsync(extractOptions, page);
+                BrowserOperator.ExtractResultTuple<GameState> asyncResult =
+                    operator.extractAsync(extractOptions, page);
                 long asyncDuration = System.currentTimeMillis() - asyncStart;
                 System.out.println("   Async extract completed in: " + asyncDuration + "ms");
 

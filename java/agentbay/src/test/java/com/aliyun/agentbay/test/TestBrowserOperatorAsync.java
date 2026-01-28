@@ -1,7 +1,24 @@
 package com.aliyun.agentbay.test;
 
+import java.util.List;
+
+import org.junit.AfterClass;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.browser.*;
+import com.aliyun.agentbay.browser.ActOptions;
+import com.aliyun.agentbay.browser.ActResult;
+import com.aliyun.agentbay.browser.BrowserOperator;
+import com.aliyun.agentbay.browser.BrowserOption;
+import com.aliyun.agentbay.browser.ExtractOptions;
+import com.aliyun.agentbay.browser.ObserveOptions;
+import com.aliyun.agentbay.browser.ObserveResult;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
@@ -10,16 +27,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
-import org.junit.*;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
- * Test cases for BrowserAgent async methods (actAsync and extractAsync)
+ * Test cases for BrowserOperator async methods (actAsync and extractAsync)
  * Tests the async variants that use page_use_act_async and page_use_extract_async
  */
-public class TestBrowserAgentAsync {
+public class TestBrowserOperatorAsync {
     private static AgentBay agentBay;
     private static Session session;
     private static String apiKey;
@@ -105,15 +118,14 @@ public class TestBrowserAgentAsync {
         apiKey = System.getenv("AGENTBAY_API_KEY");
         assertNotNull("AGENTBAY_API_KEY environment variable must be set", apiKey);
         assertFalse("AGENTBAY_API_KEY cannot be empty", apiKey.trim().isEmpty());
-
-        agentBay = new AgentBay();
-
+        agentBay = new AgentBay(apiKey);
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
         SessionResult sessionResult = agentBay.create(params);
 
         if (sessionResult.isSuccess()) {
             session = sessionResult.getSession();
+            System.out.println("Resource URL: " + session.getResourceUrl());
         } else {
             fail("Failed to create session: " + sessionResult.getErrorMessage());
         }
@@ -140,10 +152,10 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 ActOptions options = new ActOptions("goto('https://www.baidu.com')");
-                ActResult result = agent.actAsync(options, page);
-
+                ActResult result = operator.actAsync(options, page);
+                System.out.println("ActResult: " + result.toString());
                 assertNotNull("ActResult should not be null", result);
                 assertTrue("Navigation should succeed", result.isSuccess());
                 page.close();
@@ -166,14 +178,14 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 page.navigate("https://example.com",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
                         .setTimeout(60000));
                 Thread.sleep(1000);
                 ActOptions options = new ActOptions("click('a')");
-                ActResult result = agent.actAsync(options, page);
+                ActResult result = operator.actAsync(options, page);
 
                 assertNotNull("ActResult should not be null", result);
                 page.close();
@@ -195,7 +207,7 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 page.navigate("https://ovolve.github.io/2048-AI/",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
@@ -212,8 +224,8 @@ public class TestBrowserAgentAsync {
                 ExtractOptions<GameState> extractOptions = new ExtractOptions<>(instruction, GameState.class);
                 extractOptions.setUseTextExtract(false);
 
-                BrowserAgent.ExtractResultTuple<GameState> extractResult =
-                    agent.extractAsync(extractOptions, page);
+                BrowserOperator.ExtractResultTuple<GameState> extractResult =
+                    operator.extractAsync(extractOptions, page);
 
                 assertNotNull("Extract result should not be null", extractResult);
                 assertTrue("Extract operation should succeed", extractResult.isSuccess());
@@ -253,7 +265,7 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 page.navigate("https://example.com",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
@@ -268,8 +280,8 @@ public class TestBrowserAgentAsync {
                     new ExtractOptions<>(instruction, ProductInfo.class);
                 extractOptions.setUseTextExtract(true);
 
-                BrowserAgent.ExtractResultTuple<ProductInfo> extractResult =
-                    agent.extractAsync(extractOptions, page);
+                BrowserOperator.ExtractResultTuple<ProductInfo> extractResult =
+                    operator.extractAsync(extractOptions, page);
 
                 assertNotNull("Extract result should not be null", extractResult);
                 assertTrue("Extract operation should succeed", extractResult.isSuccess());
@@ -298,18 +310,18 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 page.navigate("https://example.com",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
                         .setTimeout(60000));
                 Thread.sleep(1000);
                 ObserveOptions observeOptions = new ObserveOptions("Find all links on the page");
-                BrowserAgent.ObserveResultTuple observeResult = agent.observe(page, observeOptions);
+                BrowserOperator.ObserveResultTuple observeResult = operator.observe(page, observeOptions);
 
                 if (observeResult.isSuccess() && !observeResult.getResults().isEmpty()) {
                     ObserveResult firstResult = observeResult.getResults().get(0);
-                    ActResult actResult = agent.actAsync(firstResult, page);
+                    ActResult actResult = operator.actAsync(firstResult, page);
 
                     assertNotNull("ActResult should not be null", actResult);
                 } else {
@@ -334,7 +346,7 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 page.navigate("https://example.com",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
@@ -348,8 +360,8 @@ public class TestBrowserAgentAsync {
                 extractOptions.setUseVision(false);
                 extractOptions.setSelector("body");
                 extractOptions.setDomSettleTimeoutMs(2000);
-                BrowserAgent.ExtractResultTuple<ProductInfo> extractResult =
-                    agent.extractAsync(extractOptions, page);
+                BrowserOperator.ExtractResultTuple<ProductInfo> extractResult =
+                    operator.extractAsync(extractOptions, page);
 
                 assertNotNull("Extract result should not be null", extractResult);
                 assertTrue("Extract operation should succeed", extractResult.isSuccess());
@@ -377,12 +389,12 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 ActOptions options = new ActOptions("goto('https://example.com')");
                 options.setTimeoutMS(30000);
                 options.setDomSettleTimeoutMs(3000);
 
-                ActResult result = agent.actAsync(options, page);
+                ActResult result = operator.actAsync(options, page);
 
                 assertNotNull("ActResult should not be null", result);
                 assertTrue("Navigation with timeout should succeed", result.isSuccess());
@@ -406,16 +418,16 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
 
                 ActOptions options = new ActOptions("goto('https://example.com')");
                 long startSync = System.currentTimeMillis();
-                ActResult syncResult = agent.act(page, options);
+                ActResult syncResult = operator.act(page, options);
                 long syncDuration = System.currentTimeMillis() - startSync;
 
                 Thread.sleep(2000);
                 long startAsync = System.currentTimeMillis();
-                ActResult asyncResult = agent.actAsync(options, page);
+                ActResult asyncResult = operator.actAsync(options, page);
                 long asyncDuration = System.currentTimeMillis() - startAsync;
 
                 assertNotNull("Sync result should not be null", syncResult);
@@ -440,7 +452,7 @@ public class TestBrowserAgentAsync {
                 Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
 
                 page.navigate("https://example.com",
                     new Page.NavigateOptions()
@@ -452,12 +464,12 @@ public class TestBrowserAgentAsync {
                 ExtractOptions<ProductInfo> options = new ExtractOptions<>(instruction, ProductInfo.class);
                 options.setUseTextExtract(true);
                 long startSync = System.currentTimeMillis();
-                BrowserAgent.ExtractResultTuple<ProductInfo> syncResult = agent.extract(page, options);
+                BrowserOperator.ExtractResultTuple<ProductInfo> syncResult = operator.extract(page, options);
                 long syncDuration = System.currentTimeMillis() - startSync;
 
                 Thread.sleep(2000);
                 long startAsync = System.currentTimeMillis();
-                BrowserAgent.ExtractResultTuple<ProductInfo> asyncResult = agent.extractAsync(options, page);
+                BrowserOperator.ExtractResultTuple<ProductInfo> asyncResult = operator.extractAsync(options, page);
                 long asyncDuration = System.currentTimeMillis() - startAsync;
 
                 assertNotNull("Sync result should not be null", syncResult);
@@ -480,9 +492,9 @@ public class TestBrowserAgentAsync {
             try (Playwright playwright = Playwright.create()) {
                 String endpointUrl = session.getBrowser().getEndpointUrl();
                 com.microsoft.playwright.Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
-                BrowserAgent agent = session.getBrowser().getAgent();
+                BrowserOperator operator = session.getBrowser().getOperator();
                 ActOptions actOptions = new ActOptions("goto('https://example.com')");
-                ActResult actResult = agent.actAsync(actOptions);
+                ActResult actResult = operator.actAsync(actOptions);
 
                 assertNotNull("ActResult should not be null", actResult);
                 Thread.sleep(2000);
@@ -490,8 +502,8 @@ public class TestBrowserAgentAsync {
                     new ExtractOptions<>("Extract page title", ProductInfo.class);
                 extractOptions.setUseTextExtract(true);
 
-                BrowserAgent.ExtractResultTuple<ProductInfo> extractResult =
-                    agent.extractAsync(extractOptions);
+                BrowserOperator.ExtractResultTuple<ProductInfo> extractResult =
+                    operator.extractAsync(extractOptions);
 
                 assertNotNull("ExtractResult should not be null", extractResult);
 

@@ -1,5 +1,15 @@
 package com.aliyun.agentbay.test;
 
+import org.junit.AfterClass;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
+
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.agent.Agent;
 import com.aliyun.agentbay.exception.AgentBayException;
@@ -9,14 +19,6 @@ import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
-
-import static org.junit.Assert.*;
 
 /**
  * Integration tests for Agent functionality in AgentBay Java SDK.
@@ -208,6 +210,7 @@ public static class TestBrowserAgent {
         }
 
         session = sessionResult.getSession();
+        System.out.println("Resource URL: " + session.getResourceUrl());
         agent = session.getAgent();
         
 
@@ -235,14 +238,14 @@ public static class TestBrowserAgent {
       public void testExecuteTaskSuccess() {
         System.out.println("🚀 Test: Execute task synchronously");
 
-        String task = "查询阿里巴巴上市日期";
+        String task = "导航至百度，查询上海天气";
         String timeoutEnv = System.getenv("AGENT_TASK_TIMEOUT");
         int timeout = (timeoutEnv != null && !timeoutEnv.isEmpty())
                           ? Integer.parseInt(timeoutEnv)
                           : 300;
-
+        String output_schema = "{\"type\":\"object\",\"properties\":{\"City\": {\"title\": \"City\", \"type\": \"string\"}, \"Weather\": {\"title\": \"Weather\", \"type\": \"string\"}},\"required\":[\"City\", \"Weather\"]}";
         ExecutionResult result =
-            agent.getBrowser().executeTaskAndWait(task, timeout, false, OutputSchema.class);
+            agent.getBrowser().executeTaskAndWait(task, timeout, false, output_schema);
 
         assertTrue("Task execution should succeed", result.isSuccess());
         assertNotNull("Request ID should not be null", result.getRequestId());

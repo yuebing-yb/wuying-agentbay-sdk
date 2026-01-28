@@ -8,7 +8,7 @@
 
 The Browser module provides browser automation capabilities using Playwright integration. It enables web scraping, automated testing, form filling, and other browser-based automation tasks in a cloud environment.
 
-The Browser module includes both traditional Playwright integration and an AI-powered BrowserAgent that provides natural language automation capabilities with synchronous and asynchronous methods.
+The Browser module includes both traditional Playwright integration and an AI-powered BrowserOperator that provides natural language automation capabilities with synchronous and asynchronous methods.
 
 ## Browser
 
@@ -500,15 +500,15 @@ public class PlaywrightExample {
 }
 ```
 
-## Browser Agent (AI-Powered Automation)
+## Browser Operator (AI-Powered Automation)
 
-The Browser module also includes an AI-powered agent for natural language automation:
+The Browser module also includes an AI-powered operator for natural language automation:
 
 ```java
-BrowserAgent agent = session.getBrowser().getAgent();
+BrowserOperator operator = session.getBrowser().getOperator();
 ```
 
-The BrowserAgent provides both synchronous and asynchronous variants of key browser automation methods:
+The BrowserOperator provides both synchronous and asynchronous variants of key browser automation methods:
 
 - **Synchronous methods** (`act`, `extract`, `observe`): Use `page_use_act` and `page_use_extract` MCP tools - suitable for simple, quick operations
 - **Asynchronous methods** (`actAsync`, `extractAsync`): Use `page_use_act_async` and `page_use_extract_async` MCP tools - designed for complex, time-consuming tasks with task polling mechanisms
@@ -549,13 +549,13 @@ try (Playwright playwright = Playwright.create()) {
     Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
     Page page = browser.contexts().get(0).newPage();
 
-    // Get browser agent
-    BrowserAgent agent = session.getBrowser().getAgent();
+    // Get browser operator
+    BrowserOperator operator = session.getBrowser().getOperator();
 
     // Perform actions using natural language
     ActOptions options = new ActOptions();
     options.setAction("Go to google.com");
-    ActResult result = agent.act(page, options);
+    ActResult result = operator.act(page, options);
 
     if (result.isSuccess()) {
         System.out.println("Navigation successful");
@@ -564,7 +564,7 @@ try (Playwright playwright = Playwright.create()) {
     // Perform another action
     ActOptions searchOptions = new ActOptions();
     searchOptions.setAction("Search for 'AgentBay SDK'");
-    ActResult searchResult = agent.act(page, searchOptions);
+    ActResult searchResult = operator.act(page, searchOptions);
 }
 ```
 
@@ -591,16 +591,16 @@ Perform browser actions asynchronously with task polling support. Designed for c
 ```java
 // Basic navigation
 ActOptions options = new ActOptions("goto('https://example.com')");
-ActResult result = agent.actAsync(page, options);
+ActResult result = operator.actAsync(page, options);
 
 // Click operation
 ActOptions clickOptions = new ActOptions("click('#submit-button')");
-ActResult clickResult = agent.actAsync(page, clickOptions);
+ActResult clickResult = operator.actAsync(page, clickOptions);
 
 // With custom timeout
 ActOptions timeoutOptions = new ActOptions("goto('https://example.com')");
 timeoutOptions.setTimeoutMS(30000);
-ActResult result = agent.actAsync(page, timeoutOptions);
+ActResult result = operator.actAsync(page, timeoutOptions);
 ```
 
 **When to use `actAsync`:**
@@ -637,11 +637,11 @@ try (Playwright playwright = Playwright.create()) {
     Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
     Page page = browser.contexts().get(0).newPage();
 
-    BrowserAgent agent = session.getBrowser().getAgent();
+    BrowserOperator operator = session.getBrowser().getOperator();
 
     ObserveOptions options = new ObserveOptions();
     options.setInstruction("Extract all product names and prices");
-    ObserveResult result = agent.observe(page, options);
+    ObserveResult result = operator.observe(page, options);
 
     if (result.isSuccess()) {
         System.out.println("Extracted data: " + result.getData());
@@ -687,7 +687,7 @@ ExtractOptions<ProductInfo> options = new ExtractOptions<>(instruction, ProductI
 options.setUseTextExtract(true);
 options.setUseVision(false);
 
-ExtractResultTuple<ProductInfo> result = agent.extract(page, options);
+ExtractResultTuple<ProductInfo> result = operator.extract(page, options);
 
 if (result.isSuccess()) {
     ProductInfo product = result.getData();
@@ -734,7 +734,7 @@ ExtractOptions<ProductInfo> options = new ExtractOptions<>(instruction, ProductI
 options.setUseTextExtract(true);
 options.setUseVision(false);
 
-ExtractResultTuple<ProductInfo> result = agent.extractAsync(page, options);
+ExtractResultTuple<ProductInfo> result = operator.extractAsync(page, options);
 
 if (result.isSuccess()) {
     ProductInfo product = result.getData();
@@ -776,18 +776,18 @@ public class AsyncExample {
             Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
             com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
             Page page = context.newPage();
-            BrowserAgent agent = session.getBrowser().getAgent();
+            BrowserOperator operator = session.getBrowser().getOperator();
 
             // Navigate using actAsync
             ActOptions navOptions = new ActOptions("goto('https://example.com')");
-            ActResult navResult = agent.actAsync(page, navOptions);
+            ActResult navResult = operator.actAsync(page, navOptions);
             System.out.println("Navigation: " + navResult.isSuccess());
 
             // Extract data using extractAsync
             ExtractOptions<PageData> extractOptions =
                 new ExtractOptions<>("Extract page title", PageData.class);
             ExtractResultTuple<PageData> extractResult =
-                agent.extractAsync(page, extractOptions);
+                operator.extractAsync(page, extractOptions);
 
             if (extractResult.isSuccess()) {
                 PageData data = extractResult.getData();
@@ -825,15 +825,15 @@ The Java implementation matches the Python SDK's async behavior:
 **Python:**
 ```python
 # Async variant
-result = await browser.agent.act_async(page, options)
-extracted = await browser.agent.extract_async(page, options)
+result = await browser.operator.act_async(page, options)
+extracted = await browser.operator.extract_async(page, options)
 ```
 
 **Java:**
 ```java
 // Async variant (note: still synchronous Java method, but uses async MCP tool)
-ActResult result = browser.getAgent().actAsync(page, options);
-ExtractResultTuple<T> extracted = browser.getAgent().extractAsync(page, options);
+ActResult result = browser.getOperator().actAsync(page, options);
+ExtractResultTuple<T> extracted = browser.getOperator().extractAsync(page, options);
 ```
 
 Note: The Java methods are synchronous (blocking) at the API level but use the async MCP tools internally with polling.
@@ -1010,23 +1010,23 @@ try (Playwright playwright = Playwright.create()) {
     Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
     Page page = browser.contexts().get(0).newPage();
     
-    // Use AI agent for natural language automation
-    BrowserAgent agent = session.getBrowser().getAgent();
+    // Use AI operator for natural language automation
+    BrowserOperator operator = session.getBrowser().getOperator();
     
     // Navigate
     ActOptions navOptions = new ActOptions();
     navOptions.setAction("Go to https://example.com");
-    agent.act(page, navOptions);
+    operator.act(page, navOptions);
     
     // Fill form
     ActOptions fillOptions = new ActOptions();
     fillOptions.setAction("Fill the email field with test@example.com");
-    agent.act(page, fillOptions);
+    operator.act(page, fillOptions);
     
     // Submit
     ActOptions submitOptions = new ActOptions();
     submitOptions.setAction("Click the submit button");
-    agent.act(page, submitOptions);
+    operator.act(page, submitOptions);
     
     browser.close();
 }
@@ -1036,7 +1036,7 @@ session.delete();
 
 ## Best Practices
 
-1. **Always initialize browser first**: Call `session.getBrowser().initialize()` before using agent methods
+1. **Always initialize browser first**: Call `session.getBrowser().initialize()` before using operator methods
 2. **Stealth Mode**: Enable stealth mode for web scraping to avoid detection
 3. **Behavior Simulation**: Use behavior simulation for more realistic interactions
 4. **Resource Cleanup**: Always close browser and delete session when done
@@ -1044,7 +1044,7 @@ session.delete();
 6. **Session Image**: Use `browser_latest` image for optimal browser support
 7. **Timeouts**: Set appropriate timeouts for page loads and interactions - use `setTimeoutMS()` for async operations
 8. **Context Reuse**: Reuse browser contexts for better performance
-9. **Agent Usage**: Use BrowserAgent for complex, natural language-driven automation
+9. **Agent Usage**: Use BrowserOperator for complex, natural language-driven automation
 10. **Async vs Sync**: Use async methods (`actAsync`, `extractAsync`) for time-consuming tasks, sync methods for simple operations
 11. **Check success status**: Always check `isSuccess()` before accessing result data
 12. **Use typed extraction**: Define proper data models with Jackson annotations for type-safe extraction
@@ -1081,16 +1081,16 @@ session.delete();
 ## Limitations
 
 - Browser automation requires `browser_latest` image
-- AI-powered agent features may have additional latency
+- AI-powered operator features may have additional latency
 - CAPTCHA solving success rate depends on CAPTCHA type
 - Some websites may still detect and block automation
-- BrowserAgent requires Playwright Page object for all operations
+- BrowserOperator requires Playwright Page object for all operations
 - Java async methods are synchronous (blocking) at the API level but use async MCP tools internally
 
 ## Important Notes
 
 1. **Method Name**: Use `initialize()` method to set up the browser, not `init()`.
-2. **Page Requirement**: BrowserAgent methods require a Playwright `Page` object.
+2. **Page Requirement**: BrowserOperator methods require a Playwright `Page` object.
 3. **Error Handling**: Always check `isInitialized()` before calling `getEndpointUrl()`.
 4. **Resource Management**: Proper cleanup is essential to avoid resource leaks.
 
@@ -1111,9 +1111,9 @@ mvn test -Dtest=TestBrowserAgentAsync
 
 ## Related Resources
 
-- [BrowserAgent.java](../../../agentbay/src/main/java/com/aliyun/agentbay/browser/BrowserAgent.java) - Main implementation
-- [TestBrowserAgentAsync.java](../../../agentbay/src/test/java/com/aliyun/agentbay/test/TestBrowserAgentAsync.java) - Async test cases
-- [BrowserAgentAsyncExample.java](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserAgentAsyncExample.java) - Complete async working example
+- [BrowserOperator.java](../../../agentbay/src/main/java/com/aliyun/agentbay/browser/BrowserOperator.java) - Main implementation
+- [TestBrowserOperatorAsync.java](../../../agentbay/src/test/java/com/aliyun/agentbay/test/TestBrowserOperatorAsync.java) - Async test cases
+- [BrowserOperatorAsyncExample.java](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserOperatorAsyncExample.java) - Complete async working example
 - [Browser Context Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserContextExample.java) - Complete browser context usage examples
 - [Playwright Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/PlaywrightExample.java) - Basic Playwright integration
 - [Visit Aliyun Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/VisitAliyunExample.java) - Real-world automation

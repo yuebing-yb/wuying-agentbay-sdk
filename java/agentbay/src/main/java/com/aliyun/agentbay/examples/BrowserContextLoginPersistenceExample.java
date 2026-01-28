@@ -5,7 +5,6 @@ import com.aliyun.agentbay.browser.BrowserContext;
 import com.aliyun.agentbay.browser.BrowserOption;
 import com.aliyun.agentbay.context.Context;
 import com.aliyun.agentbay.context.ContextResult;
-import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.SessionInfoResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
@@ -61,7 +60,7 @@ public class BrowserContextLoginPersistenceExample {
                 session1.getBrowser().init(new BrowserOption());
                 System.out.println("Browser initialized");
 
-                String navigateResult = session1.getBrowser().getAgent().navigate("https://www.xiaohongshu.com");
+                String navigateResult = session1.getBrowser().getOperator().navigate("https://www.xiaohongshu.com");
                 System.out.println("Navigated to Xiaohongshu: " + navigateResult);
 
                 System.out.println("\n==============================================");
@@ -85,7 +84,7 @@ public class BrowserContextLoginPersistenceExample {
                     session2.getBrowser().init(new BrowserOption());
                     System.out.println("Browser initialized");
 
-                    String screenshotData = session2.getBrowser().getAgent().navigate("https://www.xiaohongshu.com");
+                    String screenshotData = session2.getBrowser().getOperator().navigate("https://www.xiaohongshu.com");
                     System.out.println("Navigated to Xiaohongshu: " + screenshotData);
 
                     Thread.sleep(5000);

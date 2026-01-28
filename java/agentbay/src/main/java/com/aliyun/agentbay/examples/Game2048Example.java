@@ -1,7 +1,18 @@
 package com.aliyun.agentbay.examples;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+
 import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.browser.BrowserAgent;
+import com.aliyun.agentbay.browser.BrowserOperator;
 import com.aliyun.agentbay.browser.BrowserOption;
 import com.aliyun.agentbay.browser.ExtractOptions;
 import com.aliyun.agentbay.exception.AgentBayException;
@@ -10,8 +21,9 @@ import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.microsoft.playwright.*;
-import java.util.*;
+import com.microsoft.playwright.BrowserContext;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
 
 /**
  * Example: 2048 Game (Extract)
@@ -92,7 +104,7 @@ public class Game2048Example {
                         com.microsoft.playwright.Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
                         BrowserContext context = browser.contexts().get(0);
                         Page page = context.newPage();
-                        BrowserAgent agent = session.getBrowser().getAgent();
+                        BrowserOperator operator = session.getBrowser().getOperator();
 
                         System.out.println("🌐 Navigating to 2048...");
                         page.navigate("https://ovolve.github.io/2048-AI/",
@@ -132,7 +144,7 @@ public class Game2048Example {
                             ExtractOptions<GameState> extractOptions = new ExtractOptions<>(instruction, GameState.class);
                             extractOptions.setUseTextExtract(false);
 
-                            BrowserAgent.ExtractResultTuple<GameState> extractResult = agent.extract(page, extractOptions);
+                            BrowserOperator.ExtractResultTuple<GameState> extractResult = operator.extract(page, extractOptions);
 
                             if (extractResult.isSuccess() && extractResult.getData() != null) {
                                 GameState gameState = extractResult.getData();
