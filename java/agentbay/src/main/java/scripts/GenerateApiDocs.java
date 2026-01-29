@@ -1103,7 +1103,7 @@ public class GenerateApiDocs {
             "com.aliyun.agentbay.session.Session"
         ));
         moduleToClasses.put("session-params", Arrays.asList(
-            "com.aliyun.agentbay.model.SessionParams"
+            "com.aliyun.agentbay.session.CreateSessionParams"
         ));
         
         // Basic modules

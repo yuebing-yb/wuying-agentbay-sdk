@@ -220,6 +220,10 @@ export class Client extends OpenApi {
       body["ImageId"] = request.imageId;
     }
 
+    if (!$dara.isNull((request as any).timeout)) {
+      body["Timeout"] = (request as any).timeout;
+    }
+
     if (!$dara.isNull(request.labels)) {
       body["Labels"] = request.labels;
     }

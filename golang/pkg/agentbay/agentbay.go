@@ -251,6 +251,12 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		createSessionRequest.NetworkId = tea.String(params.BetaNetworkId)
 	}
 
+	// SDK idle release timeout (seconds)
+	if params.IdleReleaseTimeout <= 0 {
+		params.IdleReleaseTimeout = 300
+	}
+	createSessionRequest.Timeout = tea.Int32(params.IdleReleaseTimeout)
+
 	// Add labels if provided
 	if len(params.Labels) > 0 {
 		labelsJSON, err := params.GetLabelsJSON()
@@ -1331,6 +1337,7 @@ func (a *AgentBay) GetRegionID() string {
 func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateSessionParams {
 	copy := &CreateSessionParams{
 		ImageId:             params.ImageId,
+		IdleReleaseTimeout:  params.IdleReleaseTimeout,
 		PolicyId:            params.PolicyId,
 		BetaNetworkId:       params.BetaNetworkId,
 		Framework:           params.Framework,

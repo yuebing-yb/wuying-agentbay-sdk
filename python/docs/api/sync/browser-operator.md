@@ -113,8 +113,8 @@ Asynchronously takes a screenshot of the specified page.
 def close() -> bool
 ```
 
-Asynchronously closes the remote browser agent session.
-This will terminate the browser process managed by the agent.
+Asynchronously closes the remote browser operator session.
+This will terminate the browser process managed by the operator.
 
 ### act
 

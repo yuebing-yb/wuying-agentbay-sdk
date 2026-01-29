@@ -1,536 +1,64 @@
-# Agent API Reference
-
-The Agent module provides natural language-driven task execution capabilities for both desktop (Computer) and browser (Browser) automation.
+# 🤖 Agent API Reference
 
 ## Overview
 
-The Agent module is accessible via `session.getAgent()` and provides two sub-agents:
-- **Computer Agent** (`session.getAgent().getComputer()`) - For desktop automation tasks
-- **Browser Agent** (`session.getAgent().getBrowser()`) - For browser automation tasks (BETA)
+The Agent module provides specialized functionality for the AgentBay cloud platform. It includes various methods and utilities to interact with cloud services and manage resources.
 
-## Architecture
+## 📚 Tutorial
 
-```
-Session
-└── getAgent() → Agent
-    ├── getComputer() → Agent.Computer
-    │   ├── executeTask(String task)
-    │   ├── executeTaskAndWait(String task, int timeout)
-    │   ├── getTaskStatus(String taskId)
-    │   └── terminateTask(String taskId)
-    │
-    └── getBrowser() → Agent.Browser
-        ├── executeTask(String task, bool use_vision, Class<?>output_schema)
-        ├── executeTaskAndWait(String task, int timeout,bool use_vision, Class<?>output_schema)
-        ├── getTaskStatus(String taskId)
-        └── terminateTask(String taskId)
-```
+[Agent Modules Guide](../../../../../docs/guides/common-features/advanced/agent-modules.md)
 
-## Differences: agent.browser vs browser.operator
+Learn about agent modules and custom agents
 
-| Feature | `session.getAgent().getBrowser()` | `session.getBrowser().getOperator()` |
-|---------|----------------------------------|-----------------------------------|
-| Access Path | `session.getAgent().getBrowser()` | `session.getBrowser().getOperator()` |
-| Framework | browser-use | Playwright + PageUse |
-| MCP Tools | `browser_use_*` | `page_use_*` |
-| Operation Style | Natural language tasks | Specific operations (act, extract, observe) |
-| Granularity | Coarse (task-level) | Fine (element-level) |
-| Use Case | High-level task automation | Precise page automation & data extraction |
-| Example | `executeTask("Submit the form")` | `act("Click #submit button")` |
-| Status | BETA | Stable |
+## Agent
 
----
+Agent for natural language driven task execution.
+Provides high-level task automation capabilities for both computer and browser operations.
 
-## Agent.Computer
-
-Desktop automation agent using natural language instructions. Uses `flux_*` MCP tools.
-
-### executeTask
-
-Execute a task asynchronously without waiting for completion (non-blocking).
+### Constructor
 
 ```java
-public ExecutionResult executeTask(String task)
+public Agent(Session session)
 ```
 
-**Parameters:**
-- `task` (String) - Task description in human language
+### Methods
+
+### getComputer
+
+```java
+public Computer getComputer()
+```
+
+Get the Computer agent for desktop task execution.
 
 **Returns:**
-- `ExecutionResult` - Contains success status, task ID, and initial status
+- `Computer`: Computer agent instance
 
-**Example:**
-```java
-ExecutionResult result = session.getAgent().getComputer()
-    .executeTask("Open Chrome browser");
-System.out.println("Task ID: " + result.getTaskId());
-System.out.println("Status: " + result.getTaskStatus());
-
-// Poll for completion
-QueryResult status = session.getAgent().getComputer()
-    .getTaskStatus(result.getTaskId());
-```
-
----
-
-### executeTaskAndWait
-
-Execute a task synchronously, blocking until completion or timeout.
+### getBrowser
 
 ```java
-public ExecutionResult executeTaskAndWait(String task, int timeout)
+public Browser getBrowser()
 ```
 
-**Parameters:**
-- `task` (String) - Task description in human language
-- `timeout` (int) - Maximum time to wait for task completion in seconds (default polling interval is 3 seconds)
+Get the Browser agent for browser task execution.
 
 **Returns:**
-- `ExecutionResult` - Contains success status, task ID, status, and result
+- `Browser`: Browser agent instance
 
-**Example:**
-```java
-ExecutionResult result = session.getAgent().getComputer()
-    .executeTaskAndWait("Create a folder named 'test' on Desktop", 180);
-
-if (result.isSuccess()) {
-    System.out.println("Task completed!");
-    System.out.println("Result: " + result.getTaskResult());
-} else {
-    System.err.println("Task failed: " + result.getErrorMessage());
-}
-```
-
----
-
-### getTaskStatus
-
-Query the current status of a running task.
+### getMobile
 
 ```java
-public QueryResult getTaskStatus(String taskId)
+public Mobile getMobile()
 ```
 
-**Parameters:**
-- `taskId` (String) - The ID of the task to query
+Get the Mobile agent for mobile device task execution.
 
 **Returns:**
-- `QueryResult` - Contains task status, current action, and product
+- `Mobile`: Mobile agent instance
 
-**Task Status Values:**
-- `"running"` - Task is executing
-- `"finished"` - Task completed successfully
-- `"failed"` - Task failed
-- `"unsupported"` - Task type not supported
 
-**Example:**
-```java
-QueryResult status = session.getAgent().getComputer()
-    .getTaskStatus(taskId);
 
-System.out.println("Status: " + status.getTaskStatus());
-System.out.println("Action: " + status.getTaskAction());
-System.out.println("Product: " + status.getTaskProduct());
-```
+## 🔗 Related Resources
 
----
+- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
 
-### terminateTask
-
-Terminate a running task.
-
-```java
-public ExecutionResult terminateTask(String taskId)
-```
-
-**Parameters:**
-- `taskId` (String) - The ID of the task to terminate
-
-**Returns:**
-- `ExecutionResult` - Contains success status and termination result
-
-**Example:**
-```java
-ExecutionResult result = session.getAgent().getComputer()
-    .terminateTask(taskId);
-
-if (result.isSuccess()) {
-    System.out.println("Task terminated successfully");
-}
-```
-
----
-
-## Agent.Browser
-
-Browser automation agent using natural language instructions. Uses `browser_use_*` MCP tools.
-
-⚠️ **Status: BETA** - This feature is still in beta and may have limitations.
-
----
-
-### executeTask
-
-Execute a browser task asynchronously without waiting for completion.
-
-```java
-public ExecutionResult executeTask(String task, boolean use_vision, Class<?>output_schema)
-```
-
-**Parameters:**
-- `task` (String) - Browser task description in human language
-- `use_vision` (boolean) - Whether use vision when running the task.
-- `output_schema` (Class<?>) - The schema of structured result of the task.
-
-**Returns:**
-- `ExecutionResult` - Contains success status, task ID, and initial status
-
-**Example:**
-```java
-public static class OutputSchema {
-    @JsonProperty(value = "listedDate", required = true)
-    private String listedDate;
-
-    public String getListedDate() {
-        return listedDate;
-    }
-
-    public void setListedDate(String listedDate) {
-        this.listedDate = listedDate;
-    }
-}
-ExecutionResult result = session.getAgent().getBrowser()
-    .executeTask("Search for 'AgentBay' on Google", true, OutputSchema.class);
-
-System.out.println("Task ID: " + result.getTaskId());
-```
-
----
-
-### executeTaskAndWait
-
-Execute a browser task synchronously, blocking until completion.
-
-```java
-public ExecutionResult executeTaskAndWait(String task, int timeout, boolean use_vision, Class<?>output_schema)
-```
-
-**Parameters:**
-- `task` (String) - Browser task description in human language
-- `timeout` (int) - Maximum time to wait for task completion in seconds (default polling interval is 3 seconds)
-- `use_vision` (boolean) - Whether use vision when running the task.
-- `output_schema` (Class<?>) - The schema of structured result of the task.
-
-**Returns:**
-- `ExecutionResult` - Contains success status, task ID, status, and result
-
-**Example:**
-```java
-ExecutionResult result = session.getAgent().getBrowser()
-    .executeTaskAndWait("Go to example.com and get the page title", 180);
-
-if (result.isSuccess()) {
-    System.out.println("Result: " + result.getTaskResult());
-}
-```
-
----
-
-### getTaskStatus
-
-Query the current status of a browser task.
-
-```java
-public QueryResult getTaskStatus(String taskId)
-```
-
-**Parameters:**
-- `taskId` (String) - The ID of the task to query
-
-**Returns:**
-- `QueryResult` - Contains task status, current action, and product
-
-**Example:**
-```java
-QueryResult status = session.getAgent().getBrowser()
-    .getTaskStatus(taskId);
-
-System.out.println("Status: " + status.getTaskStatus());
-System.out.println("Action: " + status.getTaskAction());
-```
-
----
-
-### terminateTask
-
-Terminate a running browser task.
-
-```java
-public ExecutionResult terminateTask(String taskId)
-```
-
-**Parameters:**
-- `taskId` (String) - The ID of the task to terminate
-
-**Returns:**
-- `ExecutionResult` - Contains success status
-
-**Example:**
-```java
-ExecutionResult result = session.getAgent().getBrowser()
-    .terminateTask(taskId);
-```
-
----
-
-## Model Classes
-
-### ExecutionResult
-
-Result object returned from task execution operations.
-
-**Fields:**
-- `requestId` (String) - API request identifier
-- `success` (boolean) - Whether the operation succeeded
-- `errorMessage` (String) - Error description if failed
-- `taskId` (String) - Unique task identifier
-- `taskStatus` (String) - Current task status
-- `taskResult` (String) - Task output/result (for completed tasks)
-
----
-
-### QueryResult
-
-Result object returned from status query operations.
-
-**Fields:**
-- `requestId` (String) - API request identifier
-- `success` (boolean) - Whether the query succeeded
-- `errorMessage` (String) - Error description if failed
-- `taskId` (String) - Task identifier
-- `taskStatus` (String) - Current task status
-- `taskAction` (String) - Current action being performed
-- `taskProduct` (String) - Task output/product
-
----
-
-## Complete Examples
-
-### Example 1: Computer Agent - Sync Execution
-
-```java
-// Create session
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("windows_latest");
-SessionResult sessionResult = agentBay.create(params);
-Session session = sessionResult.getSession();
-
-// Execute task synchronously
-String task = "Open Notepad and type 'Hello World'";
-ExecutionResult result = session.getAgent().getComputer()
-    .executeTaskAndWait(task, 180);
-
-if (result.isSuccess()) {
-    System.out.println("✅ Completed: " + result.getTaskResult());
-}
-
-// Cleanup
-agentBay.delete(session, false);
-```
-
----
-
-### Example 2: Computer Agent - Async Execution
-
-```java
-// Create session
-Session session = agentBay.create(params).getSession();
-
-// Start task asynchronously
-ExecutionResult result = session.getAgent().getComputer()
-    .executeTask("Create a folder named 'test'");
-
-System.out.println("Task started: " + result.getTaskId());
-
-// Poll for completion
-while (true) {
-    QueryResult status = session.getAgent().getComputer()
-        .getTaskStatus(result.getTaskId());
-
-    System.out.println("Status: " + status.getTaskStatus());
-
-    if ("finished".equals(status.getTaskStatus())) {
-        System.out.println("Result: " + status.getTaskProduct());
-        break;
-    } else if ("failed".equals(status.getTaskStatus())) {
-        System.err.println("Task failed");
-        break;
-    }
-
-    Thread.sleep(3000);
-}
-
-// Cleanup
-agentBay.delete(session, false);
-```
-
----
-
-### Example 3: Browser Agent - Sync Execution
-
-```java
-// Create browser session
-public static class OutputSchema {
-    @JsonProperty(value = "listedDate", required = true)
-    private String listedDate;
-
-    public String getListedDate() {
-        return listedDate;
-    }
-
-    public void setListedDate(String listedDate) {
-        this.listedDate = listedDate;
-    }
-} 
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("browser_latest");
-Session session = agentBay.create(params).getSession();
-
-// Execute browser task
-String task = "Go to example.com and extract the page title";
-ExecutionResult result = session.getAgent().getBrowser()
-    .executeTaskAndWait(task, 180, true, OutputSchema.class);
-
-if (result.isSuccess()) {
-    System.out.println("✅ Result: " + result.getTaskResult());
-}
-
-// Cleanup
-agentBay.delete(session, false);
-```
-
----
-
-### Example 4: Error Handling
-
-```java
-ExecutionResult result = session.getAgent().getComputer()
-    .executeTaskAndWait(task, 180);
-
-if (result.isSuccess()) {
-    System.out.println("Success: " + result.getTaskResult());
-} else {
-    System.err.println("Failed: " + result.getErrorMessage());
-    System.err.println("Task ID: " + result.getTaskId());
-    System.err.println("Status: " + result.getTaskStatus());
-}
-```
-
----
-
-## Best Practices
-
-### 1. Task Timeout Configuration
-
-Set `timeout` (in seconds) based on task complexity:
-- Simple tasks (e.g., open application): 60-120 seconds
-- Medium tasks (e.g., file operations): 120-300 seconds
-- Complex tasks (e.g., multi-step workflows): 300-900 seconds
-
-### 2. Error Handling
-
-Always check `result.isSuccess()` before accessing task results:
-
-```java
-if (result.isSuccess()) {
-    // Process result
-} else {
-    // Handle error
-    logger.error("Task failed: {}", result.getErrorMessage());
-}
-```
-
-### 3. Resource Cleanup
-
-Always delete sessions after use to avoid resource leaks:
-
-```java
-try {
-    // Task execution
-} finally {
-    if (session != null) {
-        agentBay.delete(session, false);
-    }
-}
-```
-
-### 4. Task Descriptions
-
-Write clear, specific task descriptions:
-
-✅ **Good:**
-- "Open Notepad, type 'Hello World', and save as hello.txt on Desktop"
-- "Go to example.com, fill the search box with 'test', and click submit"
-
-❌ **Bad:**
-- "Do something with notepad"
-- "Search"
-
-### 5. Status Monitoring
-
-For async tasks, implement proper polling with backoff:
-
-```java
-int retries = 0;
-int maxRetries = 30;
-while (retries < maxRetries) {
-    QueryResult status = agent.getTaskStatus(taskId);
-
-    if ("finished".equals(status.getTaskStatus()) ||
-        "failed".equals(status.getTaskStatus())) {
-        break;
-    }
-
-    Thread.sleep(3000);
-    retries++;
-}
-```
-
----
-
-## Troubleshooting
-
-### Task Timeout
-
-If tasks frequently timeout:
-1. Increase `timeout` value
-2. Break complex tasks into smaller steps
-3. Check session resources (CPU/memory)
-
-### Task Unsupported
-
-If you receive `unsupported` status:
-1. Verify the task is within agent capabilities
-2. Simplify the task description
-3. Use more specific instructions
-
-### Initialization Failed
-
-If browser agent initialization fails:
-1. Verify session is using `browser_latest` image
-2. Check API key permissions
-3. Ensure browser resources are available
-
----
-
-## Related Documentation
-
-- [Computer Module](../../computer-use/computer.md) - Low-level desktop automation
-- [Browser Module](../../browser-use/browser.md) - Low-level browser automation
-
----
-
-## See Also
-
-- [AgentExample.java](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/AgentExample.java) - Complete working examples
-- [TestAgentIntegration.java](../../../../agentbay/src/test/java/com/aliyun/agentbay/test/TestAgentIntegration.java) - Integration tests

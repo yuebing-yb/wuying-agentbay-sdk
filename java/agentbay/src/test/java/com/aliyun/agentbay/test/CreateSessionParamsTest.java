@@ -142,8 +142,16 @@ public class CreateSessionParamsTest {
         assertNull(params.getEnableBrowserReplay());
         assertNull(params.getExtraConfigs());
         assertNull(params.getBetaNetworkId());
+        assertEquals(Integer.valueOf(300), params.getIdleReleaseTimeout());
         assertNotNull(params.getContextSyncs());
         assertTrue(params.getContextSyncs().isEmpty());
+    }
+
+    @Test
+    public void testCreateSessionParamsIdleReleaseTimeoutSetter() {
+        CreateSessionParams params = new CreateSessionParams();
+        params.setIdleReleaseTimeout(123);
+        assertEquals(Integer.valueOf(123), params.getIdleReleaseTimeout());
     }
 
     @Test

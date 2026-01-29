@@ -53,11 +53,11 @@ class Browser(BaseService):
         """
         if not self._agent_deprecation_warned:
             _logger.warning(
-                "browser.agent is deprecated and will be removed in a future version. "
-                "Please use browser.operator instead."
+                f"[ ⚠️ DeprecationWarning] browser.agent is deprecated and will be removed in a future version. "
+                "Please use browser.operator instead.",
             )
             self._agent_deprecation_warned = True
-        return self._agent
+            return self._agent
 
     def initialize(self, option: Optional["BrowserOption"] = None) -> bool:
         """

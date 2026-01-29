@@ -638,7 +638,7 @@ ScrollDirection represents scroll directions
 ```go
 type Window struct {
 	WindowID		int		`json:"window_id"`
-	Title			string		`json:"title"`
+	Title			string		`json:"window_title"`
 	AbsoluteUpperLeftX	int		`json:"absolute_upper_left_x,omitempty"`
 	AbsoluteUpperLeftY	int		`json:"absolute_upper_left_y,omitempty"`
 	Width			int		`json:"width,omitempty"`
@@ -667,7 +667,7 @@ WindowDetailResult represents the result of getting window details
 ```go
 type WindowInfo struct {
 	WindowID	int	`json:"window_id"`
-	Title		string	`json:"title"`
+	Title		string	`json:"window_title"`
 	PID		int	`json:"pid"`
 	PName		string	`json:"pname"`
 }

@@ -19,6 +19,8 @@ type iCreateMcpSessionShrinkRequest interface {
 	GetExternalUserId() *string
 	SetImageId(v string) *CreateMcpSessionShrinkRequest
 	GetImageId() *string
+	SetTimeout(v int32) *CreateMcpSessionShrinkRequest
+	GetTimeout() *int32
 	SetLabels(v string) *CreateMcpSessionShrinkRequest
 	GetLabels() *string
 	SetMcpPolicyId(v string) *CreateMcpSessionShrinkRequest
@@ -45,6 +47,7 @@ type CreateMcpSessionShrinkRequest struct {
 	EnableRecord              *bool   `json:"EnableRecord,omitempty" xml:"EnableRecord,omitempty"`
 	ExternalUserId            *string `json:"ExternalUserId,omitempty" xml:"ExternalUserId,omitempty"`
 	ImageId                   *string `json:"ImageId,omitempty" xml:"ImageId,omitempty"`
+	Timeout                   *int32  `json:"Timeout,omitempty" xml:"Timeout,omitempty"`
 	Labels                    *string `json:"Labels,omitempty" xml:"Labels,omitempty"`
 	McpPolicyId               *string `json:"McpPolicyId,omitempty" xml:"McpPolicyId,omitempty"`
 	NetworkId                 *string `json:"NetworkId,omitempty" xml:"NetworkId,omitempty"`
@@ -82,6 +85,10 @@ func (s *CreateMcpSessionShrinkRequest) GetExternalUserId() *string {
 
 func (s *CreateMcpSessionShrinkRequest) GetImageId() *string {
 	return s.ImageId
+}
+
+func (s *CreateMcpSessionShrinkRequest) GetTimeout() *int32 {
+	return s.Timeout
 }
 
 func (s *CreateMcpSessionShrinkRequest) GetLabels() *string {
@@ -130,6 +137,11 @@ func (s *CreateMcpSessionShrinkRequest) SetExternalUserId(v string) *CreateMcpSe
 
 func (s *CreateMcpSessionShrinkRequest) SetImageId(v string) *CreateMcpSessionShrinkRequest {
 	s.ImageId = &v
+	return s
+}
+
+func (s *CreateMcpSessionShrinkRequest) SetTimeout(v int32) *CreateMcpSessionShrinkRequest {
+	s.Timeout = &v
 	return s
 }
 

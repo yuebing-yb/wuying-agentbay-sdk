@@ -312,6 +312,13 @@ export class AgentBay {
         (request as any).networkId = (paramsCopy as any).betaNetworkId;
       }
 
+      // SDK idle release timeout (seconds)
+      if ((paramsCopy as any).idleReleaseTimeout !== undefined && (paramsCopy as any).idleReleaseTimeout !== null) {
+        (request as any).timeout = (paramsCopy as any).idleReleaseTimeout;
+      } else {
+        (request as any).timeout = 300;
+      }
+
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
 
@@ -1230,6 +1237,7 @@ export class AgentBay {
       result = {
         labels: params.labels,
         imageId: params.imageId,
+        idleReleaseTimeout: (params as any).idleReleaseTimeout,
         contextSync: params.contextSync, // Already contains merged extension contexts
         browserContext: params.browserContext,
         isVpc: params.isVpc,

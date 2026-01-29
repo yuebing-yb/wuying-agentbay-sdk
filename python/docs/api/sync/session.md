@@ -6,6 +6,11 @@
 
 - [Session Management Guide](../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
+## Overview
+
+The Session class represents an active cloud environment instance in AgentBay. It provides access to all service modules (filesystem, command, browser, code, etc.) and manages the lifecycle of the cloud environment.
+
+
 
 
 ## SessionStatusResult

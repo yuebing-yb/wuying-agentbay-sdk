@@ -289,18 +289,10 @@ type BrowserProxy struct {
 }
 ```
 
-BrowserProxy represents browser proxy configuration. Supports three types of proxy:
-- **Custom proxy**: User-provided proxy servers
-- **Wuying proxy**: Alibaba Cloud proxy service (strategies: restricted, polling)
-- **Managed proxy**: Client-provided proxies managed by Wuying platform (strategies: polling, sticky, rotating, matched)
-
-> **📞 Note**: To use managed proxy, please contact us or your account manager to set up your proxy pool first.
-
-**Parameters for managed proxy:**
-- `UserID`: Custom user identifier for tracking proxy allocation records (**Required** for managed type)
-  - `sticky`/`rotating` strategies: Associates with historical allocations to maintain or rotate IPs per user
-  - `polling`/`matched` strategies: Each session gets an independent allocation
-- `ISP`, `Country`, `Province`, `City`: Filters for matched strategy (at least one required for matched)
+BrowserProxy represents browser proxy configuration. Supports three types of proxy: custom proxy,
+wuying proxy, and managed proxy. - Custom proxy: User-provided proxy servers - Wuying proxy: Alibaba
+Cloud proxy service (strategies: restricted, polling) - Managed proxy: Client-provided proxies
+managed by Wuying platform (strategies: polling, sticky, rotating, matched)
 
 **Example:**
 

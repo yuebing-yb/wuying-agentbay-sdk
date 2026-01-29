@@ -575,7 +575,7 @@ modules:
     python: agentbay.model
     typescript: model
     golang: pkg/agentbay/model
-    java: com.aliyun.agentbay.model
+    java: com.aliyun.agentbay.session
 
     tutorial:
       url: ../../../../../docs/guides/common-features/basics/session-management.md
@@ -583,8 +583,8 @@ modules:
       description: Learn how to configure session parameters for different use cases
 
     overview: |
-      The SessionParams class provides configuration options for creating and customizing AgentBay sessions. 
-      It allows you to specify browser settings, UI preferences, localization options, and other session-specific parameters.
+      The CreateSessionParams class provides configuration options for creating AgentBay sessions.
+      It supports session labels, image selection, context synchronization, and SDK-side idle release timeout.
 
     best_practices:
       - "Configure browser type based on your automation needs (Chrome for compatibility, Firefox for specific features)"

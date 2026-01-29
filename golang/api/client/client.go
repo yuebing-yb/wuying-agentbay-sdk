@@ -255,6 +255,10 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 		body["ImageId"] = request.ImageId
 	}
 
+	if !dara.IsNil(request.Timeout) {
+		body["Timeout"] = request.Timeout
+	}
+
 	if !dara.IsNil(request.Labels) {
 		body["Labels"] = request.Labels
 	}

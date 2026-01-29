@@ -465,6 +465,10 @@ class AgentBay:
             if hasattr(params, "beta_network_id") and params.beta_network_id:
                 request.network_id = params.beta_network_id
 
+            # SDK idle release timeout (seconds)
+            if hasattr(params, "idle_release_timeout") and params.idle_release_timeout is not None:
+                request.timeout = params.idle_release_timeout
+
             # Flag to indicate if we need to wait for context synchronization
             needs_context_sync = False
 

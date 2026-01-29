@@ -9,6 +9,7 @@ export class CreateMcpSessionRequest extends $dara.Model {
   enableRecord?: boolean;
   externalUserId?: string;
   imageId?: string;
+  timeout?: number;
   labels?: string;
   mcpPolicyId?: string;
   networkId?: string;
@@ -25,6 +26,7 @@ export class CreateMcpSessionRequest extends $dara.Model {
       enableRecord: 'EnableRecord',
       externalUserId: 'ExternalUserId',
       imageId: 'ImageId',
+      timeout: 'Timeout',
       labels: 'Labels',
       mcpPolicyId: 'McpPolicyId',
       networkId: 'NetworkId',
@@ -44,6 +46,7 @@ export class CreateMcpSessionRequest extends $dara.Model {
       enableRecord: 'boolean',
       externalUserId: 'string',
       imageId: 'string',
+      timeout: 'number',
       labels: 'string',
       mcpPolicyId: 'string',
       networkId: 'string',

@@ -280,6 +280,7 @@ describe("AgentBay", () => {
 
             const createCallArgs = createMcpSessionStub.getCall(0).args[0];
             expect(createCallArgs.authorization).toBe("Bearer test-api-key");
+            expect((createCallArgs as any).timeout).toBe(300);
 
             const deleteCallArgs = deleteSessionAsyncStub.getCall(0).args[0];
             expect(deleteCallArgs.sessionId).toBe(mockSessionData.sessionId);
@@ -482,6 +483,29 @@ describe("AgentBay", () => {
             expect(createMcpSessionStub.calledOnce).toBe(true);
             const createCallArgs = createMcpSessionStub.getCall(0).args[0];
             expect(createCallArgs.mcpPolicyId).toBe(policyId);
+            expect((createCallArgs as any).timeout).toBe(300);
+        });
+    });
+
+    describe("idleReleaseTimeout passthrough", () => {
+        it("should pass idleReleaseTimeout to CreateMcpSession request body", async () => {
+            const apiKey = "test-api-key";
+            const agentBay = new AgentBay({ apiKey });
+
+            const createMockResponse = {
+                statusCode: 200,
+                body: {
+                    data: mockSessionData,
+                    requestId: "mock-request-id-create",
+                },
+            };
+            createMcpSessionStub.resolves(createMockResponse);
+
+            await agentBay.create({ idleReleaseTimeout: 123 });
+
+            expect(createMcpSessionStub.calledOnce).toBe(true);
+            const createCallArgs = createMcpSessionStub.getCall(0).args[0];
+            expect((createCallArgs as any).timeout).toBe(123);
         });
     });
 

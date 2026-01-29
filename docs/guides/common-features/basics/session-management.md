@@ -140,7 +140,8 @@ agent_bay = AgentBay(api_key="your_api_key")
 # Create a session with custom parameters
 params = CreateSessionParams(
     image_id="linux_latest",
-    labels={"project": "demo", "environment": "testing"}
+    labels={"project": "demo", "environment": "testing"},
+    idle_release_timeout=300,  # seconds (SDK-side idle release timeout)
 )
 session_result = agent_bay.create(params)
 session = session_result.session
@@ -446,6 +447,7 @@ else:
 If you don't manually delete a session, it will be automatically released after a configured timeout period:
 
 - **Configuration**: Timeout duration is set in the [AgentBay Console](https://agentbay.console.aliyun.com/)
+- **SDK Parameter**: You can also set `idle_release_timeout` (seconds) when creating a session (default: 300)
 - **Behavior**: Once the timeout is reached, the session is automatically released
 - **Recovery**: After release (manual or automatic), the session cannot be recovered - the session ID becomes invalid
 

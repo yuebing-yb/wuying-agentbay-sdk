@@ -23,6 +23,11 @@ public class CreateSessionParams {
     private String browserType;
     private boolean autoUpload;
     private String imageId;
+    /**
+     * SDK-side idle release timeout in seconds.
+     * Default is 300 seconds.
+     */
+    private Integer idleReleaseTimeout;
     private Map<String, String> labels;
     private Map<String, String> metadata;
     private List<ContextSync> contextSyncs;
@@ -36,6 +41,7 @@ public class CreateSessionParams {
 
     public CreateSessionParams() {
         this.contextSyncs = new ArrayList<>();
+        this.idleReleaseTimeout = 300;
     }
 
     public CreateSessionParams(String appId) {
@@ -43,6 +49,7 @@ public class CreateSessionParams {
         this.browserType = "chrome";
         this.autoUpload = true;
         this.contextSyncs = new ArrayList<>();
+        this.idleReleaseTimeout = 300;
     }
     
     /**
@@ -111,6 +118,14 @@ public class CreateSessionParams {
 
     public void setImageId(String imageId) {
         this.imageId = imageId;
+    }
+
+    public Integer getIdleReleaseTimeout() {
+        return idleReleaseTimeout;
+    }
+
+    public void setIdleReleaseTimeout(Integer idleReleaseTimeout) {
+        this.idleReleaseTimeout = idleReleaseTimeout;
     }
 
     public Map<String, String> getLabels() {

@@ -275,6 +275,8 @@ class Client(OpenApiClient):
             body["ExternalUserId"] = request.external_user_id
         if not DaraCore.is_null(request.image_id):
             body["ImageId"] = request.image_id
+        if not DaraCore.is_null(request.timeout):
+            body["Timeout"] = request.timeout
         if not DaraCore.is_null(request.labels):
             body["Labels"] = request.labels
         if not DaraCore.is_null(request.mcp_policy_id):
@@ -335,6 +337,8 @@ class Client(OpenApiClient):
             body["ExternalUserId"] = request.external_user_id
         if not DaraCore.is_null(request.image_id):
             body["ImageId"] = request.image_id
+        if not DaraCore.is_null(request.timeout):
+            body["Timeout"] = request.timeout
         if not DaraCore.is_null(request.labels):
             body["Labels"] = request.labels
         if not DaraCore.is_null(request.mcp_policy_id):

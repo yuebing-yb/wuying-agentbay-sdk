@@ -4,6 +4,10 @@
 
 - [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
+## Overview
+
+The Session class represents an active cloud environment instance in AgentBay. It provides access to all service modules (filesystem, command, browser, code, etc.) and manages the lifecycle of the cloud environment.
+
 ## Type Session
 
 ```go
@@ -397,6 +401,10 @@ type CreateSessionParams struct {
 	// ImageId specifies the image ID to use for the session.
 	ImageId	string
 
+	// IdleReleaseTimeout specifies the SDK-side idle release timeout in seconds.
+	// Default is 300 seconds.
+	IdleReleaseTimeout	int32
+
 	// ContextSync is a list of context synchronization configurations.
 	// These configurations define how contexts should be synchronized and mounted.
 	ContextSync	[]*ContextSync
@@ -502,6 +510,15 @@ func (p *CreateSessionParams) WithExtraConfigs(extraConfigs *models.ExtraConfigs
 
 WithExtraConfigs sets the extra configurations for the session parameters and returns the updated
 parameters.
+
+### WithIdleReleaseTimeout
+
+```go
+func (p *CreateSessionParams) WithIdleReleaseTimeout(timeoutSeconds int32) *CreateSessionParams
+```
+
+WithIdleReleaseTimeout sets the SDK-side idle release timeout in seconds and returns the updated
+parameters. Only positive values are accepted.
 
 ### WithImageId
 

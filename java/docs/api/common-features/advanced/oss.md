@@ -1,60 +1,27 @@
-# OSS API Reference
+# ☁️ Oss API Reference
 
-## ☁️ Related Tutorial
+## Overview
 
-- [OSS Integration Guide](../../../../../docs/guides/common-features/advanced/oss-integration.md) - Integrate with Alibaba Cloud OSS for file storage
+The Oss module provides specialized functionality for the AgentBay cloud platform. It includes various methods and utilities to interact with cloud services and manage resources.
 
-## Result Types
+## 📚 Tutorial
 
-### OSSClientResult
+[OSS Integration Guide](../../../../../docs/guides/common-features/advanced/oss-integration.md)
 
-```java
-public class OSSClientResult extends ApiResponse
-```
-
-Result of OSS client initialization operations.
-
-**Fields:**
-- `success` (boolean): True if operation succeeded
-- `data` (String): Client configuration data
-- `requestId` (String): Request identifier
-- `errorMessage` (String): Error description if failed
-
-### OSSUploadResult
-
-```java
-public class OSSUploadResult extends ApiResponse
-```
-
-Result of OSS upload operations.
-
-**Fields:**
-- `success` (boolean): True if operation succeeded
-- `data` (String): Upload result data
-- `requestId` (String): Request identifier
-- `errorMessage` (String): Error description if failed
-
-### OSSDownloadResult
-
-```java
-public class OSSDownloadResult extends ApiResponse
-```
-
-Result of OSS download operations.
-
-**Fields:**
-- `success` (boolean): True if operation succeeded
-- `data` (String): Download result data
-- `requestId` (String): Request identifier
-- `errorMessage` (String): Error description if failed
+Integrate with Alibaba Cloud OSS for file storage
 
 ## OSS
 
+Handles Object Storage Service operations in the AgentBay cloud environment.
+Similar to Python's Oss class.
+
+### Constructor
+
 ```java
-public class OSS extends BaseService
+public OSS(Session session)
 ```
 
-Handles Object Storage Service operations in the AgentBay cloud environment.
+### Methods
 
 ### envInit
 
@@ -62,32 +29,18 @@ Handles Object Storage Service operations in the AgentBay cloud environment.
 public OSSClientResult envInit(String accessKeyId, String accessKeySecret, String securityToken, String endpoint, String region)
 ```
 
-Initialize OSS environment with the provided STS temporary credentials.
+Create an OSS client with the provided credentials.
+Similar to Python's env_init method.
 
 **Parameters:**
-- `accessKeyId` (String): The Access Key ID from STS temporary credentials
-- `accessKeySecret` (String): The Access Key Secret from STS temporary credentials
-- `securityToken` (String): Security token from STS temporary credentials. Required for security.
-- `endpoint` (String): The OSS service endpoint. If not specified, the default is used.
-- `region` (String): The OSS region. If not specified, the default is used.
+- `accessKeyId` (String): The Access Key ID for OSS authentication
+- `accessKeySecret` (String): The Access Key Secret for OSS authentication
+- `securityToken` (String): Optional security token for temporary credentials
+- `endpoint` (String): The OSS service endpoint
+- `region` (String): The OSS region
 
 **Returns:**
-- `OSSClientResult`: Result containing client configuration and error message if any
-
-**Example:**
-
-```java
-Session session = agentBay.create().getSession();
-OSSClientResult result = session.getOss().envInit(
-    "stsAccessKeyId",
-    "stsAccessKeySecret",
-    "stsToken",
-    "endpoint",
-    "region"
-);
-```
-
-**Note:** Before calling upload/download operations, you must call this method to initialize the OSS environment.
+- `OSSClientResult`: OSSClientResult containing client configuration and error message if any
 
 ### upload
 
@@ -96,6 +49,7 @@ public OSSUploadResult upload(String bucket, String object, String path)
 ```
 
 Upload a local file or directory to OSS.
+Similar to Python's upload method.
 
 **Parameters:**
 - `bucket` (String): OSS bucket name
@@ -103,43 +57,7 @@ Upload a local file or directory to OSS.
 - `path` (String): Local file or directory path to upload
 
 **Returns:**
-- `OSSUploadResult`: Result containing upload status and error message if any
-
-**Example:**
-
-```java
-Session session = agentBay.create().getSession();
-session.getOss().envInit("accessKeyId", "accessKeySecret", "token", "endpoint", "region");
-OSSUploadResult result = session.getOss().upload("my-bucket", "my-object", "/tmp/file.txt");
-```
-
-**Note:** Before calling this API, you must call envInit to initialize the OSS environment.
-
-### download
-
-```java
-public OSSDownloadResult download(String bucket, String object, String path)
-```
-
-Download an object from OSS to a local file or directory.
-
-**Parameters:**
-- `bucket` (String): OSS bucket name
-- `object` (String): Object key in OSS
-- `path` (String): Local file or directory path to download to
-
-**Returns:**
-- `OSSDownloadResult`: Result containing download status and error message if any
-
-**Example:**
-
-```java
-Session session = agentBay.create().getSession();
-session.getOss().envInit("accessKeyId", "accessKeySecret", "token", "endpoint", "region");
-OSSDownloadResult result = session.getOss().download("my-bucket", "my-object", "/tmp/file.txt");
-```
-
-**Note:** Before calling this API, you must call envInit to initialize the OSS environment.
+- `OSSUploadResult`: OSSUploadResult containing upload result and error message if any
 
 ### uploadAnonymous
 
@@ -148,23 +66,31 @@ public OSSUploadResult uploadAnonymous(String url, String path)
 ```
 
 Upload a local file or directory to a URL anonymously.
+Similar to Python's upload_anonymous method.
 
 **Parameters:**
 - `url` (String): The HTTP/HTTPS URL to upload the file to
 - `path` (String): Local file or directory path to upload
 
 **Returns:**
-- `OSSUploadResult`: Result containing upload status and error message if any
+- `OSSUploadResult`: OSSUploadResult containing upload result and error message if any
 
-**Example:**
+### download
 
 ```java
-Session session = agentBay.create().getSession();
-OSSUploadResult result = session.getOss().uploadAnonymous(
-    "https://example.com/upload",
-    "/tmp/file.txt"
-);
+public OSSDownloadResult download(String bucket, String object, String path)
 ```
+
+Download an object from OSS to a local file or directory.
+Similar to Python's download method.
+
+**Parameters:**
+- `bucket` (String): OSS bucket name
+- `object` (String): Object key in OSS
+- `path` (String): Local file or directory path to download to
+
+**Returns:**
+- `OSSDownloadResult`: OSSDownloadResult containing download status and error message if any
 
 ### downloadAnonymous
 
@@ -173,30 +99,67 @@ public OSSDownloadResult downloadAnonymous(String url, String path)
 ```
 
 Download a file from a URL anonymously to a local file path.
+Similar to Python's download_anonymous method.
 
 **Parameters:**
 - `url` (String): The HTTP/HTTPS URL to download the file from
 - `path` (String): Local file or directory path to download to
 
 **Returns:**
-- `OSSDownloadResult`: Result containing download status and error message if any
+- `OSSDownloadResult`: OSSDownloadResult containing download status and error message if any
 
-**Example:**
+### uploadFile
 
 ```java
-Session session = agentBay.create().getSession();
-OSSDownloadResult result = session.getOss().downloadAnonymous(
-    "https://example.com/file.txt",
-    "/tmp/file.txt"
-);
+public OSSUploadResult uploadFile(String localPath, String remotePath) throws OSSException
 ```
 
-## Related Resources
+### downloadFile
 
-- [Session API Reference](../basics/session.md)
-- [FileSystem API Reference](../basics/filesystem.md)
+```java
+public OSSDownloadResult downloadFile(String remotePath, String localPath) throws OSSException
+```
 
----
+### deleteFile
 
-*Documentation for AgentBay Java SDK*
+```java
+public DeleteResult deleteFile(String remotePath) throws OSSException
+```
+
+### getClient
+
+```java
+public OSSClientResult getClient()
+```
+
+### uploadLegacy
+
+```java
+public OSSUploadResult uploadLegacy(String localPath, String remotePath, String bucketName) throws OSSException
+```
+
+### uploadAnonymousLegacy
+
+```java
+public OSSUploadResult uploadAnonymousLegacy(String localPath, String remotePath) throws OSSException
+```
+
+### downloadLegacy
+
+```java
+public OSSDownloadResult downloadLegacy(String remotePath, String localPath, String bucketName) throws OSSException
+```
+
+### deleteFileVoid
+
+```java
+public void deleteFileVoid(String remotePath) throws OSSException
+```
+
+
+
+## 🔗 Related Resources
+
+- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
+- [FileSystem API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/filesystem.md)
 

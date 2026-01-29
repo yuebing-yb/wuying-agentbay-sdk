@@ -83,9 +83,22 @@ agent_bay.delete(session)
 **2. Automatic Timeout Release**
 - If not manually deleted, sessions are automatically released after a timeout period
 - Timeout duration is configured in the [AgentBay Console](https://agentbay.console.aliyun.com/)
+- You can also set an SDK-side idle release timeout during session creation (default: 300 seconds)
 - After timeout, the session is released and cannot be recovered
 
 **Important**: Always manually delete sessions when finished. This is a best practice for resource management.
+
+**Example (Python):**
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+agent_bay = AgentBay()
+params = CreateSessionParams(
+    image_id="linux_latest",
+    idle_release_timeout=300,  # seconds (SDK-side idle release timeout)
+)
+session = agent_bay.create(params).session
+```
 
 **Learn more**: [Session Management Guide](../guides/common-features/basics/session-management.md)
 

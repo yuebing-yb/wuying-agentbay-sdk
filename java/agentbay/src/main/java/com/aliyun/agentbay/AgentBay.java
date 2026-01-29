@@ -401,6 +401,13 @@ public class AgentBay {
                 request.setImageId(params.getImageId());
             }
 
+            // SDK idle release timeout (seconds)
+            Integer idleReleaseTimeout = params.getIdleReleaseTimeout();
+            if (idleReleaseTimeout == null) {
+                idleReleaseTimeout = 300;
+            }
+            request.setTimeout(idleReleaseTimeout);
+
             // Set labels if provided
             if (params.getLabels() != null && !params.getLabels().isEmpty()) {
                 try {
