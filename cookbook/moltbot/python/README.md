@@ -1,10 +1,3 @@
----
-summary: "Create and configure a Moltbot (formerly Clawdbot) session with AgentBay SDK (Python)"
-read_when:
-  - You want to create a Moltbot instance on AgentBay
-  - You want to auto-configure model provider and channel credentials inside the session
----
-
 ## What this cookbook does
 
 This cookbook shows how to:
