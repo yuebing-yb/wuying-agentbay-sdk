@@ -13,7 +13,6 @@ from agentbay import get_logger
 from agentbay import AsyncBrowser as Browser
 from agentbay import AsyncSession as Session
 from agentbay.api.base_service import OperationResult
-
 from agentbay import AsyncBrowserOperator as BrowserOperator
 from agentbay import BrowserOption
 
@@ -214,13 +213,24 @@ class LocalPageAgent(BrowserOperator):
 
 class LocalBrowser(Browser):
     def __init__(self, session=None):
-        # Optionally skip calling super().__init__ if not needed for tests
+        super().__init__(session)
         self.contexts = []
         self._cdp_port = 9222
-        self.agent: LocalPageAgent = LocalPageAgent(session, self)
+        # New: operator is the recommended way
+        self.operator = LocalPageAgent(session, self)
+        # Deprecated: agent is kept for backward compatibility
+        self._agent = self.operator
+        self._agent_deprecation_warned = False
         self._worker_thread = None
 
-    async def initialize(self, options: BrowserOption) -> bool:
+    async def initialize(self, option: BrowserOption = None) -> bool:
+        if self.is_initialized():
+            return True
+        
+        if option is None:
+            from agentbay import BrowserOption
+            option = BrowserOption()
+        
         if self._worker_thread is None:
             promise: concurrent.futures.Future[bool] = concurrent.futures.Future()
 
@@ -281,11 +291,17 @@ class LocalBrowser(Browser):
                 _logger.error("Failed to launch local browser")
                 return False
 
-        self.agent.initialize()
+        self.operator.initialize()
+        self._initialized = True
+        self._option = option
         return True
 
     def is_initialized(self) -> bool:
-        return True
+        return getattr(self, "_initialized", False)
+
+    def get_option(self):
+        """Returns the current BrowserOption used to initialize the browser, or None if not set."""
+        return getattr(self, "_option", None)
 
     async def get_endpoint_url(self) -> str:
         return f"http://localhost:{self._cdp_port}"
