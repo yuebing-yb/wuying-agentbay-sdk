@@ -25,7 +25,9 @@ traits:
     properties:
       types: dingtalk
       when: all
-      users: 187788
+      users: 
+        - 187788
+        - WB02016330
       content: |
         ---
         - **Example Check Report**
