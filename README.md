@@ -29,6 +29,14 @@
 
 ---
 
+## 🔥 Moltbot (formerly Clawdbot) Quick Deployment
+
+You can use AgentBay SDK to spin up a prebuilt Moltbot cloud desktop in minutes, then open the Moltbot console inside the desktop browser.
+
+- **Cookbook**: `cookbook/moltbot/`
+- **Cloud Desktop URL**: the example prints `session.resource_url` and pauses for hands-on exploration
+- **Moltbot console**: open `http://127.0.0.1:30120` inside the cloud desktop
+
 ## 📦 Installation
 
 | Language | Install Command | Documentation |

@@ -29,6 +29,10 @@ Currently, distinct session environments are implemented:
 
 6. [App Login Persistence](./mobile/app-login-persistence/) - Demonstrates how to maintain login state for mobile applications (Xiaohongshu, Pinduoduo, Weibo, Ele.me) across sessions
 
+### Desktop Environment
+
+7. [Moltbot Session Setup](./moltbot/) - Create and configure a Moltbot (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
+
 ## Overview
 
 The AgentBay SDK provides a comprehensive suite of tools for efficient interaction with AgentBay cloud environments. These cookbooks demonstrate real-world applications of the SDK across different domains:
