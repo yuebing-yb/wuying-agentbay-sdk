@@ -5,8 +5,6 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.JavadocComment;
-import com.github.javaparser.ast.expr.AnnotationExpr;
-import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.javadoc.Javadoc;
 import com.github.javaparser.javadoc.JavadocBlockTag;
 import com.github.javaparser.javadoc.description.JavadocDescription;
@@ -17,6 +15,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeS
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.regex.*;
@@ -121,6 +120,9 @@ public class GenerateApiDocs {
         
         // Step 5: Parse Java source files and generate Markdown documentation
         parseSourceFilesAndGenerateMarkdown();
+
+        // Step 6: Write API README entry point
+        writeApiReadme();
         
         System.out.println("Java API documentation generation completed!");
     }
@@ -1119,6 +1121,18 @@ public class GenerateApiDocs {
         moduleToClasses.put("context-manager", Arrays.asList(
             "com.aliyun.agentbay.context.ContextManager"
         ));
+        moduleToClasses.put("context-sync", Arrays.asList(
+            "com.aliyun.agentbay.context.ContextSync",
+            "com.aliyun.agentbay.context.SyncPolicy",
+            "com.aliyun.agentbay.context.UploadPolicy",
+            "com.aliyun.agentbay.context.DownloadPolicy",
+            "com.aliyun.agentbay.context.DeletePolicy",
+            "com.aliyun.agentbay.context.ExtractPolicy",
+            "com.aliyun.agentbay.context.RecyclePolicy",
+            "com.aliyun.agentbay.context.WhiteList",
+            "com.aliyun.agentbay.context.BWList",
+            "com.aliyun.agentbay.context.UploadMode"
+        ));
         
         // Advanced modules
         moduleToClasses.put("browser", Arrays.asList(
@@ -1136,6 +1150,9 @@ public class GenerateApiDocs {
         moduleToClasses.put("mobile", Arrays.asList(
             "com.aliyun.agentbay.mobile.Mobile"
         ));
+        moduleToClasses.put("mobile-simulate", Arrays.asList(
+            "com.aliyun.agentbay.mobile.MobileSimulate"
+        ));
         moduleToClasses.put("agent", Arrays.asList(
             "com.aliyun.agentbay.agent.Agent"
         ));
@@ -1144,6 +1161,31 @@ public class GenerateApiDocs {
         ));
         
         return moduleToClasses.getOrDefault(moduleName, new ArrayList<>());
+    }
+
+    private void writeApiReadme() throws IOException {
+        Path readmePath = Paths.get(DOCS_ROOT, "README.md");
+        List<String> targets = new ArrayList<>();
+        if (docMappings != null) {
+            for (DocMapping mapping : docMappings) {
+                if (mapping != null && mapping.target != null && !mapping.target.trim().isEmpty()) {
+                    targets.add(mapping.target);
+                }
+            }
+        }
+        targets.sort(String::compareTo);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("# Java SDK API Reference\n\n");
+        sb.append("This directory is generated. Run `mvn exec:java` in `java/agentbay` to refresh it.\n\n");
+        sb.append("## Index\n\n");
+        for (String target : targets) {
+            sb.append("- [").append(target).append("](").append(target.replace("\\\\", "/")).append(")\n");
+        }
+        sb.append('\n');
+
+        Files.write(readmePath, sb.toString().getBytes(StandardCharsets.UTF_8));
+        System.out.println("Wrote API README: " + readmePath);
     }
     
     private DocumentationMetadata createFallbackMetadata() {

@@ -1017,6 +1017,7 @@ class AgentBay:
                         http_port=data_dict.get("HttpPort", ""),
                         network_interface_ip=data_dict.get("NetworkInterfaceIp", ""),
                         token=data_dict.get("Token", ""),
+                        link_url=data_dict.get("LinkUrl", "") or "",
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
                         status=data_dict.get("Status", ""),
@@ -1119,6 +1120,8 @@ class AgentBay:
         if get_result.data:
             session.resource_url = get_result.data.resource_url
             session.mcpTools = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list)
+            session.token = str(get_result.data.token or "")
+            session.link_url = str(getattr(get_result.data, "link_url", "") or "")
 
         return SessionResult(
             request_id=get_result.request_id,

@@ -38,6 +38,18 @@ func TestLinkUrlSessionMcpToolsAndCallTool(t *testing.T) {
 		t.Skip("LinkUrl/token not provided by CreateSession response in this environment")
 	}
 
+	getResult, err := client.Get(session.GetSessionId())
+	if err != nil {
+		t.Fatalf("Get failed: %v", err)
+	}
+	if !getResult.Success || getResult.Session == nil {
+		t.Fatalf("Get returned failure: success=%v err=%q", getResult.Success, getResult.ErrorMessage)
+	}
+	restored := getResult.Session
+	if restored.GetToken() == "" || restored.GetLinkUrl() == "" {
+		t.Fatalf("restored session missing LinkUrl/token: token=%q link_url=%q", restored.GetToken(), restored.GetLinkUrl())
+	}
+
 	if session.Command == nil {
 		t.Fatalf("session.Command is nil")
 	}
@@ -59,5 +71,14 @@ func TestLinkUrlSessionMcpToolsAndCallTool(t *testing.T) {
 	if !direct.Success || !strings.Contains(direct.Data, "direct-link-url-route-ok") {
 		t.Fatalf("unexpected direct tool result: success=%v data=%q err=%q", direct.Success, direct.Data, direct.ErrorMessage)
 	}
-}
 
+	restoredDirect, err := restored.CallMcpTool("shell", map[string]interface{}{
+		"command": "echo restored-direct-link-url-route-ok",
+	})
+	if err != nil {
+		t.Fatalf("restored CallMcpTool failed: %v", err)
+	}
+	if !restoredDirect.Success || !strings.Contains(restoredDirect.Data, "restored-direct-link-url-route-ok") {
+		t.Fatalf("unexpected restored tool result: success=%v data=%q err=%q", restoredDirect.Success, restoredDirect.Data, restoredDirect.ErrorMessage)
+	}
+}

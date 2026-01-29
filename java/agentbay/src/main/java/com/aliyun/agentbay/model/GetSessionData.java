@@ -12,6 +12,7 @@ public class GetSessionData {
     private String networkInterfaceIp;
     private String httpPort;
     private String token;
+    private String linkUrl;
     private String status;
     private String code;
     private String toolList;
@@ -21,7 +22,7 @@ public class GetSessionData {
 
     public GetSessionData(String sessionId, String appInstanceId, String resourceId,
                          String resourceUrl, boolean vpcResource, String networkInterfaceIp,
-                         String httpPort, String token, String code, String toolList) {
+                         String httpPort, String token, String linkUrl, String code, String toolList) {
         this.sessionId = sessionId;
         this.appInstanceId = appInstanceId;
         this.resourceId = resourceId;
@@ -30,6 +31,7 @@ public class GetSessionData {
         this.networkInterfaceIp = networkInterfaceIp;
         this.httpPort = httpPort;
         this.token = token;
+        this.linkUrl = linkUrl;
         this.code = code;
         this.toolList = toolList;
     }
@@ -96,6 +98,14 @@ public class GetSessionData {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getLinkUrl() {
+        return linkUrl;
+    }
+
+    public void setLinkUrl(String linkUrl) {
+        this.linkUrl = linkUrl;
     }
 
     public String getStatus() {

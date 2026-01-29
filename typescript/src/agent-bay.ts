@@ -947,6 +947,7 @@ export class AgentBay {
           httpPort: body.data.httpPort || "",
           networkInterfaceIp: body.data.networkInterfaceIp || "",
           token: body.data.token || "",
+          linkUrl: (body.data as any).linkUrl || "",
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
           status: body.data.status || "",
@@ -1051,6 +1052,7 @@ export class AgentBay {
     if (getResult.data) {
       session.resourceUrl = getResult.data.resourceUrl;
       session.token = getResult.data.token || "";
+      session.linkUrl = getResult.data.linkUrl || "";
       session.mcpTools = this.parseToolListToMcpTools(getResult.data.toolList);
     }
 

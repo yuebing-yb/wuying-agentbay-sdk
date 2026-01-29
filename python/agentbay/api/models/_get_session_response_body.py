@@ -84,6 +84,7 @@ class GetSessionResponseBodyData(DaraModel):
         self,
         app_instance_id: str = None,
         http_port: str = None,
+        link_url: str = None,
         network_interface_ip: str = None,
         resource_id: str = None,
         resource_url: str = None,
@@ -96,6 +97,7 @@ class GetSessionResponseBodyData(DaraModel):
     ):
         self.app_instance_id = app_instance_id
         self.http_port = http_port
+        self.link_url = link_url
         self.network_interface_ip = network_interface_ip
         self.resource_id = resource_id
         self.resource_url = resource_url
@@ -122,6 +124,9 @@ class GetSessionResponseBodyData(DaraModel):
 
         if self.http_port is not None:
             result["HttpPort"] = self.http_port
+
+        if self.link_url is not None:
+            result["LinkUrl"] = self.link_url
 
         if self.network_interface_ip is not None:
             result["NetworkInterfaceIp"] = self.network_interface_ip
@@ -161,6 +166,9 @@ class GetSessionResponseBodyData(DaraModel):
 
         if m.get("HttpPort") is not None:
             self.http_port = m.get("HttpPort")
+
+        if m.get("LinkUrl") is not None:
+            self.link_url = m.get("LinkUrl")
 
         if m.get("NetworkInterfaceIp") is not None:
             self.network_interface_ip = m.get("NetworkInterfaceIp")

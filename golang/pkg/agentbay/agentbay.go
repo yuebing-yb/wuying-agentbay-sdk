@@ -458,10 +458,10 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		// Starts with short intervals (0.5s) for fast completion detection
 		// Gradually increases intervals (up to 5s max) to reduce server load
 		// Uses exponential backoff factor of 1.1
-		const initialInterval = 500 * time.Millisecond  // Start with 0.5 seconds for quick response
-		const maxInterval = 5000 * time.Millisecond     // Maximum interval to avoid excessive delays
-		const backoffFactor = 1.1                       // Multiply interval by this factor each retry
-		const maxRetries = 50                           // Maximum number of retries
+		const initialInterval = 500 * time.Millisecond // Start with 0.5 seconds for quick response
+		const maxInterval = 5000 * time.Millisecond    // Maximum interval to avoid excessive delays
+		const backoffFactor = 1.1                      // Multiply interval by this factor each retry
+		const maxRetries = 50                          // Maximum number of retries
 
 		currentInterval := initialInterval
 
@@ -931,6 +931,7 @@ type GetSessionData struct {
 	HttpPort           string
 	NetworkInterfaceIP string
 	Token              string
+	LinkUrl            string
 	VpcResource        bool
 	ResourceUrl        string
 	Status             string
@@ -1093,6 +1094,9 @@ func (a *AgentBay) getSession(sessionID string) (*GetSessionResult, error) {
 			if response.Body.Data.GetToken() != nil {
 				data.Token = *response.Body.Data.GetToken()
 			}
+			if response.Body.Data.GetLinkUrl() != nil {
+				data.LinkUrl = *response.Body.Data.GetLinkUrl()
+			}
 			if response.Body.Data.GetVpcResource() != nil {
 				data.VpcResource = *response.Body.Data.GetVpcResource()
 			}
@@ -1217,6 +1221,8 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	if getResult.Data != nil {
 		session.ResourceUrl = getResult.Data.ResourceUrl
 		session.McpTools = parseToolListToMcpTools(getResult.Data.ToolList)
+		session.Token = getResult.Data.Token
+		session.LinkUrl = getResult.Data.LinkUrl
 	}
 
 	// Log successful retrieval

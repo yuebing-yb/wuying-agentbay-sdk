@@ -3,8 +3,6 @@ package com.aliyun.agentbay.test;
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.DeleteResult;
-import com.aliyun.agentbay.model.GetSessionData;
-import com.aliyun.agentbay.model.GetSessionResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
@@ -83,6 +81,9 @@ public class TestAgentBayGetIntegration {
         System.out.println("Session created with ID: " + sessionId);
 
         try {
+            boolean createHasLinkUrl = createdSession.getToken() != null && !createdSession.getToken().isEmpty()
+                && createdSession.getLinkUrl() != null && !createdSession.getLinkUrl().isEmpty();
+
             // Test Get API
             System.out.println("Testing Get API...");
             SessionResult result = agentBayClient.get(sessionId);
@@ -106,6 +107,20 @@ public class TestAgentBayGetIntegration {
             assertTrue("Session resourceUrl should contain 'resourceId='",
                        session.getResourceUrl().contains("resourceId="));
             System.out.println("Session resourceUrl validated");
+
+            if (createHasLinkUrl) {
+                assertNotNull("Session token should not be null", session.getToken());
+                assertNotNull("Session linkUrl should not be null", session.getLinkUrl());
+                assertFalse("Session token should not be empty", session.getToken().isEmpty());
+                assertFalse("Session linkUrl should not be empty", session.getLinkUrl().isEmpty());
+
+                java.util.Map<String, Object> args = new java.util.HashMap<>();
+                args.put("command", "echo restored-direct-link-url-route-ok");
+                com.aliyun.agentbay.model.OperationResult toolResult = session.callMcpTool("shell", args);
+                assertTrue("callMcpTool should succeed: " + toolResult.getErrorMessage(), toolResult.isSuccess());
+                assertTrue("callMcpTool output should contain marker",
+                    toolResult.getData() != null && toolResult.getData().contains("restored-direct-link-url-route-ok"));
+            }
             
             System.out.println("Successfully retrieved session with ID: " + session.getSessionId());
             System.out.println("Get API test passed successfully");

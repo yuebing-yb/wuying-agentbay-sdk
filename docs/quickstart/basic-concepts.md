@@ -68,6 +68,25 @@ Create Session → Use Session → Delete Session
   Resources     Operations      Resources
 ```
 
+### Session Recovery (Get by Session ID)
+
+If you already have a `session_id` (for example, from a previous process run), you can recover a Session object by calling `get(session_id)`.
+
+When the service returns `LinkUrl` and `Token`, the SDK will store them on the recovered session so subsequent MCP tool calls can use the LinkUrl direct route.
+
+**Example (Python):**
+```python
+from agentbay import AgentBay
+
+agent_bay = AgentBay()
+
+session_id = "s-xxxxxxxxxxxxxxxx"
+session = agent_bay.get(session_id).session
+
+result = session.call_mcp_tool("shell", {"command": "echo recovered-ok"})
+print(result.success, result.data)
+```
+
 
 
 ### Session Release
