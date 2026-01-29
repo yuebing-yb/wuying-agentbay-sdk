@@ -1247,7 +1247,7 @@ export class AgentBay {
       if(!result.enableBrowserReplay || !("enableBrowserReplay" in result)){
         result.enableBrowserReplay = true;
       }
-      let allContextSyncs = params?.contextSync ? [...params.contextSync] : [];
+      const allContextSyncs = params?.contextSync ? [...params.contextSync] : [];
       // **IMPORTANT: Apply extension context merging for plain objects automatically**
       // Check if browserContext exists and has extension syncs to merge
       if (result.browserContext && result.browserContext.extensionContextSyncs) {
