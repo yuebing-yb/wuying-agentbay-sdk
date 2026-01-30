@@ -319,6 +319,85 @@ public class MobileIntegrationTest {
             }
         }
     }
+
+    @Test
+    public void test09d_BetaTakeLongScreenshotJpegQuality() {
+        System.out.println("\nTest: Taking beta long screenshot (JPEG bytes, quality)...");
+
+        Session s = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("imgc-0ab5ta4mn31wth5lh");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            s = result.getSession();
+            Thread.sleep(15000);
+            s.listMcpTools();
+
+            CommandResult r1 = s.getCommand().executeCommand("wm size 720x1280", 10000);
+            assertTrue("Command failed: " + r1.getErrorMessage(), r1.isSuccess());
+            CommandResult r2 = s.getCommand().executeCommand("wm density 160", 10000);
+            assertTrue("Command failed: " + r2.getErrorMessage(), r2.isSuccess());
+
+            ProcessListResult start = s.mobile.startApp("monkey -p com.android.settings 1");
+            assertTrue("Failed to start Settings: " + start.getErrorMessage(), start.isSuccess());
+            Thread.sleep(2000);
+
+            CommandResult nav = s.getCommand().executeCommand("am start -a android.settings.SETTINGS", 10000);
+            assertTrue("Command failed: " + nav.getErrorMessage(), nav.isSuccess());
+            Thread.sleep(2000);
+
+            ScreenshotBytesResult invalid = s.mobile.betaTakeLongScreenshot(2, "jpeg", 0);
+            assertFalse("Invalid quality should fail", invalid.isSuccess());
+            assertNotNull("Error message should be present", invalid.getErrorMessage());
+            assertTrue(
+                "Error message should mention invalid quality: " + invalid.getErrorMessage(),
+                invalid.getErrorMessage().contains("Invalid quality")
+            );
+
+            ScreenshotBytesResult high = s.mobile.betaTakeLongScreenshot(2, "jpeg", 95);
+            ScreenshotBytesResult low = s.mobile.betaTakeLongScreenshot(2, "jpeg", 10);
+
+            assertTrue("Beta long screenshot (jpeg, q=95) failed: " + high.getErrorMessage(), high.isSuccess());
+            assertNotNull("Image bytes should not be null", high.getData());
+            assertTrue("Image bytes should not be empty", high.getData().length > 3);
+            assertEquals("jpeg", high.getFormat());
+            assertNotNull("Width should not be null", high.getWidth());
+            assertNotNull("Height should not be null", high.getHeight());
+            assertTrue("Width should be > 0", high.getWidth() > 0);
+            assertTrue("Height should be > 0", high.getHeight() > 0);
+            assertEquals((byte) 0xff, high.getData()[0]);
+            assertEquals((byte) 0xd8, high.getData()[1]);
+            assertEquals((byte) 0xff, high.getData()[2]);
+
+            assertTrue("Beta long screenshot (jpeg, q=10) failed: " + low.getErrorMessage(), low.isSuccess());
+            assertNotNull("Image bytes should not be null", low.getData());
+            assertTrue("Image bytes should not be empty", low.getData().length > 3);
+            assertEquals("jpeg", low.getFormat());
+            assertNotNull("Width should not be null", low.getWidth());
+            assertNotNull("Height should not be null", low.getHeight());
+            assertTrue("Width should be > 0", low.getWidth() > 0);
+            assertTrue("Height should be > 0", low.getHeight() > 0);
+            assertEquals((byte) 0xff, low.getData()[0]);
+            assertEquals((byte) 0xd8, low.getData()[1]);
+            assertEquals((byte) 0xff, low.getData()[2]);
+
+            assertTrue("Higher quality JPEG should be larger than lower quality JPEG", high.getData().length > low.getData().length);
+        } catch (Exception e) {
+            fail("Beta long screenshot JPEG quality test failed: " + e.getMessage());
+        } finally {
+            if (s != null) {
+                try {
+                    agentBay.delete(s, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting session: " + e.getMessage());
+                }
+            }
+        }
+    }
     
     // ==================== Application Management Tests ====================
     

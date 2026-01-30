@@ -112,5 +112,81 @@ describe("Mobile beta screenshot integration tests", () => {
       await session.delete();
     }
   }, 60000);
+
+  test("should capture long screenshot as JPEG bytes with quality", async () => {
+    if (!apiKey) {
+      log("Skipping test: AGENTBAY_API_KEY not set");
+      return;
+    }
+
+    const sessionResult = await agentBay.create({ imageId: "imgc-0ab5ta4mn31wth5lh" });
+    if (!sessionResult.success || !sessionResult.session) {
+      throw new Error(`Failed to create session: ${sessionResult.errorMessage || ""}`);
+    }
+    const session = sessionResult.session!;
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 15000));
+
+      const cmds = ["wm size 720x1280", "wm density 160"];
+      for (const c of cmds) {
+        const r = await session.command.executeCommand(c, 10000);
+        if (!r.success) {
+          throw new Error(`command failed: ${c}, error=${r.errorMessage}, output=${r.output}`);
+        }
+      }
+
+      const start = await session.mobile.startApp("monkey -p com.android.settings 1");
+      expect(start.success).toBe(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const nav = await session.command.executeCommand("am start -a android.settings.SETTINGS", 10000);
+      if (!nav.success) {
+        throw new Error(`command failed: am start -a android.settings.SETTINGS, error=${nav.errorMessage}, output=${nav.output}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const invalid = await session.mobile.betaTakeLongScreenshot(2, "jpeg", 0);
+      expect(invalid.success).toBe(false);
+      expect(invalid.errorMessage).toContain("Invalid quality");
+      expect(invalid.format).toBe("jpeg");
+
+      const high = await session.mobile.betaTakeLongScreenshot(2, "jpeg", 95);
+      const low = await session.mobile.betaTakeLongScreenshot(2, "jpeg", 10);
+
+      if (!high.success) {
+        throw new Error(
+          `betaTakeLongScreenshot (jpeg, q=95) failed: requestId=${high.requestId || ""}, error=${high.errorMessage || ""}`
+        );
+      }
+      if (!low.success) {
+        throw new Error(
+          `betaTakeLongScreenshot (jpeg, q=10) failed: requestId=${low.requestId || ""}, error=${low.errorMessage || ""}`
+        );
+      }
+
+      expect(high.requestId).toBeDefined();
+      expect(high.format).toBe("jpeg");
+      expect(high.data.length).toBeGreaterThan(3);
+      expect(Buffer.from(high.data).slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))).toBe(true);
+      expect(typeof high.width).toBe("number");
+      expect(typeof high.height).toBe("number");
+      expect((high.width as number) > 0).toBe(true);
+      expect((high.height as number) > 0).toBe(true);
+
+      expect(low.requestId).toBeDefined();
+      expect(low.format).toBe("jpeg");
+      expect(low.data.length).toBeGreaterThan(3);
+      expect(Buffer.from(low.data).slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))).toBe(true);
+      expect(typeof low.width).toBe("number");
+      expect(typeof low.height).toBe("number");
+      expect((low.width as number) > 0).toBe(true);
+      expect((low.height as number) > 0).toBe(true);
+
+      expect(high.data.length).toBeGreaterThan(low.data.length);
+    } finally {
+      await session.delete();
+    }
+  }, 90000);
 });
 

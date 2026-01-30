@@ -84,3 +84,48 @@ def test_mobile_beta_take_long_screenshot_png(session):
     assert len(result.data) > 0
     assert bytes(result.data[:8]) == b"\x89PNG\r\n\x1a\n"
 
+
+@pytest.mark.sync
+def test_mobile_beta_take_long_screenshot_jpeg_quality(session):
+    _prepare_for_screenshot_tests(session)
+
+    with pytest.raises(ValueError, match=r"Invalid quality: must be an integer in \[1, 100\]"):
+        session.mobile.beta_take_long_screenshot(
+            max_screens=2,
+            format="jpeg",
+            quality=0,
+        )
+
+    high = session.mobile.beta_take_long_screenshot(
+        max_screens=2,
+        format="jpeg",
+        quality=95,
+    )
+    low = session.mobile.beta_take_long_screenshot(
+        max_screens=2,
+        format="jpeg",
+        quality=10,
+    )
+
+    assert high.success is True
+    assert high.format == "jpeg"
+    assert isinstance(high.width, int)
+    assert isinstance(high.height, int)
+    assert high.width > 0
+    assert high.height > 0
+    assert isinstance(high.data, (bytes, bytearray))
+    assert len(high.data) > 0
+    assert bytes(high.data[:3]) == b"\xff\xd8\xff"
+
+    assert low.success is True
+    assert low.format == "jpeg"
+    assert isinstance(low.width, int)
+    assert isinstance(low.height, int)
+    assert low.width > 0
+    assert low.height > 0
+    assert isinstance(low.data, (bytes, bytearray))
+    assert len(low.data) > 0
+    assert bytes(low.data[:3]) == b"\xff\xd8\xff"
+
+    assert len(high.data) > len(low.data)
+
