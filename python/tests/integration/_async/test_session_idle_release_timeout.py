@@ -57,10 +57,9 @@ class TestSessionIdleReleaseTimeoutIntegration(unittest.IsolatedAsyncioTestCase)
         We only call `get_status()` periodically, and do not run MCP tools or user
         interactions, so the environment is considered idle from the SDK side.
         """
-        idle_release_timeout = 300  # seconds
-        max_wait_seconds = idle_release_timeout + 180  # strict but tolerant buffer
-        early_check_after = 60  # seconds
-        poll_interval = 15  # seconds
+        idle_release_timeout = 60  # seconds
+        max_over_seconds = 60  # must not exceed timeout + 60s
+        poll_interval = 2  # seconds
         image_id = "computer-use-ubuntu-2204-regionGW"
 
         print("api_key =", _mask_secret(self.api_key))
@@ -69,7 +68,7 @@ class TestSessionIdleReleaseTimeoutIntegration(unittest.IsolatedAsyncioTestCase)
         )
 
         session = None
-        start_time = time.time()
+        start_time = time.monotonic()
         try:
             params = CreateSessionParams(
                 image_id=image_id,
@@ -85,32 +84,64 @@ class TestSessionIdleReleaseTimeoutIntegration(unittest.IsolatedAsyncioTestCase)
             session = result.session
             print(f"✅ Session created: {session.session_id}")
 
-            await asyncio.sleep(early_check_after)
-            status_early = await session.get_status()
-            if _is_not_found_status_result(status_early):
-                self.fail(
-                    "Session was released too early: got NotFound within "
-                    f"{early_check_after}s"
-                )
-            if status_early.success and status_early.status:
-                self.assertNotIn(
-                    status_early.status,
-                    ["FINISH", "DELETED"],
-                    f"Session was released too early: status={status_early.status}",
-                )
+            timeout_deadline = start_time + idle_release_timeout
+            while True:
+                now = time.monotonic()
+                if now >= timeout_deadline:
+                    break
+                status = await session.get_status()
+                if _is_not_found_status_result(status):
+                    self.fail(
+                        "Session was released too early: got NotFound before "
+                        f"{idle_release_timeout}s"
+                    )
+                if status.success and status.status in ["FINISH", "DELETING", "DELETED"]:
+                    self.fail(
+                        "Session was released too early: status="
+                        f"{status.status} before {idle_release_timeout}s"
+                    )
+                remaining = timeout_deadline - now
+                await asyncio.sleep(min(poll_interval, max(0.0, remaining)))
 
-            deadline = start_time + max_wait_seconds
+            deadline = timeout_deadline + max_over_seconds
             last_status = None
-            while time.time() < deadline:
+            while time.monotonic() < deadline:
                 status = await session.get_status()
                 last_status = status
 
                 if _is_not_found_status_result(status):
-                    print("✅ Session released: get_status returned NotFound")
+                    elapsed = time.monotonic() - start_time
+                    self.assertGreaterEqual(
+                        elapsed,
+                        idle_release_timeout,
+                        "Session was released too early",
+                    )
+                    self.assertLessEqual(
+                        elapsed,
+                        idle_release_timeout + max_over_seconds,
+                        "Session was released too late",
+                    )
+                    print(
+                        "✅ Session released: get_status returned NotFound, "
+                        f"elapsed={elapsed:.2f}s"
+                    )
                     return
 
                 if status.success and status.status in ["FINISH", "DELETING", "DELETED"]:
-                    print(f"✅ Session released: status={status.status}")
+                    elapsed = time.monotonic() - start_time
+                    self.assertGreaterEqual(
+                        elapsed,
+                        idle_release_timeout,
+                        "Session was released too early",
+                    )
+                    self.assertLessEqual(
+                        elapsed,
+                        idle_release_timeout + max_over_seconds,
+                        "Session was released too late",
+                    )
+                    print(
+                        f"✅ Session released: status={status.status}, elapsed={elapsed:.2f}s"
+                    )
                     return
 
                 await asyncio.sleep(poll_interval)
@@ -124,7 +155,7 @@ class TestSessionIdleReleaseTimeoutIntegration(unittest.IsolatedAsyncioTestCase)
                 )
             self.fail(
                 "Session was not released within expected time window: "
-                f"{max_wait_seconds}s. {details}"
+                f"{idle_release_timeout}s~{idle_release_timeout + max_over_seconds}s. {details}"
             )
         finally:
             if session is not None:

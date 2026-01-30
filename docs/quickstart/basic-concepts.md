@@ -68,27 +68,6 @@ Create Session → Use Session → Delete Session
   Resources     Operations      Resources
 ```
 
-### Session Recovery (Get by Session ID)
-
-If you already have a `session_id` (for example, from a previous process run), you can recover a Session object by calling `get(session_id)`.
-
-When the service returns `LinkUrl` and `Token`, the SDK will store them on the recovered session so subsequent MCP tool calls can use the LinkUrl direct route.
-
-**Example (Python):**
-```python
-from agentbay import AgentBay
-
-agent_bay = AgentBay()
-
-session_id = "s-xxxxxxxxxxxxxxxx"
-session = agent_bay.get(session_id).session
-
-result = session.call_mcp_tool("shell", {"command": "echo recovered-ok"})
-print(result.success, result.data)
-```
-
-
-
 ### Session Release
 
 Sessions must be released when you're done to free cloud resources. There are **two ways** to release a session:
@@ -101,8 +80,7 @@ agent_bay.delete(session)
 
 **2. Automatic Timeout Release**
 - If not manually deleted, sessions are automatically released after a timeout period
-- Timeout duration is configured in the [AgentBay Console](https://agentbay.console.aliyun.com/)
-- You can also set an SDK-side idle release timeout during session creation (default: 300 seconds)
+- You can set an SDK-side idle release timeout during session creation (default: 300 seconds)
 - After timeout, the session is released and cannot be recovered
 
 **Important**: Always manually delete sessions when finished. This is a best practice for resource management.
