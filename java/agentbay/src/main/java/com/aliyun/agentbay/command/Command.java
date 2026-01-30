@@ -4,6 +4,8 @@ import com.aliyun.agentbay.model.CommandResult;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,12 +17,11 @@ public class Command extends BaseService {
     }
 
     public CommandResult execute(String command) {
-        return executeCommand(command, 1000); // Default timeout 1000ms
+        return executeCommand(command, 50000);
     }
 
     public CommandResult execute(String command, String input) {
-        // For now, we don't handle input separately, just execute the command
-        return executeCommand(command, 1000);
+        return executeCommand(command, 50000);
     }
 
     public CommandResult executeCommand(String command, int timeoutMs) {
@@ -28,7 +29,34 @@ public class Command extends BaseService {
     }
 
     public CommandResult executeCommand(String command, int timeoutMs, String cwd, Map<String, String> envs) {
+        if (envs != null) {
+            java.util.List<String> invalidVars = new java.util.ArrayList<>();
+            for (Map.Entry<String, String> entry : envs.entrySet()) {
+                Object key = entry.getKey();
+                Object value = entry.getValue();
+
+                if (!(key instanceof String)) {
+                    invalidVars.add(String.format("key '%s' (type: %s)", key, key.getClass().getSimpleName()));
+                }
+                if (!(value instanceof String)) {
+                    invalidVars.add(String.format("value for key '%s' (type: %s)", key, value.getClass().getSimpleName()));
+                }
+            }
+
+            if (!invalidVars.isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Invalid environment variables: all keys and values must be strings. " +
+                    "Found invalid entries: " + String.join(", ", invalidVars)
+                );
+            }
+        }
+
         try {
+            final int MAX_TIMEOUT_MS = 50000;
+            if (timeoutMs > MAX_TIMEOUT_MS) {
+                timeoutMs = MAX_TIMEOUT_MS;
+            }
+
             Map<String, Object> args = new HashMap<>();
             args.put("command", command);
             args.put("timeout_ms", timeoutMs);
@@ -38,26 +66,71 @@ public class Command extends BaseService {
             }
 
             if (envs != null) {
-                for (Map.Entry<String, String> entry : envs.entrySet()) {
-                    if (!(entry.getKey() instanceof String) || !(entry.getValue() instanceof String)) {
-                        throw new IllegalArgumentException(
-                            "Invalid environment variables: all keys and values must be strings."
-                        );
-                    }
-                }
                 args.put("envs", envs);
             }
 
             OperationResult result = callMcpTool("shell", args);
 
             if (result.isSuccess()) {
-                return new CommandResult(result.getRequestId(), true, result.getData(), "", 0);
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode dataJson;
+
+                    if (result.getData() instanceof String) {
+                        dataJson = mapper.readTree((String) result.getData());
+                    } else {
+                        dataJson = mapper.valueToTree(result.getData());
+                    }
+
+                    String stdout = dataJson.has("stdout") ? dataJson.get("stdout").asText() : "";
+                    String stderr = dataJson.has("stderr") ? dataJson.get("stderr").asText() : "";
+                    int exitCode = dataJson.has("exit_code") ? dataJson.get("exit_code").asInt() : 0;
+                    String traceId = dataJson.has("traceId") ? dataJson.get("traceId").asText() : "";
+
+                    boolean success = exitCode == 0;
+                    String output = stdout + stderr;
+
+                    return new CommandResult(result.getRequestId(), success, output, "", exitCode,
+                            stdout, stderr, traceId);
+                } catch (Exception e) {
+                    String output = result.getData() instanceof String ? (String) result.getData() : result.getData().toString();
+                    return new CommandResult(result.getRequestId(), true, output, "", 0, "", "", "");
+                }
             } else {
-                return new CommandResult(result.getRequestId(), false, "", result.getErrorMessage(), 1);
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode errorData;
+
+                    if (result.getErrorMessage() instanceof String) {
+                        errorData = mapper.readTree((String) result.getErrorMessage());
+                    } else {
+                        errorData = mapper.valueToTree(result.getErrorMessage());
+                    }
+
+                    if (errorData.isObject()) {
+                        String stdout = errorData.has("stdout") ? errorData.get("stdout").asText() : "";
+                        String stderr = errorData.has("stderr") ? errorData.get("stderr").asText() : "";
+                        int exitCode = errorData.has("exit_code") ? errorData.get("exit_code").asInt()
+                                     : errorData.has("errorCode") ? errorData.get("errorCode").asInt() : 0;
+                        String traceId = errorData.has("traceId") ? errorData.get("traceId").asText() : "";
+                        String output = stdout + stderr;
+                        String errorMessage = !stderr.isEmpty() ? stderr
+                                            : (result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to execute command");
+
+                        return new CommandResult(result.getRequestId(), false, output, errorMessage, exitCode,
+                                stdout, stderr, traceId);
+                    }
+                } catch (Exception e) {
+                }
+
+                return new CommandResult(result.getRequestId(), false, "",
+                        result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to execute command", 1,
+                        "", "", "");
             }
 
         } catch (Exception e) {
-            return new CommandResult("", false, "", "Unexpected error: " + e.getMessage(), 1);
+            return new CommandResult("", false, "", "Failed to execute command: " + e.getMessage(), 1,
+                    "", "", "");
         }
     }
 
