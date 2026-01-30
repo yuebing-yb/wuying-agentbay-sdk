@@ -147,6 +147,9 @@ from ._modify_context_response_body import ModifyContextResponseBody
 from ._pause_session_async_request import PauseSessionAsyncRequest
 from ._pause_session_async_response import PauseSessionAsyncResponse
 from ._pause_session_async_response_body import PauseSessionAsyncResponseBody
+from ._refresh_session_idle_time_request import RefreshSessionIdleTimeRequest
+from ._refresh_session_idle_time_response import RefreshSessionIdleTimeResponse
+from ._refresh_session_idle_time_response_body import RefreshSessionIdleTimeResponseBody
 from ._release_mcp_session_request import ReleaseMcpSessionRequest
 from ._release_mcp_session_response import ReleaseMcpSessionResponse
 from ._release_mcp_session_response_body import ReleaseMcpSessionResponseBody
@@ -232,6 +235,9 @@ __all__ = [
     PauseSessionAsyncRequest,
     PauseSessionAsyncResponseBody,
     PauseSessionAsyncResponse,
+    RefreshSessionIdleTimeRequest,
+    RefreshSessionIdleTimeResponseBody,
+    RefreshSessionIdleTimeResponse,
     ReleaseMcpSessionRequest,
     ReleaseMcpSessionResponseBody,
     ReleaseMcpSessionResponse,

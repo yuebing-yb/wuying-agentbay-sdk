@@ -322,6 +322,15 @@ defer result.Session.Delete()
 infoResult, _ := result.Session.Info()
 ```
 
+### KeepAlive
+
+```go
+func (s *Session) KeepAlive() (*KeepAliveResult, error)
+```
+
+KeepAlive refreshes the backend idle timer for this session. It calls the RefreshSessionIdleTime
+API.
+
 ### ListMcpTools
 
 ```go

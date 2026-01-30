@@ -451,6 +451,14 @@ If you don't manually delete a session, it will be automatically released after 
 - **Behavior**: Once the timeout is reached, the session is automatically released
 - **Recovery**: After release (manual or automatic), the session cannot be recovered - the session ID becomes invalid
 
+### Keep a Session Alive (Refresh Idle Timer)
+
+If you set `idle_release_timeout` and want to prevent the session from being released while your workflow is idle (for example, you are waiting for a user decision or an external system), you can manually refresh the idle timer:
+
+- **Python**: `await session.keep_alive()` / `session.keep_alive()`
+
+Calling keep-alive resets the backend idle timer back to the configured timeout value.
+
 ### Important Notes
 
 - Released sessions (either manually or by timeout) will **not** appear in `agent_bay.list()` results

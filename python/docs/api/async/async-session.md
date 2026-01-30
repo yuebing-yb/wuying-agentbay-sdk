@@ -124,6 +124,16 @@ Get basic session status asynchronously.
 
     SessionStatusResult: Result containing session status only.
 
+### keep_alive
+
+```python
+async def keep_alive() -> OperationResult
+```
+
+Refresh the backend session idle timer.
+
+This method calls the RefreshSessionIdleTime API.
+
 ### delete
 
 ```python

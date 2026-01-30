@@ -105,6 +105,9 @@ export { GetContextFileUploadUrlResponse } from './GetContextFileUploadUrlRespon
 export { PauseSessionAsyncRequest } from './PauseSessionAsyncRequest';
 export { PauseSessionAsyncResponseBody } from './PauseSessionAsyncResponseBody';
 export { PauseSessionAsyncResponse } from './PauseSessionAsyncResponse';
+export { RefreshSessionIdleTimeRequest } from './RefreshSessionIdleTimeRequest';
+export { RefreshSessionIdleTimeResponseBody } from './RefreshSessionIdleTimeResponseBody';
+export { RefreshSessionIdleTimeResponse } from './RefreshSessionIdleTimeResponse';
 export { ResumeSessionAsyncRequest } from './ResumeSessionAsyncRequest';
 export { ResumeSessionAsyncResponseBody } from './ResumeSessionAsyncResponseBody';
 export { ResumeSessionAsyncResponse } from './ResumeSessionAsyncResponse';

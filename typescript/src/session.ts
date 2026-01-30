@@ -10,6 +10,7 @@ import {
   GetMcpResourceRequest,
   GetSessionDetailRequest,
   ListMcpToolsRequest,
+  RefreshSessionIdleTimeRequest,
   SetLabelRequest,
 } from "./api/models/model";
 import { Browser } from "./browser";
@@ -427,6 +428,65 @@ export class Session {
         errorMessage: `Failed to get session detail ${this.sessionId}: ${error}`,
       };
     }
+  }
+
+  /**
+   * Refresh the backend idle timer for this session.
+   *
+   * This method calls the RefreshSessionIdleTime API.
+   */
+  async keepAlive(): Promise<OperationResult> {
+    try {
+      logAPICall("RefreshSessionIdleTime", { sessionId: this.sessionId });
+
+      const request = new RefreshSessionIdleTimeRequest({
+        authorization: `Bearer ${this.getAPIKey()}`,
+        sessionId: this.sessionId,
+      });
+
+      const response = await this.getClient().refreshSessionIdleTime(request);
+      const requestId = extractRequestId(response) || response?.body?.requestId || "";
+
+      const body = response?.body;
+      if (body?.success === false && body.code) {
+        const errorMessage = `[${body.code}] ${body.message || "Unknown error"}`;
+        logAPIResponseWithDetails(
+          "RefreshSessionIdleTime",
+          requestId,
+          false,
+          {},
+          JSON.stringify(body, null, 2)
+        );
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
+
+      logAPIResponseWithDetails("RefreshSessionIdleTime", requestId, true, {
+        session_id: this.sessionId,
+      });
+
+      return {
+        requestId,
+        success: true,
+      };
+    } catch (error) {
+      logError("Error calling RefreshSessionIdleTime:", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Failed to keep session alive ${this.sessionId}: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * Alias of keepAlive for API compatibility.
+   */
+  async keepAliveAsync(): Promise<OperationResult> {
+    return await this.keepAlive();
   }
 
   /**

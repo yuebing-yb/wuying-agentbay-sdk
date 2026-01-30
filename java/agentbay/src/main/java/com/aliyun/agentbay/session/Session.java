@@ -90,6 +90,43 @@ public class Session {
     }
 
     /**
+     * Refresh the backend idle timer for this session.
+     *
+     * This method calls the RefreshSessionIdleTime API.
+     *
+     * @return OperationResult containing request ID and success status
+     */
+    public OperationResult keepAlive() {
+        try {
+            RefreshSessionIdleTimeRequest request = new RefreshSessionIdleTimeRequest();
+            request.setAuthorization("Bearer " + getApiKey());
+            request.setSessionId(sessionId);
+
+            RefreshSessionIdleTimeResponse response = agentBay.getClient().refreshSessionIdleTime(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response == null || response.getBody() == null) {
+                return new OperationResult(requestId, false, "", "Invalid response from RefreshSessionIdleTime API");
+            }
+
+            Boolean success = response.getBody().getSuccess();
+            if (success == null || !success) {
+                String code = response.getBody().getCode();
+                String message = response.getBody().getMessage();
+                String err = message != null && !message.isEmpty() ? message : "Unknown error";
+                if (code != null && !code.isEmpty()) {
+                    err = "[" + code + "] " + err;
+                }
+                return new OperationResult(requestId, false, "", err);
+            }
+
+            return new OperationResult(requestId, true, "", "");
+        } catch (Exception e) {
+            return new OperationResult("", false, "", "Failed to keep session alive: " + e.getMessage());
+        }
+    }
+
+    /**
      * Get the AgentBay client
      *
      * @return AgentBay instance

@@ -40,6 +40,19 @@ Get the session ID
 **Returns:**
 - `String`: Session ID
 
+### keepAlive
+
+```java
+public OperationResult keepAlive()
+```
+
+Refresh the backend idle timer for this session.
+
+This method calls the RefreshSessionIdleTime API.
+
+**Returns:**
+- `OperationResult`: OperationResult containing request ID and success status
+
 ### getAgentBay
 
 ```java

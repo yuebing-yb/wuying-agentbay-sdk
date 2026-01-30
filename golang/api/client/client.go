@@ -1651,6 +1651,68 @@ func (client *Client) ModifyContext(request *ModifyContextRequest) (_result *Mod
 
 // Summary:
 //
+// # Refresh session idle timer
+//
+// @param request - RefreshSessionIdleTimeRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return RefreshSessionIdleTimeResponse
+func (client *Client) RefreshSessionIdleTimeWithOptions(request *RefreshSessionIdleTimeRequest, runtime *dara.RuntimeOptions) (_result *RefreshSessionIdleTimeResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.SessionId) {
+		body["SessionId"] = request.SessionId
+	}
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("RefreshSessionIdleTime"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &RefreshSessionIdleTimeResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # Refresh session idle timer
+//
+// @param request - RefreshSessionIdleTimeRequest
+//
+// @return RefreshSessionIdleTimeResponse
+func (client *Client) RefreshSessionIdleTime(request *RefreshSessionIdleTimeRequest) (_result *RefreshSessionIdleTimeResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &RefreshSessionIdleTimeResponse{}
+	_body, _err := client.RefreshSessionIdleTimeWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
 // # Release MCP session
 //
 // @param request - ReleaseMcpSessionRequest

@@ -39,6 +39,8 @@ Represents a session in the AgentBay cloud environment.
 - [getLinkAsync](#getlinkasync)
 - [getMetrics](#getmetrics)
 - [info](#info)
+- [keepAlive](#keepalive)
+- [keepAliveAsync](#keepaliveasync)
 - [listMcpTools](#listmcptools)
 - [setLabels](#setlabels)
 
@@ -535,6 +537,32 @@ if (result.success) {
 **`See`**
 
 [delete](#delete), [getLink](#getlink)
+
+___
+
+### keepAlive
+
+▸ **keepAlive**(): `Promise`\<`OperationResult`\>
+
+Refresh the backend idle timer for this session.
+
+This method calls the RefreshSessionIdleTime API.
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
+
+___
+
+### keepAliveAsync
+
+▸ **keepAliveAsync**(): `Promise`\<`OperationResult`\>
+
+Alias of keepAlive for API compatibility.
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
 
 ___
 

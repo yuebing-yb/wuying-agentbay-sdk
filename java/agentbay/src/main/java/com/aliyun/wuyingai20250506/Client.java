@@ -1484,6 +1484,54 @@ public class Client extends com.aliyun.teaopenapi.Client {
     }
 
     /**
+     * <b>summary</b> :
+     * <p>Refresh session idle timer</p>
+     *
+     * @param request RefreshSessionIdleTimeRequest
+     * @param runtime runtime options for this request RuntimeOptions
+     * @return RefreshSessionIdleTimeResponse
+     */
+    public RefreshSessionIdleTimeResponse refreshSessionIdleTimeWithOptions(RefreshSessionIdleTimeRequest request, com.aliyun.teautil.models.RuntimeOptions runtime) throws Exception {
+        com.aliyun.teautil.Common.validateModel(request);
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        if (!com.aliyun.teautil.Common.isUnset(request.authorization)) {
+            body.put("Authorization", request.authorization);
+        }
+
+        if (!com.aliyun.teautil.Common.isUnset(request.sessionId)) {
+            body.put("SessionId", request.sessionId);
+        }
+
+        com.aliyun.teaopenapi.models.OpenApiRequest req = com.aliyun.teaopenapi.models.OpenApiRequest.build(TeaConverter.buildMap(
+            new TeaPair("body", com.aliyun.openapiutil.Client.parseToMap(body))
+        ));
+        com.aliyun.teaopenapi.models.Params params = com.aliyun.teaopenapi.models.Params.build(TeaConverter.buildMap(
+            new TeaPair("action", "RefreshSessionIdleTime"),
+            new TeaPair("version", "2025-05-06"),
+            new TeaPair("protocol", "HTTPS"),
+            new TeaPair("pathname", "/"),
+            new TeaPair("method", "POST"),
+            new TeaPair("authType", "Anonymous"),
+            new TeaPair("style", "RPC"),
+            new TeaPair("reqBodyType", "formData"),
+            new TeaPair("bodyType", "json")
+        ));
+        return TeaModel.toModel(this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new RefreshSessionIdleTimeResponse());
+    }
+
+    /**
+     * <b>summary</b> :
+     * <p>Refresh session idle timer</p>
+     *
+     * @param request RefreshSessionIdleTimeRequest
+     * @return RefreshSessionIdleTimeResponse
+     */
+    public RefreshSessionIdleTimeResponse refreshSessionIdleTime(RefreshSessionIdleTimeRequest request) throws Exception {
+        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
+        return this.refreshSessionIdleTimeWithOptions(request, runtime);
+    }
+
+    /**
      * <b>summary</b> : 
      * <p>释放 mcp session</p>
      * 

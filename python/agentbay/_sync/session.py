@@ -42,6 +42,7 @@ from ..api.models import (
     GetMcpResourceRequest,
     ListMcpToolsRequest,
     PauseSessionAsyncRequest,
+    RefreshSessionIdleTimeRequest,
     ReleaseMcpSessionRequest,
     ResumeSessionAsyncRequest,
     SetLabelRequest,
@@ -296,6 +297,61 @@ class Session:
                 request_id="",
                 success=False,
                 error_message=f"Failed to get session status {self.session_id}: {e}",
+            )
+
+    def keep_alive(self) -> OperationResult:
+        """
+        Refresh the backend session idle timer.
+
+        This method calls the RefreshSessionIdleTime API.
+        """
+        try:
+            _log_api_call("RefreshSessionIdleTime", f"SessionId={self.session_id}")
+            request = RefreshSessionIdleTimeRequest(
+                authorization=f"Bearer {self._get_api_key()}",
+                session_id=self.session_id,
+            )
+            response = self._get_client().refresh_session_idle_time(request)
+            request_id = extract_request_id(response)
+
+            response_map = response.to_map() if response is not None else {}
+            body = response_map.get("body", {}) if isinstance(response_map, dict) else {}
+
+            success = bool(body.get("Success", False))
+            if not request_id:
+                request_id = body.get("RequestId", "") or ""
+
+            if not success:
+                code = body.get("Code", "") or ""
+                message = body.get("Message", "") or ""
+                error_message = f"[{code}] {message or 'Unknown error'}" if code else (message or "Unknown error")
+                _log_api_response_with_details(
+                    api_name="RefreshSessionIdleTime",
+                    request_id=request_id,
+                    success=False,
+                    full_response=json.dumps(body, ensure_ascii=False, indent=2)
+                    if isinstance(body, dict)
+                    else str(body),
+                )
+                return OperationResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_message,
+                )
+
+            _log_api_response_with_details(
+                api_name="RefreshSessionIdleTime",
+                request_id=request_id,
+                success=True,
+                key_fields={"session_id": self.session_id},
+            )
+            return OperationResult(request_id=request_id, success=True)
+        except Exception as e:
+            _log_operation_error("RefreshSessionIdleTime", str(e), exc_info=True)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to keep session alive {self.session_id}: {e}",
             )
 
     def delete(self, sync_context: bool = False) -> DeleteResult:

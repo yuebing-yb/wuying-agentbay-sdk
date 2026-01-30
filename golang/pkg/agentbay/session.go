@@ -67,6 +67,13 @@ type DeleteResult struct {
 	ErrorMessage string
 }
 
+// KeepAliveResult wraps keep-alive operation result and RequestID
+type KeepAliveResult struct {
+	models.ApiResponse
+	Success      bool
+	ErrorMessage string
+}
+
 // McpTool represents an MCP tool with complete information
 type McpTool struct {
 	Name        string                 `json:"name"`        // Tool name
@@ -235,6 +242,73 @@ func (s *Session) GetStatus() (*SessionStatusResult, error) {
 	}
 
 	return result, nil
+}
+
+// KeepAlive refreshes the backend idle timer for this session.
+// It calls the RefreshSessionIdleTime API.
+func (s *Session) KeepAlive() (*KeepAliveResult, error) {
+	request := &mcp.RefreshSessionIdleTimeRequest{
+		Authorization: tea.String("Bearer " + s.GetAPIKey()),
+		SessionId:     tea.String(s.SessionID),
+	}
+
+	logAPICall("RefreshSessionIdleTime", fmt.Sprintf("SessionId=%s", s.SessionID))
+
+	response, err := s.GetClient().RefreshSessionIdleTime(request)
+	if err != nil {
+		logOperationError("RefreshSessionIdleTime", err.Error(), true)
+		return &KeepAliveResult{
+			ApiResponse: models.WithRequestID(""),
+			Success:     false,
+			ErrorMessage: fmt.Sprintf(
+				"Failed to refresh session idle time for session %s: %v",
+				s.SessionID,
+				err,
+			),
+		}, nil
+	}
+
+	requestID := models.ExtractRequestID(response)
+	if requestID == "" && response != nil && response.Body != nil && response.Body.RequestId != nil {
+		requestID = tea.StringValue(response.Body.RequestId)
+	}
+	if requestID == "" {
+		requestID = fmt.Sprintf("refresh-idle-%d-%d", time.Now().UnixMilli(), rand.Intn(1000000000))
+	}
+
+	if response != nil && response.Body != nil && response.Body.Success != nil && !*response.Body.Success {
+		code := ""
+		message := "Unknown error"
+		if response.Body.Code != nil {
+			code = tea.StringValue(response.Body.Code)
+		}
+		if response.Body.Message != nil && tea.StringValue(response.Body.Message) != "" {
+			message = tea.StringValue(response.Body.Message)
+		}
+		errorMessage := message
+		if code != "" {
+			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+		}
+		logOperationError("RefreshSessionIdleTime", errorMessage, false, requestID)
+		return &KeepAliveResult{
+			ApiResponse:  models.WithRequestID(requestID),
+			Success:      false,
+			ErrorMessage: errorMessage,
+		}, nil
+	}
+
+	logAPIResponseWithDetails(
+		"RefreshSessionIdleTime",
+		requestID,
+		true,
+		map[string]interface{}{"session_id": s.SessionID},
+		"",
+	)
+	return &KeepAliveResult{
+		ApiResponse:  models.WithRequestID(requestID),
+		Success:      true,
+		ErrorMessage: "",
+	}, nil
 }
 
 // NewSession creates a new Session object.
