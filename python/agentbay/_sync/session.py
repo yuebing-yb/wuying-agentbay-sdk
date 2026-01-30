@@ -1317,17 +1317,17 @@ class Session:
         self, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionPauseResult:
         """
-        休眠会话，等待进入 PAUSED 状态。
+        Pause the session and wait until it enters PAUSED state.
 
         Args:
-            timeout: 超时时间（秒），默认 600
-            poll_interval: 轮询间隔（秒），默认 2.0
+            timeout: Timeout in seconds, default 600
+            poll_interval: Polling interval in seconds, default 2.0
 
         Returns:
-            SessionPauseResult: 包含请求ID、成功状态和会话状态的结果
+            SessionPauseResult: Result containing request ID, success status, and session status
         """
         try:
-            # 发起休眠请求
+            # Send pause request
             request = PauseSessionAsyncRequest(
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
@@ -1338,7 +1338,7 @@ class Session:
             response = self._get_client().pause_session_async(request)
             request_id = extract_request_id(response)
 
-            # 检查API响应
+            # Check API response
             response_map = response.to_map()
             if not response_map:
                 return SessionPauseResult(
@@ -1369,7 +1369,7 @@ class Session:
 
             _logger.info(f"Pause request sent for session {self.session_id}, waiting for PAUSED state")
 
-            # 轮询会话状态
+            # Poll session status
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
@@ -1421,17 +1421,17 @@ class Session:
         self, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionResumeResult:
         """
-        唤醒会话，等待进入 RUNNING 状态。
+        Resume the session and wait until it enters RUNNING state.
 
         Args:
-            timeout: 超时时间（秒），默认 600
-            poll_interval: 轮询间隔（秒），默认 2.0
+            timeout: Timeout in seconds, default 600
+            poll_interval: Polling interval in seconds, default 2.0
 
         Returns:
-            SessionResumeResult: 包含请求ID、成功状态和会话状态的结果
+            SessionResumeResult: Result containing request ID, success status, and session status
         """
         try:
-            # 发起唤醒请求
+            # Send resume request
             request = ResumeSessionAsyncRequest(
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
@@ -1442,7 +1442,7 @@ class Session:
             response = self._get_client().resume_session_async(request)
             request_id = extract_request_id(response)
 
-            # 检查API响应
+            # Check API response
             response_map = response.to_map()
             if not response_map:
                 return SessionResumeResult(
@@ -1473,7 +1473,7 @@ class Session:
 
             _logger.info(f"Resume request sent for session {self.session_id}, waiting for RUNNING state")
 
-            # 轮询会话状态
+            # Poll session status
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
