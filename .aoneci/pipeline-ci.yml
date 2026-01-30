@@ -9,11 +9,6 @@ triggers:
     target-branches:
       - "**"
 
-# Strategy configuration to prevent jobs from being accidentally cancelled
-strategy:
-  cancel-in-progress: false
-  fail-fast: false
-
 params:
   python_enabled:
     name: Enable Python Testing
@@ -50,11 +45,6 @@ jobs:
       - "${{params.runs_on_resources}}"
     image: alios-8u
     timeout: 30m
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       - uses: checkout
       - uses: setup-env
@@ -89,11 +79,6 @@ jobs:
       - "${{params.runs_on_resources}}"
     image: alios-8u
     timeout: 1h
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
 
       - uses: checkout
@@ -103,7 +88,7 @@ jobs:
           pip-cache: true
       
       - id: python-lint
-        continue-on-error: true
+        continue-on-error: false
         name: "Python Code Format Check & Security Check"
         when: "${{params.python_enabled}}"
         run: |
@@ -134,11 +119,6 @@ jobs:
     image: alios-8u
     runs-on:
       - "${{params.runs_on_resources}}"
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       - uses: checkout
       - uses: setup-env
@@ -148,20 +128,16 @@ jobs:
           tnpm-cache: true
         
       - id: typescript-lint
-        continue-on-error: true
+        continue-on-error: false
         name: "TypeScript Code Format Check"
         when: "${{params.typescript_enabled}}"
         run: |
           cd typescript
           # Set tnpm timeout and retry strategy
           # Only install lint-related packages for better performance
-          tnpm install --prefer-offline --no-audit \
-            eslint@8.35.0 \
-            @typescript-eslint/eslint-plugin@5.54.0 \
-            @typescript-eslint/parser@5.54.0 \
-            typescript@4.9.5
+          tnpm ci
           # Run lint using fallback script
-          node scripts/run_with_fallback.js eslint eslint@8.35.0 "src/**/*.ts"
+          tnpm run lint
       
 
   # Golang testing job
@@ -171,11 +147,6 @@ jobs:
     image: alios-8u
     runs-on:
       - "${{params.runs_on_resources}}"
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       
       - uses: checkout
@@ -186,20 +157,37 @@ jobs:
           go-cache: true
       
       - id: golang-lint
-        continue-on-error: true
-        name: "Golang Code Format Check"
+        continue-on-error: false
+        name: "Golang Code Quality & Security Check"
         when: "${{params.golang_enabled}}"
         run: |
           # Configure Go environment
           cd golang
+          
           # Download dependencies (use go-mod-cache from setup-env)
           go mod download
           go mod verify
+          
+          # Install linting tools
+          echo "Installing Go linting tools..."
+          # Install golangci-lint for comprehensive linting
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin latest
+          
+          # Install gosec for security scanning
+          curl -sfL https://raw.githubusercontent.com/securecodewarrior/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.18.2
+          
+          # Install govulncheck for vulnerability scanning
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          
+          # Ensure tools are in PATH
+          echo "$(go env GOPATH)/bin" >> $PATH
+          
           # Run basic checks that don't require additional tools
           echo "Building code..."
           go build -v ./api/client/... || echo "Build completed with warnings"
           echo "Running go vet..."
           go vet ./...
+          
           # Run go fmt check (non-destructive)
           echo "Checking code formatting..."
           UNFORMATTED=$(gofmt -l . | grep -v "api/client" || true)
@@ -209,6 +197,30 @@ jobs:
           else
             echo "All files are properly formatted"
           fi
+          
+          # Run golangci-lint with configuration file
+          echo "Running golangci-lint..."
+          if [ -f ".golangci.yml" ]; then
+            golangci-lint run --timeout=5m --config=.golangci.yml || {
+              echo "Linting completed with issues found."
+              echo "Issues found will be reported but won't fail the build."
+            }
+          else
+            golangci-lint run --timeout=5m || {
+              echo "Linting completed with issues found."
+              echo "Issues found will be reported but won't fail the build."
+            }
+          fi
+          
+          # Run security scan with gosec
+          echo "Running security scan with gosec..."
+          gosec -fmt json -out gosec-results.json ./... || true
+          
+          # Check for vulnerabilities with govulncheck
+          echo "Checking for vulnerabilities with govulncheck..."
+          govulncheck ./... || true
+          
+          echo "All Golang quality checks completed"
       
 
   summary:
