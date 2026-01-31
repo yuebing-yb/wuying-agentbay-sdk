@@ -64,7 +64,7 @@ class TestSessionKeepAliveIntegration(unittest.TestCase):
     def test_keep_alive_resets_idle_timer(self):
         idle_release_timeout = 30  # seconds
         max_over_seconds = 60  # control session must be released within timeout + 60s
-        poll_interval = 2  # seconds
+        poll_interval = 15  # seconds
         image_id = "linux_latest"
 
         print("api_key =", _mask_secret(self.api_key))

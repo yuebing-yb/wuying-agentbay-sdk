@@ -670,6 +670,21 @@ class AsyncComputer(AsyncBaseService):
         See Also:
             get_screen_size
         """
+        link_url = ""
+        try:
+            link_url = self.session.get_link_url() or ""
+        except Exception:
+            link_url = getattr(self.session, "link_url", "") or ""
+        if link_url:
+            return OperationResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=(
+                    "This cloud environment does not support `screenshot()`. "
+                    "Please use `beta_take_screenshot()` instead."
+                ),
+            )
         args = {}
         try:
             result = await self.session.call_mcp_tool(
@@ -722,6 +737,16 @@ class AsyncComputer(AsyncBaseService):
             AgentBayError: If screenshot fails or response cannot be decoded.
             ValueError: If `format` is invalid.
         """
+        link_url = ""
+        try:
+            link_url = self.session.get_link_url() or ""
+        except Exception:
+            link_url = getattr(self.session, "link_url", "") or ""
+        if not link_url:
+            raise AgentBayError(
+                "This cloud environment does not support `beta_take_screenshot()`. "
+                "Please use `screenshot()` instead."
+            )
         fmt = (format or "").strip().lower()
         if fmt == "jpg":
             fmt = "jpeg"

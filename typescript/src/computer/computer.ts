@@ -45,6 +45,7 @@ interface ComputerSession {
   sessionId: string;
   getAPIKey(): string;
   getSessionId(): string;
+  getLinkUrl(): string;
 }
 
 export class Computer {
@@ -604,6 +605,15 @@ export class Computer {
    * ```
    */
   async screenshot(): Promise<ScreenshotResult> {
+    if (this.session.getLinkUrl()) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage:
+          "This cloud environment does not support `screenshot()`. Please use `beta_take_screenshot()` instead.",
+        data: "",
+      };
+    }
     try {
       const result = await this.session.callMcpTool('system_screenshot', {}, false);
       if (!result.success) {
@@ -649,6 +659,16 @@ export class Computer {
    */
   async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
     const fmt = Computer.normalizeImageFormat(format, "png");
+    if (!this.session.getLinkUrl()) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage:
+          "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead.",
+        data: new Uint8Array(),
+        format: fmt,
+      };
+    }
     if (fmt !== "png" && fmt !== "jpeg") {
       return {
         success: false,

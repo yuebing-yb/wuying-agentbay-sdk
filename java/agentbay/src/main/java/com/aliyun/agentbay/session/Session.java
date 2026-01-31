@@ -897,14 +897,14 @@ public class Session {
      * Get the LinkUrl for direct tool calls.
      */
     public String getLinkUrl() {
-        return linkUrl;
+        return linkUrl == null ? "" : linkUrl;
     }
 
     /**
      * Set the LinkUrl for direct tool calls.
      */
     public void setLinkUrl(String linkUrl) {
-        this.linkUrl = linkUrl;
+        this.linkUrl = linkUrl == null ? "" : linkUrl;
     }
 
     /**

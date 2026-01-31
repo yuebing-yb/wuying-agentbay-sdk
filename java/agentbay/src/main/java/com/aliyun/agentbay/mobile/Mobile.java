@@ -706,6 +706,14 @@ public class Mobile extends BaseService {
      * @return OperationResult containing the path/URL to the screenshot and error message if any
      */
     public OperationResult screenshot() {
+        if (session.getLinkUrl() != null && !session.getLinkUrl().isEmpty()) {
+            return new OperationResult(
+                "",
+                false,
+                null,
+                "This cloud environment does not support `screenshot()`. Please use `beta_take_screenshot()` instead."
+            );
+        }
         try {
             OperationResult result = callSystemScreenshotTool();
 
@@ -740,6 +748,15 @@ public class Mobile extends BaseService {
      * @return ScreenshotBytesResult containing PNG bytes and error message if any
      */
     public ScreenshotBytesResult betaTakeScreenshot() {
+        if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
+            return new ScreenshotBytesResult(
+                "",
+                false,
+                new byte[0],
+                "png",
+                "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead."
+            );
+        }
         try {
             Map<String, Object> args = new HashMap<>();
             args.put("format", "png");

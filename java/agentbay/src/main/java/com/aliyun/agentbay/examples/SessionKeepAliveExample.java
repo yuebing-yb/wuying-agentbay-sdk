@@ -14,11 +14,10 @@ public class SessionKeepAliveExample {
             System.err.println("Please set AGENTBAY_API_KEY environment variable");
             return;
         }
-
-        AgentBay agentBay = new AgentBay(apiKey);
         Session session = null;
 
         try {
+            AgentBay agentBay = new AgentBay(apiKey);
             CreateSessionParams params = new CreateSessionParams();
             params.setImageId("linux_latest");
             params.setIdleReleaseTimeout(30);

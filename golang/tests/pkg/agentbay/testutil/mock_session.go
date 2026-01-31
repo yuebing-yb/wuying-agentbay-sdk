@@ -223,6 +223,11 @@ func (m *MockSession) GetAPIKey() string {
 	return "mock-api-key"
 }
 
+// GetLinkUrl returns a mock link url (empty by default)
+func (m *MockSession) GetLinkUrl() string {
+	return ""
+}
+
 // GetClient returns a mock client
 func (m *MockSession) GetClient() interface{} {
 	return nil

@@ -121,6 +121,7 @@ type Computer struct {
 	Session interface {
 		GetAPIKey() string
 		GetClient() *mcp.Client
+		GetLinkUrl() string
 		GetSessionId() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
@@ -130,6 +131,7 @@ type Computer struct {
 func NewComputer(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Computer {
@@ -555,6 +557,17 @@ func (c *Computer) GetScreenSize() *ScreenSize {
 //	defer result.Session.Delete()
 //	screenshot := result.Session.Computer.Screenshot()
 func (c *Computer) Screenshot() *ScreenshotResult {
+	if c.Session.GetLinkUrl() != "" {
+		return &ScreenshotResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Data: "",
+			ErrorMessage: "This cloud environment does not support `screenshot()`. " +
+				"Please use `beta_take_screenshot()` instead.",
+		}
+	}
+
 	args := map[string]interface{}{}
 
 	result, err := c.Session.CallMcpTool("system_screenshot", args)
@@ -645,6 +658,20 @@ func (c *Computer) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
 	fmtNorm := "png"
 	if len(format) > 0 {
 		fmtNorm = normalizeImageFormat(format[0], "png")
+	}
+	if c.Session.GetLinkUrl() == "" {
+		return &BetaScreenshotResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Success:      false,
+			Data:         nil,
+			Format:       fmtNorm,
+			Width:        nil,
+			Height:       nil,
+			ErrorMessage: "This cloud environment does not support `beta_take_screenshot()`. " +
+				"Please use `screenshot()` instead.",
+		}
 	}
 	if fmtNorm != "png" && fmtNorm != "jpeg" {
 		return &BetaScreenshotResult{

@@ -170,6 +170,7 @@ type Mobile struct {
 	Session interface {
 		GetAPIKey() string
 		GetClient() *mcp.Client
+		GetLinkUrl() string
 		GetSessionId() string
 		GetImageID() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
@@ -181,6 +182,7 @@ type Mobile struct {
 type SessionWithCommand interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command
@@ -190,6 +192,7 @@ type SessionWithCommand interface {
 func NewMobile(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	GetImageID() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
@@ -640,6 +643,17 @@ func (m *Mobile) StopAppByCmd(stopCmd string) *BoolResult {
 //	defer result.Session.Delete()
 //	screenshot := result.Session.Mobile.Screenshot()
 func (m *Mobile) Screenshot() *ScreenshotResult {
+	if m.Session.GetLinkUrl() != "" {
+		return &ScreenshotResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Data: "",
+			ErrorMessage: "This cloud environment does not support `screenshot()`. " +
+				"Please use `beta_take_screenshot()` instead.",
+		}
+	}
+
 	args := map[string]interface{}{}
 
 	result, err := m.Session.CallMcpTool("system_screenshot", args)
@@ -665,6 +679,21 @@ func (m *Mobile) Screenshot() *ScreenshotResult {
 //
 // It calls the MCP tool "screenshot" with format="png".
 func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
+	if m.Session.GetLinkUrl() == "" {
+		return &BetaScreenshotResult{
+			ApiResponse: models.ApiResponse{
+				RequestID: "",
+			},
+			Success:      false,
+			Data:         nil,
+			Format:       "png",
+			Width:        nil,
+			Height:       nil,
+			ErrorMessage: "This cloud environment does not support `beta_take_screenshot()`. " +
+				"Please use `screenshot()` instead.",
+		}
+	}
+
 	args := map[string]interface{}{
 		"format": "png",
 	}

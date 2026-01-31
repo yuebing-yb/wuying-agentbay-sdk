@@ -919,6 +919,14 @@ public class Computer extends BaseService {
      * @return OperationResult containing the path/URL to the screenshot and error message if any
      */
     public OperationResult screenshot() {
+        if (session.getLinkUrl() != null && !session.getLinkUrl().isEmpty()) {
+            return new OperationResult(
+                "",
+                false,
+                null,
+                "This cloud environment does not support `screenshot()`. Please use `beta_take_screenshot()` instead."
+            );
+        }
         try {
             OperationResult result = callSystemScreenshotTool();
 
@@ -962,6 +970,15 @@ public class Computer extends BaseService {
      */
     public ScreenshotBytesResult betaTakeScreenshot(String format) {
         String fmt = normalizeImageFormat(format, "png");
+        if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
+            return new ScreenshotBytesResult(
+                "",
+                false,
+                new byte[0],
+                fmt,
+                "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead."
+            );
+        }
         if (!"png".equals(fmt) && !"jpeg".equals(fmt)) {
             return new ScreenshotBytesResult("", false, new byte[0], fmt, "Unsupported format: " + format);
         }

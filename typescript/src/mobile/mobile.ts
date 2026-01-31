@@ -78,6 +78,7 @@ interface MobileSession {
   getAgentBay(): any;
   imageId?: string;
   getLink(protocolType?: string, port?: number, options?: string): Promise<any>;
+  getLinkUrl(): string;
 }
 
 /**
@@ -715,6 +716,15 @@ export class Mobile {
    * ```
    */
   async screenshot(): Promise<ScreenshotResult> {
+    if (this.session.getLinkUrl()) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage:
+          "This cloud environment does not support `screenshot()`. Please use `beta_take_screenshot()` instead.",
+        data: "",
+      };
+    }
     try {
       const result = await this.session.callMcpTool('system_screenshot', {}, false);
       
@@ -749,6 +759,16 @@ export class Mobile {
    * @returns Promise resolving to BetaScreenshotResult containing PNG bytes
    */
   async betaTakeScreenshot(): Promise<BetaScreenshotResult> {
+    if (!this.session.getLinkUrl()) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage:
+          "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead.",
+        data: new Uint8Array(),
+        format: "png",
+      };
+    }
     try {
       const result = await this.session.callMcpTool("screenshot", { format: "png" }, false);
       const requestId = result.requestId || "";

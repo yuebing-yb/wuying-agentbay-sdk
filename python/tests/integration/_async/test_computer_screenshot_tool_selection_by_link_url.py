@@ -1,0 +1,89 @@
+"""
+Integration tests for Computer screenshot tool selection based on Session.link_url.
+
+Rules:
+- When session.link_url is non-empty, users must use beta_take_screenshot().
+  screenshot() must fail with a clear guidance message.
+- When session.link_url is empty, users must use screenshot().
+  beta_take_screenshot() must fail with a clear guidance message.
+
+These tests use real backend resources (no mocks).
+"""
+
+import os
+
+import pytest
+
+from agentbay import AgentBayError, AsyncAgentBay, Config, CreateSessionParams
+
+
+LINK_URL_ENDPOINT = "agentbay-pre.cn-hangzhou.aliyuncs.com"
+LINK_URL_IMAGE_ID = "computer-use-ubuntu-2204-regionGW"
+
+NO_LINK_URL_ENDPOINT = "wuyingai-pre.cn-hangzhou.aliyuncs.com"
+NO_LINK_URL_IMAGE_ID = "linux_latest"
+
+
+def _get_api_key_or_skip() -> str:
+    api_key = os.environ.get("AGENTBAY_API_KEY") or ""
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return api_key
+
+
+def _new_agent_bay(api_key: str, endpoint: str) -> AsyncAgentBay:
+    region_id = os.environ.get("AGENTBAY_REGION_ID")
+    cfg = Config(endpoint=endpoint, timeout_ms=60000, region_id=region_id)
+    return AsyncAgentBay(api_key=api_key, cfg=cfg)
+
+
+async def _create_session(agent_bay: AsyncAgentBay, image_id: str):
+    result = await agent_bay.create(CreateSessionParams(image_id=image_id))
+    assert result.success, f"Failed to create session: {result.error_message}"
+    assert result.session is not None
+    return result.session
+
+
+@pytest.mark.asyncio
+async def test_computer_link_url_present_requires_beta_take_screenshot():
+    api_key = _get_api_key_or_skip()
+    agent_bay = _new_agent_bay(api_key, LINK_URL_ENDPOINT)
+    session = await _create_session(agent_bay, LINK_URL_IMAGE_ID)
+    try:
+        assert session.get_link_url(), "Expected session.link_url to be non-empty for this endpoint/image"
+
+        r = await session.computer.screenshot()
+        assert r.success is False
+        assert "does not support `screenshot()`" in (r.error_message or "")
+        assert "beta_take_screenshot" in (r.error_message or "")
+
+        beta = await session.computer.beta_take_screenshot(format="png")
+        assert beta.success is True
+        assert beta.format == "png"
+        assert isinstance(beta.width, int) and beta.width > 0
+        assert isinstance(beta.height, int) and beta.height > 0
+        assert isinstance(beta.data, (bytes, bytearray))
+        assert len(beta.data) > 0
+        assert bytes(beta.data[:8]) == b"\x89PNG\r\n\x1a\n"
+    finally:
+        await session.delete()
+
+
+@pytest.mark.asyncio
+async def test_computer_link_url_absent_requires_screenshot():
+    api_key = _get_api_key_or_skip()
+    agent_bay = _new_agent_bay(api_key, NO_LINK_URL_ENDPOINT)
+    session = await _create_session(agent_bay, NO_LINK_URL_IMAGE_ID)
+    try:
+        assert not session.get_link_url(), "Expected session.link_url to be empty for this endpoint/image"
+
+        r = await session.computer.screenshot()
+        assert r.success is True
+        assert isinstance(r.data, str)
+        assert r.data.strip()
+
+        with pytest.raises(AgentBayError, match=r"does not support `beta_take_screenshot\(\)`"):
+            await session.computer.beta_take_screenshot(format="png")
+    finally:
+        await session.delete()
+
