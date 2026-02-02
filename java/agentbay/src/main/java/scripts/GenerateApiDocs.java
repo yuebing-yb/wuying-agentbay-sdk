@@ -38,12 +38,16 @@ public class GenerateApiDocs {
     // If running in agentbay directory, JAVA_ROOT should be its parent directory
     private static final String JAVA_ROOT = CURRENT_DIR.endsWith("agentbay") ? 
         Paths.get(CURRENT_DIR).getParent().toString() : CURRENT_DIR;
+    // Project root: the directory containing docs and scripts
+    // Since JAVA_ROOT is the java directory (e.g., D:/innerIntenet/current/wuying-agentbay-sdk/java),
+    // PROJECT_ROOT should be its parent (e.g., D:/innerIntenet/current/wuying-agentbay-sdk)
+    private static final String PROJECT_ROOT = Paths.get(JAVA_ROOT).getParent().toString();
     // Documentation output directory: java/docs/api
     private static final String DOCS_ROOT = JAVA_ROOT + "/docs/api";
     // Source code directory: java/agentbay/src/main/java/com/aliyun/agentbay
     private static final String SRC_ROOT = JAVA_ROOT + "/agentbay/src/main/java/";
     // Metadata file path: scripts/doc-metadata.yaml under project root
-    private static final String METADATA_PATH = Paths.get(JAVA_ROOT).getParent().toString() + "/scripts/doc-metadata.yaml";
+    private static final String METADATA_PATH = PROJECT_ROOT + "/scripts/doc-metadata.yaml";
     
     // JavaParser instance with symbol solver
     private JavaParser javaParser;
@@ -122,7 +126,9 @@ public class GenerateApiDocs {
         parseSourceFilesAndGenerateMarkdown();
 
         // Step 6: Write API README entry point
+        System.out.println("Step 6: Writing API README...");
         writeApiReadme();
+        System.out.println("Step 6 completed: API README written");
         
         System.out.println("Java API documentation generation completed!");
     }
@@ -240,10 +246,8 @@ public class GenerateApiDocs {
             markdown.append("## 🔗 Related Resources\n\n");
             for (RelatedResource resource : mapping.config.relatedResources) {
                 String resourcePath = resource.category != null 
-                    ? DOCS_ROOT + "/" + resource.category + "/" + resource.module + ".md"
-                    : DOCS_ROOT + "/" + resource.module + ".md";
-                // Normalize path separators to forward slashes for Markdown compatibility
-                resourcePath = resourcePath.replace("\\", "/");
+                    ? generateRelativePathForResource(mapping.target, resource.category, resource.module)
+                    : generateRelativePathForResource(mapping.target, null, resource.module);
                 markdown.append("- [").append(resource.name).append("](").append(resourcePath).append(")\n");
             }
             markdown.append("\n");
@@ -253,6 +257,90 @@ public class GenerateApiDocs {
         Path targetPath = Paths.get(DOCS_ROOT, mapping.target);
         Files.createDirectories(targetPath.getParent());
         Files.write(targetPath, markdown.toString().getBytes("UTF-8"));
+    }
+    
+      /**
+     * Generate relative path for a resource based on the current document path
+     * 
+     * @param currentDocumentPath The path of the current document (relative path from docs/api)
+     * @param category The category of the resource (can be null)
+     * @param module The module name of the resource
+     * @return The relative path to the resource
+     */
+    private String generateRelativePathForResource(String currentDocumentPath, String category, String module) {
+        // Get the absolute path of the current document
+        Path currentDocAbsolutePath = Paths.get(DOCS_ROOT, currentDocumentPath);
+        
+        // Find the docs directory by traversing up from the current document
+        Path docsDir = findDocsDirectory(currentDocAbsolutePath);
+        
+        if (docsDir == null) {
+            // Fallback: if docs directory not found, use current logic
+            String[] pathSegments = currentDocumentPath.split("/");
+            int depth = pathSegments.length - 1;
+            StringBuilder relativePrefix = new StringBuilder();
+            for (int i = 0; i < depth; i++) {
+                relativePrefix.append("../");
+            }
+            if (category != null) {
+                return relativePrefix.toString() + category + "/" + module + ".md";
+            } else {
+                return relativePrefix.toString() + module + ".md";
+            }
+        }
+        
+        // Calculate the number of "../" needed to go from current document to docs directory
+        int levelsToDocs = calculateLevelsUp(currentDocAbsolutePath, docsDir);
+        
+        // Build the relative path prefix with the correct number of "../"
+        StringBuilder relativePrefix = new StringBuilder();
+        for (int i = 0; i < levelsToDocs; i++) {
+            relativePrefix.append("../");
+        }
+        
+        // Construct the full resource path starting from docs directory
+        // The target path should be: docs/api/{category}/{module}.md
+        // But since we're already at docs level, we need to go into api directory
+        if (category != null) {
+            return relativePrefix.toString() + "api/" + category + "/" + module + ".md";
+        } else {
+            return relativePrefix.toString() + "api/" + module + ".md";
+        }
+    }
+    
+    /**
+     * Find the docs directory by traversing up from the current document path
+     */
+    private Path findDocsDirectory(Path currentPath) {
+        Path path = currentPath.getParent();
+        int maxLevels = 10; // Prevent infinite loops
+        int levels = 0;
+        
+        while (path != null && levels < maxLevels) {
+            if (path.getFileName() != null && path.getFileName().toString().equals("docs")) {
+                return path;
+            }
+            path = path.getParent();
+            levels++;
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Calculate the number of levels up from current path to target path
+     */
+    private int calculateLevelsUp(Path currentPath, Path targetPath) {
+        Path current = currentPath.getParent();
+        int levels = 0;
+        int maxLevels = 10; // Prevent infinite loops
+        
+        while (current != null && !current.equals(targetPath) && levels < maxLevels) {
+            current = current.getParent();
+            levels++;
+        }
+        
+        return levels;
     }
     
     /**
@@ -312,27 +400,22 @@ public class GenerateApiDocs {
             }
             
             // Extract and organize public methods
-            System.out.println("  Processing methods for class: " + simpleClassName);
+            
             List<MethodDeclaration> allMethods = cls.getMethods();
-            System.out.println("  Total methods found: " + allMethods.size());
             
             List<MethodDeclaration> publicMethods = allMethods.stream()
                 .filter(method -> {
                     boolean isPublic = method.isPublic();
-                    System.out.println("    Method: " + method.getNameAsString() + " - isPublic: " + isPublic);
                     return isPublic;
                 })
                 .collect(Collectors.toList());
-            System.out.println("  Public methods found: " + publicMethods.size());
             
             List<MethodDeclaration> methods = publicMethods.stream()
                 .filter(method -> {
                     boolean shouldSkip = shouldSkipMethod(method.getNameAsString(), config);
-                    System.out.println("    Method: " + method.getNameAsString() + " - shouldSkip: " + shouldSkip);
                     return !shouldSkip;
                 })
                 .collect(Collectors.toList());
-            System.out.println("  Methods after filtering: " + methods.size());
             
             if (!methods.isEmpty()) {
                 // Group methods by category for better organization
@@ -618,34 +701,27 @@ public class GenerateApiDocs {
      * Check if a method should be excluded from documentation
      */
     private boolean shouldSkipMethod(String methodName, ModuleConfig config) {
-        // Debug: Log method being checked for skipping
-        System.out.println("  Checking shouldSkipMethod for: " + methodName);
-        
         // Java-specific exclusions from global YAML configuration
         if (metadata.global != null && metadata.global.javaConfig != null) {
             JavaConfig javaConfig = metadata.global.javaConfig;
             
             // Skip Object methods
             if (javaConfig.excludeObjectMethods != null && javaConfig.excludeObjectMethods.contains(methodName)) {
-                System.out.println("    -> Skipped by YAML excludeObjectMethods: " + methodName);
                 return true;
             }
             
             // Skip bean methods
             if (javaConfig.excludeBeanMethods != null && javaConfig.excludeBeanMethods.contains(methodName)) {
-                System.out.println("    -> Skipped by YAML excludeBeanMethods: " + methodName);
                 return true;
             }
             
             // Skip serialization methods
             if (javaConfig.excludeSerializationMethods != null && javaConfig.excludeSerializationMethods.contains(methodName)) {
-                System.out.println("    -> Skipped by YAML excludeSerializationMethods: " + methodName);
                 return true;
             }
             
             // Skip utility methods
             if (javaConfig.excludeUtilityMethods != null && javaConfig.excludeUtilityMethods.contains(methodName)) {
-                System.out.println("    -> Skipped by YAML excludeUtilityMethods: " + methodName);
                 return true;
             }
         }
@@ -985,19 +1061,54 @@ public class GenerateApiDocs {
         if (link.startsWith("/")) {
             // Absolute path (relative to docs root)
             targetPath = Paths.get(DOCS_ROOT, link.substring(1));
+        } else if (link.startsWith("../")) {
+            // Handle links that go up from current location
+            // These links are relative to the current file location
+            String normalizedLink = link.replace("\\", "/");
+            targetPath = baseDir.resolve(normalizedLink);
         } else {
-            // Relative path
-            targetPath = baseDir.resolve(link);
+            // Relative path - fix potential double separator issue
+            // Normalize the link first to handle any mixed separators
+            String normalizedLink = link.replace("\\", "/");
+            targetPath = baseDir.resolve(normalizedLink);
         }
         
-        // Normalize path
-        targetPath = targetPath.normalize();
+        // Normalize path and convert to absolute path
+        targetPath = targetPath.normalize().toAbsolutePath();
+        
+        // If the resolved path doesn't exist, try alternative resolution
+        // This handles cases where relative paths go outside the DOCS_ROOT
+        if (!Files.exists(targetPath)) {
+            // Try resolving from project root
+            Path projectRootPath = Paths.get(PROJECT_ROOT).toAbsolutePath().normalize();
+            Path altPath = projectRootPath.resolve(link.replace("\\", "/")).normalize();
+            if (Files.exists(altPath)) {
+                return altPath;
+            }
+            
+            // Try resolving from docs root
+            Path docsRootPath = Paths.get(DOCS_ROOT).toAbsolutePath().normalize();
+            altPath = docsRootPath.resolve(link.replace("\\", "/")).normalize();
+            if (Files.exists(altPath)) {
+                return altPath;
+            }
+        }
         
         // If it's a directory, try to find README.md
         if (Files.isDirectory(targetPath)) {
             Path readmePath = targetPath.resolve("README.md");
             if (Files.exists(readmePath)) {
                 return readmePath;
+            }
+        }
+        
+        // Special case: check if the resolved path exists
+        // Sometimes normalization can cause issues with paths that do exist
+        if (!Files.exists(targetPath)) {
+            // Try alternative resolution approach for edge cases
+            Path altPath = Paths.get(DOCS_ROOT).resolve(link.replace("\\", "/")).normalize();
+            if (Files.exists(altPath)) {
+                return altPath;
             }
         }
         
@@ -1045,10 +1156,30 @@ public class GenerateApiDocs {
     
     private void loadMetadata() throws Exception {
         System.out.println("Loading documentation metadata from: " + METADATA_PATH);
+        System.out.println("PROJECT_ROOT: " + PROJECT_ROOT);
+        
+        // Check if metadata file exists
+        Path metadataFilePath = Paths.get(METADATA_PATH);
+        if (!Files.exists(metadataFilePath)) {
+            System.err.println("Metadata file does not exist: " + METADATA_PATH);
+            System.err.println("Using fallback configuration");
+            this.metadata = createFallbackMetadata();
+            return;
+        }
         
         Yaml yaml = new Yaml();
         try (FileInputStream fis = new FileInputStream(METADATA_PATH)) {
             Map<String, Object> data = yaml.load(fis);
+            
+            // Debug: print loaded data structure
+            if (data == null) {
+                System.err.println("YAML file is empty or null");
+                this.metadata = createFallbackMetadata();
+                return;
+            }
+            
+            System.out.println("YAML data loaded, keys: " + data.keySet());
+            
             this.metadata = new DocumentationMetadata(data);
             System.out.println("Metadata loaded successfully");
         } catch (Exception e) {
