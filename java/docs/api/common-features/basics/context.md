@@ -100,6 +100,6 @@ public void setOsType(String osType)
 
 ## 🔗 Related Resources
 
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
-- [Context Manager API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/context-manager.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
+- [Context Manager API Reference](../../../api/common-features/basics/context-manager.md)
 

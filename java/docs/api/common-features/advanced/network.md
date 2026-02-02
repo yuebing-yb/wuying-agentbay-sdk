@@ -51,8 +51,8 @@ public NetworkStatusResult betaDescribe(String networkId)
 
 ## 🔗 Related Resources
 
-- [AgentBay API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/agentbay.md)
-- [Session Params API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session-params.md)
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
-- [Command API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/command.md)
+- [AgentBay API Reference](../../../api/common-features/basics/agentbay.md)
+- [Session Params API Reference](../../../api/common-features/basics/session-params.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
+- [Command API Reference](../../../api/common-features/basics/command.md)
 

@@ -251,6 +251,6 @@ public void setBetaNetworkId(String betaNetworkId)
 
 ## 🔗 Related Resources
 
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
-- [AgentBay API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/agentbay.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
+- [AgentBay API Reference](../../../api/common-features/basics/agentbay.md)
 

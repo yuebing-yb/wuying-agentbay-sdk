@@ -244,6 +244,6 @@ public void setTimeoutMs(int timeoutMs)
 
 ## 🔗 Related Resources
 
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
-- [Context API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/context.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
+- [Context API Reference](../../../api/common-features/basics/context.md)
 

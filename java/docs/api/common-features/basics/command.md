@@ -74,6 +74,6 @@ public CommandResult exec(String command, int timeoutMs, String cwd, Map<String,
 
 ## 🔗 Related Resources
 
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
-- [FileSystem API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/filesystem.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
+- [FileSystem API Reference](../../../api/common-features/basics/filesystem.md)
 

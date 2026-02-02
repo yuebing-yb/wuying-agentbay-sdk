@@ -510,6 +510,6 @@ public void setWhiteLists(List<WhiteList> whiteLists)
 
 ## 🔗 Related Resources
 
-- [Context Manager API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/context-manager.md)
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
+- [Context Manager API Reference](../../../api/common-features/basics/context-manager.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
 

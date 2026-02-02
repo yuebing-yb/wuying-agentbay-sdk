@@ -60,5 +60,5 @@ Get the Mobile agent for mobile device task execution.
 
 ## 🔗 Related Resources
 
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
 

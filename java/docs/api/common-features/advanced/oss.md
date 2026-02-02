@@ -160,6 +160,6 @@ public void deleteFileVoid(String remotePath) throws OSSException
 
 ## 🔗 Related Resources
 
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
-- [FileSystem API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/filesystem.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
+- [FileSystem API Reference](../../../api/common-features/basics/filesystem.md)
 

@@ -106,6 +106,6 @@ Sync context data with optional parameters and wait for completion
 
 ## 🔗 Related Resources
 
-- [Context API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/context.md)
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
+- [Context API Reference](../../../api/common-features/basics/context.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
 

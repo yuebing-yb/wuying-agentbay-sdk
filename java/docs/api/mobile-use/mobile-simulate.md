@@ -139,6 +139,6 @@ Upload the mobile simulate dev info.
 
 ## 🔗 Related Resources
 
-- [Mobile API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/mobile-use/mobile.md)
-- [Context Sync API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/context-sync.md)
+- [Mobile API Reference](../../api/mobile-use/mobile.md)
+- [Context Sync API Reference](../../api/common-features/basics/context-sync.md)
 

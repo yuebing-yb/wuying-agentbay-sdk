@@ -520,9 +520,9 @@ Get labels for this session
 
 ## 🔗 Related Resources
 
-- [FileSystem API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/filesystem.md)
-- [Command API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/command.md)
-- [Context API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/context.md)
-- [Context Manager API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/context-manager.md)
-- [OSS API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/advanced/oss.md)
+- [FileSystem API Reference](../../../api/common-features/basics/filesystem.md)
+- [Command API Reference](../../../api/common-features/basics/command.md)
+- [Context API Reference](../../../api/common-features/basics/context.md)
+- [Context Manager API Reference](../../../api/common-features/basics/context-manager.md)
+- [OSS API Reference](../../../api/common-features/advanced/oss.md)
 

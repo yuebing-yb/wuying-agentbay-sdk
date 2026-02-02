@@ -493,6 +493,6 @@ List directory contents. Alias for listDirectory().
 
 ## 🔗 Related Resources
 
-- [Session API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/session.md)
-- [Command API Reference](/Users/liyuebing/Projects/wuying-agentbay-sdk/java/docs/api/common-features/basics/command.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
+- [Command API Reference](../../../api/common-features/basics/command.md)
 
