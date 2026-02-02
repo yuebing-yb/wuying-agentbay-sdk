@@ -276,7 +276,8 @@ public class GenerateApiDocs {
         
         if (docsDir == null) {
             // Fallback: if docs directory not found, use current logic
-            String[] pathSegments = currentDocumentPath.split("/");
+            String normalizedPath = currentDocumentPath.replace('\\', '/');
+            String[] pathSegments = normalizedPath.split("/");
             int depth = pathSegments.length - 1;
             StringBuilder relativePrefix = new StringBuilder();
             for (int i = 0; i < depth; i++) {
