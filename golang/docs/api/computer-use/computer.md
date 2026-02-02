@@ -69,6 +69,7 @@ type Computer struct {
 	Session interface {
 		GetAPIKey() string
 		GetClient() *mcp.Client
+		GetLinkUrl() string
 		GetSessionId() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
@@ -522,6 +523,7 @@ stopResult := result.Session.Computer.StopAppByPName("notepad.exe")
 func NewComputer(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Computer

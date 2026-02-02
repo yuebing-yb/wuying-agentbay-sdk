@@ -9,6 +9,7 @@ import { Mobile } from '../../src/mobile/mobile';
 interface MockSession {
   callMcpTool: jest.Mock;
   getAPIKey: () => string;
+  getLinkUrl: jest.Mock;
   sessionId: string;
 }
 
@@ -20,6 +21,7 @@ describe('Mobile', () => {
     mockSession = {
       callMcpTool: jest.fn(),
       getAPIKey: () => 'test-api-key',
+      getLinkUrl: jest.fn(() => ''),
       sessionId: 'test-session-id'
     };
     mobile = new Mobile(mockSession as any);
@@ -306,6 +308,7 @@ describe('Mobile', () => {
 
     test('betaTakeScreenshot should call MCP tool and return PNG bytes', async () => {
       // Arrange
+      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
       const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
       const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
       const mockResult = {
@@ -337,6 +340,7 @@ describe('Mobile', () => {
 
     test('betaTakeScreenshot should accept JSON payloads', async () => {
       // Arrange
+      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
       const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
       const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
       const jsonPayload = JSON.stringify({
@@ -366,6 +370,7 @@ describe('Mobile', () => {
 
     test('betaTakeScreenshot should reject non-JSON payloads', async () => {
       // Arrange
+      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
       const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
       const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
       const mockResult = {

@@ -1,9 +1,8 @@
 package com.aliyun.agentbay.computer;
 
 import com.aliyun.agentbay.model.ScreenshotBytesResult;
+import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.session.Session;
-import com.aliyun.wuyingai20250506.models.CallMcpToolResponse;
-import com.aliyun.wuyingai20250506.models.CallMcpToolResponseBody;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -18,7 +17,6 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,33 +37,13 @@ public class ComputerTest {
         computer = new Computer(mockSession);
     }
 
-    private CallMcpToolResponse createMockResponse(boolean success, String data, String requestId) {
-        CallMcpToolResponse response = mock(CallMcpToolResponse.class);
-        CallMcpToolResponseBody body = mock(CallMcpToolResponseBody.class);
-
-        when(response.getBody()).thenReturn(body);
-        when(body.getRequestId()).thenReturn(requestId);
-
-        Map<String, Object> bodyMap = new HashMap<>();
-        bodyMap.put("RequestId", requestId);
-        Map<String, Object> map = new HashMap<>();
-        map.put("body", bodyMap);
-        try {
-            when(response.toMap()).thenReturn(map);
-        } catch (Exception e) {
-        }
-
-        Map<String, Object> contentItem = new HashMap<>();
-        contentItem.put("text", data);
-        Map<String, Object> dataMap = new HashMap<>();
-        dataMap.put("content", java.util.Arrays.asList(contentItem));
-        dataMap.put("isError", !success);
-        when(body.getData()).thenReturn(dataMap);
-        return response;
+    private OperationResult createMockResult(boolean success, String data, String requestId, String errorMessage) {
+        return new OperationResult(requestId, success, data, errorMessage == null ? "" : errorMessage);
     }
 
     @Test
     public void testBetaTakeScreenshotSuccessJpeg() throws Exception {
+        when(mockSession.getLinkUrl()).thenReturn("https://dummy-link-url");
         byte[] jpegHeader = new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff};
         byte[] payload = new byte[jpegHeader.length + 4];
         System.arraycopy(jpegHeader, 0, payload, 0, jpegHeader.length);
@@ -73,8 +51,8 @@ public class ComputerTest {
         String b64 = Base64.getEncoder().encodeToString(payload);
         String jsonPayload = "{\"type\":\"image\",\"mime_type\":\"image/jpeg\",\"width\":1280,\"height\":720,\"data\":\"" + b64 + "\"}";
 
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonPayload, "beta-req-1");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonPayload, "beta-req-1", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
 
         ScreenshotBytesResult result = computer.betaTakeScreenshot("jpg");
 
@@ -89,7 +67,7 @@ public class ComputerTest {
         assertTrue(result.getData().length >= 3);
 
         ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(mockSession).callTool(eq("screenshot"), argsCaptor.capture());
+        verify(mockSession).callMcpTool(eq("screenshot"), argsCaptor.capture());
         @SuppressWarnings("unchecked")
         Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
         assertEquals("jpeg", args.get("format"));
@@ -97,14 +75,15 @@ public class ComputerTest {
 
     @Test
     public void testBetaTakeScreenshotRejectsNonJsonPayload() throws Exception {
+        when(mockSession.getLinkUrl()).thenReturn("https://dummy-link-url");
         byte[] jpegHeader = new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff};
         byte[] payload = new byte[jpegHeader.length + 4];
         System.arraycopy(jpegHeader, 0, payload, 0, jpegHeader.length);
         System.arraycopy("test".getBytes(), 0, payload, jpegHeader.length, 4);
         String b64 = Base64.getEncoder().encodeToString(payload);
 
-        CallMcpToolResponse mockResponse = createMockResponse(true, b64, "beta-req-2");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, b64, "beta-req-2", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
 
         ScreenshotBytesResult result = computer.betaTakeScreenshot("jpeg");
         assertFalse(result.isSuccess());

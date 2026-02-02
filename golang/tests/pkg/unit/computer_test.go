@@ -417,6 +417,7 @@ func (suite *ComputerTestSuite) TestScreenshot_Success() {
 
 func (suite *ComputerTestSuite) TestBetaTakeScreenshot_SuccessJpeg() {
 	// Arrange
+	suite.mockSession.LinkUrl = "https://dummy-link-url"
 	jpegHeader := []byte{0xff, 0xd8, 0xff}
 	payload := append(append([]byte{}, jpegHeader...), []byte("jpegpayload")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
@@ -452,6 +453,7 @@ func (suite *ComputerTestSuite) TestBetaTakeScreenshot_SuccessJpeg() {
 
 func (suite *ComputerTestSuite) TestBetaTakeScreenshot_RejectsNonJson() {
 	// Arrange
+	suite.mockSession.LinkUrl = "https://dummy-link-url"
 	jpegHeader := []byte{0xff, 0xd8, 0xff}
 	payload := append(append([]byte{}, jpegHeader...), []byte("jpegpayload")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)

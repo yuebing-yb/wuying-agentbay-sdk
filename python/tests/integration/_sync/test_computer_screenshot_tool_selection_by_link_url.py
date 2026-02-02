@@ -23,8 +23,8 @@ from agentbay import AgentBayError, AgentBay, Config, CreateSessionParams
 LINK_URL_ENDPOINT = "agentbay-pre.cn-hangzhou.aliyuncs.com"
 LINK_URL_IMAGE_ID = "computer-use-ubuntu-2204-regionGW"
 
-NO_LINK_URL_ENDPOINT = "wuyingai.cn-shanghai.aliyuncs.com"
-NO_LINK_URL_IMAGE_ID = "moltbot-linux-ubuntu-2204"
+NO_LINK_URL_ENDPOINT = "wuyingai-pre.cn-hangzhou.aliyuncs.com"
+NO_LINK_URL_IMAGE_ID = "linux_latest"
 
 
 def _get_api_key_or_skip() -> str:

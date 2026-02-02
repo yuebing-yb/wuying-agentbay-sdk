@@ -201,10 +201,9 @@ statusResult := sessionResult.Session.Agent.Browser.GetTaskStatus(execResult.Tas
 func (a *BrowserUseAgent) Initialize(option *browser.BrowserOption) (bool, error)
 ```
 
-* * You are supposed to call this API before executeTask is called, but is't optional.
-Initialize the browser on which the agent performs tasks. * @param option Browser option *
-@return True if the browser is successfully initialized, False otherwise.
-
+* * Initialize the browser on which the agent performs tasks. * You are supposed to call this API
+before executeTask is called, but is't optional. * @param option Browser option * @return True if
+the browser is successfully initialized, False otherwise.
 
 ### TerminateTask
 

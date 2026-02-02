@@ -445,6 +445,7 @@ func (suite *MobileTestSuite) TestScreenshot_Success() {
 
 func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 	// Arrange
+	suite.mockSession.LinkUrl = "https://dummy-link-url"
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
@@ -480,6 +481,7 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 
 func (suite *MobileTestSuite) TestBetaTakeScreenshot_AcceptsJsonPayload() {
 	// Arrange
+	suite.mockSession.LinkUrl = "https://dummy-link-url"
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
@@ -509,6 +511,7 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_AcceptsJsonPayload() {
 
 func (suite *MobileTestSuite) TestBetaTakeScreenshot_RejectsNonJsonPayload() {
 	// Arrange
+	suite.mockSession.LinkUrl = "https://dummy-link-url"
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)

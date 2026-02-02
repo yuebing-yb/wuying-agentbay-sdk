@@ -4,7 +4,8 @@ import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.client.ApiClient;
 import com.aliyun.agentbay.model.*;
 import com.aliyun.agentbay.session.Session;
-import com.aliyun.wuyingai20250506.models.*;
+import com.aliyun.wuyingai20250506.models.GetAdbLinkResponse;
+import com.aliyun.wuyingai20250506.models.GetAdbLinkResponseBody;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -42,40 +43,10 @@ public class MobileTest {
     }
     
     /**
-     * Helper method to create a mock CallMcpToolResponse with the given data.
-     * The structure matches what BaseService.parseResponseBody() expects:
-     * response.body.data = Map with "content" (List of Maps with "text") and "isError" fields
+     * Helper method to create a mock OperationResult with the given data.
      */
-    private CallMcpToolResponse createMockResponse(boolean success, String data, String requestId) {
-        CallMcpToolResponse response = mock(CallMcpToolResponse.class);
-        CallMcpToolResponseBody body = mock(CallMcpToolResponseBody.class);
-        
-        // Setup mock chain
-        when(response.getBody()).thenReturn(body);
-        when(body.getRequestId()).thenReturn(requestId);
-
-        // ResponseUtil.extractRequestId uses response.toMap() and reads body.RequestId.
-        Map<String, Object> bodyMap = new HashMap<>();
-        bodyMap.put("RequestId", requestId);
-        Map<String, Object> map = new HashMap<>();
-        map.put("body", bodyMap);
-        try {
-            when(response.toMap()).thenReturn(map);
-        } catch (Exception e) {
-        }
-        
-        // Setup content structure - this is what parseResponseBody expects
-        Map<String, Object> contentItem = new HashMap<>();
-        contentItem.put("text", data);
-        
-        Map<String, Object> dataMap = new HashMap<>();
-        dataMap.put("content", java.util.Arrays.asList(contentItem));
-        dataMap.put("isError", !success);
-        
-        // body.getData() returns this Map as Object
-        when(body.getData()).thenReturn(dataMap);
-        
-        return response;
+    private OperationResult createMockResult(boolean success, String data, String requestId, String errorMessage) {
+        return new OperationResult(requestId, success, data, errorMessage == null ? "" : errorMessage);
     }
     
     @Test
@@ -88,8 +59,8 @@ public class MobileTest {
     @Test
     public void testTapSuccess() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(true, "true", "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, "true", "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         BoolResult result = mobile.tap(100, 200);
@@ -97,14 +68,14 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertTrue(result.getData());
-        verify(mockSession).callTool(eq("tap"), any());
+        verify(mockSession).callMcpTool(eq("tap"), any());
     }
     
     @Test
     public void testSwipeSuccess() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(true, "true", "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, "true", "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         BoolResult result = mobile.swipe(100, 100, 200, 200, 300);
@@ -112,14 +83,14 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertTrue(result.getData());
-        verify(mockSession).callTool(eq("swipe"), any());
+        verify(mockSession).callMcpTool(eq("swipe"), any());
     }
     
     @Test
     public void testInputTextSuccess() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(true, "true", "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, "true", "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         BoolResult result = mobile.inputText("Hello Mobile");
@@ -127,14 +98,14 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertTrue(result.getData());
-        verify(mockSession).callTool(eq("input_text"), any());
+        verify(mockSession).callMcpTool(eq("input_text"), any());
     }
     
     @Test
     public void testSendKeySuccess() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(true, "true", "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, "true", "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         BoolResult result = mobile.sendKey(KeyCode.BACK);
@@ -142,7 +113,7 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertTrue(result.getData());
-        verify(mockSession).callTool(eq("send_key"), any());
+        verify(mockSession).callMcpTool(eq("send_key"), any());
     }
     
     // ==================== UI Element Operations Tests ====================
@@ -151,8 +122,8 @@ public class MobileTest {
     public void testGetClickableUiElementsSuccess() throws Exception {
         // Arrange
         String jsonData = "[{\"id\":\"button1\",\"text\":\"Click me\"}]";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonData, "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonData, "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         UIElementListResult result = mobile.getClickableUiElements();
@@ -162,15 +133,15 @@ public class MobileTest {
         assertFalse(result.getElements().isEmpty());
         assertEquals("json", result.getFormat());
         assertEquals(jsonData, result.getRaw());
-        verify(mockSession).callTool(eq("get_clickable_ui_elements"), any());
+        verify(mockSession).callMcpTool(eq("get_clickable_ui_elements"), any());
     }
     
     @Test
     public void testGetAllUiElementsSuccess() throws Exception {
         // Arrange
         String jsonData = "[{\"bounds\":\"[0,0][100,100]\",\"className\":\"Button\",\"text\":\"OK\"}]";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonData, "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonData, "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         UIElementListResult result = mobile.getAllUiElements();
@@ -182,7 +153,7 @@ public class MobileTest {
         assertEquals(jsonData, result.getRaw());
 
         ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(mockSession).callTool(eq("get_all_ui_elements"), argsCaptor.capture());
+        verify(mockSession).callMcpTool(eq("get_all_ui_elements"), argsCaptor.capture());
         @SuppressWarnings("unchecked")
         Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
         assertEquals(2000, args.get("timeout_ms"));
@@ -193,8 +164,8 @@ public class MobileTest {
     public void testGetAllUiElementsXmlSuccess() throws Exception {
         // Arrange
         String xmlData = "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation=\"0\"></hierarchy>";
-        CallMcpToolResponse mockResponse = createMockResponse(true, xmlData, "test-xml-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, xmlData, "test-xml-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
 
         // Act
         UIElementListResult result = mobile.getAllUiElements(5000, "xml");
@@ -206,7 +177,7 @@ public class MobileTest {
         assertTrue(result.getElements().isEmpty());
 
         ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(mockSession).callTool(eq("get_all_ui_elements"), argsCaptor.capture());
+        verify(mockSession).callMcpTool(eq("get_all_ui_elements"), argsCaptor.capture());
         @SuppressWarnings("unchecked")
         Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
         assertEquals(5000, args.get("timeout_ms"));
@@ -219,8 +190,8 @@ public class MobileTest {
     public void testGetInstalledAppsSuccess() throws Exception {
         // Arrange
         String jsonData = "[{\"name\":\"Settings\",\"start_cmd\":\"com.android.settings\"}]";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonData, "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonData, "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         InstalledAppListResult result = mobile.getInstalledApps(true, false, true);
@@ -228,15 +199,15 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertFalse(result.getData().isEmpty());
-        verify(mockSession).callTool(eq("get_installed_apps"), any());
+        verify(mockSession).callMcpTool(eq("get_installed_apps"), any());
     }
     
     @Test
     public void testStartAppSuccess() throws Exception {
         // Arrange
         String jsonData = "[{\"pname\":\"settings\",\"pid\":12345,\"cmdline\":\"com.android.settings\"}]";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonData, "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonData, "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         ProcessListResult result = mobile.startApp("com.android.settings");
@@ -244,21 +215,21 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertFalse(result.getData().isEmpty());
-        verify(mockSession).callTool(eq("start_app"), any());
+        verify(mockSession).callMcpTool(eq("start_app"), any());
     }
     
     @Test
     public void testStopAppByCmdSuccess() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(true, "true", "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, "true", "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         AppOperationResult result = mobile.stopAppByCmd("com.android.settings");
         
         // Assert
         assertTrue(result.isSuccess());
-        verify(mockSession).callTool(eq("stop_app_by_cmd"), any());
+        verify(mockSession).callMcpTool(eq("stop_app_by_cmd"), any());
     }
     
     // ==================== Screenshot Tests ====================
@@ -266,8 +237,9 @@ public class MobileTest {
     @Test
     public void testScreenshotSuccess() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(true, "/path/to/screenshot.png", "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        when(mockSession.getLinkUrl()).thenReturn("");
+        OperationResult mockResult = createMockResult(true, "/path/to/screenshot.png", "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         OperationResult result = mobile.screenshot();
@@ -275,20 +247,22 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertNotNull(result.getData());
-        verify(mockSession).callTool(eq("system_screenshot"), any());
+        verify(mockSession).callMcpTool(eq("system_screenshot"), any());
     }
 
     @Test
     public void testBetaTakeScreenshotSuccessPng() throws Exception {
         // Arrange
+        when(mockSession.getLinkUrl()).thenReturn("https://dummy-link-url");
+        when(mockSession.getLinkUrl()).thenReturn("https://dummy-link-url");
         byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
         byte[] payload = new byte[pngHeader.length + 4];
         System.arraycopy(pngHeader, 0, payload, 0, pngHeader.length);
         System.arraycopy("test".getBytes(), 0, payload, pngHeader.length, 4);
         String b64 = Base64.getEncoder().encodeToString(payload);
         String jsonPayload = "{\"type\":\"image\",\"mime_type\":\"image/png\",\"width\":720,\"height\":1280,\"data\":\"" + b64 + "\"}";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonPayload, "beta-req-1");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonPayload, "beta-req-1", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
 
         // Act
         ScreenshotBytesResult result = mobile.betaTakeScreenshot();
@@ -305,7 +279,7 @@ public class MobileTest {
         assertTrue("PNG magic bytes missing", result.getData().length >= 8);
 
         ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(mockSession).callTool(eq("screenshot"), argsCaptor.capture());
+        verify(mockSession).callMcpTool(eq("screenshot"), argsCaptor.capture());
         @SuppressWarnings("unchecked")
         Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
         assertEquals("png", args.get("format"));
@@ -314,6 +288,8 @@ public class MobileTest {
     @Test
     public void testBetaTakeScreenshotAcceptsJsonPayload() throws Exception {
         // Arrange
+        when(mockSession.getLinkUrl()).thenReturn("https://dummy-link-url");
+        when(mockSession.getLinkUrl()).thenReturn("https://dummy-link-url");
         byte[] pngHeader = new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
         byte[] payload = new byte[pngHeader.length + 4];
         System.arraycopy(pngHeader, 0, payload, 0, pngHeader.length);
@@ -321,8 +297,8 @@ public class MobileTest {
         String b64 = Base64.getEncoder().encodeToString(payload);
         String jsonPayload = "{\"type\":\"image\",\"mime_type\":\"image/png\",\"width\":720,\"height\":1280,\"data\":\"" + b64 + "\"}";
 
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonPayload, "beta-json-req-1");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonPayload, "beta-json-req-1", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
 
         // Act
         ScreenshotBytesResult result = mobile.betaTakeScreenshot();
@@ -347,8 +323,8 @@ public class MobileTest {
         System.arraycopy("long".getBytes(), 0, payload, pngHeader.length, 4);
         String b64 = Base64.getEncoder().encodeToString(payload);
         String jsonPayload = "{\"type\":\"image\",\"mime_type\":\"image/png\",\"width\":720,\"height\":1280,\"data\":\"" + b64 + "\"}";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonPayload, "beta-req-2");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonPayload, "beta-req-2", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
 
         // Act
         ScreenshotBytesResult result = mobile.betaTakeLongScreenshot(2, "png");
@@ -365,7 +341,7 @@ public class MobileTest {
         assertTrue("PNG magic bytes missing", result.getData().length >= 8);
 
         ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(mockSession).callTool(eq("long_screenshot"), argsCaptor.capture());
+        verify(mockSession).callMcpTool(eq("long_screenshot"), argsCaptor.capture());
         @SuppressWarnings("unchecked")
         Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
         assertEquals(2, args.get("max_screens"));
@@ -465,10 +441,8 @@ public class MobileTest {
     @Test
     public void testTapFailure() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(false, null, "test-123");
-        CallMcpToolResponseBody body = mockResponse.getBody();
-        when(body.getMessage()).thenReturn("MCP tool failed");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(false, "", "test-123", "MCP tool failed");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         BoolResult result = mobile.tap(100, 200);
@@ -482,7 +456,7 @@ public class MobileTest {
     @Test
     public void testTapException() throws Exception {
         // Arrange
-        when(mockSession.callTool(anyString(), any())).thenThrow(new RuntimeException("Network error"));
+        when(mockSession.callMcpTool(anyString(), any())).thenThrow(new RuntimeException("Network error"));
         
         // Act
         BoolResult result = mobile.tap(100, 200);
@@ -496,10 +470,8 @@ public class MobileTest {
     @Test
     public void testSwipeFailure() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(false, null, "test-123");
-        CallMcpToolResponseBody body = mockResponse.getBody();
-        when(body.getMessage()).thenReturn("Swipe failed");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(false, "", "test-123", "Swipe failed");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         BoolResult result = mobile.swipe(100, 100, 200, 200);
@@ -513,10 +485,8 @@ public class MobileTest {
     @Test
     public void testInputTextFailure() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(false, null, "test-123");
-        CallMcpToolResponseBody body = mockResponse.getBody();
-        when(body.getMessage()).thenReturn("Input failed");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(false, "", "test-123", "Input failed");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         BoolResult result = mobile.inputText("test");
@@ -528,10 +498,8 @@ public class MobileTest {
     @Test
     public void testSendKeyFailure() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(false, null, "test-123");
-        CallMcpToolResponseBody body = mockResponse.getBody();
-        when(body.getMessage()).thenReturn("Key send failed");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(false, "", "test-123", "Key send failed");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         BoolResult result = mobile.sendKey(KeyCode.HOME);
@@ -543,10 +511,8 @@ public class MobileTest {
     @Test
     public void testGetClickableUiElementsFailure() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(false, null, "test-123");
-        CallMcpToolResponseBody body = mockResponse.getBody();
-        when(body.getMessage()).thenReturn("Get UI elements failed");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(false, "", "test-123", "Get UI elements failed");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         UIElementListResult result = mobile.getClickableUiElements();
@@ -558,7 +524,7 @@ public class MobileTest {
     @Test
     public void testGetClickableUiElementsException() throws Exception {
         // Arrange
-        when(mockSession.callTool(anyString(), any())).thenThrow(new RuntimeException("Network error"));
+        when(mockSession.callMcpTool(anyString(), any())).thenThrow(new RuntimeException("Network error"));
         
         // Act
         UIElementListResult result = mobile.getClickableUiElements();
@@ -573,8 +539,8 @@ public class MobileTest {
     public void testGetAllUiElementsWithChildren() throws Exception {
         // Arrange
         String jsonData = "[{\"bounds\":\"[0,0][100,100]\",\"className\":\"Layout\",\"text\":\"\",\"type\":\"view\",\"resourceId\":\"layout1\",\"index\":0,\"isParent\":true,\"children\":[{\"bounds\":\"[10,10][90,90]\",\"className\":\"Button\",\"text\":\"OK\",\"type\":\"button\",\"resourceId\":\"btn1\",\"index\":0,\"isParent\":false}]}]";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonData, "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonData, "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         UIElementListResult result = mobile.getAllUiElements(5000);
@@ -589,8 +555,8 @@ public class MobileTest {
     @Test
     public void testGetAllUiElementsEmptyData() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(true, "", "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, "", "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         UIElementListResult result = mobile.getAllUiElements();
@@ -603,10 +569,9 @@ public class MobileTest {
     @Test
     public void testScreenshotFailure() throws Exception {
         // Arrange
-        CallMcpToolResponse mockResponse = createMockResponse(false, null, "test-123");
-        CallMcpToolResponseBody body = mockResponse.getBody();
-        when(body.getMessage()).thenReturn("Screenshot failed");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        when(mockSession.getLinkUrl()).thenReturn("");
+        OperationResult mockResult = createMockResult(false, "", "test-123", "Screenshot failed");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         OperationResult result = mobile.screenshot();
@@ -619,23 +584,23 @@ public class MobileTest {
     public void testStartAppWithActivity() throws Exception {
         // Arrange
         String jsonData = "[{\"pname\":\"settings\",\"pid\":12345,\"cmdline\":\"com.android.settings/.MainActivity\"}]";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonData, "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonData, "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         ProcessListResult result = mobile.startApp("com.android.settings", "", ".MainActivity");
         
         // Assert
         assertTrue(result.isSuccess());
-        verify(mockSession).callTool(eq("start_app"), any());
+        verify(mockSession).callMcpTool(eq("start_app"), any());
     }
     
     @Test
     public void testStartAppWithWorkDirectory() throws Exception {
         // Arrange
         String jsonData = "[{\"pname\":\"app\",\"pid\":12345,\"cmdline\":\"test\"}]";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonData, "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonData, "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         ProcessListResult result = mobile.startApp("test", "/data/local/tmp");
@@ -648,8 +613,8 @@ public class MobileTest {
     public void testGetInstalledAppsDefaultParams() throws Exception {
         // Arrange
         String jsonData = "[{\"name\":\"App1\",\"start_cmd\":\"com.app1\"}]";
-        CallMcpToolResponse mockResponse = createMockResponse(true, jsonData, "test-123");
-        when(mockSession.callTool(anyString(), any())).thenReturn(mockResponse);
+        OperationResult mockResult = createMockResult(true, jsonData, "test-123", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
         
         // Act
         InstalledAppListResult result = mobile.getInstalledApps();

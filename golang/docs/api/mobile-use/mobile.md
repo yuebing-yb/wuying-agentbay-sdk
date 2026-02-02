@@ -86,6 +86,7 @@ type Mobile struct {
 	Session	interface {
 		GetAPIKey() string
 		GetClient() *mcp.Client
+		GetLinkUrl() string
 		GetSessionId() string
 		GetImageID() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
@@ -417,6 +418,7 @@ tapResult := result.Session.Mobile.Tap(500, 500)
 func NewMobile(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	GetImageID() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
@@ -467,6 +469,7 @@ ScreenshotResult represents the result of a screenshot operation
 type SessionWithCommand interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command
