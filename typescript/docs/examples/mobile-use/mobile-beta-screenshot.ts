@@ -9,7 +9,7 @@ async function main() {
   }
 
   const agentBay = new AgentBay({ apiKey });
-  const create = await agentBay.create({ imageId: "imgc-0ab5ta4mn31wth5lh" });
+  const create = await agentBay.create({ imageId: "mobile-use-android-12-gw" });
   if (!create.success || !create.session) {
     throw new Error(`Failed to create session: ${create.errorMessage || ""}`);
   }
@@ -48,7 +48,7 @@ async function main() {
     const p1 = path.join(outDir, "mobile_beta_screenshot.png");
     fs.writeFileSync(p1, Buffer.from(s1.data));
     console.log(
-      `Saved ${p1} (${s1.data.length} bytes, size=${s1.width}x${s1.height})`
+      `Saved ${p1} (${s1.data.length} bytes, mimeType=${s1.mimeType}, type=${s1.type}, size=${s1.width}x${s1.height})`
     );
 
     const s2 = await session.mobile.betaTakeLongScreenshot(2, "png");
@@ -59,7 +59,7 @@ async function main() {
     const p2 = path.join(outDir, "mobile_beta_long_screenshot.png");
     fs.writeFileSync(p2, Buffer.from(s2.data));
     console.log(
-      `Saved ${p2} (${s2.data.length} bytes, size=${s2.width}x${s2.height})`
+      `Saved ${p2} (${s2.data.length} bytes, mimeType=${s2.mimeType}, type=${s2.type}, size=${s2.width}x${s2.height})`
     );
   } finally {
     await session.delete();

@@ -32,8 +32,9 @@ AdbUrlResult represents the result of ADB URL retrieval operation
 type BetaScreenshotResult struct {
 	models.ApiResponse
 	Success		bool	`json:"success"`
+	Type		string	`json:"type"`
+	MimeType	string	`json:"mime_type"`
 	Data		[]byte	`json:"data"`
-	Format		string	`json:"format"`
 	Width		*int	`json:"width,omitempty"`
 	Height		*int	`json:"height,omitempty"`
 	ErrorMessage	string	`json:"error_message"`

@@ -11,7 +11,7 @@ import pytest
 from agentbay import AgentBay, CreateSessionParams
 
 
-IMAGE_ID = "imgc-0ab5ta4mn31wth5lh"
+IMAGE_ID = "mobile-use-android-12-gw"
 
 
 @pytest.fixture(scope="module")

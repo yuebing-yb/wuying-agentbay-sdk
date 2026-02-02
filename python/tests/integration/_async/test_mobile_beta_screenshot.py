@@ -44,7 +44,7 @@ async def agent_bay():
 
 @pytest_asyncio.fixture
 async def session(agent_bay):
-    params = CreateSessionParams(image_id="imgc-0ab5ta4mn31wth5lh")
+    params = CreateSessionParams(image_id="mobile-use-android-12-gw")
     result = await agent_bay.create(params)
     assert result.success, f"Failed to create session: {result.error_message}"
     assert result.session is not None
@@ -57,7 +57,9 @@ async def test_mobile_beta_take_screenshot_png(session):
     await _prepare_for_screenshot_tests(session)
     result = await session.mobile.beta_take_screenshot()
     assert result.success is True
-    assert result.format == "png"
+    assert isinstance(result.type, str)
+    assert result.type.strip()
+    assert result.mime_type == "image/png"
     assert isinstance(result.width, int)
     assert isinstance(result.height, int)
     assert result.width > 0
@@ -72,7 +74,9 @@ async def test_mobile_beta_take_long_screenshot_png(session):
     await _prepare_for_screenshot_tests(session)
     result = await session.mobile.beta_take_long_screenshot(max_screens=2, format="png")
     assert result.success is True
-    assert result.format == "png"
+    assert isinstance(result.type, str)
+    assert result.type.strip()
+    assert result.mime_type == "image/png"
     assert isinstance(result.width, int)
     assert isinstance(result.height, int)
     assert result.width > 0
@@ -105,7 +109,9 @@ async def test_mobile_beta_take_long_screenshot_jpeg_quality(session):
     )
 
     assert high.success is True
-    assert high.format == "jpeg"
+    assert isinstance(high.type, str)
+    assert high.type.strip()
+    assert high.mime_type == "image/jpeg"
     assert isinstance(high.width, int)
     assert isinstance(high.height, int)
     assert high.width > 0
@@ -115,7 +121,9 @@ async def test_mobile_beta_take_long_screenshot_jpeg_quality(session):
     assert bytes(high.data[:3]) == b"\xff\xd8\xff"
 
     assert low.success is True
-    assert low.format == "jpeg"
+    assert isinstance(low.type, str)
+    assert low.type.strip()
+    assert low.mime_type == "image/jpeg"
     assert isinstance(low.width, int)
     assert isinstance(low.height, int)
     assert low.width > 0

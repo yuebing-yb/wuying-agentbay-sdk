@@ -332,7 +332,8 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'png' }, false);
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-beta-123');
-      expect(result.format).toBe('png');
+      expect(result.type).toBe('image');
+      expect(result.mimeType).toBe('image/png');
       expect(result.width).toBe(720);
       expect(result.height).toBe(1280);
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
@@ -364,7 +365,8 @@ describe('Mobile', () => {
       // Assert
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-beta-json-123');
-      expect(result.format).toBe('png');
+      expect(result.type).toBe('image');
+      expect(result.mimeType).toBe('image/png');
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
     });
 
@@ -404,14 +406,14 @@ describe('Mobile', () => {
 
     test('betaTakeLongScreenshot should call MCP tool and normalize jpg to jpeg', async () => {
       // Arrange
-      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      const payload = Buffer.concat([pngHeader, Buffer.from('long')]).toString('base64');
+      const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
+      const payload = Buffer.concat([jpgHeader, Buffer.from('long')]).toString('base64');
       const mockResult = {
         success: true,
         requestId: 'test-long-123',
         data: JSON.stringify({
           type: "image",
-          mime_type: "image/png",
+          mime_type: "image/jpeg",
           width: 720,
           height: 1280,
           data: payload,
@@ -431,10 +433,11 @@ describe('Mobile', () => {
       }, false);
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-long-123');
-      expect(result.format).toBe('png');
+      expect(result.type).toBe('image');
+      expect(result.mimeType).toBe('image/jpeg');
       expect(result.width).toBe(720);
       expect(result.height).toBe(1280);
-      expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
+      expect(Buffer.from(result.data).slice(0, 3).equals(jpgHeader)).toBe(true);
     });
   });
 

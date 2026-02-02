@@ -40,7 +40,9 @@ def test_take_screenshot_jpg_returns_jpeg_bytes(session):
     """
     result = session.computer.beta_take_screenshot(format="jpg")
     assert result.success is True
-    assert result.format == "jpeg"
+    assert isinstance(result.type, str)
+    assert result.type.strip()
+    assert result.mime_type == "image/jpeg"
     assert isinstance(result.width, int)
     assert isinstance(result.height, int)
     assert result.width > 0

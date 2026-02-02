@@ -40,7 +40,8 @@ describe("Mobile screenshot tool selection by linkUrl", () => {
 
       const beta = await session.mobile.betaTakeScreenshot();
       expect(beta.success).toBe(true);
-      expect(beta.format).toBe("png");
+      expect(beta.type).toBe("image");
+      expect(beta.mimeType).toBe("image/png");
       expect(typeof beta.width).toBe("number");
       expect(typeof beta.height).toBe("number");
       expect((beta.width || 0) > 0).toBe(true);

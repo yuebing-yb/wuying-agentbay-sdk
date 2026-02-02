@@ -321,7 +321,7 @@ Supported formats:
 - `format` (String): Output image format ("png", "jpeg", or "jpg")
 
 **Returns:**
-- `ScreenshotBytesResult`: ScreenshotBytesResult containing image bytes and error message if any
+- `ScreenshotBytesResult`: ScreenshotBytesResult containing image bytes and metadata (`type`, `mimeType`, `width`, `height`) and error message if any
 
 ### listRootWindows
 

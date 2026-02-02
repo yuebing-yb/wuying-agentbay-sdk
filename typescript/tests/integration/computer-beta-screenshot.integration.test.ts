@@ -31,7 +31,8 @@ describe("Computer beta screenshot integration tests", () => {
       await new Promise((resolve) => setTimeout(resolve, 10000));
       const s = await session.computer.betaTakeScreenshot("jpg");
       expect(s.success).toBe(true);
-      expect(s.format).toBe("jpeg");
+      expect(s.type).toBe("image");
+      expect(s.mimeType).toBe("image/jpeg");
       expect(s.data.length).toBeGreaterThan(3);
       expect(Buffer.from(s.data).slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))).toBe(true);
       expect(typeof s.width).toBe("number");

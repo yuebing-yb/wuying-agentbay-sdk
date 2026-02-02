@@ -51,7 +51,8 @@ public class MobileScreenshotToolSelectionByLinkUrlIntegrationTest {
 
             ScreenshotBytesResult beta = session.getMobile().betaTakeScreenshot();
             assertTrue(beta.getErrorMessage(), beta.isSuccess());
-            assertEquals("png", beta.getFormat());
+            assertEquals("image", beta.getType());
+            assertEquals("image/png", beta.getMimeType());
             assertNotNull(beta.getWidth());
             assertNotNull(beta.getHeight());
             assertTrue(beta.getWidth() > 0);

@@ -440,7 +440,8 @@ func (suite *ComputerTestSuite) TestBetaTakeScreenshot_SuccessJpeg() {
 	// Assert
 	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-screenshot-jpeg", result.RequestID)
-	assert.Equal(suite.T(), "jpeg", result.Format)
+	assert.Equal(suite.T(), "image", result.Type)
+	assert.Equal(suite.T(), "image/jpeg", result.MimeType)
 	if assert.NotNil(suite.T(), result.Width) {
 		assert.Equal(suite.T(), 1280, *result.Width)
 	}
@@ -475,7 +476,6 @@ func (suite *ComputerTestSuite) TestBetaTakeScreenshot_RejectsNonJson() {
 	// Assert
 	assert.False(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-screenshot-non-json", result.RequestID)
-	assert.Equal(suite.T(), "jpeg", result.Format)
 	assert.Nil(suite.T(), result.Data)
 	assert.Contains(suite.T(), result.ErrorMessage, "non-JSON")
 }

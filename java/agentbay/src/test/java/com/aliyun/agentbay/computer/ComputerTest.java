@@ -58,7 +58,8 @@ public class ComputerTest {
 
         assertTrue(result.isSuccess());
         assertEquals("beta-req-1", result.getRequestId());
-        assertEquals("jpeg", result.getFormat());
+        assertEquals("image", result.getType());
+        assertEquals("image/jpeg", result.getMimeType());
         assertNotNull(result.getWidth());
         assertNotNull(result.getHeight());
         assertEquals(Integer.valueOf(1280), result.getWidth());
@@ -88,7 +89,6 @@ public class ComputerTest {
         ScreenshotBytesResult result = computer.betaTakeScreenshot("jpeg");
         assertFalse(result.isSuccess());
         assertEquals("beta-req-2", result.getRequestId());
-        assertEquals("jpeg", result.getFormat());
         assertNotNull(result.getErrorMessage());
         assertTrue(result.getErrorMessage().toLowerCase().contains("non-json"));
     }

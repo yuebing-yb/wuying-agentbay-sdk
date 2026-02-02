@@ -21,7 +21,7 @@ func TestMobileBetaScreenshotPNG(t *testing.T) {
 	require.NoError(t, err, "Failed to create AgentBay client")
 
 	sessionParams := &agentbay.CreateSessionParams{
-		ImageId: "imgc-0ab5ta4mn31wth5lh",
+		ImageId: "mobile-use-android-12-gw",
 	}
 	sessionResult, err := agentBay.Create(sessionParams)
 	require.NoError(t, err, "Failed to create session")
@@ -52,7 +52,8 @@ func TestMobileBetaScreenshotPNG(t *testing.T) {
 	s := session.Mobile.BetaTakeScreenshot()
 	assert.NotEmpty(t, s.RequestID)
 	assert.True(t, s.Success, "beta screenshot failed: %s", s.ErrorMessage)
-	assert.Equal(t, "png", s.Format)
+	assert.Equal(t, "image", s.Type)
+	assert.Equal(t, "image/png", s.MimeType)
 	assert.NotNil(t, s.Width)
 	assert.NotNil(t, s.Height)
 	assert.Greater(t, *s.Width, 0)
@@ -63,7 +64,8 @@ func TestMobileBetaScreenshotPNG(t *testing.T) {
 	ls := session.Mobile.BetaTakeLongScreenshot(2, "png")
 	assert.NotEmpty(t, ls.RequestID)
 	assert.True(t, ls.Success, "beta long screenshot failed: %s", ls.ErrorMessage)
-	assert.Equal(t, "png", ls.Format)
+	assert.Equal(t, "image", ls.Type)
+	assert.Equal(t, "image/png", ls.MimeType)
 	assert.NotNil(t, ls.Width)
 	assert.NotNil(t, ls.Height)
 	assert.Greater(t, *ls.Width, 0)
@@ -82,7 +84,7 @@ func TestMobileBetaLongScreenshotJPEGQuality(t *testing.T) {
 	require.NoError(t, err, "Failed to create AgentBay client")
 
 	sessionParams := &agentbay.CreateSessionParams{
-		ImageId: "imgc-0ab5ta4mn31wth5lh",
+		ImageId: "mobile-use-android-12-gw",
 	}
 	sessionResult, err := agentBay.Create(sessionParams)
 	require.NoError(t, err, "Failed to create session")
@@ -113,14 +115,14 @@ func TestMobileBetaLongScreenshotJPEGQuality(t *testing.T) {
 	invalid := session.Mobile.BetaTakeLongScreenshot(2, "jpeg", 0)
 	assert.False(t, invalid.Success)
 	assert.Contains(t, invalid.ErrorMessage, "invalid quality")
-	assert.Equal(t, "jpeg", invalid.Format)
 
 	high := session.Mobile.BetaTakeLongScreenshot(2, "jpeg", 95)
 	low := session.Mobile.BetaTakeLongScreenshot(2, "jpeg", 10)
 
 	assert.NotEmpty(t, high.RequestID)
 	assert.True(t, high.Success, "beta long screenshot (jpeg, q=95) failed: %s", high.ErrorMessage)
-	assert.Equal(t, "jpeg", high.Format)
+	assert.Equal(t, "image", high.Type)
+	assert.Equal(t, "image/jpeg", high.MimeType)
 	assert.NotNil(t, high.Width)
 	assert.NotNil(t, high.Height)
 	assert.Greater(t, *high.Width, 0)
@@ -130,7 +132,8 @@ func TestMobileBetaLongScreenshotJPEGQuality(t *testing.T) {
 
 	assert.NotEmpty(t, low.RequestID)
 	assert.True(t, low.Success, "beta long screenshot (jpeg, q=10) failed: %s", low.ErrorMessage)
-	assert.Equal(t, "jpeg", low.Format)
+	assert.Equal(t, "image", low.Type)
+	assert.Equal(t, "image/jpeg", low.MimeType)
 	assert.NotNil(t, low.Width)
 	assert.NotNil(t, low.Height)
 	assert.Greater(t, *low.Width, 0)

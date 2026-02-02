@@ -270,7 +270,8 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertEquals("beta-req-1", result.getRequestId());
-        assertEquals("png", result.getFormat());
+        assertEquals("image", result.getType());
+        assertEquals("image/png", result.getMimeType());
         assertNotNull(result.getWidth());
         assertNotNull(result.getHeight());
         assertEquals(Integer.valueOf(720), result.getWidth());
@@ -305,7 +306,8 @@ public class MobileTest {
 
         // Assert
         assertTrue(result.isSuccess());
-        assertEquals("png", result.getFormat());
+        assertEquals("image", result.getType());
+        assertEquals("image/png", result.getMimeType());
         assertNotNull(result.getWidth());
         assertNotNull(result.getHeight());
         assertEquals(Integer.valueOf(720), result.getWidth());
@@ -332,7 +334,8 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertEquals("beta-req-2", result.getRequestId());
-        assertEquals("png", result.getFormat());
+        assertEquals("image", result.getType());
+        assertEquals("image/png", result.getMimeType());
         assertNotNull(result.getWidth());
         assertNotNull(result.getHeight());
         assertEquals(Integer.valueOf(720), result.getWidth());

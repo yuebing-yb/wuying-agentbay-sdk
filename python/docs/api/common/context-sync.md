@@ -471,6 +471,10 @@ Defines the context synchronization configuration
     context_id: ID of the context to synchronize
     path: Path where the context should be mounted
     policy: Defines the synchronization policy
+    beta_wait_for_completion: Beta feature flag to control whether session creation
+  should wait for this context's initial download to finish. If set to False,
+  the SDK will not block create_session on this context. Defaults to None
+  (treated as True for backward compatibility).
 
 #### context_id: `str`
 
@@ -490,11 +494,21 @@ path = None
 policy = None
 ```
 
+#### beta_wait_for_completion: `Optional[bool]`
+
+```python
+beta_wait_for_completion = None
+```
+
 ### new
 
 ```python
 @classmethod
-def new(cls, context_id: str, path: str, policy: Optional[SyncPolicy] = None)
+def new(cls,
+        context_id: str,
+        path: str,
+        policy: Optional[SyncPolicy] = None,
+        beta_wait_for_completion: Optional[bool] = None)
 ```
 
 Creates a new context sync configuration

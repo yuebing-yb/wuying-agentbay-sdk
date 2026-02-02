@@ -752,8 +752,9 @@ public class Mobile extends BaseService {
             return new ScreenshotBytesResult(
                 "",
                 false,
+                "",
+                "",
                 new byte[0],
-                "png",
                 "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead."
             );
         }
@@ -766,8 +767,9 @@ public class Mobile extends BaseService {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    "png",
                     result.getErrorMessage()
                 );
             }
@@ -776,8 +778,9 @@ public class Mobile extends BaseService {
             return new ScreenshotBytesResult(
                 result.getRequestId(),
                 true,
+                decoded.type,
+                decoded.mimeType,
                 decoded.bytes,
-                decoded.format,
                 decoded.width,
                 decoded.height,
                 ""
@@ -786,8 +789,9 @@ public class Mobile extends BaseService {
             return new ScreenshotBytesResult(
                 "",
                 false,
+                "",
+                "",
                 new byte[0],
-                "png",
                 "Failed to take screenshot: " + e.getMessage()
             );
         }
@@ -808,7 +812,7 @@ public class Mobile extends BaseService {
     public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String format, Integer quality) {
         try {
             if (maxScreens < 2 || maxScreens > 10) {
-                return new ScreenshotBytesResult("", false, new byte[0], "", "Invalid maxScreens: must be in range [2, 10]");
+                return new ScreenshotBytesResult("", false, "", "", new byte[0], null, null, "Invalid maxScreens: must be in range [2, 10]");
             }
 
             String formatNorm = normalizeImageFormat(format, "png");
@@ -816,14 +820,15 @@ public class Mobile extends BaseService {
                 return new ScreenshotBytesResult(
                     "",
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    formatNorm,
                     "Unsupported format: " + format + ". Supported values: 'png', 'jpeg'."
                 );
             }
             if (quality != null) {
                 if (quality < 1 || quality > 100) {
-                    return new ScreenshotBytesResult("", false, new byte[0], formatNorm, "Invalid quality: must be in range [1, 100]");
+                    return new ScreenshotBytesResult("", false, "", "", new byte[0], null, null, "Invalid quality: must be in range [1, 100]");
                 }
             }
 
@@ -839,8 +844,9 @@ public class Mobile extends BaseService {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    formatNorm,
                     result.getErrorMessage()
                 );
             }
@@ -849,8 +855,9 @@ public class Mobile extends BaseService {
             return new ScreenshotBytesResult(
                 result.getRequestId(),
                 true,
+                decoded.type,
+                decoded.mimeType,
                 decoded.bytes,
-                decoded.format,
                 decoded.width,
                 decoded.height,
                 ""
@@ -859,8 +866,9 @@ public class Mobile extends BaseService {
             return new ScreenshotBytesResult(
                 "",
                 false,
+                "",
+                "",
                 new byte[0],
-                normalizeImageFormat(format, "png"),
                 "Failed to take long screenshot: " + e.getMessage()
             );
         }
@@ -1133,12 +1141,16 @@ public class Mobile extends BaseService {
         final String format;
         final Integer width;
         final Integer height;
+        final String type;
+        final String mimeType;
 
-        DecodedImage(byte[] bytes, String format, Integer width, Integer height) {
+        DecodedImage(byte[] bytes, String format, Integer width, Integer height, String type, String mimeType) {
             this.bytes = bytes;
             this.format = format;
             this.width = width;
             this.height = height;
+            this.type = type == null ? "" : type;
+            this.mimeType = mimeType == null ? "" : mimeType;
         }
     }
 
@@ -1170,10 +1182,20 @@ public class Mobile extends BaseService {
         }
         Integer width = null;
         Integer height = null;
+        String shotType;
+        String mimeType;
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> obj = objectMapper.readValue(s, Map.class);
+            Object typeObj = obj.get("type");
+            Object mimeTypeObj = obj.get("mime_type");
             Object b64Obj = obj.get("data");
+            if (!(typeObj instanceof String) || ((String) typeObj).trim().isEmpty()) {
+                throw new IllegalArgumentException("Invalid screenshot JSON: expected non-empty string 'type'");
+            }
+            if (!(mimeTypeObj instanceof String) || ((String) mimeTypeObj).trim().isEmpty()) {
+                throw new IllegalArgumentException("Invalid screenshot JSON: expected non-empty string 'mime_type'");
+            }
             if (!(b64Obj instanceof String) || ((String) b64Obj).trim().isEmpty()) {
                 throw new IllegalArgumentException("Screenshot JSON missing base64 field");
             }
@@ -1191,6 +1213,8 @@ public class Mobile extends BaseService {
                 }
                 height = ((Number) heightObj).intValue();
             }
+            shotType = ((String) typeObj).trim();
+            mimeType = ((String) mimeTypeObj).trim();
             s = ((String) b64Obj).trim();
         } catch (IllegalArgumentException e) {
             throw e;
@@ -1200,13 +1224,23 @@ public class Mobile extends BaseService {
 
         byte[] decoded = Base64.getDecoder().decode(s);
 
-        String fmt = expectedFormat;
-        if (startsWith(decoded, PNG_MAGIC)) {
-            fmt = "png";
-        } else if (startsWith(decoded, JPEG_MAGIC)) {
-            fmt = "jpeg";
+        String fmt = normalizeImageFormat(expectedFormat, "png");
+        String expectedMimeType = "png".equals(fmt) ? "image/png" : "jpeg".equals(fmt) ? "image/jpeg" : "";
+        if (expectedMimeType.isEmpty()) {
+            throw new IllegalArgumentException("Unsupported format: " + expectedFormat);
         }
-        return new DecodedImage(decoded, fmt, width, height);
+        if (!expectedMimeType.equalsIgnoreCase(mimeType)) {
+            throw new IllegalArgumentException(
+                "Screenshot JSON mime_type does not match expected format: expected " + expectedMimeType + ", got " + mimeType
+            );
+        }
+        if ("png".equals(fmt) && !startsWith(decoded, PNG_MAGIC)) {
+            throw new IllegalArgumentException("Screenshot data does not match expected format 'png'");
+        }
+        if ("jpeg".equals(fmt) && !startsWith(decoded, JPEG_MAGIC)) {
+            throw new IllegalArgumentException("Screenshot data does not match expected format 'jpeg'");
+        }
+        return new DecodedImage(decoded, fmt, width, height, shotType, mimeType);
     }
 
     private static boolean startsWith(byte[] data, byte[] prefix) {
