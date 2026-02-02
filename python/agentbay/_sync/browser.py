@@ -57,7 +57,7 @@ class Browser(BaseService):
                 "Please use browser.operator instead.",
             )
             self._agent_deprecation_warned = True
-            return self._agent
+        return self._agent
 
     def initialize(self, option: Optional["BrowserOption"] = None) -> bool:
         """

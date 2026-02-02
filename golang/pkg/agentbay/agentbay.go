@@ -279,6 +279,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	// Flag to indicate if we need to wait for context synchronization
 	needsContextSync := false
+	waitContextIDs := map[string]struct{}{}
 
 	// Add context sync configurations if provided
 	var persistenceDataList []*mcp.CreateMcpSessionRequestPersistenceDataList
@@ -300,6 +301,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			}
 
 			persistenceDataList = append(persistenceDataList, persistenceItem)
+			if contextSync.BetaWaitForCompletion == nil || *contextSync.BetaWaitForCompletion {
+				waitContextIDs[contextSync.ContextID] = struct{}{}
+			}
 		}
 	}
 
@@ -311,6 +315,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 		persistenceDataList = append(persistenceDataList, item)
 		needsContextSync = true
+		if params.BrowserContext.ContextID != "" {
+			waitContextIDs[params.BrowserContext.ContextID] = struct{}{}
+		}
 	}
 
 	// Add mobile simulate context sync if needed
@@ -337,6 +344,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 				Path:      tea.String(MobileInfoDefaultPath),
 			}
 			persistenceDataList = append(persistenceDataList, mobilePersistence)
+		}
+		if simContextID != "" {
+			waitContextIDs[simContextID] = struct{}{}
 		}
 	}
 
@@ -451,7 +461,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// If we have persistence data, wait for context synchronization
-	if needsContextSync {
+	if needsContextSync && len(waitContextIDs) > 0 {
 		fmt.Println("Waiting for context synchronization to complete...")
 
 		// Exponential backoff configuration
@@ -479,17 +489,15 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 				continue
 			}
 
-			// Check if all context items have status "Success" or "Failed"
-			allCompleted := true
 			hasFailure := false
+			statusByContextID := map[string]string{}
 
 			for _, item := range infoResult.ContextStatusData {
-				fmt.Printf("Context %s status: %s, path: %s\n", item.ContextId, item.Status, item.Path)
-
-				if item.Status != "Success" && item.Status != "Failed" {
-					allCompleted = false
-					break
+				if _, ok := waitContextIDs[item.ContextId]; !ok {
+					continue
 				}
+				statusByContextID[item.ContextId] = item.Status
+				fmt.Printf("Context %s status: %s, path: %s\n", item.ContextId, item.Status, item.Path)
 
 				if item.Status == "Failed" {
 					hasFailure = true
@@ -497,7 +505,16 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 				}
 			}
 
-			if allCompleted || len(infoResult.ContextStatusData) == 0 {
+			allCompleted := true
+			for ctxID := range waitContextIDs {
+				st, ok := statusByContextID[ctxID]
+				if !ok || (st != "Success" && st != "Failed") {
+					allCompleted = false
+					break
+				}
+			}
+
+			if allCompleted {
 				if hasFailure {
 					fmt.Println("Context synchronization completed with failures")
 				} else {
@@ -1363,8 +1380,9 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 		copy.ContextSync = make([]*ContextSync, 0, len(params.ContextSync))
 		for _, cs := range params.ContextSync {
 			csCopy := &ContextSync{
-				ContextID: cs.ContextID,
-				Path:      cs.Path,
+				ContextID:             cs.ContextID,
+				Path:                  cs.Path,
+				BetaWaitForCompletion: cs.BetaWaitForCompletion,
 			}
 			// Copy Policy if it exists (assuming SyncPolicy is a struct that can be shallow copied)
 			if cs.Policy != nil {

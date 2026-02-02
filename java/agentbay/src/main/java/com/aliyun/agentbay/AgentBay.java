@@ -26,8 +26,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -554,8 +557,22 @@ public class AgentBay {
             // If we have persistence data, wait for context synchronization
             boolean needsContextSync = (params.getContextSyncs() != null && !params.getContextSyncs().isEmpty()) ||
                                       (params.getBrowserContext() != null);
-            if (needsContextSync) {
-                waitForContextSynchronization(session);
+            Set<String> waitContextIds = new HashSet<>();
+            if (params.getContextSyncs() != null) {
+                for (ContextSync cs : params.getContextSyncs()) {
+                    Boolean wait = cs.getBetaWaitForCompletion();
+                    if (wait == null || wait) {
+                        if (cs.getContextId() != null && !cs.getContextId().isEmpty()) {
+                            waitContextIds.add(cs.getContextId());
+                        }
+                    }
+                }
+            }
+            if (params.getBrowserContext() != null && params.getBrowserContext().getContextId() != null) {
+                waitContextIds.add(params.getBrowserContext().getContextId());
+            }
+            if (needsContextSync && !waitContextIds.isEmpty()) {
+                waitForContextSynchronization(session, waitContextIds);
             }
 
             // Handle mobile simulate if configured
@@ -635,7 +652,10 @@ public class AgentBay {
      *
      * @param session The session to wait for context synchronization
      */
-    private void waitForContextSynchronization(Session session) {
+    private void waitForContextSynchronization(Session session, Set<String> waitContextIds) {
+        if (waitContextIds == null || waitContextIds.isEmpty()) {
+            return;
+        }
         // Exponential backoff configuration
         // Starts with short intervals (0.5s) for fast completion detection
         // Gradually increases intervals (up to 5s max) to reduce server load
@@ -654,22 +674,30 @@ public class AgentBay {
                 // Get context status data
                 com.aliyun.agentbay.context.ContextInfoResult infoResult = session.getContext().info();
 
-                // Check if all context items have status "Success" or "Failed"
-                boolean allCompleted = true;
                 boolean hasFailure = false;
+                Map<String, String> statusByContextId = new HashMap<>();
 
                 for (com.aliyun.agentbay.context.ContextStatusData item : infoResult.getContextStatusData()) {
-                    if (!"Success".equals(item.getStatus()) && !"Failed".equals(item.getStatus())) {
-                        allCompleted = false;
-                        break;
+                    if (!waitContextIds.contains(item.getContextId())) {
+                        continue;
                     }
+                    statusByContextId.put(item.getContextId(), item.getStatus());
 
                     if ("Failed".equals(item.getStatus())) {
                         hasFailure = true;
                     }
                 }
 
-                if (allCompleted || infoResult.getContextStatusData().isEmpty()) {
+                boolean allCompleted = true;
+                for (String ctxId : waitContextIds) {
+                    String st = statusByContextId.get(ctxId);
+                    if (st == null || (!"Success".equals(st) && !"Failed".equals(st))) {
+                        allCompleted = false;
+                        break;
+                    }
+                }
+
+                if (allCompleted) {
                     if (hasFailure) {
                     } else {
                     }

@@ -40,6 +40,12 @@ public static ContextSync create(String contextId, String path, SyncPolicy polic
 public ContextSync withPolicy(SyncPolicy policy)
 ```
 
+### withBetaWaitForCompletion
+
+```java
+public ContextSync withBetaWaitForCompletion(Boolean wait)
+```
+
 ### getPolicy
 
 ```java
@@ -50,6 +56,18 @@ public SyncPolicy getPolicy()
 
 ```java
 public void setPolicy(SyncPolicy policy)
+```
+
+### getBetaWaitForCompletion
+
+```java
+public Boolean getBetaWaitForCompletion()
+```
+
+### setBetaWaitForCompletion
+
+```java
+public void setBetaWaitForCompletion(Boolean betaWaitForCompletion)
 ```
 
 

@@ -433,16 +433,32 @@ class ContextSync:
         context_id: ID of the context to synchronize
         path: Path where the context should be mounted
         policy: Defines the synchronization policy
+        beta_wait_for_completion: Beta feature flag to control whether session creation
+            should wait for this context's initial download to finish. If set to False,
+            the SDK will not block create_session on this context. Defaults to None
+            (treated as True for backward compatibility).
     """
 
     context_id: str
     path: str
     policy: Optional[SyncPolicy] = None
+    beta_wait_for_completion: Optional[bool] = None
 
     @classmethod
-    def new(cls, context_id: str, path: str, policy: Optional[SyncPolicy] = None):
+    def new(
+        cls,
+        context_id: str,
+        path: str,
+        policy: Optional[SyncPolicy] = None,
+        beta_wait_for_completion: Optional[bool] = None,
+    ):
         """Creates a new context sync configuration"""
-        return cls(context_id=context_id, path=path, policy=policy)
+        return cls(
+            context_id=context_id,
+            path=path,
+            policy=policy,
+            beta_wait_for_completion=beta_wait_for_completion,
+        )
 
     def __deepcopy__(self, memo):
         """Support deepcopy for dataclass with __dict__() method"""
@@ -450,6 +466,7 @@ class ContextSync:
             context_id=self.context_id,
             path=self.path,
             policy=copy.deepcopy(self.policy, memo) if self.policy else None,
+            beta_wait_for_completion=self.beta_wait_for_completion,
         )
 
     def with_policy(self, policy: SyncPolicy):
