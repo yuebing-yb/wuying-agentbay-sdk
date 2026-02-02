@@ -54,7 +54,7 @@ class AsyncBrowser(AsyncBaseService):
                 "Please use browser.operator instead.",
             )
             self._agent_deprecation_warned = True
-            return self._agent
+        return self._agent
 
     async def initialize(self, option: Optional["BrowserOption"] = None) -> bool:
         """
