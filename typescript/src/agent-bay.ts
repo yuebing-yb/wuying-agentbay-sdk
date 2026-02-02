@@ -9,6 +9,7 @@ import type { McpTool } from "./session";
 import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
+import type { ConfigOptions } from "./config";
 import { ContextService } from "./context";
 import { BetaNetworkService } from "./beta-network";
 import { ContextSync } from "./context-sync";
@@ -89,7 +90,7 @@ export class AgentBay {
   constructor(
     options: {
       apiKey?: string;
-      config?: Config;
+      config?: ConfigOptions;
       envFile?: string;
     } = {}
   ) {

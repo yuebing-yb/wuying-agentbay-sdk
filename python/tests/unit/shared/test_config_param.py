@@ -35,6 +35,23 @@ class LoadConfigTestCase(unittest.TestCase):
         self.assertEqual(result["endpoint"], "custom-endpoint")
         self.assertEqual(result["timeout_ms"], 5000)
 
+    def test_partial_config_fields_are_filled_with_defaults(self):
+        """
+        Config should allow passing only a subset of fields.
+
+        Expected behavior:
+        - Missing fields are filled with SDK defaults.
+        - Explicitly provided fields are preserved.
+        """
+        os.chdir(self.test_dir.name)
+        cfg = Config(region_id="ap-southeast-1")
+        result = _load_config(cfg)
+
+        default = _default_config()
+        self.assertEqual(result["endpoint"], default["endpoint"])
+        self.assertEqual(result["timeout_ms"], default["timeout_ms"])
+        self.assertEqual(result["region_id"], "ap-southeast-1")
+
     def test_load_from_env_file(self):
         """Test loading configuration from .env file"""
         os.environ.pop("AGENTBAY_ENDPOINT", None)

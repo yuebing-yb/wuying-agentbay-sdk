@@ -16,9 +16,15 @@ class Config:
     Configuration object for AgentBay client.
     """
 
-    def __init__(self, endpoint: str, timeout_ms: int, region_id: Optional[str] = None):
-        self.endpoint = endpoint
-        self.timeout_ms = timeout_ms
+    def __init__(
+        self,
+        endpoint: Optional[str] = None,
+        timeout_ms: Optional[int] = None,
+        region_id: Optional[str] = None,
+    ):
+        defaults = _default_config()
+        self.endpoint = defaults["endpoint"] if endpoint is None else endpoint
+        self.timeout_ms = defaults["timeout_ms"] if timeout_ms is None else timeout_ms
         self.region_id = region_id
 
 
