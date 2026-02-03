@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -33,14 +34,13 @@ func TestSessionKeepAliveIntegration(t *testing.T) {
 
 	idleReleaseTimeoutSeconds := int32(30)
 	maxOverSeconds := int32(60)
-	pollInterval := 15 * time.Second
+	pollInterval := 2 * time.Second
 	imageID := "linux_latest"
 
 	commonLabels := map[string]string{
 		"test": "session-keep-alive",
 		"sdk":  "golang",
 	}
-
 	controlParams := agentbay.NewCreateSessionParams().
 		WithImageId(imageID).
 		WithIdleReleaseTimeout(idleReleaseTimeoutSeconds).
@@ -59,7 +59,6 @@ func TestSessionKeepAliveIntegration(t *testing.T) {
 		})
 
 	start := time.Now()
-
 	controlCreate, err := client.Create(controlParams)
 	if err != nil {
 		t.Fatalf("Failed to create control session: %v", err)
@@ -68,7 +67,6 @@ func TestSessionKeepAliveIntegration(t *testing.T) {
 		t.Fatalf("Create returned nil control session")
 	}
 	control := controlCreate.Session
-
 	refreshedCreate, err := client.Create(refreshedParams)
 	if err != nil {
 		t.Fatalf("Failed to create refreshed session: %v", err)
@@ -109,14 +107,23 @@ func TestSessionKeepAliveIntegration(t *testing.T) {
 		if e2 != nil {
 			t.Fatalf("Refreshed GetStatus failed: %v", e2)
 		}
-
+		
 		if isReleasedStatusResult(controlStatus) {
 			if isReleasedStatusResult(refreshedStatus) {
-				t.Fatalf("Refreshed session released no later than control session; keep-alive did not extend idle timer")
+				t.Fatalf("Refreshed session was not kept alive longer than control session; keep-alive did not extend idle timer")
 			}
+			elapsed := time.Since(start).Seconds()
+			log.Printf("✅ Control released while refreshed alive, elapsed=%.2fs\n", elapsed)
 			return
 		}
 
+		// Check if refreshed session was released before control session (unexpected)
+		if isReleasedStatusResult(refreshedStatus) {
+			t.Fatalf("Refreshed session was released before control session; keep-alive may have failed")
+		}
+
 		time.Sleep(pollInterval)
+
+	
 	}
 }
