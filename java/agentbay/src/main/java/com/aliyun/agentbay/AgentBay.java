@@ -512,8 +512,6 @@ public class AgentBay {
             }
 
             result.setSessionId(sessionId);
-            result.setStatus("created");
-            result.setBrowserType(params.getBrowserType());
             result.setSuccess(true);
 
             // Create and cache the session

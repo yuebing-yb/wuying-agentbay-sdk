@@ -15,20 +15,8 @@ public class SessionResult extends ApiResponse {
     @JsonProperty("sessionId")
     private String sessionId;
 
-    @JsonProperty("status")
-    private String status;
-
-    @JsonProperty("message")
-    private String message;
-
     @JsonProperty("requestId")
     private String requestId;
-
-    @JsonProperty("browserType")
-    private String browserType;
-
-    @JsonProperty("createdAt")
-    private String createdAt;
 
     public String getSessionId() {
         return sessionId;
@@ -38,44 +26,12 @@ public class SessionResult extends ApiResponse {
         this.sessionId = sessionId;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
     public String getRequestId() {
         return requestId;
     }
 
     public void setRequestId(String requestId) {
         this.requestId = requestId;
-    }
-
-    public String getBrowserType() {
-        return browserType;
-    }
-
-    public void setBrowserType(String browserType) {
-        this.browserType = browserType;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
     }
 
     public boolean isSuccess() {
