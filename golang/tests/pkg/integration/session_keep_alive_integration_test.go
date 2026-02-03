@@ -34,7 +34,7 @@ func TestSessionKeepAliveIntegration(t *testing.T) {
 
 	idleReleaseTimeoutSeconds := int32(30)
 	maxOverSeconds := int32(60)
-	pollInterval := 2 * time.Second
+	pollInterval := 15 * time.Second
 	imageID := "linux_latest"
 
 	commonLabels := map[string]string{
