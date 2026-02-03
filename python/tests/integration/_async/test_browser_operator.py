@@ -134,9 +134,9 @@ async def test_initialize_browser_with_fingerprint(browser_session):
         assert default_context is not None
 
         page = await default_context.new_page()
-        await page.goto("https://httpbin.org/user-operator", timeout=60000)
+        await page.goto("https://httpbin.org/user-agent", timeout=60000)
         response = await page.evaluate("() => JSON.parse(document.body.textContent)")
-        user_agent = response["user-operator"]
+        user_agent = response["user-agent"]
         print("user_agent =", user_agent)
         assert user_agent is not None
         is_windows = is_windows_user_agent(user_agent)
