@@ -748,6 +748,20 @@ public class Mobile extends BaseService {
      * @return ScreenshotBytesResult containing PNG bytes and error message if any
      */
     public ScreenshotBytesResult betaTakeScreenshot() {
+        return betaTakeScreenshot("png");
+    }
+
+    /**
+     * Capture the current screen and return raw image bytes (beta).
+     *
+     * Supported formats:
+     * - "png"
+     * - "jpeg" (or "jpg")
+     *
+     * @param format Output image format ("png" or "jpeg")
+     * @return ScreenshotBytesResult containing image bytes and error message if any
+     */
+    public ScreenshotBytesResult betaTakeScreenshot(String format) {
         if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
             return new ScreenshotBytesResult(
                 "",
@@ -755,12 +769,28 @@ public class Mobile extends BaseService {
                 "",
                 "",
                 new byte[0],
+                null,
+                null,
                 "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead."
             );
         }
         try {
+            String formatNorm = normalizeImageFormat(format, "png");
+            if (!"png".equals(formatNorm) && !"jpeg".equals(formatNorm)) {
+                return new ScreenshotBytesResult(
+                    "",
+                    false,
+                    "",
+                    "",
+                    new byte[0],
+                    null,
+                    null,
+                    "Unsupported format: " + format + ". Supported values: 'png', 'jpeg'."
+                );
+            }
+
             Map<String, Object> args = new HashMap<>();
-            args.put("format", "png");
+            args.put("format", formatNorm);
             OperationResult result = callCaptureTool("screenshot", args);
 
             if (!result.isSuccess()) {
@@ -770,11 +800,13 @@ public class Mobile extends BaseService {
                     "",
                     "",
                     new byte[0],
+                    null,
+                    null,
                     result.getErrorMessage()
                 );
             }
 
-            DecodedImage decoded = decodeBase64Image(result.getData(), "png");
+            DecodedImage decoded = decodeBase64Image(result.getData(), formatNorm);
             return new ScreenshotBytesResult(
                 result.getRequestId(),
                 true,
@@ -792,6 +824,8 @@ public class Mobile extends BaseService {
                 "",
                 "",
                 new byte[0],
+                null,
+                null,
                 "Failed to take screenshot: " + e.getMessage()
             );
         }

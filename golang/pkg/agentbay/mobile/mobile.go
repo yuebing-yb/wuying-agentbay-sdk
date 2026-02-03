@@ -676,10 +676,16 @@ func (m *Mobile) Screenshot() *ScreenshotResult {
 	}
 }
 
-// BetaTakeScreenshot captures the current screen as a PNG image and returns raw image bytes.
+// BetaTakeScreenshot captures the current screen and returns raw image bytes.
 //
-// It calls the MCP tool "screenshot" with format="png".
-func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
+// Supported formats:
+// - "png"
+// - "jpeg" (or "jpg")
+func (m *Mobile) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
+	fmtNorm := "png"
+	if len(format) > 0 {
+		fmtNorm = normalizeImageFormat(format[0], "png")
+	}
 	if m.Session.GetLinkUrl() == "" {
 		return &BetaScreenshotResult{
 			ApiResponse: models.ApiResponse{
@@ -695,9 +701,19 @@ func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
 				"Please use `screenshot()` instead.",
 		}
 	}
+	if fmtNorm != "png" && fmtNorm != "jpeg" {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Type:         "",
+			MimeType:     "",
+			Data:         nil,
+			ErrorMessage: "unsupported format: supported values: png, jpeg",
+		}
+	}
 
 	args := map[string]interface{}{
-		"format": "png",
+		"format": fmtNorm,
 	}
 
 	result, err := m.Session.CallMcpTool("screenshot", args)
@@ -723,7 +739,7 @@ func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
 		}
 	}
 
-	img, _, width, height, shotType, mimeType, err := decodeBase64Image(result.Data, "png")
+	img, _, width, height, shotType, mimeType, err := decodeBase64Image(result.Data, fmtNorm)
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},

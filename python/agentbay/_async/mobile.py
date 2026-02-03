@@ -750,7 +750,10 @@ class AsyncMobile(AsyncBaseService):
                 error_message=f"Failed to take screenshot: {str(e)}",
             )
 
-    async def beta_take_screenshot(self):
+    async def beta_take_screenshot(
+        self,
+        format: str = "png",
+    ) -> ScreenshotResult:
         """
         Takes a screenshot of the mobile device (beta).
 
@@ -766,6 +769,7 @@ class AsyncMobile(AsyncBaseService):
 
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
+            ValueError: If `format` is invalid.
         """
         link_url = ""
         try:
@@ -777,15 +781,20 @@ class AsyncMobile(AsyncBaseService):
                 "This cloud environment does not support `beta_take_screenshot()`. "
                 "Please use `screenshot()` instead."
             )
+        fmt = (format or "").strip().lower()
+        if fmt == "jpg":
+            fmt = "jpeg"
+        if fmt not in ("png", "jpeg"):
+            raise ValueError("Invalid format: must be 'png', 'jpeg', or 'jpg'")
         result = await self.session.call_mcp_tool(
             "screenshot",
-            {"format": "png"},
+            {"format": fmt},
         )
         if not result.success:
             raise AgentBayError(f"Failed to take screenshot: {result.error_message}")
 
         raw, width, height, shot_type, mime_type = self._decode_image_from_mcp_text(
-            result.data, expected_format="png"
+            result.data, expected_format=fmt
         )
         return ScreenshotResult(
             request_id=result.request_id,

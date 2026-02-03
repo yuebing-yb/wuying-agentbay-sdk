@@ -339,6 +339,39 @@ describe('Mobile', () => {
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
     });
 
+    test('betaTakeScreenshot should support jpeg format', async () => {
+      // Arrange
+      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
+      const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
+      const payload = Buffer.concat([jpgHeader, Buffer.from('test')]).toString('base64');
+      const mockResult = {
+        success: true,
+        requestId: 'test-beta-jpeg-123',
+        data: JSON.stringify({
+          type: "image",
+          mime_type: "image/jpeg",
+          width: 720,
+          height: 1280,
+          data: payload,
+        }),
+        errorMessage: '',
+      };
+      mockSession.callMcpTool.mockResolvedValue(mockResult);
+
+      // Act
+      const result = await (mobile as any).betaTakeScreenshot('jpeg');
+
+      // Assert
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'jpeg' }, false);
+      expect(result.success).toBe(true);
+      expect(result.requestId).toBe('test-beta-jpeg-123');
+      expect(result.type).toBe('image');
+      expect(result.mimeType).toBe('image/jpeg');
+      expect(result.width).toBe(720);
+      expect(result.height).toBe(1280);
+      expect(Buffer.from(result.data).slice(0, 3).equals(jpgHeader)).toBe(true);
+    });
+
     test('betaTakeScreenshot should accept JSON payloads', async () => {
       // Arrange
       mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');

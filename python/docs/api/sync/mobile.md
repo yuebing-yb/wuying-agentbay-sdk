@@ -354,7 +354,7 @@ session.delete()
 ### beta_take_screenshot
 
 ```python
-def beta_take_screenshot()
+def beta_take_screenshot(format: str = "png") -> ScreenshotResult
 ```
 
 Takes a screenshot of the mobile device (beta).
@@ -374,6 +374,7 @@ and `ScreenshotResult.height`. The backend metadata fields `type` and
 **Raises**:
 
     AgentBayError: If screenshot fails or response cannot be decoded.
+    ValueError: If `format` is invalid.
 
 ### beta_take_long_screenshot
 

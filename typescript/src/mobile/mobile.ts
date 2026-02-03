@@ -779,11 +779,13 @@ export class Mobile {
   }
 
   /**
-   * Capture the current screen as a PNG image and return raw image bytes.
+   * Capture the current screen and return raw image bytes.
    *
-   * @returns Promise resolving to BetaScreenshotResult containing PNG bytes
+   * @param format - Output image format ("png", "jpeg", or "jpg"). Default is "png"
+   * @returns Promise resolving to BetaScreenshotResult containing image bytes
    */
-  async betaTakeScreenshot(): Promise<BetaScreenshotResult> {
+  async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
+    const formatNorm = normalizeImageFormat(format, "png");
     if (!this.session.getLinkUrl()) {
       return {
         success: false,
@@ -795,8 +797,18 @@ export class Mobile {
         mimeType: "",
       };
     }
+    if (formatNorm !== "png" && formatNorm !== "jpeg") {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
+        data: new Uint8Array(),
+        type: "",
+        mimeType: "",
+      };
+    }
     try {
-      const result = await this.session.callMcpTool("screenshot", { format: "png" }, false);
+      const result = await this.session.callMcpTool("screenshot", { format: formatNorm }, false);
       const requestId = result.requestId || "";
       if (!result.success) {
         return {
@@ -808,7 +820,7 @@ export class Mobile {
           mimeType: "",
         };
       }
-      const decoded = decodeBase64Image(String(result.data || ""), "png");
+      const decoded = decodeBase64Image(String(result.data || ""), formatNorm);
       return {
         success: true,
         requestId,

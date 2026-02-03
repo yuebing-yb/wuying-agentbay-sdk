@@ -48,6 +48,9 @@ async def session(agent_bay):
     result = await agent_bay.create(params)
     assert result.success, f"Failed to create session: {result.error_message}"
     assert result.session is not None
+    # Force API-based MCP tool calls (no LinkUrl direct calls) for test stability.
+    # Some environments cannot reach the sandbox LinkUrl network path from CI/dev machines.
+    result.session.mcpTools = []
     yield result.session
     await result.session.delete()
 
@@ -67,6 +70,23 @@ async def test_mobile_beta_take_screenshot_png(session):
     assert isinstance(result.data, (bytes, bytearray))
     assert len(result.data) > 0
     assert bytes(result.data[:8]) == b"\x89PNG\r\n\x1a\n"
+
+
+@pytest.mark.asyncio
+async def test_mobile_beta_take_screenshot_jpeg(session):
+    await _prepare_for_screenshot_tests(session)
+    result = await session.mobile.beta_take_screenshot(format="jpeg")
+    assert result.success is True
+    assert isinstance(result.type, str)
+    assert result.type.strip()
+    assert result.mime_type == "image/jpeg"
+    assert isinstance(result.width, int)
+    assert isinstance(result.height, int)
+    assert result.width > 0
+    assert result.height > 0
+    assert isinstance(result.data, (bytes, bytearray))
+    assert len(result.data) > 0
+    assert bytes(result.data[:3]) == b"\xff\xd8\xff"
 
 
 @pytest.mark.asyncio

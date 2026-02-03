@@ -62,6 +62,51 @@ describe("Mobile beta screenshot integration tests", () => {
     }
   }, 60000);
 
+  test("should capture screenshot as JPEG bytes", async () => {
+    if (!apiKey) {
+      log("Skipping test: AGENTBAY_API_KEY not set");
+      return;
+    }
+
+    const sessionResult = await agentBay.create({ imageId: "mobile-use-android-12-gw" });
+    if (!sessionResult.success || !sessionResult.session) {
+      throw new Error(`Failed to create session: ${sessionResult.errorMessage || ""}`);
+    }
+    const session = sessionResult.session!;
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 15000));
+
+      const cmds = ["wm size 720x1280", "wm density 160"];
+      for (const c of cmds) {
+        const r = await session.command.executeCommand(c, 10000);
+        if (!r.success) {
+          throw new Error(`command failed: ${c}, error=${r.errorMessage}, output=${r.output}`);
+        }
+      }
+
+      const start = await session.mobile.startApp("monkey -p com.android.settings 1");
+      expect(start.success).toBe(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const s = await (session.mobile as any).betaTakeScreenshot("jpeg");
+      if (!s.success) {
+        throw new Error(`betaTakeScreenshot failed: requestId=${s.requestId || ""}, error=${s.errorMessage || ""}`);
+      }
+      expect(s.requestId).toBeDefined();
+      expect(s.type).toBe("image");
+      expect(s.mimeType).toBe("image/jpeg");
+      expect(s.data.length).toBeGreaterThan(3);
+      expect(Buffer.from(s.data).slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))).toBe(true);
+      expect(typeof s.width).toBe("number");
+      expect(typeof s.height).toBe("number");
+      expect((s.width as number) > 0).toBe(true);
+      expect((s.height as number) > 0).toBe(true);
+    } finally {
+      await session.delete();
+    }
+  }, 60000);
+
   test("should capture long screenshot as PNG bytes", async () => {
     if (!apiKey) {
       log("Skipping test: AGENTBAY_API_KEY not set");
