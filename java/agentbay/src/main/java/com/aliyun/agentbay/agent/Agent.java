@@ -527,34 +527,68 @@ public class Agent extends BaseService {
          * timeout of the task execution in your own code by setting the
          * frequency of calling getTaskStatus.
          *
-         * @param task Task description in human language
-         * @param useVision Whether to use vision in the task
-         * @param outputSchema Optional Zod schema for a structured task output
-         *     if you need
+         * @param task               Task description in human language
+         * @param useVision          Whether to use vision in the task
+         * @param outputSchema       Optional Zod schema for a structured task
+         *                           output
+         *                           if you need
+         * @param fullPageScreenShot Whether to take a full page screenshot,
+         *                           this only works if useVision is true
+         * 
+         *                           When use_vision is enabled, we need to provide a
+         *                           screenshot of the webpage to the LLM for grounding.
+         *                           There are two ways of screenshot:
+         *                           1. Full-page screenshot: Captures the entire
+         *                           webpage content, including parts not currently
+         *                           visible in the viewport.
+         *                           2. Viewport screenshot: Captures only the currently
+         *                           visible portion of the webpage.
+         *                           The first approach delivers all information to the
+         *                           LLM in one go, which can improve task success rates
+         *                           in certain information extraction scenarios.
+         *                           However, it also results in higher token
+         *                           consumption and increases the LLM's processing
+         *                           time.
+         *                           Therefore, we would like to give you the choice—you
+         *                           can decide whether to enable full-page screenshot
+         *                           based on your actual needs.
          * @return ExecutionResult containing success status, task ID, task
-         *     status, and error message if any
+         *         status, and error message if any
          *
          * @example
-         * <pre>
-         * public static class WeatherSchema {
-         *   @JsonProperty(required = true)
-         *   private String city;
-         *   private String temperature;
-         *   public String getCity() {return city;}
-         *   public void setCity(String city) {this.city = city;}
-         *   public String getTemperature() {return temperature;}
-         *   public void setTemperature(String temperature) {this.temperature = temperature;}
-         * }
-         * ExecutionResult result = session.getAgent().getBrowser()
-         *     .executeTask("Query the weather in Shanghai with Baidu", true, WeatherSchema.class);
-         * System.out.println("Task ID: " + result.getTaskId() + ", Status: " +
-         * result.getTaskStatus()); QueryResult status =
-         * session.getAgent().getBrowser().getTaskStatus(result.getTaskId());
-         * System.out.println("Task status: " + status.getTaskStatus());
-         * </pre>
+         *
+         *          <pre>
+         *          public static class WeatherSchema {
+         *              &#64;JsonProperty(required = true)
+         *              private String city;
+         *              @JsonProperty(required = true)
+         *              private String temperature;
+         *
+         *              public String getCity() {
+         *                  return city;
+         *              }
+         * 
+         *              public void setCity(String city) {
+         *                  this.city = city;
+         *              }
+         * 
+         *              public String getTemperature() {
+         *                  return temperature;
+         *              }
+         * 
+         *              public void setTemperature(String temperature) {
+         *                  this.temperature = temperature;
+         *              }
+         *          }
+         *          String task = "Query the weather in Shanghai with Baidu";
+         *          ExecutionResult result = session.getAgent().getBrowser().executeTask(task, true, WeatherSchema.class, true);
+         *          System.out.println("Task ID: " + result.getTaskId() + ", Status: " + result.getTaskStatus());
+         *          QueryResult status = session.getAgent().getBrowser().getTaskStatus(result.getTaskId());
+         *          System.out.println("Task status: " + status.getTaskStatus());
+         *          </pre>
          */
         public ExecutionResult executeTask(String task, boolean useVision,
-                Object output_schema) {
+                Object outputSchema, boolean fullPageScreenShot) {
             if (!this.initialized) {
                 logger.info("Browser is not initialized. Initialize browser first.");
                 boolean success = initialize(new BrowserOption());
@@ -566,11 +600,11 @@ public class Agent extends BaseService {
             }
             try {
                 String schemaJson = "";
-                if (output_schema instanceof String) {
-                    System.out.println("-------String schemaJson: " + output_schema);
-                    schemaJson = (String) output_schema;
-                } else if (output_schema instanceof Class) {
-                    schemaJson = SchemaHelper.generateJsonSchema((Class<?>) output_schema);
+                if (outputSchema instanceof String) {
+                    System.out.println("-------String schemaJson: " + outputSchema);
+                    schemaJson = (String) outputSchema;
+                } else if (outputSchema instanceof Class) {
+                    schemaJson = SchemaHelper.generateJsonSchema((Class<?>) outputSchema);
                     System.out.println("-------Class schemaJson: " + schemaJson);
                 }
                 logger.info("Output schema: {}", schemaJson);
@@ -579,6 +613,7 @@ public class Agent extends BaseService {
                 args.put("task", task);
                 args.put("use_vision", useVision);
                 args.put("output_schema", schemaJson);
+                args.put("full_page_screenshot", fullPageScreenShot);
                 OperationResult result = callMcpTool("browser_use_execute_task", args);
 
                 if (result.isSuccess()) {
@@ -607,33 +642,71 @@ public class Agent extends BaseService {
          * Execute a specific task described in human language synchronously.
          *
          * This is a synchronous interface that blocks until the task is completed or
-         * an error occurs, or timeout happens. The default polling interval is 3 seconds.
+         * an error occurs, or timeout happens. The default polling interval is 3
+         * seconds.
          *
-         * @param task Task description in human language
-         * @param timeout Maximum time to wait for task completion in seconds
-         * @param useVision Whether to use vision in the task
-         * @param outputSchema Optional Zod schema for a structured task output if you need
-         * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
+         * @param task               Task description in human language
+         * @param timeout            Maximum time to wait for task completion in seconds
+         * @param useVision          Whether to use vision in the task
+         * @param outputSchema       Optional Zod schema for a structured task output if
+         *                           you need
+         * @param fullPageScreenShot Whether to take a full page screenshot,
+         *                           this only works if useVision is true
+         * 
+         *                           When use_vision is enabled, we need to provide a
+         *                           screenshot of the webpage to the LLM for grounding.
+         *                           There are two ways of screenshot:
+         *                           1. Full-page screenshot: Captures the entire
+         *                           webpage content, including parts not currently
+         *                           visible in the viewport.
+         *                           2. Viewport screenshot: Captures only the currently
+         *                           visible portion of the webpage.
+         *                           The first approach delivers all information to the
+         *                           LLM in one go, which can improve task success rates
+         *                           in certain information extraction scenarios.
+         *                           However, it also results in higher token
+         *                           consumption and increases the LLM's processing
+         *                           time.
+         *                           Therefore, we would like to give you the choice—you
+         *                           can decide whether to enable full-page screenshot
+         *                           based on your actual needs.
+         * @return ExecutionResult containing success status, task ID, task status, task
+         *         result, and error message if any
          *
          * @example
-         * <pre>
-         *  public static class WeatherSchema {
-         *   @JsonProperty(required = true)
-         *   private String city;
-         *   private String temperature;
-         *   public String getCity() {return city;}
-         *   public void setCity(String city) {this.city = city;}
-         *   public String getTemperature() {return temperature;}
-         *   public void setTemperature(String temperature) {this.temperature = temperature;}
-         * }
-         * ExecutionResult result = session.getAgent().getBrowser()
-         *     .executeTaskAndWait("Query the weather in Shanghai with Baidu", 300, true, WeatherSchema.class);
-         * System.out.println("Task result: " + result.getTaskResult());
-         * </pre>
+         * 
+         *          <pre>
+         *          public static class WeatherSchema {
+         *              @JsonProperty(required = true)
+         *              private String city;
+         *              private String temperature;
+         * 
+         *              public String getCity() {
+         *                  return city;
+         *              }
+         * 
+         *              public void setCity(String city) {
+         *                  this.city = city;
+         *              }
+         * 
+         *              public String getTemperature() {
+         *                  return temperature;
+         *              }
+         * 
+         *              public void setTemperature(String temperature) {
+         *                  this.temperature = temperature;
+         *              }
+         *          }
+         * 
+         *          String task = "Query the weather in Shanghai with Baidu";
+         *          ExecutionResult result = session.getAgent().getBrowser().executeTaskAndWait(task, 300, true,
+         *                  WeatherSchema.class, true);
+         *          System.out.println("Task result: " + result.getTaskResult());
+         *          </pre>
          */
         public ExecutionResult executeTaskAndWait(String task, int timeout,
                 boolean useVision,
-                Object output_schema) {
+                Object outputSchema, boolean fullPageScreenShot) {
             if (!this.initialized) {
                 logger.info("Browser is not initialized. Initialize browser first.");
                 boolean success = initialize(new BrowserOption());
@@ -644,7 +717,7 @@ public class Agent extends BaseService {
                 }
             }
             try {
-                ExecutionResult result = executeTask(task, useVision, output_schema);
+                ExecutionResult result = executeTask(task, useVision, outputSchema, fullPageScreenShot);
                 if (result.isSuccess()) {
                     String taskId = result.getTaskId();
                     int pollInterval = 3;

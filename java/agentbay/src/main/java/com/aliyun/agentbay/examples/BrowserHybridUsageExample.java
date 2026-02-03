@@ -124,7 +124,7 @@ public class BrowserHybridUsageExample {
                 System.out.println("\nExecuting task: " + task);
 
                 ExecutionResult result = session.getAgent().getBrowser()
-                        .executeTaskAndWait(task, 180, true, WeatherSchema.class);
+                        .executeTaskAndWait(task, 180, true, WeatherSchema.class, true);
 
                 if (result.isSuccess()) {
                     System.out.println("✅ Task completed successfully!");

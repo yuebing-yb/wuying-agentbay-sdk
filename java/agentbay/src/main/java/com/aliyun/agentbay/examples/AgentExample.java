@@ -202,7 +202,7 @@ public class AgentExample {
             System.out.println("\nExecuting task: " + task);
 
             ExecutionResult result = session.getAgent().getBrowser()
-                .executeTaskAndWait(task, 30, true, OutputSchema.class);
+                .executeTaskAndWait(task, 30, true, OutputSchema.class, false);
 
             if (result.isSuccess()) {
                 System.out.println("✅ Task completed successfully!");
@@ -251,7 +251,7 @@ public class AgentExample {
 
             ExecutionResult result =
                 session.getAgent().getBrowser().executeTask(task, true,
-                                                            OutputSchema.class);
+                                                            OutputSchema.class, false);
 
             if (result.isSuccess()) {
                 System.out.println("✅ Task started!");

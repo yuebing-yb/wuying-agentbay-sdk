@@ -245,7 +245,7 @@ public static class TestBrowserAgent {
                           : 300;
         String output_schema = "{\"type\":\"object\",\"properties\":{\"City\": {\"title\": \"City\", \"type\": \"string\"}, \"Weather\": {\"title\": \"Weather\", \"type\": \"string\"}},\"required\":[\"City\", \"Weather\"]}";
         ExecutionResult result =
-            agent.getBrowser().executeTaskAndWait(task, timeout, false, output_schema);
+            agent.getBrowser().executeTaskAndWait(task, timeout, true, output_schema, false);
 
         assertTrue("Task execution should succeed", result.isSuccess());
         assertNotNull("Request ID should not be null", result.getRequestId());
@@ -269,7 +269,7 @@ public static class TestBrowserAgent {
                           : 300;
 
         // Start async task execution
-        ExecutionResult result = agent.getBrowser().executeTask(task, false, OutputSchema.class);
+        ExecutionResult result = agent.getBrowser().executeTask(task, false, OutputSchema.class, false);
 
         assertTrue("Async task execution should succeed", result.isSuccess());
         assertNotNull("Request ID should not be null", result.getRequestId());

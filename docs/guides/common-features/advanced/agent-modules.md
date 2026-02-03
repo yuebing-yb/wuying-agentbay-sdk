@@ -95,6 +95,7 @@ execution_result = agent_session.agent.browser.execute_task_and_wait(
     timeout=180,
     use_vision=False,
     output_schema=OutputSchema
+    full_page_screenshot=False
 )
 
 if execution_result.success:
