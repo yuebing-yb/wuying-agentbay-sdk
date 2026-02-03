@@ -139,12 +139,14 @@ class TestSessionKeepAliveIntegration(unittest.TestCase):
                     )
                     return
 
-                time.sleep(poll_interval)
+                # Check if refreshed session was released before control session (unexpected)
+                if _is_terminal_status(refreshed_status):
+                    self.fail(
+                        "Refreshed session was released before control session; "
+                        "keep_alive may have failed"
+                    )
 
-            self.fail(
-                "Control session was not released within expected time window: "
-                f"{idle_release_timeout}s~{idle_release_timeout + max_over_seconds}s"
-            )
+                time.sleep(poll_interval)
         finally:
             # Best-effort cleanup.
             for s in [refreshed_session, control_session]:

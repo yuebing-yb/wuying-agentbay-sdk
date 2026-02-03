@@ -72,6 +72,11 @@ describe("Session keepAlive (integration)", () => {
           return;
         }
 
+        // Check if refreshed session was released before control session (unexpected)
+        if (isReleased(refreshedStatus)) {
+          throw new Error("Refreshed session was released before control session; keep-alive may have failed");
+        }
+
         await sleep(pollIntervalMs);
       }
 
