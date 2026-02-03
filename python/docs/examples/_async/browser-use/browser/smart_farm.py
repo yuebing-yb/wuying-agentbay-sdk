@@ -31,7 +31,7 @@ async def main():
         operator = session.browser.operator
 
         await operator.navigate("https://cphengshuifarm10.connect.farmonline.net/")
-        await operator.act_async(
+        await operator.act(
             ActOptions(action="输入用户名 'guest' 密码不用输，点击 login按钮登录")
         )
 
