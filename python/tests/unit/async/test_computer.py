@@ -442,7 +442,8 @@ class TestComputer:
         assert result.success is True
         assert result.request_id == "test-req"
         assert result.error_message == ""
-        assert result.format == "jpeg"
+        assert result.type == "image"
+        assert result.mime_type == "image/jpeg"
         assert result.width == 1280
         assert result.height == 720
         assert result.data == payload
@@ -496,7 +497,8 @@ class TestComputer:
 
         # Assert
         assert result.success is True
-        assert result.format == "png"
+        assert result.type == "image"
+        assert result.mime_type == "image/png"
         assert result.width == 1280
         assert result.height == 720
 
@@ -526,7 +528,8 @@ class TestComputer:
 
         result = await self.computer.beta_take_screenshot(format="png")
         assert result.success is True
-        assert result.format == "png"
+        assert result.type == "image"
+        assert result.mime_type == "image/png"
         assert result.width == 1280
         assert result.height == 720
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")

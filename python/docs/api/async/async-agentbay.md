@@ -150,27 +150,6 @@ async def beta_pause(session: AsyncSession,
 
 Asynchronously pause a session (beta), putting it into a dormant state.
 
-### beta_pause_async
-
-```python
-async def beta_pause_async(session: AsyncSession) -> SessionPauseResult
-```
-
-Fire-and-return pause: trigger PauseSessionAsync without waiting for PAUSED.
-
-This method directly calls the PauseSessionAsync API without waiting for the session
-to reach the PAUSED state. For behavior that waits for the PAUSED state,
-use the pause() method instead.
-
-**Arguments**:
-
-- `session` _AsyncSession_ - The session to pause.
-  
-
-**Returns**:
-
-    SessionPauseResult: Result containing the request ID and success status.
-
 ### beta_resume
 
 ```python
@@ -180,27 +159,6 @@ async def beta_resume(session: AsyncSession,
 ```
 
 Asynchronously resume a session (beta) from a paused state.
-
-### beta_resume_async
-
-```python
-async def beta_resume_async(session: AsyncSession) -> SessionResumeResult
-```
-
-Fire-and-return resume: trigger ResumeSessionAsync without waiting for RUNNING.
-
-This method directly calls the ResumeSessionAsync API without waiting for the session
-to reach the RUNNING state. For behavior that waits for the RUNNING state,
-use the resume() method instead.
-
-**Arguments**:
-
-- `session` _AsyncSession_ - The session to resume.
-  
-
-**Returns**:
-
-    SessionResumeResult: Result containing the request ID and success status.
 
 ## See Also
 

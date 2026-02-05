@@ -55,8 +55,9 @@ export interface ScreenshotResult extends OperationResult {
 }
 
 export interface BetaScreenshotResult extends OperationResult {
+  type: string;
+  mimeType: string;
   data: Uint8Array;
-  format: string;
   width?: number;
   height?: number;
 }
@@ -193,7 +194,7 @@ function detectImageFormat(bytes: Uint8Array): string {
 function decodeBase64Image(
   input: string,
   expectedFormat: string
-): { bytes: Uint8Array; format: string; width?: number; height?: number } {
+): { bytes: Uint8Array; format: string; width?: number; height?: number; type: string; mimeType: string } {
   const s = String(input || "").trim();
   if (!s) {
     throw new Error("Empty image data");
@@ -211,7 +212,15 @@ function decodeBase64Image(
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
     throw new Error("Invalid screenshot JSON: expected object");
   }
+  const shotType = (obj as any).type;
+  const mimeType = (obj as any).mime_type;
   const b64 = (obj as any).data;
+  if (typeof shotType !== "string" || !shotType.trim()) {
+    throw new Error("Invalid screenshot JSON: expected non-empty string 'type'");
+  }
+  if (typeof mimeType !== "string" || !mimeType.trim()) {
+    throw new Error("Invalid screenshot JSON: expected non-empty string 'mime_type'");
+  }
   if (typeof b64 !== "string" || !b64.trim()) {
     throw new Error("Screenshot JSON missing base64 field");
   }
@@ -226,7 +235,23 @@ function decodeBase64Image(
 
   const bytes = base64ToUint8ArrayStrict(b64);
   const detected = detectImageFormat(bytes);
-  return { bytes, format: detected || expectedFormat, width, height };
+  const fmt = normalizeImageFormat(expectedFormat, expectedFormat);
+  if (fmt === "png" && detected !== "png") {
+    throw new Error("Screenshot data does not match expected format 'png'");
+  }
+  if (fmt === "jpeg" && detected !== "jpeg") {
+    throw new Error("Screenshot data does not match expected format 'jpeg'");
+  }
+  const expectedMimeType = fmt === "png" ? "image/png" : fmt === "jpeg" ? "image/jpeg" : "";
+  if (!expectedMimeType) {
+    throw new Error(`Unsupported format: ${JSON.stringify(expectedFormat)}`);
+  }
+  if (String(mimeType).trim().toLowerCase() !== expectedMimeType) {
+    throw new Error(
+      `Screenshot JSON mime_type does not match expected format: expected ${JSON.stringify(expectedMimeType)}, got ${JSON.stringify(mimeType)}`
+    );
+  }
+  return { bytes, format: detected || fmt, width, height, type: String(shotType).trim(), mimeType: String(mimeType).trim() };
 }
 
 export class Mobile {
@@ -545,7 +570,7 @@ export class Mobile {
    * Get installed apps.
    */
   async getInstalledApps(startMenu = false, desktop = true, ignoreSystemApps = true): Promise<InstalledAppsResult> {
-    const args = { start_menu: startMenu, desktop, ignore_system_apps: ignoreSystemApps };
+    const args = { start_menu: startMenu, desktop, ignore_system_app: ignoreSystemApps };
     try {
       const result = await this.session.callMcpTool('get_installed_apps', args, false);
       
@@ -754,11 +779,13 @@ export class Mobile {
   }
 
   /**
-   * Capture the current screen as a PNG image and return raw image bytes.
+   * Capture the current screen and return raw image bytes.
    *
-   * @returns Promise resolving to BetaScreenshotResult containing PNG bytes
+   * @param format - Output image format ("png", "jpeg", or "jpg"). Default is "png"
+   * @returns Promise resolving to BetaScreenshotResult containing image bytes
    */
-  async betaTakeScreenshot(): Promise<BetaScreenshotResult> {
+  async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
+    const formatNorm = normalizeImageFormat(format, "png");
     if (!this.session.getLinkUrl()) {
       return {
         success: false,
@@ -766,11 +793,22 @@ export class Mobile {
         errorMessage:
           "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead.",
         data: new Uint8Array(),
-        format: "png",
+        type: "",
+        mimeType: "",
+      };
+    }
+    if (formatNorm !== "png" && formatNorm !== "jpeg") {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
+        data: new Uint8Array(),
+        type: "",
+        mimeType: "",
       };
     }
     try {
-      const result = await this.session.callMcpTool("screenshot", { format: "png" }, false);
+      const result = await this.session.callMcpTool("screenshot", { format: formatNorm }, false);
       const requestId = result.requestId || "";
       if (!result.success) {
         return {
@@ -778,16 +816,18 @@ export class Mobile {
           requestId,
           errorMessage: result.errorMessage || "Failed to take screenshot",
           data: new Uint8Array(),
-          format: "png",
+          type: "",
+          mimeType: "",
         };
       }
-      const decoded = decodeBase64Image(String(result.data || ""), "png");
+      const decoded = decodeBase64Image(String(result.data || ""), formatNorm);
       return {
         success: true,
         requestId,
         errorMessage: "",
         data: decoded.bytes,
-        format: decoded.format || "png",
+        type: decoded.type,
+        mimeType: decoded.mimeType,
         width: decoded.width,
         height: decoded.height,
       };
@@ -797,7 +837,8 @@ export class Mobile {
         requestId: "",
         errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
         data: new Uint8Array(),
-        format: "png",
+        type: "",
+        mimeType: "",
       };
     }
   }
@@ -821,7 +862,8 @@ export class Mobile {
         requestId: "",
         errorMessage: "Invalid maxScreens: must be an integer in the range [2, 10]",
         data: new Uint8Array(),
-        format: formatNorm,
+        type: "",
+        mimeType: "",
       };
     }
     if (formatNorm !== "png" && formatNorm !== "jpeg") {
@@ -830,7 +872,8 @@ export class Mobile {
         requestId: "",
         errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
         data: new Uint8Array(),
-        format: formatNorm,
+        type: "",
+        mimeType: "",
       };
     }
     if (quality !== undefined) {
@@ -840,7 +883,8 @@ export class Mobile {
           requestId: "",
           errorMessage: "Invalid quality: must be an integer in the range [1, 100]",
           data: new Uint8Array(),
-          format: formatNorm,
+          type: "",
+          mimeType: "",
         };
       }
     }
@@ -862,7 +906,8 @@ export class Mobile {
           requestId,
           errorMessage: result.errorMessage || "Failed to take long screenshot",
           data: new Uint8Array(),
-          format: formatNorm,
+          type: "",
+          mimeType: "",
         };
       }
 
@@ -872,7 +917,8 @@ export class Mobile {
         requestId,
         errorMessage: "",
         data: decoded.bytes,
-        format: decoded.format || formatNorm,
+        type: decoded.type,
+        mimeType: decoded.mimeType,
         width: decoded.width,
         height: decoded.height,
       };
@@ -882,7 +928,8 @@ export class Mobile {
         requestId: "",
         errorMessage: `Failed to take long screenshot: ${error instanceof Error ? error.message : String(error)}`,
         data: new Uint8Array(),
-        format: formatNorm,
+        type: "",
+        mimeType: "",
       };
     }
   }

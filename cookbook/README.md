@@ -31,7 +31,7 @@ Currently, distinct session environments are implemented:
 
 ### Desktop Environment
 
-7. [Moltbot Session Setup](./moltbot/) - Create and configure a Moltbot (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
+7. [OpenClaw Session Setup](./openclaw/) - Create and configure an OpenClaw (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
 
 ## Overview
 

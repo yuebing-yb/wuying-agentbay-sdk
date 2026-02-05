@@ -227,7 +227,11 @@ class AsyncAgentBay:
 
     # NOTE: Do not fetch MCP tool list automatically for any session.
 
-    async def _wait_for_context_synchronization(self, session: AsyncSession) -> None:
+    async def _wait_for_context_synchronization(
+        self,
+        session: AsyncSession,
+        wait_context_ids: Optional[set[str]] = None,
+    ) -> None:
         """
         Wait for context synchronization to complete asynchronously.
 
@@ -238,8 +242,15 @@ class AsyncAgentBay:
 
         Args:
             session: The session to wait for context synchronization
+            wait_context_ids: If None, wait for all contexts (backward compatible).
+                If empty set, return immediately. Otherwise, only wait for the specified
+                context IDs to reach terminal status (Success/Failed).
         """
         _log_operation_start("Context synchronization", "Waiting for completion")
+
+        if wait_context_ids is not None and len(wait_context_ids) == 0:
+            _log_operation_success("Context synchronization")
+            return
 
         # Exponential backoff configuration
         initial_interval = 0.5  # Start with 0.5 seconds for quick response
@@ -259,31 +270,63 @@ class AsyncAgentBay:
                 current_interval = min(current_interval * backoff_factor, max_interval)
                 continue
 
-            # Check if all context items have status "Success" or "Failed"
-            all_completed = True
-            has_failure = False
+            if wait_context_ids is None:
+                # Backward compatible behavior: wait for all contexts in status list.
+                all_completed = True
+                has_failure = False
 
-            for item in info_result.context_status_data:
-                _logger.info(
-                    f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
-                )
-
-                if item.status != "Success" and item.status != "Failed":
-                    all_completed = False
-                    break
-
-                if item.status == "Failed":
-                    has_failure = True
-                    _logger.error(
-                        f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
+                for item in info_result.context_status_data:
+                    _logger.info(
+                        f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
                     )
 
-            if all_completed or not info_result.context_status_data:
-                if has_failure:
-                    _log_warning("Context synchronization completed with failures")
-                else:
-                    _log_operation_success("Context synchronization")
-                break
+                    if item.status != "Success" and item.status != "Failed":
+                        all_completed = False
+                        break
+
+                    if item.status == "Failed":
+                        has_failure = True
+                        _logger.error(
+                            f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
+                        )
+
+                if all_completed or not info_result.context_status_data:
+                    if has_failure:
+                        _log_warning("Context synchronization completed with failures")
+                    else:
+                        _log_operation_success("Context synchronization")
+                    break
+            else:
+                # Beta behavior: only wait for selected contexts to complete.
+                has_failure = False
+                status_by_context_id: dict[str, str] = {}
+
+                for item in info_result.context_status_data:
+                    if item.context_id not in wait_context_ids:
+                        continue
+                    status_by_context_id[item.context_id] = item.status
+                    _logger.info(
+                        f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
+                    )
+                    if item.status == "Failed":
+                        has_failure = True
+                        _logger.error(
+                            f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
+                        )
+
+                all_completed = True
+                for ctx_id in wait_context_ids:
+                    status = status_by_context_id.get(ctx_id)
+                    if status is None or (status != "Success" and status != "Failed"):
+                        all_completed = False
+                        break
+
+                if all_completed:
+                    if has_failure:
+                        _log_warning("Context synchronization completed with failures")
+                    else:
+                        _log_operation_success("Context synchronization")
+                    break
 
             _logger.debug(
                 f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}, next interval: {current_interval:.2f}s"
@@ -677,9 +720,36 @@ class AsyncAgentBay:
             # Build Session object from response data
             session = await self._build_session_from_response(data, params)
 
+            wait_context_ids: Optional[set[str]] = None
+            if hasattr(params, "context_syncs") and params.context_syncs:
+                wait_context_ids = set()
+                for cs in params.context_syncs:
+                    wait = getattr(cs, "beta_wait_for_completion", None)
+                    if wait is None or wait:
+                        wait_context_ids.add(cs.context_id)
+
+            if hasattr(params, "browser_context") and params.browser_context:
+                if wait_context_ids is None:
+                    wait_context_ids = set()
+                wait_context_ids.add(params.browser_context.context_id)
+
+            if (
+                hasattr(params, "extra_configs")
+                and params.extra_configs
+                and params.extra_configs.mobile
+                and params.extra_configs.mobile.simulate_config
+                and params.extra_configs.mobile.simulate_config.simulated_context_id
+            ):
+                if wait_context_ids is None:
+                    wait_context_ids = set()
+                wait_context_ids.add(params.extra_configs.mobile.simulate_config.simulated_context_id)
+
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
-                await self._wait_for_context_synchronization(session)
+                await self._wait_for_context_synchronization(
+                    session,
+                    wait_context_ids=wait_context_ids,
+                )
 
             # If we need to do mobile simulate by command, wait for it
             if needs_mobile_sim and mobile_sim_path:

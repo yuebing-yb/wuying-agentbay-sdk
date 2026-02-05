@@ -30,7 +30,7 @@ def main() -> None:
             f.write(screenshot.data)
 
         print(
-            f"Saved screenshot to: {out_path} ({len(screenshot.data)} bytes, format={screenshot.format}, "
+            f"Saved screenshot to: {out_path} ({len(screenshot.data)} bytes, mime_type={screenshot.mime_type}, type={screenshot.type}, "
             f"size={screenshot.width}x{screenshot.height})"
         )
     finally:

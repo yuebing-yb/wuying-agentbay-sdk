@@ -270,7 +270,8 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertEquals("beta-req-1", result.getRequestId());
-        assertEquals("png", result.getFormat());
+        assertEquals("image", result.getType());
+        assertEquals("image/png", result.getMimeType());
         assertNotNull(result.getWidth());
         assertNotNull(result.getHeight());
         assertEquals(Integer.valueOf(720), result.getWidth());
@@ -283,6 +284,45 @@ public class MobileTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
         assertEquals("png", args.get("format"));
+    }
+
+    @Test
+    public void testBetaTakeScreenshotSuccessJpeg() throws Exception {
+        // Arrange
+        when(mockSession.getLinkUrl()).thenReturn("https://dummy-link-url");
+        when(mockSession.getLinkUrl()).thenReturn("https://dummy-link-url");
+        byte[] jpgHeader = new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff};
+        byte[] payload = new byte[jpgHeader.length + 4];
+        System.arraycopy(jpgHeader, 0, payload, 0, jpgHeader.length);
+        System.arraycopy("test".getBytes(), 0, payload, jpgHeader.length, 4);
+        String b64 = Base64.getEncoder().encodeToString(payload);
+        String jsonPayload = "{\"type\":\"image\",\"mime_type\":\"image/jpeg\",\"width\":720,\"height\":1280,\"data\":\"" + b64 + "\"}";
+        OperationResult mockResult = createMockResult(true, jsonPayload, "beta-req-jpeg-1", "");
+        when(mockSession.callMcpTool(anyString(), any())).thenReturn(mockResult);
+
+        // Act
+        ScreenshotBytesResult result = mobile.betaTakeScreenshot("jpeg");
+
+        // Assert
+        assertTrue(result.isSuccess());
+        assertEquals("beta-req-jpeg-1", result.getRequestId());
+        assertEquals("image", result.getType());
+        assertEquals("image/jpeg", result.getMimeType());
+        assertNotNull(result.getWidth());
+        assertNotNull(result.getHeight());
+        assertEquals(Integer.valueOf(720), result.getWidth());
+        assertEquals(Integer.valueOf(1280), result.getHeight());
+        assertNotNull(result.getData());
+        assertTrue("JPEG magic bytes missing", result.getData().length >= 3);
+
+        ArgumentCaptor<Object> argsCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(mockSession).callMcpTool(eq("screenshot"), argsCaptor.capture());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> args = (Map<String, Object>) argsCaptor.getValue();
+        assertEquals("jpeg", args.get("format"));
+        assertEquals((byte) 0xff, result.getData()[0]);
+        assertEquals((byte) 0xd8, result.getData()[1]);
+        assertEquals((byte) 0xff, result.getData()[2]);
     }
 
     @Test
@@ -305,7 +345,8 @@ public class MobileTest {
 
         // Assert
         assertTrue(result.isSuccess());
-        assertEquals("png", result.getFormat());
+        assertEquals("image", result.getType());
+        assertEquals("image/png", result.getMimeType());
         assertNotNull(result.getWidth());
         assertNotNull(result.getHeight());
         assertEquals(Integer.valueOf(720), result.getWidth());
@@ -332,7 +373,8 @@ public class MobileTest {
         // Assert
         assertTrue(result.isSuccess());
         assertEquals("beta-req-2", result.getRequestId());
-        assertEquals("png", result.getFormat());
+        assertEquals("image", result.getType());
+        assertEquals("image/png", result.getMimeType());
         assertNotNull(result.getWidth());
         assertNotNull(result.getHeight());
         assertEquals(Integer.valueOf(720), result.getWidth());

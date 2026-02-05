@@ -154,8 +154,9 @@ type ScreenshotResult struct {
 type BetaScreenshotResult struct {
 	models.ApiResponse
 	Success      bool   `json:"success"`
+	Type         string `json:"type"`
+	MimeType     string `json:"mime_type"`
 	Data         []byte `json:"data"`
-	Format       string `json:"format"`
 	Width        *int   `json:"width,omitempty"`
 	Height       *int   `json:"height,omitempty"`
 	ErrorMessage string `json:"error_message"`
@@ -503,9 +504,9 @@ func (m *Mobile) GetAllUIElements(timeoutMs int, formats ...string) *UIElementsR
 //	appsResult := result.Session.Mobile.GetInstalledApps(true, true, true)
 func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *InstalledAppListResult {
 	args := map[string]interface{}{
-		"start_menu":         startMenu,
-		"desktop":            desktop,
-		"ignore_system_apps": ignoreSystemApps,
+		"start_menu":        startMenu,
+		"desktop":           desktop,
+		"ignore_system_app": ignoreSystemApps,
 	}
 
 	result, err := m.Session.CallMcpTool("get_installed_apps", args)
@@ -675,27 +676,44 @@ func (m *Mobile) Screenshot() *ScreenshotResult {
 	}
 }
 
-// BetaTakeScreenshot captures the current screen as a PNG image and returns raw image bytes.
+// BetaTakeScreenshot captures the current screen and returns raw image bytes.
 //
-// It calls the MCP tool "screenshot" with format="png".
-func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
+// Supported formats:
+// - "png"
+// - "jpeg" (or "jpg")
+func (m *Mobile) BetaTakeScreenshot(format ...string) *BetaScreenshotResult {
+	fmtNorm := "png"
+	if len(format) > 0 {
+		fmtNorm = normalizeImageFormat(format[0], "png")
+	}
 	if m.Session.GetLinkUrl() == "" {
 		return &BetaScreenshotResult{
 			ApiResponse: models.ApiResponse{
 				RequestID: "",
 			},
-			Success:      false,
-			Data:         nil,
-			Format:       "png",
-			Width:        nil,
-			Height:       nil,
+			Success:  false,
+			Type:     "",
+			MimeType: "",
+			Data:     nil,
+			Width:    nil,
+			Height:   nil,
 			ErrorMessage: "This cloud environment does not support `beta_take_screenshot()`. " +
 				"Please use `screenshot()` instead.",
 		}
 	}
+	if fmtNorm != "png" && fmtNorm != "jpeg" {
+		return &BetaScreenshotResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			Type:         "",
+			MimeType:     "",
+			Data:         nil,
+			ErrorMessage: "unsupported format: supported values: png, jpeg",
+		}
+	}
 
 	args := map[string]interface{}{
-		"format": "png",
+		"format": fmtNorm,
 	}
 
 	result, err := m.Session.CallMcpTool("screenshot", args)
@@ -703,8 +721,9 @@ func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
+			Type:         "",
+			MimeType:     "",
 			Data:         nil,
-			Format:       "png",
 			ErrorMessage: fmt.Sprintf("failed to call screenshot: %v", err),
 		}
 	}
@@ -713,19 +732,21 @@ func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
+			Type:         "",
+			MimeType:     "",
 			Data:         nil,
-			Format:       "png",
 			ErrorMessage: result.ErrorMessage,
 		}
 	}
 
-	img, fmtNorm, width, height, err := decodeBase64Image(result.Data, "png")
+	img, _, width, height, shotType, mimeType, err := decodeBase64Image(result.Data, fmtNorm)
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
+			Type:         "",
+			MimeType:     "",
 			Data:         nil,
-			Format:       "png",
 			ErrorMessage: fmt.Sprintf("failed to decode screenshot data: %v", err),
 		}
 	}
@@ -733,8 +754,9 @@ func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult {
 	return &BetaScreenshotResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      true,
+		Type:         shotType,
+		MimeType:     mimeType,
 		Data:         img,
-		Format:       fmtNorm,
 		Width:        width,
 		Height:       height,
 		ErrorMessage: "",
@@ -751,8 +773,9 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
+			Type:         "",
+			MimeType:     "",
 			Data:         nil,
-			Format:       "",
 			ErrorMessage: "invalid maxScreens: must be in range [2, 10]",
 		}
 	}
@@ -762,8 +785,9 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
+			Type:         "",
+			MimeType:     "",
 			Data:         nil,
-			Format:       formatNorm,
 			ErrorMessage: fmt.Sprintf("unsupported format: %q. Supported values: \"png\", \"jpeg\".", format),
 		}
 	}
@@ -778,8 +802,9 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 			return &BetaScreenshotResult{
 				ApiResponse:  models.ApiResponse{RequestID: ""},
 				Success:      false,
+				Type:         "",
+				MimeType:     "",
 				Data:         nil,
-				Format:       formatNorm,
 				ErrorMessage: "invalid quality: must be in range [1, 100]",
 			}
 		}
@@ -791,8 +816,9 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
+			Type:         "",
+			MimeType:     "",
 			Data:         nil,
-			Format:       formatNorm,
 			ErrorMessage: fmt.Sprintf("failed to call long_screenshot: %v", err),
 		}
 	}
@@ -801,19 +827,21 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
+			Type:         "",
+			MimeType:     "",
 			Data:         nil,
-			Format:       formatNorm,
 			ErrorMessage: result.ErrorMessage,
 		}
 	}
 
-	img, fmtDetected, width, height, err := decodeBase64Image(result.Data, formatNorm)
+	img, _, width, height, shotType, mimeType, err := decodeBase64Image(result.Data, formatNorm)
 	if err != nil {
 		return &BetaScreenshotResult{
 			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 			Success:      false,
+			Type:         "",
+			MimeType:     "",
 			Data:         nil,
-			Format:       formatNorm,
 			ErrorMessage: fmt.Sprintf("failed to decode long screenshot data: %v", err),
 		}
 	}
@@ -821,8 +849,9 @@ func (m *Mobile) BetaTakeLongScreenshot(maxScreens int, format string, quality .
 	return &BetaScreenshotResult{
 		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
 		Success:      true,
+		Type:         shotType,
+		MimeType:     mimeType,
 		Data:         img,
-		Format:       fmtDetected,
 		Width:        width,
 		Height:       height,
 		ErrorMessage: "",
@@ -845,57 +874,71 @@ func normalizeImageFormat(format string, defaultValue string) string {
 	return f
 }
 
-func decodeBase64Image(text string, expectedFormat string) ([]byte, string, *int, *int, error) {
+func decodeBase64Image(text string, expectedFormat string) ([]byte, string, *int, *int, string, string, error) {
 	s := strings.TrimSpace(text)
 	if s == "" {
-		return nil, expectedFormat, nil, nil, fmt.Errorf("empty image data")
+		return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("empty image data")
 	}
 
 	// Backend contract: screenshot tool returns a JSON object string with
 	// top-level field "data" containing base64.
 	if !strings.HasPrefix(s, "{") {
-		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot tool returned non-JSON data")
+		return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("screenshot tool returned non-JSON data")
 	}
 	type screenshotJSON struct {
-		Data   string `json:"data"`
-		Width  *int   `json:"width"`
-		Height *int   `json:"height"`
+		Type     string `json:"type"`
+		MimeType string `json:"mime_type"`
+		Data     string `json:"data"`
+		Width    *int   `json:"width"`
+		Height   *int   `json:"height"`
 	}
 	var payload screenshotJSON
 	if err := json.Unmarshal([]byte(s), &payload); err != nil {
-		return nil, expectedFormat, nil, nil, fmt.Errorf("invalid screenshot JSON: %w", err)
+		return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("invalid screenshot JSON: %w", err)
 	}
+	shotType := strings.TrimSpace(payload.Type)
+	mimeType := strings.TrimSpace(payload.MimeType)
 	b64 := strings.TrimSpace(payload.Data)
 	if b64 == "" {
-		return nil, expectedFormat, nil, nil, fmt.Errorf("screenshot JSON missing base64 field")
+		return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("screenshot JSON missing base64 field")
+	}
+	if shotType == "" {
+		return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("invalid screenshot JSON: expected non-empty string 'type'")
+	}
+	if mimeType == "" {
+		return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("invalid screenshot JSON: expected non-empty string 'mime_type'")
 	}
 
 	b, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
-		return nil, expectedFormat, nil, nil, err
+		return nil, expectedFormat, nil, nil, "", "", err
 	}
 
 	exp := normalizeImageFormat(expectedFormat, expectedFormat)
+	expectedMimeType := ""
 	if exp == "png" {
 		if !bytes.HasPrefix(b, pngMagic) {
-			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
+			return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("decoded image does not match expected format")
 		}
-		return b, "png", payload.Width, payload.Height, nil
+		expectedMimeType = "image/png"
 	}
 	if exp == "jpeg" {
 		if !bytes.HasPrefix(b, jpegMagic) {
-			return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
+			return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("decoded image does not match expected format")
 		}
-		return b, "jpeg", payload.Width, payload.Height, nil
+		expectedMimeType = "image/jpeg"
 	}
-
-	if bytes.HasPrefix(b, pngMagic) {
-		return b, "png", payload.Width, payload.Height, nil
+	if expectedMimeType == "" {
+		return nil, expectedFormat, nil, nil, "", "", fmt.Errorf("unsupported format: %s", expectedFormat)
 	}
-	if bytes.HasPrefix(b, jpegMagic) {
-		return b, "jpeg", payload.Width, payload.Height, nil
+	if strings.ToLower(mimeType) != expectedMimeType {
+		return nil, expectedFormat, nil, nil, "", "", fmt.Errorf(
+			"screenshot JSON mime_type does not match expected format: expected %q, got %q",
+			expectedMimeType,
+			mimeType,
+		)
 	}
-	return nil, expectedFormat, nil, nil, fmt.Errorf("decoded image does not match expected format")
+	return b, exp, payload.Width, payload.Height, shotType, mimeType, nil
 }
 
 // Configure configures mobile settings from MobileExtraConfig

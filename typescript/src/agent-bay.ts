@@ -9,6 +9,7 @@ import type { McpTool } from "./session";
 import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
+import type { ConfigOptions } from "./config";
 import { ContextService } from "./context";
 import { BetaNetworkService } from "./beta-network";
 import { ContextSync } from "./context-sync";
@@ -89,7 +90,7 @@ export class AgentBay {
   constructor(
     options: {
       apiKey?: string;
-      config?: Config;
+      config?: ConfigOptions;
       envFile?: string;
     } = {}
   ) {
@@ -321,6 +322,7 @@ export class AgentBay {
 
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
+      const waitContextIds = new Set<string>();
 
       // Flag to indicate if we need to wait for mobile simulate
       let needsMobileSim = false;
@@ -342,6 +344,9 @@ export class AgentBay {
           }
 
           persistenceDataList.push(persistenceItem);
+          if ((contextSync as any).betaWaitForCompletion !== false) {
+            waitContextIds.add(contextSync.contextId);
+          }
         }
         request.persistenceDataList = persistenceDataList;
         needsContextSync = persistenceDataList.length > 0;
@@ -371,6 +376,7 @@ export class AgentBay {
         }
         request.persistenceDataList.push(browserContextSync);
         needsContextSync = true;
+        waitContextIds.add(paramsCopy.browserContext.contextId);
       }
 
       // Add extra configs if provided
@@ -539,7 +545,7 @@ export class AgentBay {
       }
 
       // If we have persistence data, wait for context synchronization
-      if (needsContextSync) {
+      if (needsContextSync && waitContextIds.size > 0) {
         logDebug("Waiting for context synchronization to complete...");
 
         // Exponential backoff configuration
@@ -558,17 +564,15 @@ export class AgentBay {
             // Get context status data
             const infoResult = await session.context.info();
 
-            // Check if all context items have status "Success" or "Failed"
-            let allCompleted = true;
             let hasFailure = false;
+            const statusByContextId = new Map<string, string>();
 
             for (const item of infoResult.contextStatusData) {
-              logDebug(`Context ${item.contextId} status: ${item.status}, path: ${item.path}`);
-
-              if (item.status !== "Success" && item.status !== "Failed") {
-                allCompleted = false;
-                break;
+              if (!waitContextIds.has(item.contextId)) {
+                continue;
               }
+              statusByContextId.set(item.contextId, item.status);
+              logDebug(`Context ${item.contextId} status: ${item.status}, path: ${item.path}`);
 
               if (item.status === "Failed") {
                 hasFailure = true;
@@ -576,7 +580,16 @@ export class AgentBay {
               }
             }
 
-            if (allCompleted || infoResult.contextStatusData.length === 0) {
+            let allCompleted = true;
+            for (const ctxId of waitContextIds) {
+              const st = statusByContextId.get(ctxId);
+              if (!st || (st !== "Success" && st !== "Failed")) {
+                allCompleted = false;
+                break;
+              }
+            }
+
+            if (allCompleted) {
               if (hasFailure) {
                 logDebug("Context synchronization completed with failures");
               } else {

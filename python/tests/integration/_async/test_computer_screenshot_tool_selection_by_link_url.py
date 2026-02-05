@@ -59,7 +59,9 @@ async def test_computer_link_url_present_requires_beta_take_screenshot():
 
         beta = await session.computer.beta_take_screenshot(format="png")
         assert beta.success is True
-        assert beta.format == "png"
+        assert isinstance(beta.type, str)
+        assert beta.type.strip()
+        assert beta.mime_type == "image/png"
         assert isinstance(beta.width, int) and beta.width > 0
         assert isinstance(beta.height, int) and beta.height > 0
         assert isinstance(beta.data, (bytes, bytearray))

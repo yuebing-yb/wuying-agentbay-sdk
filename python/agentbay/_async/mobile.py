@@ -552,7 +552,7 @@ class AsyncMobile(AsyncBaseService):
             args = {
                 "start_menu": start_menu,
                 "desktop": desktop,
-                "ignore_system_apps": ignore_system_apps,
+                "ignore_system_app": ignore_system_apps,
             }
 
             result = await self.session.call_mcp_tool(
@@ -750,21 +750,26 @@ class AsyncMobile(AsyncBaseService):
                 error_message=f"Failed to take screenshot: {str(e)}",
             )
 
-    async def beta_take_screenshot(self):
+    async def beta_take_screenshot(
+        self,
+        format: str = "png",
+    ) -> ScreenshotResult:
         """
         Takes a screenshot of the mobile device (beta).
 
         This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
         binary image data. The backend also returns the captured image dimensions
         (width/height in pixels), which are exposed on `ScreenshotResult.width`
-        and `ScreenshotResult.height` when available.
+        and `ScreenshotResult.height`. The backend metadata fields `type` and
+        `mime_type` are exposed on `ScreenshotResult.type` and `ScreenshotResult.mime_type`.
 
         Returns:
             ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
-                including `width` and `height` when provided by the backend.
+                including `type`, `mime_type`, `width`, and `height` when provided by the backend.
 
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
+            ValueError: If `format` is invalid.
         """
         link_url = ""
         try:
@@ -776,22 +781,28 @@ class AsyncMobile(AsyncBaseService):
                 "This cloud environment does not support `beta_take_screenshot()`. "
                 "Please use `screenshot()` instead."
             )
+        fmt = (format or "").strip().lower()
+        if fmt == "jpg":
+            fmt = "jpeg"
+        if fmt not in ("png", "jpeg"):
+            raise ValueError("Invalid format: must be 'png', 'jpeg', or 'jpg'")
         result = await self.session.call_mcp_tool(
             "screenshot",
-            {"format": "png"},
+            {"format": fmt},
         )
         if not result.success:
             raise AgentBayError(f"Failed to take screenshot: {result.error_message}")
 
-        raw, width, height = self._decode_image_from_mcp_text(
-            result.data, expected_format="png"
+        raw, width, height, shot_type, mime_type = self._decode_image_from_mcp_text(
+            result.data, expected_format=fmt
         )
         return ScreenshotResult(
             request_id=result.request_id,
             success=True,
             error_message="",
+            type=shot_type,
             data=raw,
-            format="png",
+            mime_type=mime_type,
             width=width,
             height=height,
         )
@@ -812,7 +823,7 @@ class AsyncMobile(AsyncBaseService):
 
         Returns:
             ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
-                including `width` and `height` when provided by the backend.
+                including `type`, `mime_type`, `width`, and `height` when provided by the backend.
 
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
@@ -838,15 +849,16 @@ class AsyncMobile(AsyncBaseService):
         if not result.success:
             raise AgentBayError(f"Failed to take long screenshot: {result.error_message}")
 
-        raw, width, height = self._decode_image_from_mcp_text(
+        raw, width, height, shot_type, mime_type = self._decode_image_from_mcp_text(
             result.data, expected_format=fmt
         )
         return ScreenshotResult(
             request_id=result.request_id,
             success=True,
             error_message="",
+            type=shot_type,
             data=raw,
-            format=fmt,
+            mime_type=mime_type,
             width=width,
             height=height,
         )
@@ -854,7 +866,7 @@ class AsyncMobile(AsyncBaseService):
     @staticmethod
     def _decode_image_from_mcp_text(
         text: Any, expected_format: str
-    ) -> tuple[bytes, Optional[int], Optional[int]]:
+    ) -> tuple[bytes, Optional[int], Optional[int], str, str]:
         """
         Decode image bytes from MCP tool text output.
 
@@ -886,9 +898,17 @@ class AsyncMobile(AsyncBaseService):
 
         if not isinstance(obj, dict):
             raise AgentBayError("Invalid screenshot JSON: expected object")
+        shot_type = obj.get("type")
+        mime_type = obj.get("mime_type")
         b64 = obj.get("data")
         if not isinstance(b64, str) or not b64.strip():
             raise AgentBayError("Screenshot JSON missing base64 field")
+        if not isinstance(shot_type, str) or not shot_type.strip():
+            raise AgentBayError("Invalid screenshot JSON: expected non-empty string 'type'")
+        if not isinstance(mime_type, str) or not mime_type.strip():
+            raise AgentBayError(
+                "Invalid screenshot JSON: expected non-empty string 'mime_type'"
+            )
         width = obj.get("width")
         height = obj.get("height")
         if width is not None and not isinstance(width, int):
@@ -916,9 +936,16 @@ class AsyncMobile(AsyncBaseService):
         else:
             magic = b"\xff\xd8\xff"
 
-        if raw.startswith(magic):
-            return raw, width, height
-        raise AgentBayError("Decoded image does not match expected format")
+        if not raw.startswith(magic):
+            raise AgentBayError("Decoded image does not match expected format")
+
+        expected_mime_type = "image/png" if expected_format == "png" else "image/jpeg"
+        if mime_type.strip().lower() != expected_mime_type:
+            raise AgentBayError(
+                "Screenshot JSON mime_type does not match expected format: "
+                f"expected {expected_mime_type!r}, got {mime_type!r}"
+            )
+        return raw, width, height, shot_type, mime_type
 
     # Mobile Configuration Operations
     async def configure(self, mobile_config):

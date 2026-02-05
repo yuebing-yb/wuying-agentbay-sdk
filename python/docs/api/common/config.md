@@ -11,7 +11,9 @@ Configuration object for AgentBay client.
 ### __init__
 
 ```python
-def __init__(self, endpoint: str, timeout_ms: int, region_id: Optional[str] = None)
+def __init__(self, endpoint: Optional[str] = None,
+             timeout_ms: Optional[int] = None,
+             region_id: Optional[str] = None)
 ```
 
 #### BROWSER_RECORD_PATH

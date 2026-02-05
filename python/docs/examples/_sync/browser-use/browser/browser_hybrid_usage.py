@@ -74,9 +74,12 @@ def main():
 
         task = "在百度查询上海天气"
         logger.info("🚀 task of Query the weather in Shanghai")
-
+        timeout = os.environ.get("AGENT_TASK_TIMEOUT")
+        if not timeout:
+            timeout = 180
+        timeout = int(timeout)
         result = session.agent.browser.execute_task_and_wait(
-            task, timeout, use_vision=False, output_schema=WeatherSchema
+            task, timeout, False, WeatherSchema
         )
         assert result.success
         assert result.request_id != ""

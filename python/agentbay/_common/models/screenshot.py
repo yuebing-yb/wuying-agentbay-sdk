@@ -10,10 +10,20 @@ from .response import BaseResult
 
 @dataclass
 class ScreenshotResult(BaseResult):
-    """Result object containing screenshot data."""
+    """
+    Result object containing screenshot data and metadata.
 
+    Cloud (MCP tool) screenshot payload is expected to include:
+    - type
+    - data
+    - mime_type
+    - width
+    - height
+    """
+
+    type: str = ""
     data: bytes = b""
-    format: str = "png"
+    mime_type: str = ""
     width: Optional[int] = None
     height: Optional[int] = None
 

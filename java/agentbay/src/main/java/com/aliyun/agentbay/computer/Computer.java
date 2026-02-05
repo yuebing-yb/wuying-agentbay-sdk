@@ -362,7 +362,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("start_menu", startMenu);
             args.put("desktop", desktop);
-            args.put("ignore_system_apps", ignoreSystemApps);
+            args.put("ignore_system_app", ignoreSystemApps);
 
             OperationResult result = callAppTool("get_installed_apps", args);
 
@@ -974,13 +974,14 @@ public class Computer extends BaseService {
             return new ScreenshotBytesResult(
                 "",
                 false,
+                "",
+                "",
                 new byte[0],
-                fmt,
                 "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead."
             );
         }
         if (!"png".equals(fmt) && !"jpeg".equals(fmt)) {
-            return new ScreenshotBytesResult("", false, new byte[0], fmt, "Unsupported format: " + format);
+            return new ScreenshotBytesResult("", false, "", "", new byte[0], null, null, "Unsupported format: " + format);
         }
 
         try {
@@ -991,8 +992,9 @@ public class Computer extends BaseService {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    fmt,
                     result.getErrorMessage()
                 );
             }
@@ -1002,21 +1004,45 @@ public class Computer extends BaseService {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    fmt,
                     "Screenshot tool returned non-JSON data"
                 );
             }
 
             @SuppressWarnings("unchecked")
             Map<String, Object> obj = objectMapper.readValue(s, Map.class);
+            Object typeObj = obj.get("type");
+            Object mimeTypeObj = obj.get("mime_type");
             Object b64Obj = obj.get("data");
+            if (!(typeObj instanceof String) || ((String) typeObj).trim().isEmpty()) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    "",
+                    "",
+                    new byte[0],
+                    "Invalid screenshot JSON: expected non-empty string 'type'"
+                );
+            }
+            if (!(mimeTypeObj instanceof String) || ((String) mimeTypeObj).trim().isEmpty()) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    "",
+                    "",
+                    new byte[0],
+                    "Invalid screenshot JSON: expected non-empty string 'mime_type'"
+                );
+            }
             if (!(b64Obj instanceof String) || ((String) b64Obj).trim().isEmpty()) {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    fmt,
                     "Screenshot JSON missing base64 field"
                 );
             }
@@ -1029,8 +1055,9 @@ public class Computer extends BaseService {
                     return new ScreenshotBytesResult(
                         result.getRequestId(),
                         false,
+                        "",
+                        "",
                         new byte[0],
-                        fmt,
                         "Invalid screenshot JSON: expected integer 'width'"
                     );
                 }
@@ -1041,8 +1068,9 @@ public class Computer extends BaseService {
                     return new ScreenshotBytesResult(
                         result.getRequestId(),
                         false,
+                        "",
+                        "",
                         new byte[0],
-                        fmt,
                         "Invalid screenshot JSON: expected integer 'height'"
                     );
                 }
@@ -1054,8 +1082,9 @@ public class Computer extends BaseService {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    fmt,
                     "Screenshot data does not match expected format 'png'"
                 );
             }
@@ -1063,17 +1092,32 @@ public class Computer extends BaseService {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    fmt,
                     "Screenshot data does not match expected format 'jpeg'"
+                );
+            }
+
+            String expectedMimeType = "png".equals(fmt) ? "image/png" : "jpeg".equals(fmt) ? "image/jpeg" : "";
+            String mimeType = ((String) mimeTypeObj).trim();
+            if (!expectedMimeType.isEmpty() && !expectedMimeType.equalsIgnoreCase(mimeType)) {
+                return new ScreenshotBytesResult(
+                    result.getRequestId(),
+                    false,
+                    "",
+                    "",
+                    new byte[0],
+                    "Screenshot JSON mime_type does not match expected format: expected " + expectedMimeType + ", got " + mimeType
                 );
             }
 
             return new ScreenshotBytesResult(
                 result.getRequestId(),
                 true,
+                ((String) typeObj).trim(),
+                mimeType,
                 decoded,
-                fmt,
                 width,
                 height,
                 ""
@@ -1082,8 +1126,9 @@ public class Computer extends BaseService {
             return new ScreenshotBytesResult(
                 "",
                 false,
+                "",
+                "",
                 new byte[0],
-                fmt,
                 "Failed to take screenshot: " + e.getMessage()
             );
         }

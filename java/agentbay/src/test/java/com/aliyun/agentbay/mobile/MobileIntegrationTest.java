@@ -168,7 +168,7 @@ public class MobileIntegrationTest {
         Session xmlSession = null;
         try {
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("imgc-0ab5ta4mn31wth5lh");
+            params.setImageId("mobile-use-android-12-gw");
 
             SessionResult result = agentBay.create(params);
             assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
@@ -220,7 +220,7 @@ public class MobileIntegrationTest {
         Session s = null;
         try {
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("imgc-0ab5ta4mn31wth5lh");
+            params.setImageId("mobile-use-android-12-gw");
 
             SessionResult result = agentBay.create(params);
             assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
@@ -245,9 +245,10 @@ public class MobileIntegrationTest {
 
             ScreenshotBytesResult shot = s.mobile.betaTakeScreenshot();
             assertTrue("Beta screenshot failed: " + shot.getErrorMessage(), shot.isSuccess());
+            assertEquals("image", shot.getType());
+            assertEquals("image/png", shot.getMimeType());
             assertNotNull("Image bytes should not be null", shot.getData());
             assertTrue("Image bytes should not be empty", shot.getData().length > 8);
-            assertEquals("png", shot.getFormat());
             assertNotNull("Width should not be null", shot.getWidth());
             assertNotNull("Height should not be null", shot.getHeight());
             assertTrue("Width should be > 0", shot.getWidth() > 0);
@@ -272,7 +273,7 @@ public class MobileIntegrationTest {
         Session s = null;
         try {
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("imgc-0ab5ta4mn31wth5lh");
+            params.setImageId("mobile-use-android-12-gw");
 
             SessionResult result = agentBay.create(params);
             assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
@@ -300,9 +301,10 @@ public class MobileIntegrationTest {
                 return;
             }
             assertTrue("Beta long screenshot failed: " + shot.getErrorMessage(), shot.isSuccess());
+            assertEquals("image", shot.getType());
+            assertEquals("image/png", shot.getMimeType());
             assertNotNull("Image bytes should not be null", shot.getData());
             assertTrue("Image bytes should not be empty", shot.getData().length > 8);
-            assertEquals("png", shot.getFormat());
             assertNotNull("Width should not be null", shot.getWidth());
             assertNotNull("Height should not be null", shot.getHeight());
             assertTrue("Width should be > 0", shot.getWidth() > 0);
@@ -327,7 +329,7 @@ public class MobileIntegrationTest {
         Session s = null;
         try {
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("imgc-0ab5ta4mn31wth5lh");
+            params.setImageId("mobile-use-android-12-gw");
 
             SessionResult result = agentBay.create(params);
             assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
@@ -362,9 +364,10 @@ public class MobileIntegrationTest {
             ScreenshotBytesResult low = s.mobile.betaTakeLongScreenshot(2, "jpeg", 10);
 
             assertTrue("Beta long screenshot (jpeg, q=95) failed: " + high.getErrorMessage(), high.isSuccess());
+            assertEquals("image", high.getType());
+            assertEquals("image/jpeg", high.getMimeType());
             assertNotNull("Image bytes should not be null", high.getData());
             assertTrue("Image bytes should not be empty", high.getData().length > 3);
-            assertEquals("jpeg", high.getFormat());
             assertNotNull("Width should not be null", high.getWidth());
             assertNotNull("Height should not be null", high.getHeight());
             assertTrue("Width should be > 0", high.getWidth() > 0);
@@ -374,9 +377,10 @@ public class MobileIntegrationTest {
             assertEquals((byte) 0xff, high.getData()[2]);
 
             assertTrue("Beta long screenshot (jpeg, q=10) failed: " + low.getErrorMessage(), low.isSuccess());
+            assertEquals("image", low.getType());
+            assertEquals("image/jpeg", low.getMimeType());
             assertNotNull("Image bytes should not be null", low.getData());
             assertTrue("Image bytes should not be empty", low.getData().length > 3);
-            assertEquals("jpeg", low.getFormat());
             assertNotNull("Width should not be null", low.getWidth());
             assertNotNull("Height should not be null", low.getHeight());
             assertTrue("Width should be > 0", low.getWidth() > 0);

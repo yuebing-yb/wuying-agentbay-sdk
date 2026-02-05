@@ -210,6 +210,46 @@ public class ContextService {
     }
 
     /**
+     * Clears all data in the specified context.
+     *
+     * @param contextId The ID of the context to clear.
+     * @return OperationResult containing success status and request ID.
+     */
+    public com.aliyun.agentbay.model.OperationResult clear(String contextId) throws AgentBayException {
+        try {
+            com.aliyun.wuyingai20250506.models.ClearContextRequest request = new com.aliyun.wuyingai20250506.models.ClearContextRequest();
+            request.setId(contextId);
+            request.setAuthorization("Bearer " + agentBay.getApiKey());
+
+            com.aliyun.wuyingai20250506.models.ClearContextResponse response = agentBay.getClient().clearContext(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response == null || response.getBody() == null) {
+                return new com.aliyun.agentbay.model.OperationResult(
+                    requestId, false, null, "Invalid response from API"
+                );
+            }
+
+            com.aliyun.wuyingai20250506.models.ClearContextResponseBody body = response.getBody();
+            boolean success = Boolean.TRUE.equals(body.getSuccess());
+
+            String errorMessage = "";
+            if (!success) {
+                String code = body.getCode() != null ? body.getCode() : "Unknown";
+                String message = body.getMessage() != null ? body.getMessage() : "Unknown error";
+                errorMessage = "[" + code + "] " + message;
+            }
+
+            return new com.aliyun.agentbay.model.OperationResult(
+                requestId, success, success ? "true" : "false", errorMessage
+            );
+
+        } catch (Exception e) {
+            throw new AgentBayException("Failed to clear context " + contextId + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Gets a presigned download URL for a file in a context.
      *
      * @param contextId The ID of the context.

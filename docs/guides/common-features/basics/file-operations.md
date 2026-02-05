@@ -106,10 +106,7 @@ from agentbay import AgentBay
 # Create session
 agent_bay = AgentBay()
 session = agent_bay.create().session
-# Recommended aliases:
-# - session.fs (alias of session.file_system)
-# - fs.read/fs.write/fs.list/fs.delete (aliases of read_file/write_file/list_directory/delete_file)
-fs = session.fs
+fs = session.file_system
 
 # Create Directory
 fs.create_directory("/path/to")
@@ -117,18 +114,18 @@ print("✅ Directory created successfully")
 
 
 # Write text file (UTF-8 text only)
-result = fs.write("/path/to/file.txt", "Hello, World!")
+result = fs.write_file("/path/to/file.txt", "Hello, World!")
 if result.success:
     print("Text file written successfully")
 
 # Read text file (UTF-8 text only)
-result = fs.read("/path/to/file.txt")
+result = fs.read_file("/path/to/file.txt")
 if result.success:
     content = result.content  # String content
     print(f"File content: {content}")
 
 # List directory
-result = fs.list("/path/to")
+result = fs.list_directory("/path/to")
 if result.success:
     entries = result.entries
     for entry in entries:
@@ -205,14 +202,14 @@ session = agent_bay.create().session
 
 # Write plain text file
 content = "Hello, AgentBay!\nThis is a multi-line text file."
-result = session.fs.write("/tmp/hello.txt", content)
+result = session.file_system.write_file("/tmp/hello.txt", content)
 if result.success:
     print("Text file written successfully")
 else:
     print(f"Failed to write file: {result.error_message}")
 
 # Append to file
-result = session.fs.write("/tmp/hello.txt", "\nNew log entry", mode="append")
+result = session.file_system.write_file("/tmp/hello.txt", "\nNew log entry", mode="append")
 if result.success:
     print("File appended successfully")
     

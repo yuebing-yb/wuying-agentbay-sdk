@@ -235,6 +235,12 @@ export class ContextSync {
   contextId: string;
   path: string;
   policy?: SyncPolicy;
+  /**
+   * Beta feature flag to control whether session creation should wait for this context's
+   * initial download to finish. If set to false, the SDK will not block create() on this context.
+   * Defaults to undefined (treated as true for backward compatibility).
+   */
+  betaWaitForCompletion?: boolean;
 
   /**
    * Defines a full context sync configuration with optional policy overrides.
@@ -259,19 +265,25 @@ export class ContextSync {
    * }
    * ```
    */
-  constructor(contextId: string, path: string, policy?: SyncPolicy) {
+  constructor(contextId: string, path: string, policy?: SyncPolicy, betaWaitForCompletion?: boolean) {
     if (policy) {
       validateSyncPolicy(policy);
     }
     this.contextId = contextId;
     this.path = path;
     this.policy = policy;
+    this.betaWaitForCompletion = betaWaitForCompletion;
   }
 
   // WithPolicy sets the policy and returns the context sync for chaining
   withPolicy(policy: SyncPolicy): ContextSync {
     validateSyncPolicy(policy);
     this.policy = policy;
+    return this;
+  }
+
+  withBetaWaitForCompletion(wait: boolean): ContextSync {
+    this.betaWaitForCompletion = wait;
     return this;
   }
 }

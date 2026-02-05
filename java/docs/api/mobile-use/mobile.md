@@ -224,7 +224,7 @@ public ScreenshotBytesResult betaTakeScreenshot()
 Captures the current screen as a PNG image and returns raw image bytes.
 
 **Returns:**
-- `ScreenshotBytesResult`: ScreenshotBytesResult containing PNG bytes and error message if any
+- `ScreenshotBytesResult`: ScreenshotBytesResult containing PNG bytes and metadata (`type`, `mimeType`, `width`, `height`) and error message if any
 
 ### betaTakeLongScreenshot
 
@@ -252,7 +252,7 @@ Supported formats:
 - `quality` (Integer): JPEG quality (range: [1, 100]). Only used for jpeg.
 
 **Returns:**
-- `ScreenshotBytesResult`: ScreenshotBytesResult containing image bytes and error message if any
+- `ScreenshotBytesResult`: ScreenshotBytesResult containing image bytes and metadata (`type`, `mimeType`, `width`, `height`) and error message if any
 
 ### configure
 

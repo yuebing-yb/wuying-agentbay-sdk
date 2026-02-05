@@ -40,8 +40,9 @@ Keyboard modifier keys: Ctrl, Alt, Shift, Win
 type BetaScreenshotResult struct {
 	models.ApiResponse
 	Success		bool
+	Type		string
+	MimeType	string
 	Data		[]byte
-	Format		string
 	Width		*int
 	Height		*int
 	ErrorMessage	string

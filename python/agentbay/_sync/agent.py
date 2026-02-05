@@ -467,6 +467,7 @@ class Agent(BaseService):
             task: str,
             use_vision: bool = False,
             output_schema: Type[Schema] = None,
+            full_page_screenshot: Optional[bool] = False,
         ) -> ExecutionResult:
             """
             Execute a task described in human language on a browser without waiting for completion (non-blocking).
@@ -480,7 +481,12 @@ class Agent(BaseService):
                 task: Task description in human language.
                 use_vision: Whether to use vision to performe the task.
                 output_schema: The schema of the structured output.
-
+                full_page_screenshot: Whether to take a full page screenshot. This only works when use_vision is true.
+                When use_vision is enabled, we need to provide a screenshot of the webpage to the LLM for grounding. There are two ways of screenshot:
+                1. Full-page screenshot: Captures the entire webpage content, including parts not currently visible in the viewport.  
+                2. Viewport screenshot: Captures only the currently visible portion of the webpage.
+                The first approach delivers all information to the LLM in one go, which can improve task success rates in certain information extraction scenarios. However, it also results in higher token consumption and increases the LLM's processing time.
+                Therefore, we would like to give you the choice—you can decide whether to enable full-page screenshot based on your actual needs.
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
                     task status, and error message if any.
@@ -492,7 +498,7 @@ class Agent(BaseService):
                 class WeatherSchema(BaseModel):
                     city:str
                     weather: str
-                result = session.agent.browser.execute_task(task="Query the weather in Shanghai",use_vision=False, output_schema=WeatherSchema)
+                result = session.agent.browser.execute_task(task="Query the weather in Shanghai",use_vision=False, output_schema=WeatherSchema, full_page_screenshot=True)
                 print(
                     f"Task ID: {result.task_id}, Status: {result.task_status}")
                 status = session.agent.browser.get_task_status(result.task_id)
@@ -515,6 +521,7 @@ class Agent(BaseService):
                 args = {
                     "task": task,
                     "use_vision": use_vision,
+                    "full_page_screenshot": full_page_screenshot,
                 }
                 if output_schema:
                     args["output_schema"] = json.dumps(
@@ -570,6 +577,7 @@ class Agent(BaseService):
             timeout: int,
             use_vision: bool = False,
             output_schema: Type[Schema] = None,
+            full_page_screenshot: Optional[bool] = False,
         ) -> ExecutionResult:
             """
             Execute a task described in human language on a browser synchronously.
@@ -583,6 +591,12 @@ class Agent(BaseService):
                     Used to control how long to wait for task completion.
                 use_vision: Whether to use vision to performe the task.
                 output_schema: The schema of the structured output.
+                full_page_screenshot: Whether to take a full page screenshot. This only works when use_vision is true.
+                When use_vision is enabled, we need to provide a screenshot of the webpage to the LLM for grounding. There are two ways of screenshot:
+                1. Full-page screenshot: Captures the entire webpage content, including parts not currently visible in the viewport.  
+                2. Viewport screenshot: Captures only the currently visible portion of the webpage.
+                The first approach delivers all information to the LLM in one go, which can improve task success rates in certain information extraction scenarios. However, it also results in higher token consumption and increases the LLM's processing time.
+                Therefore, we would like to give you the choice—you can decide whether to enable full-page screenshot based on your actual needs.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -595,7 +609,7 @@ class Agent(BaseService):
                 class WeatherSchema(BaseModel):
                     city:str
                     weather: str
-                result = session.agent.computer.execute_task_and_wait(task="Query the weather in Shanghai",timeout=60, use_vision=False, output_schema=WeatherSchema)
+                result = session.agent.computer.execute_task_and_wait(task="Query the weather in Shanghai",timeout=60, use_vision=False, output_schema=WeatherSchema, full_page_screenshot=True)
                 print(f"Task result: {result.task_result}")
                 session.delete()
                 ```
@@ -619,6 +633,7 @@ class Agent(BaseService):
                 args = {
                     "task": task,
                     "use_vision": use_vision,
+                    "full_page_screenshot": full_page_screenshot,
                 }
                 if output_schema:
                     args["output_schema"] = json.dumps(

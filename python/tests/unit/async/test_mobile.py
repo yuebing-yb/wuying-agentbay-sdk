@@ -474,7 +474,8 @@ class TestMobile:
         result = await self.mobile.beta_take_screenshot()
 
         assert result.success is True
-        assert result.format == "png"
+        assert result.type == "image"
+        assert result.mime_type == "image/png"
         assert result.width == 720
         assert result.height == 1280
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
@@ -531,7 +532,8 @@ class TestMobile:
         result = await self.mobile.beta_take_long_screenshot(max_screens=4, format="png")
 
         assert result.success is True
-        assert result.format == "png"
+        assert result.type == "image"
+        assert result.mime_type == "image/png"
         assert result.width == 720
         assert result.height == 1280
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
@@ -570,7 +572,8 @@ class TestMobile:
         result = await self.mobile.beta_take_long_screenshot(max_screens=2, format="jpeg", quality=80)
 
         assert result.success is True
-        assert result.format == "jpeg"
+        assert result.type == "image"
+        assert result.mime_type == "image/jpeg"
         assert result.width == 720
         assert result.height == 1280
         assert result.data.startswith(b"\xff\xd8\xff")

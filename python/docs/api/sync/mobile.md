@@ -354,7 +354,7 @@ session.delete()
 ### beta_take_screenshot
 
 ```python
-def beta_take_screenshot()
+def beta_take_screenshot(format: str = "png") -> ScreenshotResult
 ```
 
 Takes a screenshot of the mobile device (beta).
@@ -362,17 +362,19 @@ Takes a screenshot of the mobile device (beta).
 This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
 binary image data. The backend also returns the captured image dimensions
 (width/height in pixels), which are exposed on `ScreenshotResult.width`
-and `ScreenshotResult.height` when available.
+and `ScreenshotResult.height`. The backend metadata fields `type` and
+`mime_type` are exposed on `ScreenshotResult.type` and `ScreenshotResult.mime_type`.
 
 **Returns**:
 
     ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
-  including `width` and `height` when provided by the backend.
+  including `type`, `mime_type`, `width`, and `height` when provided by the backend.
   
 
 **Raises**:
 
     AgentBayError: If screenshot fails or response cannot be decoded.
+    ValueError: If `format` is invalid.
 
 ### beta_take_long_screenshot
 
@@ -394,7 +396,7 @@ Takes a long screenshot (scroll + stitch) of the mobile device (beta).
 **Returns**:
 
     ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
-  including `width` and `height` when provided by the backend.
+  including `type`, `mime_type`, `width`, and `height` when provided by the backend.
   
 
 **Raises**:

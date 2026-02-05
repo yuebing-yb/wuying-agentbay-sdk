@@ -52,8 +52,11 @@ func TestMobileLinkUrlPresentRequiresBetaTakeScreenshot(t *testing.T) {
 	if !beta.Success {
 		t.Fatalf("beta_take_screenshot failed: %s", beta.ErrorMessage)
 	}
-	if beta.Format != "png" {
-		t.Fatalf("Unexpected format: %q", beta.Format)
+	if beta.Type != "image" {
+		t.Fatalf("Unexpected type: %q", beta.Type)
+	}
+	if beta.MimeType != "image/png" {
+		t.Fatalf("Unexpected mime_type: %q", beta.MimeType)
 	}
 	if beta.Width == nil || beta.Height == nil || *beta.Width <= 0 || *beta.Height <= 0 {
 		t.Fatalf("Unexpected dimensions: width=%v height=%v", beta.Width, beta.Height)
@@ -117,4 +120,3 @@ func TestMobileLinkUrlAbsentRequiresScreenshot(t *testing.T) {
 		t.Fatalf("Unexpected beta_take_screenshot error message: %q", beta.ErrorMessage)
 	}
 }
-
