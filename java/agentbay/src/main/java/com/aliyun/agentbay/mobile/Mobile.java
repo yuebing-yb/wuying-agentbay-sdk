@@ -235,7 +235,7 @@ public class Mobile extends BaseService {
      * @param timeoutMs Timeout in milliseconds. Defaults to 2000
      * @return UIElementListResult containing clickable UI elements and error message if any
      * Each returned element may include `bounds` from backend which is not stable in type.
-       Use `bounds_rect` (dict with left/top/right/bottom) instead.
+     *  Use `bounds_rect` (dict with left/top/right/bottom) instead.
      */
     public UIElementListResult getClickableUiElements(int timeoutMs) {
         try {
@@ -329,7 +329,7 @@ public class Mobile extends BaseService {
      * - "xml": return raw XML and an empty elements list
      *
      * @param timeoutMs Timeout in milliseconds. Defaults to 2000.
-     * @param format Output format of the underlying MCP tool ("json" or "xml"),default to "json"
+     * @param @param format Output format of the underlying MCP tool ("json" or "xml"), default to "json"
      * @return UIElementListResult containing UI elements or raw XML
      */
     public UIElementListResult getAllUiElements(int timeoutMs, String format) {
@@ -745,7 +745,7 @@ public class Mobile extends BaseService {
     }
 
     /**
-     *Takes a screenshot of the mobile device (beta).
+     * Takes a screenshot of the mobile device (beta).
 
       This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
         binary image data. The backend also returns the captured image dimensions

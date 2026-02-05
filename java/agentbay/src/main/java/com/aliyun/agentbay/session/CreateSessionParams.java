@@ -151,7 +151,7 @@ public class CreateSessionParams {
      * @param labels labels map
      */
     public void setLabels(Map<String, String> labels) {
-        this.labels = labels;
+        this.labels = labels != null ? labels : new java.util.HashMap<>();
     }
 
     /**

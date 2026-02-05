@@ -117,7 +117,7 @@ public class MobileSimulate {
      *         - simulate: The simulate feature enable flag
      *         - simulatePath: The path of the mobile dev info file
      *         - simulateMode: The simulate mode
-     *         - simulatedContextId: The context ID of the mobile info (defaults to empty string)
+     *         - simulatedContextId: The context ID of the mobile info (defaults to null)
      */
     public MobileSimulateConfig getSimulateConfig() {
         String simulatedContextId = useInternalContext ? contextId : null;
