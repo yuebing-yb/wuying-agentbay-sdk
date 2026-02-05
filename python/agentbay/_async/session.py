@@ -124,6 +124,12 @@ class AsyncSession:
         self.token = ""
         self.link_url = ""
 
+        # WebSocket URL for long connection (if provided by backend)
+        self.ws_url = ""
+
+        # Internal session-scoped WS client (lazy initialized)
+        self._ws_client = None
+
         # Recording functionality
         self.enableBrowserReplay = (
             True  # Whether browser recording is enabled for this session
@@ -146,6 +152,27 @@ class AsyncSession:
         self.browser = AsyncBrowser(self)
 
         self.agent = AsyncAgent(self)
+
+    async def _get_ws_client(self):
+        """
+        Internal: get or create a session-scoped WS client.
+
+        This method is intentionally internal-only and guarded against direct SDK user calls.
+        """
+        from .._common._internal_access import assert_internal_access
+
+        assert_internal_access("AsyncSession._get_ws_client")
+
+        if not self.ws_url:
+            raise SessionError("ws_url is not available for this session")
+        if not self.token:
+            raise SessionError("token is not available for WS connection")
+
+        if self._ws_client is None:
+            from ._internal.ws_client import WsClient
+
+            self._ws_client = WsClient(ws_url=self.ws_url, ws_token=self.token)
+        return self._ws_client
 
     @property
     def fs(self) -> AsyncFileSystem:

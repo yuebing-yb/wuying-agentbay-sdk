@@ -94,6 +94,7 @@ class CreateMcpSessionResponseBodyData(DaraModel):
         token: Optional[str] = None,
         tool_list: Optional[str] = None,
         vpc_resource: Optional[bool] = None,
+        ws_url: Optional[str] = None,
     ):
         self.app_instance_id = app_instance_id
         self.err_msg = err_msg
@@ -107,6 +108,7 @@ class CreateMcpSessionResponseBodyData(DaraModel):
         self.token = token
         self.tool_list = tool_list
         self.vpc_resource = vpc_resource
+        self.ws_url = ws_url
 
     def validate(self):
         pass
@@ -152,6 +154,9 @@ class CreateMcpSessionResponseBodyData(DaraModel):
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
 
+        if self.ws_url is not None:
+            result["WsUrl"] = self.ws_url
+
         return result
 
     def from_map(self, m: Optional[dict] = None):
@@ -191,5 +196,8 @@ class CreateMcpSessionResponseBodyData(DaraModel):
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")
+
+        if m.get("WsUrl") is not None:
+            self.ws_url = m.get("WsUrl")
 
         return self

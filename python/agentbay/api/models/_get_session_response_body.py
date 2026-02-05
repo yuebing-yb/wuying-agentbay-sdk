@@ -94,6 +94,7 @@ class GetSessionResponseBodyData(DaraModel):
         tool_list: str = None,
         vpc_resource: bool = None,
         contexts: List[main_models.GetSessionResponseBodyDataContexts] = None,
+        ws_url: str = None,
     ):
         self.app_instance_id = app_instance_id
         self.http_port = http_port
@@ -107,6 +108,7 @@ class GetSessionResponseBodyData(DaraModel):
         self.tool_list = tool_list
         self.vpc_resource = vpc_resource
         self.contexts = contexts
+        self.ws_url = ws_url
 
     def validate(self):
         if self.contexts:
@@ -152,6 +154,9 @@ class GetSessionResponseBodyData(DaraModel):
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
 
+        if self.ws_url is not None:
+            result["WsUrl"] = self.ws_url
+
         result["contexts"] = []
         if self.contexts is not None:
             for k1 in self.contexts:
@@ -193,6 +198,9 @@ class GetSessionResponseBodyData(DaraModel):
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")
+
+        if m.get("WsUrl") is not None:
+            self.ws_url = m.get("WsUrl")
 
         self.contexts = []
         if m.get("contexts") is not None:

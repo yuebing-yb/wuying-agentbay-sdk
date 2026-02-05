@@ -229,6 +229,7 @@ class GetSessionData:
         network_interface_ip: str = "",
         token: str = "",
         link_url: str = "",
+        ws_url: str = "",
         vpc_resource: bool = False,
         resource_url: str = "",
         status: str = "",
@@ -260,6 +261,7 @@ class GetSessionData:
         self.network_interface_ip = network_interface_ip
         self.token = token
         self.link_url = link_url
+        self.ws_url = ws_url
         self.vpc_resource = vpc_resource
         self.resource_url = resource_url
         self.status = status
