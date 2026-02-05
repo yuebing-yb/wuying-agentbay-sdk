@@ -236,7 +236,7 @@ describe('Mobile', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_installed_apps', {
         start_menu: false,
         desktop: true,
-        ignore_system_apps: true
+        ignore_system_app: true
       }, false);
       expect(result.apps).toHaveLength(1);
       expect(result.apps[0].name).toBe('Calculator');

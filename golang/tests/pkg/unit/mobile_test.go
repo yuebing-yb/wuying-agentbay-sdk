@@ -314,9 +314,9 @@ func (suite *MobileTestSuite) TestGetInstalledApps_Success() {
 	}
 
 	suite.mockSession.On("CallMcpTool", "get_installed_apps", map[string]interface{}{
-		"start_menu":         false,
-		"desktop":            true,
-		"ignore_system_apps": true,
+		"start_menu":        false,
+		"desktop":           true,
+		"ignore_system_app": true,
 	}).Return(expectedResult, nil)
 
 	// Act

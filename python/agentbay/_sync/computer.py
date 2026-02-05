@@ -1452,7 +1452,7 @@ class Computer(BaseService):
             args = {
                 "start_menu": start_menu,
                 "desktop": desktop,
-                "ignore_system_apps": ignore_system_apps,
+                "ignore_system_app": ignore_system_apps,
             }
 
             result = self.session.call_mcp_tool(

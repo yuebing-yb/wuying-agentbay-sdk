@@ -1156,7 +1156,7 @@ export class Computer {
       const args = {
         start_menu: startMenu,
         desktop,
-        ignore_system_apps: ignoreSystemApps,
+        ignore_system_app: ignoreSystemApps,
       };
 
     const response = await this.session.callMcpTool('get_installed_apps', args, false);

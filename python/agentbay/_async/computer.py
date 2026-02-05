@@ -1449,7 +1449,7 @@ class AsyncComputer(AsyncBaseService):
             args = {
                 "start_menu": start_menu,
                 "desktop": desktop,
-                "ignore_system_apps": ignore_system_apps,
+                "ignore_system_app": ignore_system_apps,
             }
 
             result = await self.session.call_mcp_tool(

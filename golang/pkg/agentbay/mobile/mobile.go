@@ -504,9 +504,9 @@ func (m *Mobile) GetAllUIElements(timeoutMs int, formats ...string) *UIElementsR
 //	appsResult := result.Session.Mobile.GetInstalledApps(true, true, true)
 func (m *Mobile) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) *InstalledAppListResult {
 	args := map[string]interface{}{
-		"start_menu":         startMenu,
-		"desktop":            desktop,
-		"ignore_system_apps": ignoreSystemApps,
+		"start_menu":        startMenu,
+		"desktop":           desktop,
+		"ignore_system_app": ignoreSystemApps,
 	}
 
 	result, err := m.Session.CallMcpTool("get_installed_apps", args)

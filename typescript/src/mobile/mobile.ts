@@ -570,7 +570,7 @@ export class Mobile {
    * Get installed apps.
    */
   async getInstalledApps(startMenu = false, desktop = true, ignoreSystemApps = true): Promise<InstalledAppsResult> {
-    const args = { start_menu: startMenu, desktop, ignore_system_apps: ignoreSystemApps };
+    const args = { start_menu: startMenu, desktop, ignore_system_app: ignoreSystemApps };
     try {
       const result = await this.session.callMcpTool('get_installed_apps', args, false);
       

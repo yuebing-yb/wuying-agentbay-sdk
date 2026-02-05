@@ -362,7 +362,7 @@ public class Computer extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("start_menu", startMenu);
             args.put("desktop", desktop);
-            args.put("ignore_system_apps", ignoreSystemApps);
+            args.put("ignore_system_app", ignoreSystemApps);
 
             OperationResult result = callAppTool("get_installed_apps", args);
 

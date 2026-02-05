@@ -1094,9 +1094,9 @@ func (c *Computer) StartApp(startCmd, workDirectory, activity string) (*ProcessL
 //	}
 func (c *Computer) GetInstalledApps(startMenu, desktop, ignoreSystemApps bool) (*InstalledAppListResult, error) {
 	args := map[string]interface{}{
-		"start_menu":         startMenu,
-		"desktop":            desktop,
-		"ignore_system_apps": ignoreSystemApps,
+		"start_menu":        startMenu,
+		"desktop":           desktop,
+		"ignore_system_app": ignoreSystemApps,
 	}
 
 	result, err := c.Session.CallMcpTool("get_installed_apps", args)
