@@ -20,7 +20,7 @@ public class SessionGetMetricsServerNameTest {
         ApiClient apiClient = mock(ApiClient.class);
         when(agentBay.getApiClient()).thenReturn(apiClient);
 
-        Session session = new Session("test-session-id", agentBay, new SessionParams());
+        Session session = new Session("test-session-id", agentBay);
         McpTool tool = new McpTool();
         tool.setName("get_metrics");
         tool.setServer("wuying_system");

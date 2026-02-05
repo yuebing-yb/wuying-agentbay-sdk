@@ -10,7 +10,6 @@ import com.aliyun.agentbay.mobile.MobileSimulateConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateMode;
 import com.aliyun.agentbay.model.GetSessionData;
 import com.aliyun.agentbay.model.GetSessionResult;
-import com.aliyun.agentbay.model.SessionParams;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.session.Session;
@@ -222,7 +221,7 @@ public class AgentBay {
         }
 
         // Create the Session object
-        Session session = new Session(sessionId, this, new SessionParams());
+        Session session = new Session(sessionId, this);
 
         // Set ResourceUrl from GetSession response
         if (getResult.getData() != null) {
@@ -510,13 +509,10 @@ public class AgentBay {
 
             result.setSessionId(sessionId);
             result.setStatus("created");
-            result.setBrowserType(params.getBrowserType());
             result.setSuccess(true);
 
             // Create and cache the session
-            SessionParams sessionParams = new SessionParams();
-            sessionParams.setBrowserType(params.getBrowserType());
-            Session session = new Session(result.getSessionId(), this, sessionParams);
+            Session session = new Session(result.getSessionId(), this);
             if (params.getImageId() != null) {
                 session.setImageId(params.getImageId());
             }

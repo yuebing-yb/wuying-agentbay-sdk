@@ -234,6 +234,8 @@ public class Mobile extends BaseService {
      *
      * @param timeoutMs Timeout in milliseconds. Defaults to 2000
      * @return UIElementListResult containing clickable UI elements and error message if any
+     * Each returned element may include `bounds` from backend which is not stable in type.
+       Use `bounds_rect` (dict with left/top/right/bottom) instead.
      */
     public UIElementListResult getClickableUiElements(int timeoutMs) {
         try {
@@ -326,8 +328,8 @@ public class Mobile extends BaseService {
      * - "json": parse and return elements
      * - "xml": return raw XML and an empty elements list
      *
-     * @param timeoutMs Timeout in milliseconds
-     * @param format Output format of the underlying MCP tool ("json" or "xml")
+     * @param timeoutMs Timeout in milliseconds. Defaults to 2000.
+     * @param format Output format of the underlying MCP tool ("json" or "xml"),default to "json"
      * @return UIElementListResult containing UI elements or raw XML
      */
     public UIElementListResult getAllUiElements(int timeoutMs, String format) {
@@ -743,7 +745,12 @@ public class Mobile extends BaseService {
     }
 
     /**
-     * Captures the current screen as a PNG image and returns raw image bytes.
+     *Takes a screenshot of the mobile device (beta).
+
+      This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+        binary image data. The backend also returns the captured image dimensions
+        (width/height in pixels), which are exposed on `ScreenshotResult.width`
+        and `ScreenshotResult.height` when available.
      *
      * @return ScreenshotBytesResult containing PNG bytes and error message if any
      */
@@ -794,7 +801,7 @@ public class Mobile extends BaseService {
     }
 
     /**
-     * Captures a long screenshot and returns raw image bytes.
+     * Takes a long screenshot (scroll + stitch) of the mobile device (beta).
      *
      * Supported formats:
      * - "png"
@@ -803,7 +810,7 @@ public class Mobile extends BaseService {
      * @param maxScreens Number of screens to stitch (range: [2, 10])
      * @param format Output image format ("png" or "jpeg")
      * @param quality JPEG quality (range: [1, 100]). Only used for jpeg.
-     * @return ScreenshotBytesResult containing image bytes and error message if any
+     * @return ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata including `width` and `height` when provided by the backend.
      */
     public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String format, Integer quality) {
         try {
@@ -866,10 +873,23 @@ public class Mobile extends BaseService {
         }
     }
 
+    /**
+     * Takes a long screenshot (scroll + stitch) of the mobile device (beta).
+     *
+     * @param maxScreens Number of screens to stitch (range: [2, 10])
+     * @param format Output image format ("png" or "jpeg")
+     * @return ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata including `width` and `height` when provided by the backend.
+     */
     public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String format) {
         return betaTakeLongScreenshot(maxScreens, format, null);
     }
 
+    /**
+     * Takes a long screenshot (scroll + stitch) of the mobile device (beta).
+     *
+     * @param maxScreens Number of screens to stitch (range: [2, 10])
+     * @return ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata including `width` and `height` when provided by the backend.
+     */
     public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens) {
         return betaTakeLongScreenshot(maxScreens, "png", null);
     }
@@ -878,10 +898,13 @@ public class Mobile extends BaseService {
 
     /**
      * Configure mobile settings from MobileExtraConfig.
-     * This method is typically called automatically during session creation when
-     * MobileExtraConfig is provided in CreateSessionParams.
+     * This method is typically called automatically during session creation when MobileExtraConfig is provided in CreateSessionParams.It can also be called manually to reconfigure mobile settings during a session.
      *
-     * @param mobileConfig Mobile configuration object
+     * @param mobileConfig mobile_config (MobileExtraConfig): Mobile configuration object with settings for:
+                - lock_resolution (bool): Whether to lock device resolution
+                - app_manager_rule (AppManagerRule): App whitelist/blacklist rules
+                - hide_navigation_bar (bool): Whether to hide navigation bar
+                - uninstall_blacklist (List[str]): Apps protected from uninstallation
      */
     public void configure(MobileExtraConfig mobileConfig) {
         if (mobileConfig == null) {
@@ -981,9 +1004,13 @@ public class Mobile extends BaseService {
 
     /**
      * Retrieves the ADB connection URL for the mobile environment.
-     *
+     *<p>
+     *This method is only supported in mobile environments (mobile_latest image).
+     *It uses the provided ADB public key to establish the connection and returns
+     *the ADB connect URL.
+     *</p>
      * @param adbkeyPub The ADB public key for connection authentication
-     * @return AdbUrlResult containing the ADB connection URL and request ID
+     * @return AdbUrlResult containing the ADB connection URL and request ID.Returns error if not in mobile environment.
      */
     public AdbUrlResult getAdbUrl(String adbkeyPub) {
         try {

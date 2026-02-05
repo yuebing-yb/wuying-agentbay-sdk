@@ -112,6 +112,8 @@ global:
       - clone
       - compareTo
       - callTool
+      - callMcpTool
+      - updateMcpTools
 
 modules:
   # Session module
