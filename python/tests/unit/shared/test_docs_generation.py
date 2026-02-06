@@ -14,13 +14,35 @@ def test_generate_python_api_docs():
     # Use the current Python executable (should be from virtual environment)
     python_executable = sys.executable
 
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+def test_generate_python_api_docs():
+    project_root = Path(__file__).resolve().parents[3]  # Go up to python directory
+    docs_dir = project_root / "docs" / "api"
+
+    if docs_dir.exists():
+        shutil.rmtree(docs_dir)
+
+    # Use the current Python executable (should be from virtual environment)
+    python_executable = sys.executable
+
+    # Set UTF-8 encoding for subprocess to handle Unicode characters on Windows
+    env = None
+    if sys.platform == "win32":
+        import os
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
+
     result = subprocess.run(
         [python_executable, "scripts/generate_api_docs.py"],
         cwd=project_root,
         capture_output=True,
         text=True,
+        env=env,
     )
-
     assert (
         result.returncode == 0
     ), f"Script failed with return code {result.returncode}\nStdout: {result.stdout}\nStderr: {result.stderr}"

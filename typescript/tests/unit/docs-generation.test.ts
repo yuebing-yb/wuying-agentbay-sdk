@@ -14,6 +14,7 @@ describe('TypeScript API documentation generator', () => {
 
   it('recreates typed SDK docs in the expected structure', () => {
     const result = spawnSync('npm', ['run', 'docs:generate'], {
+      shell: true,
       cwd: packageRoot,
       env: { ...process.env, CI: '1' },
       stdio: 'pipe',
@@ -25,15 +26,7 @@ describe('TypeScript API documentation generator', () => {
     ]).toString()
 
     if (result.status !== 0) {
-      // eslint-disable-next-line no-console
-      console.error(output)
-    }
-
-    // Handle case where status might be null (process didn't exit normally)
-    if (result.status === null) {
-      // eslint-disable-next-line no-console
-      console.error('Process did not exit normally:', output)
-      expect(result.status).not.toBeNull()
+      console.log(output)
     }
     
     expect(result.status).toBe(0)

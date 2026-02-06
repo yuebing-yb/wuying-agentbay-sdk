@@ -2,7 +2,7 @@ import { defineConfig } from 'tsup'
 import { readFileSync, writeFileSync } from 'fs'
 
 export default defineConfig({
-  entry: ['src/**/*.ts'],
+  entry: ['src/index.ts'],
   format: ['esm','cjs' ],
   shims: true,
   esbuildOptions(options, context) {
