@@ -152,8 +152,10 @@ class TestSessionResume(unittest.TestCase):
         )
         self.agent_bay._get_session = AsyncMock(return_value=get_session_resuming)
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        # Patch asyncio.sleep and time.time to avoid real waiting
+        fake_times = iter([100.0, 100.0, 103.0])
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep, \
+             patch("agentbay._async.session.time.time", side_effect=fake_times):
             # Call the method with a short timeout
             result = asyncio.run(self.session.beta_resume(timeout=2, poll_interval=1))
 
@@ -187,8 +189,10 @@ class TestSessionResume(unittest.TestCase):
         )
         self.agent_bay._get_session = AsyncMock(return_value=get_session_failure)
 
-        # Patch asyncio.sleep to avoid waiting
-        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        # Patch asyncio.sleep and time.time to avoid real waiting
+        fake_times = iter([100.0, 100.0, 103.0])
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep, \
+             patch("agentbay._async.session.time.time", side_effect=fake_times):
             # Call the method
             result = asyncio.run(self.session.beta_resume(timeout=2, poll_interval=1))
 
