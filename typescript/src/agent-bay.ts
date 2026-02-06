@@ -1286,7 +1286,7 @@ export class AgentBay {
       if (result.contextSync && Array.isArray(result.contextSync)) {
         result.contextSync = result.contextSync.map((cs: any) => {
           // Reconstruct from plain object (JSON.parse converts class instances to plain objects)
-          return new ContextSync(cs.contextId, cs.path, cs.policy);
+          return new ContextSync(cs.contextId, cs.path, cs.policy, cs.betaWaitForCompletion);
         });
       }
 

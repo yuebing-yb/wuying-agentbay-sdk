@@ -28,7 +28,7 @@ describe('TypeScript API documentation generator', () => {
     if (result.status !== 0) {
       console.log(output)
     }
-    
+
     expect(result.status).toBe(0)
 
     const expectedFiles = [

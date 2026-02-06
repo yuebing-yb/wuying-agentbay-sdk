@@ -52,6 +52,7 @@ describe("AgentBay", () => {
     let getSessionDetailStub: sinon.SinonStub;
     let clientConstructorStub: sinon.SinonStub;
     let contextServiceConstructorStub: sinon.SinonStub;
+    let contextStatusEntries: any[];
 
     beforeEach(() => {
         // Create mock client
@@ -71,16 +72,26 @@ describe("AgentBay", () => {
         getSessionStub = mockClient.getSession;
         getSessionDetailStub = mockClient.getSessionDetail;
 
-        // Mock getContextInfo to return successful response with empty context status list
-        mockClient.getContextInfo.resolves({
-            statusCode: 200,
-            body: {
-                success: true,
-                data: {
-                    contextStatusDataList: [],
+        // Mock getContextInfo used by ContextManager.info().
+        // In unit tests, we should not actually wait. We return "Success" statuses immediately
+        // when a test sets contextStatusEntries to include the expected context IDs.
+        contextStatusEntries = [];
+        mockClient.getContextInfo.callsFake(async () => {
+            return {
+                statusCode: 200,
+                body: {
+                    success: true,
+                    data: {
+                        ContextStatus: JSON.stringify([
+                            {
+                                type: "data",
+                                data: JSON.stringify(contextStatusEntries),
+                            },
+                        ]),
+                    },
+                    requestId: "mock-request-id-context-info",
                 },
-                requestId: "mock-request-id-context-info",
-            },
+            };
         });
 
         // Set environment variables for config instead of stubbing loadConfig
@@ -543,7 +554,23 @@ describe("AgentBay", () => {
             const originalLabelsRef = params.labels;
             const originalContextSyncsRef = params.contextSync;
 
+            // Make the first GetContextInfo call report all contexts as completed.
+            contextStatusEntries = originalContextSyncs.map((cs: any) => {
+                return {
+                    contextId: cs.contextId,
+                    path: cs.path,
+                    errorMessage: "",
+                    status: "Success",
+                    startTime: 0,
+                    finishTime: 0,
+                    taskType: "download",
+                };
+            });
+
             await agentBay.create(params);
+
+            // Ensure we didn't sleep/retry: create() should break on the first status check.
+            expect(mockClient.getContextInfo.calledOnce).toBe(true);
 
             // Verify the original params object was not modified
             expect(params.labels).toEqual(originalLabels);
@@ -584,7 +611,23 @@ describe("AgentBay", () => {
             const originalLabelsRef = params.labels;
             const originalContextSyncRef = params.contextSync;
 
+            // Make GetContextInfo report the simulated context as completed immediately.
+            contextStatusEntries = [
+                {
+                    contextId: "mobile-sim-ctx-123",
+                    path: "/data/agentbay_mobile_info",
+                    errorMessage: "",
+                    status: "Success",
+                    startTime: 0,
+                    finishTime: 0,
+                    taskType: "download",
+                },
+            ];
+
             await agentBay.create(params);
+
+            // Ensure we didn't sleep/retry: create() should break on the first status check.
+            expect(mockClient.getContextInfo.calledOnce).toBe(true);
 
             // Verify the original params object was not modified
             expect(params.labels).toEqual(originalLabels);

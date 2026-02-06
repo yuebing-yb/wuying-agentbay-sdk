@@ -211,7 +211,7 @@ describe("Context Clear Operations", () => {
                 .onFirstCall().resolves(statusResponses[0])
                 .onSecondCall().resolves(statusResponses[1]);
 
-            const result = await mockContextService.clear("context-123", 10, 0.1);
+            const result = await mockContextService.clear("context-123", 1, 0.05);
 
             expect(result.success).toBe(true);
             expect(result.contextId).toBe("context-123");
@@ -241,7 +241,7 @@ describe("Context Clear Operations", () => {
             mockClient.clearContext.resolves(clearAsyncResponse);
             mockClient.getContext.resolves(statusResponse);
 
-            await expect(mockContextService.clear("context-123", 1, 0.5)).rejects.toThrow(APIError);
+            await expect(mockContextService.clear("context-123", 0.25, 0.1)).rejects.toThrow(APIError);
         });
 
         it("should return early if clearAsync fails", async () => {
@@ -282,7 +282,7 @@ describe("Context Clear Operations", () => {
             mockClient.clearContext.resolves(clearAsyncResponse);
             mockClient.getContext.resolves(statusResponse);
 
-            const result = await mockContextService.clear("context-123");
+            const result = await mockContextService.clear("context-123", 0.05, 0.01);
 
             expect(result.success).toBe(false);
             expect(result.errorMessage).toBe("[Context.NotFound] Context not found");
