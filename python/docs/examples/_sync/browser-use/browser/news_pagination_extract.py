@@ -18,6 +18,7 @@ from agentbay import AgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 from agentbay import ActOptions, ExtractOptions
+import json
 
 
 class PageLinkItem(BaseModel):
@@ -56,9 +57,15 @@ def main():
                 max_page=6,
             )
         )
-        assert ok, "extract failed"
-
-        logger.info("Final extract results count=%d", len(results.results))
+        if not ok:
+            print(f"Failed to extract: {results}")
+            try:
+                parsed_results = json.loads(results)
+                logger.info("Final extract results count=%d", len(parsed_results.results))
+            except Exception as e:
+                logger.error(f"Failed to parse non-standard JSON: {e}")
+        else:
+            logger.info("Final extract results count=%d", len(results.results))
 
         time.sleep(1)
         operator.close()

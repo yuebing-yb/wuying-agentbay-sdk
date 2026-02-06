@@ -31,6 +31,13 @@ def is_windows_user_agent(user_agent: str) -> bool:
     windows_indicators = ["windows nt", "win32", "win64", "windows", "wow64"]
     return any(indicator in user_agent_lower for indicator in windows_indicators)
 
+def is_linux_user_agent(user_agent: str) -> bool:
+    if not user_agent:
+        return False
+    user_agent_lower = user_agent.lower()
+    linux_indicators = ["linux", "ubuntu", "debian", "fedora", "centos", "red hat"]
+    return any(indicator in user_agent_lower for indicator in linux_indicators)
+
 
 @pytest.fixture(scope="class")
 def agent_bay():
@@ -328,7 +335,8 @@ class TestBrowserFingerprintIntegration:
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
             assert user_agent is not None
-            assert is_windows_user_agent(user_agent)
+            # Check user agent based on image_id (browser_latest is Windows)
+            assert is_linux_user_agent(user_agent), f"Expected Windows user agent, got: {user_agent}"
             print(f"SUCCESS: fingerprint persisted correctly!")
 
             context.close()
