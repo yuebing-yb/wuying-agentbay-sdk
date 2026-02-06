@@ -1,3 +1,5 @@
+import crypto from "crypto";
+import WebSocket from "ws";
 import { logDebug, maskSensitiveData } from "../utils/logger";
 
 type OnEvent = (invocationId: string, data: Record<string, any>) => void;
@@ -5,7 +7,6 @@ type OnEnd = (invocationId: string, data: Record<string, any>) => void;
 type OnError = (invocationId: string, err: Error) => void;
 
 function newInvocationId(): string {
-  const crypto = require("crypto");
   return crypto.randomBytes(16).toString("hex");
 }
 
@@ -54,7 +55,6 @@ export class WsClient {
     if (this.connecting) return this.connecting;
 
     this.connecting = new Promise<void>((resolve, reject) => {
-      const WebSocket = require("ws");
       const ws = new WebSocket(this.wsUrl, {
         headers: {
           "X-Access-Token": this.token,
