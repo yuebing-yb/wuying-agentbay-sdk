@@ -122,6 +122,7 @@ jobs:
             typescript@4.9.5 \
             @types/node@18.19.130
           # Run tests using fallback script
+          tnpm run build
           node scripts/run_with_fallback.js jest jest@26.6.3 tests/unit --maxWorkers=4 --cache
 
   # Golang Unit Tests Only
