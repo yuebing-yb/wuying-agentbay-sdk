@@ -32,10 +32,10 @@ python-dotenv = "^1.0.0"
 pydantic = "^2.0"
 loguru = "^0.7.0"
 aliyun-log-python-sdk = "^0.8.0"
+playwright = {version = ">=1.5.0", optional = true}
 
-[tool.poetry.group.playwright.dependencies]
-optional = true
-playwright = ">=1.5.0"
+[tool.poetry.extras]
+playwright = ["playwright"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
