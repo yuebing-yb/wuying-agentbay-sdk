@@ -119,7 +119,7 @@ def _write_sync_ws_streaming_unit_test_stub() -> None:
         "            \"print('hello')\",\n"
         "            \"python\",\n"
         "            60,\n"
-        "            stream=True,\n"
+        "            stream_beta=True,\n"
         "        )\n"
         "        assert r.success is False\n"
         "        assert \"only supported\" in (r.error_message or \"\").lower()\n"

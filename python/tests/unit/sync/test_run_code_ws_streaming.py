@@ -18,7 +18,7 @@ class TestRunCodeWsStreaming:
             "print('hello')",
             "python",
             60,
-            stream=True,
+            stream_beta=True,
         )
         assert r.success is False
         assert "only supported" in (r.error_message or "").lower()

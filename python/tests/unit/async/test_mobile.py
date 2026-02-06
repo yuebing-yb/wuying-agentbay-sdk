@@ -304,7 +304,7 @@ class TestMobile:
         assert len(result.data) == 1
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
-            {"start_menu": False, "desktop": True, "ignore_system_apps": True},
+            {"start_menu": False, "desktop": True, "ignore_system_app": True},
         )
 
     @pytest.mark.asyncio
@@ -328,7 +328,7 @@ class TestMobile:
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
-            {"start_menu": True, "desktop": False, "ignore_system_apps": False},
+            {"start_menu": True, "desktop": False, "ignore_system_app": False},
         )
 
     @pytest.mark.asyncio
