@@ -177,6 +177,29 @@ Asynchronously extract information from a web page.
   Tuple[bool, T]: A tuple containing a success boolean and the extracted data as a
   Pydantic model instance, or None on failure.
 
+### login
+
+```python
+def login(login_config: str,
+          page=None,
+          use_vision: Optional[bool] = False) -> "ActResult"
+```
+
+Asynchronously perform a login operation on a web page.
+
+**Arguments**:
+
+- `login_config` _str_ - A JSON string containing login configuration,
+  e.g., '{"api_key": "xxx", "skill_id": "yyy"}'
+- `page` _Optional[Page]_ - The Playwright Page object to login on. If None,
+  the agent's currently focused page will be used.
+- `use_vision` _Optional[bool]_ - Whether to use vision-based capabilities during login.
+  
+
+**Returns**:
+
+    ActResult: The result of the login operation.
+
 ## See Also
 
 - [Synchronous vs Asynchronous API](../../../docs/guides/async-programming/sync-vs-async.md)

@@ -29,9 +29,16 @@ Handles code execution operations in the AgentBay cloud environment.
 ### run_code
 
 ```python
-def run_code(code: str,
-             language: str,
-             timeout_s: int = 60) -> EnhancedCodeExecutionResult
+def run_code(
+    code: str,
+    language: str,
+    timeout_s: int = 60,
+    *,
+    stream_beta: bool = False,
+    on_stdout: Optional[Callable[[str], None]] = None,
+    on_stderr: Optional[Callable[[str], None]] = None,
+    on_error: Optional[Callable[[Any], None]] = None
+) -> EnhancedCodeExecutionResult
 ```
 
 Execute code in the specified language with a timeout.
@@ -43,6 +50,8 @@ Execute code in the specified language with a timeout.
   Supported values: 'python', 'javascript', 'r', 'java'.
     timeout_s: The timeout for the code execution in seconds. Default is 60s.
     Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+    stream_beta: Enable WS-based streaming output (beta). When enabled, stdout/stderr
+  chunks will be delivered via callbacks as they are produced.
   
 
 **Returns**:
