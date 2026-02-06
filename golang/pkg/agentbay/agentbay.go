@@ -438,6 +438,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if response.Body.Data.LinkUrl != nil {
 		session.LinkUrl = *response.Body.Data.LinkUrl
 	}
+	if response.Body.Data.WsUrl != nil {
+		session.WsUrl = *response.Body.Data.WsUrl
+	}
 	if response.Body.Data.ToolList != nil {
 		session.McpTools = parseToolListToMcpTools(*response.Body.Data.ToolList)
 	}

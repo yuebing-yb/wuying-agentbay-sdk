@@ -25,6 +25,7 @@ import {
 import { FileSystem } from "./filesystem";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
+import { WsClient } from "./_internal/ws-client";
 import {
   ApiResponse,
   DeleteResult,
@@ -218,6 +219,10 @@ export class Session {
   public token = "";
   public linkUrl = "";
 
+  // WS long connection URL (for streaming output)
+  public wsUrl = "";
+  private _wsClient: WsClient | null = null;
+
   // Recording functionality
   public enableBrowserReplay = false; // Whether browser recording is enabled for this session
 
@@ -271,6 +276,23 @@ export class Session {
 
     // Initialize context manager (matching Go version)
     this.context = newContextManager(this);
+  }
+
+  /**
+   * Internal helper for WS streaming features.
+   */
+  async getWsClient(): Promise<WsClient> {
+    if (!this.wsUrl) {
+      throw new Error("Missing wsUrl on session; streaming is not available");
+    }
+    if (!this.token) {
+      throw new Error("Missing token on session; streaming is not available");
+    }
+    if (!this._wsClient) {
+      this._wsClient = new WsClient(this.wsUrl, this.token);
+    }
+    await this._wsClient.connect();
+    return this._wsClient;
   }
 
   /**
@@ -539,6 +561,13 @@ export class Session {
    */
   async delete(syncContext = false): Promise<DeleteResult> {
     try {
+      if (this._wsClient) {
+        try {
+          await this._wsClient.close();
+        } catch (_e) {
+        }
+        this._wsClient = null;
+      }
       if (syncContext) {
         logDebug(
           "Triggering context synchronization before session deletion..."

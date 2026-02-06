@@ -519,6 +519,7 @@ export class AgentBay {
       // LinkUrl/token may be returned by the server for direct tool calls.
       session.token = data.token || "";
       session.linkUrl = data.linkUrl || "";
+      session.wsUrl = data.wsUrl || "";
       session.mcpTools = this.parseToolListToMcpTools(data.toolList);
 
       // Set browser recording state

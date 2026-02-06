@@ -533,6 +533,9 @@ public class AgentBay {
                 if (response.getBody().getData().getLinkUrl() != null) {
                     session.setLinkUrl(response.getBody().getData().getLinkUrl());
                 }
+                if (response.getBody().getData().getWsUrl() != null) {
+                    session.setWsUrl(response.getBody().getData().getWsUrl());
+                }
                 if (response.getBody().getData().getToolList() != null) {
                     session.updateMcpTools(response.getBody().getData().getToolList());
                 }

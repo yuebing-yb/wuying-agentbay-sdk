@@ -16,9 +16,9 @@ class WsConnectionState(str):
 
 
 class WsClient:
-    def __init__(self, ws_url: str, http_token: str, **kwargs: Any):
+    def __init__(self, ws_url: str, ws_token: str, **kwargs: Any):
         self._ws_url = ws_url
-        self._http_token = http_token
+        self._ws_token = ws_token
 
     def connect(self) -> None:
         raise AgentBayError(

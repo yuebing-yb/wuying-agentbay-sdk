@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import json
-import os
 from collections.abc import Awaitable, Callable
 from typing import Any, Optional
 
@@ -21,7 +20,7 @@ class TestWsLongConnection:
         port = server.sockets[0].getsockname()[1]
         return server, f"ws://127.0.0.1:{port}"
 
-    async def test_internal_only_guard_blocks_external_call(self):
+    async def test_get_ws_client_is_accessible(self):
         from agentbay import AsyncAgentBay
         from agentbay._async.session import AsyncSession
 
@@ -30,15 +29,10 @@ class TestWsLongConnection:
         session.token = "token_test"
         session.ws_url = "ws://127.0.0.1:1"
 
-        # Should be blocked by internal-only guard by default
-        with pytest.raises(Exception) as excinfo:
-            await session._get_ws_client()
-        assert "internal" in str(excinfo.value).lower()
+        ws_client = await session._get_ws_client()
+        assert ws_client is not None
 
     async def test_call_stream_connect_and_routing_success(self):
-        # Allow tests to call internal-only API.
-        os.environ["AGENTBAY_SDK_INTERNAL_TESTING"] = "1"
-
         received_frames: list[dict[str, Any]] = []
 
         async def ws_handler(ws):
@@ -139,8 +133,6 @@ class TestWsLongConnection:
             await server.wait_closed()
 
     async def test_disconnect_fails_pending_without_retrying_business(self):
-        os.environ["AGENTBAY_SDK_INTERNAL_TESTING"] = "1"
-
         async def ws_handler(ws):
             assert ws.request is not None
             assert ws.request.headers.get("X-Access-Token") == "token_test"
@@ -186,8 +178,6 @@ class TestWsLongConnection:
             await server.wait_closed()
 
     async def test_protocol_requires_invocation_id(self):
-        os.environ["AGENTBAY_SDK_INTERNAL_TESTING"] = "1"
-
         async def ws_handler(ws):
             assert ws.request is not None
             assert ws.request.headers.get("X-Access-Token") == "token_test"
@@ -240,8 +230,6 @@ class TestWsLongConnection:
             await server.wait_closed()
 
     async def test_websocket_server_error_returns_to_caller_without_phase(self):
-        os.environ["AGENTBAY_SDK_INTERNAL_TESTING"] = "1"
-
         async def ws_handler(ws):
             assert ws.request is not None
             assert ws.request.headers.get("X-Access-Token") == "token_test"

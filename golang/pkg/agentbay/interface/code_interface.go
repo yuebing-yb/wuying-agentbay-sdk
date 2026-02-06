@@ -8,6 +8,10 @@ import (
 
 // CodeInterface defines the interface for code execution operations
 type CodeInterface interface {
-	// RunCode executes code in the specified language with optional timeout
-	RunCode(code string, language string, timeoutS ...int) (*code.CodeResult, error)
+	// RunCode executes code in the specified language.
+	//
+	// Optional args may include:
+	// - int timeoutS
+	// - *code.RunCodeStreamBetaOptions (beta streaming callbacks)
+	RunCode(code string, language string, args ...interface{}) (*code.CodeResult, error)
 }

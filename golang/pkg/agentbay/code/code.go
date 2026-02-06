@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
@@ -61,6 +62,7 @@ type Code struct {
 		GetClient() *mcp.Client
 		GetSessionId() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
+		GetWsClient() (*internal.WsClient, error)
 	}
 }
 
@@ -70,9 +72,267 @@ func NewCode(session interface {
 	GetClient() *mcp.Client
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
+	GetWsClient() (*internal.WsClient, error)
 }) *Code {
 	return &Code{
 		Session: session,
+	}
+}
+
+type RunCodeStreamBetaOptions struct {
+	TimeoutS int
+	StreamBeta bool
+	OnStdout func(chunk string)
+	OnStderr func(chunk string)
+	OnError  func(err error)
+}
+
+func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts *RunCodeStreamBetaOptions) (*CodeResult, error) {
+	if timeoutS <= 0 {
+		timeoutS = 60
+	}
+
+	rawLanguage := language
+	normalizedLanguage := strings.ToLower(strings.TrimSpace(language))
+	aliases := map[string]string{
+		"py":      "python",
+		"python3": "python",
+		"js":      "javascript",
+		"node":    "javascript",
+		"nodejs":  "javascript",
+	}
+	if canonical, ok := aliases[normalizedLanguage]; ok {
+		normalizedLanguage = canonical
+	}
+
+	switch normalizedLanguage {
+	case "python", "javascript", "r", "java":
+	default:
+		return &CodeResult{
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("Unsupported language: %s. Supported languages are 'python', 'javascript', 'r', and 'java'", rawLanguage),
+		}, nil
+	}
+
+	wsClient, err := c.Session.GetWsClient()
+	if err != nil {
+		return &CodeResult{
+			Success:      false,
+			ErrorMessage: err.Error(),
+		}, nil
+	}
+
+	stdoutChunks := []string{}
+	stderrChunks := []string{}
+	results := []CodeExecutionResultItem{}
+	var executionCount *int
+	executionTime := float64(0)
+	var execErrMsg string
+
+	target := "wuying_codespace"
+	handle, err := wsClient.CallStream(
+		target,
+		map[string]interface{}{
+			"method": "run_code",
+			"mode":   "stream",
+			"params": map[string]interface{}{
+				"language": normalizedLanguage,
+				"timeoutS": timeoutS,
+				"code":     code,
+			},
+		},
+		func(_ string, data map[string]interface{}) {
+			eventType, _ := data["eventType"].(string)
+			switch eventType {
+			case "stdout":
+				chunk := fmt.Sprintf("%v", data["chunk"])
+				stdoutChunks = append(stdoutChunks, chunk)
+				if opts != nil && opts.OnStdout != nil {
+					opts.OnStdout(chunk)
+				}
+			case "stderr":
+				chunk := fmt.Sprintf("%v", data["chunk"])
+				stderrChunks = append(stderrChunks, chunk)
+				if opts != nil && opts.OnStderr != nil {
+					opts.OnStderr(chunk)
+				}
+			case "result":
+				if m, ok := data["result"].(map[string]interface{}); ok {
+					results = append(results, parseResultItemFromMimeMap(m))
+				} else {
+					results = append(results, CodeExecutionResultItem{Text: fmt.Sprintf("%v", data["result"])})
+				}
+			case "error":
+				execErrMsg = fmt.Sprintf("%v", data["error"])
+				if opts != nil && opts.OnError != nil {
+					opts.OnError(fmt.Errorf("%s", execErrMsg))
+				}
+			}
+		},
+		func(_ string, data map[string]interface{}) {
+			if v, ok := data["executionCount"]; ok {
+				if i, ok := toInt(v); ok {
+					executionCount = &i
+				}
+			}
+			if v, ok := data["executionTime"]; ok {
+				if f, ok := toFloat(v); ok {
+					executionTime = f
+				}
+			}
+			if v, ok := data["executionError"]; ok && v != nil && fmt.Sprintf("%v", v) != "" {
+				execErrMsg = fmt.Sprintf("%v", v)
+			}
+		},
+		func(_ string, e error) {
+			if opts != nil && opts.OnError != nil {
+				opts.OnError(e)
+			}
+			if execErrMsg == "" {
+				execErrMsg = e.Error()
+			}
+		},
+	)
+	if err != nil {
+		return &CodeResult{
+			ApiResponse:   models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: err.Error(),
+		}, nil
+	}
+
+	endData, err := handle.WaitEnd()
+	if err != nil {
+		return &CodeResult{
+			ApiResponse:   models.ApiResponse{RequestID: handle.InvocationID},
+			Success:      false,
+			ErrorMessage: err.Error(),
+			Logs:         &CodeExecutionLogs{Stdout: stdoutChunks, Stderr: stderrChunks},
+			Results:      results,
+		}, nil
+	}
+	_ = endData
+
+	ok := execErrMsg == ""
+	if st, okSt := endData["status"].(string); okSt && st == "failed" {
+		ok = false
+	}
+
+	res := &CodeResult{
+		ApiResponse:    models.ApiResponse{RequestID: handle.InvocationID},
+		Success:        ok,
+		ErrorMessage:   execErrMsg,
+		Logs:           &CodeExecutionLogs{Stdout: stdoutChunks, Stderr: stderrChunks},
+		Results:        results,
+		ExecutionTime:  executionTime,
+		ExecutionCount: executionCount,
+	}
+
+	foundText := false
+	for _, r := range res.Results {
+		if r.IsMainResult && r.Text != "" {
+			res.Output = r.Text
+			res.Result = r.Text
+			foundText = true
+			break
+		}
+	}
+	if !foundText && len(res.Results) > 0 && res.Results[0].Text != "" {
+		res.Output = res.Results[0].Text
+		res.Result = res.Results[0].Text
+		foundText = true
+	}
+	if !foundText && len(stdoutChunks) > 0 {
+		res.Output = strings.Join(stdoutChunks, "")
+		res.Result = res.Output
+	}
+
+	if !res.Success && res.ErrorMessage == "" {
+		res.ErrorMessage = "Failed to run code"
+	}
+	return res, nil
+}
+
+func parseResultItemFromMimeMap(itemMap map[string]interface{}) CodeExecutionResultItem {
+	item := CodeExecutionResultItem{
+		JSON:  itemMap["application/json"],
+		Chart: itemMap["chart"],
+	}
+
+	if val, ok := itemMap["isMainResult"].(bool); ok {
+		item.IsMainResult = val
+	}
+	if val, ok := itemMap["is_main_result"].(bool); ok {
+		item.IsMainResult = val
+	}
+	if val, ok := itemMap["text/plain"].(string); ok {
+		item.Text = val
+	}
+	if val, ok := itemMap["text/html"].(string); ok {
+		item.HTML = val
+	}
+	if val, ok := itemMap["text/markdown"].(string); ok {
+		item.Markdown = val
+	}
+	if val, ok := itemMap["image/png"].(string); ok {
+		item.PNG = val
+	}
+	if val, ok := itemMap["image/jpeg"].(string); ok {
+		item.JPEG = val
+	}
+	if val, ok := itemMap["image/svg+xml"].(string); ok {
+		item.SVG = val
+	}
+	if val, ok := itemMap["text/latex"].(string); ok {
+		item.Latex = val
+	}
+	if val, ok := itemMap["application/vnd.vegalite.v4+json"]; ok {
+		item.Chart = val
+	}
+	if val, ok := itemMap["application/vnd.vegalite.v5+json"]; ok {
+		item.Chart = val
+	}
+	if val, ok := itemMap["application/vnd.vega.v5+json"]; ok {
+		item.Chart = val
+	}
+	return item
+}
+
+func toInt(v interface{}) (int, bool) {
+	switch t := v.(type) {
+	case float64:
+		return int(t), true
+	case int:
+		return t, true
+	case int64:
+		return int(t), true
+	case json.Number:
+		i, err := t.Int64()
+		if err != nil {
+			return 0, false
+		}
+		return int(i), true
+	default:
+		return 0, false
+	}
+}
+
+func toFloat(v interface{}) (float64, bool) {
+	switch t := v.(type) {
+	case float64:
+		return t, true
+	case int:
+		return float64(t), true
+	case int64:
+		return float64(t), true
+	case json.Number:
+		f, err := t.Float64()
+		if err != nil {
+			return 0, false
+		}
+		return f, true
+	default:
+		return 0, false
 	}
 }
 
@@ -233,11 +493,46 @@ func parseBackendResponse(data string) (*CodeResult, error) {
 //	sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
 //	defer sessionResult.Session.Delete()
 //	codeResult, _ := sessionResult.Session.Code.RunCode("print('Hello')", "python")
-func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResult, error) {
-	// Set default timeout if not provided
+func (c *Code) RunCode(code string, language string, args ...interface{}) (*CodeResult, error) {
 	timeout := 60
-	if len(timeoutS) > 0 && timeoutS[0] > 0 {
-		timeout = timeoutS[0]
+	var opts *RunCodeStreamBetaOptions
+	for _, a := range args {
+		if a == nil {
+			continue
+		}
+		switch v := a.(type) {
+		case int:
+			if v > 0 {
+				timeout = v
+			}
+		case int32:
+			if v > 0 {
+				timeout = int(v)
+			}
+		case int64:
+			if v > 0 {
+				timeout = int(v)
+			}
+		case RunCodeStreamBetaOptions:
+			tmp := v
+			opts = &tmp
+		case *RunCodeStreamBetaOptions:
+			opts = v
+		default:
+			return nil, fmt.Errorf("unsupported RunCode argument type: %T", a)
+		}
+	}
+
+	if opts != nil && opts.TimeoutS > 0 {
+		timeout = opts.TimeoutS
+	}
+
+	useStream := false
+	if opts != nil && (opts.StreamBeta || opts.OnStdout != nil || opts.OnStderr != nil || opts.OnError != nil) {
+		useStream = true
+	}
+	if useStream {
+		return c.runCodeStreamWs(code, language, timeout, opts)
 	}
 
 	// Normalize and validate language (case-insensitive)
@@ -264,14 +559,14 @@ func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResu
 		)
 	}
 
-	args := map[string]interface{}{
+	toolArgs := map[string]interface{}{
 		"code":      code,
 		"language":  normalizedLanguage,
 		"timeout_s": timeout,
 	}
 
 	// Use Session's CallMcpTool method
-	result, err := c.Session.CallMcpTool("run_code", args)
+	result, err := c.Session.CallMcpTool("run_code", toolArgs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute code: %w", err)
 	}
@@ -314,11 +609,11 @@ func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResu
 }
 
 // Run is an alias of RunCode.
-func (c *Code) Run(code string, language string, timeoutS ...int) (*CodeResult, error) {
-	return c.RunCode(code, language, timeoutS...)
+func (c *Code) Run(code string, language string, args ...interface{}) (*CodeResult, error) {
+	return c.RunCode(code, language, args...)
 }
 
 // Execute is an alias of RunCode.
-func (c *Code) Execute(code string, language string, timeoutS ...int) (*CodeResult, error) {
-	return c.RunCode(code, language, timeoutS...)
+func (c *Code) Execute(code string, language string, args ...interface{}) (*CodeResult, error) {
+	return c.RunCode(code, language, args...)
 }

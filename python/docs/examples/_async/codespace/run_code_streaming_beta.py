@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""
+AgentBay SDK - run_code streaming output (beta)
+
+This example demonstrates how to receive stdout/stderr in real time by enabling
+WS streaming output via `stream_beta=True`.
+
+Prerequisites:
+- export AGENTBAY_API_KEY=your_api_key_here
+- (optional) export AGENTBAY_WS_IMAGE_ID=your_ws_enabled_image_id
+"""
+
+import asyncio
+import os
+import sys
+import time
+
+from agentbay import AsyncAgentBay, CreateSessionParams
+
+
+async def main() -> None:
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    if not api_key:
+        raise RuntimeError("Missing AGENTBAY_API_KEY environment variable")
+
+    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5ta4n2htfrppyw"
+    agentbay = AsyncAgentBay(api_key=api_key)
+
+    created = await agentbay.create(CreateSessionParams(image_id=image_id))
+    if not created.success:
+        raise RuntimeError(f"Failed to create session: {created.error_message}")
+
+    session = created.session
+    try:
+        stdout_chunks: list[str] = []
+        stderr_chunks: list[str] = []
+        errors: list[object] = []
+
+        def on_stdout(chunk: str) -> None:
+            stdout_chunks.append(chunk)
+            print(f"[stdout chunk] {chunk!r}", flush=True)
+
+        def on_stderr(chunk: str) -> None:
+            stderr_chunks.append(chunk)
+            print(f"[stderr chunk] {chunk!r}", file=sys.stderr, flush=True)
+
+        def on_error(err: object) -> None:
+            errors.append(err)
+
+        code = (
+            "import sys\n"
+            "import time\n"
+            "\n"
+            "for i in range(1, 21):\n"
+            "    print(f'line {i:02d}: ' + ('x' * 80), flush=True)\n"
+            "    if i % 5 == 0:\n"
+            "        print(f'err {i:02d}: ' + ('y' * 40), file=sys.stderr, flush=True)\n"
+            "    time.sleep(0.1)\n"
+            "\n"
+            "print('done', flush=True)\n"
+        )
+
+        start_t = time.monotonic()
+        r = await session.code.run_code(
+            code,
+            "python",
+            timeout_s=60,
+            stream_beta=True,
+            on_stdout=on_stdout,
+            on_stderr=on_stderr,
+            on_error=on_error,
+        )
+        end_t = time.monotonic()
+
+        print("\n--- summary ---")
+        print(f"success={r.success}")
+        print(f"duration_s={end_t - start_t:.3f}")
+        print(f"stdout_chunks={len(stdout_chunks)} stderr_chunks={len(stderr_chunks)} errors={len(errors)}")
+        if r.error_message:
+            print(f"error_message={r.error_message}")
+        print(f"final_result={r.result!r}")
+    finally:
+        await session.delete()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

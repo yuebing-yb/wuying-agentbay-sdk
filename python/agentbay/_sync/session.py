@@ -159,12 +159,8 @@ class Session:
         """
         Internal: get or create a session-scoped WS client.
 
-        This method is intentionally internal-only and guarded against direct SDK user calls.
+        This method is internal API by convention.
         """
-        from .._common._internal_access import assert_internal_access
-
-        assert_internal_access("SyncSession._get_ws_client")
-
         if not self.ws_url:
             raise SessionError("ws_url is not available for this session")
         if not self.token:
@@ -539,6 +535,14 @@ class Session:
                 success=False,
                 error_message=f"Failed to delete session {self.session_id}: {e}",
             )
+        finally:
+            ws_client = self._ws_client
+            self._ws_client = None
+            if ws_client is not None:
+                try:
+                    ws_client.close()
+                except Exception:
+                    pass
 
     def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
         """

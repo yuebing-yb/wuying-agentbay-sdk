@@ -150,7 +150,7 @@ class WsClient:
             raw = str(payload)
         masked = _mask_sensitive_data_string(raw)
         truncated = _truncate_string_for_log(masked, 1200)
-        _logger.info(f"WS {direction} {truncated}")
+        _logger.debug(f"WS {direction} {truncated}")
 
     async def close(self) -> None:
         self._closed_explicitly = True
@@ -384,48 +384,22 @@ class WsClient:
             self._pending_by_id.pop(invocation_id, None)
             return
 
-        # Backward/compat mode: backend may omit `phase`.
-        # We surface this loudly and still try to classify to avoid dropping useful errors.
         if phase is None:
-            event_type = data.get("eventType")
-            has_error = event_type == "error" or "error" in data
-            has_end = "status" in data or "executionError" in data
-            _logger.warning(
-                "WS message missing data.phase; "
-                f"invocationId={invocation_id}, eventType={event_type!r}, "
-                f"has_error={has_error}, has_end={has_end}, "
-                f"data={_truncate_string_for_log(_mask_sensitive_data_string(str(data)), 2000)}"
+            err = WsProtocolError(
+                "WS message missing required data.phase; "
+                f"invocationId={invocation_id}, data={_truncate_string_for_log(_mask_sensitive_data_string(str(data)), 2000)}"
             )
-            if has_error:
-                err = WsRemoteError(
-                    _truncate_string_for_log(_mask_sensitive_data_string(str(data)), 2000)
-                )
-                if pending.on_error is not None:
-                    pending.on_error(invocation_id, err)
-                if not pending.end_future.done():
-                    pending.end_future.set_exception(err)
-                self._pending_by_id.pop(invocation_id, None)
-                return
-            if has_end:
-                if pending.on_end is not None:
-                    pending.on_end(invocation_id, data)
-                if not pending.end_future.done():
-                    pending.end_future.set_result(data)
-                self._pending_by_id.pop(invocation_id, None)
-                return
-            # Default to event if it looks like an event payload.
-            if event_type is not None or "chunk" in data or "result" in data:
-                if pending.on_event is not None:
-                    pending.on_event(invocation_id, data)
-                return
-
-        _logger.warning(
-            "WS message has unsupported data.phase; "
-            f"invocationId={invocation_id}, phase={phase!r}, "
-            f"data={_truncate_string_for_log(_mask_sensitive_data_string(str(data)), 2000)}"
-        )
-
-        raise WsProtocolError(f"Unsupported data.phase: {phase!r}")
+        else:
+            err = WsProtocolError(
+                "WS message has unsupported data.phase; "
+                f"invocationId={invocation_id}, phase={phase!r}, data={_truncate_string_for_log(_mask_sensitive_data_string(str(data)), 2000)}"
+            )
+        if pending.on_error is not None:
+            pending.on_error(invocation_id, err)
+        if not pending.end_future.done():
+            pending.end_future.set_exception(err)
+        self._pending_by_id.pop(invocation_id, None)
+        return
 
     async def _on_transport_error(self, reason: str) -> None:
         if self._closed_explicitly:
