@@ -1,6 +1,9 @@
 import crypto from "crypto";
-import WebSocket from "ws";
+import type { WebSocket as WsType } from "./ws";
 import { logDebug, maskSensitiveData } from "../utils/logger";
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const WebSocketImpl: typeof WsType = require("ws");
 
 type OnEvent = (invocationId: string, data: Record<string, any>) => void;
 type OnEnd = (invocationId: string, data: Record<string, any>) => void;
@@ -55,7 +58,7 @@ export class WsClient {
     if (this.connecting) return this.connecting;
 
     this.connecting = new Promise<void>((resolve, reject) => {
-      const ws = new WebSocket(this.wsUrl, {
+      const ws = new WebSocketImpl(this.wsUrl, {
         headers: {
           "X-Access-Token": this.token,
         },
