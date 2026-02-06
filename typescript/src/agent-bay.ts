@@ -329,17 +329,6 @@ export class AgentBay {
       let mobileSimMode: string | undefined = undefined;
       let mobileSimPath: string | undefined = undefined;
 
-      // Helper function to check if a context sync already exists in persistence data list
-      const contextSyncExists = (
-        persistenceDataList: CreateMcpSessionRequestPersistenceDataList[],
-        contextId: string,
-        path: string
-      ): boolean => {
-        return persistenceDataList.some(
-          item => item.contextId === contextId && item.path === path
-        );
-      };
-
       // Add context sync configurations if provided
       if (paramsCopy.contextSync && paramsCopy.contextSync.length > 0) {
         const persistenceDataList: CreateMcpSessionRequestPersistenceDataList[] = [];
@@ -365,11 +354,6 @@ export class AgentBay {
 
       // Add BrowserContext as a ContextSync if provided
       if (paramsCopy.browserContext) {
-        // Ensure persistence data list exists
-        if (!request.persistenceDataList) {
-          request.persistenceDataList = [];
-        }
-
         // Create a simple sync policy for browser context
         const syncPolicy = {
           uploadPolicy: { autoUpload: paramsCopy.browserContext.autoUpload },
@@ -386,55 +370,11 @@ export class AgentBay {
           policy: JSON.stringify(syncPolicy)
         });
 
-        // Only add if not already exists (avoid duplicates)
-        if (!contextSyncExists(request.persistenceDataList, browserContextSync.contextId!, browserContextSync.path!)) {
-          request.persistenceDataList.push(browserContextSync);
+        // Add to persistence data list or create new one if not exists
+        if (!request.persistenceDataList) {
+          request.persistenceDataList = [];
         }
-
-        // Add extension context syncs if provided (avoid duplicates)
-        if (paramsCopy.browserContext.extensionContextSyncs && paramsCopy.browserContext.extensionContextSyncs.length > 0) {
-          for (const extensionSync of paramsCopy.browserContext.extensionContextSyncs) {
-            // Skip if already exists in persistenceDataList (may have been added via contextSync)
-            if (contextSyncExists(request.persistenceDataList, extensionSync.contextId, extensionSync.path)) {
-              logDebug(`Skipping duplicate extension context sync: ${extensionSync.contextId} at ${extensionSync.path}`);
-              continue;
-            }
-
-            const extensionPersistenceItem = new CreateMcpSessionRequestPersistenceDataList({
-              contextId: extensionSync.contextId,
-              path: extensionSync.path,
-            });
-
-            // Convert policy to JSON string if provided
-            if (extensionSync.policy) {
-              extensionPersistenceItem.policy = JSON.stringify(extensionSync.policy);
-            }
-
-            request.persistenceDataList.push(extensionPersistenceItem);
-          }
-        }
-
-        // Add fingerprint context sync if provided (avoid duplicates)
-        if (paramsCopy.browserContext.fingerprintContextSync) {
-          const fingerprintSync = paramsCopy.browserContext.fingerprintContextSync;
-          // Skip if already exists in persistenceDataList (may have been added via contextSync)
-          if (!contextSyncExists(request.persistenceDataList, fingerprintSync.contextId, fingerprintSync.path)) {
-            const fingerprintPersistenceItem = new CreateMcpSessionRequestPersistenceDataList({
-              contextId: fingerprintSync.contextId,
-              path: fingerprintSync.path,
-            });
-
-            // Convert policy to JSON string if provided
-            if (fingerprintSync.policy) {
-              fingerprintPersistenceItem.policy = JSON.stringify(fingerprintSync.policy);
-            }
-
-            request.persistenceDataList.push(fingerprintPersistenceItem);
-          } else {
-            logDebug(`Skipping duplicate fingerprint context sync: ${fingerprintSync.contextId} at ${fingerprintSync.path}`);
-          }
-        }
-
+        request.persistenceDataList.push(browserContextSync);
         needsContextSync = true;
         waitContextIds.add(paramsCopy.browserContext.contextId);
       }
