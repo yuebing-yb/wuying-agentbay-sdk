@@ -114,6 +114,9 @@ jobs:
         name: "TypeScript Unit Tests"
         run: |
           cd typescript
+          # Default suppress logs in CI to reduce noise and runtime overhead.
+          # Can be overridden by explicitly setting SUPPRESS_TEST_LOGS=false.
+          export SUPPRESS_TEST_LOGS="${SUPPRESS_TEST_LOGS:-true}"
           # Only install test-related packages for better performance
           tnpm install --prefer-offline --no-audit \
             jest@26.6.3 \

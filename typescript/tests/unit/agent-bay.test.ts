@@ -82,7 +82,7 @@ describe("AgentBay", () => {
                 body: {
                     success: true,
                     data: {
-                        ContextStatus: JSON.stringify([
+                        contextStatus: JSON.stringify([
                             {
                                 type: "data",
                                 data: JSON.stringify(contextStatusEntries),
