@@ -953,7 +953,8 @@ export class AgentBay {
           }
         }
 
-        result.data = {
+        const wsUrl = (body.data as any).wsUrl || "";
+        const data = {
           appInstanceId: body.data.appInstanceId || "",
           resourceId: body.data.resourceId || "",
           sessionId: body.data.sessionId || "",
@@ -962,21 +963,23 @@ export class AgentBay {
           networkInterfaceIp: body.data.networkInterfaceIp || "",
           token: body.data.token || "",
           linkUrl: (body.data as any).linkUrl || "",
+          wsUrl,
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
           status: body.data.status || "",
           toolList: body.data.toolList || "",
           contexts: contexts.length > 0 ? contexts : undefined,
         };
+        result.data = data;
 
         logAPIResponseWithDetails(
           "GetSession",
           requestId,
           true,
           {
-            sessionId: result.data.sessionId,
-            resourceId: result.data.resourceId,
-            httpPort: result.data.httpPort,
+            sessionId: data.sessionId,
+            resourceId: data.resourceId,
+            httpPort: data.httpPort,
           }
         );
       }
@@ -1067,6 +1070,7 @@ export class AgentBay {
       session.resourceUrl = getResult.data.resourceUrl;
       session.token = getResult.data.token || "";
       session.linkUrl = getResult.data.linkUrl || "";
+      session.wsUrl = getResult.data.wsUrl || "";
       session.mcpTools = this.parseToolListToMcpTools(getResult.data.toolList);
     }
 

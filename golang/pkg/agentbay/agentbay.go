@@ -952,6 +952,7 @@ type GetSessionData struct {
 	NetworkInterfaceIP string
 	Token              string
 	LinkUrl            string
+	WsUrl              string
 	VpcResource        bool
 	ResourceUrl        string
 	Status             string
@@ -1117,6 +1118,9 @@ func (a *AgentBay) getSession(sessionID string) (*GetSessionResult, error) {
 			if response.Body.Data.GetLinkUrl() != nil {
 				data.LinkUrl = *response.Body.Data.GetLinkUrl()
 			}
+			if response.Body.Data.GetWsUrl() != nil {
+				data.WsUrl = *response.Body.Data.GetWsUrl()
+			}
 			if response.Body.Data.GetVpcResource() != nil {
 				data.VpcResource = *response.Body.Data.GetVpcResource()
 			}
@@ -1243,6 +1247,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		session.McpTools = parseToolListToMcpTools(getResult.Data.ToolList)
 		session.Token = getResult.Data.Token
 		session.LinkUrl = getResult.Data.LinkUrl
+		session.WsUrl = getResult.Data.WsUrl
 	}
 
 	// Log successful retrieval

@@ -3,6 +3,7 @@ package integration
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
@@ -20,7 +21,8 @@ func TestAgentBayGetAPI(t *testing.T) {
 	}
 
 	fmt.Println("Creating a new session for Get API testing...")
-	createResult, err := client.Create(nil)
+	params := agentbay.NewCreateSessionParams().WithImageId("imgc-0a9mg1h4et0z42hv5")
+	createResult, err := client.Create(params)
 	if err != nil {
 		t.Fatalf("Failed to create session: %v", err)
 	}
@@ -48,6 +50,12 @@ func TestAgentBayGetAPI(t *testing.T) {
 
 	if result.Session.SessionID != sessionId {
 		t.Errorf("Expected SessionID %s, got %s", sessionId, result.Session.SessionID)
+	}
+
+	if result.Session.WsUrl == "" {
+		t.Error("WsUrl should not be empty on restored session")
+	} else if !strings.HasPrefix(result.Session.WsUrl, "ws://") && !strings.HasPrefix(result.Session.WsUrl, "wss://") {
+		t.Errorf("WsUrl should be a ws/wss URL, got %q", result.Session.WsUrl)
 	}
 
 	if result.Session.AgentBay == nil {

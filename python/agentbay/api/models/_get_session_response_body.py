@@ -201,6 +201,8 @@ class GetSessionResponseBodyData(DaraModel):
 
         if m.get("WsUrl") is not None:
             self.ws_url = m.get("WsUrl")
+        elif m.get("wsUrl") is not None:
+            self.ws_url = m.get("wsUrl")
 
         self.contexts = []
         if m.get("contexts") is not None:

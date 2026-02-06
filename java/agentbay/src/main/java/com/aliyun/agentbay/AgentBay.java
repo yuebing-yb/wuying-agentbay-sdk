@@ -167,6 +167,7 @@ public class AgentBay {
                             responseData.getHttpPort(),
                             responseData.getToken(),
                             responseData.getLinkUrl(),
+                            responseData.getWsUrl(),
                             body.getCode() != null ? body.getCode() : "",
                             responseData.getToolList()
                         );
@@ -232,6 +233,7 @@ public class AgentBay {
             session.setResourceUrl(data.getResourceUrl());
             session.setToken(data.getToken());
             session.setLinkUrl(data.getLinkUrl());
+            session.setWsUrl(data.getWsUrl());
             if (data.getToolList() != null && !data.getToolList().isEmpty()) {
                 session.updateMcpTools(data.getToolList());
             }
