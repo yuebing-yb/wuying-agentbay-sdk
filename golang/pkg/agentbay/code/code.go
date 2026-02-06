@@ -10,6 +10,17 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
+// WsStreamClient is a public interface for WebSocket streaming clients.
+// It abstracts the internal WsClient to allow external packages (e.g., tests)
+// to implement GetWsClient without importing the internal package.
+type WsStreamClient interface {
+	CallStream(target string, data map[string]interface{},
+		onEvent func(string, map[string]interface{}),
+		onEnd func(string, map[string]interface{}),
+		onError func(string, error),
+	) (*internal.WsStreamHandle, error)
+}
+
 // CodeExecutionError represents an error during code execution
 type CodeExecutionError struct {
 	Name      string `json:"name"`
@@ -62,7 +73,7 @@ type Code struct {
 		GetClient() *mcp.Client
 		GetSessionId() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
-		GetWsClient() (*internal.WsClient, error)
+		GetWsClient() (interface{}, error)
 	}
 }
 
@@ -72,7 +83,7 @@ func NewCode(session interface {
 	GetClient() *mcp.Client
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
-	GetWsClient() (*internal.WsClient, error)
+	GetWsClient() (interface{}, error)
 }) *Code {
 	return &Code{
 		Session: session,
@@ -80,11 +91,11 @@ func NewCode(session interface {
 }
 
 type RunCodeStreamBetaOptions struct {
-	TimeoutS int
+	TimeoutS   int
 	StreamBeta bool
-	OnStdout func(chunk string)
-	OnStderr func(chunk string)
-	OnError  func(err error)
+	OnStdout   func(chunk string)
+	OnStderr   func(chunk string)
+	OnError    func(err error)
 }
 
 func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts *RunCodeStreamBetaOptions) (*CodeResult, error) {
@@ -114,11 +125,18 @@ func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts 
 		}, nil
 	}
 
-	wsClient, err := c.Session.GetWsClient()
+	wsClientRaw, err := c.Session.GetWsClient()
 	if err != nil {
 		return &CodeResult{
 			Success:      false,
 			ErrorMessage: err.Error(),
+		}, nil
+	}
+	wsClient, wsOk := wsClientRaw.(*internal.WsClient)
+	if !wsOk || wsClient == nil {
+		return &CodeResult{
+			Success:      false,
+			ErrorMessage: "invalid or nil WsClient returned from session",
 		}, nil
 	}
 
@@ -195,7 +213,7 @@ func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts 
 	)
 	if err != nil {
 		return &CodeResult{
-			ApiResponse:   models.ApiResponse{RequestID: ""},
+			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
 			ErrorMessage: err.Error(),
 		}, nil
@@ -204,7 +222,7 @@ func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts 
 	endData, err := handle.WaitEnd()
 	if err != nil {
 		return &CodeResult{
-			ApiResponse:   models.ApiResponse{RequestID: handle.InvocationID},
+			ApiResponse:  models.ApiResponse{RequestID: handle.InvocationID},
 			Success:      false,
 			ErrorMessage: err.Error(),
 			Logs:         &CodeExecutionLogs{Stdout: stdoutChunks, Stderr: stderrChunks},

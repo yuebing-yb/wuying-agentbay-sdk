@@ -20,10 +20,10 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/mobile"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 )
 
 // SessionResult wraps Session object and RequestID
@@ -164,7 +164,7 @@ func (s *Session) GetMcpTools() []McpTool {
 	return s.McpTools
 }
 
-func (s *Session) GetWsClient() (*internal.WsClient, error) {
+func (s *Session) GetWsClient() (interface{}, error) {
 	if s.WsUrl == "" {
 		return nil, fmt.Errorf("ws url is not available for this session")
 	}
