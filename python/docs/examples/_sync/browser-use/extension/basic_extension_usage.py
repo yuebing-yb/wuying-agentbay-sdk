@@ -145,7 +145,6 @@ def multiple_extensions_example():
 
 
 if __name__ == "__main__":
-    import asyncio
 
     def main():
         print("AgentBay Extension Examples")

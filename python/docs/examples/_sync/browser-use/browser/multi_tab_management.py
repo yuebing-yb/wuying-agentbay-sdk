@@ -11,6 +11,7 @@ This example demonstrates:
 4. Coordinating actions across tabs
 """
 
+import asyncio
 import os
 import sys
 

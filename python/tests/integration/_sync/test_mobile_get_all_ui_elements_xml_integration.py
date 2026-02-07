@@ -5,6 +5,7 @@ import time
 """Integration test for get_all_ui_elements XML format (no mocks)."""
 
 import os
+
 import pytest
 import pytest
 

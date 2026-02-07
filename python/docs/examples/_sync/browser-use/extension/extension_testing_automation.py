@@ -504,7 +504,6 @@ def ci_cd_integration_example():
 
 
 if __name__ == "__main__":
-    import asyncio
 
     def main():
         print("Extension Testing Automation Examples")
