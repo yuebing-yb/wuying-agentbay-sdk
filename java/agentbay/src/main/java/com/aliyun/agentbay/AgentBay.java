@@ -410,10 +410,9 @@ public class AgentBay {
 
             // SDK idle release timeout (seconds)
             Integer idleReleaseTimeout = params.getIdleReleaseTimeout();
-            if (idleReleaseTimeout == null) {
-                idleReleaseTimeout = 300;
+            if (idleReleaseTimeout != null) {
+                request.setTimeout(idleReleaseTimeout);
             }
-            request.setTimeout(idleReleaseTimeout);
 
             // Set labels if provided
             if (params.getLabels() != null && !params.getLabels().isEmpty()) {

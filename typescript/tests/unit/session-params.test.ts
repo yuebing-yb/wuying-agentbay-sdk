@@ -119,10 +119,10 @@ describe("Session Parameters", () => {
             ).toBe(true);
         });
 
-        it("should default idleReleaseTimeout to 300 when not specified", () => {
+        it("should default idleReleaseTimeout to 0 when not specified", () => {
             const { CreateSessionParams: CreateSessionParamsClass } = require("../../src/session-params");
             const params = new CreateSessionParamsClass({});
-            expect(params.idleReleaseTimeout).toBe(300);
+            expect(params.idleReleaseTimeout).toBe(0);
         });
     });
 

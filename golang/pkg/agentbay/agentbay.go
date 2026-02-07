@@ -252,10 +252,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// SDK idle release timeout (seconds)
-	if params.IdleReleaseTimeout <= 0 {
-		params.IdleReleaseTimeout = 300
+	if params.IdleReleaseTimeout > 0 {
+		createSessionRequest.Timeout = tea.Int32(params.IdleReleaseTimeout)
 	}
-	createSessionRequest.Timeout = tea.Int32(params.IdleReleaseTimeout)
 
 	// Add labels if provided
 	if len(params.Labels) > 0 {

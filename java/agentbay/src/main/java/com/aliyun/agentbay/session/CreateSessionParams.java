@@ -67,7 +67,6 @@ public class CreateSessionParams {
      */
     public CreateSessionParams() {
         this.contextSyncs = new ArrayList<>();
-        this.idleReleaseTimeout = 300;
         this.labels = new java.util.HashMap<>();
     }
     

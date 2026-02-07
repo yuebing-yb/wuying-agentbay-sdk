@@ -291,7 +291,7 @@ describe("AgentBay", () => {
 
             const createCallArgs = createMcpSessionStub.getCall(0).args[0];
             expect(createCallArgs.authorization).toBe("Bearer test-api-key");
-            expect((createCallArgs as any).timeout).toBe(300);
+            expect((createCallArgs as any).timeout).toBeUndefined();
 
             const deleteCallArgs = deleteSessionAsyncStub.getCall(0).args[0];
             expect(deleteCallArgs.sessionId).toBe(mockSessionData.sessionId);
@@ -494,7 +494,7 @@ describe("AgentBay", () => {
             expect(createMcpSessionStub.calledOnce).toBe(true);
             const createCallArgs = createMcpSessionStub.getCall(0).args[0];
             expect(createCallArgs.mcpPolicyId).toBe(policyId);
-            expect((createCallArgs as any).timeout).toBe(300);
+            expect((createCallArgs as any).timeout).toBeUndefined();
         });
     });
 

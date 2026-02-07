@@ -12,13 +12,13 @@ class TestAsyncCreateSessionParams(unittest.IsolatedAsyncioTestCase):
         """Test that CreateSessionParams initializes with default values."""
         params = CreateSessionParams()
         self.assertEqual(params.labels, {})
-        self.assertEqual(params.idle_release_timeout, 300)
+        self.assertIsNone(params.idle_release_timeout)
 
     @pytest.mark.asyncio
     async def test_idle_release_timeout_default_when_none(self):
-        """Test that idle_release_timeout defaults to 300 when None is provided."""
+        """Test that idle_release_timeout is None when None is provided."""
         params = CreateSessionParams(idle_release_timeout=None)
-        self.assertEqual(params.idle_release_timeout, 300)
+        self.assertIsNone(params.idle_release_timeout)
 
     @pytest.mark.asyncio
 

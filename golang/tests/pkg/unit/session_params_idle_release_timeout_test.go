@@ -9,7 +9,7 @@ import (
 
 func TestCreateSessionParams_IdleReleaseTimeout_Default(t *testing.T) {
 	params := agentbay.NewCreateSessionParams()
-	assert.Equal(t, int32(300), params.IdleReleaseTimeout)
+	assert.Equal(t, int32(0), params.IdleReleaseTimeout)
 }
 
 func TestCreateSessionParams_IdleReleaseTimeout_Setter(t *testing.T) {
@@ -17,4 +17,3 @@ func TestCreateSessionParams_IdleReleaseTimeout_Setter(t *testing.T) {
 	params.WithIdleReleaseTimeout(123)
 	assert.Equal(t, int32(123), params.IdleReleaseTimeout)
 }
-

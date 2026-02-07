@@ -314,10 +314,8 @@ export class AgentBay {
       }
 
       // SDK idle release timeout (seconds)
-      if ((paramsCopy as any).idleReleaseTimeout !== undefined && (paramsCopy as any).idleReleaseTimeout !== null) {
+      if ((paramsCopy as any).idleReleaseTimeout !== undefined && (paramsCopy as any).idleReleaseTimeout !== null && (paramsCopy as any).idleReleaseTimeout > 0) {
         (request as any).timeout = (paramsCopy as any).idleReleaseTimeout;
-      } else {
-        (request as any).timeout = 300;
       }
 
       // Flag to indicate if we need to wait for context synchronization

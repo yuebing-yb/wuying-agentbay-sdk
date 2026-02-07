@@ -348,7 +348,7 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
     this.imageId = params?.imageId;
     const idle = (params as any)?.idleReleaseTimeout;
     if (idle === undefined || idle === null) {
-      this.idleReleaseTimeout = 300;
+      this.idleReleaseTimeout = 0;
     } else if (typeof idle !== "number" || !Number.isInteger(idle) || idle <= 0) {
       throw new Error("idleReleaseTimeout must be a positive integer (seconds)");
     } else {
