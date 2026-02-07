@@ -14,7 +14,7 @@ jobs:
       actions: write
       id-token: write
 
-    if: github.repository == 'aliyun/wuying-agentbay-sdk'
+    if: github.repository == 'agentbay-ai/wuying-agentbay-sdk'
 
     steps:
       - name: Checkout code
@@ -116,7 +116,7 @@ jobs:
         run: |
           echo "pip install -i https://test.pypi.org/simple/ wuying-agentbay-sdk==${{ env.FINAL_VERSION }}"
           echo "npm install test-wuying-agentbay-sdk@${{ env.NPM_FINAL_VERSION }}"
-          echo "go get github.com/aliyun/wuying-agentbay-sdk@${{env.LATEST_COMMIT }}"
+          echo "go get github.com/agentbay-ai/wuying-agentbay-sdk@${{env.LATEST_COMMIT }}"
 
       - name: Generate Build Summary
         if: success()
@@ -127,6 +127,6 @@ jobs:
           echo "## INSTALL COMMAND " > $SUMMARY_PATH
           echo "### CONTENT" >> $SUMMARY_PATH
 
-          echo "go get github.com/aliyun/wuying-agentbay-sdk@${{env.LATEST_COMMIT }}" >> $SUMMARY_PATH
+          echo "go get github.com/agentbay-ai/wuying-agentbay-sdk@${{env.LATEST_COMMIT }}" >> $SUMMARY_PATH
           echo "pip install -i https://test.pypi.org/simple/ wuying-agentbay-sdk==${{ env.FINAL_VERSION }}" >> $SUMMARY_PATH
           echo "npm install test-wuying-agentbay-sdk@${{ env.NPM_FINAL_VERSION }}" >> $SUMMARY_PATH

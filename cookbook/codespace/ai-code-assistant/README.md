@@ -331,7 +331,7 @@ This project is part of the AgentBay SDK and is licensed under Apache License 2.
 
 - [AgentBay Documentation](https://www.alibabacloud.com/help/agentbay)
 - [DashScope Documentation](https://help.aliyun.com/zh/dashscope/)
-- [AgentBay SDK GitHub](https://github.com/aliyun/wuying-agentbay-sdk)
+- [AgentBay SDK GitHub](https://github.com/agentbay-ai/wuying-agentbay-sdk)
 - [Next.js Documentation](https://nextjs.org/docs)
 
 ## 💡 Tips

@@ -50,21 +50,21 @@ main().catch(console.error);
 ## 📖 Complete Documentation
 
 ### 🆕 New Users
-- [📚 Quick Start Tutorial](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/README.md) - Get started in 5 minutes
-- [🎯 Core Concepts](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understanding cloud environments and sessions
+- [📚 Quick Start Tutorial](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/quickstart/README.md) - Get started in 5 minutes
+- [🎯 Core Concepts](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/quickstart/basic-concepts.md) - Understanding cloud environments and sessions
 
 ### 🚀 Experienced Users
 **Choose Your Cloud Environment:**
-- 🌐 [Browser Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/browser-use/README.md) - Web scraping, browser testing, form automation
-- 🖥️ [Computer Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/computer-use/README.md) - Windows desktop automation, UI testing
-- 📱 [Mobile Use](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/mobile-use/README.md) - Android UI testing, mobile app automation
-- 💻 [CodeSpace](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/codespace/README.md) - Code execution, development environments
+- 🌐 [Browser Use](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/guides/browser-use/README.md) - Web scraping, browser testing, form automation
+- 🖥️ [Computer Use](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/guides/computer-use/README.md) - Windows desktop automation, UI testing
+- 📱 [Mobile Use](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/guides/mobile-use/README.md) - Android UI testing, mobile app automation
+- 💻 [CodeSpace](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/guides/codespace/README.md) - Code execution, development environments
 
 **Additional Resources:**
-- [📖 Feature Guides](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Complete feature introduction
+- [📖 Feature Guides](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/guides/README.md) - Complete feature introduction
 - [🔧 TypeScript API Reference](docs/api/README.md) - Detailed API documentation
 - [💻 TypeScript Examples](docs/examples/README.md) - Complete example code
-- [📋 Logging Configuration](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
+- [📋 Logging Configuration](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/guides/common-features/configuration/logging.md) - Configure logging levels and output
 
 ### 🆘 Need Help
 - [🔧 TypeScript API Reference](docs/api/README.md) - Local API documentation
@@ -121,8 +121,8 @@ const session = (await agentBay.create({ contextSync: [contextSync] })).session;
 
 ## 🆘 Get Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
-- [Complete Documentation](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/README.md)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
+- [Complete Documentation](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/README.md)
 
 ## 📄 License
 

@@ -132,7 +132,7 @@ sessionResult, _ := client.Create(params)
 
 ## 🆘 Get Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Complete Documentation](../docs/README.md)
 
 ## 📄 License

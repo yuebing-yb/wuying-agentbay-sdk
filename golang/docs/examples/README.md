@@ -116,7 +116,7 @@ Cloud-based development environment for code execution.
 
 ```bash
 # Clone the repository
-git clone https://github.com/aliyun/wuying-agentbay-sdk.git
+git clone https://github.com/agentbay-ai/wuying-agentbay-sdk.git
 cd wuying-agentbay-sdk/golang
 
 # Install dependencies
@@ -290,7 +290,7 @@ go mod tidy
 
 ## 🤝 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation](../../../docs/README.md)
 
 ---

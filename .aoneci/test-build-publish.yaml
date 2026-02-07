@@ -419,7 +419,7 @@ jobs:
 
           ### Installation Command
           \`\`\`bash
-          go mod edit -replace github.com/aliyun/wuying-agentbay-sdk/golang=code.alibaba-inc.com/InnoArchClub/wuying-agentbay-sdk.git/golang@${{jobs.go-build.outputs.string-output}}
+          go mod edit -replace github.com/agentbay-ai/wuying-agentbay-sdk/golang=code.alibaba-inc.com/InnoArchClub/wuying-agentbay-sdk.git/golang@${{jobs.go-build.outputs.string-output}}
           go mod tidy
           \`\`\`
 
