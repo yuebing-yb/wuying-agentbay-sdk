@@ -25,7 +25,7 @@ def main() -> None:
     if not api_key:
         raise RuntimeError("Missing AGENTBAY_API_KEY environment variable")
 
-    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5ta4n2htfrppyw"
+    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0a9mg1h4et0z42hv5"
     agentbay = AgentBay(api_key=api_key)
 
     created = agentbay.create(CreateSessionParams(image_id=image_id))

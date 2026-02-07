@@ -2,6 +2,7 @@ import asyncio
 import inspect
 import json
 import random
+import ssl
 import uuid
 from dataclasses import dataclass
 from enum import Enum
@@ -263,11 +264,27 @@ class WsClient:
         self._set_state(WsConnectionState.RECONNECTING, "connecting")
         _logger.info(f"WS CONNECT url={self._ws_url}")
         headers = {"X-Access-Token": self._ws_token}
+
+        # Build an SSL context with certifi CA bundle to avoid
+        # SSLCertVerificationError on macOS where the default Python
+        # installation (python.org) ships without system CA certificates.
+        ssl_context: Any = None
+        if self._ws_url.startswith("wss://"):
+            ssl_context = ssl.create_default_context()
+            try:
+                import certifi
+                ssl_context.load_verify_locations(certifi.where())
+            except ImportError:
+                _logger.debug(
+                    "certifi not available; falling back to system CA certificates"
+                )
+
         try:
             ws = await websockets.connect(
                 self._ws_url,
                 ping_interval=None,
                 additional_headers=headers,
+                ssl=ssl_context,
             )
         except InvalidStatus as e:
             raise WsHandshakeRejectedError(
