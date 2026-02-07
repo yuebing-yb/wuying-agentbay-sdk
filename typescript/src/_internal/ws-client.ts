@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import type { WebSocket as WsType } from "./ws";
-import { logDebug, maskSensitiveData } from "../utils/logger";
+import { logDebug, logWarn, maskSensitiveData } from "../utils/logger";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const WebSocketImpl: typeof WsType = require("ws");
@@ -8,6 +8,7 @@ const WebSocketImpl: typeof WsType = require("ws");
 type OnEvent = (invocationId: string, data: Record<string, any>) => void;
 type OnEnd = (invocationId: string, data: Record<string, any>) => void;
 type OnError = (invocationId: string, err: Error) => void;
+type PushCallback = (payload: { requestId: string; target: string; data: Record<string, any> }) => void | Promise<void>;
 
 function newInvocationId(): string {
   return crypto.randomBytes(16).toString("hex");
@@ -31,6 +32,7 @@ export class WsClient {
   private token: string;
   private ws: any | null = null;
   private connecting: Promise<void> | null = null;
+  private callbacksByTarget = new Map<string, Set<PushCallback>>();
   private pendingById = new Map<
     string,
     {
@@ -45,6 +47,36 @@ export class WsClient {
   constructor(wsUrl: string, token: string) {
     this.wsUrl = wsUrl;
     this.token = token;
+  }
+
+  registerCallback(target: string, callback: PushCallback): () => void {
+    if (!target || typeof target !== "string") {
+      throw new Error("target must be a non-empty string");
+    }
+    if (typeof callback !== "function") {
+      throw new Error("callback must be a function");
+    }
+    if (!this.callbacksByTarget.has(target)) {
+      this.callbacksByTarget.set(target, new Set());
+    }
+    this.callbacksByTarget.get(target)?.add(callback);
+    return () => this.unregisterCallback(target, callback);
+  }
+
+  unregisterCallback(target: string, callback?: PushCallback): void {
+    if (!target || typeof target !== "string") {
+      throw new Error("target must be a non-empty string");
+    }
+    if (!callback) {
+      this.callbacksByTarget.delete(target);
+      return;
+    }
+    const set = this.callbacksByTarget.get(target);
+    if (!set) return;
+    set.delete(callback);
+    if (set.size === 0) {
+      this.callbacksByTarget.delete(target);
+    }
   }
 
   private logFrame(direction: ">>" | "<<", payload: any): void {
@@ -159,10 +191,47 @@ export class WsClient {
     if (!invocationId || typeof invocationId !== "string") return;
 
     const pending = this.pendingById.get(invocationId);
-    if (!pending) return;
-
     const source = msg.source;
-    const data = msg.data;
+    const target = msg.target;
+    const dataAny = msg.data;
+
+    let data: Record<string, any> | null = null;
+    if (dataAny && typeof dataAny === "object") {
+      data = dataAny;
+    } else if (typeof dataAny === "string") {
+      try {
+        const parsed = JSON.parse(dataAny);
+        if (parsed && typeof parsed === "object") {
+          logWarn("WS protocol violation: backend sent data as string; decoded to object");
+          data = parsed;
+        }
+      } catch (_e) {
+        data = null;
+      }
+    }
+
+    if (!pending) {
+      const routeTarget =
+        target === "SDK" && typeof source === "string" && source && source !== "SDK"
+          ? source
+          : target;
+      if (!routeTarget || typeof routeTarget !== "string") return;
+      if (!data) return;
+      const callbacks = Array.from(this.callbacksByTarget.get(routeTarget) ?? []);
+      if (callbacks.length === 0) return;
+      const payload = { requestId: invocationId, target: routeTarget, data };
+      for (const cb of callbacks) {
+        try {
+          const r = cb(payload);
+          if (r && typeof (r as any).then === "function") {
+            (r as Promise<void>).catch(() => undefined);
+          }
+        } catch (_e) {
+          continue;
+        }
+      }
+      return;
+    }
 
     if (source === "WEBSOCKET_SERVER") {
       this.logFrame("<<", { invocationId, source, data });
@@ -176,14 +245,14 @@ export class WsClient {
         this.pendingById.delete(invocationId);
         return;
       }
-      if (pending.onEnd) pending.onEnd(invocationId, typeof data === "object" ? data : {});
-      pending.resolveEnd(typeof data === "object" ? data : {});
+      const endData = data ?? {};
+      if (pending.onEnd) pending.onEnd(invocationId, endData);
+      pending.resolveEnd(endData);
       this.pendingById.delete(invocationId);
       return;
     }
 
-    const target = msg.target;
-    if (typeof data !== "object" || !data) return;
+    if (!data) return;
 
     this.logFrame("<<", { invocationId, source, target, data });
 

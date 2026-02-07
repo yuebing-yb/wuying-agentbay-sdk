@@ -1212,7 +1212,7 @@ public class Session {
      * @param toolName The name of the tool to look up
      * @return The server name, or empty string if not found
      */
-    private String getMcpServerForTool(String toolName) {
+    public String getMcpServerForTool(String toolName) {
         if (toolName == null || toolName.isEmpty()) {
             return "";
         }

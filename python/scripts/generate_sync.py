@@ -38,8 +38,15 @@ def _init_skip_sync_generation_files() -> None:
         os.path.join(ASYNC_DIR, "_internal", "ws_client.py"),
         os.path.join(TEST_ASYNC_DIR, "test_ws_long_connection_integration.py"),
         os.path.join(TEST_ASYNC_DIR, "test_run_code_ws_streaming_integration.py"),
+        os.path.join(TEST_ASYNC_DIR, "test_ws_register_callback_integration.py"),
         os.path.join(UNIT_TEST_ASYNC_DIR, "test_ws_long_connection.py"),
         os.path.join(UNIT_TEST_ASYNC_DIR, "test_run_code_ws_streaming.py"),
+        os.path.join(
+            EXAMPLES_ASYNC_DIR,
+            "browser-use",
+            "browser",
+            "ws_push_callback_captcha_tongcheng.py",
+        ),
     }
 
 
@@ -72,6 +79,14 @@ def _write_sync_ws_client_stub() -> None:
         "        self._ws_url = ws_url\n"
         "        self._ws_token = ws_token\n\n"
         "    def connect(self) -> None:\n"
+        "        raise AgentBayError(\n"
+        "            \"WS long connection is only supported in the async Python SDK for now\"\n"
+        "        )\n\n"
+        "    def register_callback(self, target: str, callback: Callable[[dict[str, Any]], Any]) -> Callable[[], None]:\n"
+        "        raise AgentBayError(\n"
+        "            \"WS long connection is only supported in the async Python SDK for now\"\n"
+        "        )\n\n"
+        "    def unregister_callback(self, target: str, callback: Optional[Callable[[dict[str, Any]], Any]] = None) -> None:\n"
         "        raise AgentBayError(\n"
         "            \"WS long connection is only supported in the async Python SDK for now\"\n"
         "        )\n\n"
@@ -358,7 +373,10 @@ def generate_sync():
         for root, dirs, files in os.walk(EXAMPLES_ASYNC_DIR):
             for file in files:
                 if file.endswith(".py"):
-                    filepaths.append(os.path.join(root, file))
+                    path = os.path.join(root, file)
+                    if _should_skip_sync_generation(path):
+                        continue
+                    filepaths.append(path)
 
     # Walk unit tests/_async dir
     if os.path.exists(UNIT_TEST_ASYNC_DIR):

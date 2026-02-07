@@ -25,6 +25,16 @@ class WsClient:
             "WS long connection is only supported in the async Python SDK for now"
         )
 
+    def register_callback(self, target: str, callback: Callable[[dict[str, Any]], Any]) -> Callable[[], None]:
+        raise AgentBayError(
+            "WS long connection is only supported in the async Python SDK for now"
+        )
+
+    def unregister_callback(self, target: str, callback: Optional[Callable[[dict[str, Any]], Any]] = None) -> None:
+        raise AgentBayError(
+            "WS long connection is only supported in the async Python SDK for now"
+        )
+
     def close(self) -> None:
         return
 

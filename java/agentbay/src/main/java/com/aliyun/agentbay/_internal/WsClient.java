@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,6 +28,7 @@ public class WsClient {
     private volatile CompletableFuture<Void> connecting;
 
     private final ConcurrentHashMap<String, PendingStream> pendingById = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, List<PushCallback>> callbacksByTarget = new ConcurrentHashMap<>();
 
     public interface OnEvent {
         void onEvent(String invocationId, Map<String, Object> data);
@@ -37,6 +40,10 @@ public class WsClient {
 
     public interface OnError {
         void onError(String invocationId, Exception err);
+    }
+
+    public interface PushCallback {
+        void onMessage(Map<String, Object> payload);
     }
 
     private static class PendingStream {
@@ -104,6 +111,35 @@ public class WsClient {
         failAllPending(new RuntimeException("WS connection closed"));
     }
 
+    public Runnable registerCallback(String target, PushCallback callback) {
+        if (target == null || target.isEmpty()) {
+            throw new IllegalArgumentException("target must be a non-empty string");
+        }
+        if (callback == null) {
+            throw new IllegalArgumentException("callback must not be null");
+        }
+        callbacksByTarget.compute(target, (_k, v) -> {
+            List<PushCallback> list = v != null ? v : new ArrayList<>();
+            list.add(callback);
+            return list;
+        });
+        return () -> unregisterCallback(target, callback);
+    }
+
+    public void unregisterCallback(String target, PushCallback callback) {
+        if (target == null || target.isEmpty()) {
+            throw new IllegalArgumentException("target must be a non-empty string");
+        }
+        if (callback == null) {
+            callbacksByTarget.remove(target);
+            return;
+        }
+        callbacksByTarget.computeIfPresent(target, (_k, v) -> {
+            v.removeIf(cb -> cb == callback);
+            return v.isEmpty() ? null : v;
+        });
+    }
+
     public CompletableFuture<StreamHandle> callStream(
         String target,
         Map<String, Object> data,
@@ -156,13 +192,14 @@ public class WsClient {
         String invocationId = (String) invocationIdObj;
 
         PendingStream pending = pendingById.get(invocationId);
-        if (pending == null) return;
-
         Object sourceObj = msg.get("source");
         String source = sourceObj instanceof String ? (String) sourceObj : "";
         Object dataObj = msg.get("data");
+        Object targetObj = msg.get("target");
+        String target = targetObj instanceof String ? (String) targetObj : "";
 
         if ("WEBSOCKET_SERVER".equals(source)) {
+            if (pending == null) return;
             Map<String, Object> lf = new HashMap<>();
             lf.put("invocationId", invocationId);
             lf.put("source", source);
@@ -193,8 +230,48 @@ public class WsClient {
             return;
         }
 
-        if (!(dataObj instanceof Map)) return;
-        Map<String, Object> data = (Map<String, Object>) dataObj;
+        Map<String, Object> data = null;
+        if (dataObj instanceof Map) {
+            data = (Map<String, Object>) dataObj;
+        } else if (dataObj instanceof String) {
+            try {
+                Object parsed = objectMapper.readValue((String) dataObj, Object.class);
+                if (parsed instanceof Map) {
+                    logger.warn("WS protocol violation: backend sent data as string; decoded to object");
+                    data = (Map<String, Object>) parsed;
+                } else {
+                    return;
+                }
+            } catch (Exception e) {
+                return;
+            }
+        } else {
+            return;
+        }
+
+        if (pending == null) {
+            String routeTarget = target;
+            if ("SDK".equals(routeTarget) && source != null && !source.isEmpty() && !"SDK".equals(source)) {
+                routeTarget = source;
+            }
+            if (routeTarget == null || routeTarget.isEmpty()) return;
+            List<PushCallback> callbacks = callbacksByTarget.get(routeTarget);
+            if (callbacks == null || callbacks.isEmpty()) return;
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("requestId", invocationId);
+            payload.put("target", routeTarget);
+            payload.put("data", data);
+            for (PushCallback cb : new ArrayList<>(callbacks)) {
+                try {
+                    cb.onMessage(payload);
+                } catch (Exception e) {
+                    logger.warn("Push callback failed: {}", e.getMessage());
+                }
+            }
+            return;
+        }
+
         Map<String, Object> lf = new HashMap<>();
         lf.put("invocationId", invocationId);
         lf.put("source", source);

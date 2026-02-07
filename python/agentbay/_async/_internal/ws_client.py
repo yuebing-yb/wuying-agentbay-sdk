@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import json
 import random
 import uuid
@@ -39,6 +40,7 @@ ConnectionStateListener = Callable[[WsConnectionState, str], None]
 OnEvent = Callable[[str, dict[str, Any]], None]
 OnEnd = Callable[[str, dict[str, Any]], None]
 OnError = Callable[[str, Exception], None]
+PushCallback = Callable[[dict[str, Any]], Any]
 
 
 def _new_invocation_id() -> str:
@@ -121,6 +123,7 @@ class WsClient:
         self._connect_lock = asyncio.Lock()
         self._pending_by_id: dict[str, _PendingStream] = {}
         self._state_listeners: list[ConnectionStateListener] = []
+        self._callbacks_by_target: dict[str, list[PushCallback]] = {}
         self._state: WsConnectionState = WsConnectionState.CLOSED
         self._closed_explicitly = False
 
@@ -134,6 +137,41 @@ class WsClient:
         Internal helper for SDK modules and end-to-end validation.
         """
         await self._ensure_open()
+
+    def register_callback(self, target: str, callback: PushCallback) -> Callable[[], None]:
+        """
+        Register a push callback routed by target.
+
+        callback(payload) receives: {"requestId": str, "target": str, "data": dict}
+        """
+        if not isinstance(target, str) or not target:
+            raise ValueError("target must be a non-empty string")
+        if not callable(callback):
+            raise ValueError("callback must be callable")
+        self._callbacks_by_target.setdefault(target, []).append(callback)
+
+        def _unsubscribe() -> None:
+            self.unregister_callback(target, callback)
+
+        return _unsubscribe
+
+    def unregister_callback(self, target: str, callback: Optional[PushCallback] = None) -> None:
+        """
+        Unregister a previously registered callback.
+
+        If callback is None, all callbacks for target will be removed.
+        """
+        if not isinstance(target, str) or not target:
+            raise ValueError("target must be a non-empty string")
+        if callback is None:
+            self._callbacks_by_target.pop(target, None)
+            return
+        callbacks = self._callbacks_by_target.get(target)
+        if not callbacks:
+            return
+        self._callbacks_by_target[target] = [cb for cb in callbacks if cb is not callback]
+        if not self._callbacks_by_target[target]:
+            self._callbacks_by_target.pop(target, None)
 
     def _set_state(self, state: WsConnectionState, reason: str) -> None:
         self._state = state
@@ -287,7 +325,34 @@ class WsClient:
             return
         try:
             async for raw in ws:
-                self._handle_incoming(raw)
+                try:
+                    self._handle_incoming(raw)
+                except WsProtocolError as e:
+                    raw_str = _truncate_string_for_log(
+                        _mask_sensitive_data_string(str(raw)), 2000
+                    )
+                    _logger.warning(f"WS protocol error (ignored): {e}; raw={raw_str}")
+                    try:
+                        msg_any = json.loads(raw)
+                        if isinstance(msg_any, dict):
+                            invocation_id = None
+                            try:
+                                invocation_id = _extract_invocation_id(msg_any)
+                            except Exception:
+                                invocation_id = None
+                            if invocation_id:
+                                pending = self._pending_by_id.pop(invocation_id, None)
+                                if pending is not None:
+                                    if pending.on_error is not None:
+                                        try:
+                                            pending.on_error(invocation_id, e)
+                                        except Exception:
+                                            _logger.exception("on_error callback failed")
+                                    if not pending.end_future.done():
+                                        pending.end_future.set_exception(e)
+                    except Exception:
+                        pass
+                    continue
             await self._on_transport_error("connection closed")
         except Exception as e:
             await self._on_transport_error(f"recv loop closed: {e}")
@@ -304,16 +369,11 @@ class WsClient:
         invocation_id = _extract_invocation_id(msg)
         source = msg.get("source")
         pending = self._pending_by_id.get(invocation_id)
-        if pending is None:
-            _logger.debug(
-                f"Dropping message for unknown invocationId={invocation_id}"
-            )
-            return
 
         # Special parsing: messages from WebSocket server control plane.
         # If an error is present, surface it to the caller directly without
         # depending on streaming `phase` semantics.
-        if source == "WEBSOCKET_SERVER":
+        if source == "WEBSOCKET_SERVER" and pending is not None:
             data_any = msg.get("data")
             error_msg = None
             if isinstance(msg.get("error"), str) and msg.get("error"):
@@ -339,16 +399,54 @@ class WsClient:
             return
 
         target = msg.get("target")
-        data = msg.get("data")
+        data_any = msg.get("data")
         if not isinstance(target, str) or not target:
             raise WsProtocolError("target is required and must be a non-empty string")
-        if not isinstance(data, dict):
+        if isinstance(data_any, dict):
+            data = data_any
+        elif isinstance(data_any, str):
+            try:
+                parsed = json.loads(data_any)
+            except Exception as e:
+                raise WsProtocolError(f"data is a string but not valid JSON: {e}") from e
+            if not isinstance(parsed, dict):
+                raise WsProtocolError("data is a string but decoded JSON is not an object")
+            _logger.warning(
+                "WS protocol violation: backend sent data as string; decoded to object"
+            )
+            data = parsed
+        else:
             raise WsProtocolError("data is required and must be an object")
 
         self._log_frame(
             "<<",
             {"invocationId": invocation_id, "source": source, "target": target, "data": data},
         )
+
+        if pending is None:
+            route_target = target
+            if (
+                route_target == "SDK"
+                and isinstance(source, str)
+                and source
+                and source != "SDK"
+            ):
+                route_target = source
+            callbacks = list(self._callbacks_by_target.get(route_target, []))
+            if not callbacks:
+                _logger.debug(
+                    f"Dropping push message with no callback: requestId={invocation_id}, target={route_target}"
+                )
+                return
+            payload = {"requestId": invocation_id, "target": route_target, "data": data}
+            for cb in callbacks:
+                try:
+                    r = cb(payload)
+                    if inspect.isawaitable(r):
+                        asyncio.create_task(r)
+                except Exception:
+                    _logger.exception("Push callback failed")
+            return
 
         # Fast-path: any explicit error should be returned to caller.
         if isinstance(data.get("error"), str) and data.get("error"):

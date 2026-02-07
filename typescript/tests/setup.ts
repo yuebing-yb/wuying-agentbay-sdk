@@ -45,21 +45,27 @@ if (process.env.SUPPRESS_TEST_LOGS === 'true') {
   };
 }
 
-// Mock Playwright if it's causing issues
-jest.mock('playwright', () => ({
-  chromium: {
-    launch: jest.fn(),
-    connect: jest.fn()
-  },
-  firefox: {
-    launch: jest.fn(),
-    connect: jest.fn()
-  },
-  webkit: {
-    launch: jest.fn(),
-    connect: jest.fn()
-  }
-}), { virtual: true });
+// Mock Playwright to keep Jest environment stable.
+// End-to-end tests should be executed outside Jest (see integration e2e scripts).
+jest.mock(
+  "playwright",
+  () => ({
+    chromium: {
+      launch: jest.fn(),
+      connect: jest.fn(),
+      connectOverCDP: jest.fn(),
+    },
+    firefox: {
+      launch: jest.fn(),
+      connect: jest.fn(),
+    },
+    webkit: {
+      launch: jest.fn(),
+      connect: jest.fn(),
+    },
+  }),
+  { virtual: true }
+);
 
 // Increase timeout for async operations
 jest.setTimeout(60000 * 3);

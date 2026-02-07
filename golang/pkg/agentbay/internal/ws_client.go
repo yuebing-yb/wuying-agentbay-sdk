@@ -16,15 +16,19 @@ type OnError func(invocationID string, err error)
 
 type DebugLogger func(message string)
 
+type PushCallback = func(payload map[string]interface{})
+
 type WsClient struct {
 	wsURL  string
 	token  string
 	logger DebugLogger
 
-	mu       sync.Mutex
-	conn     *websocket.Conn
-	pending  map[string]*pendingStream
-	closedCh chan struct{}
+	mu        sync.Mutex
+	conn      *websocket.Conn
+	pending   map[string]*pendingStream
+	closedCh  chan struct{}
+	callbacks map[string]map[string]PushCallback
+	nextCbID  uint64
 }
 
 type pendingStream struct {
@@ -50,7 +54,45 @@ func NewWsClient(wsURL string, token string, logger DebugLogger) *WsClient {
 		logger:    logger,
 		pending:   make(map[string]*pendingStream),
 		closedCh:  make(chan struct{}),
+		callbacks: make(map[string]map[string]PushCallback),
 	}
+}
+
+func (c *WsClient) RegisterCallback(target string, callback PushCallback) func() {
+	if target == "" {
+		panic("target must be a non-empty string")
+	}
+	if callback == nil {
+		panic("callback must not be nil")
+	}
+	c.mu.Lock()
+	c.nextCbID++
+	id := fmt.Sprintf("%d", c.nextCbID)
+	if c.callbacks[target] == nil {
+		c.callbacks[target] = make(map[string]PushCallback)
+	}
+	c.callbacks[target][id] = callback
+	c.mu.Unlock()
+	return func() {
+		c.mu.Lock()
+		m := c.callbacks[target]
+		if m != nil {
+			delete(m, id)
+			if len(m) == 0 {
+				delete(c.callbacks, target)
+			}
+		}
+		c.mu.Unlock()
+	}
+}
+
+func (c *WsClient) UnregisterCallback(target string) {
+	if target == "" {
+		panic("target must be a non-empty string")
+	}
+	c.mu.Lock()
+	delete(c.callbacks, target)
+	c.mu.Unlock()
 }
 
 func (c *WsClient) Connect() error {
@@ -188,12 +230,60 @@ func (c *WsClient) handleIncoming(msg map[string]interface{}) {
 	c.mu.Lock()
 	p := c.pending[invocationID]
 	c.mu.Unlock()
-	if p == nil {
-		return
-	}
 
 	source, _ := msg["source"].(string)
 	dataAny, _ := msg["data"]
+	targetAny, _ := msg["target"]
+	target, _ := targetAny.(string)
+
+	if p == nil {
+		routeTarget := target
+		if routeTarget == "SDK" && source != "" && source != "SDK" {
+			routeTarget = source
+		}
+		if routeTarget == "" {
+			return
+		}
+
+		dataObj := map[string]interface{}(nil)
+		if m, ok := dataAny.(map[string]interface{}); ok {
+			dataObj = m
+		} else if s, ok := dataAny.(string); ok && s != "" {
+			var parsed map[string]interface{}
+			if err := json.Unmarshal([]byte(s), &parsed); err != nil {
+				return
+			}
+			if parsed == nil {
+				return
+			}
+			dataObj = parsed
+		} else {
+			return
+		}
+
+		c.mu.Lock()
+		cbMap := c.callbacks[routeTarget]
+		callbacks := make([]PushCallback, 0, len(cbMap))
+		for _, cb := range cbMap {
+			callbacks = append(callbacks, cb)
+		}
+		c.mu.Unlock()
+		if len(callbacks) == 0 {
+			return
+		}
+
+		payload := map[string]interface{}{
+			"requestId": invocationID,
+			"target":    routeTarget,
+			"data":      dataObj,
+		}
+		for _, cb := range callbacks {
+			if cb != nil {
+				cb(payload)
+			}
+		}
+		return
+	}
 
 	if source == "WEBSOCKET_SERVER" {
 		c.logFrame("<<", map[string]interface{}{"invocationId": invocationID, "source": source, "data": dataAny})
@@ -234,7 +324,15 @@ func (c *WsClient) handleIncoming(msg map[string]interface{}) {
 
 	data, ok := dataAny.(map[string]interface{})
 	if !ok {
-		return
+		if s, ok2 := dataAny.(string); ok2 && s != "" {
+			var parsed map[string]interface{}
+			if err := json.Unmarshal([]byte(s), &parsed); err != nil {
+				return
+			}
+			data = parsed
+		} else {
+			return
+		}
 	}
 	c.logFrame("<<", map[string]interface{}{"invocationId": invocationID, "source": source, "target": msg["target"], "data": data})
 
@@ -311,4 +409,3 @@ func (c *WsClient) logFrame(direction string, payload map[string]interface{}) {
 func newInvocationID() string {
 	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
-
