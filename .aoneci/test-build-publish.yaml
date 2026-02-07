@@ -81,13 +81,14 @@ jobs:
           echo "${FINAL_VERSION}" > ${{outputs.env.path}}
           cat $AONE_CI_WORKSPACE/BASE_VERSION
           cat $AONE_CI_WORKSPACE/FINAL_VERSION
-          sed -i "s/version = .*/version = \"${FINAL_VERSION}\"/" pyproject.toml
+          sed -i "0,/^version = /s/^version = .*/version = \"${FINAL_VERSION}\"/" pyproject.toml
           sed -i 's/wuying-agentbay-sdk/wuying-agentbay-sdk-test/g' pyproject.toml
           cat pyproject.toml | grep name
           grep "version" pyproject.toml
       
       - id: pypi-install--build-publish
         run: | 
+          set -e
           cd python
           echo "Installing dependencies..."
           python -m pip install --upgrade pip
