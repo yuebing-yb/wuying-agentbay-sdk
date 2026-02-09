@@ -170,5 +170,5 @@ If you encounter rate limiting, add delays between requests.
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/aliyun/wuying-agentbay-sdk/issues
-- Documentation: https://github.com/aliyun/wuying-agentbay-sdk
+- GitHub Issues: https://github.com/agentbay-ai/wuying-agentbay-sdk/issues
+- Documentation: https://github.com/agentbay-ai/wuying-agentbay-sdk

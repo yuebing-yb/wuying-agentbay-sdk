@@ -252,10 +252,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// SDK idle release timeout (seconds)
-	if params.IdleReleaseTimeout <= 0 {
-		params.IdleReleaseTimeout = 300
+	if params.IdleReleaseTimeout > 0 {
+		createSessionRequest.Timeout = tea.Int32(params.IdleReleaseTimeout)
 	}
-	createSessionRequest.Timeout = tea.Int32(params.IdleReleaseTimeout)
 
 	// Add labels if provided
 	if len(params.Labels) > 0 {
@@ -437,6 +436,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 	if response.Body.Data.LinkUrl != nil {
 		session.LinkUrl = *response.Body.Data.LinkUrl
+	}
+	if response.Body.Data.WsUrl != nil {
+		session.WsUrl = *response.Body.Data.WsUrl
 	}
 	if response.Body.Data.ToolList != nil {
 		session.McpTools = parseToolListToMcpTools(*response.Body.Data.ToolList)
@@ -949,6 +951,7 @@ type GetSessionData struct {
 	NetworkInterfaceIP string
 	Token              string
 	LinkUrl            string
+	WsUrl              string
 	VpcResource        bool
 	ResourceUrl        string
 	Status             string
@@ -1114,6 +1117,9 @@ func (a *AgentBay) getSession(sessionID string) (*GetSessionResult, error) {
 			if response.Body.Data.GetLinkUrl() != nil {
 				data.LinkUrl = *response.Body.Data.GetLinkUrl()
 			}
+			if response.Body.Data.GetWsUrl() != nil {
+				data.WsUrl = *response.Body.Data.GetWsUrl()
+			}
 			if response.Body.Data.GetVpcResource() != nil {
 				data.VpcResource = *response.Body.Data.GetVpcResource()
 			}
@@ -1240,6 +1246,7 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 		session.McpTools = parseToolListToMcpTools(getResult.Data.ToolList)
 		session.Token = getResult.Data.Token
 		session.LinkUrl = getResult.Data.LinkUrl
+		session.WsUrl = getResult.Data.WsUrl
 	}
 
 	// Log successful retrieval

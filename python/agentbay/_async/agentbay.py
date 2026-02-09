@@ -186,8 +186,14 @@ class AsyncAgentBay:
             raise ValueError("SessionId not found in response data")
 
         resource_url = response_data.get("ResourceUrl", "")
+        app_instance_id = response_data.get("AppInstanceId", "") or ""
 
-        _logger.info(f"🆔 Session created: {session_id}")
+        if app_instance_id:
+            _logger.info(
+                f"🆔 Session created: {session_id}, AppInstanceId: {app_instance_id}"
+            )
+        else:
+            _logger.info(f"🆔 Session created: {session_id}")
         _logger.debug(f"🔗 Resource URL: {resource_url}")
 
         # Create Session object
@@ -205,6 +211,12 @@ class AsyncAgentBay:
             session.token = str(response_data.get("Token") or "")
         if "LinkUrl" in response_data and response_data.get("LinkUrl") is not None:
             session.link_url = str(response_data.get("LinkUrl") or "")
+
+        # WS long-connection URL (optional, for streaming/push features).
+        if "WsUrl" in response_data and response_data.get("WsUrl") is not None:
+            session.ws_url = str(response_data.get("WsUrl") or "")
+        elif "wsUrl" in response_data and response_data.get("wsUrl") is not None:
+            session.ws_url = str(response_data.get("wsUrl") or "")
 
         # Set browser recording state (default to True if not explicitly set to False)
         session.enableBrowserReplay = params.enable_browser_replay if params.enable_browser_replay is not None else True
@@ -709,11 +721,15 @@ class AsyncAgentBay:
 
             # Log API response with key details
             resource_url = data.get("ResourceUrl", "")
+            app_instance_id = data.get("AppInstanceId", "") or ""
+            key_fields = {"session_id": session_id, "resource_url": resource_url}
+            if app_instance_id:
+                key_fields["AppInstanceId"] = app_instance_id
             _log_api_response_with_details(
                 api_name="CreateSession",
                 request_id=request_id,
                 success=True,
-                key_fields={"session_id": session_id, "resource_url": resource_url},
+                key_fields=key_fields,
                 full_response=response_body,
             )
 
@@ -1086,6 +1102,7 @@ class AsyncAgentBay:
                         network_interface_ip=data_dict.get("NetworkInterfaceIp", ""),
                         token=data_dict.get("Token", ""),
                         link_url=data_dict.get("LinkUrl", "") or "",
+                        ws_url=data_dict.get("WsUrl", "") or data_dict.get("wsUrl", "") or "",
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
                         status=data_dict.get("Status", ""),
@@ -1190,6 +1207,7 @@ class AsyncAgentBay:
             session.mcpTools = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list)
             session.token = str(get_result.data.token or "")
             session.link_url = str(getattr(get_result.data, "link_url", "") or "")
+            session.ws_url = str(getattr(get_result.data, "ws_url", "") or "")
 
         return SessionResult(
             request_id=get_result.request_id,

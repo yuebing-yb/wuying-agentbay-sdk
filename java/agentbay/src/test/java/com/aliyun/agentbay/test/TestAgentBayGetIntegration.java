@@ -67,7 +67,7 @@ public class TestAgentBayGetIntegration {
         System.out.println("Creating a new session for Get API testing...");
 
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId("linux_latest");
+        params.setImageId("imgc-0a9mg1h4et0z42hv5");
 
         SessionResult createResult = agentBayClient.create(params);
         assertTrue("Failed to create session: " + createResult.getErrorMessage(),
@@ -107,6 +107,11 @@ public class TestAgentBayGetIntegration {
             assertTrue("Session resourceUrl should contain 'resourceId='",
                        session.getResourceUrl().contains("resourceId="));
             System.out.println("Session resourceUrl validated");
+
+            assertNotNull("Session wsUrl should not be null", session.getWsUrl());
+            assertFalse("Session wsUrl should not be empty", session.getWsUrl().isEmpty());
+            assertTrue("Session wsUrl should be a ws/wss URL, got " + session.getWsUrl(),
+                session.getWsUrl().startsWith("ws://") || session.getWsUrl().startsWith("wss://"));
 
             if (createHasLinkUrl) {
                 assertNotNull("Session token should not be null", session.getToken());

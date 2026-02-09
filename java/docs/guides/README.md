@@ -130,7 +130,7 @@ agentBay.delete(session, true);  // sync_context=true
 
 - [Java README](../../README.md) - SDK overview and quick start
 - [Main Documentation](../../../docs/README.md) - Complete platform documentation
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues) - Report issues and get support
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues) - Report issues and get support
 
 ## 🚀 Next Steps
 

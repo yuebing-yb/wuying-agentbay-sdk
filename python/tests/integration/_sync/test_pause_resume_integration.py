@@ -587,7 +587,6 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Resume the session (asynchronous)
         print(f"\nStep 3: Resuming session asynchronously...")
-        import asyncio
 
         resume_result = await self.agent_bay.beta_resume_async(session)
 

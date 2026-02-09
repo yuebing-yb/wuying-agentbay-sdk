@@ -19,6 +19,7 @@ import com.aliyun.agentbay.code.Code;
 import com.aliyun.agentbay.command.Command;
 import com.aliyun.agentbay.mcp.McpTool;
 import com.aliyun.agentbay.mcp.McpToolsResult;
+import com.aliyun.agentbay._internal.WsClient;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -48,6 +49,8 @@ public class Session {
     private String resourceUrl;
     private String token;
     private String linkUrl;
+    private String wsUrl;
+    private WsClient wsClient;
     private Boolean enableBrowserReplay;
     private String imageId;
     private List<McpTool> mcpTools = new java.util.ArrayList<>();
@@ -74,6 +77,29 @@ public class Session {
         this.computer = new Computer(this);
         this.mobile = new Mobile(this);
         this.imageId = "";
+        this.wsUrl = "";
+    }
+
+    public String getWsUrl() {
+        return wsUrl;
+    }
+
+    public void setWsUrl(String wsUrl) {
+        this.wsUrl = wsUrl;
+    }
+
+    public synchronized WsClient getWsClient() {
+        if (this.wsUrl == null || this.wsUrl.isEmpty()) {
+            throw new RuntimeException("wsUrl is not available for this session");
+        }
+        if (this.token == null || this.token.isEmpty()) {
+            throw new RuntimeException("token is not available for WS connection");
+        }
+        if (this.wsClient == null) {
+            this.wsClient = new WsClient(this.wsUrl, this.token);
+        }
+        this.wsClient.connect().join();
+        return this.wsClient;
     }
 
     /**
@@ -1186,7 +1212,7 @@ public class Session {
      * @param toolName The name of the tool to look up
      * @return The server name, or empty string if not found
      */
-    private String getMcpServerForTool(String toolName) {
+    public String getMcpServerForTool(String toolName) {
         if (toolName == null || toolName.isEmpty()) {
             return "";
         }

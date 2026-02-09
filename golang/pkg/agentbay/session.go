@@ -20,6 +20,7 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/mobile"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
@@ -127,6 +128,11 @@ type Session struct {
 	Token   string
 	LinkUrl string
 
+	// WS URL for long connection (optional, for streaming output)
+	WsUrl string
+
+	wsClient *internal.WsClient
+
 	// Browser replay enabled flag
 	EnableBrowserReplay bool
 
@@ -148,6 +154,30 @@ type Session struct {
 
 	// Context management
 	Context *ContextManager
+}
+
+func (s *Session) GetWsUrl() string {
+	return s.WsUrl
+}
+
+func (s *Session) GetMcpTools() []McpTool {
+	return s.McpTools
+}
+
+func (s *Session) GetWsClient() (interface{}, error) {
+	if s.WsUrl == "" {
+		return nil, fmt.Errorf("ws url is not available for this session")
+	}
+	if s.Token == "" {
+		return nil, fmt.Errorf("token is not available for WS connection")
+	}
+	if s.wsClient == nil {
+		s.wsClient = internal.NewWsClient(s.WsUrl, s.Token, LogDebug)
+	}
+	if err := s.wsClient.Connect(); err != nil {
+		return nil, err
+	}
+	return s.wsClient, nil
 }
 
 // SessionStatusResult represents the result of Session.GetStatus().

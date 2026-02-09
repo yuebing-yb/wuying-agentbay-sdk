@@ -147,7 +147,7 @@ Already familiar with browser automation, computer use, or mobile testing? Start
 
 ## 📞 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues) - Report bugs or request features
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues) - Report bugs or request features
 
 ---
 

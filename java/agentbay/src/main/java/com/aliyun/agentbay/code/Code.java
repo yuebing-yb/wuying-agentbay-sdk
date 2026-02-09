@@ -1,11 +1,13 @@
 package com.aliyun.agentbay.code;
 
+import com.aliyun.agentbay._internal.WsClient;
 import com.aliyun.agentbay.model.code.*;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class Code extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -338,6 +340,196 @@ public class Code extends BaseService {
         } catch (Exception e) {
             return new EnhancedCodeExecutionResult("", false, "Failed to run code: " + e.getMessage());
         }
+    }
+
+    public EnhancedCodeExecutionResult runCode(
+        String code,
+        String language,
+        int timeoutS,
+        boolean streamBeta,
+        Consumer<String> onStdout,
+        Consumer<String> onStderr,
+        Consumer<Object> onError
+    ) {
+        boolean useStream = streamBeta || onStdout != null || onStderr != null || onError != null;
+        if (!useStream) {
+            return runCode(code, language, timeoutS);
+        }
+        return runCodeStreamWs(code, language, timeoutS, onStdout, onStderr, onError);
+    }
+
+    private EnhancedCodeExecutionResult runCodeStreamWs(
+        String code,
+        String language,
+        int timeoutS,
+        Consumer<String> onStdout,
+        Consumer<String> onStderr,
+        Consumer<Object> onError
+    ) {
+        try {
+            String rawLanguage = (language == null) ? "" : language;
+            String normalizedLanguage = rawLanguage.trim().toLowerCase();
+
+            Map<String, String> aliases = new HashMap<>();
+            aliases.put("py", "python");
+            aliases.put("python3", "python");
+            aliases.put("js", "javascript");
+            aliases.put("node", "javascript");
+            aliases.put("nodejs", "javascript");
+
+            String canonicalLanguage = aliases.getOrDefault(normalizedLanguage, normalizedLanguage);
+
+            Set<String> supportedLanguages = new HashSet<>(Arrays.asList("python", "javascript", "r", "java"));
+            if (!supportedLanguages.contains(canonicalLanguage)) {
+                return new EnhancedCodeExecutionResult("", false,
+                    "Unsupported language: " + rawLanguage + ". Supported languages are 'python', 'javascript', 'r', and 'java'");
+            }
+
+            String target = SERVER_CODESPACE;
+            try {
+                String t = this.session.getMcpServerForTool("run_code");
+                if (t != null && !t.isEmpty()) {
+                    target = t;
+                }
+            } catch (Exception e) {
+            }
+
+            WsClient wsClient = this.session.getWsClient();
+
+            List<String> stdoutChunks = new ArrayList<>();
+            List<String> stderrChunks = new ArrayList<>();
+            List<CodeResult> results = new ArrayList<>();
+            final String[] errorMessage = {""};
+            final CodeExecutionError[] errorObj = {null};
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("method", "run_code");
+            data.put("mode", "stream");
+            Map<String, Object> params = new HashMap<>();
+            params.put("language", canonicalLanguage);
+            params.put("timeoutS", timeoutS);
+            params.put("code", code);
+            data.put("params", params);
+
+            WsClient.StreamHandle handle = wsClient.callStream(
+                target,
+                data,
+                (_invocationId, eventData) -> {
+                    Object eventTypeObj = eventData.get("eventType");
+                    String eventType = eventTypeObj != null ? eventTypeObj.toString() : "";
+                    if ("stdout".equals(eventType)) {
+                        String chunk = String.valueOf(eventData.getOrDefault("chunk", ""));
+                        stdoutChunks.add(chunk);
+                        if (onStdout != null) onStdout.accept(chunk);
+                        return;
+                    }
+                    if ("stderr".equals(eventType)) {
+                        String chunk = String.valueOf(eventData.getOrDefault("chunk", ""));
+                        stderrChunks.add(chunk);
+                        if (onStderr != null) onStderr.accept(chunk);
+                        return;
+                    }
+                    if ("result".equals(eventType)) {
+                        Object rp = eventData.get("result");
+                        results.add(parseResultItem(rp));
+                        return;
+                    }
+                    if ("error".equals(eventType)) {
+                        String msg = String.valueOf(eventData.getOrDefault("error", ""));
+                        errorMessage[0] = msg;
+                        errorObj[0] = new CodeExecutionError("ExecutionError", msg, "");
+                        if (onError != null) onError.accept(eventData);
+                        return;
+                    }
+                },
+                (_invocationId, endData) -> {
+                    Object executionError = endData.get("executionError");
+                    if (executionError != null && !String.valueOf(executionError).isEmpty() && errorObj[0] == null) {
+                        String msg = String.valueOf(executionError);
+                        errorMessage[0] = msg;
+                        errorObj[0] = new CodeExecutionError("ExecutionError", msg, "");
+                    }
+                },
+                (_invocationId, err) -> {
+                    if (onError != null) onError.accept(err);
+                }
+            ).join();
+
+            Map<String, Object> endData = handle.waitEnd().join();
+
+            CodeExecutionLogs logs = new CodeExecutionLogs();
+            logs.getStdout().addAll(stdoutChunks);
+            logs.getStderr().addAll(stderrChunks);
+
+            EnhancedCodeExecutionResult result = new EnhancedCodeExecutionResult();
+            result.setRequestId(handle.invocationId);
+            result.setLogs(logs);
+            result.setResults(results);
+            result.setError(errorObj[0]);
+
+            Object executionCount = endData.get("executionCount");
+            if (executionCount instanceof Number) {
+                result.setExecutionCount(((Number) executionCount).intValue());
+            }
+            Object executionTime = endData.get("executionTime");
+            if (executionTime instanceof Number) {
+                result.setExecutionTime(((Number) executionTime).doubleValue());
+            }
+
+            boolean ok = (errorObj[0] == null) && (endData.get("executionError") == null) && !"failed".equals(String.valueOf(endData.get("status")));
+            result.setSuccess(ok);
+            result.setErrorMessage(ok ? "" : (errorMessage[0] != null ? errorMessage[0] : "Failed to run code"));
+            return result;
+        } catch (Exception e) {
+            if (onError != null) onError.accept(e);
+            return new EnhancedCodeExecutionResult("", false, "Failed to run code: " + e.getMessage());
+        }
+    }
+
+    private CodeResult parseResultItem(Object payload) {
+        CodeResult item = new CodeResult();
+        if (!(payload instanceof Map)) {
+            item.setText(String.valueOf(payload));
+            return item;
+        }
+        Map<?, ?> m = (Map<?, ?>) payload;
+
+        Object isMain = m.get("isMainResult");
+        if (isMain instanceof Boolean && (Boolean) isMain) {
+            item.setMainResult(true);
+        }
+        Object isMain2 = m.get("is_main_result");
+        if (isMain2 instanceof Boolean && (Boolean) isMain2) {
+            item.setMainResult(true);
+        }
+
+        Object text = m.get("text/plain");
+        if (text != null) item.setText(String.valueOf(text));
+        Object html = m.get("text/html");
+        if (html != null) item.setHtml(String.valueOf(html));
+        Object markdown = m.get("text/markdown");
+        if (markdown != null) item.setMarkdown(String.valueOf(markdown));
+        Object png = m.get("image/png");
+        if (png != null) item.setPng(String.valueOf(png));
+        Object jpeg = m.get("image/jpeg");
+        if (jpeg != null) item.setJpeg(String.valueOf(jpeg));
+        Object svg = m.get("image/svg+xml");
+        if (svg != null) item.setSvg(String.valueOf(svg));
+        Object latex = m.get("text/latex");
+        if (latex != null) item.setLatex(String.valueOf(latex));
+
+        Object jsonObj = m.get("application/json");
+        if (jsonObj != null) item.setJson(jsonObj);
+
+        Object chart = m.get("application/vnd.vegalite.v4+json");
+        if (chart == null) chart = m.get("application/vnd.vegalite.v5+json");
+        if (chart == null) chart = m.get("application/vnd.vega.v5+json");
+        if (chart != null) item.setChart(chart);
+
+        if (item.getText() == null && m.get("text") != null) {
+            item.setText(String.valueOf(m.get("text")));
+        }
+        return item;
     }
 
     public EnhancedCodeExecutionResult execute(String code, String language) {

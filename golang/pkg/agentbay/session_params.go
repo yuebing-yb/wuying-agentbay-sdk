@@ -50,7 +50,6 @@ func NewCreateSessionParams() *CreateSessionParams {
 		Labels:              make(map[string]string),
 		ContextSync:         make([]*ContextSync, 0),
 		EnableBrowserReplay: true, // browser replay is enabled by default
-		IdleReleaseTimeout:  300,
 	}
 }
 

@@ -714,10 +714,18 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
 
-        # Mock context info response
+        # Mock context info response with matching context IDs in "Success" status
+        # so that _wait_for_context_synchronization completes immediately
+        import json as _json
+        context_status_json = _json.dumps([
+            {"type": "data", "data": _json.dumps([
+                {"contextId": "ctx-1", "status": "Success", "path": "/path1"},
+                {"contextId": "ctx-2", "status": "Success", "path": "/path2"},
+            ])}
+        ])
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
-            "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
+            "body": {"Data": {"ContextStatus": context_status_json}, "Success": True}
         }
         mock_client.get_context_info_async = AsyncMock(
             return_value=mock_context_response
@@ -794,10 +802,17 @@ class TestAsyncAgentBay(unittest.IsolatedAsyncioTestCase):
         }
         mock_client.create_mcp_session_async = AsyncMock(return_value=mock_response)
 
-        # Mock context info response
+        # Mock context info response with the mobile simulate context ID in "Success" status
+        # so that _wait_for_context_synchronization completes immediately
+        import json as _json
+        context_status_json = _json.dumps([
+            {"type": "data", "data": _json.dumps([
+                {"contextId": "mobile-sim-ctx-123", "status": "Success", "path": "/"},
+            ])}
+        ])
         mock_context_response = MagicMock()
         mock_context_response.to_map.return_value = {
-            "body": {"Data": {"ContextStatusDataList": []}, "Success": True}
+            "body": {"Data": {"ContextStatus": context_status_json}, "Success": True}
         }
         mock_client.get_context_info_async = AsyncMock(
             return_value=mock_context_response

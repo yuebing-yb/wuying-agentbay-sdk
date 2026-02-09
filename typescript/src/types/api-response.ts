@@ -60,6 +60,8 @@ export interface GetSessionData {
   token: string;
   /** LinkUrl for direct MCP tool calls (non-VPC) */
   linkUrl?: string;
+  /** WebSocket URL for streaming/push features */
+  wsUrl?: string;
   /** Whether this session uses VPC resources */
   vpcResource: boolean;
   /** Resource URL for accessing the session */

@@ -306,7 +306,7 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
 
         # Start the thread
         thread.start()
-        time.sleep(0.2)  # Let it run for a short time
+        time.sleep(0.05)  # Brief pause to let the thread run
 
         # Stop the thread
         stop_event.set()
@@ -343,7 +343,7 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
 
         # Start the thread
         thread.start()
-        time.sleep(0.2)
+        time.sleep(0.05)
 
         # Stop the thread - should not crash despite callback exception
         stop_event.set()

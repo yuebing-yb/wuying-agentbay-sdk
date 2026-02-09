@@ -292,7 +292,7 @@ class CreateSessionParams:
         self,
         labels: Optional[Dict[str, str]] = None,
         image_id: Optional[str] = None,
-        idle_release_timeout: Optional[int] = 300,
+        idle_release_timeout: Optional[int] = None,
         context_syncs: Optional[List[ContextSync]] = None,
         browser_context: Optional[BrowserContext] = None,
         policy_id: Optional[str] = None,
@@ -329,12 +329,11 @@ class CreateSessionParams:
         """
         self.labels = labels or {}
         self.image_id = image_id
-        if idle_release_timeout is None:
-            idle_release_timeout = 300
-        if not isinstance(idle_release_timeout, int):
-            raise ValueError("idle_release_timeout must be an int (seconds)")
-        if idle_release_timeout <= 0:
-            raise ValueError("idle_release_timeout must be > 0 (seconds)")
+        if idle_release_timeout is not None:
+            if not isinstance(idle_release_timeout, int):
+                raise ValueError("idle_release_timeout must be an int (seconds)")
+            if idle_release_timeout <= 0:
+                raise ValueError("idle_release_timeout must be > 0 (seconds)")
         self.idle_release_timeout = idle_release_timeout
 
         # Start with provided context_syncs

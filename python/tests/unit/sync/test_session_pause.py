@@ -149,8 +149,11 @@ class TestSessionPause(unittest.TestCase):
         )
         self.agent_bay._get_session = MagicMock(return_value=get_session_pausing)
 
-        # Patch time.sleep to avoid waiting
-        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep and time.time to avoid real waiting
+        # Simulate time advancing past the timeout on the second call
+        fake_times = iter([100.0, 100.0, 103.0])
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep, \
+             patch("agentbay._sync.session.time.time", side_effect=fake_times):
             # Call the method with a short timeout
             result = self.session.beta_pause(timeout=2, poll_interval=1)
 
@@ -184,8 +187,10 @@ class TestSessionPause(unittest.TestCase):
         )
         self.agent_bay._get_session = MagicMock(return_value=get_session_failure)
 
-        # Patch time.sleep to avoid waiting
-        with patch("time.sleep", new_callable=MagicMock) as mock_sleep:
+        # Patch time.sleep and time.time to avoid real waiting
+        fake_times = iter([100.0, 100.0, 103.0])
+        with patch("time.sleep", new_callable=MagicMock) as mock_sleep, \
+             patch("agentbay._sync.session.time.time", side_effect=fake_times):
             # Call the method
             result = self.session.beta_pause(timeout=2, poll_interval=1)
 

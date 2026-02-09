@@ -330,7 +330,6 @@ def quick_test_workflow_example():
 
 
 if __name__ == "__main__":
-    import asyncio
 
     def main():
         print("Extension Development Workflow Examples")

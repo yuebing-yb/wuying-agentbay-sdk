@@ -237,7 +237,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
 
         # Resume the session (asynchronous)
         print(f"\nStep 3: Resuming session asynchronously...")
-        resume_result = self.agent_bay.beta_resume_async(session)
+        resume_result = self.agent_bay.beta_resume(session)
 
         # Verify async resume result
         self.assertIsInstance(resume_result, SessionResumeResult)

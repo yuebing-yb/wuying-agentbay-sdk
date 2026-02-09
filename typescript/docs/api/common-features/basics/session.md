@@ -62,6 +62,7 @@ oss: [`Oss`](../advanced/oss.md)
 resourceUrl: `string` = `""`
 sessionId: `string`
 token: `string` = `""`
+wsUrl: `string` = `""`
 ```
 
 

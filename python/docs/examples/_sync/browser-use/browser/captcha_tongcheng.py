@@ -12,6 +12,7 @@ This example shows how to use AIBrowser to solve captcha automatically, includin
 
 import os
 import time
+import asyncio
 import base64
 
 from agentbay import AgentBay

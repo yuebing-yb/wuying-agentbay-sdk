@@ -704,6 +704,52 @@ class BrowserOperator(BaseService):
                 )
                 raise BrowserError(error_msg)
 
+    def login(
+        self,
+        login_config: str,
+        page=None,
+        use_vision: Optional[bool] = False,
+    ) -> "ActResult":
+        """
+        Asynchronously perform a login operation on a web page.
+
+        Args:
+            login_config (str): A JSON string containing login configuration,
+                               e.g., '{"api_key": "xxx", "skill_id": "yyy"}'
+            page (Optional[Page]): The Playwright Page object to login on. If None,
+                                   the agent's currently focused page will be used.
+            use_vision (Optional[bool]): Whether to use vision-based capabilities during login.
+
+        Returns:
+            ActResult: The result of the login operation.
+        """
+        if not self.browser.is_initialized():
+            raise BrowserError("Browser must be initialized before calling login.")
+        try:
+            page_id, context_id = self._get_page_and_context_index(page)
+            args = {
+                "login_config": login_config,
+                "context_id": context_id,
+                "page_id": page_id,
+                "use_vision": use_vision,
+            }
+            args = {k: v for k, v in args.items() if v is not None}
+            _logger.info(f"login call: config={login_config[:25]}")
+            response = self._call_mcp_tool_timeout("page_use_login", args)
+
+            if response.success:
+                data = (
+                    response.data
+                    if isinstance(response.data, str)
+                    else json.dumps(response.data, ensure_ascii=False)
+                )
+                _logger.info(f"login response data: {data}")
+                return ActResult(success=True, message=data)
+            else:
+                return ActResult(success=False, message=response.error_message)
+        except Exception as e:
+            raise BrowserError(f"Failed to call login: {e}") from e
+
     def _get_page_and_context_index(self, page):
         """
         Async version of _get_page_and_context_index for getting page and context indices asynchronously.

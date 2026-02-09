@@ -167,6 +167,7 @@ public class AgentBay {
                             responseData.getHttpPort(),
                             responseData.getToken(),
                             responseData.getLinkUrl(),
+                            responseData.getWsUrl(),
                             body.getCode() != null ? body.getCode() : "",
                             responseData.getToolList()
                         );
@@ -232,6 +233,7 @@ public class AgentBay {
             session.setResourceUrl(data.getResourceUrl());
             session.setToken(data.getToken());
             session.setLinkUrl(data.getLinkUrl());
+            session.setWsUrl(data.getWsUrl());
             if (data.getToolList() != null && !data.getToolList().isEmpty()) {
                 session.updateMcpTools(data.getToolList());
             }
@@ -408,10 +410,9 @@ public class AgentBay {
 
             // SDK idle release timeout (seconds)
             Integer idleReleaseTimeout = params.getIdleReleaseTimeout();
-            if (idleReleaseTimeout == null) {
-                idleReleaseTimeout = 300;
+            if (idleReleaseTimeout != null) {
+                request.setTimeout(idleReleaseTimeout);
             }
-            request.setTimeout(idleReleaseTimeout);
 
             // Set labels if provided
             if (params.getLabels() != null && !params.getLabels().isEmpty()) {
@@ -532,6 +533,9 @@ public class AgentBay {
                 }
                 if (response.getBody().getData().getLinkUrl() != null) {
                     session.setLinkUrl(response.getBody().getData().getLinkUrl());
+                }
+                if (response.getBody().getData().getWsUrl() != null) {
+                    session.setWsUrl(response.getBody().getData().getWsUrl());
                 }
                 if (response.getBody().getData().getToolList() != null) {
                     session.updateMcpTools(response.getBody().getData().getToolList());

@@ -3,10 +3,10 @@
 [![arXiv](https://img.shields.io/badge/Paper-arXiv-b31b1b.svg?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2512.04367)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/wuying-agentbay-sdk?label=PyPI%20Downloads&logo=python&logoColor=white&cacheSeconds=86400)](https://pypi.org/project/wuying-agentbay-sdk/)
 [![NPM Downloads](https://img.shields.io/npm/dm/wuying-agentbay-sdk?label=NPM%20Downloads&logo=npm)](https://www.npmjs.com/package/wuying-agentbay-sdk)
-[![Go Report Card](https://goreportcard.com/badge/github.com/aliyun/wuying-agentbay-sdk/golang)](https://goreportcard.com/report/github.com/aliyun/wuying-agentbay-sdk/golang)
+[![Go Report Card](https://goreportcard.com/badge/github.com/agentbay-ai/wuying-agentbay-sdk/golang)](https://goreportcard.com/report/github.com/agentbay-ai/wuying-agentbay-sdk/golang)
 [![Maven Central](https://img.shields.io/maven-central/v/com.aliyun/agentbay-sdk?color=blue&logo=apache-maven)](https://central.sonatype.com/artifact/com.aliyun/agentbay-sdk)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](https://github.com/aliyun/wuying-agentbay-sdk/blob/main/LICENSE)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/aliyun/wuying-agentbay-sdk)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](https://github.com/agentbay-ai/wuying-agentbay-sdk/blob/main/LICENSE)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/agentbay-ai/wuying-agentbay-sdk)
 
 </div>
 
@@ -217,7 +217,7 @@ These files contain the full SDK documentation across all languages (Python, Typ
 
 ## 🆘 Get Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 
 ## 📞 Contact
 

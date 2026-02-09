@@ -314,10 +314,8 @@ export class AgentBay {
       }
 
       // SDK idle release timeout (seconds)
-      if ((paramsCopy as any).idleReleaseTimeout !== undefined && (paramsCopy as any).idleReleaseTimeout !== null) {
+      if ((paramsCopy as any).idleReleaseTimeout !== undefined && (paramsCopy as any).idleReleaseTimeout !== null && (paramsCopy as any).idleReleaseTimeout > 0) {
         (request as any).timeout = (paramsCopy as any).idleReleaseTimeout;
-      } else {
-        (request as any).timeout = 300;
       }
 
       // Flag to indicate if we need to wait for context synchronization
@@ -519,6 +517,7 @@ export class AgentBay {
       // LinkUrl/token may be returned by the server for direct tool calls.
       session.token = data.token || "";
       session.linkUrl = data.linkUrl || "";
+      session.wsUrl = data.wsUrl || "";
       session.mcpTools = this.parseToolListToMcpTools(data.toolList);
 
       // Set browser recording state
@@ -952,7 +951,8 @@ export class AgentBay {
           }
         }
 
-        result.data = {
+        const wsUrl = (body.data as any).wsUrl || "";
+        const data = {
           appInstanceId: body.data.appInstanceId || "",
           resourceId: body.data.resourceId || "",
           sessionId: body.data.sessionId || "",
@@ -961,21 +961,23 @@ export class AgentBay {
           networkInterfaceIp: body.data.networkInterfaceIp || "",
           token: body.data.token || "",
           linkUrl: (body.data as any).linkUrl || "",
+          wsUrl,
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
           status: body.data.status || "",
           toolList: body.data.toolList || "",
           contexts: contexts.length > 0 ? contexts : undefined,
         };
+        result.data = data;
 
         logAPIResponseWithDetails(
           "GetSession",
           requestId,
           true,
           {
-            sessionId: result.data.sessionId,
-            resourceId: result.data.resourceId,
-            httpPort: result.data.httpPort,
+            sessionId: data.sessionId,
+            resourceId: data.resourceId,
+            httpPort: data.httpPort,
           }
         );
       }
@@ -1066,6 +1068,7 @@ export class AgentBay {
       session.resourceUrl = getResult.data.resourceUrl;
       session.token = getResult.data.token || "";
       session.linkUrl = getResult.data.linkUrl || "";
+      session.wsUrl = getResult.data.wsUrl || "";
       session.mcpTools = this.parseToolListToMcpTools(getResult.data.toolList);
     }
 
@@ -1285,7 +1288,7 @@ export class AgentBay {
       if (result.contextSync && Array.isArray(result.contextSync)) {
         result.contextSync = result.contextSync.map((cs: any) => {
           // Reconstruct from plain object (JSON.parse converts class instances to plain objects)
-          return new ContextSync(cs.contextId, cs.path, cs.policy);
+          return new ContextSync(cs.contextId, cs.path, cs.policy, cs.betaWaitForCompletion);
         });
       }
 

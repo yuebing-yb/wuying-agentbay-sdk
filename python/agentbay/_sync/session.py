@@ -126,6 +126,12 @@ class Session:
         self.token = ""
         self.link_url = ""
 
+        # WebSocket URL for long connection (if provided by backend)
+        self.ws_url = ""
+
+        # Internal session-scoped WS client (lazy initialized)
+        self._ws_client = None
+
         # Recording functionality
         self.enableBrowserReplay = (
             True  # Whether browser recording is enabled for this session
@@ -148,6 +154,23 @@ class Session:
         self.browser = Browser(self)
 
         self.agent = Agent(self)
+
+    def _get_ws_client(self):
+        """
+        Internal: get or create a session-scoped WS client.
+
+        This method is internal API by convention.
+        """
+        if not self.ws_url:
+            raise SessionError("ws_url is not available for this session")
+        if not self.token:
+            raise SessionError("token is not available for WS connection")
+
+        if self._ws_client is None:
+            from ._internal.ws_client import WsClient
+
+            self._ws_client = WsClient(ws_url=self.ws_url, ws_token=self.token)
+        return self._ws_client
 
     @property
     def fs(self) -> FileSystem:
@@ -512,6 +535,14 @@ class Session:
                 success=False,
                 error_message=f"Failed to delete session {self.session_id}: {e}",
             )
+        finally:
+            ws_client = self._ws_client
+            self._ws_client = None
+            if ws_client is not None:
+                try:
+                    ws_client.close()
+                except Exception:
+                    pass
 
     def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
         """

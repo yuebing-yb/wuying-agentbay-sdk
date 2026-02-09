@@ -16,18 +16,19 @@ type aliasTestSession struct {
 	callMcpToolFunc func(toolName string, args interface{}) (*models.McpToolResult, error)
 }
 
-func (s *aliasTestSession) GetAPIKey() string                        { return "test-api-key" }
-func (s *aliasTestSession) GetClient() *mcp.Client                   { return nil }
-func (s *aliasTestSession) GetSessionId() string                     { return "test-session-id" }
-func (s *aliasTestSession) IsVpc() bool                              { return false }
-func (s *aliasTestSession) NetworkInterfaceIp() string               { return "" }
-func (s *aliasTestSession) HttpPort() string                         { return "" }
+func (s *aliasTestSession) GetAPIKey() string          { return "test-api-key" }
+func (s *aliasTestSession) GetClient() *mcp.Client     { return nil }
+func (s *aliasTestSession) GetSessionId() string       { return "test-session-id" }
+func (s *aliasTestSession) IsVpc() bool                { return false }
+func (s *aliasTestSession) NetworkInterfaceIp() string { return "" }
+func (s *aliasTestSession) HttpPort() string           { return "" }
 func (s *aliasTestSession) CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error) {
 	if s.callMcpToolFunc != nil {
 		return s.callMcpToolFunc(toolName, args)
 	}
 	return &models.McpToolResult{Success: true, Data: "", RequestID: "request-123"}, nil
 }
+func (s *aliasTestSession) GetWsClient() (interface{}, error) { return nil, nil }
 
 func TestCommand_RunAndExecAliases(t *testing.T) {
 	s := &aliasTestSession{}

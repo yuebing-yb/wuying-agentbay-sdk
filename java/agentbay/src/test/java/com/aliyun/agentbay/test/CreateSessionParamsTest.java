@@ -142,7 +142,7 @@ public class CreateSessionParamsTest {
         assertNull(params.getEnableBrowserReplay());
         assertNull(params.getExtraConfigs());
         assertNull(params.getBetaNetworkId());
-        assertEquals(Integer.valueOf(300), params.getIdleReleaseTimeout());
+        assertNull(params.getIdleReleaseTimeout());
         assertNotNull(params.getContextSyncs());
         assertTrue(params.getContextSyncs().isEmpty());
     }

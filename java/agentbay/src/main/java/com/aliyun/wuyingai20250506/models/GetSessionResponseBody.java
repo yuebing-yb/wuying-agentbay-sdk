@@ -133,6 +133,12 @@ public class GetSessionResponseBody extends TeaModel {
         @NameInMap("Token")
         public String token;
 
+        @NameInMap("WsUrl")
+        public String wsUrl;
+
+        @NameInMap("wsUrl")
+        public String wsUrlLower;
+
         @NameInMap("ToolList")
         public String toolList;
 
@@ -217,6 +223,17 @@ public class GetSessionResponseBody extends TeaModel {
         }
         public String getToken() {
             return this.token;
+        }
+
+        public GetSessionResponseBodyData setWsUrl(String wsUrl) {
+            this.wsUrl = wsUrl;
+            return this;
+        }
+        public String getWsUrl() {
+            if (this.wsUrl != null) {
+                return this.wsUrl;
+            }
+            return this.wsUrlLower;
         }
 
         public GetSessionResponseBodyData setToolList(String toolList) {

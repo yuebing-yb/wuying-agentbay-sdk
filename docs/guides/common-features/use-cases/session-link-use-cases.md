@@ -525,7 +525,7 @@ if __name__ == "__main__":
 If you encounter issues:
 
 1. Check the [Session Link Access Guide](../advanced/session-link-access.md) for detailed documentation
-2. Search [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+2. Search [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 3. Contact support with detailed error information
 
 Remember: Session Link Access is your gateway to cloud session connectivity! 🔗
@@ -538,5 +538,5 @@ Remember: Session Link Access is your gateway to cloud session connectivity! �
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../../README.md)

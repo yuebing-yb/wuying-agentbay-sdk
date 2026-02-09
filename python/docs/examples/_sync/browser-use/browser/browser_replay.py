@@ -218,5 +218,4 @@ def browse_documentation(page):
 if __name__ == "__main__":
     print("🎬 AgentBay Browser Replay Demo")
     print("=" * 50)
-    import asyncio
     main()

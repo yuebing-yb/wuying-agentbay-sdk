@@ -11,6 +11,7 @@ This example shows how to use AIBrowser to visit aliyun.com, including:
 
 import os
 import time
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption

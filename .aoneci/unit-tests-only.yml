@@ -78,6 +78,7 @@ jobs:
             "alibabacloud-tea-util>=0.3.13" \
             "playwright>=1.5.0" \
             "aliyun-log-python-sdk>=0.8.0" \
+            "websockets>=15.0.1,<16.0.0" \
             pydoc-markdown \
             docspec
           # Install agentbay in development mode (minimal dependencies)
@@ -113,6 +114,9 @@ jobs:
         name: "TypeScript Unit Tests"
         run: |
           cd typescript
+          # Default suppress logs in CI to reduce noise and runtime overhead.
+          # Can be overridden by explicitly setting SUPPRESS_TEST_LOGS=false.
+          export SUPPRESS_TEST_LOGS="${SUPPRESS_TEST_LOGS:-true}"
           # Only install test-related packages for better performance
           tnpm install --prefer-offline --no-audit \
             jest@26.6.3 \
