@@ -19,6 +19,7 @@ public class ContextService {
      *
      * @param params Parameters for listing contexts. If null, defaults will be used.
      * @return A result object containing the list of Context objects, pagination information, and request ID.
+     * 
      */
     public ContextListResult list(ContextListParams params) {
         try {
@@ -51,7 +52,7 @@ public class ContextService {
                     context.setState(contextData.getState());
                     context.setCreatedAt(contextData.getCreateTime());
                     context.setUpdatedAt(contextData.getLastUsedTime());
-                    context.setOsType(contextData.getOsType());
+                    context.setOsType(contextData.getOsType() != null ? contextData.getOsType() : "");
                     contexts.add(context);
                 }
             }
@@ -82,15 +83,26 @@ public class ContextService {
     }
 
     /**
-     * Gets a context by name. Optionally creates it if it doesn't exist.
+     * Gets a context by name or ID. Optionally creates it if it doesn't exist.
      *
      * @param name     The name of the context to get.
      * @param create   Whether to create the context if it doesn't exist.
      * @param regionId The region ID for the request.
      * @return The ContextResult object containing the Context and request ID.
+     *         The result contains:
+     *         <ul>
+     *         <li>success: true if the operation succeeded</li>
+     *         <li>context: the Context object (if success is true)</li>
+     *         <li>contextId: the ID of the context</li>
+     *         <li>requestId: unique identifier for this API request</li>
+     *         <li>errorMessage: error description (if success is false)</li>
+     *         </ul>
+     * @throws AgentBayException if neither name nor contextId is provided, or if create=true with contextId.
+     * 
      */
     public ContextResult get(String name, boolean create, String regionId) {
         try {
+            
             GetContextRequest request = new GetContextRequest();
             request.setName(name);
             request.setAllowCreate(create);
@@ -105,6 +117,14 @@ public class ContextService {
             }
 
             GetContextResponseBody body = response.getBody();
+
+            // Check for API-level errors
+            if (!Boolean.TRUE.equals(body.getSuccess()) && body.getCode() != null) {
+                String code = body.getCode() != null ? body.getCode() : "Unknown";
+                String message = body.getMessage() != null ? body.getMessage() : "Unknown error";
+                return new ContextResult(requestId, false, "", null,
+                    "[" + code + "] " + message);
+            }
 
             if (body.getData() == null) {
                 return new ContextResult(requestId, false, "", null,
@@ -122,7 +142,7 @@ public class ContextService {
             context.setState(data.getState() != null ? data.getState() : "available");
             context.setCreatedAt(data.getCreateTime());
             context.setUpdatedAt(data.getLastUsedTime());
-            context.setOsType(data.getOsType());
+            context.setOsType(data.getOsType() != null ? data.getOsType() : "");
 
             return new ContextResult(
                 requestId,
@@ -164,6 +184,7 @@ public class ContextService {
      *
      * @param name The name for the new context.
      * @return The created ContextResult object with request ID.
+     * 
      */
     public ContextResult create(String name) {
         return get(name, true);
@@ -174,6 +195,7 @@ public class ContextService {
      *
      * @param context The Context object to delete.
      * @return OperationResult containing success status and request ID.
+     * 
      */
     public com.aliyun.agentbay.model.OperationResult delete(Context context) throws AgentBayException {
         try {
@@ -214,6 +236,8 @@ public class ContextService {
      *
      * @param contextId The ID of the context to clear.
      * @return OperationResult containing success status and request ID.
+     * @throws AgentBayException if an API or network error occurs during execution.
+     * 
      */
     public com.aliyun.agentbay.model.OperationResult clear(String contextId) throws AgentBayException {
         try {
@@ -254,7 +278,11 @@ public class ContextService {
      *
      * @param contextId The ID of the context.
      * @param filePath  The path of the file to download.
-     * @return FileUrlResult containing the presigned URL and expiration time.
+     * @return FileUrlResult containing the presigned URL, expiration time, and request ID.
+     * 
+     * Note:
+     * The presigned URL expires in 1 hour by default.
+     * 
      */
     public com.aliyun.agentbay.model.FileUrlResult getFileDownloadUrl(String contextId, String filePath) throws AgentBayException {
         try {
@@ -300,7 +328,11 @@ public class ContextService {
      *
      * @param contextId The ID of the context.
      * @param filePath  The path of the file to upload.
-     * @return FileUrlResult containing the presigned URL and expiration time.
+     * @return FileUrlResult containing the presigned URL, expiration time, and request ID.
+     * 
+     * Note:
+     * The presigned URL expires in 1 hour by default.
+     * 
      */
     public com.aliyun.agentbay.model.FileUrlResult getFileUploadUrl(String contextId, String filePath) throws AgentBayException {
         try {
@@ -346,7 +378,8 @@ public class ContextService {
      *
      * @param contextId The ID of the context.
      * @param filePath  The path of the file to delete.
-     * @return OperationResult containing success status and error message if any.
+     * @return OperationResult containing success status and request ID.
+     * 
      */
     public com.aliyun.agentbay.model.OperationResult deleteFile(String contextId, String filePath) throws AgentBayException {
         try {
@@ -391,6 +424,7 @@ public class ContextService {
      * @param pageNumber The page number for pagination. Default is 1.
      * @param pageSize The number of items per page. Default is 50.
      * @return ContextFileListResult containing the list of files and request ID.
+     * 
      */
     public ContextFileListResult listFiles(String contextId, String parentFolderPath, int pageNumber, int pageSize) {
         try {

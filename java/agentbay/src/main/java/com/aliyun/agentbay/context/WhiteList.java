@@ -7,6 +7,10 @@ import java.util.Map;
 
 /**
  * Defines the white list configuration
+ * 
+ * Attributes:
+ *     path: Path to include in the white list
+ *     excludePaths: Paths to exclude from the white list
  */
 public class WhiteList {
     private String path = "";

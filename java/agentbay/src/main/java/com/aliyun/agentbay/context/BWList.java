@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 
 /**
  * Defines the black and white list configuration
+ * 
+ * Attributes:
+ *     whiteLists: Defines the white lists
  */
 public class BWList {
     private List<WhiteList> whiteLists = new ArrayList<>();

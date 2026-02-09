@@ -152,6 +152,7 @@ class ExtractPolicy:
     Attributes:
         extract: Enables file extraction
         delete_src_file: Enables deletion of source file after extraction
+        extract_current_folder: Enables extraction to the current folder
     """
 
     extract: bool = True

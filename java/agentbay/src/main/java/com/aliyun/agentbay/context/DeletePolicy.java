@@ -5,6 +5,9 @@ import java.util.Map;
 
 /**
  * Defines the delete policy for context synchronization
+ * 
+ * Attributes:
+ *     syncLocalFile: Enables synchronization of local file deletions
  */
 public class DeletePolicy {
     private boolean syncLocalFile = true;

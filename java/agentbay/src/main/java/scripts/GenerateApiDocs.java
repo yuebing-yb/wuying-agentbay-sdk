@@ -1248,7 +1248,7 @@ public class GenerateApiDocs {
             "com.aliyun.agentbay.filesystem.FileSystem"
         ));
         moduleToClasses.put("context", Arrays.asList(
-            "com.aliyun.agentbay.context.Context"
+            "com.aliyun.agentbay.context.ContextService"
         ));
         moduleToClasses.put("context-manager", Arrays.asList(
             "com.aliyun.agentbay.context.ContextManager"
@@ -1263,7 +1263,9 @@ public class GenerateApiDocs {
             "com.aliyun.agentbay.context.RecyclePolicy",
             "com.aliyun.agentbay.context.WhiteList",
             "com.aliyun.agentbay.context.BWList",
-            "com.aliyun.agentbay.context.UploadMode"
+            "com.aliyun.agentbay.context.UploadMode",
+            "com.aliyun.agentbay.context.Lifecycle",
+            "com.aliyun.agentbay.context.UploadStrategy"
         ));
         
         // Advanced modules

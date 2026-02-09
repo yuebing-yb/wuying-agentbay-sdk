@@ -83,10 +83,10 @@ public class Computer extends BaseService {
     /**
      * Starts an application with the given command, optional working directory and optional activity.
      *
-     * @param startCmd The command to start the application (e.g., "npm run dev", "notepad.exe")
-     * @param workDirectory Optional working directory for the application (e.g., "/tmp/app/react-site-demo-1")
-     * @param activity Optional activity name to launch (for mobile apps). Defaults to empty string.
-     * @return ProcessListResult containing the list of processes started
+     * @param startCmd The command to start the application
+     * @param workDirectory working directory for the application
+     * @param activity activity name to launch (for mobile apps). Defaults to empty string.
+     * @return ProcessListResult containing the list of processes started and error message if any.
      */
     public ProcessListResult startApp(String startCmd, String workDirectory, String activity) {
         try {
@@ -173,8 +173,8 @@ public class Computer extends BaseService {
      * Starts an application with the given command and optional working directory.
      *
      * @param startCmd The command to start the application
-     * @param workDirectory Optional working directory for the application
-     * @return ProcessListResult containing the list of processes started
+     * @param workDirectory working directory for the application
+     * @return ProcessListResult containing the list of processes started and error message if any.
      */
     public ProcessListResult startApp(String startCmd, String workDirectory) {
         return startApp(startCmd, workDirectory, "");
@@ -184,7 +184,7 @@ public class Computer extends BaseService {
      * Starts an application with the given command.
      *
      * @param startCmd The command to start the application
-     * @return ProcessListResult containing the list of processes started
+     * @return ProcessListResult containing the list of processes started and error message if any.
      */
     public ProcessListResult startApp(String startCmd) {
         return startApp(startCmd, "", "");
@@ -193,7 +193,7 @@ public class Computer extends BaseService {
     /**
      * Stops an application by process name.
      *
-     * @param pname The process name of the application to stop (e.g., "notepad.exe", "chrome.exe")
+     * @param pname The process name of the application to stop
      * @return AppOperationResult containing success status and error message if any
      */
     public AppOperationResult stopAppByPName(String pname) {
@@ -247,7 +247,7 @@ public class Computer extends BaseService {
     /**
      * Stops an application by stop command.
      *
-     * @param stopCmd The command to stop the application (e.g., "taskkill /IM notepad.exe /F")
+     * @param stopCmd The command to stop the application
      * @return AppOperationResult containing success status and error message if any
      */
     public AppOperationResult stopAppByCmd(String stopCmd) {
@@ -273,6 +273,8 @@ public class Computer extends BaseService {
 
     /**
      * Lists all applications with visible windows.
+     * Returns detailed process information for applications that have visible windows,including process ID, name, command line, and other system information.
+     * This is useful for system monitoring and process management tasks.
      *
      * @return ProcessListResult containing list of visible applications with detailed process information
      */
@@ -457,8 +459,34 @@ public class Computer extends BaseService {
      *
      * @param x X coordinate in pixels (0 is left edge of screen)
      * @param y Y coordinate in pixels (0 is top edge of screen)
-     * @param button Mouse button to click. Defaults to LEFT
-     * @return BoolResult containing success status and error message if any
+     * @param button Mouse button to click. Options:
+     *               - MouseButton.LEFT: Single left click
+     *               - MouseButton.RIGHT: Right click (context menu)
+     *               - MouseButton.MIDDLE: Middle click (scroll wheel)
+     *               - MouseButton.DOUBLE_LEFT: Double left click
+     *               Defaults to MouseButton.LEFT
+     * @return BoolResult Object containing:
+     *         - success (boolean): Whether the click succeeded
+     *         - data (Boolean): True if successful, null otherwise
+     *         - errorMessage (String): Error description if failed
+     * @throws IllegalArgumentException If button is not one of the valid options
+     * 
+     * <p>Behavior:
+     * <ul>
+     *   <li>Clicks at the exact pixel coordinates provided</li>
+     *   <li>Does not move the mouse cursor before clicking</li>
+     *   <li>For double-click, use MouseButton.DOUBLE_LEFT</li>
+     *   <li>Right-click typically opens context menus</li>
+     * </ul>
+     * 
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Coordinates are absolute screen positions, not relative to windows</li>
+     *   <li>Use getScreenSize() to determine valid coordinate ranges</li>
+     *   <li>Consider using moveMouse() first if you need to see cursor movement</li>
+     * </ul>
+     * 
      */
     public BoolResult clickMouse(int x, int y, MouseButton button) {
         return clickMouse(x, y, button.getValue());
@@ -529,7 +557,19 @@ public class Computer extends BaseService {
      *
      * @param x X coordinate
      * @param y Y coordinate
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
+     * 
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Moves the cursor smoothly to the target position</li>
+     *   <li>Does not click after moving</li>
+     *   <li>Use getCursorPosition() to verify the new position</li>
+     * </ul>
+     * 
+     * @see #clickMouse(int, int, MouseButton)
+     * @see #dragMouse(int, int, int, int, MouseButton)
+     * @see #getCursorPosition()
      */
     public BoolResult moveMouse(int x, int y) {
         try {
@@ -598,8 +638,19 @@ public class Computer extends BaseService {
      * @param fromY Starting Y coordinate
      * @param toX Ending X coordinate
      * @param toY Ending Y coordinate
-     * @param button Mouse button as string ("left", "right", "middle")
-     * @return BoolResult containing success status and error message if any
+     * @param button Mouse button as string. Valid values: "left", "right", "middle"
+     *               Note: "double_left" is not supported for drag operations
+     * @return BoolResult Result object containing success status and error message if any
+     * @throws IllegalArgumentException If button is not a valid option
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Performs a click-and-drag operation from start to end coordinates</li>
+     *   <li>Useful for selecting text, moving windows, or drawing</li>
+     *   <li>DOUBLE_LEFT button is not supported for drag operations</li>
+     *   <li>Use LEFT, RIGHT, or MIDDLE button only</li>
+     * </ul>
+     * 
      */
     public BoolResult dragMouse(int fromX, int fromY, int toX, int toY, String button) {
         try {
@@ -672,9 +723,19 @@ public class Computer extends BaseService {
      *
      * @param x X coordinate
      * @param y Y coordinate
-     * @param direction Scroll direction as string ("up", "down", "left", "right")
-     * @param amount Scroll amount
-     * @return BoolResult containing success status and error message if any
+     * @param direction Scroll direction as string. Valid values: "up", "down", "left", "right"
+     * @param amount Scroll amount. Defaults to 1
+     * @return BoolResult Result object containing success status and error message if any
+     * @throws IllegalArgumentException If direction is not a valid option
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Scroll operations are performed at the specified coordinates</li>
+     *   <li>The amount parameter controls how many scroll units to move</li>
+     *   <li>Larger amounts result in faster scrolling</li>
+     *   <li>Useful for navigating long documents or web pages</li>
+     * </ul>
+     * 
      */
     public BoolResult scroll(int x, int y, String direction, int amount) {
         try {
@@ -720,7 +781,19 @@ public class Computer extends BaseService {
     /**
      * Gets the current cursor position.
      *
-     * @return OperationResult containing cursor position data with keys 'x' and 'y', and error message if any
+     * @return OperationResult Result object containing cursor position data
+     *         with keys 'x' and 'y', and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Returns the absolute screen coordinates</li>
+     *   <li>Useful for verifying mouse movements</li>
+     *   <li>Position is in pixels from top-left corner (0, 0)</li>
+     * </ul>
+     * 
+     * @see #moveMouse(int, int)
+     * @see #clickMouse(int, int, MouseButton)
+     * @see #getScreenSize()
      */
     public OperationResult getCursorPosition() {
         try {
@@ -756,8 +829,18 @@ public class Computer extends BaseService {
     /**
      * Types text into the currently focused input field.
      *
-     * @param text The text to input. Supports Unicode characters.
-     * @return BoolResult containing success status and error message if any
+     * @param text The text to input. Supports Unicode characters
+     * @return BoolResult Object with success status and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Requires an input field to be focused first</li>
+     *   <li>Use clickMouse() or UI automation to focus the field</li>
+     *   <li>Supports special characters and Unicode</li>
+     * </ul>
+     * 
+     * @see #pressKeys(List, boolean)
+     * @see #clickMouse(int, int, MouseButton)
      */
     public BoolResult inputText(String text) {
         try {
@@ -793,9 +876,20 @@ public class Computer extends BaseService {
     /**
      * Presses the specified keys.
      *
-     * @param keys List of keys to press (e.g., ["Ctrl", "a"])
+     * @param keys List of keys to press (e.g., Arrays.asList("Ctrl", "a"))
      * @param hold Whether to hold the keys. Defaults to false
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Key names are case-sensitive</li>
+     *   <li>When hold=true, remember to call releaseKeys() afterwards</li>
+     *   <li>Supports modifier keys like Ctrl, Alt, Shift</li>
+     *   <li>Can press multiple keys simultaneously for shortcuts</li>
+     * </ul>
+     * 
+     * @see #releaseKeys(List)
+     * @see #inputText(String)
      */
     public BoolResult pressKeys(List<String> keys, boolean hold) {
         try {
@@ -842,8 +936,18 @@ public class Computer extends BaseService {
     /**
      * Releases the specified keys.
      *
-     * @param keys List of keys to release (e.g., ["Ctrl", "a"])
-     * @return BoolResult containing success status and error message if any
+     * @param keys List of keys to release (e.g., Arrays.asList("Ctrl", "a"))
+     * @return BoolResult Result object containing success status and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Should be used after pressKeys() with hold=true</li>
+     *   <li>Key names are case-sensitive</li>
+     *   <li>Releases all keys specified in the list</li>
+     * </ul>
+     * 
+     * @see #pressKeys(List, boolean)
+     * @see #inputText(String)
      */
     public BoolResult releaseKeys(List<String> keys) {
         try {
@@ -881,8 +985,20 @@ public class Computer extends BaseService {
     /**
      * Gets the screen size and DPI scaling factor.
      *
-     * @return OperationResult containing screen size data with keys 'width', 'height', and 'dpiScalingFactor',
+     * @return OperationResult Result object containing screen size data
+     *         with keys 'width', 'height', and 'dpiScalingFactor',
      *         and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Returns the full screen dimensions in pixels</li>
+     *   <li>DPI scaling factor affects coordinate calculations on high-DPI displays</li>
+     *   <li>Use this to determine valid coordinate ranges for mouse operations</li>
+     * </ul>
+     * 
+     * @see #clickMouse(int, int, MouseButton)
+     * @see #moveMouse(int, int)
+     * @see #screenshot()
      */
     public OperationResult getScreenSize() {
         try {
@@ -916,7 +1032,18 @@ public class Computer extends BaseService {
     /**
      * Takes a screenshot of the current screen.
      *
-     * @return OperationResult containing the path/URL to the screenshot and error message if any
+     * @return OperationResult Result object containing the path to the screenshot
+     *         and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Returns an OSS URL to the screenshot image</li>
+     *   <li>Screenshot captures the entire screen</li>
+     *   <li>Useful for debugging and verification</li>
+     *   <li>Image format is typically PNG</li>
+     * </ul>
+     * 
+     * @see #getScreenSize()
      */
     public OperationResult screenshot() {
         if (session.getLinkUrl() != null && !session.getLinkUrl().isEmpty()) {
@@ -956,17 +1083,24 @@ public class Computer extends BaseService {
     }
 
     /**
-     * Capture the current screen and return raw image bytes (beta).
+     * Takes a screenshot of the Computer and returns raw binary image data (beta).
      *
-     * This API uses the MCP tool `screenshot` (wuying_capture) and expects the backend to return
-     * a JSON string with top-level field `data` containing base64.
+     * <p>This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+     * binary image data. The backend also returns the captured image dimensions
+     * (width/height in pixels), which are exposed on ScreenshotBytesResult.width
+     * and ScreenshotBytesResult.height. The backend metadata fields `type` and
+     * `mime_type` are exposed on ScreenshotBytesResult.type and ScreenshotBytesResult.mimeType.
      *
-     * Supported formats:
-     * - "png"
-     * - "jpeg" (or "jpg")
-     *
-     * @param format Output image format ("png", "jpeg", or "jpg")
-     * @return ScreenshotBytesResult containing image bytes and error message if any
+     * @param format The desired image format (default: "png"). Supported: "png", "jpeg", "jpg"
+     * @return ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata
+     *         including `type`, `mimeType`, `width`, and `height` when provided by the backend
+     * @throws IllegalArgumentException If format is invalid
+     * 
+     * <p>Supported formats:
+     * <ul>
+     *   <li>"png"</li>
+     *   <li>"jpeg" (or "jpg")</li>
+     * </ul>
      */
     public ScreenshotBytesResult betaTakeScreenshot(String format) {
         String fmt = normalizeImageFormat(format, "png");
@@ -1144,7 +1278,8 @@ public class Computer extends BaseService {
      * Lists all root windows.
      *
      * @param timeoutMs Timeout in milliseconds. Defaults to 3000
-     * @return WindowListResult containing list of windows and error message if any
+     * @return WindowListResult Result object containing list of windows and error message if any
+     * 
      */
     public WindowListResult listRootWindows(int timeoutMs) {
         try {
@@ -1219,7 +1354,9 @@ public class Computer extends BaseService {
      * Gets the currently active window.
      *
      * @param timeoutMs Timeout in milliseconds. Defaults to 3000
-     * @return WindowInfoResult containing active window info and error message if any
+     * @return WindowInfoResult Result object containing active window info and error message if any
+     * 
+     * <p>Note: Java version requires timeoutMs parameter, while Python version does not.
      */
     public WindowInfoResult getActiveWindow(int timeoutMs) {
         try {
@@ -1291,7 +1428,18 @@ public class Computer extends BaseService {
      * Activates the specified window.
      *
      * @param windowId The ID of the window to activate
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>The window must exist in the system</li>
+     *   <li>Use listRootWindows() to get available window IDs</li>
+     *   <li>Activating a window brings it to the foreground</li>
+     * </ul>
+     * 
+     * @see #listRootWindows()
+     * @see #getActiveWindow()
+     * @see #closeWindow(int)
      */
     public BoolResult activateWindow(int windowId) {
         return windowOperation("activate_window", windowId);
@@ -1301,7 +1449,8 @@ public class Computer extends BaseService {
      * Closes the specified window.
      *
      * @param windowId The ID of the window to close
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
+     * 
      */
     public BoolResult closeWindow(int windowId) {
         return windowOperation("close_window", windowId);
@@ -1311,7 +1460,8 @@ public class Computer extends BaseService {
      * Maximizes the specified window.
      *
      * @param windowId The ID of the window to maximize
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
+     * 
      */
     public BoolResult maximizeWindow(int windowId) {
         return windowOperation("maximize_window", windowId);
@@ -1321,7 +1471,8 @@ public class Computer extends BaseService {
      * Minimizes the specified window.
      *
      * @param windowId The ID of the window to minimize
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
+     * 
      */
     public BoolResult minimizeWindow(int windowId) {
         return windowOperation("minimize_window", windowId);
@@ -1331,7 +1482,8 @@ public class Computer extends BaseService {
      * Restores the specified window.
      *
      * @param windowId The ID of the window to restore
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
+     * 
      */
     public BoolResult restoreWindow(int windowId) {
         return windowOperation("restore_window", windowId);
@@ -1343,7 +1495,8 @@ public class Computer extends BaseService {
      * @param windowId The ID of the window to resize
      * @param width New width of the window
      * @param height New height of the window
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
+     * 
      */
     public BoolResult resizeWindow(int windowId, int width, int height) {
         try {

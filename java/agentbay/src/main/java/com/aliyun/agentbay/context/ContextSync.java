@@ -2,6 +2,15 @@ package com.aliyun.agentbay.context;
 
 /**
  * Defines the context synchronization configuration
+ * 
+ * Attributes:
+ *     contextId: ID of the context to synchronize
+ *     path: Path where the context should be mounted
+ *     policy: Defines the synchronization policy
+ *     betaWaitForCompletion: Beta feature flag to control whether session creation
+ *         should wait for this context's initial download to finish. If set to false,
+ *         the SDK will not block create_session on this context. Defaults to null
+ *         (treated as true for backward compatibility).
  */
 public class ContextSync {
     private String contextId;
