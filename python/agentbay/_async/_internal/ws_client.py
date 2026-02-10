@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Optional
 
-from ..._common.exceptions import AgentBayError
+from ..._common.exceptions import AgentBayError, WsCancelledError
 from ..._common.logger import _mask_sensitive_data_string, _truncate_string_for_log, get_logger
 
 _logger = get_logger("ws_client")
@@ -578,6 +578,13 @@ class WsClient:
         pending = self._pending_by_id.pop(invocation_id, None)
         if pending is None:
             return
-        if not pending.end_future.done():
-            pending.end_future.cancel()
+        if pending.end_future.done():
+            return
+        err = WsCancelledError(f"Stream {invocation_id} was cancelled by caller")
+        if pending.on_error is not None:
+            try:
+                pending.on_error(invocation_id, err)
+            except Exception:
+                _logger.exception("on_error callback failed during cancel")
+        pending.end_future.set_exception(err)
 

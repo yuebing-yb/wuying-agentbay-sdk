@@ -18,6 +18,20 @@ type DebugLogger func(message string)
 
 type PushCallback = func(payload map[string]interface{})
 
+type endResult struct {
+	data map[string]interface{}
+	err  error
+}
+
+// WsCancelledError is returned when a stream is cancelled by the caller.
+type WsCancelledError struct {
+	InvocationID string
+}
+
+func (e *WsCancelledError) Error() string {
+	return fmt.Sprintf("stream %s was cancelled by caller", e.InvocationID)
+}
+
 type WsClient struct {
 	wsURL  string
 	token  string
@@ -35,16 +49,24 @@ type pendingStream struct {
 	onEvent OnEvent
 	onEnd   OnEnd
 	onError OnError
-	endCh   chan map[string]interface{}
+	endCh   chan endResult
 }
 
 type WsStreamHandle struct {
 	InvocationID string
 	waitEnd      func() (map[string]interface{}, error)
+	cancel       func() error
 }
 
 func (h *WsStreamHandle) WaitEnd() (map[string]interface{}, error) {
 	return h.waitEnd()
+}
+
+func (h *WsStreamHandle) Cancel() error {
+	if h.cancel == nil {
+		return nil
+	}
+	return h.cancel()
 }
 
 func NewWsClient(wsURL string, token string, logger DebugLogger) *WsClient {
@@ -148,7 +170,7 @@ func (c *WsClient) CallStream(target string, data map[string]interface{}, onEven
 	}
 
 	invocationID := newInvocationID()
-	endCh := make(chan map[string]interface{}, 1)
+	endCh := make(chan endResult, 1)
 	p := &pendingStream{
 		onEvent: onEvent,
 		onEnd:   onEnd,
@@ -188,13 +210,38 @@ func (c *WsClient) CallStream(target string, data map[string]interface{}, onEven
 			select {
 			case <-c.closedCh:
 				return nil, fmt.Errorf("WS connection closed")
-			case d := <-endCh:
-				return d, nil
+			case r := <-endCh:
+				if r.err != nil {
+					return nil, r.err
+				}
+				return r.data, nil
 			case <-time.After(5 * time.Minute):
 				return nil, fmt.Errorf("timeout waiting for WS end event")
 			}
 		},
+		cancel: func() error {
+			c.cancelPending(invocationID)
+			return nil
+		},
 	}, nil
+}
+
+func (c *WsClient) cancelPending(invocationID string) {
+	c.mu.Lock()
+	p := c.pending[invocationID]
+	delete(c.pending, invocationID)
+	c.mu.Unlock()
+	if p == nil {
+		return
+	}
+	err := &WsCancelledError{InvocationID: invocationID}
+	if p.onError != nil {
+		p.onError(invocationID, err)
+	}
+	select {
+	case p.endCh <- endResult{err: err}:
+	default:
+	}
 }
 
 func (c *WsClient) recvLoop() {
@@ -303,6 +350,10 @@ func (c *WsClient) handleIncoming(msg map[string]interface{}) {
 			if p.onError != nil {
 				p.onError(invocationID, err)
 			}
+			select {
+			case p.endCh <- endResult{err: err}:
+			default:
+			}
 			c.finishPending(invocationID)
 			return
 		}
@@ -314,9 +365,9 @@ func (c *WsClient) handleIncoming(msg map[string]interface{}) {
 			}
 		}
 		if m, ok := dataAny.(map[string]interface{}); ok {
-			p.endCh <- m
+			p.endCh <- endResult{data: m}
 		} else {
-			p.endCh <- map[string]interface{}{}
+			p.endCh <- endResult{data: map[string]interface{}{}}
 		}
 		c.finishPending(invocationID)
 		return
@@ -341,6 +392,10 @@ func (c *WsClient) handleIncoming(msg map[string]interface{}) {
 		if p.onError != nil {
 			p.onError(invocationID, err)
 		}
+		select {
+		case p.endCh <- endResult{err: err}:
+		default:
+		}
 		c.finishPending(invocationID)
 		return
 	}
@@ -356,7 +411,7 @@ func (c *WsClient) handleIncoming(msg map[string]interface{}) {
 		if p.onEnd != nil {
 			p.onEnd(invocationID, data)
 		}
-		p.endCh <- data
+		p.endCh <- endResult{data: data}
 		c.finishPending(invocationID)
 		return
 	}
@@ -364,6 +419,10 @@ func (c *WsClient) handleIncoming(msg map[string]interface{}) {
 	err := fmt.Errorf("unsupported phase: %v", data["phase"])
 	if p.onError != nil {
 		p.onError(invocationID, err)
+	}
+	select {
+	case p.endCh <- endResult{err: err}:
+	default:
 	}
 	c.finishPending(invocationID)
 }
@@ -386,6 +445,10 @@ func (c *WsClient) failAllPending(err error) {
 	for invocationID, p := range items {
 		if p.onError != nil {
 			p.onError(invocationID, err)
+		}
+		select {
+		case p.endCh <- endResult{err: err}:
+		default:
 		}
 	}
 }
