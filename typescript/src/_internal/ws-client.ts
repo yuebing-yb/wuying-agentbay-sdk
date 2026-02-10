@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import type { WebSocket as WsType } from "./ws";
 import { logDebug, logWarn, maskSensitiveData } from "../utils/logger";
+import { WsCancelledError } from "../exceptions";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const WebSocketImpl: typeof WsType = require("ws");
@@ -142,7 +143,11 @@ export class WsClient {
     onEvent?: OnEvent;
     onEnd?: OnEnd;
     onError?: OnError;
-  }): Promise<{ invocationId: string; waitEnd: () => Promise<Record<string, any>> }> {
+  }): Promise<{
+    invocationId: string;
+    waitEnd: () => Promise<Record<string, any>>;
+    cancel: () => Promise<void>;
+  }> {
     await this.connect();
     const ws = this.ws;
     if (!ws) {
@@ -173,7 +178,22 @@ export class WsClient {
     return {
       invocationId,
       waitEnd: async () => await endPromise,
+      cancel: async () => {
+        this.cancelPending(invocationId);
+      },
     };
+  }
+
+  private cancelPending(invocationId: string): void {
+    const pending = this.pendingById.get(invocationId);
+    if (!pending) return;
+    const err = new WsCancelledError(`Stream ${invocationId} was cancelled by caller`);
+    try {
+      if (pending.onError) pending.onError(invocationId, err);
+    } catch (_e) {
+    }
+    pending.rejectEnd(err);
+    this.pendingById.delete(invocationId);
   }
 
   private handleIncoming(raw: any): void {

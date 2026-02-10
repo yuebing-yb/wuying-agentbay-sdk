@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.aliyun.agentbay.exception.WsCancelledException;
+
 public class WsClient {
     private static final Logger logger = LoggerFactory.getLogger(WsClient.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -60,7 +62,7 @@ public class WsClient {
         }
     }
 
-    public static class StreamHandle {
+    public class StreamHandle {
         public final String invocationId;
         private final CompletableFuture<Map<String, Object>> endFuture;
 
@@ -71,6 +73,10 @@ public class WsClient {
 
         public CompletableFuture<Map<String, Object>> waitEnd() {
             return endFuture;
+        }
+
+        public void cancel() {
+            cancelPending(invocationId);
         }
     }
 
@@ -175,6 +181,22 @@ public class WsClient {
 
             return new StreamHandle(invocationId, pending.endFuture);
         });
+    }
+
+    private void cancelPending(String invocationId) {
+        PendingStream pending = pendingById.remove(invocationId);
+        if (pending == null) {
+            return;
+        }
+        Exception err = new WsCancelledException("Stream " + invocationId + " was cancelled by caller");
+        if (pending.onError != null) {
+            try {
+                pending.onError.onError(invocationId, err);
+            } catch (Exception cbErr) {
+                logger.warn("onError callback failed during cancel", cbErr);
+            }
+        }
+        pending.endFuture.completeExceptionally(err);
     }
 
     private void handleIncoming(String raw) {
