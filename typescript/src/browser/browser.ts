@@ -687,6 +687,7 @@ export class Browser {
       });
       const response = await this.session.getAgentBay().getClient().getCdpLink(request);
       if (response.body && response.body.success && response.body.data) {
+        
         this._endpointUrl = response.body.data.url || null;
       } else {
         const errorMsg = response.body?.message || "Unknown error";

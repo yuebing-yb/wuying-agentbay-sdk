@@ -156,11 +156,6 @@ async def test_initialize_browser_with_captchas(browser_session):
     option = BrowserOption(
         use_stealth=True,
         solve_captchas=True,
-        fingerprint=BrowserFingerprint(
-            devices=["desktop"],
-            operating_systems=["windows"],
-            locales=["zh-CN"],
-        ),
     )
     await browser.initialize(option)
 
@@ -179,14 +174,19 @@ async def test_initialize_browser_with_captchas(browser_session):
         page = await default_context.new_page()
         # Tongcheng password recovery page with captcha
         captcha_url = "https://passport.ly.com/Passport/GetPassword"
-        await page.goto(captcha_url, timeout=10000, wait_until="domcontentloaded")
+        await page.goto(captcha_url, wait_until="domcontentloaded")
 
         # Wait for phone input and interact
         input_selector = "#name_in"
-        await page.wait_for_selector(input_selector, timeout=10000)
-        await page.fill(input_selector, "15011556760")
-        await page.click("#next_step1")
+        input_element = await page.wait_for_selector(input_selector, timeout=10000)
+        # Clear input field and enter phone number
+        phone_number = "15011556760"
+        print(f"Entering phone number: {phone_number}")
 
+        # await input_element.click(force=True)
+        await input_element.fill("")  # Clear input field
+        await input_element.type(phone_number, delay=50)
+        print("Waiting for captcha")
         # Wait for potential captcha handling and navigation
         await asyncio.sleep(10)  # Reduced from 30s for faster testing
         # href changed indicates captcha solved

@@ -4,6 +4,10 @@
  * across sessions using the same ContextId and FingerprintContextId.
  */
 
+// Restore real playwright module so BrowserFingerprintGenerator works in integration tests.
+// This overrides the global jest.mock('playwright') in tests/setup.ts.
+
+
 import { AgentBay, CreateSessionParams } from "../../src";
 import { BrowserContext } from "../../src/session-params";
 import { BrowserOption, BrowserFingerprint, BrowserFingerprintContext } from "../../src/browser/browser";
@@ -15,7 +19,15 @@ import { Session } from "../../src/session";
 import { SessionResult, ContextResult } from "../../src/types/api-response";
 import * as fs from "fs";
 import * as path from "path";
-
+// Use puppeteer-core for CDP connections via createRequire to bypass Jest's
+// moduleNameMapper which incorrectly resolves node: protocol imports.
+// Jest 26 maps 'node:fs/promises' to 'fs/promises' (a relative path), causing ENOENT.
+// createRequire uses Node.js native resolution, bypassing Jest entirely.
+import { createRequire } from "module";
+const nativeRequire = createRequire(__filename);
+const puppeteer = nativeRequire("puppeteer-core");
+// Load real playwright via createRequire to bypass Jest mock and moduleNameMapper.
+const playwrightReal = nativeRequire("playwright");
 /**
  * Check if a user agent string indicates Windows OS
  */
@@ -126,27 +138,20 @@ describe("Browser Fingerprint - Integration Tests", () => {
         log("Browser initialized successfully");
 
         // Get endpoint URL
-        const endpointUrl = session.browser.getEndpointUrl();
+        const endpointUrl = await session.browser.getEndpointUrl();
         expect(endpointUrl).toBeDefined();
         log(`Browser endpoint URL: ${endpointUrl}`);
 
-        try {
-            // Connect with playwright and test user agent
-            log("Opening https://httpbin.org/user-agent and test user agent...");
-            const playwright = require('playwright');
-            const browser = await playwright.chromium.connectOverCDP(endpointUrl);
-            expect(browser).toBeDefined();
-            
-            const contexts = browser.contexts();
-            const browserContext = contexts.length > 0 ? contexts[0] : await browser.newContext();
+        // Connect with puppeteer-core and test user agent
+        log("Opening https://httpbin.org/user-agent and test user agent...");
+        const browser = await puppeteer.connect({ browserWSEndpoint: endpointUrl! });
+        expect(browser).toBeDefined();
 
-            const page = await browserContext.newPage();
+        try {
+            const page = await browser.newPage();
             await page.goto("https://httpbin.org/user-agent", { timeout: 60000 });
             
-            const response = await page.evaluate(() => {
-              // @ts-ignore
-              return JSON.parse(document.body.textContent || '{}');
-            });
+            const response: any = await page.evaluate('JSON.parse(document.body.textContent || "{}")');
             const userAgent = response["user-agent"];
             log(`user_agent = ${userAgent}`);
             
@@ -154,23 +159,10 @@ describe("Browser Fingerprint - Integration Tests", () => {
             const isWindows = isWindowsUserAgent(userAgent);
             expect(isWindows).toBe(true);
 
-            await browserContext.close();
-            await browser.close();
+            await page.close();
             log("Browser fingerprint test completed successfully");
-        } catch (error: any) {
-            log(`Browser operations encountered an error: ${error?.message || error}`);
-            
-            // Check if it's a Playwright/Jest compatibility issue
-            if (error?.message?.includes('connectOverCDP is not a function') || 
-                error?.message?.includes('node:events') || 
-                error?.message?.includes('ENOENT')) {
-                log("This appears to be a Jest/Playwright compatibility issue, which is expected in some environments");
-                log("The fingerprint functionality is still being tested through session creation and browser initialization");
-                log("Browser fingerprint test completed with expected compatibility limitations");
-            } else {
-                // Re-throw unexpected errors
-                throw error;
-            }
+        } finally {
+            await browser.close();
         }
 
       } finally {
@@ -224,27 +216,23 @@ describe("Browser Fingerprint - Integration Tests", () => {
         log("Browser initialized successfully");
 
         // Get endpoint URL
-        const endpointUrl = session1.browser.getEndpointUrl();
+        const endpointUrl = await session1.browser.getEndpointUrl();
         expect(endpointUrl).toBeDefined();
         log(`Browser endpoint URL: ${endpointUrl}`);
 
-         try {
-           // Step 3: Connect with playwright, test first session fingerprint
-           log("Step 3: Opening https://httpbin.org/user-agent and test user agent...");
-           const playwright = require('playwright');
-           const browser = await playwright.chromium.connectOverCDP(endpointUrl!);
-           expect(browser).toBeDefined();
-           
-           const contexts = browser.contexts();
-           const browserContext = contexts.length > 0 ? contexts[0] : await browser.newContext();
+         // Wait for CDP port to be ready after browser initialization
+         await wait(3000);
 
-           const page = await browserContext.newPage();
+         // Step 3: Connect with puppeteer-core, test first session fingerprint
+         log("Step 3: Opening https://httpbin.org/user-agent and test user agent...");
+         const browser1 = await puppeteer.connect({ browserWSEndpoint: endpointUrl! });
+         expect(browser1).toBeDefined();
+
+         try {
+           const page = await browser1.newPage();
            await page.goto("https://httpbin.org/user-agent", { timeout: 60000 });
            
-           const response = await page.evaluate(() => {
-             // @ts-ignore
-             return JSON.parse(document.body.textContent || '{}');
-           });
+           const response: any = await page.evaluate('JSON.parse(document.body.textContent || "{}")');
            firstUserAgent = response["user-agent"];
            log(`user_agent = ${firstUserAgent}`);
            
@@ -252,23 +240,10 @@ describe("Browser Fingerprint - Integration Tests", () => {
            const isWindows = isWindowsUserAgent(firstUserAgent);
            expect(isWindows).toBe(true);
 
-           await browserContext.close();
-           await browser.close();
+           await page.close();
            log("First session browser operations completed");
-         } catch (error: any) {
-           log(`First session browser operations encountered an error: ${error?.message || error}`);
-           
-           // Check if it's a Playwright/Jest compatibility issue
-           if (error?.message?.includes('connectOverCDP is not a function') || 
-               error?.message?.includes('node:events') || 
-               error?.message?.includes('ENOENT')) {
-             log("This appears to be a Jest/Playwright compatibility issue, which is expected in some environments");
-             log("Using fallback user agent for persistence test");
-             firstUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36";
-           } else {
-             // Re-throw unexpected errors
-             throw error;
-           }
+         } finally {
+           await browser1.close();
          }
 
       } finally {
@@ -312,26 +287,22 @@ describe("Browser Fingerprint - Integration Tests", () => {
         log("Second session browser initialized successfully");
 
         // Get endpoint URL
-        const endpointUrl = session2.browser.getEndpointUrl();
+        const endpointUrl = await session2.browser.getEndpointUrl();
         expect(endpointUrl).toBeDefined();
         log(`Second session browser endpoint URL: ${endpointUrl}`);
 
-         try {
-           // Connect with playwright and test second session fingerprint
-           const playwright = require('playwright');
-           const browser = await playwright.chromium.connectOverCDP(endpointUrl!);
-           expect(browser).toBeDefined();
-           
-           const contexts = browser.contexts();
-           const browserContext = contexts.length > 0 ? contexts[0] : await browser.newContext();
+         // Wait for CDP port to be ready after browser initialization
+         await wait(3000);
 
-           const page = await browserContext.newPage();
+         // Connect with puppeteer-core and test second session fingerprint
+         const browser2 = await puppeteer.connect({ browserWSEndpoint: endpointUrl! });
+         expect(browser2).toBeDefined();
+
+         try {
+           const page = await browser2.newPage();
            await page.goto("https://httpbin.org/user-agent", { timeout: 60000 });
            
-           const response = await page.evaluate(() => {
-             // @ts-ignore
-             return JSON.parse(document.body.textContent || '{}');
-           });
+           const response: any = await page.evaluate('JSON.parse(document.body.textContent || "{}")');
            const secondUserAgent = response["user-agent"];
            log(`user_agent = ${secondUserAgent}`);
            
@@ -343,26 +314,10 @@ describe("Browser Fingerprint - Integration Tests", () => {
            expect(secondUserAgent).toBe(firstUserAgent);
            log("SUCCESS: fingerprint persisted correctly!");
 
-           await browserContext.close();
-           await browser.close();
+           await page.close();
            log("Second session browser operations completed");
-         } catch (error: any) {
-           log(`Second session browser operations encountered an error: ${error?.message || error}`);
-           
-           // Check if it's a Playwright/Jest compatibility issue
-           if (error?.message?.includes('connectOverCDP is not a function') || 
-               error?.message?.includes('node:events') || 
-               error?.message?.includes('ENOENT')) {
-             log("This appears to be a Jest/Playwright compatibility issue, which is expected in some environments");
-             log("Using fallback verification for persistence test");
-             // Use the same fallback user agent to verify persistence logic
-             const secondUserAgent = firstUserAgent;
-             expect(secondUserAgent).toBe(firstUserAgent);
-             log("SUCCESS: fingerprint persistence verified with fallback method!");
-           } else {
-             // Re-throw unexpected errors
-             throw error;
-           }
+         } finally {
+           await browser2.close();
          }
 
       } finally {
@@ -411,7 +366,7 @@ describe("Browser Fingerprint - Integration Tests", () => {
         log("Browser initialized successfully with local fingerprint");
 
         // Get endpoint URL
-        const endpointUrl = session.browser.getEndpointUrl();
+        const endpointUrl = await session.browser.getEndpointUrl();
         expect(endpointUrl).toBeDefined();
         log(`Browser endpoint URL: ${endpointUrl}`);
 
@@ -515,27 +470,23 @@ describe("Browser Fingerprint - Integration Tests", () => {
         log("Browser initialized successfully with constructed fingerprint");
 
         // Get endpoint URL
-        const endpointUrl = session.browser.getEndpointUrl();
+        const endpointUrl = await session.browser.getEndpointUrl();
         expect(endpointUrl).toBeDefined();
         log(`Browser endpoint URL: ${endpointUrl}`);
 
-         try {
-           // Connect with playwright and verify constructed fingerprint
-           log("Testing constructed fingerprint by checking user agent...");
-           const playwright = require('playwright');
-           const browser = await playwright.chromium.connectOverCDP(endpointUrl!);
-           expect(browser).toBeDefined();
-           
-           const contexts = browser.contexts();
-           const browserContext = contexts.length > 0 ? contexts[0] : await browser.newContext();
+         // Wait for CDP port to be ready after browser initialization
+         await wait(3000);
 
-           const page = await browserContext.newPage();
+         // Connect with puppeteer-core and verify constructed fingerprint
+         log("Testing constructed fingerprint by checking user agent...");
+         const constructBrowser = await puppeteer.connect({ browserWSEndpoint: endpointUrl! });
+         expect(constructBrowser).toBeDefined();
+
+         try {
+           const page = await constructBrowser.newPage();
            await page.goto("https://httpbin.org/user-agent", { timeout: 60000 });
            
-           const response = await page.evaluate(() => {
-             // @ts-ignore
-             return JSON.parse(document.body.textContent || '{}');
-           });
+           const response: any = await page.evaluate('JSON.parse(document.body.textContent || "{}")');
            const remoteUserAgent = response["user-agent"];
            const expectedUserAgent = fingerprintFormat!.fingerprint.navigator.userAgent;
            
@@ -546,23 +497,10 @@ describe("Browser Fingerprint - Integration Tests", () => {
            expect(remoteUserAgent).toBe(expectedUserAgent);
            log("SUCCESS: Fingerprint constructed correctly from file!");
 
-           await browserContext.close();
-           await browser.close();
+           await page.close();
            log("Construct test completed");
-         } catch (error: any) {
-           log(`Construction browser operations encountered an error: ${error?.message || error}`);
-           
-           // Check if it's a Playwright/Jest compatibility issue
-           if (error?.message?.includes('connectOverCDP is not a function') || 
-               error?.message?.includes('node:events') || 
-               error?.message?.includes('ENOENT')) {
-             log("This appears to be a Jest/Playwright compatibility issue, which is expected in some environments");
-             log("The fingerprint construction functionality is still being tested through session creation and browser initialization");
-             log("SUCCESS: Fingerprint construction test completed with expected compatibility limitations");
-           } else {
-             // Re-throw unexpected errors
-             throw error;
-           }
+         } finally {
+           await constructBrowser.close();
          }
 
       } finally {
