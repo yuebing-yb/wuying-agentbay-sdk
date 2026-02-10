@@ -225,7 +225,7 @@ public class OSS extends BaseService {
     // Legacy method aliases for backwards compatibility
 
     /**
-     * @deprecated Use {@link #upload(String, String, String)} instead
+     * @deprecated Use upload instead
      */
     @Deprecated
     public OSSUploadResult uploadFile(String localPath, String remotePath) throws OSSException {
@@ -236,7 +236,7 @@ public class OSS extends BaseService {
     }
 
     /**
-     * @deprecated Use {@link #download(String, String, String)} instead
+     * @deprecated Use download instead
      */
     @Deprecated
     public OSSDownloadResult downloadFile(String remotePath, String localPath) throws OSSException {
@@ -269,7 +269,7 @@ public class OSS extends BaseService {
     }
 
     /**
-     * @deprecated Use {@link #upload(String, String, String)} instead
+     * @deprecated Use upload instead
      */
     @Deprecated
     public OSSUploadResult uploadLegacy(String localPath, String remotePath, String bucketName) throws OSSException {
@@ -277,7 +277,7 @@ public class OSS extends BaseService {
     }
 
     /**
-     * @deprecated Use {@link #uploadAnonymous(String, String)} instead
+     * @deprecated Use uploadAnonymous instead
      */
     @Deprecated
     public OSSUploadResult uploadAnonymousLegacy(String localPath, String remotePath) throws OSSException {
@@ -285,7 +285,7 @@ public class OSS extends BaseService {
     }
 
     /**
-     * @deprecated Use {@link #download(String, String, String)} instead
+     * @deprecated Use download instead
      */
     @Deprecated
     public OSSDownloadResult downloadLegacy(String remotePath, String localPath, String bucketName) throws OSSException {

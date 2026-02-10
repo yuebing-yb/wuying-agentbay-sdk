@@ -170,7 +170,7 @@ public class FileSystem extends BaseService {
      * @param path Path to remove
      * @return Removal result
      * @throws AgentBayException if removal fails
-     * @deprecated Use {@link #deleteFile(String)} instead. This method uses shell command which may not work in all environments.
+     * @deprecated Use deleteFile instead. This method uses shell command which may not work in all environments.
      */
     @Deprecated
     public String removeLegacy(String path) throws AgentBayException {

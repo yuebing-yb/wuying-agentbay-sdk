@@ -21,7 +21,7 @@ import com.microsoft.playwright.Page;
  * BrowserAgent provides AI-powered browser automation capabilities
  * Matches Python BrowserAgent functionality completely
  * 
- * @deprecated Use {@link BrowserOperator} instead. This class will be removed in a future version.
+ * @deprecated Use BrowserOperator instead. This class will be removed in a future version.
  *             For migration, simply replace BrowserAgent with BrowserOperator:
  *             <pre>{@code
  *             // Old way (deprecated):

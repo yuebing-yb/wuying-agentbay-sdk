@@ -303,7 +303,7 @@ public class Browser extends BaseService {
     /**
      * Get the browser agent for advanced browser operations.
      * 
-     * @deprecated Use {@link #getOperator()} instead. This method will be removed in a future version.
+     * @deprecated Use getOperator instead. This method will be removed in a future version.
      * 
      * <p>Migration example:</p>
      * <pre>{@code

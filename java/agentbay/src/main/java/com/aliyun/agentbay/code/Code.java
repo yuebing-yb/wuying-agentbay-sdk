@@ -9,14 +9,34 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.function.Consumer;
 
+/**
+ * Handles code execution operations in the AgentBay cloud environment.
+ *
+ * <p>This service provides methods to execute code in various programming languages
+ * (Python, JavaScript, R, Java) within a cloud-based code execution environment.
+ * It supports both synchronous and WebSocket-based streaming execution modes.</p>
+ *
+ */
 public class Code extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String SERVER_CODESPACE = "wuying_codespace";
 
+    /**
+     * Creates a new Code service instance bound to the given session.
+     *
+     * @param session The session to bind this code execution service to.
+     */
     public Code(Session session) {
         super(session);
     }
 
+    /**
+     * Parses the response body from the MCP tool, supporting rich output formats.
+     *
+     * @param responseData The response data map to parse.
+     * @return EnhancedCodeExecutionResult containing parsed execution results, logs, and error information.
+     * @throws RuntimeException if the response format is unknown or parsing fails.
+     */
     private EnhancedCodeExecutionResult parseResponseBody(Map<String, Object> responseData) {
         try {
             if (responseData == null || responseData.isEmpty()) {
@@ -63,6 +83,14 @@ public class Code extends BaseService {
         }
     }
 
+    /**
+     * Parses the new JSON format response containing {@code result}, {@code stdout},
+     * {@code stderr}, and {@code executionError} fields.
+     *
+     * @param responseData The response data in new JSON format.
+     * @return EnhancedCodeExecutionResult with parsed results and logs.
+     * @throws RuntimeException if parsing fails.
+     */
     private EnhancedCodeExecutionResult parseNewJsonFormat(Map<String, Object> responseData) {
         try {
             CodeExecutionLogs logs = new CodeExecutionLogs();
@@ -154,6 +182,13 @@ public class Code extends BaseService {
         }
     }
 
+    /**
+     * Parses the rich response format containing {@code logs} and {@code results} fields.
+     *
+     * @param responseData The response data in rich format.
+     * @return EnhancedCodeExecutionResult with parsed results and logs.
+     * @throws RuntimeException if parsing fails.
+     */
     private EnhancedCodeExecutionResult parseRichFormat(Map<String, Object> responseData) {
         try {
             CodeExecutionLogs logs = new CodeExecutionLogs();
@@ -226,6 +261,12 @@ public class Code extends BaseService {
         }
     }
 
+    /**
+     * Parses the legacy error format response where {@code isError} is true.
+     *
+     * @param responseData The response data containing error information.
+     * @return EnhancedCodeExecutionResult with success set to false and the error message.
+     */
     private EnhancedCodeExecutionResult parseLegacyErrorFormat(Map<String, Object> responseData) {
         StringBuilder errorMessage = new StringBuilder();
         Object contentObj = responseData.get("content");
@@ -265,6 +306,13 @@ public class Code extends BaseService {
         return value != null ? value.toString() : null;
     }
 
+    /**
+     * Parses the legacy response format where result text is in the {@code content} field.
+     *
+     * @param responseData The response data in legacy format.
+     * @return EnhancedCodeExecutionResult wrapping the legacy text content.
+     * @throws RuntimeException if the response format is unknown.
+     */
     private EnhancedCodeExecutionResult parseLegacyFormat(Map<String, Object> responseData) {
         Object contentObj = responseData.get("content");
         if (contentObj instanceof List) {
@@ -295,6 +343,16 @@ public class Code extends BaseService {
         throw new RuntimeException("Unknown response format");
     }
 
+    /**
+     * Execute code in the specified language with a timeout.
+     *
+     * @param code The code to execute.
+     * @param language The programming language of the code. Case-insensitive. Supported values: 'python', 'javascript', 'r', 'java'.
+     * @param timeoutS The timeout for the code execution in seconds.
+     *                 Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+     * @return EnhancedCodeExecutionResult containing success status, execution result,
+     *         logs, and error message if any.
+     */
     public EnhancedCodeExecutionResult runCode(String code, String language, int timeoutS) {
         try {
             String rawLanguage = (language == null) ? "" : language;
@@ -355,6 +413,22 @@ public class Code extends BaseService {
         }
     }
 
+    /**
+     * Execute code with optional WebSocket-based streaming output (beta).
+     *
+     * <p>When streaming is enabled or any callback is provided, stdout/stderr chunks
+     * will be delivered via callbacks as they are produced, enabling real-time output.</p>
+     *
+     * @param code The code to execute.
+     * @param language The programming language of the code. Case-insensitive.
+     * @param timeoutS The timeout for the code execution in seconds.
+     * @param streamBeta Enable WebSocket-based streaming output (beta).When enabled, stdout/stderr chunks will be delivered via callbacks as they are produced.
+     * @param onStdout Callback invoked for each stdout chunk. May be null.
+     * @param onStderr Callback invoked for each stderr chunk. May be null.
+     * @param onError Callback invoked when an error occurs. May be null.
+     * @return EnhancedCodeExecutionResult containing success status, execution result,
+     *         logs, and error message if any.
+     */
     public EnhancedCodeExecutionResult runCode(
         String code,
         String language,
@@ -371,6 +445,18 @@ public class Code extends BaseService {
         return runCodeStreamWs(code, language, timeoutS, onStdout, onStderr, onError);
     }
 
+    /**
+     * Execute code via WebSocket streaming, delivering stdout/stderr chunks in real-time.
+     *
+     * @param code The code to execute.
+     * @param language The canonical programming language (already normalized).
+     * @param timeoutS The timeout for the code execution in seconds.
+     * @param onStdout Callback invoked for each stdout chunk. May be null.
+     * @param onStderr Callback invoked for each stderr chunk. May be null.
+     * @param onError Callback invoked when an error occurs. May be null.
+     * @return EnhancedCodeExecutionResult containing success status, execution result,
+     *         logs, and error message if any.
+     */
     private EnhancedCodeExecutionResult runCodeStreamWs(
         String code,
         String language,
@@ -499,6 +585,12 @@ public class Code extends BaseService {
         }
     }
 
+    /**
+     * Parses a single result item from a streaming event payload into a CodeResult.
+     *
+     * @param payload The result payload, either a Map with MIME-typed fields or a plain value.
+     * @return CodeResult containing the parsed result data.
+     */
     private CodeResult parseResultItem(Object payload) {
         CodeResult item = new CodeResult();
         if (!(payload instanceof Map)) {
@@ -544,22 +636,59 @@ public class Code extends BaseService {
         return item;
     }
 
+    /**
+     * Alias of runCode with a default timeout of 60 seconds.
+     *
+     * @param code The code to execute.
+     * @param language The programming language of the code.
+     * @return EnhancedCodeExecutionResult containing success status and execution result.
+     */
     public EnhancedCodeExecutionResult execute(String code, String language) {
         return runCode(code, language, 60);
     }
 
+    /**
+     * Alias of runCode with Python as the default language
+     * and a default timeout of 60 seconds.
+     *
+     * @param code The Python code to execute.
+     * @return EnhancedCodeExecutionResult containing success status and execution result.
+     */
     public EnhancedCodeExecutionResult execute(String code) {
         return execute(code, "python");
     }
 
+    /**
+     * Alias of runCode with a default timeout of 60 seconds.
+     *
+     * @param code The code to execute.
+     * @param language The programming language of the code.
+     * @return EnhancedCodeExecutionResult containing success status and execution result.
+     */
     public EnhancedCodeExecutionResult runCode(String code, String language) {
         return runCode(code, language, 60);
     }
 
+    /**
+     * Alias of runCode for better ergonomics and LLM friendliness.
+     *
+     * @param code The code to execute.
+     * @param language The programming language of the code.
+     * @param timeoutS The timeout for the code execution in seconds.
+     * @return EnhancedCodeExecutionResult containing success status and execution result.
+     */
     public EnhancedCodeExecutionResult run(String code, String language, int timeoutS) {
         return runCode(code, language, timeoutS);
     }
 
+    /**
+     * Alias of runCode with a default timeout of 60 seconds,
+     * for better ergonomics and LLM friendliness.
+     *
+     * @param code The code to execute.
+     * @param language The programming language of the code.
+     * @return EnhancedCodeExecutionResult containing success status and execution result.
+     */
     public EnhancedCodeExecutionResult run(String code, String language) {
         return runCode(code, language, 60);
     }
