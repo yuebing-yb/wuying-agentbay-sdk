@@ -86,6 +86,7 @@ public class Code extends BaseService {
                                 try {
                                     parsedItem = objectMapper.readValue((String) parsed, Map.class);
                                 } catch (Exception e) {
+                                    
                                 }
                             } else if (parsed instanceof Map) {
                                 parsedItem = (Map<String, Object>) parsed;
@@ -246,6 +247,24 @@ public class Code extends BaseService {
         return result;
     }
 
+    /**
+     * Helper method to get a string value from a map with fallback to an alternative key.
+     * This mimics Python's dict.get(key1) or dict.get(key2) behavior.
+     *
+     * @param map The map to search
+     * @param key1 The primary key to look for
+     * @param key2 The fallback key if key1 is not found
+     * @return The string value, or null if neither key exists
+     */
+    private String getStringValue(Map<String, Object> map, String key1, String key2) {
+        Object value = map.get(key1);
+        if (value != null) {
+            return value.toString();
+        }
+        value = map.get(key2);
+        return value != null ? value.toString() : null;
+    }
+
     private EnhancedCodeExecutionResult parseLegacyFormat(Map<String, Object> responseData) {
         Object contentObj = responseData.get("content");
         if (contentObj instanceof List) {
@@ -274,12 +293,6 @@ public class Code extends BaseService {
         }
 
         throw new RuntimeException("Unknown response format");
-    }
-
-    private String getStringValue(Map<String, Object> map, String key1, String key2) {
-        Object value = map.get(key1);
-        if (value == null) value = map.get(key2);
-        return value != null ? value.toString() : null;
     }
 
     public EnhancedCodeExecutionResult runCode(String code, String language, int timeoutS) {
@@ -523,7 +536,6 @@ public class Code extends BaseService {
 
         Object chart = m.get("application/vnd.vegalite.v4+json");
         if (chart == null) chart = m.get("application/vnd.vegalite.v5+json");
-        if (chart == null) chart = m.get("application/vnd.vega.v5+json");
         if (chart != null) item.setChart(chart);
 
         if (item.getText() == null && m.get("text") != null) {

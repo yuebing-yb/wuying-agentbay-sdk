@@ -9,6 +9,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Async command execution service for session shells in the AgentBay cloud environment.
+ * 
+ * <p>Use this class for non-blocking command execution; for blocking/synchronous usage,
+ * refer to the Command service in the sync API.
+ */
 public class Command extends BaseService {
     private static final String SERVER_SHELL = "wuying_shell";
 
@@ -16,18 +22,68 @@ public class Command extends BaseService {
         super(session);
     }
 
+    /**
+     * Execute a shell command with default timeout (50000ms).
+     *
+     * @param command The shell command to execute
+     * @return CommandResult Result object containing execution details
+     */
     public CommandResult execute(String command) {
         return executeCommand(command, 50000);
     }
 
+    /**
+     * Execute a shell command with default timeout (50000ms).
+     * Note: The input parameter is currently not used in the implementation.
+     *
+     * @param command The shell command to execute
+     * @param input Input parameter (currently unused)
+     * @return CommandResult Result object containing execution details
+     */
     public CommandResult execute(String command, String input) {
         return executeCommand(command, 50000);
     }
 
+    /**
+     * Execute a shell command with specified timeout.
+     *
+     * @param command The shell command to execute
+     * @param timeoutMs Timeout in milliseconds
+     * @return CommandResult Result object containing execution details
+     */
     public CommandResult executeCommand(String command, int timeoutMs) {
         return executeCommand(command, timeoutMs, null, null);
     }
 
+    /**
+     * Execute a shell command with optional working directory and environment variables.
+     *
+     * <p>Executes a shell command in the session environment with configurable timeout,
+     * working directory, and environment variables. The command runs with session
+     * user permissions in a Linux shell environment.
+     *
+     * @param command The shell command to execute
+     * @param timeoutMs Timeout in milliseconds (default: 50000ms/50s). Maximum allowed
+     *                  timeout is 50000ms (50s). If a larger value is provided, it will be
+     *                  automatically limited to 50000ms
+     * @param cwd The working directory for command execution. If not specified,
+     *            the command runs in the default session directory
+     * @param envs Environment variables as a map of key-value pairs.
+     *             These variables are set for the command execution only
+     * @return CommandResult Result object containing:
+     *         <ul>
+     *           <li>success: Whether the command executed successfully (exit_code == 0)</li>
+     *           <li>output: Command output for backward compatibility (stdout + stderr)</li>
+     *           <li>exitCode: The exit code of the command execution (0 for success)</li>
+     *           <li>stdout: Standard output from the command execution</li>
+     *           <li>stderr: Standard error from the command execution</li>
+     *           <li>traceId: Trace ID for error tracking (only present when exit_code != 0)</li>
+     *           <li>requestId: Unique identifier for this API request</li>
+     *           <li>errorMessage: Error description if execution failed</li>
+     *         </ul>
+     * @throws IllegalArgumentException If environment variables contain non-string keys or values
+     *
+     */
     public CommandResult executeCommand(String command, int timeoutMs, String cwd, Map<String, String> envs) {
         if (envs != null) {
             java.util.List<String> invalidVars = new java.util.ArrayList<>();
@@ -134,18 +190,51 @@ public class Command extends BaseService {
         }
     }
 
+    /**
+     * Alias of executeCommand() for better ergonomics and LLM friendliness.
+     *
+     * @param command The shell command to execute
+     * @param timeoutMs Timeout in milliseconds
+     * @return CommandResult Result object containing execution details
+     * @see #executeCommand(String, int, String, Map)
+     */
     public CommandResult run(String command, int timeoutMs) {
         return executeCommand(command, timeoutMs);
     }
 
+    /**
+     * Alias of executeCommand() for better ergonomics and LLM friendliness.
+     *
+     * @param command The shell command to execute
+     * @param timeoutMs Timeout in milliseconds
+     * @param cwd The working directory for command execution
+     * @param envs Environment variables as a map of key-value pairs
+     * @return CommandResult Result object containing execution details
+     */
     public CommandResult run(String command, int timeoutMs, String cwd, Map<String, String> envs) {
         return executeCommand(command, timeoutMs, cwd, envs);
     }
 
+    /**
+     * Alias of executeCommand() for better ergonomics and LLM friendliness.
+     *
+     * @param command The shell command to execute
+     * @param timeoutMs Timeout in milliseconds
+     * @return CommandResult Result object containing execution details
+     */
     public CommandResult exec(String command, int timeoutMs) {
         return executeCommand(command, timeoutMs);
     }
 
+    /**
+     * Alias of executeCommand() for better ergonomics and LLM friendliness.
+     *
+     * @param command The shell command to execute
+     * @param timeoutMs Timeout in milliseconds
+     * @param cwd The working directory for command execution
+     * @param envs Environment variables as a map of key-value pairs
+     * @return CommandResult Result object containing execution details
+     */
     public CommandResult exec(String command, int timeoutMs, String cwd, Map<String, String> envs) {
         return executeCommand(command, timeoutMs, cwd, envs);
     }
