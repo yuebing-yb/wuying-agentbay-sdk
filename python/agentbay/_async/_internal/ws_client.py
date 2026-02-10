@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Optional
 
-from ..._common.exceptions import AgentBayError
+from ..._common.exceptions import AgentBayError, WsCancelledError
 from ..._common.logger import _mask_sensitive_data_string, _truncate_string_for_log, get_logger
 
 _logger = get_logger("ws_client")
@@ -35,10 +35,6 @@ class WsConnectionClosedError(AgentBayError):
 
 class WsRemoteError(AgentBayError):
     """Raised when backend sends an error for an invocation."""
-
-
-class WsCancelledError(AgentBayError):
-    """Raised when a stream is cancelled by the caller."""
 
 
 ConnectionStateListener = Callable[[WsConnectionState, str], None]

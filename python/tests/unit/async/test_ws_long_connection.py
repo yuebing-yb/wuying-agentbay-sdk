@@ -149,7 +149,7 @@ class TestWsLongConnection:
         try:
             from agentbay import AsyncAgentBay
             from agentbay._async.session import AsyncSession
-            from agentbay._async._internal.ws_client import WsCancelledError
+            from agentbay._common.exceptions import WsCancelledError
 
             agentbay = AsyncAgentBay(api_key="test_api_key")
             session = AsyncSession(agentbay, "sess_test")
