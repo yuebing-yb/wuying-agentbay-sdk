@@ -37,6 +37,10 @@ class WsRemoteError(AgentBayError):
     """Raised when backend sends an error for an invocation."""
 
 
+class WsCancelledError(AgentBayError):
+    """Raised when a stream is cancelled by the caller."""
+
+
 ConnectionStateListener = Callable[[WsConnectionState, str], None]
 OnEvent = Callable[[str, dict[str, Any]], None]
 OnEnd = Callable[[str, dict[str, Any]], None]
@@ -578,6 +582,13 @@ class WsClient:
         pending = self._pending_by_id.pop(invocation_id, None)
         if pending is None:
             return
-        if not pending.end_future.done():
-            pending.end_future.cancel()
+        if pending.end_future.done():
+            return
+        err = WsCancelledError(f"Stream {invocation_id} was cancelled by caller")
+        if pending.on_error is not None:
+            try:
+                pending.on_error(invocation_id, err)
+            except Exception:
+                _logger.exception("on_error callback failed during cancel")
+        pending.end_future.set_exception(err)
 

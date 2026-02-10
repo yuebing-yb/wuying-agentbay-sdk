@@ -132,6 +132,60 @@ class TestWsLongConnection:
             server.close()
             await server.wait_closed()
 
+    async def test_call_stream_cancel_wait_end_raises_ws_cancelled_error(self):
+        received_invocation_id: list[str] = []
+        received_event = asyncio.Event()
+
+        async def ws_handler(ws):
+            assert ws.request is not None
+            assert ws.request.headers.get("X-Access-Token") == "token_test"
+            req_raw = await ws.recv()
+            req = json.loads(req_raw)
+            received_invocation_id.append(req["invocationId"])
+            received_event.set()
+            await asyncio.sleep(5)
+
+        server, ws_url = await self._start_ws_server(ws_handler)
+        try:
+            from agentbay import AsyncAgentBay
+            from agentbay._async.session import AsyncSession
+            from agentbay._async._internal.ws_client import WsCancelledError
+
+            agentbay = AsyncAgentBay(api_key="test_api_key")
+            session = AsyncSession(agentbay, "sess_test")
+            session.token = "token_test"
+            session.ws_url = ws_url
+
+            ws_client = await session._get_ws_client()
+            try:
+                errors: list[Exception] = []
+
+                def on_error(invocation_id: str, err: Exception) -> None:
+                    assert invocation_id
+                    errors.append(err)
+
+                handle = await ws_client.call_stream(
+                    target="wuying_codespace",
+                    data={"method": "run_code", "mode": "stream"},
+                    on_event=None,
+                    on_end=None,
+                    on_error=on_error,
+                )
+                await asyncio.wait_for(received_event.wait(), timeout=1)
+                assert received_invocation_id != []
+
+                await handle.cancel()
+                with pytest.raises(WsCancelledError):
+                    await asyncio.wait_for(handle.wait_end(), timeout=1)
+
+                assert len(errors) == 1
+                assert isinstance(errors[0], WsCancelledError)
+            finally:
+                await ws_client.close()
+        finally:
+            server.close()
+            await server.wait_closed()
+
     async def test_disconnect_fails_pending_without_retrying_business(self):
         async def ws_handler(ws):
             assert ws.request is not None
