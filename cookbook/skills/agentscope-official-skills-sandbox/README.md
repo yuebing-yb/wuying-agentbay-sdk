@@ -11,7 +11,10 @@ This cookbook demonstrates how to run **official skills** inside an AgentBay san
 ### Prerequisites
 
 - **Install dependencies**:
-  - `pip install -r cookbook/skills/agentscope-official-skills-sandbox/requirements.txt`
+  - Default:
+    - `pip install -r cookbook/skills/agentscope-official-skills-sandbox/requirements.txt`
+  - If your environment uses an internal PyPI mirror and the pinned versions are not available, install from PyPI:
+    - `pip install -i https://pypi.org/simple -r cookbook/skills/agentscope-official-skills-sandbox/requirements.txt`
 - **Environment variables**:
   - `AGENTBAY_API_KEY`
   - `DASHSCOPE_API_KEY`
