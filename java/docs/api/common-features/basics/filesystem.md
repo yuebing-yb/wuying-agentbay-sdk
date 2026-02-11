@@ -12,13 +12,18 @@ Complete guide to file system operations
 
 ## FileSystem
 
-File system operations for a session
+Handles file operations in the AgentBay cloud environment.
 
 ### Constructor
 
 ```java
 public FileSystem(Session session)
 ```
+
+Initialize FileSystem with FileTransfer capability.
+
+**Parameters:**
+- `session` (Session): The session object for file operations
 
 ### Methods
 
@@ -28,16 +33,24 @@ public FileSystem(Session session)
 public String getFileTransferContextPath()
 ```
 
+Get the context path for file transfer operations.
+
+<p>This method ensures the context ID is loaded and returns the associated
+context path that was retrieved from GetAndLoadInternalContext API.</p>
+
+**Returns:**
+- `String`: The context path if available, null otherwise
+
 ### read
 
 ```java
 public String read(String path) throws AgentBayException
 ```
 
-Read a file
+Read a file, alias of readFile().
 
 **Parameters:**
-- `path` (String): File path
+- `path` (String): The path of the file to read
 
 **Returns:**
 - `String`: File content as string
@@ -51,11 +64,11 @@ Read a file
 public String write(String path, String content) throws AgentBayException
 ```
 
-Write content to a file
+Write content to a file.
 
 **Parameters:**
-- `path` (String): File path
-- `content` (String): Content to write
+- `path` (String): The path of the file to write
+- `content` (String): The content to write to the file
 
 **Returns:**
 - `String`: Write result as string
@@ -69,10 +82,10 @@ Write content to a file
 public String list(String path) throws AgentBayException
 ```
 
-List directory contents
+List the contents of a directory.
 
 **Parameters:**
-- `path` (String): Directory path
+- `path` (String): The path of the directory to list
 
 **Returns:**
 - `String`: Directory listing as string
@@ -86,7 +99,7 @@ List directory contents
 public boolean exists(String path) throws AgentBayException
 ```
 
-Check if a file or directory exists
+Check if a file or directory exists.
 
 **Parameters:**
 - `path` (String): Path to check
@@ -103,7 +116,7 @@ Check if a file or directory exists
 public String mkdir(String path) throws AgentBayException
 ```
 
-Create a directory
+Create a directory.
 
 **Parameters:**
 - `path` (String): Directory path to create
@@ -120,7 +133,7 @@ Create a directory
 public String removeLegacy(String path) throws AgentBayException
 ```
 
-Remove a file or directory using shell command
+Remove a file or directory using shell command.
 
 **Parameters:**
 - `path` (String): Path to remove
@@ -137,7 +150,7 @@ Remove a file or directory using shell command
 public String copy(String source, String destination) throws AgentBayException
 ```
 
-Copy a file or directory
+Copy a file or directory.
 
 **Parameters:**
 - `source` (String): Source path to copy from
@@ -155,7 +168,7 @@ Copy a file or directory
 public String move(String source, String destination) throws AgentBayException
 ```
 
-Move a file or directory
+Move a file or directory.
 
 **Parameters:**
 - `source` (String): Source path to move from
@@ -173,7 +186,7 @@ Move a file or directory
 public String getInfo(String path) throws AgentBayException
 ```
 
-Get file information
+Get file information.
 
 **Parameters:**
 - `path` (String): File path to inspect
@@ -199,7 +212,8 @@ public BoolResult writeFile(String path, String content, String mode)
 ```
 
 Write content to a file. Automatically handles large files by chunking.
-Similar to Python's write_file method.
+
+<p>Similar to Python's write_file method.</p>
 
 **Parameters:**
 - `path` (String): File path
@@ -233,6 +247,16 @@ public FileSearchResult searchFiles(String directory, String pattern)
 ```java
 public FileSearchResult searchFiles(String directory, String pattern, List<String> excludePatterns)
 ```
+
+Search for files matching a pattern
+
+**Parameters:**
+- `directory` (String): Directory to search in
+- `pattern` (String): Wildcard pattern to match against file names. Supports * (any characters) and ? (single character). Examples: "*.py", "test_*", "*config*".
+- `excludePatterns` (List<String>): Optional list of wildcard patterns to exclude from the search.
+
+**Returns:**
+- `FileSearchResult`: FileSearchResult containing list of matching file paths and error message if any
 
 ### readMultipleFiles
 
@@ -288,7 +312,14 @@ List the contents of a directory.
 - `path` (String): The path of the directory to list
 
 **Returns:**
-- `com.aliyun.agentbay.model.DirectoryListResult`: DirectoryListResult containing directory entries and error message if any.
+- `com.aliyun.agentbay.model.DirectoryListResult`: DirectoryListResult containing directory entries and error message if any
+ - success (bool): True if the operation succeeded
+  - entries (List[Dict[str, Union[str, bool]]]): List of directory entries (if success is True)
+     Each entry contains:
+     - name (str): Name of the file or directory
+    - isDirectory (bool): True if entry is a directory, False if file
+- requestId (str): Unique identifier for this API request
+- errorMessage (str): Error description (if success is False)
 
 ### getFileInfo
 
@@ -352,6 +383,20 @@ public UploadResult uploadFile(String localPath, String remotePath, String conte
 ```java
 public UploadResult uploadFile(String localPath, String remotePath)
 ```
+
+Upload a local file to remote path using pre-signed URLs.
+
+**Parameters:**
+- `localPath` (String): Local file path to upload
+- `remotePath` (String): Remote file path to upload to
+- `contentType` (String): Optional content type for the file (can be null)
+- `wait` (boolean): Whether to wait for the sync operation to complete
+- `waitTimeout` (float): Timeout for waiting for sync completion (seconds)
+- `pollInterval` (float): Interval between polling for sync completion (seconds)
+- `progressCallback` (ProgressCallback): Callback for upload progress updates
+
+**Returns:**
+- `UploadResult`: UploadResult containing the result of the upload operation
 
 ### downloadFile
 

@@ -2,8 +2,7 @@
 
 ## Overview
 
-The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
-screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
 
 
 ## 📚 Tutorial
@@ -34,13 +33,14 @@ public Browser(Session session)
 public boolean initialize(BrowserOption option)
 ```
 
-Initialize the browser instance with the given options.
+Initialize the browser instance with the given options asynchronously.
+Returns true if successful, false otherwise.
 
 **Parameters:**
-- `option` (BrowserOption): Browser initialization options
+- `option` (BrowserOption): Browser configuration options. If null, default options are used
 
 **Returns:**
-- `boolean`: true if successful, false otherwise
+- `boolean`: true if initialization was successful, false otherwise
 
 ### init
 
@@ -62,7 +62,7 @@ Alias for initialize method.
 public void destroy()
 ```
 
-Destroy the browser instance.
+Destroy the browser instance manually.
 
 ### screenshot
 
@@ -73,23 +73,22 @@ public byte[] screenshot(com.microsoft.playwright.Page page, boolean fullPage, M
 Takes a screenshot of the specified page with enhanced options and error handling.
 
 **Parameters:**
-- `page` (com.microsoft.playwright.Page): The Playwright Page object to take a screenshot of
+- `page` (com.microsoft.playwright.Page): The Playwright Page object to take a screenshot of. This is a required parameter.
 - `fullPage` (boolean): Whether to capture the full scrollable page
-- `options` (Map<String,Object>): Additional screenshot options
+- `options` (Map<String,Object>): Additional screenshot options that will override defaults.
+               Common options include:
+               - type (ScreenshotType): Image type, either PNG or JPEG (default: PNG)
+               - timeout (Double): Maximum time in milliseconds (default: 60000)
+               - animations (String): How to handle animations (default: "disabled")
+               - caret (String): How to handle the caret (default: "hide")
+               - scale (String): Scale setting (default: "css")
 
 **Returns:**
 - `byte[]`: Screenshot data as bytes
 
 **Throws:**
-- `BrowserException`: if browser is not initialized
-
-### stopBrowser
-
-```java
-public void stopBrowser() throws BrowserException
-```
-
-Stop the browser instance (internal use only).
+- `BrowserException`: if browser is not initialized or page is null
+- `IllegalArgumentException`: if page is null
 
 ### getEndpointUrl
 
@@ -97,7 +96,7 @@ Stop the browser instance (internal use only).
 public String getEndpointUrl() throws BrowserException
 ```
 
-Get the endpoint URL for browser connection.
+Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
 When initialized, always fetches the latest CDP url from getCdpLink API.
 
 **Returns:**
@@ -136,12 +135,8 @@ public BrowserOperator getOperator()
 
 Get the browser operator for browser operations (recommended).
 
-<p>Example usage:</p>
-<pre>{@code
-BrowserOperator operator = browser.getOperator();
-operator.navigate("https://example.com");
-operator.screenshot(null, true, null);
-}</pre>
+<p>The operator provides AI-powered browser automation capabilities including
+navigation, screenshots, actions, observations, and data extraction.</p>
 
 **Returns:**
 - `BrowserOperator`: BrowserOperator instance
@@ -153,6 +148,8 @@ public BrowserAgent getAgent()
 ```
 
 Get the browser agent for advanced browser operations.
+
+<p><strong>⚠️ Deprecated</strong>: Use getOperator instead. This method will be removed in a future version.</p>
 
 **Returns:**
 - `BrowserAgent`: BrowserAgent instance
@@ -167,6 +164,256 @@ Get the endpoint router port.
 
 **Returns:**
 - `Integer`: Port number or null if not set
+
+
+
+## BrowserOperator
+
+BrowserOperator handles browser automation and small parts of agentic logic.
+
+<p><strong>⚠️ Note</strong>: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), 
+we do not provide services for overseas users registered with <strong>alibabacloud.com</strong>.</p>
+
+### Constructor
+
+```java
+public BrowserOperator(Session session, Browser browser)
+```
+
+### Methods
+
+### navigate
+
+```java
+public String navigate(String url) throws BrowserException
+```
+
+Navigates a specific page to the given URL.
+
+**Parameters:**
+- `url` (String): The URL to navigate to
+
+**Returns:**
+- `String`: A string indicating the result of the navigation
+
+**Throws:**
+- `BrowserException`: if browser is not initialized
+
+### close
+
+```java
+public boolean close() throws BrowserException
+```
+
+Closes the remote browser operator session.
+This will terminate the browser process managed by the operator.
+
+**Returns:**
+- `boolean`: true if successful, false otherwise
+
+**Throws:**
+- `BrowserException`: if operation fails
+
+### screenshot
+
+```java
+public String screenshot(Page page, boolean fullPage, int quality, Map<String, Double> clip, Integer timeout) throws BrowserException
+```
+
+```java
+public String screenshot(Page page) throws BrowserException
+```
+
+Takes a screenshot of the specified page.
+
+**Parameters:**
+- `page` (Page): The Playwright Page object to take a screenshot of. If null, the operator's currently focused page will be used
+- `fullPage` (boolean): Whether to capture the full scrollable page
+- `quality` (int): The quality of the image (0-100), for JPEG format
+- `clip` (Map<String,Double>): An object specifying the clipping region {x, y, width, height}
+- `timeout` (Integer): Custom timeout for the operation in seconds
+
+**Returns:**
+- `String`: A base64 encoded data URL of the screenshot, or an error message
+
+**Throws:**
+- `BrowserException`: if browser is not initialized
+
+### act
+
+```java
+public ActResult act(Page page, Object actionInput) throws BrowserException
+```
+
+Perform an action on a web page.
+Uses synchronous execution.
+
+**Parameters:**
+- `page` (Page): The Playwright Page object to act on. If null, the operator's currently focused page will be used automatically
+- `actionInput` (Object): The action to perform (either ActOptions or ObserveResult)
+
+**Returns:**
+- `ActResult`: The result of the action
+
+**Throws:**
+- `BrowserException`: if browser is not initialized
+
+### actAsync
+
+```java
+public ActResult actAsync(Object actionInput, Page page) throws BrowserException
+```
+
+```java
+public ActResult actAsync(Object actionInput) throws BrowserException
+```
+
+Perform an action on the page asynchronously - matches Python act_async method
+Uses asynchronous execution with task polling for long-running operations
+
+**Parameters:**
+- `actionInput` (Object): Either ActOptions or ObserveResult describing the action
+- `page` (Page): Playwright page object (null to use currently focused page)
+
+**Returns:**
+- `ActResult`: ActResult containing success status and execution details
+
+**Throws:**
+- `BrowserException`: if browser is not initialized or action fails
+
+### observe
+
+```java
+public ObserveResultTuple observe(Page page, ObserveOptions options) throws BrowserException
+```
+
+Observe elements or state on a web page.
+
+**Parameters:**
+- `page` (Page): The Playwright Page object to observe. If null, the operator's currently focused page will be used
+- `options` (ObserveOptions): Options to configure the observation behavior
+
+**Returns:**
+- `ObserveResultTuple`: A tuple containing a success boolean and a list of observation results
+
+**Throws:**
+- `BrowserException`: if browser is not initialized
+
+### extract
+
+```java
+public ExtractResultTuple<T> extract(Page page, ExtractOptions<T> options) throws BrowserException
+```
+
+Extract information from a web page.
+Uses synchronous execution.
+
+**Parameters:**
+- `page` (Page): The Playwright Page object to extract from. If null, the operator's currently focused page will be used
+- `options` (ExtractOptions<T>): Options to configure the extraction, including schema
+- `<T>` (Object): The type of data to extract
+
+**Returns:**
+- `ExtractResultTuple<T>`: A tuple containing a success boolean and the extracted data as a Pydantic model instance, or null on failure
+
+**Throws:**
+- `BrowserException`: if browser is not initialized
+
+### extractAsync
+
+```java
+public ExtractResultTuple<T> extractAsync(ExtractOptions<T> options, Page page) throws BrowserException
+```
+
+```java
+public ExtractResultTuple<T> extractAsync(ExtractOptions<T> options) throws BrowserException
+```
+
+Extract structured data from the page asynchronously - matches Python extract_async method
+Uses asynchronous execution with task polling for complex extraction operations
+
+**Parameters:**
+- `options` (ExtractOptions<T>): ExtractOptions containing instruction, schema, and extraction parameters
+- `page` (Page): Playwright page object (null to use currently focused page)
+- `<T>` (Object): The type of data to extract (must match the schema class)
+
+**Returns:**
+- `ExtractResultTuple<T>`: ExtractResultTuple containing success status and extracted data of type T
+
+**Throws:**
+- `BrowserException`: if browser is not initialized or extraction fails
+
+### navigateTo
+
+```java
+public ActResult navigateTo(Page page, String url) throws BrowserException
+```
+
+Navigate to a URL using act method.
+
+**Parameters:**
+- `page` (Page): Playwright page object
+- `url` (String): URL to navigate to
+
+**Returns:**
+- `ActResult`: ActResult
+
+**Throws:**
+- `BrowserException`: if operation fails
+
+### click
+
+```java
+public ActResult click(Page page, String selector) throws BrowserException
+```
+
+Click on an element using act method.
+
+**Parameters:**
+- `page` (Page): Playwright page object
+- `selector` (String): Element selector
+
+**Returns:**
+- `ActResult`: ActResult
+
+**Throws:**
+- `BrowserException`: if operation fails
+
+### type
+
+```java
+public ActResult type(Page page, String selector, String text) throws BrowserException
+```
+
+Type text into an input field using act method.
+
+**Parameters:**
+- `page` (Page): Playwright page object
+- `selector` (String): Input field selector
+- `text` (String): Text to type
+
+**Returns:**
+- `ActResult`: ActResult
+
+**Throws:**
+- `BrowserException`: if operation fails
+
+### takeScreenshot
+
+```java
+public ActResult takeScreenshot(Page page) throws BrowserException
+```
+
+Take a screenshot using act method.
+
+**Parameters:**
+- `page` (Page): Playwright page object
+
+**Returns:**
+- `ActResult`: ActResult
+
+**Throws:**
+- `BrowserException`: if operation fails
 
 
 

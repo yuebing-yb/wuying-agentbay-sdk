@@ -2,8 +2,7 @@
 
 ## Overview
 
-The Computer module provides comprehensive desktop automation capabilities including mouse operations,
-keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
+The Computer module provides comprehensive desktop automation capabilities including mouse operations,keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
 
 
 ## 📚 Tutorial
@@ -19,8 +18,7 @@ Automate desktop applications
 ## Computer
 
 Computer module for desktop UI automation.
-Provides comprehensive desktop automation capabilities including mouse, keyboard,
-window management, application management, and screen operations.
+Provides comprehensive desktop automation capabilities including mouse, keyboard,window management, application management, and screen operations.
 
 ### Constructor
 
@@ -47,12 +45,12 @@ public ProcessListResult startApp(String startCmd)
 Starts an application with the given command, optional working directory and optional activity.
 
 **Parameters:**
-- `startCmd` (String): The command to start the application (e.g., "npm run dev", "notepad.exe")
-- `workDirectory` (String): Optional working directory for the application (e.g., "/tmp/app/react-site-demo-1")
-- `activity` (String): Optional activity name to launch (for mobile apps). Defaults to empty string.
+- `startCmd` (String): The command to start the application
+- `workDirectory` (String): working directory for the application
+- `activity` (String): activity name to launch (for mobile apps). Defaults to empty string.
 
 **Returns:**
-- `ProcessListResult`: ProcessListResult containing the list of processes started
+- `ProcessListResult`: ProcessListResult containing the list of processes started and error message if any.
 
 ### stopAppByPName
 
@@ -63,7 +61,7 @@ public AppOperationResult stopAppByPName(String pname)
 Stops an application by process name.
 
 **Parameters:**
-- `pname` (String): The process name of the application to stop (e.g., "notepad.exe", "chrome.exe")
+- `pname` (String): The process name of the application to stop
 
 **Returns:**
 - `AppOperationResult`: AppOperationResult containing success status and error message if any
@@ -91,7 +89,7 @@ public AppOperationResult stopAppByCmd(String stopCmd)
 Stops an application by stop command.
 
 **Parameters:**
-- `stopCmd` (String): The command to stop the application (e.g., "taskkill /IM notepad.exe /F")
+- `stopCmd` (String): The command to stop the application
 
 **Returns:**
 - `AppOperationResult`: AppOperationResult containing success status and error message if any
@@ -103,6 +101,8 @@ public ProcessListResult listVisibleApps()
 ```
 
 Lists all applications with visible windows.
+Returns detailed process information for applications that have visible windows,including process ID, name, command line, and other system information.
+This is useful for system monitoring and process management tasks.
 
 **Returns:**
 - `ProcessListResult`: ProcessListResult containing list of visible applications with detailed process information
@@ -146,10 +146,37 @@ Clicks the mouse at the specified screen coordinates.
 **Parameters:**
 - `x` (int): X coordinate in pixels (0 is left edge of screen)
 - `y` (int): Y coordinate in pixels (0 is top edge of screen)
-- `button` (MouseButton): Mouse button to click. Defaults to LEFT
+- `button` (MouseButton): Mouse button to click. Options:
+              - MouseButton.LEFT: Single left click
+              - MouseButton.RIGHT: Right click (context menu)
+              - MouseButton.MIDDLE: Middle click (scroll wheel)
+              - MouseButton.DOUBLE_LEFT: Double left click
+              Defaults to MouseButton.LEFT
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Object containing:
+        - success (boolean): Whether the click succeeded
+        - data (Boolean): True if successful, null otherwise
+        - errorMessage (String): Error description if failed
+
+**Throws:**
+- `IllegalArgumentException`: If button is not one of the valid options
+
+<p>Behavior:
+<ul>
+  <li>Clicks at the exact pixel coordinates provided</li>
+  <li>Does not move the mouse cursor before clicking</li>
+  <li>For double-click, use MouseButton.DOUBLE_LEFT</li>
+  <li>Right-click typically opens context menus</li>
+</ul>
+
+
+<p>Note:
+<ul>
+  <li>Coordinates are absolute screen positions, not relative to windows</li>
+  <li>Use getScreenSize() to determine valid coordinate ranges</li>
+  <li>Consider using moveMouse() first if you need to see cursor movement</li>
+</ul>
 
 ### moveMouse
 
@@ -164,7 +191,15 @@ Moves the mouse to the specified coordinates.
 - `y` (int): Y coordinate
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+
+<p>Note:
+<ul>
+  <li>Moves the cursor smoothly to the target position</li>
+  <li>Does not click after moving</li>
+  <li>Use getCursorPosition() to verify the new position</li>
+</ul>
 
 ### dragMouse
 
@@ -226,7 +261,14 @@ public OperationResult getCursorPosition()
 Gets the current cursor position.
 
 **Returns:**
-- `OperationResult`: OperationResult containing cursor position data with keys 'x' and 'y', and error message if any
+- `OperationResult`: OperationResult Result object containing cursor position data with keys 'x' and 'y', and error message if any
+
+<p>Note:
+<ul>
+  <li>Returns the absolute screen coordinates</li>
+  <li>Useful for verifying mouse movements</li>
+  <li>Position is in pixels from top-left corner (0, 0)</li>
+</ul>
 
 ### inputText
 
@@ -237,10 +279,17 @@ public BoolResult inputText(String text)
 Types text into the currently focused input field.
 
 **Parameters:**
-- `text` (String): The text to input. Supports Unicode characters.
+- `text` (String): The text to input. Supports Unicode characters
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Object with success status and error message if any
+
+<p>Note:
+<ul>
+  <li>Requires an input field to be focused first</li>
+  <li>Use clickMouse() or UI automation to focus the field</li>
+  <li>Supports special characters and Unicode</li>
+</ul>
 
 ### pressKeys
 
@@ -255,11 +304,19 @@ public BoolResult pressKeys(List<String> keys)
 Presses the specified keys.
 
 **Parameters:**
-- `keys` (List<String>): List of keys to press (e.g., ["Ctrl", "a"])
+- `keys` (List<String>): List of keys to press (e.g., Arrays.asList("Ctrl", "a"))
 - `hold` (boolean): Whether to hold the keys. Defaults to false
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>Key names are case-sensitive</li>
+  <li>When hold=true, remember to call releaseKeys() afterwards</li>
+  <li>Supports modifier keys like Ctrl, Alt, Shift</li>
+  <li>Can press multiple keys simultaneously for shortcuts</li>
+</ul>
 
 ### releaseKeys
 
@@ -270,10 +327,17 @@ public BoolResult releaseKeys(List<String> keys)
 Releases the specified keys.
 
 **Parameters:**
-- `keys` (List<String>): List of keys to release (e.g., ["Ctrl", "a"])
+- `keys` (List<String>): List of keys to release (e.g., Arrays.asList("Ctrl", "a"))
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>Should be used after pressKeys() with hold=true</li>
+  <li>Key names are case-sensitive</li>
+  <li>Releases all keys specified in the list</li>
+</ul>
 
 ### getScreenSize
 
@@ -284,8 +348,14 @@ public OperationResult getScreenSize()
 Gets the screen size and DPI scaling factor.
 
 **Returns:**
-- `OperationResult`: OperationResult containing screen size data with keys 'width', 'height', and 'dpiScalingFactor',
-        and error message if any
+- `OperationResult`: OperationResult Result object containing screen size data with keys 'width', 'height', and 'dpiScalingFactor', and error message if any
+
+<p>Note:
+<ul>
+  <li>Returns the full screen dimensions in pixels</li>
+  <li>DPI scaling factor affects coordinate calculations on high-DPI displays</li>
+  <li>Use this to determine valid coordinate ranges for mouse operations</li>
+</ul>
 
 ### screenshot
 
@@ -296,7 +366,15 @@ public OperationResult screenshot()
 Takes a screenshot of the current screen.
 
 **Returns:**
-- `OperationResult`: OperationResult containing the path/URL to the screenshot and error message if any
+- `OperationResult`: OperationResult Result object containing the path to the screenshot and error message if any
+
+<p>Note:
+<ul>
+  <li>Returns an OSS URL to the screenshot image</li>
+  <li>Screenshot captures the entire screen</li>
+  <li>Useful for debugging and verification</li>
+  <li>Image format is typically PNG</li>
+</ul>
 
 ### betaTakeScreenshot
 
@@ -308,20 +386,29 @@ public ScreenshotBytesResult betaTakeScreenshot(String format)
 public ScreenshotBytesResult betaTakeScreenshot()
 ```
 
-Capture the current screen and return raw image bytes (beta).
+Takes a screenshot of the Computer and returns raw binary image data (beta).
 
-This API uses the MCP tool `screenshot` (wuying_capture) and expects the backend to return
-a JSON string with top-level field `data` containing base64.
-
-Supported formats:
-- "png"
-- "jpeg" (or "jpg")
+<p>This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+binary image data. The backend also returns the captured image dimensions
+(width/height in pixels), which are exposed on ScreenshotBytesResult.width
+and ScreenshotBytesResult.height. The backend metadata fields `type` and
+`mime_type` are exposed on ScreenshotBytesResult.type and ScreenshotBytesResult.mimeType.
 
 **Parameters:**
-- `format` (String): Output image format ("png", "jpeg", or "jpg")
+- `format` (String): The desired image format (default: "png"). Supported: "png", "jpeg", "jpg"
 
 **Returns:**
-- `ScreenshotBytesResult`: ScreenshotBytesResult containing image bytes and metadata (`type`, `mimeType`, `width`, `height`) and error message if any
+- `ScreenshotBytesResult`: ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata
+        including `type`, `mimeType`, `width`, and `height` when provided by the backend
+
+**Throws:**
+- `IllegalArgumentException`: If format is invalid
+
+<p>Supported formats:
+<ul>
+  <li>"png"</li>
+  <li>"jpeg" (or "jpg")</li>
+</ul>
 
 ### listRootWindows
 
@@ -339,7 +426,7 @@ Lists all root windows.
 - `timeoutMs` (int): Timeout in milliseconds. Defaults to 3000
 
 **Returns:**
-- `WindowListResult`: WindowListResult containing list of windows and error message if any
+- `WindowListResult`: WindowListResult Result object containing list of windows and error message if any
 
 ### getActiveWindow
 
@@ -357,7 +444,9 @@ Gets the currently active window.
 - `timeoutMs` (int): Timeout in milliseconds. Defaults to 3000
 
 **Returns:**
-- `WindowInfoResult`: WindowInfoResult containing active window info and error message if any
+- `WindowInfoResult`: WindowInfoResult Result object containing active window info and error message if any
+
+<p><strong>Note</strong>: Java version requires timeoutMs parameter, while Python version does not.
 
 ### activateWindow
 
@@ -371,7 +460,14 @@ Activates the specified window.
 - `windowId` (int): The ID of the window to activate
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Use listRootWindows() to get available window IDs</li>
+  <li>Activating a window brings it to the foreground</li>
+</ul>
 
 ### closeWindow
 
@@ -385,7 +481,14 @@ Closes the specified window.
 - `windowId` (int): The ID of the window to close
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Use listRootWindows() to get available window IDs</li>
+  <li>Closing a window terminates it permanently</li>
+</ul>
 
 ### maximizeWindow
 
@@ -399,7 +502,14 @@ Maximizes the specified window.
 - `windowId` (int): The ID of the window to maximize
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Maximizing expands the window to fill the screen</li>
+  <li>Use restoreWindow() to return to previous size</li>
+</ul>
 
 ### minimizeWindow
 
@@ -413,7 +523,14 @@ Minimizes the specified window.
 - `windowId` (int): The ID of the window to minimize
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Minimizing hides the window in the taskbar</li>
+  <li>Use restoreWindow() or activateWindow() to bring it back</li>
+</ul>
 
 ### restoreWindow
 
@@ -427,7 +544,14 @@ Restores the specified window.
 - `windowId` (int): The ID of the window to restore
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Restoring returns a minimized or maximized window to its normal state</li>
+  <li>Works for windows that were previously minimized or maximized</li>
+</ul>
 
 ### resizeWindow
 
@@ -443,7 +567,14 @@ Resizes the specified window.
 - `height` (int): New height of the window
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Width and height are in pixels</li>
+  <li>Some windows may have minimum or maximum size constraints</li>
+</ul>
 
 ### fullscreenWindow
 
@@ -459,6 +590,14 @@ Makes the specified window fullscreen.
 **Returns:**
 - `BoolResult`: BoolResult containing success status and error message if any
 
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Fullscreen mode hides window borders and taskbar</li>
+  <li>Different from maximizeWindow() which keeps window borders</li>
+  <li>Press F11 or ESC to exit fullscreen in most applications</li>
+</ul>
+
 ### focusMode
 
 ```java
@@ -472,6 +611,13 @@ Toggles focus mode on or off.
 
 **Returns:**
 - `BoolResult`: BoolResult containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>Focus mode helps reduce distractions by managing window focus</li>
+  <li>When enabled, may prevent background windows from stealing focus</li>
+  <li>Behavior depends on the window manager and OS settings</li>
+</ul>
 
 
 

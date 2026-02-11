@@ -18,11 +18,22 @@ Execute code in isolated environments
 
 ## Code
 
+Handles code execution operations in the AgentBay cloud environment.
+
+<p>This service provides methods to execute code in various programming languages
+(Python, JavaScript, R, Java) within a cloud-based code execution environment.
+It supports both synchronous and WebSocket-based streaming execution modes.</p>
+
 ### Constructor
 
 ```java
 public Code(Session session)
 ```
+
+Creates a new Code service instance bound to the given session.
+
+**Parameters:**
+- `session` (Session): The session to bind this code execution service to.
 
 ### Methods
 
@@ -33,8 +44,30 @@ public EnhancedCodeExecutionResult runCode(String code, String language, int tim
 ```
 
 ```java
+public EnhancedCodeExecutionResult runCode(String code, String language, int timeoutS, boolean streamBeta, Consumer<String> onStdout, Consumer<String> onStderr, Consumer<Object> onError)
+```
+
+```java
 public EnhancedCodeExecutionResult runCode(String code, String language)
 ```
+
+Execute code with optional WebSocket-based streaming output (beta).
+
+<p>When streaming is enabled or any callback is provided, stdout/stderr chunks
+will be delivered via callbacks as they are produced, enabling real-time output.</p>
+
+**Parameters:**
+- `code` (String): The code to execute.
+- `language` (String): The programming language of the code. Case-insensitive.
+- `timeoutS` (int): The timeout for the code execution in seconds.
+- `streamBeta` (boolean): Enable WebSocket-based streaming output (beta).When enabled, stdout/stderr chunks will be delivered via callbacks as they are produced.
+- `onStdout` (Consumer<String>): Callback invoked for each stdout chunk. May be null.
+- `onStderr` (Consumer<String>): Callback invoked for each stderr chunk. May be null.
+- `onError` (Consumer<Object>): Callback invoked when an error occurs. May be null.
+
+**Returns:**
+- `EnhancedCodeExecutionResult`: EnhancedCodeExecutionResult containing success status, execution result,
+        logs, and error message if any.
 
 ### execute
 
@@ -46,6 +79,15 @@ public EnhancedCodeExecutionResult execute(String code, String language)
 public EnhancedCodeExecutionResult execute(String code)
 ```
 
+Alias of runCode with a default timeout of 60 seconds.
+
+**Parameters:**
+- `code` (String): The code to execute.
+- `language` (String): The programming language of the code.
+
+**Returns:**
+- `EnhancedCodeExecutionResult`: EnhancedCodeExecutionResult containing success status and execution result.
+
 ### run
 
 ```java
@@ -55,6 +97,16 @@ public EnhancedCodeExecutionResult run(String code, String language, int timeout
 ```java
 public EnhancedCodeExecutionResult run(String code, String language)
 ```
+
+Alias of runCode for better ergonomics and LLM friendliness.
+
+**Parameters:**
+- `code` (String): The code to execute.
+- `language` (String): The programming language of the code.
+- `timeoutS` (int): The timeout for the code execution in seconds.
+
+**Returns:**
+- `EnhancedCodeExecutionResult`: EnhancedCodeExecutionResult containing success status and execution result.
 
 
 

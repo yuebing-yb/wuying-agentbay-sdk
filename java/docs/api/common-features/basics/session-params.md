@@ -25,9 +25,7 @@ browser context, policy management, browser replay, and mobile extra configurati
 public CreateSessionParams()
 ```
 
-```java
-public CreateSessionParams(String appId)
-```
+Create a new CreateSessionParams instance with default values(contextSyncs: empty list,idleReleaseTimeout: 300 seconds).
 
 ### Methods
 
@@ -42,47 +40,16 @@ Set the browser context and automatically merge extension and fingerprint contex
 **Parameters:**
 - `browserContext` (BrowserContext): Browser context configuration
 
-### getAppId
-
-```java
-public String getAppId()
-```
-
-### setAppId
-
-```java
-public void setAppId(String appId)
-```
-
-### isAutoUpload
-
-```java
-public boolean isAutoUpload()
-```
-
-### setAutoUpload
-
-```java
-public void setAutoUpload(boolean autoUpload)
-```
-
-### getMetadata
-
-```java
-public Map<String, String> getMetadata()
-```
-
-### setMetadata
-
-```java
-public void setMetadata(Map<String, String> metadata)
-```
-
 ### getImageId
 
 ```java
 public String getImageId()
 ```
+
+Get the ID of the image to use for the session.
+
+**Returns:**
+- `String`: image ID, or null if not set
 
 ### setImageId
 
@@ -90,11 +57,21 @@ public String getImageId()
 public void setImageId(String imageId)
 ```
 
+Set the ID of the image to use for the session.
+
+**Parameters:**
+- `imageId` (String): image ID
+
 ### getIdleReleaseTimeout
 
 ```java
 public Integer getIdleReleaseTimeout()
 ```
+
+Get the SDK-side idle release timeout in seconds.
+
+**Returns:**
+- `Integer`: idle release timeout in seconds, default is 300
 
 ### setIdleReleaseTimeout
 
@@ -102,11 +79,21 @@ public Integer getIdleReleaseTimeout()
 public void setIdleReleaseTimeout(Integer idleReleaseTimeout)
 ```
 
+Set the SDK-side idle release timeout in seconds.
+
+**Parameters:**
+- `idleReleaseTimeout` (Integer): idle release timeout in seconds
+
 ### getLabels
 
 ```java
 public Map<String, String> getLabels()
 ```
+
+Get the custom labels for the Session.
+
+**Returns:**
+- `Map<String,String>`: labels map, or null if not set
 
 ### setLabels
 
@@ -114,11 +101,21 @@ public Map<String, String> getLabels()
 public void setLabels(Map<String, String> labels)
 ```
 
+Set the custom labels for the Session.
+
+**Parameters:**
+- `labels` (Map<String,String>): labels map
+
 ### getContextSyncs
 
 ```java
 public List<ContextSync> getContextSyncs()
 ```
+
+Get the list of context synchronization configurations.
+
+**Returns:**
+- `List<ContextSync>`: list of context syncs, or null if not set
 
 ### setContextSyncs
 
@@ -126,11 +123,21 @@ public List<ContextSync> getContextSyncs()
 public void setContextSyncs(List<ContextSync> contextSyncs)
 ```
 
+Set the list of context synchronization configurations.
+
+**Parameters:**
+- `contextSyncs` (List<ContextSync>): list of context syncs
+
 ### getBrowserContext
 
 ```java
 public BrowserContext getBrowserContext()
 ```
+
+Get the browser context configuration.
+
+**Returns:**
+- `BrowserContext`: browser context, or null if not set
 
 ### getFramework
 
@@ -138,7 +145,7 @@ public BrowserContext getBrowserContext()
 public String getFramework()
 ```
 
-Get the framework name (e.g., "spring-ai", "langchain4j").
+Get the framework name (e.g., "langchain").
 This is used for SDK statistics tracking.
 
 **Returns:**
@@ -150,7 +157,7 @@ This is used for SDK statistics tracking.
 public void setFramework(String framework)
 ```
 
-Set the framework name (e.g., "spring-ai", "langchain4j").
+Set the framework name (e.g., "langchain").
 This is used for SDK statistics tracking.
 
 **Parameters:**
@@ -197,8 +204,6 @@ public void setEnableBrowserReplay(Boolean enableBrowserReplay)
 
 Set whether to enable browser replay recording for the session.
 
-<p>Browser replay is enabled by default. Set to false to disable recording.</p>
-
 **Parameters:**
 - `enableBrowserReplay` (Boolean): true to enable, false to disable
 
@@ -208,7 +213,7 @@ Set whether to enable browser replay recording for the session.
 public ExtraConfigs getExtraConfigs()
 ```
 
-Get advanced configuration parameters.
+Get Advanced configuration parameters for mobile environments.
 
 **Returns:**
 - `ExtraConfigs`: ExtraConfigs instance, or null if not set
@@ -219,10 +224,7 @@ Get advanced configuration parameters.
 public void setExtraConfigs(ExtraConfigs extraConfigs)
 ```
 
-Set advanced configuration parameters for specialized environments.
-
-<p>Currently supports mobile environment configurations including
-device simulation, app management rules, and more.</p>
+Set Advanced configuration parameters for mobile environments.
 
 **Parameters:**
 - `extraConfigs` (ExtraConfigs): Advanced configuration parameters
@@ -233,11 +235,21 @@ device simulation, app management rules, and more.</p>
 public String getBetaNetworkId()
 ```
 
+Get the Beta network ID to bind this session to.
+
+**Returns:**
+- `String`: beta network ID, or null if not set
+
 ### setBetaNetworkId
 
 ```java
 public void setBetaNetworkId(String betaNetworkId)
 ```
+
+Set the Beta network ID to bind this session to.
+
+**Parameters:**
+- `betaNetworkId` (String): beta network ID
 
 
 

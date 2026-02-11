@@ -2,8 +2,7 @@
 
 ## Overview
 
-Context Sync provides a mechanism to persist files and directories across sessions by synchronizing local paths
-to a named context. It supports policies for upload/download behavior and selective path inclusion.
+Context Sync provides a mechanism to persist files and directories across sessions by synchronizing local paths to a named context. It supports policies for upload/download behavior and selective path inclusion.
 
 
 ## 📚 Tutorial
@@ -14,7 +13,11 @@ Learn how context synchronization works and how to persist data across sessions
 
 ## ContextSync
 
-Defines the context synchronization configuration
+Defines the context synchronization configuration.
+
+<p>This class configures how a context should be synchronized with a session,
+including the context ID, mount path, synchronization policy, and whether to
+wait for initial download completion.</p>
 
 ### Constructor
 
@@ -75,6 +78,14 @@ public void setBetaWaitForCompletion(Boolean betaWaitForCompletion)
 ## SyncPolicy
 
 Defines the synchronization policy
+
+Attributes:
+    - uploadPolicy: Defines the upload policy
+    - downloadPolicy: Defines the download policy
+    - deletePolicy: Defines the delete policy
+    - extractPolicy: Defines the extract policy
+    - recyclePolicy: Defines the recycle policy
+    - bwList: Defines the black and white list
 
 ### Constructor
 
@@ -176,6 +187,12 @@ public void setBwList(BWList bwList)
 
 Defines the upload policy for context synchronization
 
+Attributes:
+    autoUpload: Enables automatic upload
+    uploadStrategy: Defines the upload strategy
+    uploadMode: Defines the upload mode (UploadMode.FILE or UploadMode.ARCHIVE)
+    period: Upload period in seconds (default: 30)
+
 ### Constructor
 
 ```java
@@ -252,6 +269,10 @@ public void setUploadMode(UploadMode uploadMode)
 
 Defines the download policy for context synchronization
 
+Attributes:
+    autoDownload: Enables automatic download
+    downloadStrategy: Defines the download strategy
+
 ### Constructor
 
 ```java
@@ -300,6 +321,9 @@ public void setDownloadStrategy(DownloadStrategy downloadStrategy)
 
 Defines the delete policy for context synchronization
 
+Attributes:
+    syncLocalFile: Enables synchronization of local file deletions
+
 ### Constructor
 
 ```java
@@ -335,6 +359,11 @@ public void setSyncLocalFile(boolean syncLocalFile)
 ## ExtractPolicy
 
 Defines the extract policy for context synchronization
+
+Attributes:
+    extract: Enables file extraction
+    deleteSrcFile: Enables deletion of source file after extraction
+    extractCurrentFolder: Enables extraction to current folder
 
 ### Constructor
 
@@ -470,6 +499,10 @@ public void setPaths(List<String> paths)
 
 Defines the white list configuration
 
+Attributes:
+    path: Path to include in the white list
+    excludePaths: Paths to exclude from the white list
+
 ### Constructor
 
 ```java
@@ -499,6 +532,9 @@ public void setExcludePaths(List<String> excludePaths)
 ## BWList
 
 Defines the black and white list configuration
+
+Attributes:
+    whiteLists: Defines the white lists
 
 ### Constructor
 

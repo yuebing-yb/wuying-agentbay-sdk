@@ -199,6 +199,10 @@ public Config(String regionId, String endpoint, int timeoutMs)
 ```
 
 ```java
+public Config(String regionId)
+```
+
+```java
 public Config()
 ```
 

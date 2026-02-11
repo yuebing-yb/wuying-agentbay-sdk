@@ -13,13 +13,17 @@ Integrate with Alibaba Cloud OSS for file storage
 ## OSS
 
 Handles Object Storage Service operations in the AgentBay cloud environment.
-Similar to Python's Oss class.
 
 ### Constructor
 
 ```java
 public OSS(Session session)
 ```
+
+Initialize an OSS object.
+
+**Parameters:**
+- `session` (Session): The Session instance that this OSS belongs to
 
 ### Methods
 
@@ -29,18 +33,17 @@ public OSS(Session session)
 public OSSClientResult envInit(String accessKeyId, String accessKeySecret, String securityToken, String endpoint, String region)
 ```
 
-Create an OSS client with the provided credentials.
-Similar to Python's env_init method.
+Create an OSS client with the provided STS temporary credentials.
 
 **Parameters:**
-- `accessKeyId` (String): The Access Key ID for OSS authentication
-- `accessKeySecret` (String): The Access Key Secret for OSS authentication
-- `securityToken` (String): Optional security token for temporary credentials
-- `endpoint` (String): The OSS service endpoint
-- `region` (String): The OSS region
+- `accessKeyId` (String): The Access Key ID from STS temporary credentials.
+- `accessKeySecret` (String): The Access Key Secret from STS temporary credentials.
+- `securityToken` (String): Security token from STS temporary credentials. Required for security.
+- `endpoint` (String): The OSS service endpoint. If not specified, the default is used.
+- `region` (String): The OSS region. If not specified, the default is used.
 
 **Returns:**
-- `OSSClientResult`: OSSClientResult containing client configuration and error message if any
+- `OSSClientResult`: OSSClientResult containing client configuration and error message if any.
 
 ### upload
 
@@ -49,15 +52,17 @@ public OSSUploadResult upload(String bucket, String object, String path)
 ```
 
 Upload a local file or directory to OSS.
-Similar to Python's upload method.
+
+<p>Note: Before calling this API, you must first call envInit to initialize
+the OSS environment.</p>
 
 **Parameters:**
-- `bucket` (String): OSS bucket name
-- `object` (String): Object key in OSS
-- `path` (String): Local file or directory path to upload
+- `bucket` (String): OSS bucket name.
+- `object` (String): Object key in OSS.
+- `path` (String): Local file or directory path to upload.
 
 **Returns:**
-- `OSSUploadResult`: OSSUploadResult containing upload result and error message if any
+- `OSSUploadResult`: OSSUploadResult containing upload result and error message if any.
 
 ### uploadAnonymous
 
@@ -66,14 +71,13 @@ public OSSUploadResult uploadAnonymous(String url, String path)
 ```
 
 Upload a local file or directory to a URL anonymously.
-Similar to Python's upload_anonymous method.
 
 **Parameters:**
-- `url` (String): The HTTP/HTTPS URL to upload the file to
-- `path` (String): Local file or directory path to upload
+- `url` (String): The HTTP/HTTPS URL to upload the file to.
+- `path` (String): Local file or directory path to upload.
 
 **Returns:**
-- `OSSUploadResult`: OSSUploadResult containing upload result and error message if any
+- `OSSUploadResult`: OSSUploadResult containing upload result and error message if any.
 
 ### download
 
@@ -82,15 +86,17 @@ public OSSDownloadResult download(String bucket, String object, String path)
 ```
 
 Download an object from OSS to a local file or directory.
-Similar to Python's download method.
+
+<p>Note: Before calling this API, you must first call envInit to initialize
+the OSS environment.</p>
 
 **Parameters:**
-- `bucket` (String): OSS bucket name
-- `object` (String): Object key in OSS
-- `path` (String): Local file or directory path to download to
+- `bucket` (String): OSS bucket name.
+- `object` (String): Object key in OSS.
+- `path` (String): Local file or directory path to download to.
 
 **Returns:**
-- `OSSDownloadResult`: OSSDownloadResult containing download status and error message if any
+- `OSSDownloadResult`: OSSDownloadResult containing download status and error message if any.
 
 ### downloadAnonymous
 
@@ -99,14 +105,13 @@ public OSSDownloadResult downloadAnonymous(String url, String path)
 ```
 
 Download a file from a URL anonymously to a local file path.
-Similar to Python's download_anonymous method.
 
 **Parameters:**
-- `url` (String): The HTTP/HTTPS URL to download the file from
-- `path` (String): Local file or directory path to download to
+- `url` (String): The HTTP/HTTPS URL to download the file from.
+- `path` (String): Local file or directory path to download to.
 
 **Returns:**
-- `OSSDownloadResult`: OSSDownloadResult containing download status and error message if any
+- `OSSDownloadResult`: OSSDownloadResult containing download status and error message if any.
 
 ### uploadFile
 

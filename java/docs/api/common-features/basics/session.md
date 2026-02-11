@@ -13,21 +13,53 @@ Detailed tutorial on session lifecycle and management
 
 ## Session
 
-Represents a session in the AgentBay cloud environment
-
 ### Constructor
-
-```java
-public Session(String sessionId, AgentBay agentBay, SessionParams params)
-```
 
 ```java
 public Session(AgentBay agentBay, String sessionId)
 ```
 
-Constructor compatible with Python SDK style (AgentBay, sessionId)
+Creates a new Session instance.
+
+<p>Initializes all service instances (Agent, FileSystem, OSS, Code, Command, 
+ContextManager, Browser, Computer, Mobile) for this session.</p>
+
+**Parameters:**
+- `agentBay` (AgentBay): The AgentBay client instance
+- `sessionId` (String): The unique identifier for this session
+
+```java
+public Session(String sessionId, AgentBay agentBay)
+```
+
+Creates a new Session instance with alternative parameter order.
+
+<p>This constructor provides backward compatibility for code that uses
+the (String, AgentBay) parameter order.</p>
+
+**Parameters:**
+- `sessionId` (String): The unique identifier for this session
+- `agentBay` (AgentBay): The AgentBay client instance
 
 ### Methods
+
+### getWsUrl
+
+```java
+public String getWsUrl()
+```
+
+### setWsUrl
+
+```java
+public void setWsUrl(String wsUrl)
+```
+
+### getWsClient
+
+```java
+public synchronized WsClient getWsClient()
+```
 
 ### getSessionId
 
@@ -35,10 +67,10 @@ Constructor compatible with Python SDK style (AgentBay, sessionId)
 public String getSessionId()
 ```
 
-Get the session ID
+Get the session ID.
 
 **Returns:**
-- `String`: Session ID
+- `String`: The unique identifier for this session
 
 ### keepAlive
 
@@ -48,7 +80,8 @@ public OperationResult keepAlive()
 
 Refresh the backend idle timer for this session.
 
-This method calls the RefreshSessionIdleTime API.
+<p>This method calls the RefreshSessionIdleTime API to prevent the session
+from being automatically terminated due to inactivity.</p>
 
 **Returns:**
 - `OperationResult`: OperationResult containing request ID and success status
@@ -59,21 +92,10 @@ This method calls the RefreshSessionIdleTime API.
 public AgentBay getAgentBay()
 ```
 
-Get the AgentBay client
+Get the AgentBay client.
 
 **Returns:**
-- `AgentBay`: AgentBay instance
-
-### getParams
-
-```java
-public SessionParams getParams()
-```
-
-Get session parameters
-
-**Returns:**
-- `SessionParams`: SessionParams
+- `AgentBay`: The AgentBay client instance associated with this session
 
 ### getAgent
 
@@ -81,10 +103,10 @@ Get session parameters
 public Agent getAgent()
 ```
 
-Get the agent for this session
+Get the agent for this session.
 
 **Returns:**
-- `Agent`: Agent instance
+- `Agent`: The Agent instance for AI-powered automation
 
 ### getFileSystem
 
@@ -92,10 +114,10 @@ Get the agent for this session
 public FileSystem getFileSystem()
 ```
 
-Get the file system for this session
+Get the file system for this session.
 
 **Returns:**
-- `FileSystem`: FileSystem instance
+- `FileSystem`: The FileSystem instance for file operations
 
 ### fs
 
@@ -103,11 +125,25 @@ Get the file system for this session
 public FileSystem fs()
 ```
 
+Alias for fileSystem.
+
+<p>Provides a shorthand way to access the file system service.</p>
+
+**Returns:**
+- `FileSystem`: The FileSystem instance
+
 ### getFilesystem
 
 ```java
 public FileSystem getFilesystem()
 ```
+
+Alias for fileSystem.
+
+<p>Provides an alternative way to access the file system service.</p>
+
+**Returns:**
+- `FileSystem`: The FileSystem instance
 
 ### getFiles
 
@@ -115,36 +151,12 @@ public FileSystem getFilesystem()
 public FileSystem getFiles()
 ```
 
-### callMcpTool
+Alias for fileSystem.
 
-```java
-public OperationResult callMcpTool(String toolName, Object args)
-```
-
-Call an MCP tool and return structured OperationResult (similar to Python's call_mcp_tool).
-This is the preferred method for calling MCP tools as it provides unified routing logic
-(LinkUrl, VPC, API) and consistent error handling.
-
-**Parameters:**
-- `toolName` (String): Tool name
-- `args` (Object): Tool arguments
+<p>Provides a shorthand way to access the file system service.</p>
 
 **Returns:**
-- `OperationResult`: OperationResult containing parsed response with request ID, success status, and data
-
-### listTools
-
-```java
-public List<Object> listTools() throws AgentBayException
-```
-
-List available tools
-
-**Returns:**
-- `List<Object>`: List of available tools
-
-**Throws:**
-- `AgentBayException`: if the call fails
+- `FileSystem`: The FileSystem instance
 
 ### getMetrics
 
@@ -278,8 +290,18 @@ Set the file transfer context ID for this session
 public OperationResult initializeBrowser(BrowserOption option) throws AgentBayException
 ```
 
-Initialize browser instance with the given options
-This calls the AgentBay cloud service to create a browser instance
+Initializes a browser instance with the given options.
+
+This method calls the AgentBay cloud service to create a browser instance for web automation and testing. The browser is initialized with a persistent path for storing browser data.
+
+**Parameters:**
+- `option` (BrowserOption): Browser configuration options including browser type, headless mode, etc.
+
+**Returns:**
+- `OperationResult`: OperationResult containing the initialization result
+
+**Throws:**
+- `AgentBayException`: if browser initialization fails
 
 ### getApiKey
 
@@ -298,10 +320,12 @@ Get the API key for this session
 public McpToolsResult listMcpTools()
 ```
 
-List MCP tools for this session
+Lists all available MCP tools for this session.
+
+This method retrieves the list of MCP tools that can be called in this session,including their names, descriptions, input schemas, and server information.
 
 **Returns:**
-- `McpToolsResult`: McpToolsResult
+- `McpToolsResult`: McpToolsResult containing the list of available tools
 
 ### setImageId
 
@@ -309,7 +333,11 @@ List MCP tools for this session
 public void setImageId(String imageId)
 ```
 
-Set image ID for this session (placeholder method)
+Sets the image ID for this session.
+This is used to specify the base image for the session environment.
+
+**Parameters:**
+- `imageId` (String): The image ID to set
 
 ### getImageId
 
@@ -317,13 +345,22 @@ Set image ID for this session (placeholder method)
 public String getImageId()
 ```
 
+Gets the image ID for this session.
+
+**Returns:**
+- `String`: The image ID, or empty string if not set
+
 ### getEnableBrowserReplay
 
 ```java
 public Boolean getEnableBrowserReplay()
 ```
 
-Get enableBrowserReplay flag
+Gets the enableBrowserReplay flag.
+This flag determines whether browser recording is enabled for this session.
+
+**Returns:**
+- `Boolean`: true if browser replay is enabled, false otherwise
 
 ### setEnableBrowserReplay
 
@@ -331,7 +368,11 @@ Get enableBrowserReplay flag
 public void setEnableBrowserReplay(Boolean enableBrowserReplay)
 ```
 
-Set enableBrowserReplay flag
+Sets the enableBrowserReplay flag.
+This flag determines whether browser recording is enabled for this session.
+
+**Parameters:**
+- `enableBrowserReplay` (Boolean): true to enable browser replay, false to disable
 
 ### getResourceUrl
 
@@ -361,7 +402,11 @@ Set the resource URL for accessing the session
 public String getToken()
 ```
 
-Get the token for LinkUrl tool calls.
+Gets the token for LinkUrl tool calls.
+This token is used for authentication when calling MCP tools via the LinkUrl route.
+
+**Returns:**
+- `String`: The authentication token
 
 ### setToken
 
@@ -369,7 +414,11 @@ Get the token for LinkUrl tool calls.
 public void setToken(String token)
 ```
 
-Set the token for LinkUrl tool calls.
+Sets the token for LinkUrl tool calls.
+This token is used for authentication when calling MCP tools via the LinkUrl route.
+
+**Parameters:**
+- `token` (String): The authentication token to set
 
 ### getLinkUrl
 
@@ -377,7 +426,11 @@ Set the token for LinkUrl tool calls.
 public String getLinkUrl()
 ```
 
-Get the LinkUrl for direct tool calls.
+Gets the LinkUrl for direct tool calls.
+This URL is used for calling MCP tools via the LinkUrl route in VPC environments.
+
+**Returns:**
+- `String`: The LinkUrl, or empty string if not set
 
 ### setLinkUrl
 
@@ -385,15 +438,11 @@ Get the LinkUrl for direct tool calls.
 public void setLinkUrl(String linkUrl)
 ```
 
-Set the LinkUrl for direct tool calls.
+Sets the LinkUrl for direct tool calls.
+This URL is used for calling MCP tools via the LinkUrl route in VPC environments.
 
-### updateMcpTools
-
-```java
-public void updateMcpTools(String dataJson)
-```
-
-Update MCP tools for this session
+**Parameters:**
+- `linkUrl` (String): The LinkUrl to set
 
 ### getMcpTools
 
@@ -401,17 +450,37 @@ Update MCP tools for this session
 public List<McpTool> getMcpTools()
 ```
 
+Gets the list of MCP tools available for this session.
+
+**Returns:**
+- `List<McpTool>`: List of McpTool instances
+
 ### setMcpTools
 
 ```java
 public void setMcpTools(List<McpTool> mcpTools)
 ```
 
+Sets the list of MCP tools for this session.
+
+**Parameters:**
+- `mcpTools` (List<McpTool>): The list of McpTool instances to set
+
 ### getMcpServerForTool
 
 ```java
 public String getMcpServerForTool(String toolName)
 ```
+
+Gets the MCP server name for a specific tool.
+
+This method searches through the available MCP tools to find the server that provides the specified tool.
+
+**Parameters:**
+- `toolName` (String): The name of the tool to look up
+
+**Returns:**
+- `String`: The server name, or empty string if not found
 
 ### getLink
 
@@ -423,49 +492,19 @@ public OperationResult getLink(String protocolType, Integer port) throws AgentBa
 public OperationResult getLink() throws AgentBayException
 ```
 
-Get a link associated with the current session
+Gets a connection link for the current session with specified parameters.
+
+This method generates a connection URL that can be used to access the session via the specified protocol and port.
 
 **Parameters:**
-- `protocolType` (String): The protocol type to use for the link (optional)
-- `port` (Integer): The port to use for the link (optional)
+- `protocolType` (String): The protocol type to use for the link (e.g., "https")
+- `port` (Integer): The port number to use for the connection
 
 **Returns:**
-- `OperationResult`: OperationResult containing the link URL
+- `OperationResult`: OperationResult containing the connection link URL
 
 **Throws:**
 - `AgentBayException`: if the request fails
-
-### dumpState
-
-```java
-public String dumpState() throws AgentBayException
-```
-
-Dump session state to a JSON string for persistence
-
-**Returns:**
-- `String`: JSON string containing session state
-
-**Throws:**
-- `AgentBayException`: if serialization fails
-
-### restoreState
-
-```java
-public static Session restoreState(AgentBay agentBay, String stateJson) throws AgentBayException
-```
-
-Restore session from a JSON state string
-
-**Parameters:**
-- `agentBay` (AgentBay): AgentBay client instance
-- `stateJson` (String): JSON string containing session state
-
-**Returns:**
-- `Session`: Restored Session object
-
-**Throws:**
-- `AgentBayException`: if deserialization or restoration fails
 
 ### delete
 
@@ -477,13 +516,17 @@ public com.aliyun.agentbay.model.DeleteResult delete()
 public com.aliyun.agentbay.model.DeleteResult delete(boolean syncContext)
 ```
 
-Delete this session with optional sync context
+Deletes this session with optional context synchronization.
+
+This method releases the cloud resources associated with this session.
+If syncContext is true, it will first synchronize the context (upload files)
+before deleting the session, waiting for all uploads to complete.
 
 **Parameters:**
-- `syncContext` (boolean): Whether to sync context before deletion
+- `syncContext` (boolean): Whether to synchronize context before deletion
 
 **Returns:**
-- `com.aliyun.agentbay.model.DeleteResult`: DeleteResult
+- `com.aliyun.agentbay.model.DeleteResult`: DeleteResult containing the deletion result
 
 ### setLabels
 
@@ -491,7 +534,10 @@ Delete this session with optional sync context
 public OperationResult setLabels(Map<String, String> labels) throws AgentBayException
 ```
 
-Set labels for this session
+Sets labels for this session.
+
+Labels are key-value pairs that can be used to organize and filter sessions.
+All keys and values must be non-empty strings.
 
 **Parameters:**
 - `labels` (Map<String,String>): Map of label key-value pairs to set
@@ -500,7 +546,8 @@ Set labels for this session
 - `OperationResult`: OperationResult indicating success or failure
 
 **Throws:**
-- `AgentBayException`: if the API call fails
+- `AgentBayException`: if the API call fails or validation fails
+- `IllegalArgumentException`: if labels are null or contain invalid keys/values
 
 ### getLabels
 
@@ -508,10 +555,12 @@ Set labels for this session
 public OperationResult getLabels() throws AgentBayException
 ```
 
-Get labels for this session
+Gets the labels for this session.
+
+This method retrieves all labels that have been set for this session.
 
 **Returns:**
-- `OperationResult`: OperationResult containing the labels map in the data field
+- `OperationResult`: OperationResult containing the labels map as JSON string in the data field
 
 **Throws:**
 - `AgentBayException`: if the API call fails

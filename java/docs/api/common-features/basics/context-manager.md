@@ -30,15 +30,15 @@ public ContextInfoResult info()
 public ContextInfoResult info(String contextId, String path, String taskType)
 ```
 
-Get context info with optional filters
+Get information about context synchronization status.
 
 **Parameters:**
-- `contextId` (String): Context ID filter (optional)
-- `path` (String): Path filter (optional)
-- `taskType` (String): Task type filter (optional)
+- `contextId` (String): Optional ID of the context to get information for
+- `path` (String): Optional path where the context is mounted
+- `taskType` (String): Optional type of task to get information for (e.g., "upload", "download")
 
 **Returns:**
-- `ContextInfoResult`: ContextInfoResult containing status data
+- `ContextInfoResult`: ContextInfoResult Result object containing context status data and request ID
 
 ### sync
 
@@ -62,16 +62,16 @@ public ContextSyncResult sync(String contextId, String path, String mode, Consum
 public ContextSyncResult sync(String contextId, String path, String mode, Consumer<Boolean> callback, int maxRetries, int retryInterval)
 ```
 
-Sync context data with optional parameters and callback mode (non-blocking)
-Returns immediately and calls the callback when sync completes
+Sync context data with optional parameters and callback mode (non-blocking).
+Returns immediately and calls the callback when sync completes.
 
 **Parameters:**
-- `contextId` (String): Context ID (optional)
-- `path` (String): Path (optional)
-- `mode` (String): Sync mode (optional)
+- `contextId` (String): Optional ID of the context to synchronize
+- `path` (String): Optional path where the context should be mounted
+- `mode` (String): Optional synchronization mode (e.g., "upload", "download")
 - `callback` (Consumer<Boolean>): Callback function that receives success status (true if successful, false otherwise)
 - `maxRetries` (int): Maximum number of retries for polling completion status (default: 150)
-- `retryInterval` (int): Milliseconds to wait between retries (default: 2000)
+- `retryInterval` (int): Milliseconds to wait between retries (default: 1500)
 
 **Returns:**
 - `ContextSyncResult`: ContextSyncResult indicating initial sync trigger success/failure

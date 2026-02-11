@@ -2,8 +2,7 @@
 
 ## Overview
 
-The Mobile module provides mobile device automation capabilities including touch gestures,
-text input, app management, and screenshot capture. It supports Android device automation.
+The Mobile module provides mobile device automation capabilities including touch gestures,text input, app management, and screenshot capture. It supports Android device automation.
 
 
 ## 📚 Tutorial
@@ -19,8 +18,7 @@ Automate mobile applications
 ## Mobile
 
 Mobile module for mobile device UI automation and configuration.
-Handles touch operations, UI element interactions, application management, screenshot capabilities,
-and mobile environment configuration operations.
+Handles touch operations, UI element interactions, application management, screenshot capabilities,and mobile environment configuration operations.
 
 ### Constructor
 
@@ -43,7 +41,7 @@ Taps on the mobile screen at the specified coordinates.
 - `y` (int): Y coordinate in pixels
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Object with success status and error message if any
 
 ### swipe
 
@@ -65,7 +63,7 @@ Performs a swipe gesture from one point to another.
 - `durationMs` (int): Duration of the swipe in milliseconds. Defaults to 300
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
 
 ### inputText
 
@@ -79,7 +77,7 @@ Inputs text into the active field.
 - `text` (String): The text to input
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
 
 ### sendKey
 
@@ -91,15 +89,15 @@ Sends a key press event.
 
 **Parameters:**
 - `key` (int): The key code to send. Supported key codes:
-           - 3: HOME
-           - 4: BACK
-           - 24: VOLUME_UP
-           - 25: VOLUME_DOWN
-           - 26: POWER
-           - 82: MENU
+              - 3: HOME
+              - 4: BACK
+              - 24: VOLUME_UP
+              - 25: VOLUME_DOWN
+              - 26: POWER
+              - 82: MENU
 
 **Returns:**
-- `BoolResult`: BoolResult containing success status and error message if any
+- `BoolResult`: BoolResult Result object containing success status and error message if any
 
 ### getClickableUiElements
 
@@ -118,6 +116,9 @@ Retrieves all clickable UI elements within the specified timeout.
 
 **Returns:**
 - `UIElementListResult`: UIElementListResult containing clickable UI elements and error message if any
+
+<p><strong>Note</strong>: Each returned element may include from backend which is not stable in type.
+Use (dict with left/top/right/bottom) instead.</p>
 
 ### getAllUiElements
 
@@ -140,8 +141,8 @@ Supported formats:
 - "xml": return raw XML and an empty elements list
 
 **Parameters:**
-- `timeoutMs` (int): Timeout in milliseconds
-- `format` (String): Output format of the underlying MCP tool ("json" or "xml")
+- `timeoutMs` (int): Timeout in milliseconds. Defaults to 2000.
+- `format` (String): Output format of the underlying MCP tool ("json" or "xml"), default to "json"
 
 **Returns:**
 - `UIElementListResult`: UIElementListResult containing UI elements or raw XML
@@ -221,10 +222,21 @@ Takes a screenshot of the current screen.
 public ScreenshotBytesResult betaTakeScreenshot()
 ```
 
-Captures the current screen as a PNG image and returns raw image bytes.
+```java
+public ScreenshotBytesResult betaTakeScreenshot(String format)
+```
+
+Capture the current screen and return raw image bytes (beta).
+
+Supported formats:
+- "png"
+- "jpeg" (or "jpg")
+
+**Parameters:**
+- `format` (String): Output image format ("png" or "jpeg")
 
 **Returns:**
-- `ScreenshotBytesResult`: ScreenshotBytesResult containing PNG bytes and metadata (`type`, `mimeType`, `width`, `height`) and error message if any
+- `ScreenshotBytesResult`: ScreenshotBytesResult containing image bytes and error message if any
 
 ### betaTakeLongScreenshot
 
@@ -240,7 +252,7 @@ public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String forma
 public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens)
 ```
 
-Captures a long screenshot and returns raw image bytes.
+Takes a long screenshot (scroll + stitch) of the mobile device (beta).
 
 Supported formats:
 - "png"
@@ -252,7 +264,7 @@ Supported formats:
 - `quality` (Integer): JPEG quality (range: [1, 100]). Only used for jpeg.
 
 **Returns:**
-- `ScreenshotBytesResult`: ScreenshotBytesResult containing image bytes and metadata (`type`, `mimeType`, `width`, `height`) and error message if any
+- `ScreenshotBytesResult`: ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata including `width` and `height` when provided by the backend.
 
 ### configure
 
@@ -261,11 +273,14 @@ public void configure(MobileExtraConfig mobileConfig)
 ```
 
 Configure mobile settings from MobileExtraConfig.
-This method is typically called automatically during session creation when
-MobileExtraConfig is provided in CreateSessionParams.
+This method is typically called automatically during session creation when MobileExtraConfig is provided in CreateSessionParams. It can also be called manually to reconfigure mobile settings during a session.
 
 **Parameters:**
-- `mobileConfig` (MobileExtraConfig): Mobile configuration object
+- `mobileConfig` (MobileExtraConfig): mobile_config (MobileExtraConfig): Mobile configuration object with settings for:
+                - lock_resolution (bool): Whether to lock device resolution
+                - app_manager_rule (AppManagerRule): App whitelist/blacklist rules
+                - hide_navigation_bar (bool): Whether to hide navigation bar
+                - uninstall_blacklist (List[str]): Apps protected from uninstallation
 
 ### setResolutionLock
 
@@ -329,12 +344,17 @@ public AdbUrlResult getAdbUrl(String adbkeyPub)
 ```
 
 Retrieves the ADB connection URL for the mobile environment.
+<p>
+This method is only supported in mobile environments (mobile_latest image).
+It uses the provided ADB public key to establish the connection and returns
+the ADB connect URL.
+</p>
 
 **Parameters:**
 - `adbkeyPub` (String): The ADB public key for connection authentication
 
 **Returns:**
-- `AdbUrlResult`: AdbUrlResult containing the ADB connection URL and request ID
+- `AdbUrlResult`: AdbUrlResult containing the ADB connection URL and request ID.Returns error if not in mobile environment.
 
 
 
