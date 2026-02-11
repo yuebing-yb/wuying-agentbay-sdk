@@ -134,7 +134,7 @@ Set environment variables:
 Then run:
 
 ```bash
-python cookbook/skills/agentscope-official-skills-sandbox/python/main.py
+python cookbook/skills/agentscope-official-skills-sandbox/main.py
 ```
 
 For scenario configuration and details, see:

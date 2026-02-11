@@ -21,6 +21,7 @@ class OfficialSkillScenario:
     user_prompt: str
     default_report_path: str
 
+
 def _scenario(key: str, user_prompt: str, default_report_path: str) -> OfficialSkillScenario:
     return OfficialSkillScenario(
         key=key,
@@ -60,7 +61,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "- 在 `Top 5` 部分，每条必须用以下字段（英文标签）描述：\n"
             "  - **Issue** / **Impact** / **Evidence** / **Fix** / **Priority**\n"
             "- 报告必须包含 `## References Used`：列出你参考过的资料（含文件路径或 URL），并各引用一句原文\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/seo_audit_report.md",
     )
@@ -87,7 +88,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "  - Alternatives（Headline 与 CTA 各 2-3 个备选）\n"
             "  - Meta Content（page title + meta description）\n"
             "- 报告必须包含 `## References Used`：列出你参考过的资料（含文件路径或 URL），并各引用一句原文\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/copywriting_report.md",
     )
@@ -112,7 +113,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "  - Test Ideas（至少 5 条，写成假设 + 预期影响）\n"
             "  - Copy Alternatives（Headline 与 CTA 各 2-3 个）\n"
             "- 报告必须包含 `## References Used`：列出你参考过的资料（含文件路径或 URL），并各引用一句原文\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/page_cro_report.md",
     )
@@ -142,7 +143,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "  - Risks & mitigations\n"
             "  - Next steps（2 周内可执行）\n"
             "- 报告必须包含 `## References Used`：列出你参考过的资料（含文件路径或 URL），并各引用一句原文\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/pricing_strategy_report.md",
     )
@@ -168,7 +169,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "  - Priority Topics：至少 12 个条目，注明 searchable/shareable/both、buyer stage\n"
             "  - Topic Cluster Map：结构化表示\n"
             "  - 30-day execution plan：按周\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/content_strategy_report.md",
     )
@@ -194,7 +195,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "  - `## Email 5`\n"
             "  - `## Metrics Plan`\n"
             "- 每封邮件部分必须包含以下字段（英文标签原样）：`Subject` / `Preview` / `Body` / `CTA` / `Send timing`\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/email_sequence_report.md",
     )
@@ -212,7 +213,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "交付物：\n"
             "- 生成一份 Markdown 报告，落盘到指定报告路径\n"
             "- 报告必须包含：Overview（Tools: GA4, GTM）/ Events 表格（至少 12 条）/ Custom Dimensions 表格（至少 6 条）/ Conversions 表格（至少 3 条）/ UTM 命名约定\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/analytics_tracking_report.md",
     )
@@ -231,7 +232,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "交付物：\n"
             "- 生成一份 Markdown 方案，落盘到指定报告路径\n"
             "- 报告必须包含：The ONE Job / MVP Scope（Must/Should/Nice-to-have）/ Complete Experience / AI-first Considerations / Risks & mitigations / 2-week plan\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/zero_to_launch_report.md",
     )
@@ -256,7 +257,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "  - `## Failure modes & UX`\n"
             "  - `## Evals & observability`\n"
             "  - `## Data flywheel`\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/ai_product_strategy_report.md",
     )
@@ -275,7 +276,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "交付物：\n"
             "- 生成一份 Markdown 报告，落盘到指定报告路径\n"
             "- 报告必须包含：Problem framing / Human-AI boundary / Build vs Buy / Architecture options / Failure modes & UX / Evals & observability / Data flywheel\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/product_strategy_report.md",
     )
@@ -289,7 +290,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "交付物：\n"
             "- 生成一份 Markdown 文档，落盘到指定报告路径\n"
             "- 文档必须包含：Red-Green-Refactor 的操作步骤 / The Iron Law（用原文引用）/ 什么时候例外、例外如何审批 / 常见借口与反驳（至少 6 条）/ 一个最小示例 / Verification checklist\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/tdd_sop.md",
     )
@@ -302,7 +303,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "交付物：\n"
             "- 生成一份 Markdown 文档，落盘到指定报告路径\n"
             "- 文档必须包含：典型场景 / 目录选择规则 / 安全校验步骤 / 创建-进入-验证-清理 的命令序列 / 常见错误与排查\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/git_worktrees_guide.md",
     )
@@ -316,7 +317,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "交付物：\n"
             "- 生成一份 Markdown 报告，落盘到指定报告路径\n"
             "- 报告必须包含：边界与分层（domain/application/infrastructure）/ 模块命名建议 / 关键用例（至少 3 个）/ 依赖方向与接口 / 反模式清单（至少 6 条）/ “Library-first”评估步骤\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/software_architecture_review.md",
     )
@@ -333,7 +334,7 @@ def _build_scenarios() -> Dict[str, OfficialSkillScenario]:
             "\n"
             "交付物：\n"
             "- 生成一份 Markdown 报告，落盘到指定报告路径\n"
-            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件绝对路径\n"
+            "- 最后请给出中文摘要：至少引用报告原文两处，并给出报告文件的绝对路径\n"
         ),
         default_report_path="/tmp/official_skill_report.md",
     )

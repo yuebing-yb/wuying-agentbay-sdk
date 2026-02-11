@@ -220,7 +220,6 @@ async def main() -> None:
         missing: List[str] = []
         if expects_report and not content:
             missing.append(f"Report file `{report_path}` is empty or missing.")
-
         if not any(p.endswith("/SKILL.md") for p in toolset.read_paths):
             missing.append("No SKILL.md was read via tools.")
         if expects_report and not toolset.report_opened:
@@ -246,16 +245,15 @@ async def main() -> None:
     session = toolset.session
     if session is None:
         raise RuntimeError("Session is missing after agent run")
+    v = await session.file_system.read_file(report_path, format="text")
+    report_content = (v.content or "").strip() if v.success else ""
+    if report_content:
+        print("========== [Cookbook] Report Preview ==========")
+        print(_preview(report_content, limit=1200))
+        print("===============================================")
     else:
-        v = await session.file_system.read_file(report_path, format="text")
-        report_content = (v.content or "").strip() if v.success else ""
-        if report_content:
-            print("========== [Cookbook] Report Preview ==========")
-            print(_preview(report_content, limit=1200))
-            print("===============================================")
-        else:
-            raise RuntimeError(v.error_message or f"Report not found: {report_path}")
-        await session.delete()
+        raise RuntimeError(v.error_message or f"Report not found: {report_path}")
+    await session.delete()
 
 
 if __name__ == "__main__":

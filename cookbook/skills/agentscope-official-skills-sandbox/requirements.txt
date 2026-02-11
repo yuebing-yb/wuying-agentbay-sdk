@@ -1,0 +1,2 @@
+wuying-agentbay-sdk>=0.15.0
+agentscope>=0.2.0

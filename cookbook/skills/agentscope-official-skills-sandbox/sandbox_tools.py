@@ -13,7 +13,7 @@ from __future__ import annotations
 import shlex
 from dataclasses import dataclass
 from dataclasses import field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from agentscope.message import TextBlock
 from agentscope.tool import ToolResponse
@@ -140,7 +140,6 @@ class SandboxToolset:
                 in_double = not in_double
                 i += 1
                 continue
-
             if not in_single and not in_double and ch == ">":
                 j = i + 1
                 if j < len(s) and s[j] == ">":
