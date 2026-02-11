@@ -86,6 +86,7 @@ type AgentBay struct {
 	Context        *ContextService
 	MobileSimulate *MobileSimulateService
 	BetaNetwork    *BetaNetworkService
+	BetaSkills     *BetaSkillsService
 	config         Config
 }
 
@@ -132,12 +133,14 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 		Client:      client,
 		Context:     nil, // Will be initialized after creation
 		BetaNetwork: nil, // Will be initialized after creation
+		BetaSkills:  nil, // Will be initialized after creation
 		config:      config,
 	}
 
 	// Initialize context service
 	agentBay.Context = &ContextService{AgentBay: agentBay}
 	agentBay.BetaNetwork = &BetaNetworkService{AgentBay: agentBay}
+	agentBay.BetaSkills = &BetaSkillsService{AgentBay: agentBay}
 
 	return agentBay, nil
 }

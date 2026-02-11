@@ -21,7 +21,7 @@ import java.util.jar.Attributes;
  * 4. Default version constant
  */
 public class Version {
-    private static final String DEFAULT_VERSION = "0.15.0";
+    private static final String DEFAULT_VERSION = "0.15.1";
     private static final String VERSION_PROPERTIES_FILE = "/META-INF/maven/com.aliyun/agentbay-sdk/pom.properties";
     
     private static final String VERSION = getVersion();
