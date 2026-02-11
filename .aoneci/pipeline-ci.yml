@@ -131,7 +131,7 @@ jobs:
           cd typescript
           # Set tnpm timeout and retry strategy
           # Only install lint-related packages for better performance
-          tnpm install
+          tnpm ci
           # Run lint using fallback script
           tnpm run lint
       
