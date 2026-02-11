@@ -243,6 +243,24 @@ class WsClient:
 
         return WsStreamHandle(self, pending)
 
+    async def send_message(
+        self,
+        *,
+        target: str,
+        data: dict[str, Any],
+    ) -> None:
+        await self._ensure_open()
+
+        try:
+            invocation_id = _new_invocation_id()
+            await self._write_business(
+                invocation_id=invocation_id,
+                target=target,
+                data=data,
+            )
+        except Exception as e:
+            _logger.warning(f"Failed to send message: {e}")
+
     async def _ensure_open(self) -> None:
         async with self._connect_lock:
             if self._ws is not None and self._recv_task is not None:

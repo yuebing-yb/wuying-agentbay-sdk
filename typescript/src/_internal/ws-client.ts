@@ -137,6 +137,32 @@ export class WsClient {
     }
   }
 
+  /**
+   * Send a message to the target without expecting a response.
+   * Used for one-way notifications like browser callback messages.
+   * 
+   * @param target - The target service identifier
+   * @param data - The message data to send
+   */
+  async sendMessage(target: string, data: Record<string, any>): Promise<void> {
+    await this.connect();
+    const ws = this.ws;
+    if (!ws) {
+      throw new Error("WS is not connected");
+    }
+
+    const invocationId = newInvocationId();
+    const payload = {
+      invocationId,
+      source: "SDK",
+      target,
+      data,
+    };
+
+    this.logFrame(">>", payload);
+    ws.send(safeStringify(payload));
+  }
+
   async callStream(params: {
     target: string;
     data: Record<string, any>;

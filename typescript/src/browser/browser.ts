@@ -28,6 +28,85 @@ export interface BrowserScreen {
   height: number;
 }
 
+/**
+ * Browser notify message for SDK and sandbox communication, like call-for-user messages.
+ * 
+ * @example
+ * ```typescript
+ * const notifyMsg = new BrowserNotifyMessage(
+ *   'call-for-user',
+ *   3,
+ *   201,
+ *   'captcha solving start',
+ *   'pause',
+ *   { max_wait_time: 30 }
+ * );
+ * ```
+ */
+export class BrowserNotifyMessage {
+  type?: string;
+  id?: number;
+  code?: number;
+  message?: string;
+  action?: string;
+  extraParams?: Record<string, any>;
+
+  constructor(
+    type?: string,
+    id?: number,
+    code?: number,
+    message?: string,
+    action?: string,
+    extraParams?: Record<string, any>
+  ) {
+    this.type = type;
+    this.id = id;
+    this.code = code;
+    this.message = message;
+    this.action = action;
+    this.extraParams = extraParams || {};
+  }
+
+  /**
+   * Convert BrowserNotifyMessage to dictionary format.
+   */
+  toMap(): Record<string, any> {
+    const notifyMap: Record<string, any> = {};
+    
+    if (this.type !== undefined) notifyMap.type = this.type;
+    if (this.id !== undefined) notifyMap.id = this.id;
+    if (this.code !== undefined) notifyMap.code = this.code;
+    if (this.message !== undefined) notifyMap.message = this.message;
+    if (this.action !== undefined) notifyMap.action = this.action;
+    if (this.extraParams && Object.keys(this.extraParams).length > 0) {
+      notifyMap.extraParams = this.extraParams;
+    }
+    
+    return notifyMap;
+  }
+
+  /**
+   * Create BrowserNotifyMessage from dictionary format.
+   */
+  static fromMap(m?: Record<string, any>): BrowserNotifyMessage | null {
+    if (!m) return null;
+    
+    return new BrowserNotifyMessage(
+      m.type,
+      m.id,
+      m.code,
+      m.message,
+      m.action,
+      m.extraParams
+    );
+  }
+}
+
+/**
+ * Type alias for browser callback function
+ */
+export type BrowserCallback = (notifyMsg: BrowserNotifyMessage) => void;
+
 export interface BrowserFingerprint {
   devices?: Array<'desktop' | 'mobile'>;
   operatingSystems?: Array<'windows' | 'macos' | 'linux' | 'android' | 'ios'>;
@@ -484,6 +563,10 @@ export class Browser {
   private _initialized = false;
   private _option: BrowserOptionClass | null = null;
   public operator: BrowserOperator;
+  
+  // Internal callback management
+  private _userCallback: BrowserCallback | null = null;
+  private _wsCallbackRegistered = false;
 
   constructor(session: Session) {
     this.session = session;
@@ -849,6 +932,256 @@ export class Browser {
         break;
       }
       lastHeight = newHeight;
+    }
+  }
+
+  /**
+   * Internal WebSocket callback handler.
+   * @private
+   */
+  private _internalWsCallback(payload: Record<string, any>): void {
+    logDebug(`Browser layer received notification: ${JSON.stringify(payload)}`);
+
+    // Basic validation: data field should exist and not be None
+    if (!payload.data) {
+      logDebug(`Ignoring notification with empty data: ${JSON.stringify(payload)}`);
+      return;
+    }
+
+    // Dispatch to user callback if set
+    if (this._userCallback) {
+      try {
+        const notifyMsg = BrowserNotifyMessage.fromMap(payload.data);
+        if (notifyMsg) {
+          this._userCallback(notifyMsg);
+        }
+      } catch (error) {
+        logError(`Error when calling user callback: ${error}`);
+      }
+    }
+  }
+
+  /**
+   * Register a callback function to handle browser-related push notifications from sandbox.
+   * 
+   * @param callback - Callback function that receives a BrowserNotifyMessage object containing
+   *                   notification details such as type, code, message, action, and extra_params.
+   * @returns Promise<boolean> - True if the callback was successfully registered.
+   * 
+   * @example
+   * ```typescript
+   * function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+   *   console.log(`Type: ${notifyMsg.type}`);
+   *   console.log(`Code: ${notifyMsg.code}`);
+   *   console.log(`Message: ${notifyMsg.message}`);
+   *   console.log(`Action: ${notifyMsg.action}`);
+   *   console.log(`Extra params: ${JSON.stringify(notifyMsg.extraParams)}`);
+   * }
+   * 
+   * const createResult = await agentBay.create();
+   * const session = createResult.session;
+   * 
+   * // Initialize browser
+   * await session.browser.initialize();
+   * 
+   * // Register callback
+   * const success = await session.browser.registerCallback(onBrowserCallback);
+   * 
+   * // ... do work ...
+   * 
+   * // Unregister when done
+   * await session.browser.unregisterCallback();
+   * await session.delete();
+   * ```
+   */
+  async registerCallback(callback: BrowserCallback): Promise<boolean> {
+    try {
+      // Set user callback (replaces any existing callback)
+      this._userCallback = callback;
+      logInfo("Set user callback");
+
+      // Register internal callback to ws_client only once
+      if (!this._wsCallbackRegistered) {
+        const wsClient = await this.session.getWsClient();
+        await wsClient.connect();
+        wsClient.registerCallback("wuying_cdp_mcp_server", this._internalWsCallback.bind(this));
+        this._wsCallbackRegistered = true;
+        logDebug("Registered internal ws_callback to ws_client");
+      }
+
+      return true;
+    } catch (error) {
+      logError(`Failed to register user callback: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Unregister the previously registered callback function.
+   * 
+   * @example
+   * ```typescript
+   * function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+   *   console.log(`Notification - Type: ${notifyMsg.type}, Message: ${notifyMsg.message}`);
+   * }
+   * 
+   * const createResult = await agentBay.create();
+   * const session = createResult.session;
+   * 
+   * await session.browser.initialize();
+   * 
+   * await session.browser.registerCallback(onBrowserCallback);
+   * 
+   * // ... do work ...
+   * 
+   * // Unregister callback
+   * await session.browser.unregisterCallback();
+   * 
+   * await session.delete();
+   * ```
+   */
+  async unregisterCallback(): Promise<void> {
+    try {
+      // Clear user callback
+      this._userCallback = null;
+      logInfo("Cleared user callback");
+
+      // Unregister from ws_client
+      if (this._wsCallbackRegistered) {
+        const wsClient = await this.session.getWsClient();
+        wsClient.unregisterCallback("wuying_cdp_mcp_server", this._internalWsCallback.bind(this));
+        await wsClient.close();
+        this._wsCallbackRegistered = false;
+        logDebug("Unregistered internal ws_callback from ws_client");
+      }
+    } catch (error) {
+      logError(`Failed to unregister user callback: ${error}`);
+    }
+  }
+
+  /**
+   * Send a BrowserNotifyMessage to sandbox.
+   * 
+   * @param notifyMessage - The notify message to send.
+   * @returns Promise<boolean> - True if the notify message was successfully sent, False otherwise.
+   * 
+   * @example
+   * ```typescript
+   * function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+   *   console.log(`Type: ${notifyMsg.type}`);
+   *   console.log(`Code: ${notifyMsg.code}`);
+   *   console.log(`Message: ${notifyMsg.message}`);
+   *   console.log(`Action: ${notifyMsg.action}`);
+   *   console.log(`Extra params: ${JSON.stringify(notifyMsg.extraParams)}`);
+   * }
+   * 
+   * const createResult = await agentBay.create();
+   * const session = createResult.session;
+   * 
+   * // Initialize browser
+   * await session.browser.initialize();
+   * 
+   * // Register callback
+   * const success = await session.browser.registerCallback(onBrowserCallback);
+   * 
+   * // ... do work ...
+   * 
+   * // Send notify message
+   * const notifyMessage = new BrowserNotifyMessage(
+   *   'call-for-user',
+   *   3,
+   *   199,
+   *   'user handle done',
+   *   'takeoverdone',
+   *   {}
+   * );
+   * await session.browser.sendNotifyMessage(notifyMessage);
+   * 
+   * // Unregister when done
+   * await session.browser.unregisterCallback();
+   * await session.delete();
+   * ```
+   */
+  async sendNotifyMessage(notifyMessage: BrowserNotifyMessage): Promise<boolean> {
+    try {
+      const wsClient = await this.session.getWsClient();
+
+      // Send notify message through ws_client
+      await wsClient.sendMessage(
+        "wuying_cdp_mcp_server",
+        notifyMessage.toMap()
+      );
+      logInfo(`Successfully sent browser notify message, notify_message: ${JSON.stringify(notifyMessage.toMap())}`);
+      return true;
+    } catch (error) {
+      logError(`Failed to send notify message: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Send a takeoverdone notify message to sandbox.
+   * 
+   * @param notifyId - The notification ID associated with the takeover request message.
+   * @returns Promise<boolean> - True if the takeoverdone notify message was successfully sent, False otherwise.
+   * 
+   * @example
+   * ```typescript
+   * function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+   *   // receive call-for-user "takeover" action
+   *   if (notifyMsg.action === 'takeover') {
+   *     const takeoverNotifyId = notifyMsg.id;
+   * 
+   *     // ... do work in other thread...
+   *     // send takeoverdone notify message
+   *     await session.browser.sendTakeoverDone(takeoverNotifyId);
+   *     // ... end...
+   *   }
+   * }
+   * 
+   * const createResult = await agentBay.create();
+   * const session = createResult.session;
+   * 
+   * // Initialize browser
+   * await session.browser.initialize();
+   * 
+   * // Register callback
+   * const success = await session.browser.registerCallback(onBrowserCallback);
+   * 
+   * // ... do work ...
+   * 
+   * // Unregister when done
+   * await session.browser.unregisterCallback();
+   * await session.delete();
+   * ```
+   */
+  async sendTakeoverDone(notifyId: number): Promise<boolean> {
+    try {
+      // Get ws_client
+      const wsClient = await this.session.getWsClient();
+
+      // Build takeoverdone notify message
+      const notifyMessage = new BrowserNotifyMessage(
+        'call-for-user',
+        notifyId,
+        199,
+        'user handle done',
+        'takeoverdone',
+        {}
+      );
+      const messageData = notifyMessage.toMap();
+
+      // Send message through ws_client
+      await wsClient.sendMessage(
+        "wuying_cdp_mcp_server",
+        messageData
+      );
+
+      logInfo(`Successfully sent browser takeoverdone notify message, notify_id: ${notifyId}`);
+      return true;
+    } catch (error) {
+      logError(`Failed to send browser notify message: ${error}`);
+      return false;
     }
   }
 }
