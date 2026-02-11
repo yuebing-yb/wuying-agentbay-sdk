@@ -26,7 +26,7 @@ from official_skill_user_scenarios import get_scenario
 from sandbox_tools import SandboxToolset, register_tools
 
 
-DEFAULT_IMAGE_ID = "imgc-0ab5ta4n50mtv1sut"
+DEFAULT_IMAGE_ID = "linux_latest"
 SKILLS_ROOT = "/home/wuying/skills"
 MODEL_NAME = "qwen3-max"
 MAX_SHELL_CALLS = 24
