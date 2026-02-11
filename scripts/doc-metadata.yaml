@@ -292,8 +292,7 @@ modules:
       description: Learn how context synchronization works and how to persist data across sessions
 
     overview: |
-      Context Sync provides a mechanism to persist files and directories across sessions by synchronizing local paths
-      to a named context. It supports policies for upload/download behavior and selective path inclusion.
+      Context Sync provides a mechanism to persist files and directories across sessions by synchronizing local paths to a named context. It supports policies for upload/download behavior and selective path inclusion.
 
     related_resources:
       - name: Context Manager API Reference
@@ -421,8 +420,7 @@ modules:
       description: Complete guide to browser automation
 
     overview: |
-      The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
-      screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+      The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
 
     requirements:
       - "Requires `browser_latest` image for browser automation features"
@@ -509,8 +507,7 @@ modules:
       description: Automate desktop applications
 
     overview: |
-      The Computer module provides comprehensive desktop automation capabilities including mouse operations,
-      keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
+      The Computer module provides comprehensive desktop automation capabilities including mouse operations,keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
 
     requirements:
       - "Requires `windows_latest` image for computer use features"
@@ -553,8 +550,7 @@ modules:
       description: Automate mobile applications
 
     overview: |
-      The Mobile module provides mobile device automation capabilities including touch gestures,
-      text input, app management, and screenshot capture. It supports Android device automation.
+      The Mobile module provides mobile device automation capabilities including touch gestures,text input, app management, and screenshot capture. It supports Android device automation.
 
     requirements:
       - "Requires `mobile_latest` image for mobile automation features"
@@ -588,8 +584,7 @@ modules:
       description: Use mobile simulate to emulate device properties and persist them with context sync
 
     overview: |
-      Mobile Simulate helps you apply and persist device simulation settings (properties, sensors, packages, services)
-      by storing a device profile in a context and applying it during session creation.
+      Mobile Simulate helps you apply and persist device simulation settings (properties, sensors, packages, services) by storing a device profile in a context and applying it during session creation.
 
     related_resources:
       - name: Mobile API Reference
