@@ -1579,6 +1579,65 @@ func (client *Client) ListSession(request *ListSessionRequest) (_result *ListSes
 
 // Summary:
 //
+// # List official skills metadata
+//
+// @param request - ListSkillMetaDataRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return ListSkillMetaDataResponse
+func (client *Client) ListSkillMetaDataWithOptions(request *ListSkillMetaDataRequest, runtime *dara.RuntimeOptions) (_result *ListSkillMetaDataResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("ListSkillMetaData"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &ListSkillMetaDataResponse{}
+	_body, _err := client.CallApi(params, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # List official skills metadata
+//
+// @param request - ListSkillMetaDataRequest
+//
+// @return ListSkillMetaDataResponse
+func (client *Client) ListSkillMetaData(request *ListSkillMetaDataRequest) (_result *ListSkillMetaDataResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &ListSkillMetaDataResponse{}
+	_body, _err := client.ListSkillMetaDataWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
 // # Modify context
 //
 // @param request - ModifyContextRequest

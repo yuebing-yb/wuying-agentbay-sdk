@@ -50,6 +50,7 @@ from ..api.models import (
 from .._common.models.mcp_tool import McpTool
 from .context import AsyncContextService
 from .beta_network import AsyncBetaNetworkService
+from .beta import AsyncBetaNamespace
 from .session import AsyncSession
 from .._common.params.session_params import CreateSessionParams
 
@@ -103,6 +104,7 @@ class AsyncAgentBay:
         # Initialize context service
         self.context = AsyncContextService(self)
         self.beta_network = AsyncBetaNetworkService(self)
+        self.beta = AsyncBetaNamespace(self)
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):

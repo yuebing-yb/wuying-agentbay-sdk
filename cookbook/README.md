@@ -32,6 +32,7 @@ Currently, distinct session environments are implemented:
 ### Desktop Environment
 
 7. [Moltbot Session Setup](./moltbot/) - Create and configure a Moltbot (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
+8. [Official Skills Sandbox (AgentScope)](./skills/agentscope-official-skills-sandbox/) - Experience official skills running inside a sandbox with AgentScope (no mocks)
 
 ## Overview
 
@@ -118,6 +119,27 @@ To use any of these cookbooks:
 4. Navigate to the specific cookbook you're interested in
 5. Follow the setup instructions in that cookbook's README.md
 6. Run the example scripts to see the SDK in action
+
+## Official Skills Sandbox (AgentScope)
+
+The cookbook at `cookbook/skills/agentscope-official-skills-sandbox/` demonstrates how to use AgentScope (Python) with official skills hosted in a sandbox image.
+
+### Run
+
+Set environment variables:
+
+- `AGENTBAY_API_KEY`: AgentBay API key
+- `DASHSCOPE_API_KEY`: DashScope API key
+
+Then run:
+
+```bash
+python cookbook/skills/agentscope-official-skills-sandbox/main.py
+```
+
+For scenario configuration and details, see:
+
+- `cookbook/skills/agentscope-official-skills-sandbox/README.md`
 
 ## Prerequisites
 

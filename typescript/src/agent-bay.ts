@@ -11,6 +11,7 @@ import { Client } from "./api/client";
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
 import { ContextService } from "./context";
 import { BetaNetworkService } from "./beta-network";
+import { BetaSkillsService } from "./beta-skills";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
@@ -79,6 +80,11 @@ export class AgentBay {
   betaNetwork: BetaNetworkService;
 
   /**
+   * Beta skills service for listing official skills metadata.
+   */
+  betaSkills: BetaSkillsService;
+
+  /**
    * Initialize the AgentBay client.
    *
    * @param options - Configuration options
@@ -124,6 +130,7 @@ export class AgentBay {
       // Initialize context service
       this.context = new ContextService(this);
       this.betaNetwork = new BetaNetworkService(this);
+      this.betaSkills = new BetaSkillsService(this);
       // Deprecated alias: network APIs are beta for now
       this.network = this.betaNetwork as any;
     } catch (error) {
