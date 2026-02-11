@@ -91,8 +91,7 @@ public class MobileSimulate {
 
     /**
      * Set a previously saved simulate context id.
-     * Please make sure the context id is provided by MobileSimulateService
-     * but not user side created context.
+     * Please make sure the context id is provided by MobileSimulateService but not user side created context.
      *
      * @param contextId The context ID of the previously saved mobile simulate context
      */
@@ -135,8 +134,7 @@ public class MobileSimulate {
      *
      * @param contextSync The context sync to check
      * @return True if the mobile dev info file exists, False otherwise
-     * @throws IllegalArgumentException if contextSync is not provided,
-     *         or contextSync.contextId is not provided, or contextSync.path is not provided
+     * @throws IllegalArgumentException if contextSync is not provided, or contextSync.contextId is not provided, or contextSync.path is not provided
      */
     public boolean hasMobileInfo(ContextSync contextSync) {
         if (contextSync == null) {

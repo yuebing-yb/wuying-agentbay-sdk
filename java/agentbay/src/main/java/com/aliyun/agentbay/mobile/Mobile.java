@@ -16,8 +16,7 @@ import com.aliyun.agentbay.model.Process;
 
 /**
  * Mobile module for mobile device UI automation and configuration.
- * Handles touch operations, UI element interactions, application management, screenshot capabilities,
- * and mobile environment configuration operations.
+ * Handles touch operations, UI element interactions, application management, screenshot capabilities,and mobile environment configuration operations.
  */
 public class Mobile extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -55,7 +54,9 @@ public class Mobile extends BaseService {
      *
      * @param x X coordinate in pixels
      * @param y Y coordinate in pixels
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Object with success status and error message if any
+     * 
+     * @see #swipe(int, int, int, int, int)
      */
     public BoolResult tap(int x, int y) {
         try {
@@ -97,7 +98,7 @@ public class Mobile extends BaseService {
      * @param endX Ending X coordinate
      * @param endY Ending Y coordinate
      * @param durationMs Duration of the swipe in milliseconds. Defaults to 300
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
      */
     public BoolResult swipe(int startX, int startY, int endX, int endY, int durationMs) {
         try {
@@ -141,7 +142,7 @@ public class Mobile extends BaseService {
      * @param startY Starting Y coordinate
      * @param endX Ending X coordinate
      * @param endY Ending Y coordinate
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
      */
     public BoolResult swipe(int startX, int startY, int endX, int endY) {
         return swipe(startX, startY, endX, endY, 300);
@@ -151,7 +152,7 @@ public class Mobile extends BaseService {
      * Inputs text into the active field.
      *
      * @param text The text to input
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
      */
     public BoolResult inputText(String text) {
         try {
@@ -188,13 +189,13 @@ public class Mobile extends BaseService {
      * Sends a key press event.
      *
      * @param key The key code to send. Supported key codes:
-     *            - 3: HOME
-     *            - 4: BACK
-     *            - 24: VOLUME_UP
-     *            - 25: VOLUME_DOWN
-     *            - 26: POWER
-     *            - 82: MENU
-     * @return BoolResult containing success status and error message if any
+     *               - 3: HOME
+     *               - 4: BACK
+     *               - 24: VOLUME_UP
+     *               - 25: VOLUME_DOWN
+     *               - 26: POWER
+     *               - 82: MENU
+     * @return BoolResult Result object containing success status and error message if any
      */
     public BoolResult sendKey(int key) {
         try {
@@ -234,8 +235,9 @@ public class Mobile extends BaseService {
      *
      * @param timeoutMs Timeout in milliseconds. Defaults to 2000
      * @return UIElementListResult containing clickable UI elements and error message if any
-     * Each returned element may include `bounds` from backend which is not stable in type.
-     *  Use `bounds_rect` (dict with left/top/right/bottom) instead.
+     * 
+     * <p><strong>Note</strong>: Each returned element may include from backend which is not stable in type.
+     * Use (dict with left/top/right/bottom) instead.</p>
      */
     public UIElementListResult getClickableUiElements(int timeoutMs) {
         try {
@@ -329,7 +331,7 @@ public class Mobile extends BaseService {
      * - "xml": return raw XML and an empty elements list
      *
      * @param timeoutMs Timeout in milliseconds. Defaults to 2000.
-     * @param @param format Output format of the underlying MCP tool ("json" or "xml"), default to "json"
+     * @param format Output format of the underlying MCP tool ("json" or "xml"), default to "json"
      * @return UIElementListResult containing UI elements or raw XML
      */
     public UIElementListResult getAllUiElements(int timeoutMs, String format) {
@@ -940,7 +942,7 @@ public class Mobile extends BaseService {
 
     /**
      * Configure mobile settings from MobileExtraConfig.
-     * This method is typically called automatically during session creation when MobileExtraConfig is provided in CreateSessionParams.It can also be called manually to reconfigure mobile settings during a session.
+     * This method is typically called automatically during session creation when MobileExtraConfig is provided in CreateSessionParams. It can also be called manually to reconfigure mobile settings during a session.
      *
      * @param mobileConfig mobile_config (MobileExtraConfig): Mobile configuration object with settings for:
                 - lock_resolution (bool): Whether to lock device resolution

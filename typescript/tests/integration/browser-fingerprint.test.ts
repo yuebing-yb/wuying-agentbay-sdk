@@ -26,8 +26,7 @@ import * as path from "path";
 import { createRequire } from "module";
 const nativeRequire = createRequire(__filename);
 const puppeteer = nativeRequire("puppeteer-core");
-// Load real playwright via createRequire to bypass Jest mock and moduleNameMapper.
-const playwrightReal = nativeRequire("playwright");
+
 /**
  * Check if a user agent string indicates Windows OS
  */
@@ -373,14 +372,12 @@ describe("Browser Fingerprint - Integration Tests", () => {
          try {
            // Connect with playwright and verify fingerprint sync
            log("Testing fingerprint sync by checking user agent...");
-           const playwright = require('playwright');
-           const browser = await playwright.chromium.connectOverCDP(endpointUrl!);
+           const browser = await puppeteer.connect({ browserWSEndpoint: endpointUrl! });
            expect(browser).toBeDefined();
            
-           const contexts = browser.contexts();
-           const browserContext = contexts.length > 0 ? contexts[0] : await browser.newContext();
+           
 
-           const page = await browserContext.newPage();
+           const page = await browser.newPage();
            await page.goto("https://httpbin.org/user-agent", { timeout: 60000 });
            
            const response = await page.evaluate(() => {
@@ -397,7 +394,7 @@ describe("Browser Fingerprint - Integration Tests", () => {
            expect(remoteUserAgent).toBe(localUserAgent);
            log("SUCCESS: Local fingerprint synced correctly to remote browser!");
 
-           await browserContext.close();
+           await page.close();
            await browser.close();
            log("Local sync test completed");
          } catch (error: any) {

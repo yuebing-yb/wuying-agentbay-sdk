@@ -58,8 +58,8 @@ public class Session {
     /**
      * Creates a new Session instance.
      * 
-     * Initializes all service instances (Agent, FileSystem, OSS, Code, Command, 
-     * ContextManager, Browser, Computer, Mobile) for this session.
+     * <p>Initializes all service instances (Agent, FileSystem, OSS, Code, Command, 
+     * ContextManager, Browser, Computer, Mobile) for this session.</p>
      * 
      * @param agentBay The AgentBay client instance
      * @param sessionId The unique identifier for this session
@@ -105,8 +105,8 @@ public class Session {
     /**
      * Creates a new Session instance with alternative parameter order.
      * 
-     * This constructor provides backward compatibility for code that uses
-     * the (String, AgentBay) parameter order.
+     * <p>This constructor provides backward compatibility for code that uses
+     * the (String, AgentBay) parameter order.</p>
      * 
      * @param sessionId The unique identifier for this session
      * @param agentBay The AgentBay client instance
@@ -116,9 +116,9 @@ public class Session {
     }
 
     /**
-     * Get the session ID
+     * Get the session ID.
      *
-     * @return Session ID
+     * @return The unique identifier for this session
      */
     public String getSessionId() {
         return sessionId;
@@ -127,7 +127,8 @@ public class Session {
     /**
      * Refresh the backend idle timer for this session.
      *
-     * This method calls the RefreshSessionIdleTime API.
+     * <p>This method calls the RefreshSessionIdleTime API to prevent the session
+     * from being automatically terminated due to inactivity.</p>
      *
      * @return OperationResult containing request ID and success status
      */
@@ -162,27 +163,27 @@ public class Session {
     }
 
     /**
-     * Get the AgentBay client
+     * Get the AgentBay client.
      *
-     * @return AgentBay instance
+     * @return The AgentBay client instance associated with this session
      */
     public AgentBay getAgentBay() {
         return agentBay;
     }
 
     /**
-     * Get the agent for this session
+     * Get the agent for this session.
      *
-     * @return Agent instance
+     * @return The Agent instance for AI-powered automation
      */
     public Agent getAgent() {
         return agent;
     }
 
     /**
-     * Get the file system for this session
+     * Get the file system for this session.
      *
-     * @return FileSystem instance
+     * @return The FileSystem instance for file operations
      */
     public FileSystem getFileSystem() {
         return fileSystem;
@@ -190,9 +191,10 @@ public class Session {
 
     /**
      * Alias for fileSystem.
-     * Provides a shorthand way to access the file system service.
      * 
-     * @return FileSystem instance
+     * <p>Provides a shorthand way to access the file system service.</p>
+     * 
+     * @return The FileSystem instance
      */
     public FileSystem fs() {
         return fileSystem;
@@ -200,9 +202,10 @@ public class Session {
 
     /**
      * Alias for fileSystem.
-     * Provides an alternative way to access the file system service.
      * 
-     * @return FileSystem instance
+     * <p>Provides an alternative way to access the file system service.</p>
+     * 
+     * @return The FileSystem instance
      */
     public FileSystem getFilesystem() {
         return fileSystem;
@@ -210,20 +213,21 @@ public class Session {
 
     /**
      * Alias for fileSystem.
-     * Provides a shorthand way to access the file system service.
      * 
-     * @return FileSystem instance
+     * <p>Provides a shorthand way to access the file system service.</p>
+     * 
+     * @return The FileSystem instance
      */
     public FileSystem getFiles() {
         return fileSystem;
     }
 
     /**
-     * Call an MCP tool (legacy method, returns raw API response)
+     * Call an MCP tool (legacy method, returns raw API response).
      *
      * @param toolName Tool name
      * @param args Tool arguments
-     * @return CallMcpToolResponse
+     * @return CallMcpToolResponse Raw API response
      * @throws AgentBayException if the call fails
      */
     public CallMcpToolResponse callTool(String toolName, Object args) throws AgentBayException {
@@ -238,9 +242,10 @@ public class Session {
     }
 
     /**
-     * Call an MCP tool and return structured OperationResult
-     * This is the preferred method for calling MCP tools as it provides unified routing logic
-     * (LinkUrl, VPC, API) and consistent error handling.
+     * Call an MCP tool and return structured OperationResult.
+     * 
+     * <p>This is the preferred method for calling MCP tools as it provides unified routing logic
+     * (LinkUrl, VPC, API) and consistent error handling.</p>
      *
      * @param toolName Tool name
      * @param args Tool arguments
@@ -858,9 +863,7 @@ public class Session {
     /**
      * Initializes a browser instance with the given options.
      * 
-     * This method calls the AgentBay cloud service to create a browser instance
-     * for web automation and testing. The browser is initialized with a persistent
-     * path for storing browser data.
+     * This method calls the AgentBay cloud service to create a browser instance for web automation and testing. The browser is initialized with a persistent path for storing browser data.
      * 
      * @param option Browser configuration options including browser type, headless mode, etc.
      * @return OperationResult containing the initialization result
@@ -913,8 +916,7 @@ public class Session {
     /**
      * Lists all available MCP tools for this session.
      * 
-     * This method retrieves the list of MCP tools that can be called in this session,
-     * including their names, descriptions, input schemas, and server information.
+     * This method retrieves the list of MCP tools that can be called in this session,including their names, descriptions, input schemas, and server information.
      * 
      * @return McpToolsResult containing the list of available tools
      */
@@ -1206,8 +1208,7 @@ public class Session {
     /**
      * Gets the MCP server name for a specific tool.
      * 
-     * This method searches through the available MCP tools to find the server
-     * that provides the specified tool.
+     * This method searches through the available MCP tools to find the server that provides the specified tool.
      * 
      * @param toolName The name of the tool to look up
      * @return The server name, or empty string if not found
@@ -1230,8 +1231,7 @@ public class Session {
     /**
      * Gets a connection link for the current session with specified parameters.
      * 
-     * This method generates a connection URL that can be used to access the session
-     * via the specified protocol and port.
+     * This method generates a connection URL that can be used to access the session via the specified protocol and port.
      * 
      * @param protocolType The protocol type to use for the link (e.g., "https")
      * @param port The port number to use for the connection

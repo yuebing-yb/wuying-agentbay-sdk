@@ -1270,7 +1270,8 @@ public class GenerateApiDocs {
         
         // Advanced modules
         moduleToClasses.put("browser", Arrays.asList(
-            "com.aliyun.agentbay.browser.Browser"
+            "com.aliyun.agentbay.browser.Browser",
+            "com.aliyun.agentbay.browser.BrowserOperator"
         ));
         moduleToClasses.put("code", Arrays.asList(
             "com.aliyun.agentbay.code.Code"

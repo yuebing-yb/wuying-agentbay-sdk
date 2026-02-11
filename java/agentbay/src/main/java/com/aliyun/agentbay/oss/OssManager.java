@@ -3,6 +3,12 @@ package com.aliyun.agentbay.oss;
 import com.aliyun.agentbay.model.DeleteResult;
 import com.aliyun.agentbay.exception.OSSException;
 
+/**
+ * Legacy OSS manager class.
+ * 
+ * @deprecated This class is deprecated. Use {@link OSS} instead.
+ */
+@Deprecated
 public class OssManager {
     private String sessionId;
 

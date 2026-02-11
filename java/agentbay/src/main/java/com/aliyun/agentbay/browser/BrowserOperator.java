@@ -18,9 +18,10 @@ import com.microsoft.playwright.CDPSession;
 import com.microsoft.playwright.Page;
 
 /**
- * BrowserOperator provides AI-powered browser automation capabilities
- * Matches Python BrowserOperator functionality completely
+ * BrowserOperator handles browser automation and small parts of agentic logic.
  * 
+ * <p><strong>⚠️ Note</strong>: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), 
+ * we do not provide services for overseas users registered with <strong>alibabacloud.com</strong>.</p>
  */
 public class BrowserOperator extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -34,8 +35,12 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Get page and context index from Playwright Page object
-     * Matches Python _get_page_and_context_index method
+     * Get page and context index from Playwright Page object.
+     * Matches Python _get_page_and_context_index method.
+     * 
+     * @param page Playwright Page object
+     * @return PageContextIndex containing page ID and context index
+     * @throws BrowserException if indices cannot be determined
      */
     private PageContextIndex getPageAndContextIndex(Page page) throws BrowserException {
         if (page == null) {
@@ -73,6 +78,9 @@ public class BrowserOperator extends BaseService {
         }
     }
 
+    /**
+     * Helper class to hold page and context indices.
+     */
     private static class PageContextIndex {
         final String pageIndex;
         final int contextIndex;
@@ -84,10 +92,10 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Navigate to a URL - matches Python navigate method
+     * Navigates a specific page to the given URL.
      *
      * @param url The URL to navigate to
-     * @return Success message or error message
+     * @return A string indicating the result of the navigation
      * @throws BrowserException if browser is not initialized
      */
     public String navigate(String url) throws BrowserException {
@@ -109,7 +117,8 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Close the remote browser agent session - matches Python close method
+     * Closes the remote browser operator session.
+     * This will terminate the browser process managed by the operator.
      *
      * @return true if successful, false otherwise
      * @throws BrowserException if operation fails
@@ -128,14 +137,14 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Take a screenshot of the specified page - matches Python screenshot method
+     * Takes a screenshot of the specified page.
      *
-     * @param page Playwright Page object (null to use currently focused page)
+     * @param page The Playwright Page object to take a screenshot of. If null, the operator's currently focused page will be used
      * @param fullPage Whether to capture the full scrollable page
-     * @param quality Quality of the image (0-100, for JPEG)
-     * @param clip Clipping region {x, y, width, height}
-     * @param timeout Custom timeout in milliseconds
-     * @return Base64 encoded data URL of the screenshot
+     * @param quality The quality of the image (0-100), for JPEG format
+     * @param clip An object specifying the clipping region {x, y, width, height}
+     * @param timeout Custom timeout for the operation in seconds
+     * @return A base64 encoded data URL of the screenshot, or an error message
      * @throws BrowserException if browser is not initialized
      */
     public String screenshot(Page page, boolean fullPage, int quality, Map<String, Double> clip, Integer timeout) throws BrowserException {
@@ -151,14 +160,26 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Overloaded screenshot method with default parameters
+     * Overloaded screenshot method with default parameters.
+     * 
+     * @param page The Playwright Page object to take a screenshot of
+     * @return A base64 encoded data URL of the screenshot
+     * @throws BrowserException if browser is not initialized
      */
     public String screenshot(Page page) throws BrowserException {
         return screenshot(page, true, 80, null, null);
     }
 
     /**
-     * Execute screenshot with parameters
+     * Execute screenshot with parameters.
+     * 
+     * @param contextId Browser context ID
+     * @param pageId Page ID (can be null)
+     * @param fullPage Whether to capture the full scrollable page
+     * @param quality The quality of the image (0-100)
+     * @param clip Clipping region
+     * @param timeout Custom timeout
+     * @return Screenshot data or error message
      */
     private String executeScreenshot(int contextId, String pageId, boolean fullPage, int quality,
                                      Map<String, Double> clip, Integer timeout) {
@@ -179,12 +200,13 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Perform an action on the page - matches Python act method
-     * Uses synchronous execution
+     * Perform an action on a web page.
+     * Uses synchronous execution.
      *
-     * @param page Playwright page object
-     * @param actionInput Either ActOptions or ObserveResult
-     * @return ActResult
+     * @param page The Playwright Page object to act on. If null, the operator's currently focused page will be used automatically
+     * @param actionInput The action to perform (either ActOptions or ObserveResult)
+     * @return The result of the action
+     * @throws BrowserException if browser is not initialized
      */
     public ActResult act(Page page, Object actionInput) throws BrowserException {
         if (!browser.isInitialized()) {
@@ -208,14 +230,6 @@ public class BrowserOperator extends BaseService {
      * @return ActResult containing success status and execution details
      * @throws BrowserException if browser is not initialized or action fails
      *
-     * Example:
-     * <pre>
-     * ActOptions options = new ActOptions("click('#submit-button')");
-     * ActResult result = agent.actAsync(options, page);
-     * if (result.isSuccess()) {
-     *     System.out.println("Action completed: " + result.getMessage());
-     * }
-     * </pre>
      */
     public ActResult actAsync(Object actionInput, Page page) throws BrowserException {
         if (!browser.isInitialized()) {
@@ -239,22 +253,20 @@ public class BrowserOperator extends BaseService {
      * @return ActResult containing success status and execution details
      * @throws BrowserException if browser is not initialized or action fails
      *
-     * Example:
-     * <pre>
-     * ActOptions options = new ActOptions("click('#submit-button')");
-     * ActResult result = agent.actAsync(options);
-     * if (result.isSuccess()) {
-     *     System.out.println("Action completed: " + result.getMessage());
-     * }
-     * </pre>
      */
     public ActResult actAsync(Object actionInput) throws BrowserException {
         return actAsync(actionInput, null);
     }
 
     /**
-     * Execute act with task polling mechanism - matches Python _execute_act
-     * Uses synchronous page_use_act tool
+     * Execute act with task polling mechanism - matches Python _execute_act.
+     * Uses synchronous page_use_act tool.
+     * 
+     * @param actionInput Either ActOptions or ObserveResult
+     * @param contextId Browser context ID
+     * @param pageId Page ID
+     * @return ActResult containing success status and execution details
+     * @throws BrowserException if the action fails
      */
     private ActResult executeAct(Object actionInput, int contextId, String pageId) throws BrowserException {
         return executeActInternal(actionInput, contextId, pageId, false);
@@ -275,7 +287,14 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Internal method to execute act with either sync or async tool
+     * Internal method to execute act with either sync or async tool.
+     * 
+     * @param actionInput Either ActOptions or ObserveResult
+     * @param contextId Browser context ID
+     * @param pageId Page ID
+     * @param useAsync Whether to use async execution
+     * @return ActResult containing success status and execution details
+     * @throws BrowserException if the action fails
      */
     private ActResult executeActInternal(Object actionInput, int contextId, String pageId, boolean useAsync) throws BrowserException {
         Map<String, Object> args = new HashMap<>();
@@ -374,7 +393,11 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Parse JSON response - helper method for parsing API responses
+     * Parse JSON response - helper method for parsing API responses.
+     * 
+     * @param data JSON string to parse
+     * @return Parsed map of response data
+     * @throws Exception if parsing fails
      */
     @SuppressWarnings("unchecked")
     private Map<String, Object> parseJsonResponse(String data) throws Exception {
@@ -385,11 +408,12 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Observe elements on the page - matches Python observe method
+     * Observe elements or state on a web page.
      *
-     * @param page Playwright page object
-     * @param options ObserveOptions
-     * @return Tuple of success and list of ObserveResult
+     * @param page The Playwright Page object to observe. If null, the operator's currently focused page will be used
+     * @param options Options to configure the observation behavior
+     * @return A tuple containing a success boolean and a list of observation results
+     * @throws BrowserException if browser is not initialized
      */
     public ObserveResultTuple observe(Page page, ObserveOptions options) throws BrowserException {
         if (!browser.isInitialized()) {
@@ -447,6 +471,9 @@ public class BrowserOperator extends BaseService {
         }
     }
 
+    /**
+     * Tuple class to hold observe operation results.
+     */
     public static class ObserveResultTuple {
         private final boolean success;
         private final List<ObserveResult> results;
@@ -461,12 +488,14 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Extract structured data from the page - matches Python extract method
-     * Uses synchronous execution
+     * Extract information from a web page.
+     * Uses synchronous execution.
      *
-     * @param page Playwright page object
-     * @param options ExtractOptions
-     * @return Tuple of success and extracted data
+     * @param page The Playwright Page object to extract from. If null, the operator's currently focused page will be used
+     * @param options Options to configure the extraction, including schema
+     * @param <T> The type of data to extract
+     * @return A tuple containing a success boolean and the extracted data as a Pydantic model instance, or null on failure
+     * @throws BrowserException if browser is not initialized
      */
     public <T> ExtractResultTuple<T> extract(Page page, ExtractOptions<T> options) throws BrowserException {
         if (!browser.isInitialized()) {
@@ -491,24 +520,6 @@ public class BrowserOperator extends BaseService {
      * @return ExtractResultTuple containing success status and extracted data of type T
      * @throws BrowserException if browser is not initialized or extraction fails
      *
-     * Example:
-     * <pre>
-     * class ProductInfo {
-     *     public String name;
-     *     public double price;
-     * }
-     *
-     * ExtractOptions&lt;ProductInfo&gt; options = new ExtractOptions&lt;&gt;(
-     *     "Extract product name and price",
-     *     ProductInfo.class
-     * );
-     *
-     * ExtractResultTuple&lt;ProductInfo&gt; result = agent.extractAsync(options, page);
-     * if (result.isSuccess()) {
-     *     ProductInfo product = result.getData();
-     *     System.out.println("Product: " + product.name + ", Price: $" + product.price);
-     * }
-     * </pre>
      */
     public <T> ExtractResultTuple<T> extractAsync(ExtractOptions<T> options, Page page) throws BrowserException {
         if (!browser.isInitialized()) {
@@ -533,32 +544,21 @@ public class BrowserOperator extends BaseService {
      * @return ExtractResultTuple containing success status and extracted data of type T
      * @throws BrowserException if browser is not initialized or extraction fails
      *
-     * Example:
-     * <pre>
-     * class ProductInfo {
-     *     public String name;
-     *     public double price;
-     * }
-     *
-     * ExtractOptions&lt;ProductInfo&gt; options = new ExtractOptions&lt;&gt;(
-     *     "Extract product name and price",
-     *     ProductInfo.class
-     * );
-     *
-     * ExtractResultTuple&lt;ProductInfo&gt; result = agent.extractAsync(options);
-     * if (result.isSuccess()) {
-     *     ProductInfo product = result.getData();
-     *     System.out.println("Product: " + product.name);
-     * }
-     * </pre>
      */
     public <T> ExtractResultTuple<T> extractAsync(ExtractOptions<T> options) throws BrowserException {
         return extractAsync(options, null);
     }
 
     /**
-     * Execute extract with task polling mechanism - matches Python _execute_extract
-     * Uses synchronous page_use_extract tool
+     * Execute extract with task polling mechanism - matches Python _execute_extract.
+     * Uses synchronous page_use_extract tool.
+     * 
+     * @param options ExtractOptions containing instruction and schema
+     * @param contextId Browser context ID
+     * @param pageId Page ID
+     * @param <T> The type of data to extract
+     * @return ExtractResultTuple containing success status and extracted data
+     * @throws BrowserException if extraction fails
      */
     private <T> ExtractResultTuple<T> executeExtract(ExtractOptions<T> options, int contextId, String pageId) throws BrowserException {
         return executeExtractInternal(options, contextId, pageId, false);
@@ -579,7 +579,15 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Internal method to execute extract with either sync or async tool
+     * Internal method to execute extract with either sync or async tool.
+     * 
+     * @param options ExtractOptions containing instruction and schema
+     * @param contextId Browser context ID
+     * @param pageId Page ID
+     * @param useAsync Whether to use async execution
+     * @param <T> The type of data to extract
+     * @return ExtractResultTuple containing success status and extracted data
+     * @throws BrowserException if extraction fails
      */
     private <T> ExtractResultTuple<T> executeExtractInternal(ExtractOptions<T> options, int contextId, String pageId, boolean useAsync) throws BrowserException {
         Map<String, Object> args = new HashMap<>();
@@ -636,6 +644,11 @@ public class BrowserOperator extends BaseService {
         }
     }
 
+    /**
+     * Tuple class to hold extract operation results.
+     * 
+     * @param <T> The type of extracted data
+     */
     public static class ExtractResultTuple<T> {
         private final boolean success;
         private final T data;
@@ -650,7 +663,11 @@ public class BrowserOperator extends BaseService {
     }
 
     /**
-     * Call MCP tool with timeout - matches Python _call_mcp_tool_timeout method
+     * Call MCP tool with timeout - matches Python _call_mcp_tool_timeout method.
+     * 
+     * @param name Tool name
+     * @param args Tool arguments
+     * @return Operation result
      */
     private OperationResult callMcpToolTimeout(String name, Map<String, Object> args) {
         return callMcpTool(name, args);
@@ -659,28 +676,48 @@ public class BrowserOperator extends BaseService {
     // Convenience methods for common operations (matching existing functionality)
 
     /**
-     * Navigate to a URL using act method
+     * Navigate to a URL using act method.
+     * 
+     * @param page Playwright page object
+     * @param url URL to navigate to
+     * @return ActResult
+     * @throws BrowserException if operation fails
      */
     public ActResult navigateTo(Page page, String url) throws BrowserException {
         return act(page, new ActOptions("goto('" + url + "')"));
     }
 
     /**
-     * Click on an element using act method
+     * Click on an element using act method.
+     * 
+     * @param page Playwright page object
+     * @param selector Element selector
+     * @return ActResult
+     * @throws BrowserException if operation fails
      */
     public ActResult click(Page page, String selector) throws BrowserException {
         return act(page, new ActOptions("click('" + selector + "')"));
     }
 
     /**
-     * Type text into an input field using act method
+     * Type text into an input field using act method.
+     * 
+     * @param page Playwright page object
+     * @param selector Input field selector
+     * @param text Text to type
+     * @return ActResult
+     * @throws BrowserException if operation fails
      */
     public ActResult type(Page page, String selector, String text) throws BrowserException {
         return act(page, new ActOptions("fill('" + selector + "', '" + text + "')"));
     }
 
     /**
-     * Take a screenshot using act method
+     * Take a screenshot using act method.
+     * 
+     * @param page Playwright page object
+     * @return ActResult
+     * @throws BrowserException if operation fails
      */
     public ActResult takeScreenshot(Page page) throws BrowserException {
         return act(page, new ActOptions("screenshot()"));

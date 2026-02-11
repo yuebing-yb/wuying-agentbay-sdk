@@ -2,14 +2,52 @@ package com.aliyun.agentbay.context;
 
 import java.util.Map;
 
+/**
+ * Represents a persistent storage context in the AgentBay cloud environment.
+ * 
+ * <p>A Context provides persistent storage that can be shared across multiple sessions.
+ * It allows data to be preserved between session lifecycles and enables collaboration
+ * between different sessions.</p>
+ */
 public class Context {
+    /**
+     * The unique identifier of the context.
+     */
     private String contextId;
+    
+    /**
+     * The name of the context.
+     */
     private String name;
+    
+    /**
+     * Description of the context.
+     */
     private String description;
+    
+    /**
+     * Additional metadata associated with the context.
+     */
     private Map<String, Object> metadata;
+    
+    /**
+     * Date and time when the Context was created.
+     */
     private String createdAt;
+    
+    /**
+     * Date and time when the Context was last updated.
+     */
     private String updatedAt;
+    
+    /**
+     * Current state of the context (e.g., "available", "clearing").
+     */
     private String state;
+    
+    /**
+     * Operating system type of the context.
+     */
     private String osType;
 
     public Context() {

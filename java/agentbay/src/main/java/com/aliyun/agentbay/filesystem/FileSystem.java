@@ -62,10 +62,9 @@ public class FileSystem extends BaseService {
      * Get the context path for file transfer operations.
      *
      * <p>This method ensures the context ID is loaded and returns the associated
-     * context path that was retrieved from GetAndLoadInternalContext API.
+     * context path that was retrieved from GetAndLoadInternalContext API.</p>
      *
      * @return The context path if available, null otherwise
-     *
      */
     public String getFileTransferContextPath() {
         FileTransfer transfer = ensureFileTransfer();
@@ -73,9 +72,9 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Read a file,Alias of readFile().
+     * Read a file, alias of readFile().
      *
-     * @param path The path of the file to read.
+     * @param path The path of the file to read
      * @return File content as string
      * @throws AgentBayException if reading fails
      */
@@ -93,8 +92,8 @@ public class FileSystem extends BaseService {
     /**
      * Write content to a file.
      *
-     * @param path The path of the file to write.
-     * @param content The content to write to the file.
+     * @param path The path of the file to write
+     * @param content The content to write to the file
      * @return Write result as string
      * @throws AgentBayException if writing fails
      */
@@ -113,7 +112,7 @@ public class FileSystem extends BaseService {
     /**
      * List the contents of a directory.
      *
-     * @param path The path of the directory to list.
+     * @param path The path of the directory to list
      * @return Directory listing as string
      * @throws AgentBayException if listing fails or directory does not exist
      */
@@ -129,7 +128,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Check if a file or directory exists
+     * Check if a file or directory exists.
      *
      * @param path Path to check
      * @return true if exists, false otherwise
@@ -147,7 +146,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Create a directory
+     * Create a directory.
      *
      * @param path Directory path to create
      * @return Creation result as string
@@ -165,7 +164,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Remove a file or directory using shell command
+     * Remove a file or directory using shell command.
      *
      * @param path Path to remove
      * @return Removal result
@@ -185,7 +184,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Copy a file or directory
+     * Copy a file or directory.
      *
      * @param source Source path to copy from
      * @param destination Destination path to copy to
@@ -204,7 +203,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Move a file or directory
+     * Move a file or directory.
      *
      * @param source Source path to move from
      * @param destination Destination path to move to
@@ -223,7 +222,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Get file information
+     * Get file information.
      *
      * @param path File path to inspect
      * @return File information as string (ls -la output)
@@ -242,7 +241,8 @@ public class FileSystem extends BaseService {
 
     /**
      * Write content to a file. Automatically handles large files by chunking.
-     * Similar to Python's write_file method.
+     * 
+     * <p>Similar to Python's write_file method.</p>
      *
      * @param path File path
      * @param content Content to write

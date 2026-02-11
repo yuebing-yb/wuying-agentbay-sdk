@@ -280,8 +280,7 @@ public class ContextService {
      * @param filePath  The path of the file to download.
      * @return FileUrlResult containing the presigned URL, expiration time, and request ID.
      * 
-     * Note:
-     * The presigned URL expires in 1 hour by default.
+     * Note: The presigned URL expires in 1 hour by default.
      * 
      */
     public com.aliyun.agentbay.model.FileUrlResult getFileDownloadUrl(String contextId, String filePath) throws AgentBayException {
@@ -330,8 +329,7 @@ public class ContextService {
      * @param filePath  The path of the file to upload.
      * @return FileUrlResult containing the presigned URL, expiration time, and request ID.
      * 
-     * Note:
-     * The presigned URL expires in 1 hour by default.
+     * Note:The presigned URL expires in 1 hour by default.
      * 
      */
     public com.aliyun.agentbay.model.FileUrlResult getFileUploadUrl(String contextId, String filePath) throws AgentBayException {

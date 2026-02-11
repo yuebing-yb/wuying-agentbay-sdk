@@ -34,7 +34,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
- * Main client for interacting with the AgentBay cloud runtime environment
+ * AgentBay represents the main client for interacting with the AgentBay cloud runtime
+ * environment.
+ * 
+ * <p>This class provides the entry point for creating and managing sessions in the
+ * AgentBay cloud environment. It handles authentication, session lifecycle management,
+ * and provides access to various services including context management, mobile simulation,
+ * and network services.</p>
  */
 
 public class AgentBay {

@@ -25,8 +25,7 @@ import java.util.Base64;
 
 /**
  * Computer module for desktop UI automation.
- * Provides comprehensive desktop automation capabilities including mouse, keyboard,
- * window management, application management, and screen operations.
+ * Provides comprehensive desktop automation capabilities including mouse, keyboard,window management, application management, and screen operations.
  */
 public class Computer extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -277,6 +276,10 @@ public class Computer extends BaseService {
      * This is useful for system monitoring and process management tasks.
      *
      * @return ProcessListResult containing list of visible applications with detailed process information
+     * 
+     * @see #startApp(String)
+     * @see #stopAppByPName(String)
+     * @see #getInstalledApps()
      */
     public ProcessListResult listVisibleApps() {
         try {
@@ -781,8 +784,7 @@ public class Computer extends BaseService {
     /**
      * Gets the current cursor position.
      *
-     * @return OperationResult Result object containing cursor position data
-     *         with keys 'x' and 'y', and error message if any
+     * @return OperationResult Result object containing cursor position data with keys 'x' and 'y', and error message if any
      * 
      * <p>Note:
      * <ul>
@@ -985,9 +987,7 @@ public class Computer extends BaseService {
     /**
      * Gets the screen size and DPI scaling factor.
      *
-     * @return OperationResult Result object containing screen size data
-     *         with keys 'width', 'height', and 'dpiScalingFactor',
-     *         and error message if any
+     * @return OperationResult Result object containing screen size data with keys 'width', 'height', and 'dpiScalingFactor', and error message if any
      * 
      * <p>Note:
      * <ul>
@@ -1032,8 +1032,7 @@ public class Computer extends BaseService {
     /**
      * Takes a screenshot of the current screen.
      *
-     * @return OperationResult Result object containing the path to the screenshot
-     *         and error message if any
+     * @return OperationResult Result object containing the path to the screenshot and error message if any
      * 
      * <p>Note:
      * <ul>
@@ -1356,7 +1355,10 @@ public class Computer extends BaseService {
      * @param timeoutMs Timeout in milliseconds. Defaults to 3000
      * @return WindowInfoResult Result object containing active window info and error message if any
      * 
-     * <p>Note: Java version requires timeoutMs parameter, while Python version does not.
+     * <p><strong>Note</strong>: Java version requires timeoutMs parameter, while Python version does not.
+     * 
+     * @see #listRootWindows()
+     * @see #activateWindow(int)
      */
     public WindowInfoResult getActiveWindow(int timeoutMs) {
         try {
@@ -1451,6 +1453,16 @@ public class Computer extends BaseService {
      * @param windowId The ID of the window to close
      * @return BoolResult Result object containing success status and error message if any
      * 
+     * <p>Note:
+     * <ul>
+     *   <li>The window must exist in the system</li>
+     *   <li>Use listRootWindows() to get available window IDs</li>
+     *   <li>Closing a window terminates it permanently</li>
+     * </ul>
+     * 
+     * @see #listRootWindows()
+     * @see #activateWindow(int)
+     * @see #minimizeWindow(int)
      */
     public BoolResult closeWindow(int windowId) {
         return windowOperation("close_window", windowId);
@@ -1462,6 +1474,17 @@ public class Computer extends BaseService {
      * @param windowId The ID of the window to maximize
      * @return BoolResult Result object containing success status and error message if any
      * 
+     * <p>Note:
+     * <ul>
+     *   <li>The window must exist in the system</li>
+     *   <li>Maximizing expands the window to fill the screen</li>
+     *   <li>Use restoreWindow() to return to previous size</li>
+     * </ul>
+     * 
+     * @see #minimizeWindow(int)
+     * @see #restoreWindow(int)
+     * @see #fullscreenWindow(int)
+     * @see #resizeWindow(int, int, int)
      */
     public BoolResult maximizeWindow(int windowId) {
         return windowOperation("maximize_window", windowId);
@@ -1473,6 +1496,16 @@ public class Computer extends BaseService {
      * @param windowId The ID of the window to minimize
      * @return BoolResult Result object containing success status and error message if any
      * 
+     * <p>Note:
+     * <ul>
+     *   <li>The window must exist in the system</li>
+     *   <li>Minimizing hides the window in the taskbar</li>
+     *   <li>Use restoreWindow() or activateWindow() to bring it back</li>
+     * </ul>
+     * 
+     * @see #maximizeWindow(int)
+     * @see #restoreWindow(int)
+     * @see #activateWindow(int)
      */
     public BoolResult minimizeWindow(int windowId) {
         return windowOperation("minimize_window", windowId);
@@ -1484,6 +1517,16 @@ public class Computer extends BaseService {
      * @param windowId The ID of the window to restore
      * @return BoolResult Result object containing success status and error message if any
      * 
+     * <p>Note:
+     * <ul>
+     *   <li>The window must exist in the system</li>
+     *   <li>Restoring returns a minimized or maximized window to its normal state</li>
+     *   <li>Works for windows that were previously minimized or maximized</li>
+     * </ul>
+     * 
+     * @see #minimizeWindow(int)
+     * @see #maximizeWindow(int)
+     * @see #activateWindow(int)
      */
     public BoolResult restoreWindow(int windowId) {
         return windowOperation("restore_window", windowId);
@@ -1497,6 +1540,16 @@ public class Computer extends BaseService {
      * @param height New height of the window
      * @return BoolResult Result object containing success status and error message if any
      * 
+     * <p>Note:
+     * <ul>
+     *   <li>The window must exist in the system</li>
+     *   <li>Width and height are in pixels</li>
+     *   <li>Some windows may have minimum or maximum size constraints</li>
+     * </ul>
+     * 
+     * @see #maximizeWindow(int)
+     * @see #restoreWindow(int)
+     * @see #getScreenSize()
      */
     public BoolResult resizeWindow(int windowId, int width, int height) {
         try {
@@ -1536,6 +1589,17 @@ public class Computer extends BaseService {
      *
      * @param windowId The ID of the window to make fullscreen
      * @return BoolResult containing success status and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>The window must exist in the system</li>
+     *   <li>Fullscreen mode hides window borders and taskbar</li>
+     *   <li>Different from maximizeWindow() which keeps window borders</li>
+     *   <li>Press F11 or ESC to exit fullscreen in most applications</li>
+     * </ul>
+     * 
+     * @see #maximizeWindow(int)
+     * @see #restoreWindow(int)
      */
     public BoolResult fullscreenWindow(int windowId) {
         return windowOperation("fullscreen_window", windowId);
@@ -1546,6 +1610,16 @@ public class Computer extends BaseService {
      *
      * @param on True to enable focus mode, False to disable it
      * @return BoolResult containing success status and error message if any
+     * 
+     * <p>Note:
+     * <ul>
+     *   <li>Focus mode helps reduce distractions by managing window focus</li>
+     *   <li>When enabled, may prevent background windows from stealing focus</li>
+     *   <li>Behavior depends on the window manager and OS settings</li>
+     * </ul>
+     * 
+     * @see #activateWindow(int)
+     * @see #getActiveWindow()
      */
     public BoolResult focusMode(boolean on) {
         try {

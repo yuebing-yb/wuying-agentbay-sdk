@@ -20,19 +20,21 @@ public class ContextManager {
     }
 
     /**
-     * Get context info for the session
+     * Get context info for the session.
+     * 
+     * @return ContextInfoResult containing status data
      */
     public ContextInfoResult info() {
         return info(null, null, null);
     }
 
     /**
-     * Get context info with optional filters
+     * Get information about context synchronization status.
      *
-     * @param contextId Context ID filter (optional)
-     * @param path Path filter (optional)
-     * @param taskType Task type filter (optional)
-     * @return ContextInfoResult containing status data
+     * @param contextId Optional ID of the context to get information for
+     * @param path Optional path where the context is mounted
+     * @param taskType Optional type of task to get information for (e.g., "upload", "download")
+     * @return ContextInfoResult Result object containing context status data and request ID
      */
     public ContextInfoResult info(String contextId, String path, String taskType) {
         try {
@@ -96,19 +98,23 @@ public class ContextManager {
     }
 
     /**
-     * Sync context data (trigger upload)
+     * Sync context data (trigger upload).
+     * 
+     * @return ContextSyncResult indicating success/failure
      */
     public ContextSyncResult sync() {
         return sync(null, null, null);
     }
 
     /**
-     * Sync context data with optional parameters
+     * Synchronize a context with the session.
      *
-     * @param contextId Context ID (optional)
-     * @param path Path (optional)
-     * @param mode Sync mode (optional)
-     * @return ContextSyncResult indicating success/failure
+     * @param contextId Optional ID of the context to synchronize
+     * @param path Optional path where the context should be mounted; not limited to
+     *             the path specified when creating the session (other backend-allowed
+     *             paths are acceptable)
+     * @param mode Optional synchronization mode (e.g., "upload", "download")
+     * @return ContextSyncResult Result object containing success status and request ID
      */
     public ContextSyncResult sync(String contextId, String path, String mode) {
         try {
@@ -151,8 +157,8 @@ public class ContextManager {
     }
 
     /**
-     * Sync context data with callback mode (non-blocking)
-     * Returns immediately and calls the callback when sync completes
+     * Sync context data with callback mode (non-blocking).
+     * Returns immediately and calls the callback when sync completes.
      *
      * @param callback Callback function that receives success status (true if successful, false otherwise)
      * @return ContextSyncResult indicating initial sync trigger success/failure
@@ -162,12 +168,12 @@ public class ContextManager {
     }
 
     /**
-     * Sync context data with optional parameters and callback mode (non-blocking)
-     * Returns immediately and calls the callback when sync completes
+     * Sync context data with optional parameters and callback mode (non-blocking).
+     * Returns immediately and calls the callback when sync completes.
      *
-     * @param contextId Context ID (optional)
-     * @param path Path (optional)
-     * @param mode Sync mode (optional)
+     * @param contextId Optional ID of the context to synchronize
+     * @param path Optional path where the context should be mounted
+     * @param mode Optional synchronization mode (e.g., "upload", "download")
      * @param callback Callback function that receives success status (true if successful, false otherwise)
      * @return ContextSyncResult indicating initial sync trigger success/failure
      */
@@ -176,15 +182,15 @@ public class ContextManager {
     }
 
     /**
-     * Sync context data with optional parameters and callback mode (non-blocking)
-     * Returns immediately and calls the callback when sync completes
+     * Sync context data with optional parameters and callback mode (non-blocking).
+     * Returns immediately and calls the callback when sync completes.
      *
-     * @param contextId Context ID (optional)
-     * @param path Path (optional)
-     * @param mode Sync mode (optional)
+     * @param contextId Optional ID of the context to synchronize
+     * @param path Optional path where the context should be mounted
+     * @param mode Optional synchronization mode (e.g., "upload", "download")
      * @param callback Callback function that receives success status (true if successful, false otherwise)
      * @param maxRetries Maximum number of retries for polling completion status (default: 150)
-     * @param retryInterval Milliseconds to wait between retries (default: 2000)
+     * @param retryInterval Milliseconds to wait between retries (default: 1500)
      * @return ContextSyncResult indicating initial sync trigger success/failure
      */
     public ContextSyncResult sync(String contextId, String path, String mode, Consumer<Boolean> callback,
@@ -213,7 +219,11 @@ public class ContextManager {
     }
 
     /**
-     * Polls the info interface to check if sync is completed and calls callback
+     * Polls the info interface to check if sync is completed and calls callback.
+     * 
+     * <p>This method continuously polls the context status until all sync tasks
+     * (upload/download) are completed or failed, or until the maximum number of
+     * retries is reached.</p>
      *
      * @param callback Callback function that receives success status
      * @param contextId ID of the context to check

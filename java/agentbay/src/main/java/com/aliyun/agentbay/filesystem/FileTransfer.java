@@ -1,5 +1,18 @@
 package com.aliyun.agentbay.filesystem;
 
+/**
+ * Provides pre-signed URL upload/download functionality between local and OSS,
+ * with integration to Session Context synchronization.
+ * 
+ * <p><strong>Prerequisites and Constraints:</strong></p>
+ * <ul>
+ * <li>Session must be associated with the corresponding context_id and path through
+ * CreateSessionParams.context_syncs, and remote_path should fall within that
+ * synchronization path (or conform to backend path rules).</li>
+ * <li>Requires available AgentBay context service (agent_bay.context) and session context.</li>
+ * </ul>
+ */
+
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.context.ContextInfoResult;
 import com.aliyun.agentbay.context.ContextService;
