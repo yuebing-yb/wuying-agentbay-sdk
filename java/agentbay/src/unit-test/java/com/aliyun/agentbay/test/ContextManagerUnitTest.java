@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
  * 
  * This test is equivalent to Python's test_context_manager.py
  */
-public class TestContextManagerUnit {
+public class ContextManagerUnitTest {
     private static AgentBay agentBay;
     private static Context context;
     private static Session session;

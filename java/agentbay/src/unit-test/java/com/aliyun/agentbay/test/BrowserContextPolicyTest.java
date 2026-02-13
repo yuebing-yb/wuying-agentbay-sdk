@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
 /**
  * Test browser context policy includes BWList with white lists.
  */
-public class TestBrowserContextPolicy {
+public class BrowserContextPolicyTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

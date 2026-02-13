@@ -196,7 +196,7 @@ public class TestBrowserOperatorAsync {
     }
 
     @Test
-    public void test03_ExtractAsyncGameState() {
+    public void test03_ExtractAsyncUserAgent() {
         assertNotNull("Session must be created", session);
 
         try {
@@ -208,42 +208,24 @@ public class TestBrowserOperatorAsync {
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
                 BrowserOperator operator = session.getBrowser().getOperator();
-                page.navigate("https://ovolve.github.io/2048-AI/",
+                page.navigate("https://httpbin.org/user-agent",
                     new Page.NavigateOptions()
                         .setWaitUntil(com.microsoft.playwright.options.WaitUntilState.DOMCONTENTLOADED)
-                        .setTimeout(180000));
+                        .setTimeout(60000));
                 Thread.sleep(2000);
-                page.waitForSelector(".grid-container",
-                    new Page.WaitForSelectorOptions().setTimeout(10000));
-                Thread.sleep(1000);
 
-                String instruction = "Extract the current game state:\n" +
-                    "1. Score from the score counter\n" +
-                    "2. All tile values and their positions in the 4x4 grid\n" +
-                    "3. Highest tile value present";
-                ExtractOptions<GameState> extractOptions = new ExtractOptions<>(instruction, GameState.class);
-                extractOptions.setUseTextExtract(false);
+                String instruction = "Extract the user-agent string from the page content";
+                ExtractOptions<ProductInfo> extractOptions = new ExtractOptions<>(instruction, ProductInfo.class);
+                extractOptions.setUseTextExtract(true);
 
-                BrowserOperator.ExtractResultTuple<GameState> extractResult =
+                BrowserOperator.ExtractResultTuple<ProductInfo> extractResult =
                     operator.extractAsync(extractOptions, page);
 
                 assertNotNull("Extract result should not be null", extractResult);
                 assertTrue("Extract operation should succeed", extractResult.isSuccess());
 
-                GameState gameState = extractResult.getData();
-                assertNotNull("Game state should not be null", gameState);
-                assertNotNull("Grid should not be null", gameState.getGrid());
-                assertEquals("Grid should have 4 rows", 4, gameState.getGrid().size());
-
-                for (List<Integer> row : gameState.getGrid()) {
-                    assertEquals("Each row should have 4 columns", 4, row.size());
-                }
-
-                assertNotNull("Score should not be null", gameState.getScore());
-                assertTrue("Score should be non-negative", gameState.getScore() >= 0);
-
-                assertNotNull("Highest tile should not be null", gameState.getHighestTile());
-                assertTrue("Highest tile should be positive", gameState.getHighestTile() > 0);
+                ProductInfo info = extractResult.getData();
+                assertNotNull("Extracted info should not be null", info);
 
                 page.close();
                 browser.close();
@@ -390,7 +372,7 @@ public class TestBrowserOperatorAsync {
                 com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
                 Page page = context.newPage();
                 BrowserOperator operator = session.getBrowser().getOperator();
-                ActOptions options = new ActOptions("goto('https://example.com')");
+                ActOptions options = new ActOptions("goto('https://httpbin.org/user-agent')");
                 options.setTimeoutMS(30000);
                 options.setDomSettleTimeoutMs(3000);
 

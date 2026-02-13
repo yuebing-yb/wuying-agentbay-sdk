@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 /**
  * Test browser context configuration and constant usage.
  */
-public class TestBrowserContextConfig {
+public class BrowserContextConfigTest {
 
     @Test
     public void testBrowserDataPathConstant() {

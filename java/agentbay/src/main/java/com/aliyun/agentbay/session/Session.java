@@ -88,17 +88,26 @@ public class Session {
         this.wsUrl = wsUrl;
     }
 
+    /**
+     * Internal: get or create a session-scoped WS client.
+     * 
+     * <p>This method is internal API by convention. The WS client is lazily initialized
+     * and cached for the lifetime of this session. Callers are responsible for calling
+     * connect() on the returned client if needed.</p>
+     * 
+     * @return The WsClient instance for this session
+     * @throws RuntimeException if wsUrl or token is not available
+     */
     public synchronized WsClient getWsClient() {
-        if (this.wsUrl == null || this.wsUrl.isEmpty()) {
+        if (this.wsUrl == null || this.wsUrl.trim().isEmpty()) {
             throw new RuntimeException("wsUrl is not available for this session");
         }
-        if (this.token == null || this.token.isEmpty()) {
+        if (this.token == null || this.token.trim().isEmpty()) {
             throw new RuntimeException("token is not available for WS connection");
         }
         if (this.wsClient == null) {
             this.wsClient = new WsClient(this.wsUrl, this.token);
         }
-        this.wsClient.connect().join();
         return this.wsClient;
     }
 

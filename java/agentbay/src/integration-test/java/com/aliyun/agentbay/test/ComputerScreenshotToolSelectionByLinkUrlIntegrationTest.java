@@ -19,10 +19,9 @@ import static org.junit.Assert.*;
 public class ComputerScreenshotToolSelectionByLinkUrlIntegrationTest {
 
     private static final String LINK_URL_ENDPOINT = "agentbay-pre.cn-hangzhou.aliyuncs.com";
-    private static final String LINK_URL_IMAGE_ID = "computer-use-ubuntu-2204-regionGW";
+    private static final String LINK_URL_IMAGE_ID = "linux_latest";
 
-    private static final String NO_LINK_URL_ENDPOINT = "wuyingai.cn-shanghai.aliyuncs.com";
-    private static final String NO_LINK_URL_IMAGE_ID = "moltbot-linux-ubuntu-2204";
+    private static final String NO_LINK_URL_ENDPOINT = "wuyingai-pre.cn-hangzhou.aliyuncs.com";
 
     @Test
     public void testComputerLinkUrlPresentRequiresBetaTakeScreenshot() throws Exception {
@@ -79,7 +78,7 @@ public class ComputerScreenshotToolSelectionByLinkUrlIntegrationTest {
         AgentBay agentBay = new AgentBay(apiKey, cfg);
 
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId(NO_LINK_URL_IMAGE_ID);
+        params.setImageId(LINK_URL_IMAGE_ID);
         SessionResult create = agentBay.create(params);
         assertTrue(create.getErrorMessage(), create.isSuccess());
         Session session = create.getSession();

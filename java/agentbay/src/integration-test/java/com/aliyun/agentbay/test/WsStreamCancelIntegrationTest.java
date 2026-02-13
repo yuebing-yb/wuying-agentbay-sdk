@@ -44,8 +44,8 @@ public class WsStreamCancelIntegrationTest {
         assertTrue("Failed to create session: " + created.getErrorMessage(), created.isSuccess());
         session = created.getSession();
         assertNotNull(session);
-        assertNotNull("wsUrl should not be empty", session.getWsUrl());
-        assertTrue("wsUrl should not be empty", !session.getWsUrl().isEmpty());
+        assertNotNull("Backend did not return wsUrl/WsUrl in CreateSession response", session.getWsUrl());
+        assertFalse("wsUrl should not be empty", session.getWsUrl().isEmpty());
     }
 
     @AfterClass
@@ -65,8 +65,8 @@ public class WsStreamCancelIntegrationTest {
     @Test
     public void testWsStreamCancelE2E() throws Exception {
         WsClient wsClient = session.getWsClient();
-        assertNotNull(wsClient);
-
+        assertNotNull("wsClient should not be null", wsClient);
+        wsClient.connect().join();
         String target = "wuying_codespace";
         String server = session.getMcpServerForTool("run_code");
         if (server != null && !server.isEmpty()) {

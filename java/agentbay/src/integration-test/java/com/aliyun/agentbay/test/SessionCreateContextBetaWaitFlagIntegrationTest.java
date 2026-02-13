@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -86,10 +87,10 @@ public class SessionCreateContextBetaWaitFlagIntegrationTest {
                 statuses.add(it.getStatus());
             }
         }
-        assertTrue(label + ": expected at least one download status entry", !statuses.isEmpty());
+        assertFalse(label + ": expected at least one download status entry", statuses.isEmpty());
         for (String st : statuses) {
             assertTrue(label + ": status should be terminal, got=" + st, "Success".equals(st) || "Failed".equals(st));
-            assertTrue(label + ": download should not fail", !"Failed".equals(st));
+            assertFalse(label + ": download should not fail", "Failed".equals(st));
         }
     }
 
@@ -120,7 +121,7 @@ public class SessionCreateContextBetaWaitFlagIntegrationTest {
                 }
                 if (allTerminal) {
                     for (String st : statuses) {
-                        assertTrue("Download should not fail, statuses=" + statuses, !"Failed".equals(st));
+                        assertFalse("Download should not fail, statuses=" + statuses, "Failed".equals(st));
                     }
                     return;
                 }

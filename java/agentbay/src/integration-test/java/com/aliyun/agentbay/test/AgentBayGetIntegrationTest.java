@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
  * - Handling non-existent session IDs
  * - Validating empty and whitespace session IDs
  */
-public class TestAgentBayGetIntegration {
+public class AgentBayGetIntegrationTest {
 
     private AgentBay agentBayClient;
 
@@ -216,7 +216,7 @@ public class TestAgentBayGetIntegration {
         System.out.println("=== Running AgentBay Get API Integration Tests ===");
         System.out.println("=== Testing Session Recovery Capability ===\n");
         
-        TestAgentBayGetIntegration test = new TestAgentBayGetIntegration();
+        AgentBayGetIntegrationTest test = new AgentBayGetIntegrationTest();
         
         try {
             test.setUp();

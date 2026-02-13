@@ -38,8 +38,8 @@ public class RunCodeWsStreamingBetaIntegrationTest {
         assertTrue("Failed to create session: " + created.getErrorMessage(), created.isSuccess());
         session = created.getSession();
         assertNotNull(session);
-        assertNotNull("wsUrl should not be empty", session.getWsUrl());
-        assertTrue("wsUrl should not be empty", !session.getWsUrl().isEmpty());
+        assertNotNull("wsUrl should not be null", session.getWsUrl());
+        assertFalse("wsUrl should not be empty", session.getWsUrl().isEmpty());
     }
 
     @AfterClass

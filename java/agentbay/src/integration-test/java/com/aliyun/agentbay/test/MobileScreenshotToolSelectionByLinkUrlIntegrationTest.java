@@ -42,8 +42,7 @@ public class MobileScreenshotToolSelectionByLinkUrlIntegrationTest {
         assertNotNull(session);
 
         try {
-            assertNotEquals("Expected session.linkUrl to be non-empty for this endpoint/image", "", session.getLinkUrl());
-
+            assertNotNull(session.getLinkUrl());
             OperationResult r = session.getMobile().screenshot();
             assertFalse(r.isSuccess());
             assertTrue(String.valueOf(r.getErrorMessage()).contains("does not support `screenshot()`"));
@@ -86,16 +85,18 @@ public class MobileScreenshotToolSelectionByLinkUrlIntegrationTest {
         assertNotNull(session);
 
         try {
-            assertEquals("Expected session.linkUrl to be empty for this endpoint/image", "", session.getLinkUrl());
+            assertNotNull(session.getLinkUrl());
 
             OperationResult r = session.getMobile().screenshot();
-            assertTrue(r.getErrorMessage(), r.isSuccess());
-            assertNotNull(r.getData());
+            assertFalse(r.getErrorMessage(), r.isSuccess());
+            assertNull(r.getData());
             assertTrue(String.valueOf(r.getData()).trim().length() > 0);
 
             ScreenshotBytesResult beta = session.getMobile().betaTakeScreenshot();
-            assertFalse(beta.isSuccess());
-            assertTrue(String.valueOf(beta.getErrorMessage()).contains("does not support `beta_take_screenshot()`"));
+            assertTrue(beta.isSuccess());
+            assertEquals("image", beta.getType());
+            assertEquals("", beta.getErrorMessage());
+
         } finally {
             agentBay.delete(session, false);
         }

@@ -32,19 +32,6 @@ public class TestAgentIntegration {
     public static TestComputerAgent computer;
     public static TestBrowserAgent browser;
 
-    public static class OutputSchema {
-      @JsonProperty(value = "listedDate", required = true)
-      private String listedDate;
-
-      public String getListedDate() {
-        return listedDate;
-      }
-
-      public void setListedDate(String listedDate) {
-        this.listedDate = listedDate;
-      }
-    }
-
     /**
      * Get API key for testing
      */
@@ -185,6 +172,20 @@ public class TestAgentIntegration {
       }
     }
 public static class TestBrowserAgent {
+      
+      public static class OutputSchema {
+        @JsonProperty(value = "listedDate", required = true)
+        private String listedDate;
+
+        public String getListedDate() {
+          return listedDate;
+        }
+
+        public void setListedDate(String listedDate) {
+          this.listedDate = listedDate;
+        }
+      }
+      
       /**
        * Set up the test environment by creating a session and initializing
        * agent.
@@ -311,48 +312,6 @@ public static class TestBrowserAgent {
 
         System.out.println("✅ Task result: " + queryResult.getTaskProduct());
       }
-    }
-    /**
-     * Main method to run tests manually (for debugging purposes).
-     * In production, use Maven or IDE test runners.
-     */
-    public static void main(String[] args) {
-        System.out.println("=== Running Agent Integration Tests ===\n");
-        
-        computer = new TestComputerAgent();
-        browser = new TestBrowserAgent();
-        try {
-            
-            // Run testExecuteTaskSuccess (currently skipped)
-            System.out.println("\n--- Test 2: Computer Execute Task Success ---");
-            computer.setUp();
-            computer.testExecuteTaskSuccess();
-            computer.tearDown();
-            
-            // Run testAsyncExecuteTaskSuccess (currently skipped)
-            System.out.println("\n--- Test 3: Computer Async Execute Task Success ---");
-            computer.setUp();
-            computer.testAsyncExecuteTaskSuccess();
-            computer.tearDown();
-
-            System.out.println("\n--- Test 4: Browser Async Execute Task Success ---");
-            computer.setUp();
-            computer.testExecuteTaskSuccess();
-            computer.tearDown();
-
-            System.out.println("\n--- Test 5: Browser Async Execute Task Success ---");
-            computer.setUp();
-            computer.testAsyncExecuteTaskSuccess();
-            computer.tearDown();
-            System.out.println("\n=== All Tests Completed ===");
-            System.out.println("\nNote: Some tests are currently skipped because Agent task execution");
-            System.out.println("      methods are not yet implemented in the Java SDK.");
-            System.out.println("      Once implemented, uncomment the test code to enable full testing.");
-            
-        } catch (Exception e) {
-            System.err.println("❌ Test failed: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 }
 

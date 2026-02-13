@@ -114,6 +114,7 @@ global:
       - callTool
       - callMcpTool
       - updateMcpTools
+      - getWsClient
 
 modules:
   # Session module

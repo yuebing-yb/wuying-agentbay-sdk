@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
  * Test cases for AgentBay session operations.
  * This test class is equivalent to test_agent_bay_session.py in Python SDK
  */
-public class TestAgentBaySession {
+public class AgentBaySessionIntegrationTest {
 
     /**
      * Test cases for AgentBay session operations - Create, List, Delete
@@ -44,45 +44,6 @@ public class TestAgentBaySession {
 
         // Session deletion completed
         System.out.println("✅ testCreateListDelete passed");
-    }
-
-    /**
-     * Main method to run tests manually (for debugging purposes)
-     * In production, use Maven or IDE test runners
-     */
-    public static void main(String[] args) {
-        System.out.println("=== Running AgentBay Session Tests ===\n");
-        
-        // Run TestAgentBaySession test
-        System.out.println("Running TestAgentBaySession tests...");
-        TestAgentBaySession testAgentBaySession = new TestAgentBaySession();
-        try {
-            testAgentBaySession.testCreateListDelete();
-        } catch (Exception e) {
-            System.err.println("❌ Test failed: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        // Run TestSession tests
-        System.out.println("\nRunning TestSession tests...");
-        TestSession testSession = new TestSession();
-        try {
-            testSession.setUp();
-            testSession.testSessionProperties();
-            testSession.testCommand();
-            testSession.testFilesystem();
-            testSession.tearDown();
-            
-            // Test delete separately
-            testSession.setUp();
-            testSession.testDelete();
-            testSession.tearDown();
-        } catch (Exception e) {
-            System.err.println("❌ Test failed: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        System.out.println("\n=== All Tests Completed ===");
     }
 
 }
