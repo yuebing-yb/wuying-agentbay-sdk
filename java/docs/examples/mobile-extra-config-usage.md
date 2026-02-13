@@ -315,7 +315,5 @@ Session session = result.getSession();
 ## 测试用例
 
 参考测试代码：
-- [ExtraConfigsTest.java](../../agentbay/src/test/java/com/aliyun/agentbay/test/ExtraConfigsTest.java)
-- [CreateSessionParamsTest.java](../../agentbay/src/test/java/com/aliyun/agentbay/test/CreateSessionParamsTest.java)
-- [TestSessionConfigurationIntegration.java](../../agentbay/src/test/java/com/aliyun/agentbay/test/TestSessionConfigurationIntegration.java)
+- [TestSessionConfigurationIntegration.java](../../agentbay/src/integration-test/java/com/aliyun/agentbay/test/TestSessionConfigurationIntegration.java)
 
