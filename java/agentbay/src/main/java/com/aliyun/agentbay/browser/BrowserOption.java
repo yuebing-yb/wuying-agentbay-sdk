@@ -12,6 +12,8 @@ public class BrowserOption {
     private BrowserScreen screen;
     private BrowserFingerprint fingerprint;
     private boolean solveCaptchas;
+    private boolean autoLogin;
+    private boolean callForUser;
     private List<BrowserProxy> proxies;
     private String extensionPath;
     private List<String> cmdArgs;
@@ -21,11 +23,14 @@ public class BrowserOption {
     public BrowserOption() {
         this.useStealth = false;
         this.solveCaptchas = false;
+        this.autoLogin = false;
+        this.callForUser = false;
         this.extensionPath = "/tmp/extensions/";
     }
 
     public BrowserOption(boolean useStealth, String userAgent, BrowserViewport viewport,
                          BrowserScreen screen, BrowserFingerprint fingerprint, boolean solveCaptchas,
+                         boolean autoLogin, boolean callForUser,
                          List<BrowserProxy> proxies, String extensionPath, List<String> cmdArgs,
                          String defaultNavigateUrl, String browserType) {
         this.useStealth = useStealth;
@@ -34,6 +39,8 @@ public class BrowserOption {
         this.screen = screen;
         this.fingerprint = fingerprint;
         this.solveCaptchas = solveCaptchas;
+        this.autoLogin = autoLogin;
+        this.callForUser = callForUser;
         this.proxies = proxies;
         this.extensionPath = extensionPath;
         this.cmdArgs = cmdArgs;
@@ -77,6 +84,8 @@ public class BrowserOption {
         if (screen != null) map.put("screen", screen.toMap());
         if (fingerprint != null) map.put("fingerprint", fingerprint.toMap());
         map.put("solveCaptchas", solveCaptchas);
+        map.put("autoLogin", autoLogin);
+        map.put("callForUser", callForUser);
         if (proxies != null) {
             List<Map<String, Object>> proxyMaps = new ArrayList<>();
             for (BrowserProxy proxy : proxies) {
@@ -115,6 +124,8 @@ public class BrowserOption {
         }
 
         option.solveCaptchas = Boolean.TRUE.equals(map.get("solveCaptchas"));
+        option.autoLogin = Boolean.TRUE.equals(map.get("autoLogin"));
+        option.callForUser = Boolean.TRUE.equals(map.get("callForUser"));
 
         if (map.get("proxies") instanceof List) {
             List<Map<String, Object>> proxyList = (List<Map<String, Object>>) map.get("proxies");
@@ -157,6 +168,12 @@ public class BrowserOption {
 
     public boolean isSolveCaptchas() { return solveCaptchas; }
     public void setSolveCaptchas(boolean solveCaptchas) { this.solveCaptchas = solveCaptchas; }
+
+    public boolean isAutoLogin() { return autoLogin; }
+    public void setAutoLogin(boolean autoLogin) { this.autoLogin = autoLogin; }
+
+    public boolean isCallForUser() { return callForUser; }
+    public void setCallForUser(boolean callForUser) { this.callForUser = callForUser; }
 
     public List<BrowserProxy> getProxies() { return proxies; }
     public void setProxies(List<BrowserProxy> proxies) { this.proxies = proxies; }

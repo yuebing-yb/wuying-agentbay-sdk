@@ -611,6 +611,8 @@ class BrowserOption:
         fingerprint_format: Optional["FingerprintFormat"] = None,
         fingerprint_persistent: bool = False,
         solve_captchas: bool = False,
+        auto_login: bool = False,
+        call_for_user: bool = False,
         proxies: Optional[list[BrowserProxy]] = None,
         extension_path: Optional[str] = "/tmp/extensions/",
         cmd_args: Optional[list[str]] = None,
@@ -624,6 +626,8 @@ class BrowserOption:
         self.fingerprint = fingerprint
         self.fingerprint_format = fingerprint_format
         self.solve_captchas = solve_captchas
+        self.auto_login = auto_login
+        self.call_for_user = call_for_user
         self.proxies = proxies
         self.extension_path = extension_path
         self.cmd_args = cmd_args
@@ -685,6 +689,10 @@ class BrowserOption:
             option_map["fingerprintPersistPath"] = self.fingerprint_persist_path
         if self.solve_captchas is not None:
             option_map["solveCaptchas"] = self.solve_captchas
+        if self.auto_login is not None:
+            option_map["autoLogin"] = self.auto_login
+        if self.call_for_user is not None:
+            option_map["callForUser"] = self.call_for_user
         if self.proxies is not None:
             option_map["proxies"] = [proxy._to_map() for proxy in self.proxies]
         if self.extension_path is not None:
@@ -731,6 +739,14 @@ class BrowserOption:
             self.solve_captchas = m.get("solveCaptchas")
         else:
             self.solve_captchas = False
+        if m.get("autoLogin") is not None:
+            self.auto_login = m.get("autoLogin")
+        else:
+            self.auto_login = False
+        if m.get("callForUser") is not None:
+            self.call_for_user = m.get("callForUser")
+        else:
+            self.call_for_user = False
         if m.get("proxies") is not None:
             proxy_list = m.get("proxies")
             if len(proxy_list) > 1:

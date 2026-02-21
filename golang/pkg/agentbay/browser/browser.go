@@ -298,6 +298,8 @@ type BrowserOption struct {
 	Screen             *BrowserScreen      `json:"screen,omitempty"`             // Screen configuration
 	Fingerprint        *BrowserFingerprint `json:"fingerprint,omitempty"`        // Fingerprint configuration
 	SolveCaptchas      bool                `json:"solveCaptchas,omitempty"`      // Auto-solve captchas
+	AutoLogin          bool                `json:"autoLogin,omitempty"`          // Enable auto login feature
+	CallForUser        bool                `json:"callForUser,omitempty"`        // Enable call for user feature
 	Proxies            []*BrowserProxy     `json:"proxies,omitempty"`            // Proxy configurations
 	ExtensionPath      *string             `json:"extensionPath,omitempty"`      // Path to extensions directory
 	CmdArgs            []string            `json:"cmdArgs,omitempty"`            // Additional command line arguments
@@ -316,6 +318,8 @@ func NewBrowserOption() *BrowserOption {
 	return &BrowserOption{
 		UseStealth:    false,
 		SolveCaptchas: false,
+		AutoLogin:     false,
+		CallForUser:   false,
 		ExtensionPath: &defaultExtPath,
 		BrowserType:   nil, // Default to nil (no browser type specified)
 	}
@@ -401,6 +405,8 @@ func (o *BrowserOption) toMap() map[string]interface{} {
 	}
 
 	optionMap["solveCaptchas"] = o.SolveCaptchas
+	optionMap["autoLogin"] = o.AutoLogin
+	optionMap["callForUser"] = o.CallForUser
 
 	if len(o.Proxies) > 0 {
 		proxies := make([]map[string]interface{}, len(o.Proxies))

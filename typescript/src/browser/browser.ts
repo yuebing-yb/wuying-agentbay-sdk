@@ -324,6 +324,10 @@ export interface BrowserOption {
   /** Whether to enable fingerprint persistence across sessions */
   fingerprintPersistent?: boolean;
   solveCaptchas?: boolean;
+  /** Whether to enable auto login feature */
+  autoLogin?: boolean;
+  /** Whether to enable call for user feature */
+  callForUser?: boolean;
   proxies?: BrowserProxy[];
   /** Path to the extensions directory. Defaults to "/tmp/extensions/" */
   extensionPath?: string;
@@ -346,6 +350,8 @@ export class BrowserOptionClass implements BrowserOption {
   fingerprintPersistent?: boolean;
   fingerprintPersistPath?: string;
   solveCaptchas?: boolean;
+  autoLogin?: boolean;
+  callForUser?: boolean;
   proxies?: BrowserProxy[];
   extensionPath?: string;
   cmdArgs?: string[];
@@ -361,6 +367,8 @@ export class BrowserOptionClass implements BrowserOption {
     fingerprintFormat?: FingerprintFormat,
     fingerprintPersistent = false,
     solveCaptchas = false,
+    autoLogin = false,
+    callForUser = false,
     proxies?: BrowserProxy[],
     cmdArgs?: string[],
     defaultNavigateUrl?: string,
@@ -374,6 +382,8 @@ export class BrowserOptionClass implements BrowserOption {
     this.fingerprintFormat = fingerprintFormat;
     this.fingerprintPersistent = fingerprintPersistent;
     this.solveCaptchas = solveCaptchas;
+    this.autoLogin = autoLogin;
+    this.callForUser = callForUser;
     this.extensionPath = "/tmp/extensions/";
     this.cmdArgs = cmdArgs;
     this.defaultNavigateUrl = defaultNavigateUrl;
@@ -452,6 +462,12 @@ export class BrowserOptionClass implements BrowserOption {
     if (this.solveCaptchas !== undefined) {
       optionMap['solveCaptchas'] = this.solveCaptchas;
     }
+    if (this.autoLogin !== undefined) {
+      optionMap['autoLogin'] = this.autoLogin;
+    }
+    if (this.callForUser !== undefined) {
+      optionMap['callForUser'] = this.callForUser;
+    }
     if (this.proxies !== undefined) {
       optionMap['proxies'] = this.proxies.map(proxy => proxy.toMap());
     }
@@ -526,6 +542,16 @@ export class BrowserOptionClass implements BrowserOption {
     }
     if (map.solveCaptchas !== undefined) {
       this.solveCaptchas = map.solveCaptchas;
+    }
+    if (map.autoLogin !== undefined) {
+      this.autoLogin = map.autoLogin;
+    } else {
+      this.autoLogin = false;
+    }
+    if (map.callForUser !== undefined) {
+      this.callForUser = map.callForUser;
+    } else {
+      this.callForUser = false;
     }
     if (map.proxies !== undefined) {
       const proxyList = map.proxies;
