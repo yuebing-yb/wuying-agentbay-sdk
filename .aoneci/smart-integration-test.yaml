@@ -114,10 +114,6 @@ jobs:
               # Download dependencies
               echo "📦 Downloading Maven dependencies..."
               mvn dependency:go-offline -DskipTests || echo "⚠️ Maven dependency download failed"
-              
-              # Compile integration tests
-              echo "🔨 Compiling Java integration tests..."
-              mvn test-compile -DskipTests || echo "⚠️ Maven test compilation failed"
               cd ../..
             fi
           fi
