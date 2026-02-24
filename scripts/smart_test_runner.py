@@ -660,8 +660,18 @@ def discover_java_tests(state: AgentState, pattern: Optional[str]) -> AgentState
                     else:
                         full_class_name = class_name
                     
-                    # 如果有模式过滤，应用过滤
-                    if not pattern or pattern.lower() in full_class_name.lower():
+                    # 检查是否应该跳过（匹配 TEST_PATTERNS）
+                    should_skip = False
+                    skip_oss = state.get("skip_oss", False)
+                    if skip_oss:
+                        for test_pattern in TEST_PATTERNS:
+                            if test_pattern in full_class_name or test_pattern in class_name:
+                                should_skip = True
+                                print(f"⏭️ 发现阶段跳过测试类: {full_class_name} (匹配模式: {test_pattern})")
+                                break
+                    
+                    # 如果不应该跳过，再应用用户的模式过滤
+                    if not should_skip and (not pattern or pattern.lower() in full_class_name.lower()):
                         test_ids.append(f"java:{full_class_name}")
         
         print(f"✅ 在目录扫描中找到 {len(test_ids)} 个Java集成测试。")
@@ -760,7 +770,7 @@ def execute_next_test(state: AgentState) -> AgentState:
         result = execute_typescript_test(test_id)
     elif test_id.startswith("golang:"):
         result = execute_golang_test(test_id)
-    elif test_id.startswith("java:"):
+    elif test_id.startswith("java:"): 
         result = execute_java_test(test_id)
     else:
         # 默认为Python测试
@@ -780,7 +790,8 @@ def execute_next_test(state: AgentState) -> AgentState:
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
-        "test_type": state.get("test_type", "python")
+        "test_type": state["test_type"],
+        "skip_oss": state.get("skip_oss", False)
     }
 
 def execute_python_test(test_id: str) -> Dict[str, Any]:
@@ -911,16 +922,6 @@ def execute_java_test(test_id: str) -> Dict[str, Any]:
     """执行Java测试"""
     print(f"☕ 执行Java测试: {test_id}")
     
-    # 二次检查：确保不执行应该被跳过的测试
-    # 这是一个安全防护，防止过滤逻辑失败时仍然执行不应该执行的测试
-    for pattern in TEST_PATTERNS:
-        if pattern in test_id:
-            print(f"⚠️ 安全防护：检测到测试 {test_id} 匹配跳过模式 '{pattern}'，跳过执行")
-            return {
-                "status": "passed",  # 标记为通过，因为这是预期的跳过行为
-                "output": f"测试被跳过：匹配模式 '{pattern}'（安全防护机制）"
-            }
-    
     # 查找Maven命令
     mvn_paths = ["mvn", "/usr/bin/mvn", "/usr/local/bin/mvn", "mvn.cmd"]
     mvn_cmd = None
@@ -949,11 +950,37 @@ def execute_java_test(test_id: str) -> Dict[str, Any]:
 
     # Run specific test using mvn verify
     # 使用 -Dtest 参数指定要运行的测试类
+    # 注意：在 Windows PowerShell 中，包含点号的参数需要特殊处理
+    # subprocess.run 会自动处理参数转义，所以这里直接传递即可
     cmd = [mvn_cmd, "verify", "-DskipUnitTests=true", f"-Dtest={actual_test_id}"]
     
     print(f"   执行命令: {' '.join(cmd)}")
+    print(f"   工作目录: {cwd}")
     
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
+    
+    # 输出详细的执行结果日志
+    print(f"   返回码: {result.returncode}")
+    print(f"   标准输出长度: {len(result.stdout)} 字符")
+    print(f"   标准错误长度: {len(result.stderr)} 字符")
+    
+    if result.stdout:
+        print(f"   标准输出（前500字符）:")
+        print("   " + "-" * 60)
+        for line in result.stdout[:500].split('\n'):
+            print(f"   {line}")
+        if len(result.stdout) > 500:
+            print(f"   ... (还有 {len(result.stdout) - 500} 字符)")
+        print("   " + "-" * 60)
+    
+    if result.stderr:
+        print(f"   标准错误（前500字符）:")
+        print("   " + "-" * 60)
+        for line in result.stderr[:500].split('\n'):
+            print(f"   {line}")
+        if len(result.stderr) > 500:
+            print(f"   ... (还有 {len(result.stderr) - 500} 字符)")
+        print("   " + "-" * 60)
     
     status = "passed" if result.returncode == 0 else "failed"
     output = result.stdout + "\n" + result.stderr
@@ -980,20 +1007,54 @@ def analyze_failure(state: AgentState) -> AgentState:
     # but allow enough for the model to understand the SDK.
     sdk_context_snippet = state["sdk_context"][:50000] + "...(truncated)" if len(state["sdk_context"]) > 50000 else state["sdk_context"]
     
-    # Get test code
-    test_file_path = os.path.join(PROJECT_ROOT, "python", last_result["test_id"].split("::")[0])
+    # Get test code - 根据测试类型构建正确的文件路径
+    test_id = last_result["test_id"]
     test_code = ""
-    if os.path.exists(test_file_path):
+    
+    if test_id.startswith("typescript:"):
+        # TypeScript测试
+        test_file_path = os.path.join(PROJECT_ROOT, "typescript", test_id[11:])
+    elif test_id.startswith("golang:"):
+        # Golang测试 - 无法直接读取文件，从输出中提取
+        test_code = "Golang测试文件内容需要从go test输出中提取"
+        test_file_path = None
+    elif test_id.startswith("java:"):
+        # Java测试 - 根据类名构建文件路径
+        class_name = test_id[5:]  # 移除java:前缀
+        file_path = class_name.replace('.', os.sep) + '.java'
+        test_file_path = os.path.join(PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java", file_path)
+    else:
+        # Python测试（默认）
+        test_file_path = os.path.join(PROJECT_ROOT, "python", test_id.split("::")[0])
+    
+    # 读取测试文件内容
+    if test_file_path and os.path.exists(test_file_path):
         try:
-            with open(test_file_path, "r") as f:
+            with open(test_file_path, "r", encoding="utf-8") as f:
                 test_code = f.read()
-        except:
-            test_code = "Could not read test file."
+        except Exception as e:
+            test_code = f"无法读取测试文件: {e}"
+    elif not test_code:  # 如果还没有设置test_code（非Golang情况）
+        test_code = "Could not read test file."
 
     error_log = last_result["output"][-5000:] # Last 5000 chars of log
 
+    # 根据测试类型确定语言和专家角色
+    if test_id.startswith("typescript:"):
+        language = "TypeScript"
+        code_lang = "typescript"
+    elif test_id.startswith("golang:"):
+        language = "Golang"
+        code_lang = "go"
+    elif test_id.startswith("java:"):
+        language = "Java"
+        code_lang = "java"
+    else:
+        language = "Python"
+        code_lang = "python"
+
     prompt = ChatPromptTemplate.from_template("""
-你是一位资深的Python SDK测试专家。请用中文进行分析和回答。
+你是一位资深的{language} SDK测试专家。请用中文进行分析和回答。
 
 ### SDK Context (Documentation/Codebase)
 {sdk_context}
@@ -1006,7 +1067,7 @@ def analyze_failure(state: AgentState) -> AgentState:
 测试ID: {test_id}
 
 测试代码:
-```python
+```{code_lang}
 {test_code}
 ```
 
@@ -1025,6 +1086,8 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
     try:
         chain = prompt | model
         response = chain.invoke({
+            "language": language,
+            "code_lang": code_lang,
             "sdk_context": sdk_context_snippet,
             "test_id": last_result["test_id"],
             "test_code": test_code,
@@ -1053,7 +1116,8 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
-        "test_type": state.get("test_type", "python")
+        "test_type": state["test_type"],
+        "skip_oss": state.get("skip_oss", False)
     }
 
 def increment_index(state: AgentState) -> AgentState:
@@ -1067,7 +1131,8 @@ def increment_index(state: AgentState) -> AgentState:
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
-        "test_type": state.get("test_type", "python")
+        "test_type": state["test_type"],
+        "skip_oss": state.get("skip_oss", False)
     }
 
 def generate_report(state: AgentState) -> AgentState:
@@ -1126,7 +1191,8 @@ def generate_report(state: AgentState) -> AgentState:
         "current_test_index": state["current_test_index"],
         "sdk_context": state["sdk_context"],
         "specific_test_pattern": state["specific_test_pattern"],
-        "test_type": state.get("test_type", "python")
+        "test_type": state["test_type"],
+        "skip_oss": state.get("skip_oss", False)
     }
 
 def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
