@@ -47,6 +47,14 @@ public class TestVisitAliyunExample {
     public static void tearDownClass() {
     }
 
+    @Test
+    public void testApiKeyAvailable() {
+        String apiKey = System.getenv("AGENTBAY_API_KEY");
+        assertNotNull("AGENTBAY_API_KEY should be set", apiKey);
+        assertFalse("AGENTBAY_API_KEY should not be empty", apiKey.isEmpty());
+        System.out.println("✅ AGENTBAY_API_KEY is available: " + apiKey.substring(0, 10) + "...");
+    }
+
     /**
      * Test successful AgentBay client initialization
      */
