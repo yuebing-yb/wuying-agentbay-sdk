@@ -81,7 +81,10 @@ TEST_PATTERNS = [
     "test_browser_agent",      # Browser Agent tests
     "test_network_integration",
     "network_integration_test",
-    "network.integration.test"
+    "network.integration.test",
+    # Image ID is not supported in CI/CD, requires local integration test execution
+    "WsRegisterCallbackIntegrationTest",
+    
     
 ]
 
