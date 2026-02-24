@@ -74,6 +74,7 @@ TEST_PATTERNS = [
     "oss.test.ts",             # TypeScript OSS test files
     "oss_test.go",             # Golang OSS test files
     "TestOss_",                # Golang OSS test function prefix
+    "TestOSSManagement",      # Java OSS integration test class suffix
     "test_agent_integration",   # Agent integration tests
     "agent-integration",        # Agent integration related tests
     "agent_test",              # Agent test files
@@ -168,6 +169,8 @@ def discover_tests(state: AgentState) -> AgentState:
             return discover_typescript_tests(state, pattern)
         elif test_type == "golang":
             return discover_golang_tests(state, pattern)
+        elif test_type == "java":
+            return discover_java_tests(state, pattern)
         elif test_type == "all":
             return discover_all_tests(state, pattern)
         else:
@@ -564,6 +567,129 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
             "test_type": "golang"
         }
 
+def discover_java_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
+    """发现Java集成测试"""
+    print("☕ 正在发现Java测试...")
+    
+    cwd = os.path.join(PROJECT_ROOT, "java", "agentbay")
+    
+    print(f"📂 Java工作目录: {cwd}")
+    print(f"🔍 目录存在: {os.path.exists(cwd)}")
+    
+    # 检查Maven是否安装，包括常见的安装路径
+    mvn_paths = ["mvn", "/usr/bin/mvn", "/usr/local/bin/mvn", "mvn.cmd"]
+    mvn_cmd = None
+    
+    for mvn_path in mvn_paths:
+        try:
+            mvn_version_result = subprocess.run([mvn_path, "--version"], capture_output=True, text=True, timeout=10)
+            if mvn_version_result.returncode == 0:
+                mvn_cmd = mvn_path
+                print(f"✅ Maven环境检查通过: {mvn_version_result.stdout.splitlines()[0]}")
+                print(f"✅ Maven路径: {mvn_cmd}")
+                break
+        except FileNotFoundError:
+            continue
+        except Exception as e:
+            print(f"⚠️ Maven路径 {mvn_path} 检查失败: {e}")
+            continue
+    
+    if mvn_cmd is None:
+        print("❌ Maven命令未找到")
+        print("💡 提示: 当前CI环境不支持Java测试，请使用python、typescript或golang测试类型")
+        print("🔍 检查的路径: " + ", ".join(mvn_paths))
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "java"
+        }
+    
+    # 检查pom.xml是否存在
+    pom_path = os.path.join(cwd, "pom.xml")
+    if not os.path.exists(pom_path):
+        print(f"❌ 未找到pom.xml: {pom_path}")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "java"
+        }
+    
+    # 直接扫描集成测试目录
+    integration_test_dir = os.path.join(cwd, "src", "integration-test", "java")
+    test_ids = []
+    
+    if os.path.exists(integration_test_dir):
+        print(f"📂 扫描集成测试目录: {integration_test_dir}")
+        for root, dirs, files in os.walk(integration_test_dir):
+            for file in files:
+                # 处理所有 .java 文件（集成测试目录下的所有 Java 文件都是测试）
+                if file.endswith('.java'):
+                    # 获取完整路径
+                    full_path = os.path.join(root, file)
+                    
+                    # 计算包名（相对于src/integration-test/java）
+                    rel_path = os.path.relpath(full_path, integration_test_dir)
+                    package_path = os.path.dirname(rel_path).replace(os.sep, '.')
+                    class_name = file[:-5]  # 移除.java后缀
+                    
+                    # 完整的测试类名
+                    if package_path:
+                        full_class_name = f"{package_path}.{class_name}"
+                    else:
+                        full_class_name = class_name
+                    
+                    # 如果有模式过滤，应用过滤
+                    if not pattern or pattern.lower() in full_class_name.lower():
+                        test_ids.append(f"java:{full_class_name}")
+        
+        print(f"✅ 在目录扫描中找到 {len(test_ids)} 个Java集成测试。")
+        if len(test_ids) > 0:
+            print("📋 测试类列表:")
+            for test_id in test_ids[:5]:  # 只显示前5个
+                print(f"   - {test_id}")
+            if len(test_ids) > 5:
+                print(f"   ... 还有 {len(test_ids) - 5} 个测试类")
+    else:
+        print(f"❌ 集成测试目录不存在: {integration_test_dir}")
+    
+    print(f"✅ 总共找到 {len(test_ids)} 个Java集成测试。")
+    
+    # 应用 OSS 测试过滤
+    skip_oss = state.get("skip_oss", False)
+    if skip_oss:
+        print("🔍 正在过滤 OSS 测试...")
+        test_ids = filter_oss_tests(test_ids, skip_oss)
+        print(f"✅ 过滤后剩余 {len(test_ids)} 个Java测试。")
+    
+    # Load SDK Context
+    context = ""
+    if os.path.exists(LLMS_FULL_PATH):
+        try:
+            with open(LLMS_FULL_PATH, "r", encoding="utf-8") as f:
+                context = f.read()
+            print(f"📚 已加载SDK上下文 ({len(context)} 字符)")
+        except Exception as e:
+            print(f"⚠️ 读取llms-full.txt失败: {e}")
+
+    return {
+        "test_queue": test_ids,
+        "current_test_index": 0,
+        "results": [],
+        "sdk_context": context,
+        "is_finished": False,
+        "specific_test_pattern": pattern,
+        "test_type": "java",
+        "skip_oss": state.get("skip_oss", False)
+    }
+
 def discover_all_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
     """发现所有语言的集成测试"""
     print("🌍 正在发现所有语言的测试...")
@@ -584,6 +710,10 @@ def discover_all_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
         # 发现Golang测试
         golang_state = discover_golang_tests(state, pattern)
         all_test_ids.extend(golang_state["test_queue"])
+        
+        # 发现Java测试
+        java_state = discover_java_tests(state, pattern)
+        all_test_ids.extend(java_state["test_queue"])
         
         print(f"✅ 总共找到 {len(all_test_ids)} 个测试。")
         
@@ -616,6 +746,8 @@ def execute_next_test(state: AgentState) -> AgentState:
         result = execute_typescript_test(test_id)
     elif test_id.startswith("golang:"):
         result = execute_golang_test(test_id)
+    elif test_id.startswith("java:"):
+        result = execute_java_test(test_id)
     else:
         # 默认为Python测试
         result = execute_python_test(test_id)
@@ -726,6 +858,51 @@ def execute_golang_test(test_id: str) -> Dict[str, Any]:
         cmd.extend(["-run", test_name])
     
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
+    
+    status = "passed" if result.returncode == 0 else "failed"
+    output = result.stdout + "\n" + result.stderr
+    
+    print(f"   结果: {status.upper()}")
+    
+    return {"status": status, "output": output}
+
+def execute_java_test(test_id: str) -> Dict[str, Any]:
+    """执行Java测试"""
+    print(f"☕ 执行Java测试: {test_id}")
+    
+    # 查找Maven命令
+    mvn_paths = ["mvn", "/usr/bin/mvn", "/usr/local/bin/mvn", "mvn.cmd"]
+    mvn_cmd = None
+    
+    for mvn_path in mvn_paths:
+        try:
+            subprocess.run([mvn_path, "--version"], capture_output=True, text=True, timeout=5)
+            mvn_cmd = mvn_path
+            break
+        except:
+            continue
+    
+    if mvn_cmd is None:
+        print("❌ 执行测试时未找到Maven命令")
+        return {"status": "failed", "output": "Maven命令未找到，无法执行测试"}
+    
+    # 移除java:前缀获取测试类名
+    actual_test_id = test_id[5:]  # len("java:") = 5
+    
+    cwd = os.path.join(PROJECT_ROOT, "java", "agentbay")
+    env = os.environ.copy()
+    
+    # Ensure AGENTBAY_API_KEY is present
+    if "AGENTBAY_API_KEY" not in env:
+        print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
+
+    # Run specific test using mvn verify
+    # 使用 -Dtest 参数指定要运行的测试类
+    cmd = [mvn_cmd, "verify", "-DskipUnitTests=true", f"-Dtest={actual_test_id}"]
+    
+    print(f"   执行命令: {' '.join(cmd)}")
+    
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env, timeout=300)
     
     status = "passed" if result.returncode == 0 else "failed"
     output = result.stdout + "\n" + result.stderr
@@ -915,6 +1092,11 @@ def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
     elif test_id.startswith("golang:"):
         # Golang测试 - 需要特殊处理
         test_file_content = "Golang测试文件内容需要从go test输出中提取"
+    elif test_id.startswith("java:"):
+        # Java测试 - 根据类名构建文件路径
+        class_name = test_id[5:]  # 移除java:前缀
+        file_path = class_name.replace('.', os.sep) + '.java'
+        test_file_path = os.path.join(PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java", file_path)
     else:
         # Python测试
         test_file_path = os.path.join(PROJECT_ROOT, "python", test_id.split("::")[0])
@@ -949,7 +1131,16 @@ def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
     # 测试代码片段（如果文件不太大）
     if test_file_content and len(test_file_content) < 5000:
         prompt_lines.append("**测试代码**:")
-        prompt_lines.append("```python" if not test_id.startswith("typescript:") else "```typescript")
+        # 根据测试类型选择代码块语言
+        if test_id.startswith("typescript:"):
+            code_lang = "typescript"
+        elif test_id.startswith("java:"):
+            code_lang = "java"
+        elif test_id.startswith("golang:"):
+            code_lang = "go"
+        else:
+            code_lang = "python"
+        prompt_lines.append(f"```{code_lang}")
         prompt_lines.append(test_file_content)
         prompt_lines.append("```")
         prompt_lines.append("")
@@ -957,18 +1148,38 @@ def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
         # 文件太大，只显示相关函数
         lines = test_file_content.split('\n')
         relevant_lines = []
-        for j, line in enumerate(lines):
-            if 'def test_' in line or 'async def test_' in line or 'it(' in line or 'test(' in line:
-                # 提取测试函数（前后10行）
-                start = max(0, j-5)
-                end = min(len(lines), j+20)
-                relevant_lines.extend(lines[start:end])
-                relevant_lines.append("... (其他代码)")
-                break
+        
+        # 根据语言类型查找测试方法
+        if test_id.startswith("java:"):
+            # Java: 查找 @Test 注解或 public void test 方法
+            for j, line in enumerate(lines):
+                if '@Test' in line or ('public' in line and 'void' in line and 'test' in line.lower()):
+                    start = max(0, j-5)
+                    end = min(len(lines), j+30)
+                    relevant_lines.extend(lines[start:end])
+                    relevant_lines.append("... (其他代码)")
+                    break
+        else:
+            # Python/TypeScript/Golang
+            for j, line in enumerate(lines):
+                if 'def test_' in line or 'async def test_' in line or 'it(' in line or 'test(' in line or 'func Test' in line:
+                    start = max(0, j-5)
+                    end = min(len(lines), j+20)
+                    relevant_lines.extend(lines[start:end])
+                    relevant_lines.append("... (其他代码)")
+                    break
         
         if relevant_lines:
             prompt_lines.append("**相关测试代码片段**:")
-            prompt_lines.append("```python" if not test_id.startswith("typescript:") else "```typescript")
+            if test_id.startswith("typescript:"):
+                code_lang = "typescript"
+            elif test_id.startswith("java:"):
+                code_lang = "java"
+            elif test_id.startswith("golang:"):
+                code_lang = "go"
+            else:
+                code_lang = "python"
+            prompt_lines.append(f"```{code_lang}")
             prompt_lines.append('\n'.join(relevant_lines))
             prompt_lines.append("```")
             prompt_lines.append("")
@@ -1063,7 +1274,7 @@ def main():
     
     parser = argparse.ArgumentParser(description="Smart Integration Test Runner with AI Analysis")
     parser.add_argument("-k", "--keyword", help="Run tests which match the given substring expression (same as pytest -k)", type=str)
-    parser.add_argument("--test-type", help="Test type to run (all, python, typescript, golang)", type=str, default="all")
+    parser.add_argument("--test-type", help="Test type to run (all, python, typescript, golang, java)", type=str, default="all")
     parser.add_argument("--report", help="Path to save the report", default=REPORT_FILE)
     parser.add_argument("--skip-oss", help="Skip OSS integration tests", action="store_true", default=False)
     
