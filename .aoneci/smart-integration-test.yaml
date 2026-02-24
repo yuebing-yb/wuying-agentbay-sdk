@@ -16,6 +16,7 @@ params:
       - "python"
       - "typescript"
       - "golang"
+      - "java"
   skip_specified_patterns:
     name: Skip Specified Test Patterns
     type: boolean
@@ -74,6 +75,8 @@ jobs:
           go-version: '1.24.3'
           go-mod-cache: true
           go-cache: true
+          java-version: '11'
+          maven-version: '3.9'
           
       - id: run-smart-tests
         name: "Run Smart Tests"
@@ -96,6 +99,26 @@ jobs:
               echo "🎭 Installing Playwright browsers for Golang..."
               go run github.com/playwright-community/playwright-go/cmd/playwright@latest install --with-deps
               cd ..
+            fi
+          fi
+          
+          # Setup Java dependencies if needed
+          if [ "${{params.test_type}}" = "java" ] || [ "${{params.test_type}}" = "all" ]; then
+            echo "☕ Setting up Java environment..."
+            # Java and Maven already installed by setup-env
+            java -version
+            mvn --version
+            
+            if [ -d "java/agentbay" ]; then
+              cd java/agentbay
+              # Download dependencies
+              echo "📦 Downloading Maven dependencies..."
+              mvn dependency:go-offline -DskipTests || echo "⚠️ Maven dependency download failed"
+              
+              # Compile integration tests
+              echo "🔨 Compiling Java integration tests..."
+              mvn test-compile -DskipTests || echo "⚠️ Maven test compilation failed"
+              cd ../..
             fi
           fi
           
@@ -197,6 +220,14 @@ jobs:
             npm --version || echo "❌ npm version check failed"
           fi
           
+          if [ "${{params.test_type}}" = "java" ] || [ "${{params.test_type}}" = "all" ]; then
+            echo "🔍 Checking Java installation..."
+            which java || echo "❌ Java not found in PATH"
+            java -version || echo "❌ Java version check failed"
+            which mvn || echo "❌ Maven not found in PATH"
+            mvn --version || echo "❌ Maven version check failed"
+          fi
+          
           # Run the smart test runner
           SKIP_PATTERNS_FLAG=""
           if [ "${{params.skip_specified_patterns}}" = "true" ]; then
@@ -254,6 +285,8 @@ jobs:
                   lang="Python"
                 elif echo "$test_id" | grep -q "typescript\|\.ts\|\.js\|npm\|jest"; then
                   lang="TypeScript"
+                elif echo "$test_id" | grep -q "java:"; then
+                  lang="Java"
                 else
                   lang="未知"
                 fi
