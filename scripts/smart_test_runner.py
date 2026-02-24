@@ -122,20 +122,31 @@ def should_skip_oss_test(test_id: str, skip_oss: bool = False) -> bool:
 def filter_oss_tests(test_ids: List[str], skip_oss: bool = False) -> List[str]:
     """过滤掉 OSS 测试"""
     if not skip_oss:
+        print(f"⚠️ skip_oss=False，不进行测试过滤")
         return test_ids
+    
+    print(f"🔍 开始过滤测试，skip_oss={skip_oss}")
+    print(f"📋 过滤模式列表: {TEST_PATTERNS}")
     
     filtered_tests = []
     skipped_count = 0
     
     for test_id in test_ids:
-        if should_skip_oss_test(test_id, skip_oss):
+        should_skip = should_skip_oss_test(test_id, skip_oss)
+        if should_skip:
             skipped_count += 1
-            print(f"⏭️ 跳过 OSS 测试: {test_id}")
+            print(f"⏭️ 跳过测试: {test_id}")
+            # 输出匹配的模式
+            for pattern in TEST_PATTERNS:
+                if pattern in test_id:
+                    print(f"   ✓ 匹配模式: {pattern}")
         else:
             filtered_tests.append(test_id)
     
     if skipped_count > 0:
-        print(f"📋 总共跳过 {skipped_count} 个 OSS 测试")
+        print(f"📋 总共跳过 {skipped_count} 个测试")
+    else:
+        print(f"📋 没有测试被跳过")
     
     return filtered_tests
 

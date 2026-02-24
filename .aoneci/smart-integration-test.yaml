@@ -226,12 +226,14 @@ jobs:
           
           # Run the smart test runner
           SKIP_PATTERNS_FLAG=""
+          echo "🔍 检查 skip_specified_patterns 参数值: ${{params.skip_specified_patterns}}"
           if [ "${{params.skip_specified_patterns}}" = "true" ]; then
             SKIP_PATTERNS_FLAG="--skip-oss"
-            echo "🔄 Specified test patterns skipping enabled"
+            echo "✅ Specified test patterns skipping enabled (--skip-oss)"
           else
-            echo "🔄 Specified test patterns skipping disabled, will run all tests"
+            echo "⚠️ Specified test patterns skipping disabled, will run all tests"
           fi
+          echo "🔍 SKIP_PATTERNS_FLAG 值: $SKIP_PATTERNS_FLAG"
           
           if python scripts/smart_test_runner.py --test-type="${{params.test_type}}" $SKIP_PATTERNS_FLAG; then
             echo "✅ Smart Test Runner completed successfully"
