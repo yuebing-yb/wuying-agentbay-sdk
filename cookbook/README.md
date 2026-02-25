@@ -31,7 +31,7 @@ Currently, distinct session environments are implemented:
 
 ### Desktop Environment
 
-7. [Moltbot Session Setup](./moltbot/) - Create and configure a Moltbot (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
+7. [OpenClaw Session Setup](./openclaw/) - Create and configure an OpenClaw (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
 8. [Official Skills Sandbox (AgentScope)](./skills/agentscope-official-skills-sandbox/) - Experience official skills running inside a sandbox with AgentScope
 9. [Official Skills Sandbox (LangChain DeepAgents)](./skills/langchain-deepagents-official-skills-sandbox/) - Experience official skills running inside a sandbox with LangChain DeepAgents
 
