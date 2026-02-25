@@ -14,7 +14,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestListSessions {
+public class ListSessionsIntegrationTest {
 
     private AgentBay agentBay;
     private List<Session> testSessions;

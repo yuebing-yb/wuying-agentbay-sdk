@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
  * Integration tests for Mobile Agent functionality in AgentBay Java SDK.
  * This test class is equivalent to test_mobile_agent_integration.py in Python SDK.
  */
-public class TestMobileAgentIntegration {
+public class MobileAgentIntegrationIntegrationTest {
     private static AgentBay agentBay;
     private static Session session;
     private static Agent agent;
@@ -377,10 +377,10 @@ public class TestMobileAgentIntegration {
     public static void main(String[] args) {
         System.out.println("=== Running Mobile Agent Integration Tests ===\n");
         
-        TestMobileAgentIntegration test = new TestMobileAgentIntegration();
+        MobileAgentIntegrationIntegrationTest test = new MobileAgentIntegrationIntegrationTest();
         
         try {
-            TestMobileAgentIntegration.setUp();
+            MobileAgentIntegrationIntegrationTest.setUp();
             
             System.out.println("\n--- Test 1: Execute Task Success ---");
             test.testMobileExecuteTaskSuccess();
@@ -394,7 +394,7 @@ public class TestMobileAgentIntegration {
             System.out.println("\n--- Test 4: Terminate Task Success ---");
             test.testMobileTerminateTaskSuccess();
             
-            TestMobileAgentIntegration.tearDown();
+            MobileAgentIntegrationIntegrationTest.tearDown();
             
             System.out.println("\n=== All Tests Completed ===");
             

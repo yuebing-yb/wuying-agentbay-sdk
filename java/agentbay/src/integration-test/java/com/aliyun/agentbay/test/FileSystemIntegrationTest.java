@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
  * 8. Large file operations
  * 9. Parent directory creation
  */
-public class TestFileSystem {
+public class FileSystemIntegrationTest {
 
     private static AgentBay agentBay;
     private static Session session;
@@ -670,7 +670,7 @@ public class TestFileSystem {
     public static void main(String[] args) {
         System.out.println("=== Running FileSystem Tests ===\n");
         
-        TestFileSystem test = new TestFileSystem();
+        FileSystemIntegrationTest test = new FileSystemIntegrationTest();
         int testCount = 0;
         int passedCount = 0;
         

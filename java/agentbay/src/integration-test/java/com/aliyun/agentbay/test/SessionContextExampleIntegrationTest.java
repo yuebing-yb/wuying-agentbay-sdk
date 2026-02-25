@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
  * JUnit 4 test cases for SessionContextExample functionality
  * Tests context management operations including list, get, create, update and cleanup
  */
-public class TestSessionContextExample {
+public class SessionContextExampleIntegrationTest {
     private static AgentBay agentBay;
     private static Session session;
     private static Context context;

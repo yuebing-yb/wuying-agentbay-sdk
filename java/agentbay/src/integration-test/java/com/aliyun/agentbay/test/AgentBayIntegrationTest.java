@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
  * This test class is equivalent to test_agent_bay.py in Python SDK
  */
 @RunWith(Enclosed.class)
-public class AgentBayTest {
+public class AgentBayIntegrationTest {
 
     /**
      * Get API key for testing
