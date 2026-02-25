@@ -687,13 +687,6 @@ def discover_java_tests(state: AgentState, pattern: Optional[str]) -> AgentState
     
     print(f"✅ 总共找到 {len(test_ids)} 个Java集成测试。")
     
-    # 应用 OSS 测试过滤
-    skip_oss = state.get("skip_oss", False)
-    if skip_oss:
-        print("🔍 正在过滤 OSS 测试...")
-        test_ids = filter_oss_tests(test_ids, skip_oss)
-        print(f"✅ 过滤后剩余 {len(test_ids)} 个Java测试。")
-    
     # Load SDK Context
     context = ""
     if os.path.exists(LLMS_FULL_PATH):

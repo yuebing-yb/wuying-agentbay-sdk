@@ -103,6 +103,7 @@ public class SessionKeepAliveIntegrationTest {
                 boolean controlReleased = false;
                 try {
                     String s = getSessionStatus(agentBay, apiKey, control.getSessionId());
+                    System.out.println("Control session status: " + s);
                     if (isReleasedByStatusString(s)) {
                         controlReleased = true;
                     }
@@ -119,6 +120,7 @@ public class SessionKeepAliveIntegrationTest {
                     boolean refreshedReleased = false;
                     try {
                         String s = getSessionStatus(agentBay, apiKey, refreshed.getSessionId());
+                        System.out.println("refreshedReleased session status: " + s);
                         if (isReleasedByStatusString(s)) {
                             refreshedReleased = true;
                         }
@@ -139,7 +141,7 @@ public class SessionKeepAliveIntegrationTest {
                     return;
                 }
 
-                Thread.sleep(pollInterval * 1000L);
+                Thread.sleep(2000);
             }
 
             throw new AssertionError("Control session was not released within expected time window");
