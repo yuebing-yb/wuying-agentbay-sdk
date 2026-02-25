@@ -942,20 +942,16 @@ def execute_java_test(test_id: str) -> Dict[str, Any]:
     if "AGENTBAY_API_KEY" not in env:
         print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
 
-    # 判断测试类型并构建相应的Maven命令
-    # 集成测试类名通常以 IntegrationTest 结尾
-    is_integration_test = "IntegrationTest" in actual_test_id
+    # 构建集成测试的Maven命令
+    # 注意：此函数只处理集成测试，所有测试都来自 src/integration-test/java 目录
+    simple_class_name = actual_test_id.split('.')[-1] if '.' in actual_test_id else actual_test_id
     
-    if is_integration_test:
-        simple_class_name = actual_test_id.split('.')[-1] if '.' in actual_test_id else actual_test_id
-        
-        cmd = [mvn_cmd, "verify", "-Dsurefire.skip=true", f"-Dit.test={simple_class_name}"]
-        test_type = "集成测试"
-        print(f"   📋 测试类型: {test_type}")
-        print(f"   🔧 使用 maven-failsafe-plugin")
-        print(f"   ⚠️ 使用 -Dsurefire.skip=true 跳过单元测试")
-        print(f"   📝 完全限定类名: {actual_test_id}")
-        print(f"   📝 简单类名: {simple_class_name}")
+    cmd = [mvn_cmd, "verify", "-Dsurefire.skip=true", f"-Dit.test={simple_class_name}"]
+    print(f"   📋 测试类型: 集成测试")
+    print(f"   🔧 使用 maven-failsafe-plugin")
+    print(f"   ⚠️ 使用 -Dsurefire.skip=true 跳过单元测试")
+    print(f"   📝 完全限定类名: {actual_test_id}")
+    print(f"   📝 简单类名: {simple_class_name}")
     
     print(f"   执行命令: {' '.join(cmd)}")
     print(f"   工作目录: {cwd}")
