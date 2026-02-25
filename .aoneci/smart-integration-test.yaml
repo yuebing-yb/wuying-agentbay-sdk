@@ -55,11 +55,6 @@ jobs:
       - "4-16Gi"
     image: alios-8u
     timeout: 5h
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     outputs:
       test_summary: ${{steps.run-smart-tests.outputs.test_summary}}
       failed_tests: ${{steps.run-smart-tests.outputs.failed_tests}}
@@ -70,8 +65,6 @@ jobs:
         inputs:
           python-version: '3.12'
           node-version: '18'
-          npm-version: '10'
-          npm-cache: true
           go-version: '1.24.3'
           go-mod-cache: true
           go-cache: true
@@ -108,14 +101,6 @@ jobs:
             # Java and Maven already installed by setup-env
             java -version
             mvn --version
-            
-            if [ -d "java/agentbay" ]; then
-              cd java/agentbay
-              # Download dependencies
-              echo "📦 Downloading Maven dependencies..."
-              mvn dependency:go-offline -DskipTests || echo "⚠️ Maven dependency download failed"
-              cd ../..
-            fi
           fi
           
           # Setup TypeScript dependencies if needed  
