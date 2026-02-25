@@ -74,7 +74,7 @@ TEST_PATTERNS = [
     "oss.test.ts",             # TypeScript OSS test files
     "oss_test.go",             # Golang OSS test files
     "TestOss_",                # Golang OSS test function prefix
-    "TestOSSManagement",      # Java OSS integration test class suffix
+    "OSSManagementIntegrationTest", # Java OSS integration test class suffix
     "test_agent_integration",   # Agent integration tests
     "agent-integration",        # Agent integration related tests
     "agent_test",              # Agent test files
@@ -85,8 +85,8 @@ TEST_PATTERNS = [
     # Image ID is not supported in CI/CD, requires local integration test execution
     "WsRegisterCallbackIntegrationTest",
     "RunCodeWsStreamingBetaIntegrationTest",
-    
-    
+    "WsStreamCancelIntegrationTest",
+    "AgentBayGetIntegrationTest"
 ]
 
 # State Definition
