@@ -1311,6 +1311,56 @@ export class Client extends OpenApi {
   }
 
   /**
+   * List official skills metadata
+   *
+   * @param request - ListSkillMetaDataRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns ListSkillMetaDataResponse
+   */
+  async listSkillMetaDataWithOptions(
+    request: $_model.ListSkillMetaDataRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.ListSkillMetaDataResponse> {
+    request.validate();
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "ListSkillMetaData",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.ListSkillMetaDataResponse>(
+      await this.callApi(params, req, runtime),
+      new $_model.ListSkillMetaDataResponse({})
+    );
+  }
+
+  /**
+   * List official skills metadata
+   *
+   * @param request - ListSkillMetaDataRequest
+   * @returns ListSkillMetaDataResponse
+   */
+  async listSkillMetaData(
+    request: $_model.ListSkillMetaDataRequest
+  ): Promise<$_model.ListSkillMetaDataResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.listSkillMetaDataWithOptions(request, runtime);
+  }
+
+  /**
    * Modify context
    *
    * @param request - ModifyContextRequest

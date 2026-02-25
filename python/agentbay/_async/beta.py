@@ -1,0 +1,109 @@
+import os
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+import asyncio
+from ..api.models import ListSkillMetaDataRequest
+
+if TYPE_CHECKING:
+    from .agentbay import AsyncAgentBay
+
+
+DEFAULT_OFFICIAL_SKILLS_ROOT = "/home/wuying/skills"
+
+
+class AsyncBetaSkillsService:
+    """
+    Beta skills service.
+
+    Current capability:
+    - List official skills metadata via POP Action `ListSkillMetaData`.
+
+    Notes:
+    - Backend returns Name/Description only.
+    """
+
+    def __init__(self, agent_bay: "AsyncAgentBay", skills_root: Optional[str] = None):
+        self._agent_bay = agent_bay
+        root = (
+            skills_root
+            or os.environ.get("AGENTBAY_OFFICIAL_SKILLS_ROOT", "").strip()
+            or DEFAULT_OFFICIAL_SKILLS_ROOT
+        )
+        self._skills_root = root.rstrip("/") or DEFAULT_OFFICIAL_SKILLS_ROOT
+
+    def _build_skill_dir(self, name: str) -> str:
+        n = (name or "").strip().lstrip("/")
+        return f"{self._skills_root}/{n}" if n else self._skills_root
+
+    async def list_metadata(self) -> List[Dict[str, str]]:
+        """
+        List official skills metadata.
+
+        Returns:
+            List[Dict[str, str]]: Each item contains:
+            - name (str)
+            - description (str)
+        """
+        request = ListSkillMetaDataRequest(
+            authorization=f"Bearer {self._agent_bay.api_key}",
+        )
+
+        max_attempts = 3
+        delay_s = 0.2
+        last_err: Optional[BaseException] = None
+        resp: Any = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                resp = await self._agent_bay.client.list_skill_meta_data_async(request)
+                last_err = None
+                break
+            except Exception as e:
+                last_err = e
+                msg = str(e)
+                if attempt < max_attempts and (
+                    "ServiceUnavailable" in msg or "statusCode': 503" in msg or "code: 503" in msg
+                ):
+                    await asyncio.sleep(delay_s)
+                    delay_s *= 2
+                    continue
+                raise
+
+        if last_err is not None:
+            raise RuntimeError(f"ListSkillMetaData failed: {last_err}") from last_err
+
+        body = getattr(resp, "body", None)
+        if body is None:
+            raise RuntimeError("ListSkillMetaData failed: missing response body")
+
+        if getattr(body, "success", None) is None or not body.success:
+            code = str(getattr(body, "code", "") or "")
+            msg = str(getattr(body, "message", "") or "")
+            if code:
+                raise RuntimeError(f"ListSkillMetaData failed: [{code}] {msg}")
+            raise RuntimeError(f"ListSkillMetaData failed: {msg or 'Unknown error'}")
+
+        data = getattr(body, "data", None) or []
+        if not isinstance(data, list):
+            raise RuntimeError("ListSkillMetaData failed: invalid Data field")
+
+        items: List[Dict[str, str]] = []
+        for raw in data:
+            name = str(getattr(raw, "name", "") or "").strip()
+            if not name:
+                continue
+            description = str(getattr(raw, "description", "") or "")
+            items.append(
+                {
+                    "name": name,
+                    "description": description,
+                }
+            )
+        return items
+
+
+class AsyncBetaNamespace:
+    """Beta namespace container for experimental features."""
+
+    def __init__(self, agent_bay: "AsyncAgentBay"):
+        self.skills = AsyncBetaSkillsService(agent_bay)
+

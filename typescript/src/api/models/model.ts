@@ -11,6 +11,7 @@ export { GetMcpResourceResponseBodyDataDesktopInfo } from './GetMcpResourceRespo
 export { GetMcpResourceResponseBodyData } from './GetMcpResourceResponseBodyData';
 export { ListContextsResponseBodyData } from './ListContextsResponseBodyData';
 export { ListSessionResponseBodyData } from './ListSessionResponseBodyData';
+export { ListSkillMetaDataResponseBodyData } from './ListSkillMetaDataResponseBody';
 export { ApplyMqttTokenRequest } from './ApplyMqttTokenRequest';
 export { ApplyMqttTokenResponseBody } from './ApplyMqttTokenResponseBody';
 export { ApplyMqttTokenResponse } from './ApplyMqttTokenResponse';
@@ -76,6 +77,9 @@ export { ListMcpToolsResponse } from './ListMcpToolsResponse';
 export { ListSessionRequest } from './ListSessionRequest';
 export { ListSessionResponseBody } from './ListSessionResponseBody';
 export { ListSessionResponse } from './ListSessionResponse';
+export { ListSkillMetaDataRequest } from './ListSkillMetaDataRequest';
+export { ListSkillMetaDataResponseBody } from './ListSkillMetaDataResponseBody';
+export { ListSkillMetaDataResponse } from './ListSkillMetaDataResponse';
 export { ModifyContextRequest } from './ModifyContextRequest';
 export { ModifyContextResponseBody } from './ModifyContextResponseBody';
 export { ModifyContextResponse } from './ModifyContextResponse';

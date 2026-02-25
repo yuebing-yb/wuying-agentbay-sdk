@@ -29,12 +29,13 @@
 
 ---
 
-## 🔥 OpenClaw (formerly Clawdbot) Quick Deployment
+## 🔥 Moltbot (formerly Clawdbot) Quick Deployment
 
-You can use AgentBay SDK to spin up a prebuilt OpenClaw cloud desktop in minutes, then open the OpenClaw console inside the desktop browser.
+You can use AgentBay SDK to spin up a prebuilt Moltbot cloud desktop in minutes, then open the Moltbot console inside the desktop browser.
 
-- **Cookbook**: `cookbook/openclaw/`
-- **OpenClaw console**: open `http://127.0.0.1:30120` inside the cloud desktop
+- **Cookbook**: `cookbook/moltbot/`
+- **Cloud Desktop URL**: the example prints `session.resource_url` and pauses for hands-on exploration
+- **Moltbot console**: open `http://127.0.0.1:30120` inside the cloud desktop
 
 ## 📦 Installation
 
