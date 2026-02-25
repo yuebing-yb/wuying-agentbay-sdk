@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
  * Enhanced Code Execution Integration Tests
  * Reference: python/tests/integration/_sync/test_enhanced_code_integration.py
  */
-public class TestEnhancedCodeExecution {
+public class EnhancedCodeExecutionIntegrationTest {
 
     private static Session sharedSession;
     private static AgentBay agentBay;

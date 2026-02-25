@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
  * Test cases for Code Execution functionality in AgentBay Java SDK
  * This test class covers the functionality demonstrated in CodeExecutionExample.java
  */
-public class TestCodeExecution {
+public class CodeExecutionIntegrationTest {
 
     private static AgentBay agentBay;
     private static Session session;
@@ -330,7 +330,7 @@ public class TestCodeExecution {
     public static void main(String[] args) {
         System.out.println("=== Running Code Execution Tests ===\n");
 
-        TestCodeExecution test = new TestCodeExecution();
+        CodeExecutionIntegrationTest test = new CodeExecutionIntegrationTest();
 
         try {
             test.setUp();

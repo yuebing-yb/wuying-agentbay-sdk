@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
  * 6. Error handling for invalid paths
  * 7. Cleanup operations
  */
-public class TestFileTransfer {
+public class FileTransferIntegrationTest {
 
     private static AgentBay agentBay;
     private static Session session;

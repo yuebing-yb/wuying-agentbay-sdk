@@ -28,7 +28,7 @@ import static org.junit.Assume.assumeTrue;
  * 5. Error handling for invalid credentials
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestOSSManagement {
+public class OSSManagementIntegrationTest {
     
     private static AgentBay agentBay;
     private static Session session;

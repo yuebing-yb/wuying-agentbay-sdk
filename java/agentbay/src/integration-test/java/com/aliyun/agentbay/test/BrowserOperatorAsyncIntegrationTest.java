@@ -32,7 +32,7 @@ import com.microsoft.playwright.Playwright;
  * Test cases for BrowserOperator async methods (actAsync and extractAsync)
  * Tests the async variants that use page_use_act_async and page_use_extract_async
  */
-public class TestBrowserOperatorAsync {
+public class BrowserOperatorAsyncIntegrationTest {
     private static AgentBay agentBay;
     private static Session session;
     private static String apiKey;

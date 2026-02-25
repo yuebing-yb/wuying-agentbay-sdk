@@ -20,7 +20,7 @@ import static org.junit.Assert.*;
  * 
  * This test is equivalent to Python's test_context_sync_integration.py
  */
-public class TestContextSyncIntegration {
+public class ContextSyncIntegrationIntegrationTest {
     private static AgentBay agentBay;
     
     @BeforeClass

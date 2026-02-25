@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class TestCommandEnvironment {
+public class CommandEnvironmentIntegrationTest {
 
     private static AgentBay agentBay;
     private static Session session;
@@ -248,7 +248,7 @@ public class TestCommandEnvironment {
     public static void main(String[] args) {
         System.out.println("=== Running Command Environment Tests ===\n");
 
-        TestCommandEnvironment test = new TestCommandEnvironment();
+        CommandEnvironmentIntegrationTest test = new CommandEnvironmentIntegrationTest();
 
         try {
             setUp();

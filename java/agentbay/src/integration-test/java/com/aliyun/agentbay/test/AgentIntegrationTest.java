@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * This test class is equivalent to test_agent_integration.py in Python SDK.
  */
 @RunWith(Enclosed.class)
-public class TestAgentIntegration {
+public class AgentIntegrationTest {
     private static AgentBay agentBay;
     private static Session session;
     private static Agent agent;

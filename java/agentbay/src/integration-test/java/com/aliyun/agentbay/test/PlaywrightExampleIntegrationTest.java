@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
  * JUnit 4 test cases for PlaywrightExample functionality
  * Tests the integration of AgentBay SDK with Playwright browser automation
  */
-public class TestPlaywrightExample {
+public class PlaywrightExampleIntegrationTest {
     private AgentBay agentBay;
     private Session session;
     private String apiKey;

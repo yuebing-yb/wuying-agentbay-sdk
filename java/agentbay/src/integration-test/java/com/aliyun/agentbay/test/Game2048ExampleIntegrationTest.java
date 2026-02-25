@@ -33,7 +33,7 @@ import com.microsoft.playwright.Playwright;
  * - Browser initialization and control
  * - Browser agent data extraction
  */
-public class TestGame2048Example {
+public class Game2048ExampleIntegrationTest {
     private static AgentBay agentBay;
     private static Session session;
     private static String apiKey;

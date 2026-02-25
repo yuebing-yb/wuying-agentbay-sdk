@@ -58,8 +58,6 @@
         <!-- SDK release flag: set to true when publishing to Maven Central -->
         <!-- Usage: mvn deploy -Dagentbay.is.release.build=true -->
         <agentbay.is.release.build>false</agentbay.is.release.build>
-        <!-- Test control properties -->
-        <skipUnitTests>false</skipUnitTests>
     </properties>
 
     <dependencies>
@@ -262,8 +260,8 @@
                     <excludes>
                         <exclude>**/*IntegrationTest.java</exclude>
                     </excludes>
-                    <!-- 在 verify 阶段跳过单元测试 -->
-                    <skipTests>${skipUnitTests}</skipTests>
+                    <!-- 允许通过命令行参数 -Dsurefire.skip=true 跳过单元测试 -->
+                    <skip>${surefire.skip}</skip>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -285,13 +283,15 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.1.2</version>
                 <configuration>
-                    <!-- 只运行集成测试 -->
+                    <!-- 默认运行所有集成测试 -->
+                    <!-- 使用 -Dit.test 参数可以指定单个测试类 -->
                     <includes>
                         <include>**/*IntegrationTest.java</include>
                     </includes>
                 </configuration>
                 <executions>
                     <execution>
+                        <id>integration-tests</id>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>

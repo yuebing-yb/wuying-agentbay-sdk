@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
  * Integration tests for session configuration parameters including
  * policy_id, enable_browser_replay, and extra_configs.
  */
-public class TestSessionConfigurationIntegration {
+public class SessionConfigurationIntegrationTest {
 
     private AgentBay agentBay;
     private Session session;

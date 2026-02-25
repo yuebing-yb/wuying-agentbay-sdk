@@ -15,7 +15,7 @@ import static org.junit.Assert.*;
  * JUnit 4 test cases for VisitAliyunExample functionality
  * Tests the integration of AgentBay SDK with Playwright to visit aliyun.com
  */
-public class TestVisitAliyunExample {
+public class VisitAliyunExampleIntegrationTest {
     private AgentBay agentBay;
     private Session session;
     private String apiKey;

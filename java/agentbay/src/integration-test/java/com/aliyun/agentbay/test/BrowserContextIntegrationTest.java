@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
  * This test verifies that browser context (cookies, localStorage, etc.) can be persisted
  * across sessions using the same ContextId.
  */
-public class TestBrowserContextIntegration {
+public class BrowserContextIntegrationTest {
     
     private static AgentBay agentBay;
     private static String contextName;

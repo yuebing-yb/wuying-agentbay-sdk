@@ -16,9 +16,9 @@ import static org.junit.Assert.*;
 
 /**
  * Test cases for the Session class.
- * This test class is equivalent to TestSession in test_agent_bay_session.py
+ * This test class is equivalent to SessionIntegrationTest in test_agent_bay_session.py
  */
-public class TestSession {
+public class SessionIntegrationTest {
     private static AgentBay agentBay;
     private static Session session;
     private static SessionResult result;

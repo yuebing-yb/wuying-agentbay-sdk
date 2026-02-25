@@ -84,6 +84,7 @@ TEST_PATTERNS = [
     "network.integration.test",
     # Image ID is not supported in CI/CD, requires local integration test execution
     "WsRegisterCallbackIntegrationTest",
+    "RunCodeWsStreamingBetaIntegrationTest",
     
     
 ]
@@ -948,11 +949,20 @@ def execute_java_test(test_id: str) -> Dict[str, Any]:
     if "AGENTBAY_API_KEY" not in env:
         print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
 
-    # Run specific test using mvn verify
-    # 使用 -Dtest 参数指定要运行的测试类
-    # 注意：在 Windows PowerShell 中，包含点号的参数需要特殊处理
-    # subprocess.run 会自动处理参数转义，所以这里直接传递即可
-    cmd = [mvn_cmd, "verify", "-DskipUnitTests=true", f"-Dtest={actual_test_id}"]
+    # 判断测试类型并构建相应的Maven命令
+    # 集成测试类名通常以 IntegrationTest 结尾
+    is_integration_test = "IntegrationTest" in actual_test_id
+    
+    if is_integration_test:
+        simple_class_name = actual_test_id.split('.')[-1] if '.' in actual_test_id else actual_test_id
+        
+        cmd = [mvn_cmd, "verify", "-Dsurefire.skip=true", f"-Dit.test={simple_class_name}"]
+        test_type = "集成测试"
+        print(f"   📋 测试类型: {test_type}")
+        print(f"   🔧 使用 maven-failsafe-plugin")
+        print(f"   ⚠️ 使用 -Dsurefire.skip=true 跳过单元测试")
+        print(f"   📝 完全限定类名: {actual_test_id}")
+        print(f"   📝 简单类名: {simple_class_name}")
     
     print(f"   执行命令: {' '.join(cmd)}")
     print(f"   工作目录: {cwd}")
