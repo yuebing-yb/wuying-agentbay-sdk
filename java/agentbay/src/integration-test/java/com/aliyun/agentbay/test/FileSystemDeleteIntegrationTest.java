@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 /**
  * Test cases for FileSystem.deleteFile method
  */
-public class FileSystemDeleteTest {
+public class  FileSystemDeleteIntegrationTest {
 
     private static AgentBay agentBay;
     private static Session session;
