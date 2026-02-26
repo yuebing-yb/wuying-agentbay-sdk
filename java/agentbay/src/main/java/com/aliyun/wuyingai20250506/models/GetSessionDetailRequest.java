@@ -3,19 +3,19 @@ package com.aliyun.wuyingai20250506.models;
 
 import com.aliyun.tea.*;
 
-public class RefreshSessionIdleTimeRequest extends TeaModel {
+public class GetSessionDetailRequest extends TeaModel {
     @NameInMap("Authorization")
     public String authorization;
 
     @NameInMap("SessionId")
     public String sessionId;
 
-    public static RefreshSessionIdleTimeRequest build(java.util.Map<String, ?> map) throws Exception {
-        RefreshSessionIdleTimeRequest self = new RefreshSessionIdleTimeRequest();
+    public static GetSessionDetailRequest build(java.util.Map<String, ?> map) throws Exception {
+        GetSessionDetailRequest self = new GetSessionDetailRequest();
         return TeaModel.build(map, self);
     }
 
-    public RefreshSessionIdleTimeRequest setAuthorization(String authorization) {
+    public GetSessionDetailRequest setAuthorization(String authorization) {
         this.authorization = authorization;
         return this;
     }
@@ -23,7 +23,7 @@ public class RefreshSessionIdleTimeRequest extends TeaModel {
         return this.authorization;
     }
 
-    public RefreshSessionIdleTimeRequest setSessionId(String sessionId) {
+    public GetSessionDetailRequest setSessionId(String sessionId) {
         this.sessionId = sessionId;
         return this;
     }

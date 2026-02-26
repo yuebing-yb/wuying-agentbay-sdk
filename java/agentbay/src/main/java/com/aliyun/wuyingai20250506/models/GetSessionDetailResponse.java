@@ -3,7 +3,7 @@ package com.aliyun.wuyingai20250506.models;
 
 import com.aliyun.tea.*;
 
-public class RefreshSessionIdleTimeResponse extends TeaModel {
+public class GetSessionDetailResponse extends TeaModel {
     @NameInMap("headers")
     public java.util.Map<String, String> headers;
 
@@ -11,14 +11,14 @@ public class RefreshSessionIdleTimeResponse extends TeaModel {
     public Integer statusCode;
 
     @NameInMap("body")
-    public RefreshSessionIdleTimeResponseBody body;
+    public GetSessionDetailResponseBody body;
 
-    public static RefreshSessionIdleTimeResponse build(java.util.Map<String, ?> map) throws Exception {
-        RefreshSessionIdleTimeResponse self = new RefreshSessionIdleTimeResponse();
+    public static GetSessionDetailResponse build(java.util.Map<String, ?> map) throws Exception {
+        GetSessionDetailResponse self = new GetSessionDetailResponse();
         return TeaModel.build(map, self);
     }
 
-    public RefreshSessionIdleTimeResponse setHeaders(java.util.Map<String, String> headers) {
+    public GetSessionDetailResponse setHeaders(java.util.Map<String, String> headers) {
         this.headers = headers;
         return this;
     }
@@ -26,7 +26,7 @@ public class RefreshSessionIdleTimeResponse extends TeaModel {
         return this.headers;
     }
 
-    public RefreshSessionIdleTimeResponse setStatusCode(Integer statusCode) {
+    public GetSessionDetailResponse setStatusCode(Integer statusCode) {
         this.statusCode = statusCode;
         return this;
     }
@@ -34,11 +34,11 @@ public class RefreshSessionIdleTimeResponse extends TeaModel {
         return this.statusCode;
     }
 
-    public RefreshSessionIdleTimeResponse setBody(RefreshSessionIdleTimeResponseBody body) {
+    public GetSessionDetailResponse setBody(GetSessionDetailResponseBody body) {
         this.body = body;
         return this;
     }
-    public RefreshSessionIdleTimeResponseBody getBody() {
+    public GetSessionDetailResponseBody getBody() {
         return this.body;
     }
 
