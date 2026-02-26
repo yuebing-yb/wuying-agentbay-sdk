@@ -3,12 +3,9 @@ package com.aliyun.wuyingai20250506.models;
 
 import com.aliyun.tea.*;
 
-public class RefreshSessionIdleTimeResponseBody extends TeaModel {
+public class DeleteVolumeResponseBody extends TeaModel {
     @NameInMap("Code")
     public String code;
-
-    @NameInMap("Data")
-    public Object data;
 
     @NameInMap("HttpStatusCode")
     public Integer httpStatusCode;
@@ -22,12 +19,12 @@ public class RefreshSessionIdleTimeResponseBody extends TeaModel {
     @NameInMap("Success")
     public Boolean success;
 
-    public static RefreshSessionIdleTimeResponseBody build(java.util.Map<String, ?> map) throws Exception {
-        RefreshSessionIdleTimeResponseBody self = new RefreshSessionIdleTimeResponseBody();
+    public static DeleteVolumeResponseBody build(java.util.Map<String, ?> map) throws Exception {
+        DeleteVolumeResponseBody self = new DeleteVolumeResponseBody();
         return TeaModel.build(map, self);
     }
 
-    public RefreshSessionIdleTimeResponseBody setCode(String code) {
+    public DeleteVolumeResponseBody setCode(String code) {
         this.code = code;
         return this;
     }
@@ -35,15 +32,7 @@ public class RefreshSessionIdleTimeResponseBody extends TeaModel {
         return this.code;
     }
 
-    public RefreshSessionIdleTimeResponseBody setData(Object data) {
-        this.data = data;
-        return this;
-    }
-    public Object getData() {
-        return this.data;
-    }
-
-    public RefreshSessionIdleTimeResponseBody setHttpStatusCode(Integer httpStatusCode) {
+    public DeleteVolumeResponseBody setHttpStatusCode(Integer httpStatusCode) {
         this.httpStatusCode = httpStatusCode;
         return this;
     }
@@ -51,7 +40,7 @@ public class RefreshSessionIdleTimeResponseBody extends TeaModel {
         return this.httpStatusCode;
     }
 
-    public RefreshSessionIdleTimeResponseBody setMessage(String message) {
+    public DeleteVolumeResponseBody setMessage(String message) {
         this.message = message;
         return this;
     }
@@ -59,7 +48,7 @@ public class RefreshSessionIdleTimeResponseBody extends TeaModel {
         return this.message;
     }
 
-    public RefreshSessionIdleTimeResponseBody setRequestId(String requestId) {
+    public DeleteVolumeResponseBody setRequestId(String requestId) {
         this.requestId = requestId;
         return this;
     }
@@ -67,7 +56,7 @@ public class RefreshSessionIdleTimeResponseBody extends TeaModel {
         return this.requestId;
     }
 
-    public RefreshSessionIdleTimeResponseBody setSuccess(Boolean success) {
+    public DeleteVolumeResponseBody setSuccess(Boolean success) {
         this.success = success;
         return this;
     }

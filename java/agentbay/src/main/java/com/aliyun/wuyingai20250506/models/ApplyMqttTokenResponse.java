@@ -3,7 +3,7 @@ package com.aliyun.wuyingai20250506.models;
 
 import com.aliyun.tea.*;
 
-public class RefreshSessionIdleTimeResponse extends TeaModel {
+public class ApplyMqttTokenResponse extends TeaModel {
     @NameInMap("headers")
     public java.util.Map<String, String> headers;
 
@@ -11,14 +11,14 @@ public class RefreshSessionIdleTimeResponse extends TeaModel {
     public Integer statusCode;
 
     @NameInMap("body")
-    public RefreshSessionIdleTimeResponseBody body;
+    public ApplyMqttTokenResponseBody body;
 
-    public static RefreshSessionIdleTimeResponse build(java.util.Map<String, ?> map) throws Exception {
-        RefreshSessionIdleTimeResponse self = new RefreshSessionIdleTimeResponse();
+    public static ApplyMqttTokenResponse build(java.util.Map<String, ?> map) throws Exception {
+        ApplyMqttTokenResponse self = new ApplyMqttTokenResponse();
         return TeaModel.build(map, self);
     }
 
-    public RefreshSessionIdleTimeResponse setHeaders(java.util.Map<String, String> headers) {
+    public ApplyMqttTokenResponse setHeaders(java.util.Map<String, String> headers) {
         this.headers = headers;
         return this;
     }
@@ -26,7 +26,7 @@ public class RefreshSessionIdleTimeResponse extends TeaModel {
         return this.headers;
     }
 
-    public RefreshSessionIdleTimeResponse setStatusCode(Integer statusCode) {
+    public ApplyMqttTokenResponse setStatusCode(Integer statusCode) {
         this.statusCode = statusCode;
         return this;
     }
@@ -34,11 +34,11 @@ public class RefreshSessionIdleTimeResponse extends TeaModel {
         return this.statusCode;
     }
 
-    public RefreshSessionIdleTimeResponse setBody(RefreshSessionIdleTimeResponseBody body) {
+    public ApplyMqttTokenResponse setBody(ApplyMqttTokenResponseBody body) {
         this.body = body;
         return this;
     }
-    public RefreshSessionIdleTimeResponseBody getBody() {
+    public ApplyMqttTokenResponseBody getBody() {
         return this.body;
     }
 

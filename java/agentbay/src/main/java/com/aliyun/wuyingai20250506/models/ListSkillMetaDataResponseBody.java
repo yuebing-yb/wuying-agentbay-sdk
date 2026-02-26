@@ -3,14 +3,12 @@ package com.aliyun.wuyingai20250506.models;
 
 import com.aliyun.tea.*;
 
-import java.util.List;
-
 public class ListSkillMetaDataResponseBody extends TeaModel {
     @NameInMap("Code")
     public String code;
 
     @NameInMap("Data")
-    public List<ListSkillMetaDataResponseBodyData> data;
+    public java.util.List<ListSkillMetaDataResponseBodyData> data;
 
     @NameInMap("HttpStatusCode")
     public Integer httpStatusCode;
@@ -36,17 +34,15 @@ public class ListSkillMetaDataResponseBody extends TeaModel {
         this.code = code;
         return this;
     }
-
     public String getCode() {
         return this.code;
     }
 
-    public ListSkillMetaDataResponseBody setData(List<ListSkillMetaDataResponseBodyData> data) {
+    public ListSkillMetaDataResponseBody setData(java.util.List<ListSkillMetaDataResponseBodyData> data) {
         this.data = data;
         return this;
     }
-
-    public List<ListSkillMetaDataResponseBodyData> getData() {
+    public java.util.List<ListSkillMetaDataResponseBodyData> getData() {
         return this.data;
     }
 
@@ -54,7 +50,6 @@ public class ListSkillMetaDataResponseBody extends TeaModel {
         this.httpStatusCode = httpStatusCode;
         return this;
     }
-
     public Integer getHttpStatusCode() {
         return this.httpStatusCode;
     }
@@ -63,7 +58,6 @@ public class ListSkillMetaDataResponseBody extends TeaModel {
         this.message = message;
         return this;
     }
-
     public String getMessage() {
         return this.message;
     }
@@ -72,7 +66,6 @@ public class ListSkillMetaDataResponseBody extends TeaModel {
         this.requestId = requestId;
         return this;
     }
-
     public String getRequestId() {
         return this.requestId;
     }
@@ -81,7 +74,6 @@ public class ListSkillMetaDataResponseBody extends TeaModel {
         this.success = success;
         return this;
     }
-
     public Boolean getSuccess() {
         return this.success;
     }
@@ -90,7 +82,6 @@ public class ListSkillMetaDataResponseBody extends TeaModel {
         this.totalCount = totalCount;
         return this;
     }
-
     public Integer getTotalCount() {
         return this.totalCount;
     }
@@ -111,7 +102,6 @@ public class ListSkillMetaDataResponseBody extends TeaModel {
             this.description = description;
             return this;
         }
-
         public String getDescription() {
             return this.description;
         }
@@ -120,10 +110,10 @@ public class ListSkillMetaDataResponseBody extends TeaModel {
             this.name = name;
             return this;
         }
-
         public String getName() {
             return this.name;
         }
-    }
-}
 
+    }
+
+}

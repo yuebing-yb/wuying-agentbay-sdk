@@ -22,7 +22,6 @@ public class ListSkillMetaDataResponse extends TeaModel {
         this.headers = headers;
         return this;
     }
-
     public java.util.Map<String, String> getHeaders() {
         return this.headers;
     }
@@ -31,7 +30,6 @@ public class ListSkillMetaDataResponse extends TeaModel {
         this.statusCode = statusCode;
         return this;
     }
-
     public Integer getStatusCode() {
         return this.statusCode;
     }
@@ -40,9 +38,8 @@ public class ListSkillMetaDataResponse extends TeaModel {
         this.body = body;
         return this;
     }
-
     public ListSkillMetaDataResponseBody getBody() {
         return this.body;
     }
-}
 
+}

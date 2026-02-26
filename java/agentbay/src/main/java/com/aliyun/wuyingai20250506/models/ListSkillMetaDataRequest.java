@@ -16,9 +16,8 @@ public class ListSkillMetaDataRequest extends TeaModel {
         this.authorization = authorization;
         return this;
     }
-
     public String getAuthorization() {
         return this.authorization;
     }
-}
 
+}
