@@ -10,7 +10,7 @@ import org.junit.*;
 
 import static org.junit.Assert.*;
 
-public class  AliasMethodsIntegrationTest {
+public class AliasMethodsIntegrationTest {
 
     private static AgentBay agentBay;
     private static Session session;
@@ -211,7 +211,7 @@ public class  AliasMethodsIntegrationTest {
         try {
             setUp();
 
-             AliasMethodsIntegrationTest test = new  AliasMethodsIntegrationTest();
+            AliasMethodsIntegrationTest test = new AliasMethodsIntegrationTest();
             test.testSessionFsAlias();
             test.testSessionFilesystemAlias();
             test.testSessionFilesAlias();

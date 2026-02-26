@@ -17,7 +17,7 @@ import static org.junit.Assert.*;
  * Similar to test_create_session_with_policy_id in Python SDK, but using integration tests
  * instead of mocks to match the style of other Java test cases.
  */
-public class  AgentBaySdkStatsIntegrationTest {
+public class AgentBaySdkStatsIntegrationTest {
 
     /**
      * Test that session can be created without framework parameter
