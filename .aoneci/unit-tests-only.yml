@@ -9,11 +9,6 @@ triggers:
     target-branches:
       - "**"
 
-# Strategy configuration to prevent jobs from being accidentally cancelled
-strategy:
-  cancel-in-progress: false
-  fail-fast: false
-
 params:
   python_enabled:
     name: Enable Python Unit Testing
@@ -25,6 +20,10 @@ params:
     default: true
   golang_enabled:
     name: Enable Golang Unit Testing
+    type: boolean
+    default: true
+  java_enabled:
+    name: Enable Java Unit Testing
     type: boolean
     default: true
   runs_on_resources:
@@ -40,16 +39,11 @@ jobs:
   # Python Unit Tests Only
   python-unit-test:
     name: "Python Unit Tests"
-    when: "${{params.python_enabled}}"
+    when: ${{params.python_enabled}}
     runs-on:
       - "${{params.runs_on_resources}}"
     image: alios-8u
     timeout: 30m
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       - uses: checkout
       - uses: setup-env
@@ -91,15 +85,10 @@ jobs:
   # TypeScript Unit Tests Only
   typescript-unit-test:
     name: "TypeScript Unit Tests"
-    when: "${{params.typescript_enabled}}"
+    when: ${{params.typescript_enabled}}
     image: alios-8u
     runs-on:
       - "${{params.runs_on_resources}}"
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       - uses: checkout
       - uses: setup-env
@@ -131,15 +120,10 @@ jobs:
   # Golang Unit Tests Only
   golang-unit-test:
     name: "Golang Unit Tests"
-    when: "${{params.golang_enabled}}"
+    when: ${{params.golang_enabled}}
     image: alios-8u
     runs-on:
       - "${{params.runs_on_resources}}"
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       - uses: checkout
       - uses: setup-env
@@ -161,10 +145,37 @@ jobs:
           # Run tests with race detector
           go test -race -v ./tests/pkg/unit/...
 
+  # Java Unit Tests Only
+  java-unit-test:
+    name: "Java Unit Tests"
+    when: "${{params.java_enabled}}"
+    image: alios-8u
+    runs-on:
+      - "${{params.runs_on_resources}}"
+    steps:
+      - uses: checkout
+      - uses: setup-env
+        inputs:
+          java-version: "11"
+          maven-version: "3.9"
+      
+      - id: java-unit-test
+        continue-on-error: false
+        when: "${{params.java_enabled}}"
+        name: "Java Unit Tests"
+        run: |
+          # Configure Maven environment
+          cd java/agentbay
+          # Check Java and Maven versions
+          java -version
+          mvn --version
+          # Run unit tests only (skip integration tests)
+          mvn test
+
   # Unit Tests Summary
   unit-tests-summary:
     name: "Multi-Language Unit Tests Summary"
-    needs: ["python-unit-test", "typescript-unit-test", "golang-unit-test"]
+    needs: ["python-unit-test", "typescript-unit-test", "golang-unit-test", "java-unit-test"]
     runs-on:
       - "4-16Gi"
     steps:
@@ -178,6 +189,7 @@ jobs:
           echo "✅ Python Unit Tests: PASSED"
           echo "✅ TypeScript Unit Tests: PASSED"
           echo "✅ Golang Unit Tests: PASSED"
+          echo "✅ Java Unit Tests: PASSED"
           echo ""
           echo "=========================================="
           echo "✅ All Unit Tests: PASSED"

@@ -22,7 +22,7 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class SessionLabelTest {
+public class SessionLabelIntegrationTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
