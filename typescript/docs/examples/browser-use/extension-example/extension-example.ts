@@ -56,13 +56,14 @@ async function basicExtensionExample(): Promise<boolean> {
     // Create browser session with extension
     console.log("🌐 Creating browser session with extension...");
 
-    // Create session parameters with browser context configuration
-    // In a real implementation, you would use the BrowserContext class:
-    // const browserContext = new BrowserContext("basic_extension_session", true, extOption);
-    // For this example, we'll use a plain object to demonstrate the structure:
+    // Create persistent context
+    const contextResult = await agentBay.context.get("cookie-demo-context", true);
+    const context = contextResult.context!;
+
     const sessionParams = {
-      labels: { purpose: "basic_extension_example", type: "demo" },
-      browserContext: new BrowserContext("basic_extension_session",true,extOption)
+      imageId: "browser_latest" as const,
+      labels: { purpose: "extension_testing" },
+      browserContext: new BrowserContext(context.id, true, extOption)
 
     };
 
@@ -140,16 +141,17 @@ async function multipleExtensionsExample(): Promise<boolean> {
     console.log("🔧 Creating configuration for all extensions...");
     const extOption = extensionsService.createExtensionOption(extensionIds);
 
-    // Create session parameters with browser context configuration
-    // In a real implementation, you would use the BrowserContext class:
-    // const browserContext = new BrowserContext("multi_extension_session", true, extOption);
-    // For this example, we'll use a plain object to demonstrate the structure:
+    // Create persistent context
+    const contextResult = await agentBay.context.get("cookie-demo-context", true);
+    const context = contextResult.context!;
+
     const sessionParams = {
+      imageId: "browser_latest" as const,
       labels: {
         purpose: "multiple_extensions",
         count: extensionIds.length.toString()
       },
-      browserContext: new BrowserContext("multi_extension_session",true,extOption)
+      browserContext: new BrowserContext(context.id, true, extOption)
 
     };
 
@@ -206,13 +208,14 @@ async function extensionDevelopmentWorkflow(): Promise<boolean> {
     console.log("🌐 Step 2: Create test session");
     const extOption = extensionsService.createExtensionOption([extension.id]);
 
-    // Create session parameters with browser context configuration
-    // In a real implementation, you would use the BrowserContext class:
-    // const browserContext = new BrowserContext("dev_test_session", true, extOption);
-    // For this example, we'll use a plain object to demonstrate the structure:
+    // Create persistent context
+    const contextResult = await agentBay.context.get("dev_test_session", true);
+    const context = contextResult.context!;
+
     const sessionParams = {
+      imageId: "browser_latest" as const,
       labels: { purpose: "development", phase: "testing" },
-      browserContext: new BrowserContext("dev_test_session",true,extOption)
+      browserContext: new BrowserContext(context.id, true, extOption)
     };
 
     const sessionResult = await agentBay.create(sessionParams);

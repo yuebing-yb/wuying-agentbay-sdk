@@ -46,16 +46,23 @@ def basic_extension_example():
 
         # Create browser session with extension
         print("🌐 Creating browser session with extension...")
-        session_params = CreateSessionParams(
+        context_result = agent_bay.context.get("cookie-demo-context", create=True)
+        if not context_result.success or not context_result.context:
+            print(f"❌ Failed to create context: {getattr(context_result, 'error_message', 'unknown')}")
+            return False
+        context = context_result.context
+        browser_context = BrowserContext(
+            context_id=context.id,
+            auto_upload=True,
+            extension_option=ext_option
+        )
+        params = CreateSessionParams(
+            image_id="browser_latest",
             labels={"purpose": "basic_extension_example", "type": "demo"},
-            browser_context=BrowserContext(
-                context_id="basic_extension_session",
-                auto_upload=True,
-                extension_option=ext_option
-            )
+            browser_context=browser_context
         )
 
-        session_result = agent_bay.create(session_params)
+        session_result = agent_bay.create(params)
         if not session_result.success:
             print(f"❌ Failed to create session: {session_result.error_message}")
             return False
@@ -120,16 +127,24 @@ def multiple_extensions_example():
         print("🔧 Creating configuration for all extensions...")
         ext_option = extensions_service.create_extension_option(extension_ids)
 
-        session_params = CreateSessionParams(
+        context_result = agent_bay.context.get("cookie-demo-context", create=True)
+        if not context_result.success or not context_result.context:
+            print(f"❌ Failed to create context: {getattr(context_result, 'error_message', 'unknown')}")
+            return False
+        context = context_result.context
+        browser_context = BrowserContext(
+            context_id=context.id,
+            auto_upload=True,
+            extension_option=ext_option
+        )
+        params = CreateSessionParams(
+            image_id="browser_latest",
             labels={"purpose": "multiple_extensions", "count": str(len(extension_ids))},
-            browser_context=BrowserContext(
-                context_id="multi_extension_session",
-                extension_option=ext_option
-            )
+            browser_context=browser_context
         )
 
         print("🌐 Creating browser session...")
-        session_result = agent_bay.create(session_params)
+        session_result = agent_bay.create(params)
         session = session_result.session
 
         print(f"✅ Session created with {len(extension_ids)} extensions!")
