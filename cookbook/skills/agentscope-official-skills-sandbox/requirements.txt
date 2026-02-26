@@ -1,0 +1,3 @@
+wuying-agentbay-sdk==0.15.2
+agentscope==1.0.15
+dashscope==1.25.12

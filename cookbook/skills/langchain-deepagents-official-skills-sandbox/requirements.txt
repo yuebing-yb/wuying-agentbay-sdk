@@ -1,0 +1,6 @@
+wuying-agentbay-sdk==0.15.2
+langchain==1.2.10
+langchain-community==0.4.1
+langchain-core==1.2.11
+dashscope==1.25.12
+deepagents==0.4.0

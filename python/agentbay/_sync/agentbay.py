@@ -52,6 +52,7 @@ from ..api.models import (
 from .._common.models.mcp_tool import McpTool
 from .context import ContextService
 from .beta_network import SyncBetaNetworkService
+from .beta import SyncBetaNamespace
 from .session import Session
 from .._common.params.session_params import CreateSessionParams
 
@@ -105,6 +106,7 @@ class AgentBay:
         # Initialize context service
         self.context = ContextService(self)
         self.beta_network = SyncBetaNetworkService(self)
+        self.beta = SyncBetaNamespace(self)
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):

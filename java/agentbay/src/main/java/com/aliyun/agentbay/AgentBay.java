@@ -12,6 +12,7 @@ import com.aliyun.agentbay.model.GetSessionData;
 import com.aliyun.agentbay.model.GetSessionResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.network.BetaNetworkService;
+import com.aliyun.agentbay.skills.BetaSkillsService;
 import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.util.ResponseUtil;
@@ -54,6 +55,7 @@ public class AgentBay {
     private ConcurrentHashMap<String, Session> sessions;
     private MobileSimulate mobileSimulate;
     private BetaNetworkService betaNetwork;
+    private BetaSkillsService betaSkills;
 
     public AgentBay() throws AgentBayException {
         this(null, null);
@@ -95,6 +97,7 @@ public class AgentBay {
             this.apiClient = new ApiClient(this.client, apiKey);
             this.mobileSimulate = new MobileSimulate(this);
             this.betaNetwork = new BetaNetworkService(this);
+            this.betaSkills = new BetaSkillsService(this);
         } catch (Exception e) {
             throw new AgentBayException("Failed to initialize AgentBay client", e);
         }
@@ -297,6 +300,15 @@ public class AgentBay {
      */
     public BetaNetworkService getBetaNetwork() {
         return betaNetwork;
+    }
+
+    /**
+     * Get beta skills service (trial feature).
+     *
+     * @return BetaSkillsService instance
+     */
+    public BetaSkillsService getBetaSkills() {
+        return betaSkills;
     }
 
     /**
