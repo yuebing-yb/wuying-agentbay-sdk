@@ -1,11 +1,11 @@
 package com.aliyun.agentbay.test;
 
 import com.aliyun.agentbay.AgentBay;
+import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.SessionResult;
+import com.aliyun.agentbay.model.SessionStatusResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
-import com.aliyun.wuyingai20250506.models.GetSessionRequest;
-import com.aliyun.wuyingai20250506.models.GetSessionResponse;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -28,15 +28,12 @@ public class SessionKeepAliveIntegrationTest {
         return lower.contains("invalidmcpsession.notfound") || lower.contains("notfound") || lower.contains("not found");
     }
 
-    private static String getSessionStatus(AgentBay agentBay, String apiKey, String sessionId) throws Exception {
-        GetSessionRequest req = new GetSessionRequest();
-        req.setAuthorization("Bearer " + apiKey);
-        req.setSessionId(sessionId);
-        GetSessionResponse resp = agentBay.getClient().getSession(req);
-        if (resp == null || resp.getBody() == null || resp.getBody().getData() == null) {
+    private static String getSessionStatus(Session session) {
+        SessionStatusResult result = session.getStatus();
+        if (result == null || !result.isSuccess()) {
             return "";
         }
-        return resp.getBody().getData().getStatus() != null ? resp.getBody().getData().getStatus() : "";
+        return result.getStatus() != null ? result.getStatus() : "";
     }
 
     private static boolean isReleasedByStatusString(String status) {
@@ -94,15 +91,17 @@ public class SessionKeepAliveIntegrationTest {
         try {
             // Wait until halfway through, then refresh the idle timer for refreshed session
             Thread.sleep(idleReleaseTimeoutSeconds * 1000L / 2);
-            assertTrue("keep_alive failed", refreshed.keepAlive().isSuccess());
+            OperationResult keepAliveResult = refreshed.keepAlive();
+            assertTrue("keep_alive failed", keepAliveResult.isSuccess());
 
             long deadline = start + (idleReleaseTimeoutSeconds + maxOverSeconds) * 1000L;
             Long controlReleasedAt = null;
 
             while (System.currentTimeMillis() < deadline) {
+                // Check control session status
                 boolean controlReleased = false;
                 try {
-                    String s = getSessionStatus(agentBay, apiKey, control.getSessionId());
+                    String s = getSessionStatus(control);
                     System.out.println("Control session status: " + s);
                     if (isReleasedByStatusString(s)) {
                         controlReleased = true;
@@ -115,22 +114,24 @@ public class SessionKeepAliveIntegrationTest {
                     }
                 }
 
+                // Check refreshed session status
+                boolean refreshedReleased = false;
+                try {
+                    String s = getSessionStatus(refreshed);
+                    System.out.println("Refreshed session status: " + s);
+                    if (isReleasedByStatusString(s)) {
+                        refreshedReleased = true;
+                    }
+                } catch (Throwable e) {
+                    if (isNotFound(e)) {
+                        refreshedReleased = true;
+                    } else {
+                        throw new RuntimeException(e);
+                    }
+                }
+
                 if (controlReleased) {
                     controlReleasedAt = System.currentTimeMillis();
-                    boolean refreshedReleased = false;
-                    try {
-                        String s = getSessionStatus(agentBay, apiKey, refreshed.getSessionId());
-                        System.out.println("refreshedReleased session status: " + s);
-                        if (isReleasedByStatusString(s)) {
-                            refreshedReleased = true;
-                        }
-                    } catch (Throwable e) {
-                        if (isNotFound(e)) {
-                            refreshedReleased = true;
-                        } else {
-                            throw new RuntimeException(e);
-                        }
-                    }
                     assertFalse(
                         "Refreshed session was released no later than control session; " +
                         "keep_alive did not extend idle timer as expected",
@@ -141,21 +142,36 @@ public class SessionKeepAliveIntegrationTest {
                     return;
                 }
 
-                Thread.sleep(2000);
+                // Check if refreshed session was released before control session (unexpected)
+                if (refreshedReleased) {
+                    throw new AssertionError(
+                        "Refreshed session was released before control session; " +
+                        "keep_alive may have failed"
+                    );
+                }
+
+                Thread.sleep(pollInterval * 1000L);
             }
 
             throw new AssertionError("Control session was not released within expected time window");
         } finally {
             // Best-effort cleanup
-            try {
-                refreshed.delete(false);
-            } catch (Exception e) {
-                // ignore
-            }
-            try {
-                control.delete(false);
-            } catch (Exception e) {
-                // ignore
+            for (Session s : new Session[]{refreshed, control}) {
+                if (s == null) {
+                    continue;
+                }
+                try {
+                    SessionStatusResult statusFinal = s.getStatus();
+                    if (statusFinal != null && statusFinal.isSuccess()) {
+                        String status = statusFinal.getStatus();
+                        if (!isReleasedByStatusString(status)) {
+                            
+                            s.delete(false);
+                        }
+                    }
+                } catch (Exception e) {
+                    // Ignore cleanup errors
+                }
             }
         }
     }

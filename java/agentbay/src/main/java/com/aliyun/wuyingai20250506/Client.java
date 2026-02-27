@@ -254,16 +254,9 @@ public class Client extends com.aliyun.teaopenapi.Client {
         if (!com.aliyun.teautil.Common.isUnset(request.networkId)) {
             body.put("NetworkId", request.networkId);
         }
-        if (!com.aliyun.teautil.Common.isUnset(request.loginRegionId)) {
-            body.put("LoginRegionId", request.loginRegionId);
-        }
 
         if (!com.aliyun.teautil.Common.isUnset(request.persistenceDataListShrink)) {
             body.put("PersistenceDataList", request.persistenceDataListShrink);
-        }
-
-        if (!com.aliyun.teautil.Common.isUnset(request.sdkStats)) {
-            body.put("SdkStats", request.sdkStats);
         }
 
         if (!com.aliyun.teautil.Common.isUnset(request.sessionId)) {
@@ -272,6 +265,18 @@ public class Client extends com.aliyun.teaopenapi.Client {
 
         if (!com.aliyun.teautil.Common.isUnset(request.vpcResource)) {
             body.put("VpcResource", request.vpcResource);
+        }
+
+        if (!com.aliyun.teautil.Common.isUnset(request.extraConfigs)) {
+            body.put("ExtraConfigs", request.extraConfigs);
+        }
+
+        if (!com.aliyun.teautil.Common.isUnset(request.sdkStats)) {
+            body.put("SdkStats", request.sdkStats);
+        }
+
+        if (!com.aliyun.teautil.Common.isUnset(request.timeout)) {
+            body.put("Timeout", request.timeout);
         }
 
         com.aliyun.teaopenapi.models.OpenApiRequest req = com.aliyun.teaopenapi.models.OpenApiRequest.build(TeaConverter.buildMap(

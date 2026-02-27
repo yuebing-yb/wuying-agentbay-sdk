@@ -14,6 +14,7 @@ import com.aliyun.agentbay.model.SessionInfo;
 import com.aliyun.agentbay.model.SessionInfoResult;
 import com.aliyun.agentbay.model.SessionMetrics;
 import com.aliyun.agentbay.model.SessionMetricsResult;
+import com.aliyun.agentbay.model.SessionStatusResult;
 import com.aliyun.agentbay.oss.OSS;
 import com.aliyun.agentbay.code.Code;
 import com.aliyun.agentbay.command.Command;
@@ -131,6 +132,75 @@ public class Session {
      */
     public String getSessionId() {
         return sessionId;
+    }
+
+    /**
+     * Get basic session status.
+     *
+     * <p>This method calls the GetSessionDetail API and returns status only.</p>
+     *
+     * @return SessionStatusResult containing session status information
+     */
+    public SessionStatusResult getStatus() {
+        try {
+            logger.debug("Calling GetSessionDetail API for session: {}", sessionId);
+            
+            GetSessionDetailRequest request = new GetSessionDetailRequest();
+            request.setAuthorization("Bearer " + getApiKey());
+            request.setSessionId(sessionId);
+
+            GetSessionDetailResponse response = agentBay.getClient().getSessionDetail(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response == null || response.getBody() == null) {
+                return new SessionStatusResult(requestId, 0, "", false, "", "Invalid response from GetSessionDetail API");
+            }
+
+            GetSessionDetailResponseBody body = response.getBody();
+            Integer httpStatusCode = body.getHttpStatusCode() != null ? body.getHttpStatusCode() : 0;
+            String code = body.getCode() != null ? body.getCode() : "";
+            Boolean success = body.getSuccess() != null ? body.getSuccess() : false;
+            String message = body.getMessage() != null ? body.getMessage() : "";
+
+            if (requestId == null || requestId.isEmpty()) {
+                requestId = body.getRequestId() != null ? body.getRequestId() : "";
+            }
+
+            if (!success && !code.isEmpty()) {
+                String errorMessage = message != null && !message.isEmpty() ? message : "Unknown error";
+                if (!code.isEmpty()) {
+                    errorMessage = "[" + code + "] " + errorMessage;
+                }
+                return new SessionStatusResult(requestId, httpStatusCode, code, false, "", errorMessage);
+            }
+
+            String status = "";
+            if (body.getData() != null) {
+                GetSessionDetailResponseBody.GetSessionDetailResponseBodyData data = body.getData();
+                logger.info("GetSessionDetail API call successful: {}", data);
+                status = data.getStatus() != null ? data.getStatus() : "";
+            }
+
+            logger.debug("GetSessionDetail API response - RequestId: {}, Success: {}, Status: {}", 
+                        requestId, success, status);
+
+            return new SessionStatusResult(requestId, httpStatusCode, code, success, status, "");
+
+        } catch (Exception e) {
+            String errorStr = e.getMessage() != null ? e.getMessage() : e.toString();
+            
+            // Check for NotFound error
+            if (errorStr.contains("InvalidMcpSession.NotFound") || errorStr.contains("NotFound")) {
+                logger.info("Session not found: {}", sessionId);
+                logger.debug("GetSessionDetail error details: {}", errorStr);
+                return new SessionStatusResult("", 400, "InvalidMcpSession.NotFound", false, "", 
+                                              "Session " + sessionId + " not found");
+            }
+
+            logger.error("Error calling GetSessionDetail: {}", errorStr, e);
+            return new SessionStatusResult("", 0, "", false, "", 
+                                          "Failed to get session status " + sessionId + ": " + errorStr);
+        }
     }
 
     /**
