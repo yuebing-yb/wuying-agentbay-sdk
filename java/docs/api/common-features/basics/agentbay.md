@@ -91,6 +91,17 @@ Get beta network service (trial feature).
 **Returns:**
 - `BetaNetworkService`: BetaNetworkService instance
 
+### getBetaSkills
+
+```java
+public BetaSkillsService getBetaSkills()
+```
+
+Get beta skills service (trial feature).
+
+**Returns:**
+- `BetaSkillsService`: BetaSkillsService instance
+
 ### getApiKey
 
 ```java

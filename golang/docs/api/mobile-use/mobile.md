@@ -6,8 +6,7 @@
 
 ## Overview
 
-The Mobile module provides mobile device automation capabilities including touch gestures,
-text input, app management, and screenshot capture. It supports Android device automation.
+The Mobile module provides mobile device automation capabilities including touch gestures,text input, app management, and screenshot capture. It supports Android device automation.
 
 ## Requirements
 
@@ -118,12 +117,12 @@ Supported formats: - "png" - "jpeg" (or "jpg")
 ### BetaTakeScreenshot
 
 ```go
-func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult
+func (m *Mobile) BetaTakeScreenshot(format ...string) *BetaScreenshotResult
 ```
 
-BetaTakeScreenshot captures the current screen as a PNG image and returns raw image bytes.
+BetaTakeScreenshot captures the current screen and returns raw image bytes.
 
-It calls the MCP tool "screenshot" with format="png".
+Supported formats: - "png" - "jpeg" (or "jpg")
 
 ### Configure
 

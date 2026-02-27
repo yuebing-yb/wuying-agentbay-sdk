@@ -1832,9 +1832,9 @@ class FileSystem(BaseService):
 
         Example:
             ```python
-            params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
+            params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/tmp/workspace")])
             session = (agent_bay.create(params)).session
-            upload_result = session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
+            upload_result = session.file_system.upload_file("/local/file.txt", "/tmp/workspace/file.txt")
             session.delete()
             ```
         """

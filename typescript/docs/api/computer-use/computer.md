@@ -6,8 +6,7 @@
 
 ## Overview
 
-The Computer module provides comprehensive desktop automation capabilities including mouse operations,
-keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
+The Computer module provides comprehensive desktop automation capabilities including mouse operations,keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
 
 
 ## Requirements

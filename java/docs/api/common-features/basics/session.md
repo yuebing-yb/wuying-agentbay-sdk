@@ -55,12 +55,6 @@ public String getWsUrl()
 public void setWsUrl(String wsUrl)
 ```
 
-### getWsClient
-
-```java
-public synchronized WsClient getWsClient()
-```
-
 ### getSessionId
 
 ```java

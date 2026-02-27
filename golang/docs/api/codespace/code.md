@@ -22,6 +22,7 @@ type Code struct {
 		GetClient() *mcp.Client
 		GetSessionId() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
+		GetWsClient() (interface{}, error)
 	}
 }
 ```
@@ -33,7 +34,7 @@ Code handles code execution operations in the AgentBay cloud environment.
 ### Execute
 
 ```go
-func (c *Code) Execute(code string, language string, timeoutS ...int) (*CodeResult, error)
+func (c *Code) Execute(code string, language string, args ...interface{}) (*CodeResult, error)
 ```
 
 Execute is an alias of RunCode.
@@ -41,7 +42,7 @@ Execute is an alias of RunCode.
 ### Run
 
 ```go
-func (c *Code) Run(code string, language string, timeoutS ...int) (*CodeResult, error)
+func (c *Code) Run(code string, language string, args ...interface{}) (*CodeResult, error)
 ```
 
 Run is an alias of RunCode.
@@ -49,7 +50,7 @@ Run is an alias of RunCode.
 ### RunCode
 
 ```go
-func (c *Code) RunCode(code string, language string, timeoutS ...int) (*CodeResult, error)
+func (c *Code) RunCode(code string, language string, args ...interface{}) (*CodeResult, error)
 ```
 
 RunCode executes code in the session environment. timeoutS: The timeout for the code execution in
@@ -76,6 +77,7 @@ func NewCode(session interface {
 	GetClient() *mcp.Client
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
+	GetWsClient() (interface{}, error)
 }) *Code
 ```
 
@@ -145,6 +147,34 @@ type CodeResult struct {
 ```
 
 CodeResult represents the result of a code execution
+
+## Type RunCodeStreamBetaOptions
+
+```go
+type RunCodeStreamBetaOptions struct {
+	TimeoutS	int
+	StreamBeta	bool
+	OnStdout	func(chunk string)
+	OnStderr	func(chunk string)
+	OnError		func(err error)
+}
+```
+
+## Type WsStreamClient
+
+```go
+type WsStreamClient interface {
+	CallStream(target string, data map[string]interface{},
+		onEvent func(string, map[string]interface{}),
+		onEnd func(string, map[string]interface{}),
+		onError func(string, error),
+	) (*internal.WsStreamHandle, error)
+}
+```
+
+WsStreamClient is a public interface for WebSocket streaming clients. It abstracts the internal
+WsClient to allow external packages (e.g., tests) to implement GetWsClient without importing the
+internal package.
 
 ## Type backendResponse
 

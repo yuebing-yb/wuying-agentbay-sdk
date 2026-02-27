@@ -190,7 +190,7 @@ Parameters for creating a new session in the AgentBay cloud environment.
 ```python
 def __init__(self, labels: Optional[Dict[str, str]] = None,
              image_id: Optional[str] = None,
-             idle_release_timeout: Optional[int] = 300,
+             idle_release_timeout: Optional[int] = None,
              context_syncs: Optional[List[ContextSync]] = None,
              browser_context: Optional[BrowserContext] = None,
              policy_id: Optional[str] = None,
