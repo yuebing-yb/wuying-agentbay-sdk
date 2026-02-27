@@ -2,10 +2,9 @@ package com.aliyun.agentbay.test;
 
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.model.SessionResult;
+import com.aliyun.agentbay.model.SessionStatusResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
-import com.aliyun.wuyingai20250506.models.GetSessionRequest;
-import com.aliyun.wuyingai20250506.models.GetSessionResponse;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -46,15 +45,12 @@ public class SessionIdleReleaseTimeoutIntegrationTest {
         return lower.contains("invalidmcpsession.notfound") || lower.contains("notfound") || lower.contains("not found");
     }
 
-    private static String getSessionStatus(AgentBay agentBay, String apiKey, String sessionId) throws Exception {
-        GetSessionRequest req = new GetSessionRequest();
-        req.setAuthorization("Bearer " + apiKey);
-        req.setSessionId(sessionId);
-        GetSessionResponse resp = agentBay.getClient().getSession(req);
-        if (resp == null || resp.getBody() == null || resp.getBody().getData() == null) {
+    private static String getSessionStatus(Session session) {
+        SessionStatusResult result = session.getStatus();
+        if (result == null || !result.isSuccess()) {
             return "";
         }
-        return resp.getBody().getData().getStatus() != null ? resp.getBody().getData().getStatus() : "";
+        return result.getStatus() != null ? result.getStatus() : "";
     }
 
     private static boolean isReleasedByStatusString(String status) {
@@ -98,7 +94,7 @@ public class SessionIdleReleaseTimeoutIntegrationTest {
             while (System.currentTimeMillis() < timeoutDeadline) {
                 boolean released = false;
                 try {
-                    String status = getSessionStatus(agentBay, apiKey, sessionId);
+                    String status = getSessionStatus(session);
                     if (isReleasedByStatusString(status)) {
                         released = true;
                     }
@@ -123,7 +119,7 @@ public class SessionIdleReleaseTimeoutIntegrationTest {
             while (System.currentTimeMillis() < deadline) {
                 boolean released = false;
                 try {
-                    String status = getSessionStatus(agentBay, apiKey, sessionId);
+                    String status = getSessionStatus(session);
                     lastStatus = status;
                     if (isReleasedByStatusString(status)) {
                         released = true;
@@ -156,7 +152,7 @@ public class SessionIdleReleaseTimeoutIntegrationTest {
                 try {
                     boolean needsCleanup = false;
                     try {
-                        String status = getSessionStatus(agentBay, apiKey, sessionId);
+                        String status = getSessionStatus(session);
                         if (!isReleasedByStatusString(status)) {
                             needsCleanup = true;
                         }

@@ -34,7 +34,11 @@ public class ResponseUtil {
                     if (body instanceof java.util.Map) {
                         @SuppressWarnings("unchecked")
                         java.util.Map<String, Object> bodyMap = (java.util.Map<String, Object>) body;
+                        // Try both "RequestId" and "requestId" to handle case-insensitive responses
                         Object requestId = bodyMap.get("RequestId");
+                        if (requestId == null) {
+                            requestId = bodyMap.get("requestId");
+                        }
                         if (requestId instanceof String) {
                             return (String) requestId;
                         }
