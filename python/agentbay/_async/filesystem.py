@@ -1855,9 +1855,9 @@ class AsyncFileSystem(BaseService):
 
         Example:
             ```python
-            params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/workspace")])
+            params = CreateSessionParams(context_syncs=[ContextSync(context_id="ctx-xxx", path="/tmp/workspace")])
             session = (await agent_bay.create(params)).session
-            upload_result = await session.file_system.upload_file("/local/file.txt", "/workspace/file.txt")
+            upload_result = await session.file_system.upload_file("/local/file.txt", "/tmp/workspace/file.txt")
             await session.delete()
             ```
         """
