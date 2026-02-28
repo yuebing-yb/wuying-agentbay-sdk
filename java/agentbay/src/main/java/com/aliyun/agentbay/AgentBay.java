@@ -1,6 +1,7 @@
 package com.aliyun.agentbay;
 
 import com.aliyun.agentbay.browser.BrowserContext;
+import com.aliyun.agentbay.browser.BrowserSyncMode;
 import com.aliyun.agentbay.client.ApiClient;
 import com.aliyun.agentbay.context.*;
 import com.aliyun.agentbay.exception.AgentBayException;
@@ -382,12 +383,45 @@ public class AgentBay {
                     UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
                     30
                 );
-
-                // Create BWList with white lists for browser data paths
+    
+                // Build whitelist based on sync mode
                 List<WhiteList> whiteLists = new ArrayList<>();
-                whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
-                whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
-                whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
+                BrowserSyncMode syncMode = browserContext.getSyncMode();
+
+                if (syncMode == BrowserSyncMode.MINIMAL) {
+                    // MINIMAL mode: only Cookies + Local State
+                    whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
+                } else {
+                    // STANDARD mode: login state + anti-risk-control data
+                    // Auth core
+                    whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
+                    // Anti-risk-control device fingerprint (localStorage / IndexedDB)
+                    whiteLists.add(new WhiteList("/Default/Local Storage", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/IndexedDB", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Session Storage", new ArrayList<>()));
+                    // Saved passwords and form autofill
+                    whiteLists.add(new WhiteList("/Default/Login Data", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Login Data-journal", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Login Data For Account", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Login Data For Account-journal", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Web Data", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Web Data-journal", new ArrayList<>()));
+                    // Browser settings and permission consistency
+                    whiteLists.add(new WhiteList("/Default/Preferences", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Secure Preferences", new ArrayList<>()));
+                    // Network behavior consistency (HSTS / QUIC)
+                    whiteLists.add(new WhiteList("/Default/TransportSecurity", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Network Persistent State", new ArrayList<>()));
+                    // Rendering fingerprint stability
+                    whiteLists.add(new WhiteList("/Default/GPUCache", new ArrayList<>()));
+                    // Cross-domain password matching
+                    whiteLists.add(new WhiteList("/Default/Affiliation Database", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Affiliation Database-journal", new ArrayList<>()));
+                }
                 BWList bwList = new BWList(whiteLists);
 
                 SyncPolicy syncPolicy = new SyncPolicy(

@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import MagicMock, MagicMock, Mock, patch
 
 from agentbay import _BROWSER_DATA_PATH
-from agentbay import BrowserContext, CreateSessionParams
+from agentbay import BrowserContext, BrowserSyncMode, CreateSessionParams
 from agentbay import AgentBay
 
 
@@ -21,8 +21,6 @@ class TestAsyncBrowserContextConfig(unittest.TestCase):
         self.assertTrue(_BROWSER_DATA_PATH.startswith("/"))
 
     @pytest.mark.sync
-
-
     def test_browser_context_creation(self):
         """Test BrowserContext creation with correct attributes."""
         context_id = "test-context-123"
@@ -32,10 +30,9 @@ class TestAsyncBrowserContextConfig(unittest.TestCase):
 
         self.assertEqual(browser_context.context_id, context_id)
         self.assertEqual(browser_context.auto_upload, auto_upload)
+        self.assertEqual(browser_context.sync_mode, BrowserSyncMode.STANDARD)
 
     @pytest.mark.sync
-
-
     def test_browser_context_default_auto_upload(self):
         """Test BrowserContext creation with default auto_upload value."""
         context_id = "test-context-456"
@@ -44,6 +41,20 @@ class TestAsyncBrowserContextConfig(unittest.TestCase):
 
         self.assertEqual(browser_context.context_id, context_id)
         self.assertTrue(browser_context.auto_upload)  # Default should be True
+        self.assertEqual(browser_context.sync_mode, BrowserSyncMode.STANDARD)
+
+    @pytest.mark.sync
+    def test_browser_context_explicit_sync_mode(self):
+        """Test BrowserContext creation with explicit sync mode."""
+        bc_minimal = BrowserContext(
+            "ctx-1", auto_upload=True, sync_mode=BrowserSyncMode.MINIMAL
+        )
+        self.assertEqual(bc_minimal.sync_mode, BrowserSyncMode.MINIMAL)
+
+        bc_standard = BrowserContext(
+            "ctx-2", auto_upload=True, sync_mode=BrowserSyncMode.STANDARD
+        )
+        self.assertEqual(bc_standard.sync_mode, BrowserSyncMode.STANDARD)
 
     @pytest.mark.sync
 

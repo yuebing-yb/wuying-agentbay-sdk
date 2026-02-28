@@ -5,96 +5,108 @@ import sys
 import unittest
 from unittest.mock import MagicMock, MagicMock, patch
 
-from agentbay import BrowserContext, CreateSessionParams
+from agentbay import BrowserContext, BrowserSyncMode, CreateSessionParams
 from agentbay import AgentBay
 
 
-class TestAsyncBrowserContextPolicy(unittest.TestCase):
+MINIMAL_PATHS = [
+    "/Local State",
+    "/Default/Cookies",
+    "/Default/Cookies-journal",
+]
+
+STANDARD_PATHS = [
+    "/Local State",
+    "/Default/Cookies",
+    "/Default/Cookies-journal",
+    "/Default/Local Storage",
+    "/Default/IndexedDB",
+    "/Default/Session Storage",
+    "/Default/Login Data",
+    "/Default/Login Data-journal",
+    "/Default/Login Data For Account",
+    "/Default/Login Data For Account-journal",
+    "/Default/Web Data",
+    "/Default/Web Data-journal",
+    "/Default/Preferences",
+    "/Default/Secure Preferences",
+    "/Default/TransportSecurity",
+    "/Default/Network Persistent State",
+    "/Default/GPUCache",
+    "/Default/Affiliation Database",
+    "/Default/Affiliation Database-journal",
+]
+
+
+def _build_policy_dict(white_list_paths):
+    """Helper to build and serialize a SyncPolicy with given whitelist paths."""
+    from agentbay import BWList, SyncPolicy, UploadPolicy, WhiteList
+
+    upload_policy = UploadPolicy(auto_upload=True)
+    white_lists = [WhiteList(path=p, exclude_paths=[]) for p in white_list_paths]
+    bw_list = BWList(white_lists=white_lists)
+    sync_policy = SyncPolicy(upload_policy=upload_policy, bw_list=bw_list)
+
+    policy_json = json.dumps(
+        sync_policy,
+        default=lambda obj: (
+            obj.__dict__() if hasattr(obj, "__dict__") else str(obj)
+        ),
+        ensure_ascii=False,
+    )
+    return json.loads(policy_json)
+
+
+class TestSyncBrowserContextPolicy(unittest.TestCase):
     """Test that browser_context policy includes BWList with white lists."""
 
     @pytest.mark.sync
+    def test_default_sync_mode_is_standard(self):
+        """Default BrowserContext should use STANDARD sync mode."""
+        bc = BrowserContext(context_id="test-ctx", auto_upload=True)
+        self.assertEqual(bc.sync_mode, BrowserSyncMode.STANDARD)
 
-
-    def test_browser_context_policy_creation(self):
-        # Create session parameters with browser context
-        params = CreateSessionParams()
-
-        # Create browser context
-        browser_context = BrowserContext(
-            context_id="test-browser-context", auto_upload=True
+    @pytest.mark.sync
+    def test_explicit_minimal_sync_mode(self):
+        bc = BrowserContext(
+            context_id="test-ctx", auto_upload=True,
+            sync_mode=BrowserSyncMode.MINIMAL,
         )
-        params.browser_context = browser_context
+        self.assertEqual(bc.sync_mode, BrowserSyncMode.MINIMAL)
 
-        # Create AgentBay instance (this will trigger the policy creation)
-        # This will fail without API key, but we can test the policy creation logic
+    @pytest.mark.sync
+    def test_standard_mode_policy(self):
+        """STANDARD mode policy should contain 19 whitelist entries."""
+        policy_dict = _build_policy_dict(STANDARD_PATHS)
 
-        # We mock the method where policy is created or just test logic if it was extracted.
-        # Since the logic is embedded in create(), we should mock internal parts or copy logic to verify.
-        # But since the original file was a script running real code (mostly), let's adapt it to be a test.
+        self.assertIn("bwList", policy_dict)
+        self.assertIn("whiteLists", policy_dict["bwList"])
 
-        # The original test relied on importing internal classes to verify logic manually.
-        from agentbay import (
-            BWList,
-            SyncPolicy,
-            UploadPolicy,
-            WhiteList,
-        )
-
-        # Create a new SyncPolicy with default values for browser context
-        upload_policy = UploadPolicy(auto_upload=browser_context.auto_upload)
-
-        # Create BWList with white lists for browser data paths
-        white_lists = [
-            WhiteList(path="/Local State", exclude_paths=[]),
-            WhiteList(path="/Default/Cookies", exclude_paths=[]),
-            WhiteList(path="/Default/Cookies-journal", exclude_paths=[]),
-        ]
-        bw_list = BWList(white_lists=white_lists)
-
-        sync_policy = SyncPolicy(upload_policy=upload_policy, bw_list=bw_list)
-
-        # Serialize policy to JSON string
-        policy_json = json.dumps(
-            sync_policy,
-            default=lambda obj: (
-                obj.__dict__() if hasattr(obj, "__dict__") else str(obj)
-            ),
-            ensure_ascii=False,
-        )
-
-        # Verify the policy contains the expected structure
-        policy_dict = json.loads(policy_json)
-
-        # Check that bwList exists
-        self.assertIn("bwList", policy_dict, "bwList should be present in policy")
-
-        # Check that whiteLists exists in bwList
-        self.assertIn(
-            "whiteLists",
-            policy_dict["bwList"],
-            "whiteLists should be present in bwList",
-        )
-
-        # Check that we have 3 white lists
         white_lists = policy_dict["bwList"]["whiteLists"]
-        self.assertEqual(
-            len(white_lists), 3, f"Expected 3 white lists, got {len(white_lists)}"
-        )
+        self.assertEqual(len(white_lists), 19,
+                         f"Expected 19 white lists, got {len(white_lists)}")
 
-        # Check the specific paths
         paths = [wl["path"] for wl in white_lists]
-        expected_paths = [
-            "/Local State",
-            "/Default/Cookies",
-            "/Default/Cookies-journal",
-        ]
+        for expected_path in STANDARD_PATHS:
+            self.assertIn(expected_path, paths,
+                          f"Expected path {expected_path} not found in white lists")
 
-        for expected_path in expected_paths:
-            self.assertIn(
-                expected_path,
-                paths,
-                f"Expected path {expected_path} not found in white lists",
-            )
+    @pytest.mark.sync
+    def test_minimal_mode_policy(self):
+        """MINIMAL mode policy should contain 3 whitelist entries."""
+        policy_dict = _build_policy_dict(MINIMAL_PATHS)
+
+        self.assertIn("bwList", policy_dict)
+        self.assertIn("whiteLists", policy_dict["bwList"])
+
+        white_lists = policy_dict["bwList"]["whiteLists"]
+        self.assertEqual(len(white_lists), 3,
+                         f"Expected 3 white lists, got {len(white_lists)}")
+
+        paths = [wl["path"] for wl in white_lists]
+        for expected_path in MINIMAL_PATHS:
+            self.assertIn(expected_path, paths,
+                          f"Expected path {expected_path} not found in white lists")
 
 
 if __name__ == "__main__":
