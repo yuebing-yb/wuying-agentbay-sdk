@@ -6,8 +6,7 @@
 
 ## Overview
 
-Mobile Simulate helps you apply and persist device simulation settings (properties, sensors, packages, services)
-by storing a device profile in a context and applying it during session creation.
+Mobile Simulate helps you apply and persist device simulation settings (properties, sensors, packages, services) by storing a device profile in a context and applying it during session creation.
 
 ## Type MobileSimulateService
 

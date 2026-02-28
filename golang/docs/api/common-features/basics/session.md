@@ -24,6 +24,11 @@ type Session struct {
 	Token	string
 	LinkUrl	string
 
+	// WS URL for long connection (optional, for streaming output)
+	WsUrl	string
+
+	wsClient	*internal.WsClient
+
 	// Browser replay enabled flag
 	EnableBrowserReplay	bool
 
@@ -295,6 +300,14 @@ func (s *Session) GetStatus() (*SessionStatusResult, error)
 GetStatus retrieves basic session status for the current session. This method calls the
 GetSessionDetail API and returns status only.
 
+### GetStreamingWsClient
+
+```go
+func (s *Session) GetStreamingWsClient() (WsStreamingClient, error)
+```
+
+GetStreamingWsClient returns a WS streaming client for this session.
+
 ### GetToken
 
 ```go
@@ -302,6 +315,18 @@ func (s *Session) GetToken() string
 ```
 
 GetToken returns the token for LinkUrl-based direct tool calls.
+
+### GetWsClient
+
+```go
+func (s *Session) GetWsClient() (interface{}, error)
+```
+
+### GetWsUrl
+
+```go
+func (s *Session) GetWsUrl() string
+```
 
 ### Info
 

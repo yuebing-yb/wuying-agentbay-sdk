@@ -6,8 +6,7 @@
 
 ## Overview
 
-The Mobile module provides mobile device automation capabilities including touch gestures,
-text input, app management, and screenshot capture. It supports Android device automation.
+The Mobile module provides mobile device automation capabilities including touch gestures,text input, app management, and screenshot capture. It supports Android device automation.
 
 
 ## Requirements

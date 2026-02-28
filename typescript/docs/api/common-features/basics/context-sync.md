@@ -6,8 +6,7 @@
 
 ## Overview
 
-Context Sync provides a mechanism to persist files and directories across sessions by synchronizing local paths
-to a named context. It supports policies for upload/download behavior and selective path inclusion.
+Context Sync provides a mechanism to persist files and directories across sessions by synchronizing local paths to a named context. It supports policies for upload/download behavior and selective path inclusion.
 
 Base interface for API responses
 
