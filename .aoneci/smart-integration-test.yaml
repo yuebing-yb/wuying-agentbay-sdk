@@ -103,6 +103,21 @@ jobs:
             # Java and Maven already installed by setup-env
             java -version
             mvn --version
+            
+            # Install Playwright dependencies for Java tests
+            echo "🎭 Installing Playwright dependencies for Java..."
+            sudo apt-get update
+            sudo apt-get install -y libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+              libcups2 libdrm2 libatspi2.0-0 libxcomposite1 libxdamage1 libxfixes3 \
+              libxrandr2 libgbm1 libxkbcommon0 libpango-1.0-0 libasound2
+            
+            # Only compile the project, don't run tests yet
+            # Tests will be run individually by smart_test_runner.py
+            echo "🔨 Compiling Java project..."
+            cd java/agentbay
+            mvn clean compile test-compile
+            cd ../..
+            echo "✅ Java project compiled successfully"
           fi
           
           # Setup TypeScript dependencies if needed  
