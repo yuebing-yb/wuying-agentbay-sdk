@@ -85,17 +85,26 @@ public class MobileScreenshotToolSelectionByLinkUrlIntegrationTest {
         assertNotNull(session);
 
         try {
-            assertNotNull(session.getLinkUrl());
+            // Assert link_url is empty/null for this endpoint/image
+            assertNull("Expected session.link_url to be empty for this endpoint/image", session.getLinkUrl());
 
+            // screenshot() should succeed when link_url is absent
             OperationResult r = session.getMobile().screenshot();
-            assertFalse(r.getErrorMessage(), r.isSuccess());
-            assertNull(r.getData());
-            assertTrue(String.valueOf(r.getData()).trim().length() > 0);
+            assertTrue(r.getErrorMessage(), r.isSuccess());
+            assertNotNull("Expected screenshot data to be present", r.getData());
+            assertTrue("Expected screenshot data to be non-empty", String.valueOf(r.getData()).trim().length() > 0);
 
-            ScreenshotBytesResult beta = session.getMobile().betaTakeScreenshot();
-            assertTrue(beta.isSuccess());
-            assertEquals("image", beta.getType());
-            assertEquals("", beta.getErrorMessage());
+            // beta_take_screenshot() should fail with clear guidance when link_url is absent
+            try {
+                ScreenshotBytesResult beta = session.getMobile().betaTakeScreenshot();
+                fail("Expected betaTakeScreenshot() to throw exception when link_url is absent");
+            } catch (Exception e) {
+                // Expected: should throw exception with guidance message
+                String errorMsg = e.getMessage();
+                assertNotNull("Expected error message", errorMsg);
+                assertTrue("Expected error message to mention beta_take_screenshot not supported",
+                    errorMsg.contains("does not support") && errorMsg.contains("beta_take_screenshot"));
+            }
 
         } finally {
             agentBay.delete(session, false);
