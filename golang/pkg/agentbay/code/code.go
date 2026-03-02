@@ -90,7 +90,10 @@ func NewCode(session interface {
 	}
 }
 
-type RunCodeStreamBetaOptions struct {
+// RunCodeStreamBetaOptions holds streaming callback options for run_code.
+// Temporarily unexported while streaming API is disabled in this release.
+// Will be re-exported in a future release.
+type runCodeStreamBetaOptions struct {
 	TimeoutS   int
 	StreamBeta bool
 	OnStdout   func(chunk string)
@@ -98,7 +101,7 @@ type RunCodeStreamBetaOptions struct {
 	OnError    func(err error)
 }
 
-func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts *RunCodeStreamBetaOptions) (*CodeResult, error) {
+func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts *runCodeStreamBetaOptions) (*CodeResult, error) {
 	if timeoutS <= 0 {
 		timeoutS = 60
 	}
@@ -513,7 +516,6 @@ func parseBackendResponse(data string) (*CodeResult, error) {
 //	codeResult, _ := sessionResult.Session.Code.RunCode("print('Hello')", "python")
 func (c *Code) RunCode(code string, language string, args ...interface{}) (*CodeResult, error) {
 	timeout := 60
-	var opts *RunCodeStreamBetaOptions
 	for _, a := range args {
 		if a == nil {
 			continue
@@ -531,27 +533,14 @@ func (c *Code) RunCode(code string, language string, args ...interface{}) (*Code
 			if v > 0 {
 				timeout = int(v)
 			}
-		case RunCodeStreamBetaOptions:
-			tmp := v
-			opts = &tmp
-		case *RunCodeStreamBetaOptions:
-			opts = v
 		default:
 			return nil, fmt.Errorf("unsupported RunCode argument type: %T", a)
 		}
 	}
 
-	if opts != nil && opts.TimeoutS > 0 {
-		timeout = opts.TimeoutS
-	}
-
-	useStream := false
-	if opts != nil && (opts.StreamBeta || opts.OnStdout != nil || opts.OnStderr != nil || opts.OnError != nil) {
-		useStream = true
-	}
-	if useStream {
-		return c.runCodeStreamWs(code, language, timeout, opts)
-	}
+	// Streaming is temporarily disabled in this version.
+	// The streaming implementation is preserved in runCodeStreamWs()
+	// and will be re-enabled in a future release.
 
 	// Normalize and validate language (case-insensitive)
 	rawLanguage := language

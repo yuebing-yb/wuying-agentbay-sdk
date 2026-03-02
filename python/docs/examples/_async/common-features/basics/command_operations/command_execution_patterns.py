@@ -4,7 +4,7 @@ This example demonstrates command execution patterns:
 - Setting working directory with cwd parameter
 - Setting environment variables with envs parameter
 - Accessing command results: exit_code, stdout, stderr, trace_id
-- Note: Maximum timeout is 50s (50000ms). If a larger value is provided, it will be automatically limited.
+- Default timeout is 50s (50000ms).
 """
 
 import asyncio

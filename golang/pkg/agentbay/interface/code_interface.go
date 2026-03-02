@@ -12,6 +12,5 @@ type CodeInterface interface {
 	//
 	// Optional args may include:
 	// - int timeoutS
-	// - *code.RunCodeStreamBetaOptions (beta streaming callbacks)
 	RunCode(code string, language string, args ...interface{}) (*code.CodeResult, error)
 }

@@ -1,7 +1,10 @@
+// @ts-nocheck
+// Streaming API temporarily disabled; will be re-enabled in a future release
+
 import { AgentBay, Session } from "../../src";
 import { log, logError } from "../../src/utils/logger";
 
-describe("runCode WS streaming (beta) Integration Test", () => {
+describe.skip("runCode WS streaming (beta) Integration Test", () => {
   let agentBay: AgentBay | null = null;
   let session: Session | null = null;
 

@@ -2,6 +2,36 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.16.0] - 2026-03-02
+
+### Added
+
+- **WebSocket infrastructure** (All SDKs): Persistent WebSocket connections for sessions (`wsUrl`), push notification callbacks (`registerCallback`/`unregisterCallback`), stream cancellation with `WsCancelledError`, and a true synchronous WS client for Python.
+- **Session keep-alive & idle release timeout** (All SDKs): Prevent idle timeout disconnections; configurable `idle_release_timeout` in session creation.
+- **New API models** (All SDKs): MQTT token, volume operations, skills metadata listing, and official skills sandbox APIs.
+- **Java enhancements**: Auto release support, `executeCommand` stdout/stderr separation, browser agent interface unification.
+- **Python enhancements**: Browser agent interface unification, page use login API.
+- **Screenshot improvements**: Full-page screenshot support, type/mime_type fields, beta long screenshot with JPEG quality.
+- **Context sync**: Optional ID filtering for context synchronization.
+- **Cookbook**: LangChain DeepAgents skills sandbox; renamed Moltbot to OpenClaw.
+- **Developer tools**: Tiered knowledge builder for AI context files; enhanced Config class with defaults.
+
+### Changed
+
+- Added managed proxy support, clear API, and removed legacy Java browser config.
+
+### Fixed
+
+- macOS SSL compatibility for WsClient (Python); drop malformed WS messages without invocationId.
+- Browser: destroy not resetting params, `get_window` title null, browser.agent crash.
+- Mobile: null `link_url` in screenshot, `get_installed_apps` error.
+- Pause/Resume for both async and sync APIs; protobuf compatibility; dotenv loading guard.
+- Unit test stability improvements across CI.
+
+### Security
+
+- Dependency updates: protobuf 3.20.3→5.29.6, setuptools, urllib3, lodash, axios, js-yaml, next 14.2.33→15.5.10.
+
 ## [0.15.0] - 2026-01-24
 
 ### Added

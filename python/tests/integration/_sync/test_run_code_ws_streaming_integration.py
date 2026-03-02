@@ -10,6 +10,7 @@ from agentbay import AgentBay, CreateSessionParams
 
 @pytest.mark.integration
 @pytest.mark.sync
+@pytest.mark.skip(reason="Streaming API temporarily disabled; will be re-enabled in a future release")
 def test_run_code_ws_streaming_e2e():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:

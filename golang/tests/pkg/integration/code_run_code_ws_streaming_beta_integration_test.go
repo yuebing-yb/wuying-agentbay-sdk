@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/code"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 func TestRunCodeWsStreamingBetaE2E(t *testing.T) {
+	// Streaming API temporarily disabled; will be re-enabled in a future release
+	t.Skip("Streaming API temporarily disabled; will be re-enabled in a future release")
 	apiKey := testutil.GetTestAPIKey(t)
 	ab, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
@@ -47,19 +48,18 @@ func TestRunCodeWsStreamingBetaE2E(t *testing.T) {
 	}
 
 	start := time.Now()
+	// Note: streaming API temporarily disabled; this test is skipped.
+	// When re-enabled, use the exported RunCodeStreamBetaOptions type.
 	r, err := session.Code.RunCode(
 		"import time\n"+
 			"print('hello', flush=True)\n"+
 			"time.sleep(1.0)\n"+
 			"print(2, flush=True)\n",
 		"python",
-		&code.RunCodeStreamBetaOptions{
-			TimeoutS:   60,
-			StreamBeta: true,
-			OnStdout:   onStdout,
-			OnError:    onError,
-		},
+		60,
 	)
+	_ = onStdout
+	_ = onError
 	end := time.Now()
 	if err != nil {
 		t.Fatalf("run code streaming error: %v", err)

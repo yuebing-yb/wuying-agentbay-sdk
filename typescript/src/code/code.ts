@@ -367,13 +367,7 @@ export class Code {
   async runCode(
     code: string,
     language: string,
-    timeoutS = 60,
-    options: {
-      streamBeta?: boolean;
-      onStdout?: (chunk: string) => void;
-      onStderr?: (chunk: string) => void;
-      onError?: (err: any) => void;
-    } = {}
+    timeoutS = 60
   ): Promise<CodeExecutionResult> {
     try {
       // Normalize and validate language (case-insensitive)
@@ -398,21 +392,9 @@ export class Code {
         };
       }
 
-      const useStream =
-        Boolean(options.streamBeta) ||
-        Boolean(options.onStdout) ||
-        Boolean(options.onStderr) ||
-        Boolean(options.onError);
-      if (useStream) {
-        return await this.runCodeStreamWs({
-          code,
-          language: canonicalLanguage,
-          timeoutS,
-          onStdout: options.onStdout,
-          onStderr: options.onStderr,
-          onError: options.onError,
-        });
-      }
+      // Streaming is temporarily disabled in this version.
+      // The streaming implementation is preserved in runCodeStreamWs()
+      // and will be re-enabled in a future release.
 
       const args = {
         code,

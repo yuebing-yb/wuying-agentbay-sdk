@@ -11583,11 +11583,6 @@ class AsyncCode(AsyncBaseService):
         code: str,
         language: str,
         timeout_s: int = 60,
-        *,
-        stream_beta: bool = False,
-        on_stdout: Optional[Callable[[str], None]] = None,
-        on_stderr: Optional[Callable[[str], None]] = None,
-        on_error: Optional[Callable[[Any], None]] = None,
     ) -> EnhancedCodeExecutionResult:
         """
         Execute code in the specified language with a timeout.
@@ -11598,8 +11593,6 @@ class AsyncCode(AsyncBaseService):
                 Supported values: 'python', 'javascript', 'r', 'java'.
             timeout_s: The timeout for the code execution in seconds. Default is 60s.
                 Note: Due to gateway limitations, each request cannot exceed 60 seconds.
-            stream_beta: Enable WS-based streaming output (beta). When enabled, stdout/stderr
-                chunks will be delivered via callbacks as they are produced.
 
         Returns:
             EnhancedCodeExecutionResult: Result object containing success status, execution
@@ -11627,10 +11620,6 @@ class AsyncCode(AsyncBaseService):
                 await result.session.delete()
         """
         try:
-            # If streaming is requested or callbacks are provided, use WS stream mode.
-            use_stream = stream_beta or any(
-                cb is not None for cb in (on_stdout, on_stderr, on_error)
-            )
 
             def _normalize_tool_data_to_response_data(data: Any) -> Dict[str, Any]:
                 """
@@ -11681,15 +11670,9 @@ class AsyncCode(AsyncBaseService):
                     ),
                 )
 
-            if use_stream:
-                return await self._run_code_stream_ws(
-                    code=code,
-                    language=canonical_language,
-                    timeout_s=timeout_s,
-                    on_stdout=on_stdout,
-                    on_stderr=on_stderr,
-                    on_error=on_error,
-                )
+            # Streaming is temporarily disabled in this version.
+            # The streaming implementation is preserved in _run_code_stream_ws()
+            # and will be re-enabled in a future release.
 
             args = {"code": code, "language": canonical_language, "timeout_s": timeout_s}
 
@@ -11811,8 +11794,25 @@ class AsyncCode(AsyncBaseService):
                 results.append(ExecutionResult(text=str(result_payload)))
                 return
             is_main = bool(result_payload.get("isMainResult") or result_payload.get("is_main_result") or False)
+            mime = result_payload.get("mime") if isinstance(result_payload.get("mime"), dict) else {}
+            if not isinstance(mime, dict):
+                mime = {}
+            results.append(
+                ExecutionResult(
+                    text=mime.get("text/plain"),
+                    html=mime.get("text/html"),
+                    markdown=mime.get("text/markdown"),
+                    png=mime.get("image/png"),
+                    jpeg=mime.get("image/jpeg"),
+                    svg=mime.get("image/svg+xml"),
+                    json=mime.get("application/json"),
+                    latex=mime.get("text/latex"),
+                    chart=mime.get("application/vnd.vegalite.v4+json")
+                    or mime.get("application/vnd.vegalite.v5+json"),
+                    is_main_result=is_main,
+                )
 
-... [truncated, 4,368 chars remaining] ...
+... [truncated, 3,529 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
         def _on_event(invocation_id: str, data: dict[str, Any]) -> None:
@@ -16988,7 +16988,7 @@ FILE: python/pyproject.toml
 ================================================
 [tool.poetry]
 name = "wuying-agentbay-sdk"
-version = "0.15.2"
+version = "0.16.0"
 description = "Python SDK for interacting with the Wuying AgentBay cloud runtime environment"
 readme = ["README.md", "CHANGELOG.md"]
 packages = [{include = "agentbay"}]
@@ -19093,7 +19093,7 @@ FILE: typescript/package.json
 ================================================
 {
     "name": "wuying-agentbay-sdk",
-    "version": "0.15.2",
+    "version": "0.16.0",
     "description": "TypeScript SDK for interacting with the Wuying AgentBay cloud runtime environment",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",
@@ -21556,13 +21556,7 @@ export class Code {
   async runCode(
     code: string,
     language: string,
-    timeoutS = 60,
-    options: {
-      streamBeta?: boolean;
-      onStdout?: (chunk: string) => void;
-      onStderr?: (chunk: string) => void;
-      onError?: (err: any) => void;
-    } = {}
+    timeoutS = 60
   ): Promise<CodeExecutionResult> {
     try {
       // Normalize and validate language (case-insensitive)
@@ -21587,21 +21581,9 @@ export class Code {
         };
       }
 
-      const useStream =
-        Boolean(options.streamBeta) ||
-        Boolean(options.onStdout) ||
-        Boolean(options.onStderr) ||
-        Boolean(options.onError);
-      if (useStream) {
-        return await this.runCodeStreamWs({
-          code,
-          language: canonicalLanguage,
-          timeoutS,
-          onStdout: options.onStdout,
-          onStderr: options.onStderr,
-          onError: options.onError,
-        });
-      }
+      // Streaming is temporarily disabled in this version.
+      // The streaming implementation is preserved in runCodeStreamWs()
+      // and will be re-enabled in a future release.
 
       const args = {
         code,

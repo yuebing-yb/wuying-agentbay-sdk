@@ -42,9 +42,7 @@ export class Command {
    * user permissions in a Linux shell environment.
    *
    * @param command - The shell command to execute
-   * @param timeoutMs - Timeout in milliseconds (default: 1000ms/1s). Maximum allowed
-   *                    timeout is 50000ms (50s). If a larger value is provided,
-   *                    it will be automatically limited to 50000ms
+   * @param timeoutMs - Timeout in milliseconds (default: 50000ms/50s).
    * @param cwd - The working directory for command execution. If not specified,
    *              the command runs in the default session directory
    * @param envs - Environment variables as a dictionary of key-value pairs.
@@ -116,14 +114,6 @@ export class Command {
     }
 
     try {
-      // Limit timeout to maximum 50s (50000ms) as per SDK constraints
-      const MAX_TIMEOUT_MS = 50000;
-      if (timeoutMs > MAX_TIMEOUT_MS) {
-        // Log warning (in production, you might want to use a proper logger)
-        // Note: Warning is silently applied to maintain compatibility
-        timeoutMs = MAX_TIMEOUT_MS;
-      }
-
       // Build request arguments
       const args: Record<string, any> = {
         command,

@@ -236,11 +236,6 @@ class Code(BaseService):
         code: str,
         language: str,
         timeout_s: int = 60,
-        *,
-        stream_beta: bool = False,
-        on_stdout: Optional[Callable[[str], None]] = None,
-        on_stderr: Optional[Callable[[str], None]] = None,
-        on_error: Optional[Callable[[Any], None]] = None,
     ) -> EnhancedCodeExecutionResult:
         """
         Execute code in the specified language with a timeout.
@@ -251,8 +246,6 @@ class Code(BaseService):
                 Supported values: 'python', 'javascript', 'r', 'java'.
             timeout_s: The timeout for the code execution in seconds. Default is 60s.
                 Note: Due to gateway limitations, each request cannot exceed 60 seconds.
-            stream_beta: Enable WS-based streaming output (beta). When enabled, stdout/stderr
-                chunks will be delivered via callbacks as they are produced.
 
         Returns:
             EnhancedCodeExecutionResult: Result object containing success status, execution
@@ -280,10 +273,6 @@ class Code(BaseService):
                 result.session.delete()
         """
         try:
-            # If streaming is requested or callbacks are provided, use WS stream mode.
-            use_stream = stream_beta or any(
-                cb is not None for cb in (on_stdout, on_stderr, on_error)
-            )
 
             def _normalize_tool_data_to_response_data(data: Any) -> Dict[str, Any]:
                 """
@@ -334,15 +323,9 @@ class Code(BaseService):
                     ),
                 )
 
-            if use_stream:
-                return self._run_code_stream_ws(
-                    code=code,
-                    language=canonical_language,
-                    timeout_s=timeout_s,
-                    on_stdout=on_stdout,
-                    on_stderr=on_stderr,
-                    on_error=on_error,
-                )
+            # Streaming is temporarily disabled in this version.
+            # The streaming implementation is preserved in _run_code_stream_ws()
+            # and will be re-enabled in a future release.
 
             args = {"code": code, "language": canonical_language, "timeout_s": timeout_s}
 

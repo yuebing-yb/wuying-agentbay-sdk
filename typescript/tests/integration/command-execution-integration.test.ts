@@ -180,27 +180,14 @@ describe('Command Execution Integration Tests', () => {
       log(`  Output: ${result.stdout ?? ''}`);
     });
 
-    it('should test timeout limit (50s)', async () => {
+    it('should support custom timeout values', async () => {
       const command = session.command;
 
-      // Test with timeout exceeding 50s (50000ms) - should be limited to 50s
-      // Note: We can't directly verify the timeout was limited without mocking,
-      // but we can verify the command still executes successfully
-      const result1 = await command.executeCommand("echo 'timeout test'", 60000);
-      expect(result1.success).toBe(true);
-      expect(result1.exitCode).toBe(0);
+      const result = await command.executeCommand("echo 'timeout test'", 120000);
+      expect(result.success).toBe(true);
+      expect(result.exitCode).toBe(0);
 
-      // Test with timeout exactly at limit
-      const result2 = await command.executeCommand("echo 'timeout test 50s'", 50000);
-      expect(result2.success).toBe(true);
-      expect(result2.exitCode).toBe(0);
-
-      // Test with timeout below limit
-      const result3 = await command.executeCommand("echo 'timeout test 30s'", 30000);
-      expect(result3.success).toBe(true);
-      expect(result3.exitCode).toBe(0);
-
-      log('✓ Timeout limit test passed');
+      log('✓ Custom timeout test passed');
     });
 
     it('should test cwd with spaces (security test for parameter passing)', async () => {

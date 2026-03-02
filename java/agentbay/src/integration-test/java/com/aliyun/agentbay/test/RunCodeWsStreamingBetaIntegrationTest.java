@@ -9,6 +9,7 @@ import com.aliyun.agentbay.session.Session;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ public class RunCodeWsStreamingBetaIntegrationTest {
     }
 
     @Test
+    @Ignore("Streaming API temporarily disabled; will be re-enabled in a future release")
     public void testRunCodeWsStreamingBetaE2E() {
         List<String> stdoutChunks = new ArrayList<>();
         List<Long> stdoutTimesMs = new ArrayList<>();

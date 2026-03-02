@@ -63,9 +63,7 @@ public class Command extends BaseService {
      * user permissions in a Linux shell environment.
      *
      * @param command The shell command to execute
-     * @param timeoutMs Timeout in milliseconds (default: 50000ms/50s). Maximum allowed
-     *                  timeout is 50000ms (50s). If a larger value is provided, it will be
-     *                  automatically limited to 50000ms
+     * @param timeoutMs Timeout in milliseconds (default: 50000ms/50s).
      * @param cwd The working directory for command execution. If not specified,
      *            the command runs in the default session directory
      * @param envs Environment variables as a map of key-value pairs.
@@ -108,11 +106,6 @@ public class Command extends BaseService {
         }
 
         try {
-            final int MAX_TIMEOUT_MS = 50000;
-            if (timeoutMs > MAX_TIMEOUT_MS) {
-                timeoutMs = MAX_TIMEOUT_MS;
-            }
-
             Map<String, Object> args = new HashMap<>();
             args.put("command", command);
             args.put("timeout_ms", timeoutMs);

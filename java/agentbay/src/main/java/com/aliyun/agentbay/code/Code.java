@@ -413,37 +413,9 @@ public class Code extends BaseService {
         }
     }
 
-    /**
-     * Execute code with optional WebSocket-based streaming output (beta).
-     *
-     * <p>When streaming is enabled or any callback is provided, stdout/stderr chunks
-     * will be delivered via callbacks as they are produced, enabling real-time output.</p>
-     *
-     * @param code The code to execute.
-     * @param language The programming language of the code. Case-insensitive.
-     * @param timeoutS The timeout for the code execution in seconds.
-     * @param streamBeta Enable WebSocket-based streaming output (beta).When enabled, stdout/stderr chunks will be delivered via callbacks as they are produced.
-     * @param onStdout Callback invoked for each stdout chunk. May be null.
-     * @param onStderr Callback invoked for each stderr chunk. May be null.
-     * @param onError Callback invoked when an error occurs. May be null.
-     * @return EnhancedCodeExecutionResult containing success status, execution result,
-     *         logs, and error message if any.
-     */
-    public EnhancedCodeExecutionResult runCode(
-        String code,
-        String language,
-        int timeoutS,
-        boolean streamBeta,
-        Consumer<String> onStdout,
-        Consumer<String> onStderr,
-        Consumer<Object> onError
-    ) {
-        boolean useStream = streamBeta || onStdout != null || onStderr != null || onError != null;
-        if (!useStream) {
-            return runCode(code, language, timeoutS);
-        }
-        return runCodeStreamWs(code, language, timeoutS, onStdout, onStderr, onError);
-    }
+    // Streaming overload is temporarily disabled in this version.
+    // The streaming implementation is preserved in runCodeStreamWs()
+    // and will be re-enabled in a future release.
 
     /**
      * Execute code via WebSocket streaming, delivering stdout/stderr chunks in real-time.

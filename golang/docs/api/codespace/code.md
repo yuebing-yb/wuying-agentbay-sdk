@@ -148,18 +148,6 @@ type CodeResult struct {
 
 CodeResult represents the result of a code execution
 
-## Type RunCodeStreamBetaOptions
-
-```go
-type RunCodeStreamBetaOptions struct {
-	TimeoutS	int
-	StreamBeta	bool
-	OnStdout	func(chunk string)
-	OnStderr	func(chunk string)
-	OnError		func(err error)
-}
-```
-
 ## Type WsStreamClient
 
 ```go

@@ -9,6 +9,7 @@ import pytest
 
 @pytest.mark.unit
 @pytest.mark.sync
+@pytest.mark.skip(reason="Streaming API temporarily disabled; will be re-enabled in a future release")
 class TestRunCodeWsStreaming:
     def _start_server_in_thread(self, handler):
         import websockets

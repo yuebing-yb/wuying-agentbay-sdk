@@ -2,6 +2,9 @@
 """
 AgentBay SDK - run_code streaming output (beta)
 
+NOTE: Streaming API is temporarily disabled in this version and will be
+re-enabled in a future release. This example is for reference only.
+
 This example demonstrates how to receive stdout/stderr in real time by enabling
 WS streaming output via `stream_beta=True`.
 
