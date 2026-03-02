@@ -1301,8 +1301,6 @@ public class Session {
             } else {
                 return new OperationResult(requestId, false, "", "No URL in response");
             }
-        } catch (AgentBayException e) {
-            throw e;
         } catch (Exception e) {
             throw new AgentBayException("Failed to get link: " + e.getMessage(), e);
         }

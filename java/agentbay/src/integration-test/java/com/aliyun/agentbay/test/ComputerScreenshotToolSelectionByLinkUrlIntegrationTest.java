@@ -86,8 +86,8 @@ public class ComputerScreenshotToolSelectionByLinkUrlIntegrationTest {
 
         try {
             String linkUrl = session.getLinkUrl();
-            assertTrue("Expected session.link_url to be empty or null for this endpoint/image",
-                    linkUrl == null || linkUrl.isEmpty());
+            assertEquals("Expected session.linkUrl to be empty for this endpoint/image",
+                    "", linkUrl);
 
             OperationResult r = session.getComputer().screenshot();
             assertTrue(r.getErrorMessage(), r.isSuccess());

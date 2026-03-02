@@ -1010,7 +1010,7 @@ public class AgentBay {
         try {
             return session.betaPause(timeout, pollInterval);
         } catch (Exception e) {
-            return new SessionPauseResult("", false, "Failed to pause session: "+ session.getSessionId() + e.getMessage());
+            return new SessionPauseResult("", false, "Failed to pause session: " + session.getSessionId() + " - " + e.getMessage());
         }
     }
 
