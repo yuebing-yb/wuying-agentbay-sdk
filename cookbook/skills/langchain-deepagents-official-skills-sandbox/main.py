@@ -27,7 +27,7 @@ from official_skill_user_scenarios import get_scenario
 
 
 DEFAULT_IMAGE_ID = "linux_latest"
-SKILLS_ROOT = "/home/wuying/skills"
+SKILLS_ROOT = "/opt/Alibaba/skills"
 MODEL_NAME = "qwen3-max"
 
 

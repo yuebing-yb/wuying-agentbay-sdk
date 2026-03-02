@@ -27,7 +27,7 @@ from sandbox_tools import SandboxToolset, register_tools
 
 
 DEFAULT_IMAGE_ID = "linux_latest"
-SKILLS_ROOT = "/home/wuying/skills"
+SKILLS_ROOT = "/opt/Alibaba/skills"
 MODEL_NAME = "qwen3-max"
 MAX_SHELL_CALLS = 24
 MAX_WRITE_CALLS = 8
