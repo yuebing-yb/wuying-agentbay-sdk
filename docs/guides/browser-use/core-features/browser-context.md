@@ -12,6 +12,10 @@ A Browser Context represents a persistent browser environment that stores browse
 - Browser preferences
 - Installed extensions (when used with Extension Management)
 
+## Supported Image Types
+
+> **Important**: Browser Context is only supported on **Browser Use Image** (`browser_latest`) and **Computer Use Image - Linux** (`linux_latest`). It is **not available** on Computer Use Image - Windows (`windows_latest`) or other image types. See [Browser Capabilities by Image Type](../../computer-use/browser-capabilities-by-image-type.md) for details.
+
 ## Key Benefits
 
 1. **Reduced Anti-Bot Friction**: By maintaining browser state, websites recognize your sessions as returning users rather than new visitors
