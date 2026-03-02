@@ -52,6 +52,11 @@ class AgentBayLogger:
     _initialized = False
     _log_level = "INFO"
     _log_file: Optional[Path] = None
+    _enable_console = True
+    _enable_file = True
+    _retention = "30 days"
+    _max_file_size: Optional[str] = None
+    _colorize: Optional[bool] = None
 
     @classmethod
     def _should_use_colors(cls) -> bool:
@@ -185,6 +190,11 @@ class AgentBayLogger:
             pass
 
         cls._log_level = level.upper()
+        cls._enable_console = enable_console
+        cls._enable_file = enable_file
+        cls._retention = retention
+        cls._max_file_size = max_file_size
+        cls._colorize = colorize
 
         # Determine if colors should be used
         should_colorize = colorize if colorize is not None else cls._should_use_colors()
@@ -305,9 +315,16 @@ class AgentBayLogger:
         """
         cls._log_level = level.upper()
         if cls._initialized:
-            # Re-initialize with new level
             cls._initialized = False
-            cls.setup(level=cls._log_level)
+            cls.setup(
+                level=cls._log_level,
+                log_file=cls._log_file,
+                enable_console=cls._enable_console,
+                enable_file=cls._enable_file,
+                retention=cls._retention,
+                max_file_size=cls._max_file_size,
+                colorize=cls._colorize,
+            )
 
 
 # Initialize the _logger automatically on module import
