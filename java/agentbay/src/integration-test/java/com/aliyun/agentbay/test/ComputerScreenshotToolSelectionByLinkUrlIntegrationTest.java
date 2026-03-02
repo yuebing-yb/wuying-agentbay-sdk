@@ -22,7 +22,7 @@ public class ComputerScreenshotToolSelectionByLinkUrlIntegrationTest {
     private static final String LINK_URL_IMAGE_ID = "linux_latest";
 
     private static final String NO_LINK_URL_ENDPOINT = "wuyingai-pre.cn-hangzhou.aliyuncs.com";
-
+    private static final String NO_LINK_URL_IMAGE_ID = "imgc-0ab5ta4lxt8rw05a2";
     @Test
     public void testComputerLinkUrlPresentRequiresBetaTakeScreenshot() throws Exception {
         String apiKey = System.getenv("AGENTBAY_API_KEY");
@@ -78,14 +78,16 @@ public class ComputerScreenshotToolSelectionByLinkUrlIntegrationTest {
         AgentBay agentBay = new AgentBay(apiKey, cfg);
 
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId(LINK_URL_IMAGE_ID);
+        params.setImageId(NO_LINK_URL_IMAGE_ID);
         SessionResult create = agentBay.create(params);
         assertTrue(create.getErrorMessage(), create.isSuccess());
         Session session = create.getSession();
         assertNotNull(session);
 
         try {
-            assertEquals("Expected session.linkUrl to be empty for this endpoint/image", "", session.getLinkUrl());
+            String linkUrl = session.getLinkUrl();
+            assertTrue("Expected session.link_url to be empty or null for this endpoint/image",
+                    linkUrl == null || linkUrl.isEmpty());
 
             OperationResult r = session.getComputer().screenshot();
             assertTrue(r.getErrorMessage(), r.isSuccess());
