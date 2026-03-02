@@ -133,6 +133,9 @@ type Session struct {
 
 	wsClient *internal.WsClient
 
+	// Shared HTTP client for LinkUrl calls (lazy initialized)
+	linkHttpClient *http.Client
+
 	// Browser replay enabled flag
 	EnableBrowserReplay bool
 
@@ -154,6 +157,13 @@ type Session struct {
 
 	// Context management
 	Context *ContextManager
+}
+
+func (s *Session) getLinkHttpClient() *http.Client {
+	if s.linkHttpClient == nil {
+		s.linkHttpClient = &http.Client{Timeout: 900 * time.Second}
+	}
+	return s.linkHttpClient
 }
 
 func (s *Session) GetWsUrl() string {
@@ -1356,8 +1366,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Access-Token", token)
 
-	httpClient := &http.Client{Timeout: 900 * time.Second}
-	resp, err := httpClient.Do(req)
+	resp, err := s.getLinkHttpClient().Do(req)
 	if err != nil {
 		return &models.McpToolResult{
 			Success:      false,
@@ -1717,6 +1726,9 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 // BetaPause synchronously pauses this session (beta), putting it into a dormant state to reduce resource usage and costs.
 // BetaPause puts the session into a PAUSED state where computational resources are significantly reduced.
 // The session state is preserved and can be resumed later to continue work.
+//
+// Note: This feature is currently in whitelist-only access.
+// Contact agentbay_dev@alibabacloud.com to request access.
 //
 // Parameters:
 //   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.

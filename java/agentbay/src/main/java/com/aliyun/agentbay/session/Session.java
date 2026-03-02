@@ -52,6 +52,7 @@ public class Session {
     private String linkUrl;
     private String wsUrl;
     private WsClient wsClient;
+    private okhttp3.OkHttpClient linkHttpClient;
     private Boolean enableBrowserReplay;
     private String imageId;
     private List<McpTool> mcpTools = new java.util.ArrayList<>();
@@ -110,6 +111,25 @@ public class Session {
             this.wsClient = new WsClient(this.wsUrl, this.token);
         }
         return this.wsClient;
+    }
+
+    private synchronized okhttp3.OkHttpClient getLinkHttpClient() {
+        if (this.linkHttpClient == null) {
+            this.linkHttpClient = new okhttp3.OkHttpClient.Builder()
+                .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
+        }
+        return this.linkHttpClient;
+    }
+
+    private void closeLinkHttpClient() {
+        if (this.linkHttpClient != null) {
+            this.linkHttpClient.connectionPool().evictAll();
+            this.linkHttpClient.dispatcher().executorService().shutdown();
+            this.linkHttpClient = null;
+        }
     }
 
     /**
@@ -463,11 +483,7 @@ public class Session {
                 okhttp3.MediaType.parse("application/json")
             );
 
-            okhttp3.OkHttpClient httpClient = new okhttp3.OkHttpClient.Builder()
-                .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
-                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .build();
+            okhttp3.OkHttpClient httpClient = getLinkHttpClient();
 
             okhttp3.Request request = new okhttp3.Request.Builder()
                 .url(url)
@@ -1465,6 +1481,11 @@ public class Session {
         } catch (Exception e) {
             return new com.aliyun.agentbay.model.DeleteResult(
                 "", false, "Failed to delete session " + sessionId + ": " + e.getMessage());
+        } finally {
+            try {
+                closeLinkHttpClient();
+            } catch (Exception ignored) {
+            }
         }
     }
 

@@ -412,6 +412,8 @@ def generate_sync():
 
                     # Fix httpx.SyncClient issue (unasync might produce this)
                     content = content.replace("httpx.SyncClient", "httpx.Client")
+                    # Fix httpx async close method: aclose() -> close() for sync Client
+                    content = content.replace(".aclose()", ".close()")
 
                     # Fix playwright import
                     content = content.replace("playwright.async_api", "playwright.sync_api")

@@ -132,6 +132,9 @@ class Session:
         # Internal session-scoped WS client (lazy initialized)
         self._ws_client = None
 
+        # Shared HTTP client for LinkUrl calls (lazy initialized)
+        self._link_http_client: Optional[httpx.Client] = None
+
         # Recording functionality
         self.enableBrowserReplay = (
             True  # Whether browser recording is enabled for this session
@@ -154,6 +157,19 @@ class Session:
         self.browser = Browser(self)
 
         self.agent = Agent(self)
+
+    def _get_link_http_client(self) -> httpx.Client:
+        """Internal: get or create a shared HTTP client for LinkUrl calls."""
+        if self._link_http_client is None:
+            self._link_http_client = httpx.Client(timeout=900)
+        return self._link_http_client
+
+    def _close_link_http_client(self) -> None:
+        """Internal: close the shared HTTP client for LinkUrl calls."""
+        client = self._link_http_client
+        self._link_http_client = None
+        if client is not None:
+            client.close()
 
     def _get_ws_client(self):
         """
@@ -543,6 +559,10 @@ class Session:
                     ws_client.close()
                 except Exception:
                     pass
+            try:
+                self._close_link_http_client()
+            except Exception:
+                pass
 
     def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
         """
@@ -1015,15 +1035,15 @@ class Session:
         }
 
         try:
-            with httpx.Client(timeout=900) as client:
-                resp = client.post(
-                    url,
-                    json=payload,
-                    headers={
-                        "Content-Type": "application/json",
-                        "X-Access-Token": token,
-                    },
-                )
+            client = self._get_link_http_client()
+            resp = client.post(
+                url,
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Access-Token": token,
+                },
+            )
 
             if resp.status_code < 200 or resp.status_code >= 300:
                 _log_api_response_with_details(
@@ -1349,6 +1369,10 @@ class Session:
     ) -> SessionPauseResult:
         """
         Pause the session and wait until it enters PAUSED state.
+
+        Note:
+            This feature is currently in whitelist-only access.
+            Contact agentbay_dev@alibabacloud.com to request access.
 
         Args:
             timeout: Timeout in seconds, default 600

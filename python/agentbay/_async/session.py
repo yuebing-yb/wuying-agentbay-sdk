@@ -130,6 +130,9 @@ class AsyncSession:
         # Internal session-scoped WS client (lazy initialized)
         self._ws_client = None
 
+        # Shared HTTP client for LinkUrl calls (lazy initialized)
+        self._link_http_client: Optional[httpx.AsyncClient] = None
+
         # Recording functionality
         self.enableBrowserReplay = (
             True  # Whether browser recording is enabled for this session
@@ -152,6 +155,19 @@ class AsyncSession:
         self.browser = AsyncBrowser(self)
 
         self.agent = AsyncAgent(self)
+
+    def _get_link_http_client(self) -> httpx.AsyncClient:
+        """Internal: get or create a shared HTTP client for LinkUrl calls."""
+        if self._link_http_client is None:
+            self._link_http_client = httpx.AsyncClient(timeout=900)
+        return self._link_http_client
+
+    async def _close_link_http_client(self) -> None:
+        """Internal: close the shared HTTP client for LinkUrl calls."""
+        client = self._link_http_client
+        self._link_http_client = None
+        if client is not None:
+            await client.aclose()
 
     async def _get_ws_client(self):
         """
@@ -541,6 +557,10 @@ class AsyncSession:
                     await ws_client.close()
                 except Exception:
                     pass
+            try:
+                await self._close_link_http_client()
+            except Exception:
+                pass
 
     def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
         """
@@ -1013,15 +1033,15 @@ class AsyncSession:
         }
 
         try:
-            async with httpx.AsyncClient(timeout=900) as client:
-                resp = await client.post(
-                    url,
-                    json=payload,
-                    headers={
-                        "Content-Type": "application/json",
-                        "X-Access-Token": token,
-                    },
-                )
+            client = self._get_link_http_client()
+            resp = await client.post(
+                url,
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Access-Token": token,
+                },
+            )
 
             if resp.status_code < 200 or resp.status_code >= 300:
                 _log_api_response_with_details(
@@ -1347,6 +1367,10 @@ class AsyncSession:
     ) -> SessionPauseResult:
         """
         Pause the session and wait until it enters PAUSED state.
+
+        Note:
+            This feature is currently in whitelist-only access.
+            Contact agentbay_dev@alibabacloud.com to request access.
 
         Args:
             timeout: Timeout in seconds, default 600
