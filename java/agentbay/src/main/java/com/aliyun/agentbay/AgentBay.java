@@ -11,6 +11,7 @@ import com.aliyun.agentbay.mobile.MobileSimulateConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateMode;
 import com.aliyun.agentbay.model.GetSessionData;
 import com.aliyun.agentbay.model.GetSessionResult;
+import com.aliyun.agentbay.model.SessionPauseResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.skills.BetaSkillsService;
@@ -21,8 +22,7 @@ import com.aliyun.agentbay.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.wuyingai20250506.Client;
-import com.aliyun.wuyingai20250506.models.CreateMcpSessionRequest;
-import com.aliyun.wuyingai20250506.models.CreateMcpSessionResponse;
+import com.aliyun.wuyingai20250506.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +106,115 @@ public class AgentBay {
 
 
     /**
+     * Internal method to get session information by session ID.
+     * 
+     * This method calls the GetSession API and returns raw session data without creating a Session object.
+     * This method is public to allow access from Session class for polling operations.
+     * 
+     * @param sessionId The ID of the session to retrieve
+     * @return GetSessionResult containing session information
+     */
+    public GetSessionResult _getSession(String sessionId) {
+        try {
+            GetSessionRequest request = new GetSessionRequest();
+            request.setAuthorization("Bearer " + apiKey);
+            request.setSessionId(sessionId);
+
+            GetSessionResponse response = client.getSession(request);
+
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response == null || response.getBody() == null) {
+                return new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Invalid response from GetSession API"
+                );
+            }
+
+            GetSessionResponseBody body = response.getBody();
+            Boolean success = body.getSuccess();
+            String code = body.getCode();
+            String message = body.getMessage();
+
+            // Check for API-level errors
+            if (success == null || !success) {
+                String errorMsg = message != null ? message : "Unknown error";
+                if (code != null) {
+                    errorMsg = "[" + code + "] " + errorMsg;
+                }
+                return new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    errorMsg
+                );
+            }
+
+            // Extract session data
+            GetSessionData data = null;
+            if (body.getData() != null) {
+                GetSessionResponseBody.GetSessionResponseBodyData responseData = body.getData();
+                data = new GetSessionData(
+                    responseData.getSessionId(),
+                    responseData.getAppInstanceId(),
+                    responseData.getResourceId(),
+                    responseData.getResourceUrl(),
+                    responseData.getVpcResource() != null ? responseData.getVpcResource() : false,
+                    responseData.getNetworkInterfaceIp(),
+                    responseData.getHttpPort(),
+                    responseData.getToken(),
+                    responseData.getLinkUrl(),
+                    responseData.getWsUrl(),
+                    body.getCode() != null ? body.getCode() : "",
+                    responseData.getToolList(),
+                    success,
+                    responseData.getStatus() != null ? responseData.getStatus() : ""
+                );
+            }
+
+            return new GetSessionResult(
+                requestId,
+                true,
+                data,
+                ""
+            );
+        } catch (com.aliyun.tea.TeaException e) {
+            String errorStr = e.getMessage();
+            String requestId = "";
+            if (e.getData() != null && e.getData().get("RequestId") != null) {
+                requestId = e.getData().get("RequestId").toString();
+            }
+
+            // Check if this is an expected business error (e.g., session not found)
+            if (errorStr != null && (errorStr.contains("InvalidMcpSession.NotFound") ||
+                                     errorStr.contains("NotFound"))) {
+                return new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Session " + sessionId + " not found"
+                );
+            } else {
+                return new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Failed to get session " + sessionId + ": " + errorStr
+                );
+            }
+        } catch (Exception e) {
+            return new GetSessionResult(
+                "",
+                false,
+                null,
+                "Failed to get session " + sessionId + ": " + e.getMessage()
+            );
+        }
+    }
+
+    /**
      * Get a session by its ID from remote server.
      * This method calls the GetSession API to retrieve session information and creates a Session object.
      * This method fetches from the remote server, enabling session recovery scenarios.
@@ -125,104 +234,7 @@ public class AgentBay {
         }
 
         // Call GetSession API
-        GetSessionResult getResult;
-        try {
-            com.aliyun.wuyingai20250506.models.GetSessionRequest request =
-                new com.aliyun.wuyingai20250506.models.GetSessionRequest();
-            request.setAuthorization("Bearer " + apiKey);
-            request.setSessionId(sessionId);
-
-            com.aliyun.wuyingai20250506.models.GetSessionResponse response = client.getSession(request);
-
-            String requestId = ResponseUtil.extractRequestId(response);
-
-            if (response == null || response.getBody() == null) {
-                getResult = new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Invalid response from GetSession API"
-                );
-            } else {
-                com.aliyun.wuyingai20250506.models.GetSessionResponseBody body = response.getBody();
-                Boolean success = body.getSuccess();
-                String code = body.getCode();
-                String message = body.getMessage();
-
-                // Check for API-level errors
-                if (success == null || !success) {
-                    String errorMsg = message != null ? message : "Unknown error";
-                    if (code != null) {
-                        errorMsg = "[" + code + "] " + errorMsg;
-                    }
-                    getResult = new GetSessionResult(
-                        requestId,
-                        false,
-                        null,
-                        errorMsg
-                    );
-                } else {
-                    // Extract session data
-                    GetSessionData data = null;
-                    if (body.getData() != null) {
-                        com.aliyun.wuyingai20250506.models.GetSessionResponseBody.GetSessionResponseBodyData responseData =
-                            body.getData();
-                        data = new GetSessionData(
-                            responseData.getSessionId(),
-                            responseData.getAppInstanceId(),
-                            responseData.getResourceId(),
-                            responseData.getResourceUrl(),
-                            responseData.getVpcResource() != null ? responseData.getVpcResource() : false,
-                            responseData.getNetworkInterfaceIp(),
-                            responseData.getHttpPort(),
-                            responseData.getToken(),
-                            responseData.getLinkUrl(),
-                            responseData.getWsUrl(),
-                            body.getCode() != null ? body.getCode() : "",
-                            responseData.getToolList()
-                        );
-                    }
-
-                    getResult = new GetSessionResult(
-                        requestId,
-                        true,
-                        data,
-                        ""
-                    );
-                }
-            }
-        } catch (com.aliyun.tea.TeaException e) {
-            String errorStr = e.getMessage();
-            String requestId = "";
-            if (e.getData() != null && e.getData().get("RequestId") != null) {
-                requestId = e.getData().get("RequestId").toString();
-            }
-
-            // Check if this is an expected business error (e.g., session not found)
-            if (errorStr != null && (errorStr.contains("InvalidMcpSession.NotFound") ||
-                                     errorStr.contains("NotFound"))) {
-                getResult = new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Session " + sessionId + " not found"
-                );
-            } else {
-                getResult = new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Failed to get session " + sessionId + ": " + errorStr
-                );
-            }
-        } catch (Exception e) {
-            getResult = new GetSessionResult(
-                "",
-                false,
-                null,
-                "Failed to get session " + sessionId + ": " + e.getMessage()
-            );
-        }
+        GetSessionResult getResult = _getSession(sessionId);
 
         // Check if the API call was successful
         if (!getResult.isSuccess()) {
@@ -247,15 +259,6 @@ public class AgentBay {
             if (data.getToolList() != null && !data.getToolList().isEmpty()) {
                 session.updateMcpTools(data.getToolList());
             }
-
-            // TODO: VPC functionality temporarily disabled
-            /*
-            if (data.isVpcResource()) {
-                session.setHttpPort(data.getHttpPort());
-                session.setToken(data.getToken());
-                session.setNetworkInterfaceIp(data.getNetworkInterfaceIp());
-            }
-            */
         }
 
         SessionResult result = new SessionResult();
@@ -851,8 +854,7 @@ public class AgentBay {
                 while (currentPage < page) {
                     // Make API call to get next_token
                     String labelsJson = labels != null ? objectMapper.writeValueAsString(labels) : "{}";
-                    com.aliyun.wuyingai20250506.models.ListSessionRequest request =
-                        new com.aliyun.wuyingai20250506.models.ListSessionRequest();
+                    ListSessionRequest request = new ListSessionRequest();
                     request.setAuthorization("Bearer " + apiKey);
                     request.setLabels(labelsJson);
                     request.setMaxResults(limit);
@@ -860,9 +862,9 @@ public class AgentBay {
                         request.setNextToken(nextToken);
                     }
 
-                    com.aliyun.wuyingai20250506.models.ListSessionResponse response = client.listSession(request);
+                    ListSessionResponse response = client.listSession(request);
                     String requestId = ResponseUtil.extractRequestId(response);
-                    com.aliyun.wuyingai20250506.models.ListSessionResponseBody body = response.getBody();
+                    ListSessionResponseBody body = response.getBody();
 
                     if (body == null || !body.getSuccess()) {
                         String errorMessage = body != null ? body.getMessage() : "Unknown error";
@@ -896,8 +898,7 @@ public class AgentBay {
 
             // Make the actual request for the desired page
             String labelsJson = labels != null ? objectMapper.writeValueAsString(labels) : "{}";
-            com.aliyun.wuyingai20250506.models.ListSessionRequest request =
-                new com.aliyun.wuyingai20250506.models.ListSessionRequest();
+            ListSessionRequest request = new ListSessionRequest();
             request.setAuthorization("Bearer " + apiKey);
             request.setLabels(labelsJson);
             request.setMaxResults(limit);
@@ -905,11 +906,11 @@ public class AgentBay {
                 request.setNextToken(nextToken);
             }
 
-            com.aliyun.wuyingai20250506.models.ListSessionResponse response = client.listSession(request);
+            ListSessionResponse response = client.listSession(request);
 
             // Extract request ID
             String requestId = ResponseUtil.extractRequestId(response);
-            com.aliyun.wuyingai20250506.models.ListSessionResponseBody body = response.getBody();
+            ListSessionResponseBody body = response.getBody();
 
             // Check for errors in the response
             if (body == null || !body.getSuccess()) {
@@ -928,7 +929,7 @@ public class AgentBay {
             // Extract session data
             List<com.aliyun.agentbay.model.SessionListResult.SessionInfo> sessionInfos = new ArrayList<>();
             if (body.getData() != null) {
-                for (com.aliyun.wuyingai20250506.models.ListSessionResponseBody.ListSessionResponseBodyData sessionData : body.getData()) {
+                for (ListSessionResponseBody.ListSessionResponseBodyData sessionData : body.getData()) {
                     String sessionId = sessionData.getSessionId();
                     String sessionStatus = sessionData.getSessionStatus();
                     if (sessionId != null) {
@@ -991,6 +992,39 @@ public class AgentBay {
         sessions.remove(session.getSessionId());
 
         return result;
+    }
+
+    /**
+     * Pause a session (beta feature), putting it into a dormant state.
+     * 
+     * This is a convenience method that delegates to the session's betaPause method.
+     * 
+     * @param session The session to pause
+     * @param timeout Maximum time to wait for pause completion in seconds (default: 600)
+     * @param pollInterval Interval between status checks in seconds (default: 2.0)
+     * @return SessionPauseResult containing the pause operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public com.aliyun.agentbay.model.SessionPauseResult betaPause(Session session, int timeout, double pollInterval) 
+            throws AgentBayException {
+        try {
+            return session.betaPause(timeout, pollInterval);
+        } catch (Exception e) {
+            return new SessionPauseResult("", false, "Failed to pause session: "+ session.getSessionId() + e.getMessage());
+        }
+    }
+
+    /**
+     * Pause a session with default parameters (beta feature).
+     * 
+     * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
+     * 
+     * @param session The session to pause
+     * @return SessionPauseResult containing the pause operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public com.aliyun.agentbay.model.SessionPauseResult betaPause(Session session) throws AgentBayException {
+        return betaPause(session, 600, 2.0);
     }
 
 }
