@@ -3,7 +3,6 @@ package com.aliyun.agentbay.test;
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.model.DeleteResult;
-import com.aliyun.agentbay.model.code.EnhancedCodeExecutionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import org.junit.AfterClass;
@@ -11,9 +10,6 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -60,52 +56,8 @@ public class RunCodeWsStreamingBetaIntegrationTest {
     @Test
     @Ignore("Streaming API temporarily disabled; will be re-enabled in a future release")
     public void testRunCodeWsStreamingBetaE2E() {
-        List<String> stdoutChunks = new ArrayList<>();
-        List<Long> stdoutTimesMs = new ArrayList<>();
-        List<Object> errors = new ArrayList<>();
-
-        long startMs = System.currentTimeMillis();
-        EnhancedCodeExecutionResult r = session.getCode().runCode(
-            "import time\n" +
-                "print('hello', flush=True)\n" +
-                "time.sleep(1.0)\n" +
-                "print(2, flush=True)\n",
-            "python",
-            60,
-            true,
-            chunk -> {
-                stdoutChunks.add(chunk);
-                stdoutTimesMs.add(System.currentTimeMillis());
-            },
-            null,
-            errors::add
-        );
-        long endMs = System.currentTimeMillis();
-
-        assertTrue("errors should be empty, got=" + errors, errors.isEmpty());
-        assertTrue("expected success, error_message=" + r.getErrorMessage(), r.isSuccess());
-        assertTrue("expected >=2 stdout chunks, got=" + stdoutChunks.size(), stdoutChunks.size() >= 2);
-        assertTrue("expected duration >=1.0s, got=" + (endMs - startMs) + "ms", (endMs - startMs) >= 1000);
-
-        String joined = String.join("", stdoutChunks);
-        assertTrue("expected stdout contains hello, got=" + joined, joined.contains("hello"));
-        assertTrue("expected stdout contains 2, got=" + joined, joined.contains("2"));
-
-        Long helloT = null;
-        Long twoT = null;
-        for (int i = 0; i < stdoutChunks.size(); i += 1) {
-            String chunk = stdoutChunks.get(i);
-            long t = stdoutTimesMs.get(i);
-            if (helloT == null && chunk.contains("hello")) {
-                helloT = t;
-            }
-            if (twoT == null && chunk.contains("2")) {
-                twoT = t;
-            }
-        }
-        assertNotNull("hello not observed in stdout chunks: " + stdoutChunks, helloT);
-        assertNotNull("2 not observed in stdout chunks: " + stdoutChunks, twoT);
-        assertTrue("stdout did not behave like streaming; delta=" + (twoT - helloT) + "ms", (twoT - helloT) >= 800);
+        // Streaming runCode overload was removed in this release.
+        // Test body will be restored when the streaming API is re-enabled.
     }
 }
 
