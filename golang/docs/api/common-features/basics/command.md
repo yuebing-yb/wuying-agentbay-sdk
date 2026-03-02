@@ -71,8 +71,7 @@ Functional Options usage (recommended for new code):
 Parameters:
   - command: The shell command to execute
   - options: Either an int (timeoutMs in milliseconds) for legacy usage, or CommandOption functions
-    for Functional Options pattern. Maximum allowed timeout is 50000ms (50s). If a larger value is
-    provided, it will be automatically limited to 50000ms
+    for Functional Options pattern. Default is 50000ms (50s).
 
 Returns:
   - *CommandResult: Result containing command output, exit code, stdout, stderr, trace_id, and
@@ -173,8 +172,7 @@ cmd.ExecuteCommand("echo $VAR", WithEnvs(map[string]string{"VAR": "value"}))
 func WithTimeoutMs(timeoutMs int) CommandOption
 ```
 
-WithTimeoutMs sets the timeout for command execution in milliseconds. Maximum allowed timeout is
-50000ms (50s). If a larger value is provided, it will be automatically limited to 50000ms.
+WithTimeoutMs sets the timeout for command execution in milliseconds.
 
 **Example:**
 

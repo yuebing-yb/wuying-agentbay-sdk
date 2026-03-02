@@ -65,9 +65,7 @@ user permissions in a Linux shell environment.
 
 **Parameters:**
 - `command` (String): The shell command to execute
-- `timeoutMs` (int): Timeout in milliseconds (default: 50000ms/50s). Maximum allowed
-                 timeout is 50000ms (50s). If a larger value is provided, it will be
-                 automatically limited to 50000ms
+- `timeoutMs` (int): Timeout in milliseconds (default: 50000ms/50s).
 - `cwd` (String): The working directory for command execution. If not specified,
            the command runs in the default session directory
 - `envs` (Map<String,String>): Environment variables as a map of key-value pairs.
