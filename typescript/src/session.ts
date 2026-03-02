@@ -1791,6 +1791,9 @@ export class Session {
   /**
    * Asynchronously pause this session (beta), putting it into a dormant state.
    *
+   * **Note**: This feature is currently in whitelist-only access.
+   * Contact agentbay_dev@alibabacloud.com to request access.
+   *
    * This method calls the PauseSessionAsync API to initiate the pause operation and then polls
    * the GetSession API to check the session status until it becomes PAUSED or until timeout is reached.
    * During the paused state, resource usage and costs are reduced while session state is preserved.

@@ -29,6 +29,9 @@ type Session struct {
 
 	wsClient	*internal.WsClient
 
+	// Shared HTTP client for LinkUrl calls (lazy initialized)
+	linkHttpClient	*http.Client
+
 	// Browser replay enabled flag
 	EnableBrowserReplay	bool
 
@@ -70,6 +73,9 @@ BetaPause synchronously pauses this session (beta), putting it into a dormant st
 resource usage and costs. BetaPause puts the session into a PAUSED state where computational
 resources are significantly reduced. The session state is preserved and can be resumed later to
 continue work.
+
+Note: This feature is currently in whitelist-only access. Contact agentbay_dev@alibabacloud.com to
+request access.
 
 Parameters:
   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.

@@ -353,6 +353,8 @@ For detailed practical examples and use cases of session information, including 
 
 ## Session Beta Pause and Beta Resume
 
+> **⚠️ Important Notice**: The Session Pause/Resume feature is currently in whitelist-only access. To request access, please contact agentbay_dev@alibabacloud.com.
+
 Sessions can be temporarily paused to suspend resource usage and resumed later to continue work. This feature is useful for reducing costs during inactive periods and preserving session state for later continuation.
 
 ### Beta Pausing a Session

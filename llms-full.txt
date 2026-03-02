@@ -2410,6 +2410,8 @@ FILE: golang/docs/examples/common-features/basics/session_pause_resume/README.md
 ================================================
 # Session BetaPause and BetaResume Example
 
+> **Note**: This feature is currently in whitelist-only access. Contact agentbay_dev@alibabacloud.com to request access.
+
 This example demonstrates how to use the `BetaPause` and `BetaResume` APIs to manage session lifecycle and reduce resource consumption.
 
 ## Description
@@ -4075,7 +4077,7 @@ func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string,
 
 	duration := time.Since(startTime)
 
-... [truncated, 26,016 chars remaining] ...
+... [truncated, 26,140 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
 func NewListSessionParams() *ListSessionParams {
@@ -4802,8 +4804,6 @@ type commandOptions struct {
 type CommandOption func(*commandOptions)
 
 // WithTimeoutMs sets the timeout for command execution in milliseconds.
-// Maximum allowed timeout is 50000ms (50s). If a larger value is provided,
-// it will be automatically limited to 50000ms.
 //
 // Example:
 //
@@ -4855,8 +4855,7 @@ func WithEnvs(envs map[string]string) CommandOption {
 //   - command: The shell command to execute
 //   - options: Either an int (timeoutMs in milliseconds) for legacy usage, or
 //     CommandOption functions for Functional Options pattern.
-//     Maximum allowed timeout is 50000ms (50s). If a larger value is provided,
-//     it will be automatically limited to 50000ms
+//     Default is 50000ms (50s).
 //
 // Returns:
 //   - *CommandResult: Result containing command output, exit code, stdout,
@@ -4922,14 +4921,6 @@ func (c *Command) executeCommandInternal(
 	cwd string,
 	envs map[string]string,
 ) (*CommandResult, error) {
-	// Limit timeout to maximum 50s (50000ms) as per SDK constraints
-	const MAX_TIMEOUT_MS = 50000
-	if timeout > MAX_TIMEOUT_MS {
-		// Log warning (in production, you might want to use a proper logger)
-		// fmt.Printf("Warning: Timeout %dms exceeds maximum allowed %dms. Limiting to %dms.\n", timeout, MAX_TIMEOUT_MS, MAX_TIMEOUT_MS)
-		timeout = MAX_TIMEOUT_MS
-	}
-
 	// Note: In Go, envs is typed as map[string]string, which enforces type safety at compile time.
 	// All keys and values are guaranteed to be strings by the type system.
 	// This validation is kept for consistency with other SDKs and documentation purposes.
@@ -8133,6 +8124,9 @@ type Session struct {
 
 	wsClient *internal.WsClient
 
+	// Shared HTTP client for LinkUrl calls (lazy initialized)
+	linkHttpClient *http.Client
+
 	// Browser replay enabled flag
 	EnableBrowserReplay bool
 
@@ -8154,6 +8148,13 @@ type Session struct {
 
 	// Context management
 	Context *ContextManager
+}
+
+func (s *Session) getLinkHttpClient() *http.Client {
+	if s.linkHttpClient == nil {
+		s.linkHttpClient = &http.Client{Timeout: 900 * time.Second}
+	}
+	return s.linkHttpClient
 }
 
 func (s *Session) GetWsUrl() string {
@@ -8637,15 +8638,8 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 				// Session is deleted
 				LogInfo(fmt.Sprintf("Session %s successfully deleted (NotFound)", s.SessionID))
 				break
-			} else {
-				// Other error, continue polling
-				LogDebug(fmt.Sprintf("Get session error (will retry): %v", err))
-				// Continue to next poll iteration
-			}
-		} else if statusResult != nil && !statusResult.Success {
-			errorCode := statusResult.Code
 
-... [truncated, 43,755 chars remaining] ...
+... [truncated, 44,089 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
 func (s *Session) ValidateLabels(labels map[string]string) string {
@@ -10357,7 +10351,7 @@ class AsyncAgentBay:
             framework = (
                 params.framework if params and hasattr(params, "framework") else ""
 
-... [truncated, 31,215 chars remaining] ...
+... [truncated, 31,363 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
     async def list(
@@ -11860,9 +11854,7 @@ class AsyncCommand(AsyncBaseService):
 
         Args:
             command: The shell command to execute
-            timeout_ms: Timeout in milliseconds (default: 50000ms/50s). Maximum allowed
-                timeout is 50000ms (50s). If a larger value is provided, it will be
-                automatically limited to 50000ms
+            timeout_ms: Timeout in milliseconds (default: 50000ms/50s).
             cwd: The working directory for command execution. If not specified,
                 the command runs in the default session directory
             envs: Environment variables as a dictionary of key-value pairs.
@@ -11915,15 +11907,6 @@ class AsyncCommand(AsyncBaseService):
                 )
 
         try:
-            # Limit timeout to maximum 50s (50000ms) as per SDK constraints
-            MAX_TIMEOUT_MS = 50000
-            if timeout_ms > MAX_TIMEOUT_MS:
-                _logger.warning(
-                    f"Timeout {timeout_ms}ms exceeds maximum allowed {MAX_TIMEOUT_MS}ms. "
-                    f"Limiting to {MAX_TIMEOUT_MS}ms."
-                )
-                timeout_ms = MAX_TIMEOUT_MS
-
             # Build request arguments
             args = {"command": command, "timeout_ms": timeout_ms}
             if cwd is not None:
@@ -14586,6 +14569,9 @@ class AsyncSession:
         # Internal session-scoped WS client (lazy initialized)
         self._ws_client = None
 
+        # Shared HTTP client for LinkUrl calls (lazy initialized)
+        self._link_http_client: Optional[httpx.AsyncClient] = None
+
         # Recording functionality
         self.enableBrowserReplay = (
             True  # Whether browser recording is enabled for this session
@@ -14608,6 +14594,19 @@ class AsyncSession:
         self.browser = AsyncBrowser(self)
 
         self.agent = AsyncAgent(self)
+
+    def _get_link_http_client(self) -> httpx.AsyncClient:
+        """Internal: get or create a shared HTTP client for LinkUrl calls."""
+        if self._link_http_client is None:
+            self._link_http_client = httpx.AsyncClient(timeout=900)
+        return self._link_http_client
+
+    async def _close_link_http_client(self) -> None:
+        """Internal: close the shared HTTP client for LinkUrl calls."""
+        client = self._link_http_client
+        self._link_http_client = None
+        if client is not None:
+            await client.aclose()
 
     async def _get_ws_client(self):
         """
@@ -14997,29 +14996,14 @@ class AsyncSession:
                     await ws_client.close()
                 except Exception:
                     pass
+            try:
+                await self._close_link_http_client()
+            except Exception:
 
-    def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
-        """
-        Validates labels parameter for label operations.
-        """
-        # Check if labels is None
-        if labels is None:
-            return OperationResult(
-                request_id="",
-                success=False,
-                error_message="Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
-            )
-
-        # Check if labels is a list (array equivalent) - check this before dict check
-        if isinstance(labels, list):
-            return OperationResult(
-                request_id="",
-                success=False,
-                error_message="Labels cannot be an array. Please provide a valid labels object.",
-
-... [truncated, 37,842 chars remaining] ...
+... [truncated, 38,746 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
+    def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
     async def set_labels(self, labels: Dict[str, str]) -> OperationResult:
     async def get_labels(self) -> OperationResult:
     async def info(self) -> OperationResult:
@@ -19036,6 +19020,8 @@ FILE: typescript/docs/examples/common-features/basics/session-pause-resume/READM
 ================================================
 # Session Pause and Resume Example
 
+> **Note**: This feature is currently in whitelist-only access. Contact agentbay_dev@alibabacloud.com to request access.
+
 This example demonstrates how to pause and resume sessions using the Wuying AgentBay SDK. Pausing a session puts it into a dormant state, consuming fewer resources while maintaining its state. Resuming a session brings it back to an active state.
 
 ## Features Demonstrated
@@ -19760,7 +19746,7 @@ export class AgentBay {
         const initialInterval = 500; // Start with 0.5 seconds (500ms) for quick response
         const maxInterval = 5000; // Maximum interval (5s) to avoid excessive delays
 
-... [truncated, 26,133 chars remaining] ...
+... [truncated, 26,267 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
         for (let retry = 0; retry < maxRetries; retry++) {
@@ -21707,9 +21693,7 @@ export class Command {
    * user permissions in a Linux shell environment.
    *
    * @param command - The shell command to execute
-   * @param timeoutMs - Timeout in milliseconds (default: 1000ms/1s). Maximum allowed
-   *                    timeout is 50000ms (50s). If a larger value is provided,
-   *                    it will be automatically limited to 50000ms
+   * @param timeoutMs - Timeout in milliseconds (default: 50000ms/50s).
    * @param cwd - The working directory for command execution. If not specified,
    *              the command runs in the default session directory
    * @param envs - Environment variables as a dictionary of key-value pairs.
@@ -21781,14 +21765,6 @@ export class Command {
     }
 
     try {
-      // Limit timeout to maximum 50s (50000ms) as per SDK constraints
-      const MAX_TIMEOUT_MS = 50000;
-      if (timeoutMs > MAX_TIMEOUT_MS) {
-        // Log warning (in production, you might want to use a proper logger)
-        // Note: Warning is silently applied to maintain compatibility
-        timeoutMs = MAX_TIMEOUT_MS;
-      }
-
       // Build request arguments
       const args: Record<string, any> = {
         command,
@@ -25558,7 +25534,7 @@ export class Session {
       );
 
 
-... [truncated, 45,966 chars remaining] ...
+... [truncated, 46,100 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
       logError("Error calling delete_session_async:", error);

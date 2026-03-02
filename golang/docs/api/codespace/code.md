@@ -183,6 +183,21 @@ type backendResponse struct {
 
 backendResponse represents the raw JSON structure returned by the backend tool
 
+## Type runCodeStreamBetaOptions
+
+```go
+type runCodeStreamBetaOptions struct {
+	TimeoutS	int
+	StreamBeta	bool
+	OnStdout	func(chunk string)
+	OnStderr	func(chunk string)
+	OnError		func(err error)
+}
+```
+
+RunCodeStreamBetaOptions holds streaming callback options for run_code. Temporarily unexported while
+streaming API is disabled in this release. Will be re-exported in a future release.
+
 ## Best Practices
 
 1. Validate code syntax before execution

@@ -43,6 +43,9 @@ BetaPause synchronously pauses a session (beta), putting it into a dormant state
 usage and costs. BetaPause puts the session into a PAUSED state where computational resources are
 significantly reduced. The session state is preserved and can be resumed later to continue work.
 
+Note: This feature is currently in whitelist-only access. Contact agentbay_dev@alibabacloud.com to
+request access.
+
 Parameters:
   - session: The session to pause.
   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.

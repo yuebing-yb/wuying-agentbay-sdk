@@ -150,6 +150,11 @@ async def beta_pause(session: AsyncSession,
 
 Asynchronously pause a session (beta), putting it into a dormant state.
 
+**Notes**:
+
+  This feature is currently in whitelist-only access.
+  Contact agentbay_dev@alibabacloud.com to request access.
+
 ### beta_resume
 
 ```python

@@ -233,6 +233,12 @@ def beta_pause(timeout: int = 600,
 
 Pause the session and wait until it enters PAUSED state.
 
+**Notes**:
+
+  This feature is currently in whitelist-only access.
+  Contact agentbay_dev@alibabacloud.com to request access.
+  
+
 **Arguments**:
 
     timeout: Timeout in seconds, default 600

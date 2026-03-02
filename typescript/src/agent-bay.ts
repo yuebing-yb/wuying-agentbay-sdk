@@ -1122,6 +1122,9 @@ export class AgentBay {
   /**
    * Asynchronously pause a session, putting it into a dormant state.
    *
+   * **Note**: This feature is currently in whitelist-only access.
+   * Contact agentbay_dev@alibabacloud.com to request access.
+   *
    * This method directly calls the PauseSessionAsync API without waiting for the session
    * to reach the PAUSED state.
    *

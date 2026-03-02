@@ -1,5 +1,7 @@
 # Session Pause and Resume Example
 
+> **Note**: This feature is currently in whitelist-only access. Contact agentbay_dev@alibabacloud.com to request access.
+
 This example demonstrates how to pause and resume sessions using the Wuying AgentBay SDK. Pausing a session puts it into a dormant state, consuming fewer resources while maintaining its state. Resuming a session brings it back to an active state.
 
 ## Features Demonstrated

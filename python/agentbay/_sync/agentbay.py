@@ -1224,6 +1224,10 @@ class AgentBay:
     ) -> SessionPauseResult:
         """
         Asynchronously pause a session (beta), putting it into a dormant state.
+
+        Note:
+            This feature is currently in whitelist-only access.
+            Contact agentbay_dev@alibabacloud.com to request access.
         """
         try:
             return session.beta_pause(timeout, poll_interval)
