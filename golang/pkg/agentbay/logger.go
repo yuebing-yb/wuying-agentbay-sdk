@@ -222,8 +222,8 @@ func SetupLogger(config LoggerConfig) {
 		fileLoggingEnabled = true
 
 		// Create directory if needed
-		dir := logFilePath[:strings.LastIndex(logFilePath, "/")]
-		if dir != "" {
+		if idx := strings.LastIndex(logFilePath, "/"); idx > 0 {
+			dir := logFilePath[:idx]
 			os.MkdirAll(dir, 0755)
 		}
 
