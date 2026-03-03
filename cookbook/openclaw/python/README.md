@@ -19,10 +19,10 @@ Set environment variables before running:
 
 ## Run
 
-Use the existing virtual environment `./agentbay_example_env` at repo root, then run:
-
 ```bash
-source ./agentbay_example_env/bin/activate
+python -m venv .venv
+source .venv/bin/activate
+pip install agentbay
 python cookbook/openclaw/python/main.py
 ```
 
