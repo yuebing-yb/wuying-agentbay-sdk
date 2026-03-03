@@ -15,6 +15,7 @@ import com.aliyun.agentbay.model.SessionInfoResult;
 import com.aliyun.agentbay.model.SessionMetrics;
 import com.aliyun.agentbay.model.SessionMetricsResult;
 import com.aliyun.agentbay.model.SessionPauseResult;
+import com.aliyun.agentbay.model.SessionResumeResult;
 import com.aliyun.agentbay.model.SessionStatusResult;
 import com.aliyun.agentbay.oss.OSS;
 import com.aliyun.agentbay.code.Code;
@@ -1636,6 +1637,112 @@ public class Session {
      */
     public SessionPauseResult betaPause() throws AgentBayException {
         return betaPause(600, 2.0);
+    }
+
+    /**
+     * Resumes this session and waits until it enters RUNNING state (beta feature).
+     * 
+     * This method sends a resume request to the backend and polls the session status
+     * until it reaches the RUNNING state or the timeout is exceeded.
+     * 
+     * @param timeout Maximum time to wait in seconds (must be > 0, default 600)
+     * @param pollInterval Time between status checks in seconds (must be > 0, default 2.0)
+     * @return SessionResumeResult containing the resume operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionResumeResult betaResume(int timeout, double pollInterval) throws AgentBayException {
+        // Validate and set default values for parameters
+        if (timeout <= 0) {
+            timeout = 600;
+        }
+        if (pollInterval <= 0) {
+            pollInterval = 2.0;
+        }
+        
+        try {
+            // Create resume request
+            ResumeSessionAsyncRequest request = new ResumeSessionAsyncRequest();
+            request.setAuthorization("Bearer " + getApiKey());
+            request.setSessionId(sessionId);
+
+            // Call resume API
+            ResumeSessionAsyncResponse response = agentBay.getClient().resumeSessionAsync(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            // Check if the initial request was successful
+            if (response == null || response.getBody() == null) {
+                return new SessionResumeResult(requestId, false, "Invalid response from resume API");
+            }
+
+            ResumeSessionAsyncResponseBody body = response.getBody();
+            Boolean success = body.getSuccess();
+            String code = body.getCode() != null ? body.getCode() : "";
+            String message = body.getMessage() != null ? body.getMessage() : "";
+
+            // Check for API-level errors
+            if (success == null || !success) {
+                String errorMessage = message != null && !message.isEmpty() ? message : "Failed to initiate resume";
+                if (!code.isEmpty()) {
+                    errorMessage = "[" + code + "] " + errorMessage;
+                }
+                return new SessionResumeResult(requestId, false, errorMessage);
+            }
+
+            // Poll for status until RUNNING or timeout
+            long startTime = System.currentTimeMillis();
+            long timeoutMs = timeout * 1000L;
+            long pollIntervalMs = (long) (pollInterval * 1000);
+
+            while (System.currentTimeMillis() - startTime < timeoutMs) {
+                try {
+                    // Get session information using _getSession
+                    GetSessionResult sessionResult = agentBay._getSession(sessionId);
+                    
+                    if (sessionResult.isSuccess() && sessionResult.getData() != null) {
+                        String status = sessionResult.getData().getStatus();
+                        // Check if session reached RUNNING state
+                        if ("RUNNING".equals(status)) {
+                            return new SessionResumeResult(requestId, true, "", status);
+                        }
+                        
+                        // Check if session is still resuming
+                        if (!"RESUMING".equals(status)) {
+                            return new SessionResumeResult(requestId, false, 
+                                "Resume failed, session in unexpected state: " + status, status);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.debug("Failed to get session status: {}", e.getMessage());
+                    return new SessionResumeResult(requestId, false, "Failed to get session status:{}" + e.getMessage() , "");
+                }
+                // Sleep before next poll
+                try {
+                    Thread.sleep(pollIntervalMs);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return new SessionResumeResult(requestId, false, "Resume operation interrupted", "");
+                }
+            }
+
+            // Timeout reached
+            return new SessionResumeResult(requestId, false, 
+                "Timed out after " + timeout + "s waiting for RUNNING state", "");
+
+        } catch (Exception e) {
+            throw new AgentBayException("Failed to resume session: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Resumes this session with default parameters (beta feature).
+     * 
+     * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
+     * 
+     * @return SessionResumeResult containing the resume operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionResumeResult betaResume() throws AgentBayException {
+        return betaResume(600, 2.0);
     }
 
     /**

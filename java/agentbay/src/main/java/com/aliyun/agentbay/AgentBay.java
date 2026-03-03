@@ -9,10 +9,7 @@ import com.aliyun.agentbay.exception.AuthenticationException;
 import com.aliyun.agentbay.mobile.MobileSimulate;
 import com.aliyun.agentbay.mobile.MobileSimulateConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateMode;
-import com.aliyun.agentbay.model.GetSessionData;
-import com.aliyun.agentbay.model.GetSessionResult;
-import com.aliyun.agentbay.model.SessionPauseResult;
-import com.aliyun.agentbay.model.SessionResult;
+import com.aliyun.agentbay.model.*;
 import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.skills.BetaSkillsService;
 import com.aliyun.agentbay.session.Session;
@@ -687,7 +684,7 @@ public class AgentBay {
 
             String command = String.format("chmod -R a+rwx %s; wya apply %s %s",
                                           mobileSimPath, wyaApplyOption, devInfoFilePath).trim();
-            com.aliyun.agentbay.model.CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
+            CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
             if (cmdResult.isSuccess()) {
                 // no-op
             } else {
@@ -726,12 +723,12 @@ public class AgentBay {
 
             try {
                 // Get context status data
-                com.aliyun.agentbay.context.ContextInfoResult infoResult = session.getContext().info();
+                ContextInfoResult infoResult = session.getContext().info();
 
                 boolean hasFailure = false;
                 Map<String, String> statusByContextId = new HashMap<>();
 
-                for (com.aliyun.agentbay.context.ContextStatusData item : infoResult.getContextStatusData()) {
+                for (ContextStatusData item : infoResult.getContextStatusData()) {
                     if (!waitContextIds.contains(item.getContextId())) {
                         continue;
                     }
@@ -786,8 +783,8 @@ public class AgentBay {
      *
      * @return ContextService instance
      */
-    public com.aliyun.agentbay.context.ContextService getContextService() {
-        return new com.aliyun.agentbay.context.ContextService(this);
+    public ContextService getContextService() {
+        return new ContextService(this);
     }
 
     /**
@@ -795,7 +792,7 @@ public class AgentBay {
      *
      * @return ContextService instance
      */
-    public com.aliyun.agentbay.context.ContextService getContext() {
+    public ContextService getContext() {
         return getContextService();
     }
 
@@ -809,7 +806,7 @@ public class AgentBay {
      * @param status Status to filter sessions: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED (optional)
      * @return SessionListResult containing paginated list of session information
      */
-    public com.aliyun.agentbay.model.SessionListResult list(
+    public SessionListResult list(
             java.util.Map<String, String> labels,
             Integer page,
             Integer limit,
@@ -822,7 +819,7 @@ public class AgentBay {
 
             // Validate status parameter
             if (status != null && !com.aliyun.agentbay.enums.SessionStatus.isValid(status)) {
-                return new com.aliyun.agentbay.model.SessionListResult(
+                return new SessionListResult(
                     "",
                     false,
                     "Invalid status '" + status + "'. Must be one of: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED",
@@ -835,7 +832,7 @@ public class AgentBay {
 
             // Validate page number
             if (page != null && page < 1) {
-                return new com.aliyun.agentbay.model.SessionListResult(
+                return new SessionListResult(
                     "",
                     false,
                     "Cannot reach page " + page + ": Page number must be >= 1",
@@ -858,6 +855,7 @@ public class AgentBay {
                     request.setAuthorization("Bearer " + apiKey);
                     request.setLabels(labelsJson);
                     request.setMaxResults(limit);
+                    request.setStatus(status);
                     if (nextToken != null && !nextToken.isEmpty()) {
                         request.setNextToken(nextToken);
                     }
@@ -868,7 +866,7 @@ public class AgentBay {
 
                     if (body == null || !body.getSuccess()) {
                         String errorMessage = body != null ? body.getMessage() : "Unknown error";
-                        return new com.aliyun.agentbay.model.SessionListResult(
+                        return new SessionListResult(
                             requestId,
                             false,
                             "Cannot reach page " + page + ": " + errorMessage,
@@ -882,7 +880,7 @@ public class AgentBay {
                     nextToken = body.getNextToken();
                     if (nextToken == null || nextToken.isEmpty()) {
                         // No more pages available
-                        return new com.aliyun.agentbay.model.SessionListResult(
+                        return new SessionListResult(
                             requestId,
                             false,
                             "Cannot reach page " + page + ": No more pages available",
@@ -902,6 +900,7 @@ public class AgentBay {
             request.setAuthorization("Bearer " + apiKey);
             request.setLabels(labelsJson);
             request.setMaxResults(limit);
+            request.setStatus(status);
             if (nextToken != null && !nextToken.isEmpty()) {
                 request.setNextToken(nextToken);
             }
@@ -915,7 +914,7 @@ public class AgentBay {
             // Check for errors in the response
             if (body == null || !body.getSuccess()) {
                 String errorMessage = body != null ? body.getMessage() : "Unknown error";
-                return new com.aliyun.agentbay.model.SessionListResult(
+                return new SessionListResult(
                     requestId,
                     false,
                     "Failed to list sessions: " + errorMessage,
@@ -927,13 +926,13 @@ public class AgentBay {
             }
 
             // Extract session data
-            List<com.aliyun.agentbay.model.SessionListResult.SessionInfo> sessionInfos = new ArrayList<>();
+            List<SessionListResult.SessionInfo> sessionInfos = new ArrayList<>();
             if (body.getData() != null) {
                 for (ListSessionResponseBody.ListSessionResponseBodyData sessionData : body.getData()) {
                     String sessionId = sessionData.getSessionId();
                     String sessionStatus = sessionData.getSessionStatus();
                     if (sessionId != null) {
-                        sessionInfos.add(new com.aliyun.agentbay.model.SessionListResult.SessionInfo(
+                        sessionInfos.add(new SessionListResult.SessionInfo(
                             sessionId,
                             sessionStatus != null ? sessionStatus : "UNKNOWN"
                         ));
@@ -942,7 +941,7 @@ public class AgentBay {
             }
 
             // Return SessionListResult with request ID and pagination info
-            return new com.aliyun.agentbay.model.SessionListResult(
+            return new SessionListResult(
                 requestId,
                 true,
                 "",
@@ -953,7 +952,7 @@ public class AgentBay {
             );
 
         } catch (Exception e) {
-            return new com.aliyun.agentbay.model.SessionListResult(
+            return new SessionListResult(
                 "",
                 false,
                 "Failed to list sessions: " + e.getMessage(),
@@ -970,10 +969,13 @@ public class AgentBay {
      *
      * @return SessionListResult containing paginated list of session information
      */
-    public com.aliyun.agentbay.model.SessionListResult list() {
+    public SessionListResult list() {
         return list(null, null, null, null);
     }
 
+    public SessionListResult list(String status){
+        return list(null, null, null, status);
+    }
     /**
      * Delete a session
      *
@@ -981,12 +983,12 @@ public class AgentBay {
      * @param syncContext Whether to sync context before deletion
      * @return DeleteResult
      */
-    public com.aliyun.agentbay.model.DeleteResult delete(Session session, boolean syncContext) {
+    public DeleteResult delete(Session session, boolean syncContext) {
         if (session == null) {
-            return new com.aliyun.agentbay.model.DeleteResult("", false, "Session is null");
+            return new DeleteResult("", false, "Session is null");
         }
 
-        com.aliyun.agentbay.model.DeleteResult result = session.delete(syncContext);
+        DeleteResult result = session.delete(syncContext);
 
         // Remove from sessions map
         sessions.remove(session.getSessionId());
@@ -1005,7 +1007,7 @@ public class AgentBay {
      * @return SessionPauseResult containing the pause operation result
      * @throws AgentBayException if the API call fails
      */
-    public com.aliyun.agentbay.model.SessionPauseResult betaPause(Session session, int timeout, double pollInterval) 
+    public SessionPauseResult betaPause(Session session, int timeout, double pollInterval) 
             throws AgentBayException {
         try {
             return session.betaPause(timeout, pollInterval);
@@ -1023,8 +1025,41 @@ public class AgentBay {
      * @return SessionPauseResult containing the pause operation result
      * @throws AgentBayException if the API call fails
      */
-    public com.aliyun.agentbay.model.SessionPauseResult betaPause(Session session) throws AgentBayException {
+    public SessionPauseResult betaPause(Session session) throws AgentBayException {
         return betaPause(session, 600, 2.0);
+    }
+
+    /**
+     * Resume a paused session and wait until it enters RUNNING state (beta feature).
+     * 
+     * This is a convenience method that delegates to the session's betaResume method.
+     * 
+     * @param session The session to resume
+     * @param timeout Maximum time to wait for resume completion in seconds (default: 600)
+     * @param pollInterval Interval between status checks in seconds (default: 2.0)
+     * @return SessionResumeResult containing the resume operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionResumeResult betaResume(Session session, int timeout, double pollInterval) 
+            throws AgentBayException {
+        try {
+            return session.betaResume(timeout, pollInterval);
+        } catch (Exception e) {
+            return new SessionResumeResult("", false, "Failed to resume session: " + session.getSessionId() + " - " + e.getMessage());
+        }
+    }
+
+    /**
+     * Resume a paused session with default parameters (beta feature).
+     * 
+     * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
+     * 
+     * @param session The session to resume
+     * @return SessionResumeResult containing the resume operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionResumeResult betaResume(Session session) throws AgentBayException {
+        return betaResume(session, 600, 2.0);
     }
 
 }

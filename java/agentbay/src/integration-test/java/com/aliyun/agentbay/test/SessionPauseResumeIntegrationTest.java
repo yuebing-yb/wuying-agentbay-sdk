@@ -2,10 +2,8 @@ package com.aliyun.agentbay.test;
 
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.exception.AgentBayException;
-import com.aliyun.agentbay.model.GetSessionResult;
-import com.aliyun.agentbay.model.SessionPauseResult;
-import com.aliyun.agentbay.model.SessionResult;
-import com.aliyun.agentbay.model.SessionStatusResult;
+import com.aliyun.agentbay.model.*;
+import com.aliyun.agentbay.model.SessionListResult.SessionInfo;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import org.junit.After;
@@ -78,19 +76,20 @@ public class SessionPauseResumeIntegrationTest {
                     
                     // TODO: Implement betaResume method
                     // If session is PAUSED, resume it first
-                    // if ("PAUSED".equals(statusResult.getStatus())) {
-                    //     SessionResumeResult resumeResult = session.betaResume();
-                    //     if (resumeResult.isSuccess()) {
-                    //         System.out.println("  ✓ Resumed session: " + session.getSessionId());
-                    //     }
-                    // }
+                    if ("PAUSED".equals(statusResult.getStatus())) {
+                        SessionResumeResult resumeResult = session.betaResume();
+                        if (resumeResult.isSuccess()) {
+                            System.out.println("  ✓ Resumed session: " + session.getSessionId());
+                        }
+                    }
                     
                     // Delete session if not already deleting/deleted
                     if (statusResult.getStatus() != null && 
                         !statusResult.getStatus().equals("DELETING") && 
                         !statusResult.getStatus().equals("DELETED") &&
                         !statusResult.getStatus().equals("RESUMING") &&
-                        !statusResult.getStatus().equals("PAUSING")) {
+                        !statusResult.getStatus().equals("PAUSING") &&
+                        !statusResult.getStatus().equals("FINISH")) {
                         com.aliyun.agentbay.model.DeleteResult deleteResult = session.delete(false);
                         if (deleteResult.isSuccess()) {
                             System.out.println("  ✓ Deleted session: " + session.getSessionId());
@@ -178,30 +177,30 @@ public class SessionPauseResumeIntegrationTest {
         // Java AgentBay doesn't have a list(status) method yet
         // For now, we skip the list verification part
         // When list method is implemented, uncomment the following code:
-        //
-        // ListSessionsResult listResult = agentBay.list(currentStatus);
-        // assertTrue("Failed to list sessions: " + listResult.getErrorMessage(), 
-        //           listResult.isSuccess());
-        // 
-        // // Verify session is in the list and check structure
-        // boolean sessionFound = false;
-        // for (Map<String, Object> sessionData : listResult.getSessionIds()) {
-        //     String sessionId = (String) sessionData.get("sessionId");
-        //     if (session.getSessionId().equals(sessionId)) {
-        //         sessionFound = true;
-        //         assertTrue("sessionStatus field missing in list result", 
-        //                   sessionData.containsKey("sessionStatus"));
-        //         assertTrue("sessionId field missing in list result", 
-        //                   sessionData.containsKey("sessionId"));
-        //         assertEquals("Session status mismatch in list", 
-        //                    currentStatus, sessionData.get("sessionStatus"));
-        //         break;
-        //     }
-        // }
-        // 
-        // assertTrue("Session " + session.getSessionId() + " not found in list with status " + currentStatus,
-        //           sessionFound);
-        // System.out.println("  ✓ Session found in list with status " + currentStatus);
+        
+        SessionListResult listResult = agentBay.list(currentStatus);
+        assertTrue("Failed to list sessions: " + listResult.getErrorMessage(), 
+                  listResult.isSuccess());
+        
+        // Verify session is in the list and check structure
+        boolean sessionFound = false;
+        for (SessionInfo sessionData : listResult.getSessionInfos()) {
+            String sessionId = (String) sessionData.getSessionId();
+            if (session.getSessionId().equals(sessionId)) {
+                sessionFound = true;
+                assertNotNull("sessionStatus field missing in list result", 
+                          sessionData.getSessionStatus());
+                assertNotNull("sessionId field missing in list result", 
+                          sessionData.getSessionId());
+                assertEquals("Session status mismatch in list", 
+                           currentStatus, sessionData.getSessionStatus());
+                break;
+            }
+        }
+        
+        assertTrue("Session " + session.getSessionId() + " not found in list with status " + currentStatus,
+                  sessionFound);
+        System.out.println("  ✓ Session found in list with status " + currentStatus);
         
         System.out.println("  ✓ Session status verification completed for " + operationName);
         
@@ -279,11 +278,9 @@ public class SessionPauseResumeIntegrationTest {
         
         // TODO: Implement betaResume method
         // Resume the session before deletion
-        // SessionResumeResult resumeResult = session.betaResume();
-        // assertTrue("Resume failed: " + resumeResult.getErrorMessage(), resumeResult.isSuccess());
-        // System.out.println("  ✓ Session resumed");
-        
-        System.out.println("  ⚠ betaResume not implemented yet, skipping resume step");
+        SessionResumeResult resumeResult = session.betaResume();
+        assertTrue("Resume failed: " + resumeResult.getErrorMessage(), resumeResult.isSuccess());
+        System.out.println("  ✓ Session resumed");
 
         // Step 5: Delete the session
         System.out.println("\nStep 4: Deleting session...");
@@ -301,56 +298,57 @@ public class SessionPauseResumeIntegrationTest {
     }
 
     // TODO: Implement test_resume_async_session_success after betaResume is implemented
-    // @Test
-    // public void testResumeAsyncSessionSuccess() throws Exception {
-    //     System.out.println("\n" + "=".repeat(60));
-    //     System.out.println("TEST: Async Resume Session Success");
-    //     System.out.println("=".repeat(60));
-    //
-    //     // Step 1: Create a test session
-    //     Session session = createTestSession();
-    //
-    //     // Step 2: Pause the session first
-    //     System.out.println("\nStep 1: Pausing session...");
-    //     SessionPauseResult pauseResult = agentBay.betaPause(session);
-    //     assertTrue("Pause failed: " + pauseResult.getErrorMessage(), pauseResult.isSuccess());
-    //     System.out.println("  ✓ Session pause initiated successfully");
-    //
-    //     // Step 3: Wait for pause to complete
-    //     System.out.println("\nStep 2: Waiting for session to pause...");
-    //     Thread.sleep(2000);
-    //
-    //     // Step 4: Verify session is PAUSED or PAUSING
-    //     SessionStatusResult statusResult = session.getStatus();
-    //     assertTrue("Failed to get session status: " + statusResult.getErrorMessage(), 
-    //               statusResult.isSuccess());
-    //     
-    //     String status = statusResult.getStatus() != null ? statusResult.getStatus() : "UNKNOWN";
-    //     System.out.println("  ✓ Session status from getStatus: " + status);
-    //     assertTrue("Unexpected status, expected PAUSED or PAUSING", 
-    //               "PAUSED".equals(status) || "PAUSING".equals(status));
-    //     System.out.println("  ✓ Session status checked");
-    //
-    //     // Step 5: Resume the session (asynchronous)
-    //     System.out.println("\nStep 3: Resuming session asynchronously...");
-    //     SessionResumeResult resumeResult = agentBay.betaResume(session);
-    //
-    //     // Verify async resume result
-    //     assertNotNull("Resume result is null", resumeResult);
-    //     assertTrue("Async resume failed: " + resumeResult.getErrorMessage(), 
-    //               resumeResult.isSuccess());
-    //     System.out.println("  ✓ Session resume initiated successfully");
-    //     System.out.println("    Request ID: " + resumeResult.getRequestId());
-    //
-    //     // Step 6: Wait for resume to complete
-    //     System.out.println("\nStep 4: Waiting for session to resume...");
-    //     Thread.sleep(2000);
-    //
-    //     // Step 7: Verify session status after async resume
-    //     String currentStatus = verifySessionStatusAndList(session, 
-    //                                                      new String[]{"RUNNING", "RESUMING"}, 
-    //                                                      "async resume");
-    //     
-    //     System.out.println("\n✅ Test completed successfully");
-    // }
+    @Test
+    public void testResumeAsyncSessionSuccess() throws Exception {
+        String separator = "============================================================";
+        System.out.println("\n" + separator);
+        System.out.println("TEST: Async Resume Session Success");
+        System.out.println("\n" + separator);
+        // Step 1: Create a test session
+        Session session = createTestSession();
+    
+        // Step 2: Pause the session first
+        System.out.println("\nStep 1: Pausing session...");
+        SessionPauseResult pauseResult = agentBay.betaPause(session);
+        assertTrue("Pause failed: " + pauseResult.getErrorMessage(), pauseResult.isSuccess());
+        System.out.println("  ✓ Session pause initiated successfully");
+    
+        // Step 3: Wait for pause to complete
+        System.out.println("\nStep 2: Waiting for session to pause...");
+        Thread.sleep(2000);
+    
+        // Step 4: Verify session is PAUSED or PAUSING
+        SessionStatusResult statusResult = session.getStatus();
+        assertTrue("Failed to get session status: " + statusResult.getErrorMessage(), 
+                  statusResult.isSuccess());
+        Thread.sleep(2000);
+        
+        String status = statusResult.getStatus() != null ? statusResult.getStatus() : "UNKNOWN";
+        System.out.println("  ✓ Session status from getStatus: " + status);
+        assertTrue("Unexpected status, expected PAUSED or PAUSING", 
+                  "PAUSED".equals(status) || "PAUSING".equals(status));
+        System.out.println("  ✓ Session status checked");
+    
+        // Step 5: Resume the session (asynchronous)
+        System.out.println("\nStep 3: Resuming session asynchronously...");
+        SessionResumeResult resumeResult = agentBay.betaResume(session);
+    
+        // Verify async resume result
+        assertNotNull("Resume result is null", resumeResult);
+        assertTrue("Async resume failed: " + resumeResult.getErrorMessage(), 
+                  resumeResult.isSuccess());
+        System.out.println("  ✓ Session resume initiated successfully");
+        System.out.println("    Request ID: " + resumeResult.getRequestId());
+    
+        // Step 6: Wait for resume to complete
+        System.out.println("\nStep 4: Waiting for session to resume...");
+        Thread.sleep(2000);
+    
+        // Step 7: Verify session status after async resume
+        String currentStatus = verifySessionStatusAndList(session, 
+                                                         new String[]{"RUNNING", "RESUMING"}, 
+                                                         "async resume");
+        
+        System.out.println("\n✅ Test completed successfully");
+    }
 }
