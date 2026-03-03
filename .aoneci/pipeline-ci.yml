@@ -129,9 +129,8 @@ jobs:
         when: "${{params.typescript_enabled}}"
         run: |
           cd typescript
-          # Set tnpm timeout and retry strategy
-          # Only install lint-related packages for better performance
-          tnpm ci
+          # Skip lifecycle scripts (prepare/build) since lint does not need build artifacts
+          tnpm ci --ignore-scripts
           # Run lint using fallback script
           tnpm run lint
       
