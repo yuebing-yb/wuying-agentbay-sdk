@@ -153,7 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16, 18, 20]
+        node-version: [18, 20]
 
     steps:
     - uses: actions/checkout@v3
@@ -163,7 +163,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        cache-dependency-path: 'typescript/package.json'
+        cache-dependency-path: 'typescript/package-lock.json'
 
     - name: Install dependencies
       working-directory: ./typescript
