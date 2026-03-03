@@ -20,7 +20,9 @@ Optional:
 From repo root:
 
 ```bash
-source agentbay_example_env/bin/activate
+python -m venv .venv
+source .venv/bin/activate
+pip install agentbay fastapi uvicorn
 python cookbook/mobile/nl-mobile-control/server.py
 ```
 

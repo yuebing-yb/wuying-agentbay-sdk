@@ -18,6 +18,7 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
 ### Changed
 
+- **Browser Agent → Operator** (All SDKs): Migrated `session.browser.agent` to `session.browser.operator` for unified browser automation interface naming. In Java and Python, `session.browser.agent` is kept as a deprecated alias with a warning; in TypeScript it has been directly replaced.
 - **Removed 50s timeout cap on `execute_command`** (All SDKs): The SDK-side 50-second timeout limit has been removed. Custom `timeout_ms` values are now passed through to the backend without capping. Note: the backend gateway may still enforce its own timeout.
 - Added managed proxy support, clear API, and removed legacy Java browser config.
 
