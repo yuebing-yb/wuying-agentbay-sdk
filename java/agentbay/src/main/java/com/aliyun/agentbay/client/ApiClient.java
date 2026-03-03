@@ -35,6 +35,7 @@ public class ApiClient {
             CallMcpToolRequest request = new CallMcpToolRequest();
             request.authorization = "Bearer " + apiKey;
             request.sessionId = sessionId;
+            request.autoGenSession = false;
 
             // Use 'name' field like Python version, with plain tool name
             request.name = toolName;

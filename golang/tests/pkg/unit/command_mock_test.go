@@ -296,8 +296,7 @@ func TestCommand_Implementation_CwdAndEnvs(t *testing.T) {
 	assert.Equal(t, "test_value", envs["TEST_VAR"])
 }
 
-func TestCommand_Implementation_TimeoutLimit(t *testing.T) {
-	// Test timeout limit enforcement (50s maximum)
+func TestCommand_Implementation_CustomTimeout(t *testing.T) {
 	mockResult := &models.McpToolResult{
 		Success:      true,
 		Data:         "test output",
@@ -305,7 +304,7 @@ func TestCommand_Implementation_TimeoutLimit(t *testing.T) {
 		RequestID:    "request-123",
 	}
 
-	// Test with timeout exceeding 50s (50000ms) - should be limited to 50s
+	// Test with custom timeout (no limit enforced)
 	var capturedTimeout1 interface{}
 	mockSession1 := &CommandTestMockSession{
 		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
@@ -315,25 +314,10 @@ func TestCommand_Implementation_TimeoutLimit(t *testing.T) {
 		},
 	}
 	cmd1 := command.NewCommand(mockSession1)
-	result1, err1 := cmd1.ExecuteCommand("ls -la", 60000)
+	result1, err1 := cmd1.ExecuteCommand("ls -la", 120000)
 	assert.NoError(t, err1)
 	assert.NotNil(t, result1)
-	assert.Equal(t, 50000, capturedTimeout1) // Should be limited to 50s
-
-	// Test with timeout exactly at limit
-	var capturedTimeout2 interface{}
-	mockSession2 := &CommandTestMockSession{
-		callMcpToolFunc: func(toolName string, args interface{}) (*models.McpToolResult, error) {
-			assert.Equal(t, "shell", toolName)
-			capturedTimeout2 = args.(map[string]interface{})["timeout_ms"]
-			return mockResult, nil
-		},
-	}
-	cmd2 := command.NewCommand(mockSession2)
-	result2, err2 := cmd2.ExecuteCommand("ls -la", 50000)
-	assert.NoError(t, err2)
-	assert.NotNil(t, result2)
-	assert.Equal(t, 50000, capturedTimeout2) // Should remain 50s
+	assert.Equal(t, 120000, capturedTimeout1)
 
 	// Test with timeout below limit
 	var capturedTimeout3 interface{}

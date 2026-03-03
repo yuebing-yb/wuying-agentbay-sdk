@@ -334,6 +334,10 @@ type ContextSync struct {
 	Path string `json:"path"`
 	// Policy defines the synchronization policy
 	Policy *SyncPolicy `json:"policy,omitempty"`
+	// BetaWaitForCompletion controls whether session creation should wait for this context's
+	// initial download to finish. If set to false, the SDK will not block Create() on this
+	// context. If nil, it defaults to waiting (backward compatible).
+	BetaWaitForCompletion *bool `json:"-"`
 }
 
 // isValidUploadMode checks if the given uploadMode value is valid
@@ -397,4 +401,10 @@ func (cs *ContextSync) WithPolicy(policy *SyncPolicy) (*ContextSync, error) {
 	}
 	cs.Policy = policy
 	return cs, nil
+}
+
+// WithBetaWaitForCompletion sets BetaWaitForCompletion for chaining.
+func (cs *ContextSync) WithBetaWaitForCompletion(wait bool) *ContextSync {
+	cs.BetaWaitForCompletion = &wait
+	return cs
 }

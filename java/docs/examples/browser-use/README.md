@@ -73,8 +73,8 @@ Session session2 = agentBay.create(paramsWithSameContext).getSession();
 // Browser context automatically restored
 ```
 
-### 4. BrowserAgentAsyncExample.java
-**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserAgentAsyncExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserAgentAsyncExample.java)
+### 4. BrowserOperatorAsyncExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserOperatorAsyncExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserOperatorAsyncExample.java)
 
 Asynchronous browser automation:
 - Async browser operations

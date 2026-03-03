@@ -55,7 +55,6 @@ def run(
 
     agent.act("type 'web agents with multimodal models' in the search bar")
     agent.act("hit enter")
-    import asyncio
 
     time.sleep(1)
 

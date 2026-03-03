@@ -1,26 +1,54 @@
-# Interface: CreateSessionParams
+# Class: CreateSessionParamsClass
 
-Parameters for creating a session.
+## ⚙️ Related Tutorial
+
+- [Session Configuration Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Learn how to configure session parameters for different use cases
+
+## Overview
+
+The CreateSessionParams class provides configuration options for creating AgentBay sessions.
+It supports session labels, image selection, context synchronization, and SDK-side idle release timeout.
+
+CreateSessionParams provides a way to configure the parameters for creating a new session
+in the AgentBay cloud environment.
+
+## Implements
+
+- ``CreateSessionParamsInterface``
 
 ## Table of contents
 
+
 ### Properties
 
-- [betaNetworkId](#betanetworkid)
-- [browserContext](#browsercontext)
-- [contextSync](#contextsync)
-- [enableBrowserReplay](#enablebrowserreplay)
-- [extraConfigs](#extraconfigs)
-- [framework](#framework)
-- [imageId](#imageid)
-- [labels](#labels)
-- [policyId](#policyid)
+- `betaNetworkId`
+- `browserContext`
+- `extraConfigs`
+- `imageId`
+- `isVpc`
+- `mcpPolicyId`
+- `policyId`
 
 ## Properties
+
+```typescript
+contextSync: [`ContextSync`](context-sync.md)[]
+enableBrowserReplay: `boolean`
+framework: `string`
+idleReleaseTimeout: `number`
+labels: `Record`<`string`, `string`>
+```
+
 
 ### betaNetworkId
 
 • `Optional` **betaNetworkId**: `string`
+
+Beta network ID to bind this session to.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`betaNetworkId`
 
 ___
 
@@ -28,17 +56,23 @@ ___
 
 • `Optional` **browserContext**: ``BrowserContext``
 
+Optional configuration for browser data synchronization.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`browserContext`
+
 ___
 
-### contextSync
+#### Implementation of
 
-• `Optional` **contextSync**: [`ContextSync`](context-sync.md)[]
+`CreateSessionParamsInterface`.`contextSync`
 
 ___
 
-### enableBrowserReplay
+#### Implementation of
 
-• `Optional` **enableBrowserReplay**: `boolean`
+`CreateSessionParamsInterface`.`enableBrowserReplay`
 
 ___
 
@@ -46,11 +80,23 @@ ___
 
 • `Optional` **extraConfigs**: ``ExtraConfigs``
 
+Additional configuration options.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`extraConfigs`
+
 ___
 
-### framework
+#### Implementation of
 
-• `Optional` **framework**: `string`
+`CreateSessionParamsInterface`.`framework`
+
+___
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`idleReleaseTimeout`
 
 ___
 
@@ -58,14 +104,65 @@ ___
 
 • `Optional` **imageId**: `string`
 
+Image ID to use for the session.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`imageId`
+
 ___
 
-### labels
+### isVpc
 
-• `Optional` **labels**: `Record`\<`string`, `string`\>
+• `Optional` **isVpc**: `boolean`
+
+Whether to create a VPC-based session. Defaults to false.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`isVpc`
+
+___
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`labels`
+
+___
+
+### mcpPolicyId
+
+• `Optional` **mcpPolicyId**: `string`
+
+MCP policy id to apply when creating the session.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`mcpPolicyId`
 
 ___
 
 ### policyId
 
 • `Optional` **policyId**: `string`
+
+Security policy ID (interface field name). Maps to mcpPolicyId internally.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`policyId`
+
+## Best Practices
+
+1. Configure browser type based on your automation needs (Chrome for compatibility, Firefox for specific features)
+2. Use headless mode for server environments and headed mode for debugging
+3. Set appropriate user agent strings for web scraping to avoid detection
+4. Configure timezone and language settings to match your target audience
+5. Enable cookies when session state persistence is required
+
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [AgentBay API Reference](agentbay.md)
+

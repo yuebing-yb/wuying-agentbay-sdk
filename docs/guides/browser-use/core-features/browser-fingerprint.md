@@ -10,6 +10,10 @@ AgentBay supports advanced browser fingerprint management with the following key
 - **Fingerprint Persistence**: Maintain consistent fingerprints across multiple sessions
 - **Context Management**: Persistent storage using browser and fingerprint contexts
 
+## Supported Image Types
+
+> **Important**: Browser Fingerprint features vary by image type. Random Fingerprint is supported on all image types including Windows. However, advanced features (Local Sync, Construct, Persistence) are only available on **Browser Use Image** (`browser_latest`) and **Computer Use Image - Linux** (`linux_latest`), and are **not available** on Computer Use Image - Windows (`windows_latest`). See [Browser Capabilities by Image Type](../../computer-use/browser-capabilities-by-image-type.md) for the full comparison.
+
 ## 1. Fingerprint Generation Methods
 
 ### 1.1 Random Fingerprint Generation
@@ -1289,5 +1293,5 @@ wrong_fingerprint = BrowserFingerprint(
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../../README.md)

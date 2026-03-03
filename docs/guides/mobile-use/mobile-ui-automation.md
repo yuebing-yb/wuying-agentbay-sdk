@@ -264,7 +264,7 @@ def _prepare_for_screenshots(session) -> None:
 
 
 agent_bay = AgentBay()
-session = agent_bay.create(CreateSessionParams(image_id="imgc-0ab5ta4mn31wth5lh")).session
+session = agent_bay.create(CreateSessionParams(image_id="mobile-use-android-12-gw")).session
 try:
     _prepare_for_screenshots(session)
     result = session.mobile.beta_take_screenshot()
@@ -274,7 +274,7 @@ try:
             f.write(result.data)
         print(
             f"Saved ./tmp/mobile_beta_screenshot.png ({len(result.data)} bytes, "
-            f"size={result.width}x{result.height})"
+            f"mime_type={result.mime_type}, type={result.type}, size={result.width}x{result.height})"
         )
     else:
         print(f"Screenshot failed: {result.error_message}")
@@ -293,7 +293,7 @@ if result.success:
         f.write(result.data)
     print(
         f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(result.data)} bytes, "
-        f"size={result.width}x{result.height})"
+        f"mime_type={result.mime_type}, type={result.type}, size={result.width}x{result.height})"
     )
 else:
     print(f"Long screenshot failed: {result.error_message}")

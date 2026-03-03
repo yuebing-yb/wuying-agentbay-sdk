@@ -1,101 +1,20 @@
-# MobileSimulate API Reference
+# 🧪 Mobile-simulate API Reference
 
 ## Overview
 
-The MobileSimulate module provides capabilities for managing persistent mobile device information and syncing it to mobile devices. This allows you to simulate specific mobile device characteristics and maintain consistent device profiles across sessions.
+Mobile Simulate helps you apply and persist device simulation settings (properties, sensors, packages, services) by storing a device profile in a context and applying it during session creation.
 
-## Enums
 
-### MobileSimulateMode
+## 📚 Tutorial
 
-```java
-public enum MobileSimulateMode
-```
+[Mobile Simulate Guide](../../../../docs/guides/mobile-use/mobile-simulate.md)
 
-Defines the simulation mode for mobile device characteristics.
-
-**Values:**
-- `PROPERTIES_ONLY`: Only simulate device properties (default)
-- `SENSORS_ONLY`: Only simulate sensor data
-- `PACKAGES_ONLY`: Only simulate installed packages
-- `SERVICES_ONLY`: Only simulate system services
-- `ALL`: Simulate all aspects
-
-**Methods:**
-- `String getValue()`: Get the string value of the mode
-
-**Example:**
-
-```java
-MobileSimulateMode mode = MobileSimulateMode.ALL;
-System.out.println(mode.getValue()); // Output: "All"
-```
-
-## Result Classes
-
-### MobileSimulateUploadResult
-
-```java
-public class MobileSimulateUploadResult
-```
-
-Result of uploading mobile simulation data.
-
-**Fields:**
-- `success` (boolean): True if the upload succeeded
-- `mobileSimulateContextId` (String): The context ID of the uploaded mobile simulation data
-- `errorMessage` (String): Error description (if success is false)
-
-**Constructor:**
-
-```java
-public MobileSimulateUploadResult(
-    boolean success,
-    String mobileSimulateContextId,
-    String errorMessage
-)
-```
-
-## Configuration Classes
-
-### MobileSimulateConfig
-
-```java
-public class MobileSimulateConfig
-```
-
-Configuration for mobile device simulation.
-
-**Fields:**
-- `simulate` (boolean): Whether simulation is enabled
-- `mobileDevInfoPath` (String): Path to mobile device info file
-- `simulateMode` (MobileSimulateMode): The simulation mode
-- `simulatedContextId` (String): The context ID containing simulation data
-
-**Constructor:**
-
-```java
-public MobileSimulateConfig(
-    boolean simulate,
-    String mobileDevInfoPath,
-    MobileSimulateMode simulateMode,
-    String simulatedContextId
-)
-```
-
-**Methods:**
-- `boolean isSimulate()`: Check if simulation is enabled
-- `String getMobileDevInfoPath()`: Get the mobile device info path
-- `MobileSimulateMode getSimulateMode()`: Get the simulation mode
-- `String getSimulatedContextId()`: Get the simulated context ID
+Use mobile simulate to emulate device properties and persist them with context sync
 
 ## MobileSimulate
 
-```java
-public class MobileSimulate
-```
-
 Service for managing persistent mobile device info and syncing to mobile devices.
+Provides methods to upload mobile simulation data and configure simulation settings.
 
 ### Constructor
 
@@ -103,17 +22,7 @@ Service for managing persistent mobile device info and syncing to mobile devices
 public MobileSimulate(AgentBay agentBay)
 ```
 
-Creates a new MobileSimulate instance.
-
-**Parameters:**
-- `agentBay` (AgentBay): The AgentBay client instance (required)
-
-**Throws:**
-- `IllegalArgumentException`: If agentBay or agentBay.context is null
-
----
-
-## Configuration Methods
+### Methods
 
 ### setSimulateEnable
 
@@ -121,17 +30,10 @@ Creates a new MobileSimulate instance.
 public void setSimulateEnable(boolean enable)
 ```
 
-Enable or disable mobile device simulation.
+Set the simulate enable flag.
 
 **Parameters:**
-- `enable` (boolean): True to enable simulation, false to disable
-
-**Example:**
-
-```java
-MobileSimulate mobileSimulate = new MobileSimulate(agentBay);
-mobileSimulate.setSimulateEnable(true);
-```
+- `enable` (boolean): The simulate feature enable flag
 
 ### getSimulateEnable
 
@@ -139,17 +41,10 @@ mobileSimulate.setSimulateEnable(true);
 public boolean getSimulateEnable()
 ```
 
-Get the current simulation enable status.
+Get the simulate enable flag.
 
 **Returns:**
-- `boolean`: True if simulation is enabled
-
-**Example:**
-
-```java
-boolean isEnabled = mobileSimulate.getSimulateEnable();
-System.out.println("Simulation enabled: " + isEnabled);
-```
+- `boolean`: The simulate feature enable flag
 
 ### setSimulateMode
 
@@ -157,16 +52,15 @@ System.out.println("Simulation enabled: " + isEnabled);
 public void setSimulateMode(MobileSimulateMode mode)
 ```
 
-Set the simulation mode.
+Set the simulate mode.
 
 **Parameters:**
-- `mode` (MobileSimulateMode): The simulation mode to use
-
-**Example:**
-
-```java
-mobileSimulate.setSimulateMode(MobileSimulateMode.ALL);
-```
+- `mode` (MobileSimulateMode): The simulate mode:
+            - PROPERTIES_ONLY: Simulate only device properties
+            - SENSORS_ONLY: Simulate only device sensors
+            - PACKAGES_ONLY: Simulate only installed packages
+            - SERVICES_ONLY: Simulate only system services
+            - ALL: Simulate all aspects of the device
 
 ### getSimulateMode
 
@@ -174,17 +68,10 @@ mobileSimulate.setSimulateMode(MobileSimulateMode.ALL);
 public MobileSimulateMode getSimulateMode()
 ```
 
-Get the current simulation mode.
+Get the simulate mode.
 
 **Returns:**
-- `MobileSimulateMode`: The current simulation mode
-
-**Example:**
-
-```java
-MobileSimulateMode mode = mobileSimulate.getSimulateMode();
-System.out.println("Current mode: " + mode.getValue());
-```
+- `MobileSimulateMode`: The simulate mode
 
 ### setSimulateContextId
 
@@ -192,20 +79,11 @@ System.out.println("Current mode: " + mode.getValue());
 public void setSimulateContextId(String contextId)
 ```
 
-Set a previously saved simulate context ID.
-
-This allows you to reuse mobile device simulation data from a previous upload.
+Set a previously saved simulate context id.
+Please make sure the context id is provided by MobileSimulateService but not user side created context.
 
 **Parameters:**
 - `contextId` (String): The context ID of the previously saved mobile simulate context
-
-**Example:**
-
-```java
-// Use a previously uploaded simulation context
-String previousContextId = "ctx_abc123...";
-mobileSimulate.setSimulateContextId(previousContextId);
-```
 
 ### getSimulateContextId
 
@@ -213,17 +91,10 @@ mobileSimulate.setSimulateContextId(previousContextId);
 public String getSimulateContextId()
 ```
 
-Get the simulate context ID.
+Get the simulate context id.
 
 **Returns:**
 - `String`: The context ID of the mobile simulate context
-
-**Example:**
-
-```java
-String contextId = mobileSimulate.getSimulateContextId();
-System.out.println("Context ID: " + contextId);
-```
 
 ### getSimulateConfig
 
@@ -231,22 +102,14 @@ System.out.println("Context ID: " + contextId);
 public MobileSimulateConfig getSimulateConfig()
 ```
 
-Get the complete simulation configuration.
+Get the simulate config.
 
 **Returns:**
-- `MobileSimulateConfig`: The current simulation configuration
-
-**Example:**
-
-```java
-MobileSimulateConfig config = mobileSimulate.getSimulateConfig();
-System.out.println("Simulation enabled: " + config.isSimulate());
-System.out.println("Simulation mode: " + config.getSimulateMode().getValue());
-```
-
----
-
-## Mobile Info Management
+- `MobileSimulateConfig`: The MobileSimulateConfig containing:
+        - simulate: The simulate feature enable flag
+        - simulatePath: The path of the mobile dev info file
+        - simulateMode: The simulate mode
+        - simulatedContextId: The context ID of the mobile info (defaults to null)
 
 ### hasMobileInfo
 
@@ -254,340 +117,53 @@ System.out.println("Simulation mode: " + config.getSimulateMode().getValue());
 public boolean hasMobileInfo(ContextSync contextSync)
 ```
 
-Check if the mobile device info file exists in a context sync.
+Check if the mobile dev info file exists in one context sync.
+This method can only be used when mobile simulate context sync is managed by user side.
 
 **Parameters:**
-- `contextSync` (ContextSync): The context sync to check (required)
+- `contextSync` (ContextSync): The context sync to check
 
 **Returns:**
-- `boolean`: True if the mobile device info file exists, false otherwise
+- `boolean`: True if the mobile dev info file exists, False otherwise
 
 **Throws:**
-- `IllegalArgumentException`: If contextSync, contextId, or path is null
-
-**Example:**
-
-```java
-ContextSync contextSync = new ContextSync();
-contextSync.setContextId("ctx_123");
-contextSync.setPath("/data");
-
-boolean exists = mobileSimulate.hasMobileInfo(contextSync);
-System.out.println("Mobile info exists: " + exists);
-```
+- `IllegalArgumentException`: if contextSync is not provided, or contextSync.contextId is not provided, or contextSync.path is not provided
 
 ### uploadMobileInfo
 
 ```java
-public MobileSimulateUploadResult uploadMobileInfo(String mobileDevInfo)
+public MobileSimulateUploadResult uploadMobileInfo(String mobileDevInfoContent, ContextSync contextSync)
 ```
 
-Upload mobile device info to create a simulation context.
+```java
+public MobileSimulateUploadResult uploadMobileInfo(String mobileDevInfoContent)
+```
 
-This method:
-1. Creates a new context for storing mobile simulation data
-2. Uploads the provided mobile device information as JSON
-3. Returns the context ID that can be reused in future sessions
+Upload the mobile simulate dev info.
 
 **Parameters:**
-- `mobileDevInfo` (String): The mobile device information as a JSON string (required)
+- `mobileDevInfoContent` (String): The mobile simulate dev info content to upload (JSON string)
+- `contextSync` (ContextSync): Optional context sync:
+                   - If not provided, a new context will be created for the mobile simulate service
+                     and this context id will be returned by the MobileSimulateUploadResult.
+                     User can use this context id to do persistent mobile simulate across sessions.
+                   - If provided, the mobile simulate dev info will be uploaded to the context sync
+                     in a specific path.
 
 **Returns:**
-- `MobileSimulateUploadResult`: Upload result containing the context ID
+- `MobileSimulateUploadResult`: MobileSimulateUploadResult containing the result of the upload operation:
+        - success: Whether the operation was successful
+        - mobileSimulateContextId: The context ID of the mobile info (defaults to empty string)
+        - errorMessage: The error message if the operation failed (defaults to empty string)
 
 **Throws:**
-- `IllegalArgumentException`: If mobileDevInfo is null or empty
+- `IllegalArgumentException`: if mobileDevInfoContent is not provided or not a valid JSON string,
+        or if contextSync is provided but contextSync.contextId is missing
 
-**Example:**
 
-```java
-// Prepare mobile device info JSON
-String mobileDevInfo = "{" +
-    "\"device\": {" +
-    "  \"brand\": \"Samsung\"," +
-    "  \"model\": \"Galaxy S21\"," +
-    "  \"android_version\": \"12\"," +
-    "  \"screen\": {" +
-    "    \"width\": 1080," +
-    "    \"height\": 2400," +
-    "    \"density\": 3.0" +
-    "  }" +
-    "}," +
-    "\"build\": {" +
-    "  \"manufacturer\": \"Samsung\"," +
-    "  \"product\": \"beyond1\"," +
-    "  \"fingerprint\": \"samsung/beyond1/beyond1:12/..\"" +
-    "}" +
-    "}";
 
-MobileSimulateUploadResult result = mobileSimulate.uploadMobileInfo(mobileDevInfo);
-if (result.isSuccess()) {
-    String contextId = result.getMobileSimulateContextId();
-    System.out.println("Upload successful! Context ID: " + contextId);
-    
-    // Save this contextId for future use
-    // You can reuse it with setSimulateContextId()
-} else {
-    System.err.println("Upload failed: " + result.getErrorMessage());
-}
-```
+## 🔗 Related Resources
 
-**Mobile Device Info JSON Structure:**
+- [Mobile API Reference](../../api/mobile-use/mobile.md)
+- [Context Sync API Reference](../../api/common-features/basics/context-sync.md)
 
-The mobile device info JSON should contain device characteristics you want to simulate:
-
-```json
-{
-  "device": {
-    "brand": "Device brand name",
-    "model": "Device model",
-    "android_version": "Android version",
-    "screen": {
-      "width": 1080,
-      "height": 2400,
-      "density": 3.0
-    }
-  },
-  "build": {
-    "manufacturer": "Manufacturer name",
-    "product": "Product name",
-    "fingerprint": "Build fingerprint"
-  },
-  "properties": {
-    "ro.build.version.sdk": "31",
-    "ro.product.cpu.abi": "arm64-v8a"
-  },
-  "sensors": [...],
-  "packages": [...],
-  "services": [...]
-}
-```
-
----
-
-## Complete Example: Upload and Reuse Simulation Data
-
-```java
-import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.mobile.MobileSimulate;
-import com.aliyun.agentbay.mobile.MobileSimulateMode;
-import com.aliyun.agentbay.mobile.MobileSimulateUploadResult;
-import com.aliyun.agentbay.session.CreateSessionParams;
-import com.aliyun.agentbay.session.Session;
-
-public class MobileSimulateExample {
-    public static void main(String[] args) {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        
-        try {
-            AgentBay agentBay = new AgentBay(apiKey);
-            MobileSimulate mobileSimulate = new MobileSimulate(agentBay);
-            
-            // Step 1: Configure simulation settings
-            System.out.println("1. Configuring simulation...");
-            mobileSimulate.setSimulateEnable(true);
-            mobileSimulate.setSimulateMode(MobileSimulateMode.ALL);
-            
-            // Step 2: Upload mobile device info
-            System.out.println("\n2. Uploading mobile device info...");
-            String mobileDevInfo = "{" +
-                "\"device\": {" +
-                "  \"brand\": \"Samsung\"," +
-                "  \"model\": \"Galaxy S21\"," +
-                "  \"android_version\": \"12\"" +
-                "}" +
-                "}";
-            
-            MobileSimulateUploadResult uploadResult = 
-                mobileSimulate.uploadMobileInfo(mobileDevInfo);
-            
-            if (!uploadResult.isSuccess()) {
-                System.err.println("Upload failed: " + uploadResult.getErrorMessage());
-                return;
-            }
-            
-            String contextId = uploadResult.getMobileSimulateContextId();
-            System.out.println("Upload successful! Context ID: " + contextId);
-            System.out.println("Save this context ID for future use!");
-            
-            // Step 3: Create session with simulation
-            System.out.println("\n3. Creating mobile session with simulation...");
-            mobileSimulate.setSimulateContextId(contextId);
-            
-            CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("mobile_latest");
-            params.setMobileSimulateConfig(mobileSimulate.getSimulateConfig());
-            
-            Session session = agentBay.create(params).getSession();
-            System.out.println("Session created: " + session.getSessionId());
-            System.out.println("The mobile device is now simulating Samsung Galaxy S21!");
-            
-            // Use the session for mobile operations...
-            // session.getMobile().tap(100, 200);
-            
-            // Cleanup
-            agentBay.delete(session);
-            System.out.println("\n=== Example completed ===");
-            
-        } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
----
-
-## Example: Reuse Previously Uploaded Simulation Data
-
-```java
-import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.mobile.MobileSimulate;
-import com.aliyun.agentbay.mobile.MobileSimulateMode;
-import com.aliyun.agentbay.session.CreateSessionParams;
-import com.aliyun.agentbay.session.Session;
-
-public class ReuseSimulationExample {
-    public static void main(String[] args) {
-        String apiKey = System.getenv("AGENTBAY_API_KEY");
-        
-        // Context ID from previous upload (save this in your database or config)
-        String previousContextId = "ctx_abc123def456...";
-        
-        try {
-            AgentBay agentBay = new AgentBay(apiKey);
-            MobileSimulate mobileSimulate = new MobileSimulate(agentBay);
-            
-            // Configure simulation using previously uploaded context
-            System.out.println("Reusing simulation context: " + previousContextId);
-            mobileSimulate.setSimulateEnable(true);
-            mobileSimulate.setSimulateMode(MobileSimulateMode.ALL);
-            mobileSimulate.setSimulateContextId(previousContextId);
-            
-            // Create session with the reused simulation
-            CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("mobile_latest");
-            params.setMobileSimulateConfig(mobileSimulate.getSimulateConfig());
-            
-            Session session = agentBay.create(params).getSession();
-            System.out.println("Session created with simulated device!");
-            
-            // Use the session...
-            
-            // Cleanup
-            agentBay.delete(session);
-            
-        } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
-        }
-    }
-}
-```
-
----
-
-## Integration with Session Creation
-
-You can provide `MobileSimulateConfig` when creating a session:
-
-```java
-import com.aliyun.agentbay.mobile.MobileExtraConfig;
-
-// Option 1: Using MobileSimulateConfig directly in CreateSessionParams
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("mobile_latest");
-params.setMobileSimulateConfig(mobileSimulate.getSimulateConfig());
-
-Session session = agentBay.create(params).getSession();
-
-// Option 2: Using MobileExtraConfig for additional mobile settings
-MobileExtraConfig extraConfig = new MobileExtraConfig();
-extraConfig.setLockResolution(true);
-extraConfig.setHideNavigationBar(true);
-
-params.setMobileExtraConfig(extraConfig);
-params.setMobileSimulateConfig(mobileSimulate.getSimulateConfig());
-
-session = agentBay.create(params).getSession();
-```
-
----
-
-## Best Practices
-
-### 1. Save and Reuse Context IDs
-
-```java
-// Upload once
-MobileSimulateUploadResult result = mobileSimulate.uploadMobileInfo(deviceInfo);
-String contextId = result.getMobileSimulateContextId();
-
-// Save this contextId in database or configuration
-saveToDatabase("device_profile_samsung_s21", contextId);
-
-// Later, reuse it
-String savedContextId = loadFromDatabase("device_profile_samsung_s21");
-mobileSimulate.setSimulateContextId(savedContextId);
-```
-
-### 2. Create Device Profiles
-
-```java
-public class DeviceProfiles {
-    public static final String SAMSUNG_S21 = "ctx_samsung_s21_...";
-    public static final String IPHONE_13 = "ctx_iphone_13_...";
-    public static final String PIXEL_6 = "ctx_pixel_6_...";
-    
-    public static MobileSimulate createWithProfile(
-        AgentBay agentBay, 
-        String profileContextId
-    ) {
-        MobileSimulate ms = new MobileSimulate(agentBay);
-        ms.setSimulateEnable(true);
-        ms.setSimulateMode(MobileSimulateMode.ALL);
-        ms.setSimulateContextId(profileContextId);
-        return ms;
-    }
-}
-
-// Usage
-MobileSimulate ms = DeviceProfiles.createWithProfile(
-    agentBay, 
-    DeviceProfiles.SAMSUNG_S21
-);
-```
-
-### 3. Validate Mobile Info Before Upload
-
-```java
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-public void validateAndUpload(String mobileDevInfo) {
-    ObjectMapper mapper = new ObjectMapper();
-    try {
-        // Validate JSON
-        mapper.readTree(mobileDevInfo);
-        
-        // Upload
-        MobileSimulateUploadResult result = 
-            mobileSimulate.uploadMobileInfo(mobileDevInfo);
-        
-        if (result.isSuccess()) {
-            System.out.println("Context ID: " + 
-                result.getMobileSimulateContextId());
-        }
-    } catch (Exception e) {
-        System.err.println("Invalid JSON: " + e.getMessage());
-    }
-}
-```
-
----
-
-## See Also
-
-- [Mobile API](./mobile.md) - Mobile device UI automation and operations
-- [Context Management](../common-features/basics/context.md) - Context storage and retrieval
-- [Context Synchronization](../common-features/basics/context-sync.md) - Context sync operations
-- [Session Management](../common-features/basics/session.md) - Session lifecycle management

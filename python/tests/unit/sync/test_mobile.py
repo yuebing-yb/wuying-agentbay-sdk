@@ -20,6 +20,8 @@ class TestMobile:
         """Set up test fixtures."""
         self.mock_session = Mock()
         self.mock_session.call_mcp_tool = MagicMock()
+        # Default to no link_url so screenshot() uses system_screenshot in unit tests.
+        self.mock_session.get_link_url = Mock(return_value="")
         # Setup agent_bay.client mock for get_adb_url
         self.mock_session.agent_bay = Mock()
         self.mock_session.agent_bay.client = Mock()
@@ -302,7 +304,7 @@ class TestMobile:
         assert len(result.data) == 1
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
-            {"start_menu": False, "desktop": True, "ignore_system_apps": True},
+            {"start_menu": False, "desktop": True, "ignore_system_app": True},
         )
 
     @pytest.mark.sync
@@ -326,7 +328,7 @@ class TestMobile:
         # Assert
         self.session.call_mcp_tool.assert_called_once_with(
             "get_installed_apps",
-            {"start_menu": True, "desktop": False, "ignore_system_apps": False},
+            {"start_menu": True, "desktop": False, "ignore_system_app": False},
         )
 
     @pytest.mark.sync
@@ -427,8 +429,30 @@ class TestMobile:
         )
 
     @pytest.mark.sync
+    def test_screenshot_fails_when_link_url_present(self):
+        """Test screenshot() fails and suggests beta_take_screenshot() when link_url is present."""
+        # Arrange
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session.call_mcp_tool = MagicMock()
+
+        # Act
+        result = self.mobile.screenshot()
+
+        # Assert
+        assert isinstance(result, OperationResult)
+        assert result.success is False
+        assert result.data is None
+        assert (
+            result.error_message
+            == "This cloud environment does not support `screenshot()`. "
+            "Please use `beta_take_screenshot()` instead."
+        )
+        self.session.call_mcp_tool.assert_not_called()
+
+    @pytest.mark.sync
     def test_beta_take_screenshot_success_png(self):
         """Test beta_take_screenshot returns PNG bytes."""
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
         import base64
         import json
 
@@ -450,7 +474,8 @@ class TestMobile:
         result = self.mobile.beta_take_screenshot()
 
         assert result.success is True
-        assert result.format == "png"
+        assert result.type == "image"
+        assert result.mime_type == "image/png"
         assert result.width == 720
         assert result.height == 1280
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
@@ -462,6 +487,7 @@ class TestMobile:
     @pytest.mark.sync
     def test_beta_take_screenshot_non_json_payload_raises(self):
         """Test beta_take_screenshot rejects non-JSON payloads."""
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
         import base64
 
         png = b"\x89PNG\r\n\x1a\n" + b"payload"
@@ -506,7 +532,8 @@ class TestMobile:
         result = self.mobile.beta_take_long_screenshot(max_screens=4, format="png")
 
         assert result.success is True
-        assert result.format == "png"
+        assert result.type == "image"
+        assert result.mime_type == "image/png"
         assert result.width == 720
         assert result.height == 1280
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
@@ -545,7 +572,8 @@ class TestMobile:
         result = self.mobile.beta_take_long_screenshot(max_screens=2, format="jpeg", quality=80)
 
         assert result.success is True
-        assert result.format == "jpeg"
+        assert result.type == "image"
+        assert result.mime_type == "image/jpeg"
         assert result.width == 720
         assert result.height == 1280
         assert result.data.startswith(b"\xff\xd8\xff")

@@ -23,7 +23,7 @@ func main() {
 	}
 
 	sessionResult, err := client.Create(&agentbay.CreateSessionParams{
-		ImageId: "imgc-0ab5ta4mn31wth5lh",
+		ImageId: "mobile-use-android-12-gw",
 	})
 	if err != nil || sessionResult == nil || sessionResult.Session == nil {
 		fmt.Printf("Failed to create session: %v\n", err)
@@ -74,7 +74,7 @@ func main() {
 	}
 	size1 := ""
 	if s1.Width != nil && s1.Height != nil {
-		size1 = fmt.Sprintf(", size=%dx%d", *s1.Width, *s1.Height)
+		size1 = fmt.Sprintf(", mime_type=%s, type=%s, size=%dx%d", s1.MimeType, s1.Type, *s1.Width, *s1.Height)
 	}
 	fmt.Printf("Saved %s (%d bytes%s)\n", p1, len(s1.Data), size1)
 
@@ -90,7 +90,7 @@ func main() {
 	}
 	size2 := ""
 	if s2.Width != nil && s2.Height != nil {
-		size2 = fmt.Sprintf(", size=%dx%d", *s2.Width, *s2.Height)
+		size2 = fmt.Sprintf(", mime_type=%s, type=%s, size=%dx%d", s2.MimeType, s2.Type, *s2.Width, *s2.Height)
 	}
 	fmt.Printf("Saved %s (%d bytes%s)\n", p2, len(s2.Data), size2)
 }

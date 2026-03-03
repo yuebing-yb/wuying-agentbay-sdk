@@ -103,7 +103,7 @@ async function main() {
             use_text_extract: false,
           };
 
-          const [success, gameState] = await session.browser.agent.extract(
+          const [success, gameState] = await session.browser.operator.extract(
             gameStateOptions,
             page
           );
@@ -162,7 +162,7 @@ async function main() {
               use_text_extract: false,
             };
 
-            const [moveSuccess, nextMove] = await session.browser.agent.extract(
+            const [moveSuccess, nextMove] = await session.browser.operator.extract(
               nextMoveOptions,
               page
             );

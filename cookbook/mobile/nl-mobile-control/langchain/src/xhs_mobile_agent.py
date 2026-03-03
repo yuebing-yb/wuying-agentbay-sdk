@@ -26,7 +26,15 @@ from agentbay import AsyncAgentBay, CreateSessionParams
 from agentbay import KeyCode
 
 
-load_dotenv()
+# NOTE:
+# This module is imported by unit tests from a different working directory.
+# `python-dotenv`'s default `find_dotenv()` calls `os.getcwd()`, which can raise
+# `FileNotFoundError` in some CI sandboxes where the original cwd is removed.
+# Loading env vars is optional here, so guard it.
+try:
+    load_dotenv()
+except FileNotFoundError:
+    pass
 
 
 XHS_IMAGE_ID = "imgc-0aae4rgl3u35xrhoe"

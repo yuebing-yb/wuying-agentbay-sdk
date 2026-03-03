@@ -14,6 +14,14 @@ Base exception for all AgentBay SDK errors.
 def __init__(self, message=None, *args, **kwargs)
 ```
 
+## WsCancelledError
+
+```python
+class WsCancelledError(AgentBayError)
+```
+
+Raised when a WS stream is cancelled by the caller.
+
 ## AuthenticationError
 
 ```python

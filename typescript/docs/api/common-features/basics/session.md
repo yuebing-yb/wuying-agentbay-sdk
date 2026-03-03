@@ -4,6 +4,10 @@
 
 - [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
+## Overview
+
+The Session class represents an active cloud environment instance in AgentBay. It provides access to all service modules (filesystem, command, browser, code, etc.) and manages the lifecycle of the cloud environment.
+
 Represents a session in the AgentBay cloud environment.
 
 ## Hierarchy
@@ -35,6 +39,8 @@ Represents a session in the AgentBay cloud environment.
 - [getLinkAsync](#getlinkasync)
 - [getMetrics](#getmetrics)
 - [info](#info)
+- [keepAlive](#keepalive)
+- [keepAliveAsync](#keepaliveasync)
 - [listMcpTools](#listmcptools)
 - [setLabels](#setlabels)
 
@@ -56,6 +62,7 @@ oss: [`Oss`](../advanced/oss.md)
 resourceUrl: `string` = `""`
 sessionId: `string`
 token: `string` = `""`
+wsUrl: `string` = `""`
 ```
 
 
@@ -102,6 +109,9 @@ Alias of fileSystem.
 ▸ **betaPauseAsync**(`timeout?`, `pollInterval?`): `Promise`\<`SessionPauseResult`\>
 
 Asynchronously pause this session (beta), putting it into a dormant state.
+
+**Note**: This feature is currently in whitelist-only access.
+Contact agentbay_dev@alibabacloud.com to request access.
 
 This method calls the PauseSessionAsync API to initiate the pause operation and then polls
 the GetSession API to check the session status until it becomes PAUSED or until timeout is reached.
@@ -531,6 +541,32 @@ if (result.success) {
 **`See`**
 
 [delete](#delete), [getLink](#getlink)
+
+___
+
+### keepAlive
+
+▸ **keepAlive**(): `Promise`\<`OperationResult`\>
+
+Refresh the backend idle timer for this session.
+
+This method calls the RefreshSessionIdleTime API.
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
+
+___
+
+### keepAliveAsync
+
+▸ **keepAliveAsync**(): `Promise`\<`OperationResult`\>
+
+Alias of keepAlive for API compatibility.
+
+#### Returns
+
+`Promise`\<`OperationResult`\>
 
 ___
 

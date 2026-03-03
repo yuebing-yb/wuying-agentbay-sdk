@@ -190,8 +190,14 @@ class AgentBay:
             raise ValueError("SessionId not found in response data")
 
         resource_url = response_data.get("ResourceUrl", "")
+        app_instance_id = response_data.get("AppInstanceId", "") or ""
 
-        _logger.info(f"🆔 Session created: {session_id}")
+        if app_instance_id:
+            _logger.info(
+                f"🆔 Session created: {session_id}, AppInstanceId: {app_instance_id}"
+            )
+        else:
+            _logger.info(f"🆔 Session created: {session_id}")
         _logger.debug(f"🔗 Resource URL: {resource_url}")
 
         # Create Session object
@@ -209,6 +215,12 @@ class AgentBay:
             session.token = str(response_data.get("Token") or "")
         if "LinkUrl" in response_data and response_data.get("LinkUrl") is not None:
             session.link_url = str(response_data.get("LinkUrl") or "")
+
+        # WS long-connection URL (optional, for streaming/push features).
+        if "WsUrl" in response_data and response_data.get("WsUrl") is not None:
+            session.ws_url = str(response_data.get("WsUrl") or "")
+        elif "wsUrl" in response_data and response_data.get("wsUrl") is not None:
+            session.ws_url = str(response_data.get("wsUrl") or "")
 
         # Set browser recording state (default to True if not explicitly set to False)
         session.enableBrowserReplay = params.enable_browser_replay if params.enable_browser_replay is not None else True
@@ -231,7 +243,11 @@ class AgentBay:
 
     # NOTE: Do not fetch MCP tool list automatically for any session.
 
-    def _wait_for_context_synchronization(self, session: Session) -> None:
+    def _wait_for_context_synchronization(
+        self,
+        session: Session,
+        wait_context_ids: Optional[set[str]] = None,
+    ) -> None:
         """
         Wait for context synchronization to complete asynchronously.
 
@@ -242,8 +258,15 @@ class AgentBay:
 
         Args:
             session: The session to wait for context synchronization
+            wait_context_ids: If None, wait for all contexts (backward compatible).
+                If empty set, return immediately. Otherwise, only wait for the specified
+                context IDs to reach terminal status (Success/Failed).
         """
         _log_operation_start("Context synchronization", "Waiting for completion")
+
+        if wait_context_ids is not None and len(wait_context_ids) == 0:
+            _log_operation_success("Context synchronization")
+            return
 
         # Exponential backoff configuration
         initial_interval = 0.5  # Start with 0.5 seconds for quick response
@@ -263,31 +286,63 @@ class AgentBay:
                 current_interval = min(current_interval * backoff_factor, max_interval)
                 continue
 
-            # Check if all context items have status "Success" or "Failed"
-            all_completed = True
-            has_failure = False
+            if wait_context_ids is None:
+                # Backward compatible behavior: wait for all contexts in status list.
+                all_completed = True
+                has_failure = False
 
-            for item in info_result.context_status_data:
-                _logger.info(
-                    f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
-                )
-
-                if item.status != "Success" and item.status != "Failed":
-                    all_completed = False
-                    break
-
-                if item.status == "Failed":
-                    has_failure = True
-                    _logger.error(
-                        f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
+                for item in info_result.context_status_data:
+                    _logger.info(
+                        f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
                     )
 
-            if all_completed or not info_result.context_status_data:
-                if has_failure:
-                    _log_warning("Context synchronization completed with failures")
-                else:
-                    _log_operation_success("Context synchronization")
-                break
+                    if item.status != "Success" and item.status != "Failed":
+                        all_completed = False
+                        break
+
+                    if item.status == "Failed":
+                        has_failure = True
+                        _logger.error(
+                            f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
+                        )
+
+                if all_completed or not info_result.context_status_data:
+                    if has_failure:
+                        _log_warning("Context synchronization completed with failures")
+                    else:
+                        _log_operation_success("Context synchronization")
+                    break
+            else:
+                # Beta behavior: only wait for selected contexts to complete.
+                has_failure = False
+                status_by_context_id: dict[str, str] = {}
+
+                for item in info_result.context_status_data:
+                    if item.context_id not in wait_context_ids:
+                        continue
+                    status_by_context_id[item.context_id] = item.status
+                    _logger.info(
+                        f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
+                    )
+                    if item.status == "Failed":
+                        has_failure = True
+                        _logger.error(
+                            f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
+                        )
+
+                all_completed = True
+                for ctx_id in wait_context_ids:
+                    status = status_by_context_id.get(ctx_id)
+                    if status is None or (status != "Success" and status != "Failed"):
+                        all_completed = False
+                        break
+
+                if all_completed:
+                    if has_failure:
+                        _log_warning("Context synchronization completed with failures")
+                    else:
+                        _log_operation_success("Context synchronization")
+                    break
 
             _logger.debug(
                 f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}, next interval: {current_interval:.2f}s"
@@ -466,6 +521,10 @@ class AgentBay:
             # Beta: Add NetworkId if specified
             if hasattr(params, "beta_network_id") and params.beta_network_id:
                 request.network_id = params.beta_network_id
+
+            # SDK idle release timeout (seconds)
+            if hasattr(params, "idle_release_timeout") and params.idle_release_timeout is not None:
+                request.timeout = params.idle_release_timeout
 
             # Flag to indicate if we need to wait for context synchronization
             needs_context_sync = False
@@ -666,20 +725,51 @@ class AgentBay:
 
             # Log API response with key details
             resource_url = data.get("ResourceUrl", "")
+            app_instance_id = data.get("AppInstanceId", "") or ""
+            key_fields = {"session_id": session_id, "resource_url": resource_url}
+            if app_instance_id:
+                key_fields["AppInstanceId"] = app_instance_id
             _log_api_response_with_details(
                 api_name="CreateSession",
                 request_id=request_id,
                 success=True,
-                key_fields={"session_id": session_id, "resource_url": resource_url},
+                key_fields=key_fields,
                 full_response=response_body,
             )
 
             # Build Session object from response data
             session = self._build_session_from_response(data, params)
 
+            wait_context_ids: Optional[set[str]] = None
+            if hasattr(params, "context_syncs") and params.context_syncs:
+                wait_context_ids = set()
+                for cs in params.context_syncs:
+                    wait = getattr(cs, "beta_wait_for_completion", None)
+                    if wait is None or wait:
+                        wait_context_ids.add(cs.context_id)
+
+            if hasattr(params, "browser_context") and params.browser_context:
+                if wait_context_ids is None:
+                    wait_context_ids = set()
+                wait_context_ids.add(params.browser_context.context_id)
+
+            if (
+                hasattr(params, "extra_configs")
+                and params.extra_configs
+                and params.extra_configs.mobile
+                and params.extra_configs.mobile.simulate_config
+                and params.extra_configs.mobile.simulate_config.simulated_context_id
+            ):
+                if wait_context_ids is None:
+                    wait_context_ids = set()
+                wait_context_ids.add(params.extra_configs.mobile.simulate_config.simulated_context_id)
+
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
-                self._wait_for_context_synchronization(session)
+                self._wait_for_context_synchronization(
+                    session,
+                    wait_context_ids=wait_context_ids,
+                )
 
             # If we need to do mobile simulate by command, wait for it
             if needs_mobile_sim and mobile_sim_path:
@@ -1015,6 +1105,8 @@ class AgentBay:
                         http_port=data_dict.get("HttpPort", ""),
                         network_interface_ip=data_dict.get("NetworkInterfaceIp", ""),
                         token=data_dict.get("Token", ""),
+                        link_url=data_dict.get("LinkUrl", "") or "",
+                        ws_url=data_dict.get("WsUrl", "") or data_dict.get("wsUrl", "") or "",
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
                         status=data_dict.get("Status", ""),
@@ -1117,6 +1209,9 @@ class AgentBay:
         if get_result.data:
             session.resource_url = get_result.data.resource_url
             session.mcpTools = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list)
+            session.token = str(get_result.data.token or "")
+            session.link_url = str(getattr(get_result.data, "link_url", "") or "")
+            session.ws_url = str(getattr(get_result.data, "ws_url", "") or "")
 
         return SessionResult(
             request_id=get_result.request_id,
@@ -1129,85 +1224,15 @@ class AgentBay:
     ) -> SessionPauseResult:
         """
         Asynchronously pause a session (beta), putting it into a dormant state.
+
+        Note:
+            This feature is currently in whitelist-only access.
+            Contact agentbay_dev@alibabacloud.com to request access.
         """
         try:
             return session.beta_pause(timeout, poll_interval)
         except Exception as e:
             _log_operation_error("beta_pause_session", str(e), exc_info=True)
-            return SessionPauseResult(
-                request_id="",
-                success=False,
-                error_message=f"Failed to pause session {session.session_id}: {e}",
-            )
-
-    def beta_pause_async(self, session: Session) -> SessionPauseResult:
-        """
-        Fire-and-return pause: trigger PauseSessionAsync without waiting for PAUSED.
-
-        This method directly calls the PauseSessionAsync API without waiting for the session
-        to reach the PAUSED state. For behavior that waits for the PAUSED state,
-        use the pause() method instead.
-
-        Args:
-            session (AsyncSession): The session to pause.
-
-        Returns:
-            SessionPauseResult: Result containing the request ID and success status.
-        """
-        # This method is somewhat redundant in async SDK if pause() is already async,
-        # but pause() awaits completion, while this just initiates.
-        # It's good to keep for API parity.
-        # Note: AsyncSession doesn't have explicit pause_async method (it has pause which does both?).
-        # Wait, AsyncSession has `pause` which polls.
-        # Does it have `pause_async`?
-        # In `python/agentbay/_async/session.py`, I see `pause` method.
-        # I don't see `pause_async` method in `AsyncSession` snippet I read.
-        # Let's check `_async/session.py` again.
-        # I implemented `pause` and `resume` in `AsyncSession`.
-        # I did NOT implement `pause_async` and `resume_async` in `AsyncSession`.
-        # So `AgentBay.pause_async` should implement the logic or call client directly?
-        # `AgentBay.pause_async` called `session.pause_async`.
-        # I should probably add `pause_async` to `AsyncSession` as well, or implement it here.
-        # Implementing here is fine as `AsyncSession` holds `client` via `agent_bay`.
-
-        try:
-            request = open_api_models.PauseSessionAsyncRequest(
-                authorization=f"Bearer {self.api_key}",
-                session_id=session.session_id,
-            )
-
-            _log_api_call("PauseSessionAsync", f"SessionId={session.session_id}")
-
-            response = self.client.pause_session_async(request)
-
-            request_id = extract_request_id(response)
-
-            response_map = response.to_map()
-            if not response_map:
-                return SessionPauseResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message="Invalid response format",
-                )
-
-            body = response_map.get("body", {})
-            success = body.get("Success", False)
-
-            if not success:
-                code = body.get("Code", "")
-                message = body.get("Message", "")
-                return SessionPauseResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message=f"[{code}] {message}",
-                    code=code,
-                    message=message,
-                )
-
-            return SessionPauseResult(request_id=request_id, success=True)
-
-        except Exception as e:
-            _log_operation_error("beta_pause_session_async", str(e), exc_info=True)
             return SessionPauseResult(
                 request_id="",
                 success=False,
@@ -1230,60 +1255,3 @@ class AgentBay:
                 error_message=f"Failed to resume session {session.session_id}: {e}",
             )
 
-    def beta_resume_async(self, session: Session) -> SessionResumeResult:
-        """
-        Fire-and-return resume: trigger ResumeSessionAsync without waiting for RUNNING.
-
-        This method directly calls the ResumeSessionAsync API without waiting for the session
-        to reach the RUNNING state. For behavior that waits for the RUNNING state,
-        use the resume() method instead.
-
-        Args:
-            session (AsyncSession): The session to resume.
-
-        Returns:
-            SessionResumeResult: Result containing the request ID and success status.
-        """
-        try:
-            request = ResumeSessionAsyncRequest(
-                authorization=f"Bearer {self.api_key}",
-                session_id=session.session_id,
-            )
-
-            _log_api_call("ResumeSessionAsync", f"SessionId={session.session_id}")
-
-            response = self.client.resume_session_async(request)
-
-            request_id = extract_request_id(response)
-
-            response_map = response.to_map()
-            if not response_map:
-                return SessionResumeResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message="Invalid response format",
-                )
-
-            body = response_map.get("body", {})
-            success = body.get("Success", False)
-
-            if not success:
-                code = body.get("Code", "")
-                message = body.get("Message", "")
-                return SessionResumeResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message=f"[{code}] {message}",
-                    code=code,
-                    message=message,
-                )
-
-            return SessionResumeResult(request_id=request_id, success=True)
-
-        except Exception as e:
-            _log_operation_error("beta_resume_session_async", str(e), exc_info=True)
-            return SessionResumeResult(
-                request_id="",
-                success=False,
-                error_message=f"Failed to resume session {session.session_id}: {e}",
-            )

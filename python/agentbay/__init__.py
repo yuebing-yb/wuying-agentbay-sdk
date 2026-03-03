@@ -70,7 +70,7 @@ from ._sync.session import Session, SessionInfo
 from ._sync.fingerprint import BrowserFingerprintGenerator
 from ._sync.browser import (
     Browser,
-    BrowserAgent,
+    BrowserOperator,
 )
 from ._common.models import (
     FingerprintFormat,
@@ -81,7 +81,7 @@ from ._common.models import (
     BrowserFingerprint,
     BrowserFingerprintContext,
 )
-from ._common.models.browser_agent import (
+from ._common.models.browser_operator import (
     ActOptions,
     ActResult,
     ExtractOptions,
@@ -147,7 +147,7 @@ from ._common.models import MobileSimulateUploadResult
 from ._async.agentbay import AsyncAgentBay
 from ._async.session import AsyncSession
 from ._async.browser import AsyncBrowser
-from ._async.browser_agent import AsyncBrowserAgent
+from ._async.browser_operator import AsyncBrowserOperator
 from ._async.fingerprint import AsyncBrowserFingerprintGenerator
 from ._async.computer import AsyncComputer
 from ._async.mobile import AsyncMobile
@@ -240,8 +240,8 @@ __all__ = [
     "BrowserFingerprint",
     "BrowserProxy",
     "BrowserFingerprintContext",
-    "BrowserAgent",
-    "AsyncBrowserAgent",
+    "BrowserOperator",
+    "AsyncBrowserOperator",
     "BrowserFingerprintGenerator",
     "FingerprintFormat",
     # Context related
@@ -258,13 +258,13 @@ __all__ = [
     "FileUrlResult",
     "ClearContextResult",
     "ContextStatusData",
-    # Browser Agent types BEGIN
+    # Browser Operator types BEGIN
     "ActOptions",
     "ActResult",
     "ExtractOptions",
     "ObserveResult",
     "ObserveOptions",
-    # Browser Agent types END
+    # Browser Operator types END
     "ApiResponse",
     "BaseResult",
     "OperationResult",

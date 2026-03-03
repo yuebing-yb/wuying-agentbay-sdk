@@ -24,6 +24,7 @@ type AgentBay struct {
 	Context		*ContextService
 	MobileSimulate	*MobileSimulateService
 	BetaNetwork	*BetaNetworkService
+	BetaSkills	*BetaSkillsService
 	config		Config
 }
 ```
@@ -41,6 +42,9 @@ func (ab *AgentBay) BetaPause(session *Session, timeout int, pollInterval float6
 BetaPause synchronously pauses a session (beta), putting it into a dormant state to reduce resource
 usage and costs. BetaPause puts the session into a PAUSED state where computational resources are
 significantly reduced. The session state is preserved and can be resumed later to continue work.
+
+Note: This feature is currently in whitelist-only access. Contact agentbay_dev@alibabacloud.com to
+request access.
 
 Parameters:
   - session: The session to pause.

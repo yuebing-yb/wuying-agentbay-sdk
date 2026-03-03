@@ -36,41 +36,47 @@ extensions_service = ExtensionsService(agent_bay)
 try:
     # Upload extension to cloud
     extension_path = "/path/to/your-extension.zip"
-    
+
     if not os.path.exists(extension_path):
         print(f"❌ Extension file not found: {extension_path}")
         exit(1)
-    
+
     print(f"📦 Uploading extension: {extension_path}")
     extension = extensions_service.create(extension_path)
     print(f"✅ Extension uploaded successfully!")
     print(f"   - Name: {extension.name}")
     print(f"   - ID: {extension.id}")
-    
+
     # Create extension option for browser session
     ext_option = extensions_service.create_extension_option([extension.id])
-    
-    # Create browser session with extension
-    session_params = CreateSessionParams(
-        labels={"purpose": "extension_testing", "type": "demo"},
-        browser_context=BrowserContext(
-            context_id="extension_test_session",
-            auto_upload=True,  # Enable automatic extension synchronization
-            extension_option=ext_option
-        )
+
+    # Create persistent context
+    context_result = agent_bay.context.get("cookie-demo-context", create=True)
+    context = context_result.context
+
+    browser_context = BrowserContext(
+        context_id=context.id,
+        auto_upload=True,  # Enable automatic extension synchronization
+        extension_option=ext_option
     )
-    
+
+    params = CreateSessionParams(
+        image_id="browser_latest",
+        labels={"purpose": "extension_testing", "type": "demo"},
+        browser_context=browser_context
+    )
+
     # Create session - extension will be automatically synchronized
-    session_result = agent_bay.create(session_params)
+    session_result = agent_bay.create(params)
     if not session_result.success:
         print(f"❌ Failed to create session: {session_result.error_message}")
         exit(1)
-    
+
     session = session_result.session
     print(f"✅ Browser session created successfully!")
     print(f"   - Session ID: {session.session_id}")
     print(f"   - Extensions synchronized to: /tmp/extensions/")
-    
+
     # List available extensions in context
     extensions = extensions_service.list()
     for ext in extensions:
@@ -99,37 +105,44 @@ try:
         "/path/to/extension2.zip",
         "/path/to/extension3.zip"
     ]
-    
+
     # Filter existing files
     existing_paths = [path for path in extension_paths if os.path.exists(path)]
     if not existing_paths:
         print("❌ No extension files found")
         exit(1)
-    
+
     print(f"📦 Uploading {len(existing_paths)} extensions...")
-    
+
     # Upload all extensions
     extension_ids = []
     for path in existing_paths:
         ext = extensions_service.create(path)
         extension_ids.append(ext.id)
         print(f"   ✅ {ext.name} uploaded (ID: {ext.id})")
-    
+
     # Create session with all extensions
     ext_option = extensions_service.create_extension_option(extension_ids)
-    
-    session_params = CreateSessionParams(
-        labels={"purpose": "multiple_extensions", "count": str(len(extension_ids))},
-        browser_context=BrowserContext(
-            context_id="multi_extension_session",
-            auto_upload=True,
-            extension_option=ext_option
-        )
+
+    # Create persistent context
+    context_result = agent_bay.context.get("cookie-demo-context", create=True)
+    context = context_result.context
+
+    browser_context = BrowserContext(
+        context_id=context.id,
+        auto_upload=True,
+        extension_option=ext_option
     )
-    
-    session_result = agent_bay.create(session_params)
+
+    params = CreateSessionParams(
+        image_id="browser_latest",
+        labels={"purpose": "multiple_extensions", "count": str(len(extension_ids))},
+        browser_context=browser_context
+    )
+
+    session_result = agent_bay.create(params)
     session = session_result.session
-    
+
     print(f"✅ Session created with {len(extension_ids)} extensions!")
     print(f"   - Session ID: {session.session_id}")
 
@@ -179,125 +192,131 @@ from agentbay import BrowserContext
 class ExtensionDevelopmentWorkflow:
     """
     A helper class for extension development and testing workflow.
-    
+
     This class provides methods to:
     - Upload extensions for development
     - Create test sessions with extensions
     - Update extensions during development
     - Manage development lifecycle
     """
-    
+
     def __init__(self, api_key: str, project_name: str = "dev_extensions"):
         """Initialize the development workflow."""
         self.agent_bay = AgentBay(api_key=api_key)
         self.extensions_service = ExtensionsService(self.agent_bay, project_name)
         self.extension_id: Optional[str] = None
         self.project_name = project_name
-        
+
         print(f"🛠️  Extension Development Workflow initialized")
         print(f"   - Project: {project_name}")
-    
+
     def upload_extension(self, extension_path: str) -> str:
         """Upload an extension for development testing."""
         try:
             print(f"📦 Uploading extension: {os.path.basename(extension_path)}")
-            
+
             if not os.path.exists(extension_path):
                 raise FileNotFoundError(f"Extension file not found: {extension_path}")
-            
+
             extension = self.extensions_service.create(extension_path)
             self.extension_id = extension.id
-            
+
             print(f"✅ Extension uploaded successfully!")
             print(f"   - Name: {extension.name}")
             print(f"   - ID: {extension.id}")
-            
+
             return extension.id
-            
+
         except Exception as e:
             print(f"❌ Upload failed: {e}")
             raise
-    
+
     def update_extension(self, new_extension_path: str) -> str:
         """Update existing extension during development."""
         if not self.extension_id:
             raise ValueError("No extension uploaded yet. Call upload_extension() first.")
-        
+
         try:
             print(f"🔄 Updating extension: {os.path.basename(new_extension_path)}")
-            
+
             updated_ext = self.extensions_service.update(self.extension_id, new_extension_path)
-            
+
             print(f"✅ Extension updated successfully!")
             print(f"   - Name: {updated_ext.name}")
             print(f"   - ID: {self.extension_id}")
-            
+
             return self.extension_id
-            
+
         except Exception as e:
             print(f"❌ Update failed: {e}")
             raise
-    
+
     def create_test_session(self, session_name: Optional[str] = None):
         """Create a browser session with the current extension for testing."""
         if not self.extension_id:
             raise ValueError("No extension available. Upload an extension first.")
-        
+
         try:
             # Generate session name if not provided
             if not session_name:
                 timestamp = int(time.time())
                 session_name = f"dev_session_{timestamp}"
-            
+
             print(f"🌐 Creating test session: {session_name}")
-            
+
             # Create extension option
             ext_option = self.extensions_service.create_extension_option([self.extension_id])
-            
-            # Create session parameters
-            session_params = CreateSessionParams(
+
+            # Create persistent context
+            context_result = self.agent_bay.context.get(session_name, create=True)
+            context = context_result.context
+
+            browser_context = BrowserContext(
+                context_id=context.id,
+                auto_upload=True,
+                extension_option=ext_option
+            )
+
+            params = CreateSessionParams(
+                image_id="browser_latest",
                 labels={
                     "purpose": "extension_development",
                     "project": self.project_name,
                     "extension_id": self.extension_id
                 },
-                browser_context=BrowserContext(
-                    context_id=session_name,
-                    auto_upload=True,
-                    extension_option=ext_option
-                )
+                browser_context=browser_context
             )
-            
+
             # Create session
-            session_result = self.agent_bay.create(session_params)
+            session_result = self.agent_bay.create(params)
             if not session_result.success:
                 raise Exception(f"Session creation failed: {session_result.error_message}")
-            
+
             session = session_result.session
-            
+
             print(f"✅ Test session created successfully!")
             print(f"   - Session ID: {session.session_id}")
             print(f"   - Extension available at: /tmp/extensions/{self.extension_id}/")
-            
+
             return session
-            
+
         except Exception as e:
             print(f"❌ Session creation failed: {e}")
             raise
-    
+
     def cleanup(self):
         """Clean up development resources."""
         try:
             print("🧹 Cleaning up development resources...")
-            
+
             if self.extension_id:
                 deleted = self.extensions_service.delete(self.extension_id)
                 if deleted:
                     print(f"   ✅ Deleted extension: {self.extension_id}")
-            
+
             self.extensions_service.cleanup()
             print("✅ Cleanup completed")
-            
+
         except Exception as e:
             print(f"❌ Cleanup failed: {e}")
 
@@ -329,65 +348,72 @@ from agentbay import BrowserContext
 
 def run_extension_tests(extension_paths: List[str]) -> bool:
     """Run automated tests on multiple extensions."""
-    
+
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         print("❌ Please set AGENTBAY_API_KEY environment variable")
         return False
-    
+
     agent_bay = AgentBay(api_key=api_key)
     extensions_service = ExtensionsService(agent_bay, "automated_tests")
-    
+
     try:
         print(f"🚀 Starting automated extension tests...")
-        
+
         # Upload all test extensions
         extension_ids = []
         for path in extension_paths:
             if not os.path.exists(path):
                 print(f"⚠️  Extension not found: {path}")
                 continue
-            
+
             ext = extensions_service.create(path)
             extension_ids.append(ext.id)
             print(f"   ✅ {ext.name} uploaded (ID: {ext.id})")
-        
+
         if not extension_ids:
             raise Exception("No extensions uploaded successfully")
-        
+
         # Create test session
         ext_option = extensions_service.create_extension_option(extension_ids)
-        
-        session_params = CreateSessionParams(
+
+        # Create persistent context
+        context_result = agent_bay.context.get("cookie-demo-context", create=True)
+        context = context_result.context
+
+        browser_context = BrowserContext(
+            context_id=context.id,
+            auto_upload=True,
+            extension_option=ext_option
+        )
+
+        params = CreateSessionParams(
+            image_id="browser_latest",
             labels={
                 "purpose": "automated_testing",
                 "test_type": "extension_validation",
                 "extension_count": str(len(extension_ids))
             },
-            browser_context=BrowserContext(
-                context_id="auto_test_session",
-                auto_upload=True,
-                extension_option=ext_option
-            )
+            browser_context=browser_context
         )
-        
-        session_result = agent_bay.create(session_params)
+
+        session_result = agent_bay.create(params)
         if not session_result.success:
             raise Exception(f"Session creation failed: {session_result.error_message}")
-        
+
         session = session_result.session
         print(f"✅ Test session created: {session.session_id}")
-        
+
         # Wait for extension synchronization
         print("⏳ Waiting for extension synchronization...")
         time.sleep(5)  # Give time for extensions to sync
-        
+
         # Run your extension tests here
         # Extensions are available at /tmp/extensions/ in the session
         test_passed = True
         for extension_id in extension_ids:
             print(f"🧪 Testing extension: {extension_id}")
-            
+
             # Example: Check if extension files exist
             result = session.command.execute(f"ls /tmp/extensions/{extension_id}/")
             if result.success and "manifest.json" in result.output:
@@ -395,9 +421,9 @@ def run_extension_tests(extension_paths: List[str]) -> bool:
             else:
                 print(f"   ❌ Extension not found or invalid")
                 test_passed = False
-        
+
         return test_passed
-    
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         return False
@@ -410,7 +436,7 @@ if __name__ == "__main__":
         "/path/to/test-extension-1.zip",
         "/path/to/test-extension-2.zip"
     ]
-    
+
     success = run_extension_tests(test_extensions)
     print(f"\n🎯 Test result: {'✅ PASSED' if success else '❌ FAILED'}")
 ```
@@ -470,50 +496,57 @@ from agentbay import BrowserContext
 def robust_extension_workflow():
     """Example of robust error handling in extension workflows."""
     extensions_service = None
-    
+
     try:
         # Initialize with API key
         api_key = os.getenv("AGENTBAY_API_KEY")
         if not api_key:
             raise ValueError("AGENTBAY_API_KEY environment variable not set")
-        
+
         agent_bay = AgentBay(api_key=api_key)
         extensions_service = ExtensionsService(agent_bay, "production_extensions")
-        
+
         # Validate extension file
         extension_path = "/path/to/production-extension.zip"
         if not os.path.exists(extension_path):
             raise FileNotFoundError(f"Extension not found: {extension_path}")
-        
+
         print(f"📦 Uploading extension: {extension_path}")
-        
+
         # Upload with error handling
         extension = extensions_service.create(extension_path)
         print(f"✅ Extension uploaded: {extension.id}")
-        
+
         # Create session with validation
         ext_option = extensions_service.create_extension_option([extension.id])
-        
-        session_params = CreateSessionParams(
-            labels={"environment": "production", "purpose": "extension_deployment"},
-            browser_context=BrowserContext(
-                context_id="production_session",
-                auto_upload=True,
-                extension_option=ext_option
-            )
+
+        # Create persistent context
+        context_result = agent_bay.context.get("cookie-demo-context", create=True)
+        context = context_result.context
+
+        browser_context = BrowserContext(
+            context_id=context.id,
+            auto_upload=True,
+            extension_option=ext_option
         )
-        
+
+        params = CreateSessionParams(
+            image_id="browser_latest",
+            labels={"environment": "production", "purpose": "extension_deployment"},
+            browser_context=browser_context
+        )
+
         print("🌐 Creating production session...")
-        session_result = agent_bay.create(session_params)
-        
+        session_result = agent_bay.create(params)
+
         if not session_result.success:
             raise Exception(f"Session creation failed: {session_result.error_message}")
-        
+
         session = session_result.session
         print(f"✅ Production session created: {session.session_id}")
-        
+
         return session
-    
+
     except FileNotFoundError as e:
         print(f"❌ File error: {e}")
         return None
@@ -580,31 +613,38 @@ try:
     print(f"📋 Available extensions: {len(extensions)}")
     for ext in extensions:
         print(f"   - {ext.name} (ID: {ext.id})")
-    
+
     # Upload and validate extension
     extension_path = "/path/to/your-extension.zip"
     if os.path.exists(extension_path):
         extension = extensions_service.create(extension_path)
         print(f"✅ Extension uploaded: {extension.id}")
-        
+
         # Create extension option
         ext_option = extensions_service.create_extension_option([extension.id])
         print(f"🔧 Extension option created: {ext_option}")
-        
+
         # Create session with detailed error checking
         from agentbay import CreateSessionParams, BrowserContext
-        
-        session_params = CreateSessionParams(
-            labels={"purpose": "debugging"},
-            browser_context=BrowserContext(
-                context_id="debug_session",
-                auto_upload=True,
-                extension_option=ext_option
-            )
+
+        # Create persistent context
+        context_result = agent_bay.context.get("cookie-demo-context", create=True)
+        context = context_result.context
+
+        browser_context = BrowserContext(
+            context_id=context.id,
+            auto_upload=True,
+            extension_option=ext_option
         )
-        
-        session_result = agent_bay.create(session_params)
-        
+
+        params = CreateSessionParams(
+            image_id="browser_latest",
+            labels={"purpose": "debugging"},
+            browser_context=browser_context
+        )
+
+        session_result = agent_bay.create(params)
+
         if not session_result.success:
             print(f"❌ Session creation failed: {session_result.error_message}")
         else:
@@ -630,25 +670,31 @@ def create_extension_session():
     """Create a browser session with extensions."""
     agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
     extensions_service = ExtensionsService(agent_bay)
-    
+
     try:
         # Upload extension
         extension = extensions_service.create("/path/to/extension.zip")
         ext_option = extensions_service.create_extension_option([extension.id])
-        
-        # Create session
-        session_params = CreateSessionParams(
-            labels={"purpose": "browser_automation"},
-            browser_context=BrowserContext(
-                context_id="automation_session",
-                auto_upload=True,
-                extension_option=ext_option
-            )
+
+        # Create persistent context
+        context_result = agent_bay.context.get("cookie-demo-context", create=True)
+        context = context_result.context
+
+        browser_context = BrowserContext(
+            context_id=context.id,
+            auto_upload=True,
+            extension_option=ext_option
         )
-        
-        session_result = agent_bay.create(session_params)
+
+        params = CreateSessionParams(
+            image_id="browser_latest",
+            labels={"purpose": "browser_automation"},
+            browser_context=browser_context
+        )
+
+        session_result = agent_bay.create(params)
         return session_result.session
-    
+
     except Exception as e:
         print(f"❌ Failed to create session: {e}")
         raise
@@ -664,14 +710,14 @@ with sync_playwright() as p:
     browser = p.chromium.connect_over_cdp(endpoint_url)
     context = browser.contexts[0]
     page = context.new_page()
-    
+
     # Extensions are already loaded and available
     page.goto("https://example.com")
-    
+
     # Your extension should be active here
     # Test extension functionality...
     print(f"✅ Page loaded with extension active")
-    
+
     browser.close()
 ```
 
@@ -684,5 +730,5 @@ with sync_playwright() as p:
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../README.md)

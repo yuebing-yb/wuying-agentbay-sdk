@@ -37,7 +37,7 @@ All synchronous API classes are in the `sync/` directory:
 - [Agent](sync/agent.md) - `agentbay.agent`
 - [OSS](sync/oss.md) - `agentbay.oss`
 - [Browser](sync/browser.md) - `agentbay.browser`
-- [BrowserAgent](sync/browser-agent.md) - `agentbay.browser_agent`
+- [BrowserOperator](sync/browser-operator.md) - `agentbay.browser_operator`
 - [Extension](sync/extension.md) - `agentbay.extension`
 - [Code](sync/code.md) - `agentbay.code`
 - [Computer](sync/computer.md) - `agentbay.computer`
@@ -60,7 +60,7 @@ All asynchronous API classes are in the `async/` directory:
 - [AsyncAgent](async/async-agent.md) - `agentbay.agent`
 - [AsyncOss](async/async-oss.md) - `agentbay.oss`
 - [AsyncBrowser](async/async-browser.md) - `agentbay.browser`
-- [AsyncBrowserAgent](async/async-browser-agent.md) - `agentbay.browser_agent`
+- [AsyncBrowserOperator](async/async-browser-operator.md) - `agentbay.browser_operator`
 - [AsyncExtension](async/async-extension.md) - `agentbay.extension`
 - [AsyncCode](async/async-code.md) - `agentbay.code`
 - [AsyncComputer](async/async-computer.md) - `agentbay.computer`
@@ -80,7 +80,7 @@ Shared classes used by both sync and async APIs are in the `common/` directory:
 - [Code Execution Models](common/code-models.md) - `agentbay._common.models.code`
 - [Browser Models](common/browser-models.md) - `agentbay._common.models.browser`
 - [Response Models](common/response-models.md) - `agentbay._common.models.response`
-- [Browser Agent Models](common/browser-agent-models.md) - `agentbay._common.models.browser_agent`
+- [Browser Operator Models](common/browser-operator-models.md) - `agentbay._common.models.browser_operator`
 
 ---
 

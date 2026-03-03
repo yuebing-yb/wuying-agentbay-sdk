@@ -140,7 +140,8 @@ agent_bay = AgentBay(api_key="your_api_key")
 # Create a session with custom parameters
 params = CreateSessionParams(
     image_id="linux_latest",
-    labels={"project": "demo", "environment": "testing"}
+    labels={"project": "demo", "environment": "testing"},
+    idle_release_timeout=300,  # seconds (SDK-side idle release timeout)
 )
 session_result = agent_bay.create(params)
 session = session_result.session
@@ -352,6 +353,8 @@ For detailed practical examples and use cases of session information, including 
 
 ## Session Beta Pause and Beta Resume
 
+> **⚠️ Important Notice**: The Session Pause/Resume feature is currently in whitelist-only access. To request access, please contact agentbay_dev@alibabacloud.com.
+
 Sessions can be temporarily paused to suspend resource usage and resumed later to continue work. This feature is useful for reducing costs during inactive periods and preserving session state for later continuation.
 
 ### Beta Pausing a Session
@@ -446,8 +449,17 @@ else:
 If you don't manually delete a session, it will be automatically released after a configured timeout period:
 
 - **Configuration**: Timeout duration is set in the [AgentBay Console](https://agentbay.console.aliyun.com/)
+- **SDK Parameter**: You can also set `idle_release_timeout` (seconds) when creating a session (default: 300)
 - **Behavior**: Once the timeout is reached, the session is automatically released
 - **Recovery**: After release (manual or automatic), the session cannot be recovered - the session ID becomes invalid
+
+### Keep a Session Alive (Refresh Idle Timer)
+
+If you set `idle_release_timeout` and want to prevent the session from being released while your workflow is idle (for example, you are waiting for a user decision or an external system), you can manually refresh the idle timer:
+
+- **Python**: `await session.keep_alive()` / `session.keep_alive()`
+
+Calling keep-alive resets the backend idle timer back to the configured timeout value.
 
 ### Important Notes
 
@@ -591,5 +603,5 @@ For detailed API documentation, see:
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../README.md)

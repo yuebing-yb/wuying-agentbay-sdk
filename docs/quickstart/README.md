@@ -53,7 +53,7 @@ from agentbay import AgentBay
 
 agent_bay = AgentBay()
 session = agent_bay.create().session
-result = session.command.run("echo 'Hello'")
+result = session.command.execute_command("echo 'Hello'")
 print(result.output)
 agent_bay.delete(session)
 ```
@@ -74,7 +74,7 @@ from agentbay import AsyncAgentBay
 async def main():
     agent_bay = AsyncAgentBay()
     session = (await agent_bay.create()).session
-    result = await session.command.run("echo 'Hello'")
+    result = await session.command.execute_command("echo 'Hello'")
     print(result.output)
     await agent_bay.delete(session)
 
@@ -112,7 +112,7 @@ asyncio.run(main())
 
 ## ❓ Having Issues?
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation](../README.md)
 
 ## 💡 Tips

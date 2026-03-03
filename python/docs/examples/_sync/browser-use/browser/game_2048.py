@@ -32,7 +32,7 @@ def main():
     session = session_result.session
     try:
         assert session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
         endpoint_url = session.browser.get_endpoint_url()
         with sync_playwright() as p:
@@ -71,7 +71,7 @@ Extract the current game state:
                     use_text_extract=False,
                 )
 
-                success, game_state = agent.extract(options=options, page=page)
+                success, game_state = operator.extract(options=options, page=page)
                 if not success:
                     print("❌ Failed to extract game state, retry observing")
                     continue

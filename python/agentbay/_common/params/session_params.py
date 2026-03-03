@@ -274,6 +274,10 @@ class CreateSessionParams:
     Attributes:
         labels (Optional[Dict[str, str]]): Custom labels for the Session. These can be
             used for organizing and filtering sessions.
+        idle_release_timeout (Optional[int]): SDK-side idle release timeout in seconds.
+            This parameter takes effect together with console-side MCP/user interaction
+            idle timeouts. The cloud environment is automatically released only when
+            all idle timeouts are reached (or when the single-run maximum duration is reached).
         context_syncs (Optional[List[ContextSync]]): List of context synchronization
             configurations that define how contexts should be synchronized and mounted.
         browser_context (Optional[BrowserContext]): Optional configuration for browser data synchronization.
@@ -288,6 +292,7 @@ class CreateSessionParams:
         self,
         labels: Optional[Dict[str, str]] = None,
         image_id: Optional[str] = None,
+        idle_release_timeout: Optional[int] = None,
         context_syncs: Optional[List[ContextSync]] = None,
         browser_context: Optional[BrowserContext] = None,
         policy_id: Optional[str] = None,
@@ -304,6 +309,8 @@ class CreateSessionParams:
                 Defaults to None.
             image_id (Optional[str], optional): ID of the image to use for the session.
                 Defaults to None.
+            idle_release_timeout (Optional[int], optional): SDK-side idle release timeout in seconds.
+                Defaults to 300.
             context_syncs (Optional[List[ContextSync]], optional): List of context
                 synchronization configurations. Defaults to None.
             browser_context (Optional[BrowserContext], optional): Browser context configuration.
@@ -322,6 +329,12 @@ class CreateSessionParams:
         """
         self.labels = labels or {}
         self.image_id = image_id
+        if idle_release_timeout is not None:
+            if not isinstance(idle_release_timeout, int):
+                raise ValueError("idle_release_timeout must be an int (seconds)")
+            if idle_release_timeout <= 0:
+                raise ValueError("idle_release_timeout must be > 0 (seconds)")
+        self.idle_release_timeout = idle_release_timeout
 
         # Start with provided context_syncs
         all_context_syncs = list(context_syncs or [])

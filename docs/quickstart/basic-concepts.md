@@ -54,7 +54,7 @@ A **session** is your connection to a cloud environment. It's like renting a com
 session = agent_bay.create().session
 
 # Use the session for your tasks
-session.command.run("echo 'Hello World'")
+session.command.execute_command("echo 'Hello World'")
 
 # Always clean up when done
 agent_bay.delete(session)
@@ -68,8 +68,6 @@ Create Session → Use Session → Delete Session
   Resources     Operations      Resources
 ```
 
-
-
 ### Session Release
 
 Sessions must be released when you're done to free cloud resources. There are **two ways** to release a session:
@@ -82,10 +80,22 @@ agent_bay.delete(session)
 
 **2. Automatic Timeout Release**
 - If not manually deleted, sessions are automatically released after a timeout period
-- Timeout duration is configured in the [AgentBay Console](https://agentbay.console.aliyun.com/)
+- You can set an SDK-side idle release timeout during session creation (default: 300 seconds)
 - After timeout, the session is released and cannot be recovered
 
 **Important**: Always manually delete sessions when finished. This is a best practice for resource management.
+
+**Example (Python):**
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+agent_bay = AgentBay()
+params = CreateSessionParams(
+    image_id="linux_latest",
+    idle_release_timeout=300,  # seconds (SDK-side idle release timeout)
+)
+session = agent_bay.create(params).session
+```
 
 **Learn more**: [Session Management Guide](../guides/common-features/basics/session-management.md)
 
@@ -144,7 +154,7 @@ session = agent_bay.create(params).session
 # Initialize and navigate
 from agentbay import BrowserOption
 session.browser.initialize(BrowserOption())
-session.browser.agent.navigate("https://www.baidu.com")
+session.browser.operator.navigate("https://www.baidu.com")
 print("Web navigation successful")
 
 agent_bay.delete(session)
@@ -157,7 +167,7 @@ params = CreateSessionParams(image_id="code_latest")
 session = agent_bay.create(params).session
 
 # Execute code
-result = session.code.run("print('Hello from CodeSpace!')", "python")
+result = session.code.run_code("print('Hello from CodeSpace!')", "python")
 # Returns: CodeExecutionResult with output
 # Example: result.result = "Hello from CodeSpace!"
 
@@ -198,7 +208,7 @@ Understanding data permanence is crucial when using cloud environments:
 
 ```python
 # This data will be LOST when session ends
-session.fs.write("/tmp/temp_data.txt", "This will disappear")
+session.file_system.write_file("/tmp/temp_data.txt", "This will disappear")
 ```
 
 ### Persistent Data (Context)
@@ -218,7 +228,7 @@ params = CreateSessionParams(context_syncs=[context_sync])
 session = agent_bay.create(params).session
 
 # This data will be SAVED across sessions
-session.fs.write("/persistent/important.txt", "This will persist")
+session.file_system.write_file("/persistent/important.txt", "This will persist")
 ```
 
 **Critical Rule**: If you need to keep data, you MUST use Context. Otherwise, it will be lost forever when the session ends.
@@ -256,7 +266,7 @@ Every API call to AgentBay gets a unique **Request ID** - a special identifier l
 
 **Example troubleshooting:**
 ```python
-result = session.code.run("print('hello')", "python")
+result = session.code.run_code("print('hello')", "python")
 if not result.success:
     print(f"Code execution failed! Request ID: {result.request_id}")
     # Share this Request ID with support for faster help

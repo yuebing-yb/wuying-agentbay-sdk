@@ -69,7 +69,12 @@ public class MobileSimulate {
     /**
      * Set the simulate mode.
      *
-     * @param mode The simulate mode
+     * @param mode The simulate mode:
+     *             - PROPERTIES_ONLY: Simulate only device properties
+     *             - SENSORS_ONLY: Simulate only device sensors
+     *             - PACKAGES_ONLY: Simulate only installed packages
+     *             - SERVICES_ONLY: Simulate only system services
+     *             - ALL: Simulate all aspects of the device
      */
     public void setSimulateMode(MobileSimulateMode mode) {
         this.simulateMode = mode;
@@ -86,6 +91,7 @@ public class MobileSimulate {
 
     /**
      * Set a previously saved simulate context id.
+     * Please make sure the context id is provided by MobileSimulateService but not user side created context.
      *
      * @param contextId The context ID of the previously saved mobile simulate context
      */
@@ -106,7 +112,11 @@ public class MobileSimulate {
     /**
      * Get the simulate config.
      *
-     * @return The simulate config
+     * @return The MobileSimulateConfig containing:
+     *         - simulate: The simulate feature enable flag
+     *         - simulatePath: The path of the mobile dev info file
+     *         - simulateMode: The simulate mode
+     *         - simulatedContextId: The context ID of the mobile info (defaults to null)
      */
     public MobileSimulateConfig getSimulateConfig() {
         String simulatedContextId = useInternalContext ? contextId : null;
@@ -120,9 +130,11 @@ public class MobileSimulate {
 
     /**
      * Check if the mobile dev info file exists in one context sync.
+     * This method can only be used when mobile simulate context sync is managed by user side.
      *
      * @param contextSync The context sync to check
      * @return True if the mobile dev info file exists, False otherwise
+     * @throws IllegalArgumentException if contextSync is not provided, or contextSync.contextId is not provided, or contextSync.path is not provided
      */
     public boolean hasMobileInfo(ContextSync contextSync) {
         if (contextSync == null) {
@@ -173,8 +185,23 @@ public class MobileSimulate {
      * Upload the mobile simulate dev info.
      *
      * @param mobileDevInfoContent The mobile simulate dev info content to upload (JSON string)
-     * @param contextSync Optional context sync. If not provided, a new context will be created
-     * @return MobileSimulateUploadResult containing the result of the upload operation
+     * @param contextSync Optional context sync:
+     *                    - If not provided, a new context will be created for the mobile simulate service
+     *                      and this context id will be returned by the MobileSimulateUploadResult.
+     *                      User can use this context id to do persistent mobile simulate across sessions.
+     *                    - If provided, the mobile simulate dev info will be uploaded to the context sync
+     *                      in a specific path.
+     * @return MobileSimulateUploadResult containing the result of the upload operation:
+     *         - success: Whether the operation was successful
+     *         - mobileSimulateContextId: The context ID of the mobile info (defaults to empty string)
+     *         - errorMessage: The error message if the operation failed (defaults to empty string)
+     * @throws IllegalArgumentException if mobileDevInfoContent is not provided or not a valid JSON string,
+     *         or if contextSync is provided but contextSync.contextId is missing
+     * @apiNote If context_sync is not provided, a new context sync will be created for the mobile simulate.
+     *           If context_sync is provided, the mobile simulate dev info will be uploaded to the context sync.
+     *           If the mobile simulate dev info already exists in the context sync, the context sync will be updated.
+     *           If the mobile simulate dev info does not exist in the context sync, the context sync will be created.
+     *           If the upload operation fails, the error message will be returned.
      */
     public MobileSimulateUploadResult uploadMobileInfo(String mobileDevInfoContent, ContextSync contextSync) {
         // Validate parameters

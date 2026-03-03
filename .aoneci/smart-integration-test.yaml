@@ -16,6 +16,7 @@ params:
       - "python"
       - "typescript"
       - "golang"
+      - "java"
   skip_specified_patterns:
     name: Skip Specified Test Patterns
     type: boolean
@@ -27,7 +28,9 @@ traits:
     properties:
       types: dingtalk
       when: all
-      users: 187788
+      users: 
+        - 187788
+        - WB02016330
       content: |
         ---
         - **Test Report**
@@ -52,26 +55,23 @@ jobs:
       - "4-16Gi"
     image: alios-8u
     timeout: 5h
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     outputs:
       test_summary: ${{steps.run-smart-tests.outputs.test_summary}}
       failed_tests: ${{steps.run-smart-tests.outputs.failed_tests}}
     steps:
       - uses: checkout
+        inputs:
+          fetch-depth: '0'
       
       - uses: setup-env
         inputs:
           python-version: '3.12'
           node-version: '18'
-          npm-version: '10'
-          npm-cache: true
           go-version: '1.24.3'
           go-mod-cache: true
           go-cache: true
+          java-version: '11'
+          maven-version: '3.9'
           
       - id: run-smart-tests
         name: "Run Smart Tests"
@@ -95,6 +95,29 @@ jobs:
               go run github.com/playwright-community/playwright-go/cmd/playwright@latest install --with-deps
               cd ..
             fi
+          fi
+          
+          # Setup Java dependencies if needed
+          if [ "${{params.test_type}}" = "java" ] || [ "${{params.test_type}}" = "all" ]; then
+            echo "☕ Setting up Java environment..."
+            # Java and Maven already installed by setup-env
+            java -version
+            mvn --version
+            
+            # Install Playwright dependencies for Java tests
+            echo "🎭 Installing Playwright dependencies for Java..."
+            sudo apt-get update
+            sudo apt-get install -y libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+              libcups2 libdrm2 libatspi2.0-0 libxcomposite1 libxdamage1 libxfixes3 \
+              libxrandr2 libgbm1 libxkbcommon0 libpango-1.0-0 libasound2
+            
+            # Only compile the project, don't run tests yet
+            # Tests will be run individually by smart_test_runner.py
+            echo "🔨 Compiling Java project..."
+            cd java/agentbay
+            mvn clean compile test-compile
+            cd ../..
+            echo "✅ Java project compiled successfully"
           fi
           
           # Setup TypeScript dependencies if needed  
@@ -195,14 +218,24 @@ jobs:
             npm --version || echo "❌ npm version check failed"
           fi
           
+          if [ "${{params.test_type}}" = "java" ] || [ "${{params.test_type}}" = "all" ]; then
+            echo "🔍 Checking Java installation..."
+            which java || echo "❌ Java not found in PATH"
+            java -version || echo "❌ Java version check failed"
+            which mvn || echo "❌ Maven not found in PATH"
+            mvn --version || echo "❌ Maven version check failed"
+          fi
+          
           # Run the smart test runner
           SKIP_PATTERNS_FLAG=""
+          echo "🔍 检查 skip_specified_patterns 参数值: ${{params.skip_specified_patterns}}"
           if [ "${{params.skip_specified_patterns}}" = "true" ]; then
             SKIP_PATTERNS_FLAG="--skip-oss"
-            echo "🔄 Specified test patterns skipping enabled"
+            echo "✅ Specified test patterns skipping enabled (--skip-oss)"
           else
-            echo "🔄 Specified test patterns skipping disabled, will run all tests"
+            echo "⚠️ Specified test patterns skipping disabled, will run all tests"
           fi
+          echo "🔍 SKIP_PATTERNS_FLAG 值: $SKIP_PATTERNS_FLAG"
           
           if python scripts/smart_test_runner.py --test-type="${{params.test_type}}" $SKIP_PATTERNS_FLAG; then
             echo "✅ Smart Test Runner completed successfully"
@@ -252,6 +285,8 @@ jobs:
                   lang="Python"
                 elif echo "$test_id" | grep -q "typescript\|\.ts\|\.js\|npm\|jest"; then
                   lang="TypeScript"
+                elif echo "$test_id" | grep -q "java:"; then
+                  lang="Java"
                 else
                   lang="未知"
                 fi

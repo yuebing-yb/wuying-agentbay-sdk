@@ -1,6 +1,17 @@
 package com.aliyun.agentbay.agent;
 
-import com.aliyun.agentbay.model.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.aliyun.agentbay.browser.BrowserOption;
+import com.aliyun.agentbay.model.ExecutionResult;
+import com.aliyun.agentbay.model.OperationResult;
+import com.aliyun.agentbay.model.QueryResult;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,17 +22,12 @@ import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
- * Agent for natural language driven task execution.
- * Provides high-level task automation capabilities for both computer and browser operations.
+ * An Agent to manipulate applications to complete specific tasks.
+ * 
+ * <p><strong>⚠️ Note</strong>: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), 
+ * we do not provide services for overseas users registered with <strong>alibabacloud.com</strong>.</p>
  */
 public class Agent extends BaseService {
     private static final Gson gson = new Gson();
@@ -135,8 +141,10 @@ public class Agent extends BaseService {
     }
 
     /**
-     * Computer agent for desktop automation with natural language.
-     * Uses flux_* MCP tools for task execution.
+     * An Agent to perform tasks on the computer.
+     * 
+     * <p><strong>⚠️ Note</strong>: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), 
+     * we do not provide services for overseas users registered with <strong>alibabacloud.com</strong>.</p>
      */
     public static class Computer extends BaseService {
         private static final Logger logger = LoggerFactory.getLogger(Computer.class);
@@ -156,13 +164,6 @@ public class Agent extends BaseService {
          * @param task Task description in human language
          * @return ExecutionResult containing success status, task ID, task status, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getComputer().executeTask("Open Chrome browser");
-         * System.out.println("Task ID: " + result.getTaskId() + ", Status: " + result.getTaskStatus());
-         * QueryResult status = session.getAgent().getComputer().getTaskStatus(result.getTaskId());
-         * System.out.println("Task status: " + status.getTaskStatus());
-         * </pre>
          */
         public ExecutionResult executeTask(String task) {
             try {
@@ -212,12 +213,6 @@ public class Agent extends BaseService {
          * @param timeout Maximum time to wait for task completion in seconds
          * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getComputer()
-         *     .executeTaskAndWait("Open Chrome browser", 300);
-         * System.out.println("Task result: " + result.getTaskResult());
-         * </pre>
          */
         public ExecutionResult executeTaskAndWait(String task, int timeout) {
             try {
@@ -367,13 +362,6 @@ public class Agent extends BaseService {
          * @param taskId The ID of the task to query
          * @return QueryResult containing success status, task status, task action, task product, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getComputer()
-         *     .executeTask("Query the weather in Shanghai with Baidu");
-         * QueryResult status = session.getAgent().getComputer().getTaskStatus(result.getTaskId());
-         * System.out.println("Status: " + status.getTaskStatus() + ", Action: " + status.getTaskAction());
-         * </pre>
          */
         public QueryResult getTaskStatus(String taskId) {
             try {
@@ -420,14 +408,6 @@ public class Agent extends BaseService {
          * @param taskId The ID of the running task to terminate
          * @return ExecutionResult containing success status, task ID, task status, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getComputer()
-         *     .executeTask("Query the weather in Shanghai with Baidu");
-         * ExecutionResult terminateResult = session.getAgent().getComputer()
-         *     .terminateTask(result.getTaskId());
-         * System.out.println("Terminated: " + terminateResult.isSuccess());
-         * </pre>
          */
         public ExecutionResult terminateTask(String taskId) {
             try {
@@ -467,62 +447,87 @@ public class Agent extends BaseService {
 
     /**
      * Browser agent for browser automation with natural language.
-     * Uses browser_use_* MCP tools for task execution.
-     * Still in BETA.
+     * 
+     * <p><strong>⚠️ Note</strong>: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), 
+     * we do not provide services for overseas users registered with <strong>alibabacloud.com</strong>.</p>
      */
     public static class Browser extends BaseService {
         private static final Logger logger = LoggerFactory.getLogger(Browser.class);
+        private boolean initialized = false;
 
         public Browser(Session session) {
             super(session);
         }
 
         /**
-         * Execute a browser task in human language without waiting for
-         * completion (non-blocking).
+         * Initialize the browser on which the agent performs tasks.
+         * You are supposed to call this API before executeTask is called, but it's not optional.
+         * If you want perform a hybrid usage of browser, you must call this API before executeTask is called.
          *
-         * This is a fire-and-return interface that immediately provides a task
-         * ID. Call getTaskStatus to check the task status. You can control the
-         * timeout of the task execution in your own code by setting the
-         * frequency of calling getTaskStatus.
+         * @param option the browser initialization options. If {@code null}, default options will be used
+         * @return {@code true} if the browser is successfully initialized, {@code false} otherwise
+         */
+        public boolean initialize(BrowserOption option) {
+
+            if (this.initialized) {
+                return true;
+            }
+
+            if (option == null) {
+                option = new BrowserOption();
+            }
+            boolean success = session.getBrowser().initialize(option);
+            this.initialized = success;
+            return success;
+        }
+
+        /**
+         * Execute a task described in human language on a browser without waiting for completion (non-blocking).
+         *
+         * This is a fire-and-return interface that immediately provides a task ID.
+         * Call get_task_status to check the task status. You can control the timeout
+         * of the task execution in your own code by setting the frequency of calling
+         * get_task_status.
          *
          * @param task Task description in human language
-         * @param useVision Whether to use vision in the task
-         * @param outputSchema Optional Zod schema for a structured task output
-         *     if you need
-         * @return ExecutionResult containing success status, task ID, task
-         *     status, and error message if any
+         * @param useVision Whether to use vision to performe the task
+         * @param outputSchema The schema of the structured output
+         * @param fullPageScreenShot Whether to take a full page screenshot. This only works when use_vision is true.
+         *                           When use_vision is enabled, we need to provide a screenshot of the webpage to the LLM for grounding. There are two ways of screenshot:
+         *                           1. Full-page screenshot: Captures the entire webpage content, including parts not currently visible in the viewport.
+         *                           2. Viewport screenshot: Captures only the currently visible portion of the webpage.
+         *                           The first approach delivers all information to the LLM in one go, which can improve task success rates in certain information extraction scenarios. However, it also results in higher token consumption and increases the LLM's processing time.
+         *                           Therefore, we would like to give you the choice—you can decide whether to enable full-page screenshot based on your actual needs.
+         * @return ExecutionResult Result object containing success status, task ID, task status, and error message if any
          *
-         * @example
-         * <pre>
-         * public static class WeatherSchema {
-         *   @JsonProperty(required = true)
-         *   private String city;
-         *   private String temperature;
-         *   public String getCity() {return city;}
-         *   public void setCity(String city) {this.city = city;}
-         *   public String getTemperature() {return temperature;}
-         *   public void setTemperature(String temperature) {this.temperature = temperature;}
-         * }
-         * ExecutionResult result = session.getAgent().getBrowser()
-         *     .executeTask("Query the weather in Shanghai with Baidu", true, WeatherSchema.class);
-         * System.out.println("Task ID: " + result.getTaskId() + ", Status: " +
-         * result.getTaskStatus()); QueryResult status =
-         * session.getAgent().getBrowser().getTaskStatus(result.getTaskId());
-         * System.out.println("Task status: " + status.getTaskStatus());
-         * </pre>
          */
         public ExecutionResult executeTask(String task, boolean useVision,
-                Class<?> output_schema) {
+                Object outputSchema, boolean fullPageScreenShot) {
+            if (!this.initialized) {
+                logger.info("Browser is not initialized. Initialize browser first.");
+                boolean success = initialize(new BrowserOption());
+                if (!success) {
+                    return new ExecutionResult("", false,
+                            "Browser initialization failed.",
+                            "", "failed");
+                }
+            }
             try {
-                String schemaJson = SchemaHelper.generateJsonSchema(output_schema);
+                String schemaJson = "";
+                if (outputSchema instanceof String) {
+                    System.out.println("-------String schemaJson: " + outputSchema);
+                    schemaJson = (String) outputSchema;
+                } else if (outputSchema instanceof Class) {
+                    schemaJson = SchemaHelper.generateJsonSchema((Class<?>) outputSchema);
+                    System.out.println("-------Class schemaJson: " + schemaJson);
+                }
                 logger.info("Output schema: {}", schemaJson);
-                System.out.println("----------------schemaJson: " + schemaJson);
 
                 Map<String, Object> args = new HashMap<>();
                 args.put("task", task);
                 args.put("use_vision", useVision);
                 args.put("output_schema", schemaJson);
+                args.put("full_page_screenshot", fullPageScreenShot);
                 OperationResult result = callMcpTool("browser_use_execute_task", args);
 
                 if (result.isSuccess()) {
@@ -551,105 +556,121 @@ public class Agent extends BaseService {
          * Execute a specific task described in human language synchronously.
          *
          * This is a synchronous interface that blocks until the task is completed or
-         * an error occurs, or timeout happens. The default polling interval is 3 seconds.
+         * an error occurs, or timeout happens. The default polling interval is 3
+         * seconds.
          *
-         * @param task Task description in human language
-         * @param timeout Maximum time to wait for task completion in seconds
-         * @param useVision Whether to use vision in the task
-         * @param outputSchema Optional Zod schema for a structured task output if you need
-         * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
+         * @param task               Task description in human language
+         * @param timeout            Maximum time to wait for task completion in seconds
+         * @param useVision          Whether to use vision in the task
+         * @param outputSchema       Optional Zod schema for a structured task output if
+         *                           you need
+         * @param fullPageScreenShot Whether to take a full page screenshot,
+         *                           this only works if useVision is true
+         * 
+         *                           When use_vision is enabled, we need to provide a
+         *                           screenshot of the webpage to the LLM for grounding.
+         *                           There are two ways of screenshot:
+         *                           1. Full-page screenshot: Captures the entire
+         *                           webpage content, including parts not currently
+         *                           visible in the viewport.
+         *                           2. Viewport screenshot: Captures only the currently
+         *                           visible portion of the webpage.
+         *                           The first approach delivers all information to the
+         *                           LLM in one go, which can improve task success rates
+         *                           in certain information extraction scenarios.
+         *                           However, it also results in higher token
+         *                           consumption and increases the LLM's processing
+         *                           time.
+         *                           Therefore, we would like to give you the choice—you
+         *                           can decide whether to enable full-page screenshot
+         *                           based on your actual needs.
+         * @return ExecutionResult containing success status, task ID, task status, task
+         *         result, and error message if any
          *
-         * @example
-         * <pre>
-         *  public static class WeatherSchema {
-         *   @JsonProperty(required = true)
-         *   private String city;
-         *   private String temperature;
-         *   public String getCity() {return city;}
-         *   public void setCity(String city) {this.city = city;}
-         *   public String getTemperature() {return temperature;}
-         *   public void setTemperature(String temperature) {this.temperature = temperature;}
-         * }
-         * ExecutionResult result = session.getAgent().getBrowser()
-         *     .executeTaskAndWait("Query the weather in Shanghai with Baidu", 300, true, WeatherSchema.class);
-         * System.out.println("Task result: " + result.getTaskResult());
-         * </pre>
          */
         public ExecutionResult executeTaskAndWait(String task, int timeout,
-                                                  boolean useVision,
-                                                  Class<?> output_schema) {
-          try {
-            ExecutionResult result =
-                executeTask(task, useVision, output_schema);
-            if (result.isSuccess()) {
-              String taskId = result.getTaskId();
-              int pollInterval = 3;
-              int maxPollAttempts = timeout / pollInterval;
-              int triedTime = 0;
-              while (triedTime < maxPollAttempts) {
-                QueryResult query = getTaskStatus(taskId);
-
-                if ("finished".equals(query.getTaskStatus())) {
-                  return new ExecutionResult(result.getRequestId(), true, "",
-                                             taskId, query.getTaskStatus(),
-                                             query.getTaskProduct());
-                } else if ("failed".equals(query.getTaskStatus())) {
-                  String errorMsg = query.getErrorMessage();
-                  if (errorMsg == null || errorMsg.isEmpty()) {
-                    errorMsg = "Failed to execute task.";
-                  }
-                  return new ExecutionResult(result.getRequestId(), false,
-                                             errorMsg, taskId,
-                                             query.getTaskStatus(), "");
-                } else if ("unsupported".equals(query.getTaskStatus())) {
-                  String errorMsg = query.getErrorMessage();
-                  if (errorMsg == null || errorMsg.isEmpty()) {
-                    errorMsg = "Unsupported task.";
-                  }
-                  return new ExecutionResult(result.getRequestId(), false,
-                                             errorMsg, taskId,
-                                             query.getTaskStatus(), "");
+                boolean useVision,
+                Object outputSchema, boolean fullPageScreenShot) {
+            if (!this.initialized) {
+                logger.info("Browser is not initialized. Initialize browser first.");
+                boolean success = initialize(new BrowserOption());
+                if (!success) {
+                    return new ExecutionResult("", false,
+                            "Browser initialization failed.",
+                            "", "failed");
                 }
-                Thread.sleep(3000);
-                triedTime++;
-              }
-              // Automatically terminate the task on timeout
-              try {
-                ExecutionResult terminateResult = terminateTask(taskId);
-                if (terminateResult.isSuccess()) {
-                  logger.info("✅ Task {} terminated successfully after timeout",
-                              taskId);
-                } else {
-                  logger.warn(
-                      "⚠️ Failed to terminate task {} after timeout: {}",
-                      taskId, terminateResult.getErrorMessage());
-                }
-              } catch (Exception e) {
-                logger.warn(
-                    "⚠️ Exception while terminating task {} after timeout: {}",
-                    taskId, e.getMessage());
-              }
-              String timeoutErrorMsg = String.format(
-                  "Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).",
-                  timeout, taskId, triedTime, maxPollAttempts);
-              return new ExecutionResult(
-                  result.getRequestId(), false, timeoutErrorMsg, taskId,
-                  "failed",
-                  String.format("Task execution timed out after %d seconds.",
-                                timeout));
-            } else {
-              return result;
             }
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new ExecutionResult("", false,
-                                       "Task interrupted: " + e.getMessage(),
-                                       "", "failed", "Task Failed");
-          } catch (Exception e) {
-            return new ExecutionResult("", false,
-                                       "Failed to execute: " + e.getMessage(),
-                                       "", "failed", "Task Failed");
-          }
+            try {
+                ExecutionResult result = executeTask(task, useVision, outputSchema, fullPageScreenShot);
+                if (result.isSuccess()) {
+                    String taskId = result.getTaskId();
+                    int pollInterval = 3;
+                    int maxPollAttempts = timeout / pollInterval;
+                    int triedTime = 0;
+                    while (triedTime < maxPollAttempts) {
+                        QueryResult query = getTaskStatus(taskId);
+
+                        if ("finished".equals(query.getTaskStatus())) {
+                            return new ExecutionResult(result.getRequestId(), true, "",
+                                    taskId, query.getTaskStatus(),
+                                    query.getTaskProduct());
+                        } else if ("failed".equals(query.getTaskStatus())) {
+                            String errorMsg = query.getErrorMessage();
+                            if (errorMsg == null || errorMsg.isEmpty()) {
+                                errorMsg = "Failed to execute task.";
+                            }
+                            return new ExecutionResult(result.getRequestId(), false,
+                                    errorMsg, taskId,
+                                    query.getTaskStatus(), "");
+                        } else if ("unsupported".equals(query.getTaskStatus())) {
+                            String errorMsg = query.getErrorMessage();
+                            if (errorMsg == null || errorMsg.isEmpty()) {
+                                errorMsg = "Unsupported task.";
+                            }
+                            return new ExecutionResult(result.getRequestId(), false,
+                                    errorMsg, taskId,
+                                    query.getTaskStatus(), "");
+                        }
+                        Thread.sleep(3000);
+                        triedTime++;
+                    }
+                    // Automatically terminate the task on timeout
+                    try {
+                        ExecutionResult terminateResult = terminateTask(taskId);
+                        if (terminateResult.isSuccess()) {
+                            logger.info("✅ Task {} terminated successfully after timeout",
+                                    taskId);
+                        } else {
+                            logger.warn(
+                                    "⚠️ Failed to terminate task {} after timeout: {}",
+                                    taskId, terminateResult.getErrorMessage());
+                        }
+                    } catch (Exception e) {
+                        logger.warn(
+                                "⚠️ Exception while terminating task {} after timeout: {}",
+                                taskId, e.getMessage());
+                    }
+                    String timeoutErrorMsg = String.format(
+                            "Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).",
+                            timeout, taskId, triedTime, maxPollAttempts);
+                    return new ExecutionResult(
+                            result.getRequestId(), false, timeoutErrorMsg, taskId,
+                            "failed",
+                            String.format("Task execution timed out after %d seconds.",
+                                    timeout));
+                } else {
+                    return result;
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return new ExecutionResult("", false,
+                        "Task interrupted: " + e.getMessage(),
+                        "", "failed", "Task Failed");
+            } catch (Exception e) {
+                return new ExecutionResult("", false,
+                        "Failed to execute: " + e.getMessage(),
+                        "", "failed", "Task Failed");
+            }
         }
 
         /**
@@ -658,13 +679,6 @@ public class Agent extends BaseService {
          * @param taskId The ID of the task to query
          * @return QueryResult containing success status, task status, task action, task product, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getBrowser()
-         *     .executeTask("Open Chrome browser");
-         * QueryResult status = session.getAgent().getBrowser().getTaskStatus(result.getTaskId());
-         * System.out.println("Status: " + status.getTaskStatus() + ", Action: " + status.getTaskAction());
-         * </pre>
          */
         public QueryResult getTaskStatus(String taskId) {
             try {
@@ -711,14 +725,6 @@ public class Agent extends BaseService {
          * @param taskId The ID of the running task to terminate
          * @return ExecutionResult containing success status, task ID, task status, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getBrowser()
-         *     .executeTask("Open Chrome browser");
-         * ExecutionResult terminateResult = session.getAgent().getBrowser()
-         *     .terminateTask(result.getTaskId());
-         * System.out.println("Terminated: " + terminateResult.isSuccess());
-         * </pre>
          */
         public ExecutionResult terminateTask(String taskId) {
             try {
@@ -801,14 +807,6 @@ public class Agent extends BaseService {
          * @param maxSteps Maximum number of steps (clicks/swipes/etc.) allowed
          * @return ExecutionResult containing success status, task ID, task status, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getMobile()
-         *     .executeTask("Open WeChat app", 100);
-         * System.out.println("Task ID: " + result.getTaskId() + ", Status: " + result.getTaskStatus());
-         * QueryResult status = session.getAgent().getMobile().getTaskStatus(result.getTaskId());
-         * System.out.println("Task status: " + status.getTaskStatus());
-         * </pre>
          */
         public ExecutionResult executeTask(String task, int maxSteps) {
             try {
@@ -910,12 +908,6 @@ public class Agent extends BaseService {
          * @param timeout Maximum time to wait for task completion in seconds
          * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getMobile()
-         *     .executeTaskAndWait("Open WeChat app and send a message", 100, 180);
-         * System.out.println("Task result: " + result.getTaskResult());
-         * </pre>
          */
         public ExecutionResult executeTaskAndWait(String task, int maxSteps, int timeout) {
             try {
@@ -1222,13 +1214,6 @@ public class Agent extends BaseService {
          * @param taskId The ID of the task to query
          * @return QueryResult containing success status, task status, task action, task product, stream, error, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getMobile()
-         *     .executeTask("Open WeChat app", 100);
-         * QueryResult status = session.getAgent().getMobile().getTaskStatus(result.getTaskId());
-         * System.out.println("Status: " + status.getTaskStatus() + ", Action: " + status.getTaskAction());
-         * </pre>
          */
         public QueryResult getTaskStatus(String taskId) {
             try {
@@ -1321,14 +1306,6 @@ public class Agent extends BaseService {
          * @param taskId The ID of the running task to terminate
          * @return ExecutionResult containing success status, task ID, task status, and error message if any
          *
-         * @example
-         * <pre>
-         * ExecutionResult result = session.getAgent().getMobile()
-         *     .executeTask("Open WeChat app", 100);
-         * ExecutionResult terminateResult = session.getAgent().getMobile()
-         *     .terminateTask(result.getTaskId());
-         * System.out.println("Terminated: " + terminateResult.isSuccess());
-         * </pre>
          */
         public ExecutionResult terminateTask(String taskId) {
             logger.info("Terminating task");

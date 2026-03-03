@@ -118,6 +118,12 @@ describe("Session Parameters", () => {
                 mockAgentBay.create.calledOnceWith({ labels, imageId })
             ).toBe(true);
         });
+
+        it("should default idleReleaseTimeout to 0 when not specified", () => {
+            const { CreateSessionParams: CreateSessionParamsClass } = require("../../src/session-params");
+            const params = new CreateSessionParamsClass({});
+            expect(params.idleReleaseTimeout).toBe(0);
+        });
     });
 
     describe("session creation with options", () => {

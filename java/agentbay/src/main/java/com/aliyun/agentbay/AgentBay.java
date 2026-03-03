@@ -10,7 +10,6 @@ import com.aliyun.agentbay.mobile.MobileSimulateConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateMode;
 import com.aliyun.agentbay.model.GetSessionData;
 import com.aliyun.agentbay.model.GetSessionResult;
-import com.aliyun.agentbay.model.SessionParams;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.skills.BetaSkillsService;
@@ -27,13 +26,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
- * Main client for interacting with the AgentBay cloud runtime environment
+ * AgentBay represents the main client for interacting with the AgentBay cloud runtime
+ * environment.
+ * 
+ * <p>This class provides the entry point for creating and managing sessions in the
+ * AgentBay cloud environment. It handles authentication, session lifecycle management,
+ * and provides access to various services including context management, mobile simulation,
+ * and network services.</p>
  */
 
 public class AgentBay {
@@ -167,6 +175,8 @@ public class AgentBay {
                             responseData.getNetworkInterfaceIp(),
                             responseData.getHttpPort(),
                             responseData.getToken(),
+                            responseData.getLinkUrl(),
+                            responseData.getWsUrl(),
                             body.getCode() != null ? body.getCode() : "",
                             responseData.getToolList()
                         );
@@ -224,12 +234,15 @@ public class AgentBay {
         }
 
         // Create the Session object
-        Session session = new Session(sessionId, this, new SessionParams());
+        Session session = new Session(sessionId, this);
 
         // Set ResourceUrl from GetSession response
         if (getResult.getData() != null) {
             GetSessionData data = getResult.getData();
             session.setResourceUrl(data.getResourceUrl());
+            session.setToken(data.getToken());
+            session.setLinkUrl(data.getLinkUrl());
+            session.setWsUrl(data.getWsUrl());
             if (data.getToolList() != null && !data.getToolList().isEmpty()) {
                 session.updateMcpTools(data.getToolList());
             }
@@ -413,6 +426,12 @@ public class AgentBay {
                 request.setImageId(params.getImageId());
             }
 
+            // SDK idle release timeout (seconds)
+            Integer idleReleaseTimeout = params.getIdleReleaseTimeout();
+            if (idleReleaseTimeout != null) {
+                request.setTimeout(idleReleaseTimeout);
+            }
+
             // Set labels if provided
             if (params.getLabels() != null && !params.getLabels().isEmpty()) {
                 try {
@@ -511,14 +530,10 @@ public class AgentBay {
             }
 
             result.setSessionId(sessionId);
-            result.setStatus("created");
-            result.setBrowserType(params.getBrowserType());
             result.setSuccess(true);
 
             // Create and cache the session
-            SessionParams sessionParams = new SessionParams();
-            sessionParams.setBrowserType(params.getBrowserType());
-            Session session = new Session(result.getSessionId(), this, sessionParams);
+            Session session = new Session(result.getSessionId(), this);
             if (params.getImageId() != null) {
                 session.setImageId(params.getImageId());
             }
@@ -536,6 +551,9 @@ public class AgentBay {
                 }
                 if (response.getBody().getData().getLinkUrl() != null) {
                     session.setLinkUrl(response.getBody().getData().getLinkUrl());
+                }
+                if (response.getBody().getData().getWsUrl() != null) {
+                    session.setWsUrl(response.getBody().getData().getWsUrl());
                 }
                 if (response.getBody().getData().getToolList() != null) {
                     session.updateMcpTools(response.getBody().getData().getToolList());
@@ -556,8 +574,22 @@ public class AgentBay {
             // If we have persistence data, wait for context synchronization
             boolean needsContextSync = (params.getContextSyncs() != null && !params.getContextSyncs().isEmpty()) ||
                                       (params.getBrowserContext() != null);
-            if (needsContextSync) {
-                waitForContextSynchronization(session);
+            Set<String> waitContextIds = new HashSet<>();
+            if (params.getContextSyncs() != null) {
+                for (ContextSync cs : params.getContextSyncs()) {
+                    Boolean wait = cs.getBetaWaitForCompletion();
+                    if (wait == null || wait) {
+                        if (cs.getContextId() != null && !cs.getContextId().isEmpty()) {
+                            waitContextIds.add(cs.getContextId());
+                        }
+                    }
+                }
+            }
+            if (params.getBrowserContext() != null && params.getBrowserContext().getContextId() != null) {
+                waitContextIds.add(params.getBrowserContext().getContextId());
+            }
+            if (needsContextSync && !waitContextIds.isEmpty()) {
+                waitForContextSynchronization(session, waitContextIds);
             }
 
             // Handle mobile simulate if configured
@@ -637,7 +669,10 @@ public class AgentBay {
      *
      * @param session The session to wait for context synchronization
      */
-    private void waitForContextSynchronization(Session session) {
+    private void waitForContextSynchronization(Session session, Set<String> waitContextIds) {
+        if (waitContextIds == null || waitContextIds.isEmpty()) {
+            return;
+        }
         // Exponential backoff configuration
         // Starts with short intervals (0.5s) for fast completion detection
         // Gradually increases intervals (up to 5s max) to reduce server load
@@ -656,22 +691,30 @@ public class AgentBay {
                 // Get context status data
                 com.aliyun.agentbay.context.ContextInfoResult infoResult = session.getContext().info();
 
-                // Check if all context items have status "Success" or "Failed"
-                boolean allCompleted = true;
                 boolean hasFailure = false;
+                Map<String, String> statusByContextId = new HashMap<>();
 
                 for (com.aliyun.agentbay.context.ContextStatusData item : infoResult.getContextStatusData()) {
-                    if (!"Success".equals(item.getStatus()) && !"Failed".equals(item.getStatus())) {
-                        allCompleted = false;
-                        break;
+                    if (!waitContextIds.contains(item.getContextId())) {
+                        continue;
                     }
+                    statusByContextId.put(item.getContextId(), item.getStatus());
 
                     if ("Failed".equals(item.getStatus())) {
                         hasFailure = true;
                     }
                 }
 
-                if (allCompleted || infoResult.getContextStatusData().isEmpty()) {
+                boolean allCompleted = true;
+                for (String ctxId : waitContextIds) {
+                    String st = statusByContextId.get(ctxId);
+                    if (st == null || (!"Success".equals(st) && !"Failed".equals(st))) {
+                        allCompleted = false;
+                        break;
+                    }
+                }
+
+                if (allCompleted) {
                     if (hasFailure) {
                     } else {
                     }

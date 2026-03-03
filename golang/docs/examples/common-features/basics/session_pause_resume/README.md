@@ -1,5 +1,7 @@
 # Session BetaPause and BetaResume Example
 
+> **Note**: This feature is currently in whitelist-only access. Contact agentbay_dev@alibabacloud.com to request access.
+
 This example demonstrates how to use the `BetaPause` and `BetaResume` APIs to manage session lifecycle and reduce resource consumption.
 
 ## Description

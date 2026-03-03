@@ -7,10 +7,14 @@ package com.aliyun.agentbay;
 public class Config {
     // Browser data path constant
     public static final String BROWSER_DATA_PATH = "/tmp/agentbay_browser";
-    
+
     // Browser fingerprint persistent path constant
     public static final String BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
-    
+
+    // Default configuration values
+    private static final String DEFAULT_ENDPOINT = "wuyingai.cn-shanghai.aliyuncs.com";
+    private static final int DEFAULT_TIMEOUT_MS = 60000;
+
     private String regionId;
     private String endpoint;
     private int timeoutMs;
@@ -19,6 +23,12 @@ public class Config {
         this.regionId = regionId;
         this.endpoint = endpoint;
         this.timeoutMs = timeoutMs;
+    }
+
+    public Config(String regionId) {
+        this.regionId = regionId;
+        this.endpoint = DEFAULT_ENDPOINT;
+        this.timeoutMs = DEFAULT_TIMEOUT_MS;
     }
 
     public Config() {
@@ -34,7 +44,7 @@ public class Config {
 
     private String loadEndpoint() {
         String envValue = System.getenv("AGENTBAY_ENDPOINT");
-        return (envValue != null && !envValue.trim().isEmpty()) ? envValue : "wuyingai.cn-shanghai.aliyuncs.com";
+        return (envValue != null && !envValue.trim().isEmpty()) ? envValue : DEFAULT_ENDPOINT;
     }
 
     private int loadTimeoutMs() {
@@ -46,7 +56,7 @@ public class Config {
                 System.err.println("Warning: Invalid AGENTBAY_TIMEOUT_MS value: " + envValue + ", using default");
             }
         }
-        return 60000;
+        return DEFAULT_TIMEOUT_MS;
     }
 
     public String getRegionId() {

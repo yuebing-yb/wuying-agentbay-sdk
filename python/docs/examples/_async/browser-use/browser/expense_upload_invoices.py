@@ -34,17 +34,17 @@ async def main():
             print("Browser init failed")
             return
 
-        agent = session.browser.agent
+        operator = session.browser.operator
 
-        await agent.navigate("https://work.aliyun-inc.com/")
-        await agent.act(
+        await operator.navigate("https://work.aliyun-inc.com/")
+        await operator.act(
             ActOptions(
                 action="帮我登陆",
                 variables={"用户名": "xxx", "密码": "123456"},
             )
         )
-        await agent.act(ActOptions(action="点击报销链接或按钮"))
-        await agent.act(ActOptions(action="在报销单列表中点击第一个项目"))
+        await operator.act(ActOptions(action="点击报销链接或按钮"))
+        await operator.act(ActOptions(action="在报销单列表中点击第一个项目"))
 
         invoices = [
             "/Users/user/Desktop/20250711114033.pdf",
@@ -52,19 +52,19 @@ async def main():
             "/Users/user/Desktop/20250711114035.pdf",
         ]
         for path in invoices:
-            await agent.act(
+            await operator.act(
                 ActOptions(action="在快速新增费用列表中选择'差旅-餐费'")
             )
-            await agent.act(ActOptions(action="点击'上传电子发票'按钮"))
-            await agent.act(ActOptions(action=f"上传位于 '{path}' 的文件"))
-            await agent.act(ActOptions(action="点击'保存'按钮"))
+            await operator.act(ActOptions(action="点击'上传电子发票'按钮"))
+            await operator.act(ActOptions(action=f"上传位于 '{path}' 的文件"))
+            await operator.act(ActOptions(action="点击'保存'按钮"))
 
-        await agent.act(ActOptions(action="点击提交报销单"))
+        await operator.act(ActOptions(action="点击提交报销单"))
         await asyncio.sleep(3)
     finally:
         if session is not None:
             try:
-                await session.browser.agent.close()
+                await session.browser.operator.close()
             except Exception:
                 pass
             await agent_bay.delete(session)

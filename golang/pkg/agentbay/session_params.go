@@ -15,6 +15,10 @@ type CreateSessionParams struct {
 	// ImageId specifies the image ID to use for the session.
 	ImageId string
 
+	// IdleReleaseTimeout specifies the SDK-side idle release timeout in seconds.
+	// Default is 300 seconds.
+	IdleReleaseTimeout int32
+
 	// ContextSync is a list of context synchronization configurations.
 	// These configurations define how contexts should be synchronized and mounted.
 	ContextSync []*ContextSync
@@ -58,6 +62,15 @@ func (p *CreateSessionParams) WithLabels(labels map[string]string) *CreateSessio
 // WithImageId sets the image ID for the session parameters and returns the updated parameters.
 func (p *CreateSessionParams) WithImageId(imageId string) *CreateSessionParams {
 	p.ImageId = imageId
+	return p
+}
+
+// WithIdleReleaseTimeout sets the SDK-side idle release timeout in seconds and returns the updated parameters.
+// Only positive values are accepted.
+func (p *CreateSessionParams) WithIdleReleaseTimeout(timeoutSeconds int32) *CreateSessionParams {
+	if timeoutSeconds > 0 {
+		p.IdleReleaseTimeout = timeoutSeconds
+	}
 	return p
 }
 

@@ -1,0 +1,111 @@
+"""
+Agent Task Execution Example
+
+This example demonstrates:
+1. Async task execution
+2. Task status monitoring
+3. Task result retrieval
+"""
+
+import asyncio
+import os
+import sys
+from typing import List
+from pydantic import BaseModel, Field
+from agentbay import get_logger
+
+logger = get_logger("browser_use_agent")
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
+
+from agentbay import AsyncAgentBay
+from agentbay import CreateSessionParams
+
+class NameInconsistency(BaseModel):
+    name_in_pdf: str = Field(..., description="PDF 中的产品名称")
+    name_on_website: str = Field(..., description="网站上显示的产品名称")
+
+class PriceInconsistency(BaseModel):
+    product_name: str = Field(..., description="产品名称")
+    price_in_pdf: str = Field(..., description="PDF 中的价格(字符串)")
+    price_on_website: str = Field(..., description="网站上的价格(字符串)")
+
+class BrandInconsistency(BaseModel):
+    product_name: str = Field(..., description="产品名称")
+    brand_in_pdf: str = Field(..., description="PDF 中的品牌(字符串)")
+    brand_on_website: str = Field(..., description="网站上的品牌(字符串)")
+
+class InconsistencyReport(BaseModel):
+    inconsistent_names: List[NameInconsistency] = Field(..., description="名称不一致的列表")
+    inconsistent_prices: List[PriceInconsistency] = Field(..., description="价格不一致的列表")
+    inconsistent_brands: List[BrandInconsistency] = Field(..., description="品牌不一致的列表")
+
+async def main():
+    """Demonstrate agent task execution."""
+    print("=== Agent Task Execution Example ===\n")
+
+    client = AsyncAgentBay()
+    session = None
+
+    try:
+        # Create a session
+        logger.info("Creating session...")
+        session_result = await client.create(
+            CreateSessionParams(image_id="linux_latest")
+        )
+        session = session_result.session
+        logger.info(f"Session created: {session.session_id}")
+
+        agent = session.agent
+
+        task = """
+        按照如下步骤"对比PDF文档与网页端商品信息,找出不一致：
+        1. 导航至'https://agentbay-playground-prod.oss-cn-shanghai.aliyuncs.com/102.pdf'，下载商品列表PDF
+        2. 读取商品列表PDF中的所有商品列表信息,包括商品名称、品牌、价格以及对应的商品链接。
+        3. 依次访问商品列表中的对应商品链接,每次都必须新建Tab来访问商品连接，禁止关闭之前打开的Tab。
+        4. 在商品页面中找到商品名称、品牌和价格并和PDF中商品信息进行对比。
+        5. 如果发现任何一项数据(名称、品牌、价格)不匹配,记录给出不一致网站和具体的不一致内容。
+        """
+
+        logger.info("🚀 Executing Task of products inspectation.")
+        result = await agent.browser.execute_task(
+            task, use_vision=False, output_schema=InconsistencyReport
+        )
+        if not result.success:
+            logger.info(f"Task failed: {result.error_message}")
+            return
+        retry_times: int = 0
+        query_result = None
+        max_poll_attempts = 300
+        while retry_times < max_poll_attempts:
+            query_result = await agent.browser.get_task_status(result.task_id)
+            if not result.success:
+                logger.error(f"Task failed: {query_result.error_message}")
+                break
+            logger.info(
+                f"⏳ Task {query_result.task_id} running 🚀: {query_result.task_action}."
+            )
+            if query_result.task_status == "finished":
+                break
+            retry_times += 1
+            await asyncio.sleep(3)
+        # Verify the final task status
+        if retry_times < max_poll_attempts:
+            logger.info(f"✅ Task Completed with Result {query_result.task_product}")
+        else:
+            logger.error("Task timed out")
+
+    except Exception as e:
+        print(f"\nError occurred: {str(e)}")
+        raise
+
+    finally:
+        if session:
+            print("\nCleaning up session...")
+            await client.delete(session)
+            print("Session closed")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+

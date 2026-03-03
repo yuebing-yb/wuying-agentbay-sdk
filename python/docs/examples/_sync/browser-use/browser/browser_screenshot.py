@@ -28,10 +28,10 @@ def take_agent_screenshots(session: Session):
     print("📸 Taking screenshots using browser agent...")
 
     # Navigate to a website
-    session.browser.agent.navigate("https://www.aliyun.com")
+    session.browser.operator.navigate("https://www.aliyun.com")
 
     # Take a simple screenshot (returns base64 data)
-    screenshot_b64 = session.browser.agent.screenshot()
+    screenshot_b64 = session.browser.operator.screenshot()
     print(f"✅ Agent screenshot captured (base64 length: {len(screenshot_b64)})")
 
     # Save the screenshot to a file
@@ -53,7 +53,7 @@ def take_agent_screenshots(session: Session):
     print("✅ Agent screenshot saved as temp_agent_screenshot.png")
 
     # Take a full page screenshot with custom quality
-    full_page_b64 = session.browser.agent.screenshot(
+    full_page_b64 = session.browser.operator.screenshot(
         full_page=True,
         quality=75
     )

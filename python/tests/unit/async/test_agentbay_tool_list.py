@@ -63,15 +63,18 @@ class TestAsyncAgentBayToolList(unittest.IsolatedAsyncioTestCase):
             [{"name": "shell", "server": "wuying_shell"}],
             ensure_ascii=False,
         )
+        data = GetSessionData(
+            session_id="sid-2",
+            resource_url="https://example.invalid/resource2",
+            tool_list=tool_list,
+            token="test-token",
+        )
+        setattr(data, "link_url", "https://example.invalid/link-url")
         agent_bay._get_session = AsyncMock(
             return_value=GetSessionResult(
                 request_id="req-1",
                 success=True,
-                data=GetSessionData(
-                    session_id="sid-2",
-                    resource_url="https://example.invalid/resource2",
-                    tool_list=tool_list,
-                ),
+                data=data,
             )
         )
 
@@ -81,6 +84,8 @@ class TestAsyncAgentBayToolList(unittest.IsolatedAsyncioTestCase):
         assert len(result.session.mcpTools) == 1
         assert result.session.mcpTools[0].name == "shell"
         assert result.session.mcpTools[0].server == "wuying_shell"
+        assert result.session.get_token() == "test-token"
+        assert result.session.get_link_url() == "https://example.invalid/link-url"
 
 
 if __name__ == "__main__":

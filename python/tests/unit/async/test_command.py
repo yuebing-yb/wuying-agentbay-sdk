@@ -273,9 +273,9 @@ class TestAsyncCommand(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(args["cwd"], "/tmp")
         self.assertEqual(args["envs"], {"TEST_VAR": "test_value"})
 
-    async def test_execute_command_timeout_limit(self):
+    async def test_execute_command_custom_timeout(self):
         """
-        Test execute_command method with timeout exceeding maximum limit (50s).
+        Test execute_command passes custom timeout values through without limiting.
         """
         from agentbay import McpToolResult
 
@@ -284,27 +284,13 @@ class TestAsyncCommand(unittest.IsolatedAsyncioTestCase):
         )
         self.session.call_mcp_tool = AsyncMock(return_value=mock_result)
 
-        # Test with timeout exceeding 50s (50000ms)
-        result = await self.command.execute_command("ls -la", timeout_ms=60000)
+        result = await self.command.execute_command("ls -la", timeout_ms=120000)
         self.assertIsInstance(result, CommandResult)
         self.assertTrue(result.success)
 
-        # Verify timeout was limited to 50000ms
         self.session.call_mcp_tool.assert_called_once()
         args = self.session.call_mcp_tool.call_args[0][1]
-        self.assertEqual(args["timeout_ms"], 50000)  # Should be limited to 50s
-
-        # Test with timeout exactly at limit
-        self.session.call_mcp_tool.reset_mock()
-        result = await self.command.execute_command("ls -la", timeout_ms=50000)
-        args = self.session.call_mcp_tool.call_args[0][1]
-        self.assertEqual(args["timeout_ms"], 50000)  # Should remain 50s
-
-        # Test with timeout below limit
-        self.session.call_mcp_tool.reset_mock()
-        result = await self.command.execute_command("ls -la", timeout_ms=30000)
-        args = self.session.call_mcp_tool.call_args[0][1]
-        self.assertEqual(args["timeout_ms"], 30000)  # Should remain unchanged
+        self.assertEqual(args["timeout_ms"], 120000)
 
     async def test_execute_command_invalid_envs_key(self):
         """

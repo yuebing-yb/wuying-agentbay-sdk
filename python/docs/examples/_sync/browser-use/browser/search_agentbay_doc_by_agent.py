@@ -6,7 +6,7 @@ import time
 示例：使用PageUse Agent的AgentBay接口访问阿里云并搜索“AgentBay帮助文档”
 打开 https://www.aliyun.com
 搜索“AgentBay帮助文档”，点击第一条搜索结果并进入“帮助文档”，滚动到页面底部
-重点：全程使用 BrowserAgent API
+重点：全程使用 BrowserOperator API
 """
 
 import os
@@ -26,13 +26,13 @@ def main():
     session = session_result.session
     try:
         assert session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
-        agent.navigate("https://www.aliyun.com")
-        agent.act(ActOptions(action="搜索框输入'AgentBay帮助文档'并回车"))
-        agent.act(ActOptions(action="点击搜索结果中的第一项"))
-        agent.act(ActOptions(action="点击'帮助文档'"))
-        agent.act(ActOptions(action="滚动页面到底部"))
+        operator.navigate("https://www.aliyun.com")
+        operator.act(ActOptions(action="搜索框输入'AgentBay帮助文档'并回车"))
+        operator.act(ActOptions(action="点击搜索结果中的第一项"))
+        operator.act(ActOptions(action="点击'帮助文档'"))
+        operator.act(ActOptions(action="滚动页面到底部"))
 
         time.sleep(5)
     finally:

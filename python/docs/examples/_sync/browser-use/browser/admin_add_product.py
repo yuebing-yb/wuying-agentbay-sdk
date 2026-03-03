@@ -25,10 +25,10 @@ def main():
     session = session_result.session
     try:
         assert session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
-        agent.navigate("http://116.62.195.152:3000")
-        agent.act(
+        operator.navigate("http://116.62.195.152:3000")
+        operator.act(
             ActOptions(
                 action="填写表单",
                 variables={
@@ -41,9 +41,9 @@ def main():
                 },
             )
         )
-        agent.act(ActOptions(action="点击提交/保存按钮"))
+        operator.act(ActOptions(action="点击提交/保存按钮"))
         time.sleep(2)
-        agent.close()
+        operator.close()
     finally:
         agent_bay.delete(session)
 

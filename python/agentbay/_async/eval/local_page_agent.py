@@ -7,14 +7,22 @@ import uuid
 from typing import Any, Dict
 
 from mcp import ClientSession, StdioServerParameters, stdio_client
-from playwright.async_api import async_playwright
+
+try:
+    from playwright.async_api import async_playwright
+except ImportError:
+    async_playwright = None  # type: ignore[misc, assignment]
 
 from agentbay import get_logger
+
+_PLAYWRIGHT_REQUIRED_MSG = (
+    "Playwright is required for local browser. "
+    "Install it with: pip install wuying-agentbay-sdk[playwright] or poetry install --with playwright"
+)
 from agentbay import AsyncBrowser as Browser
 from agentbay import AsyncSession as Session
 from agentbay.api.base_service import OperationResult
-
-from agentbay import AsyncBrowserAgent as BrowserAgent
+from agentbay import AsyncBrowserOperator as BrowserOperator
 from agentbay import BrowserOption
 
 # Use the AgentBay _logger instead of the standard _logger
@@ -167,7 +175,7 @@ class LocalMCPClient:
                 await asyncio.sleep(1)
 
 
-class LocalPageAgent(BrowserAgent):
+class LocalPageAgent(BrowserOperator):
     def __init__(self, session, browser):
         super().__init__(session, browser)
 
@@ -214,13 +222,24 @@ class LocalPageAgent(BrowserAgent):
 
 class LocalBrowser(Browser):
     def __init__(self, session=None):
-        # Optionally skip calling super().__init__ if not needed for tests
+        super().__init__(session)
         self.contexts = []
         self._cdp_port = 9222
-        self.agent: LocalPageAgent = LocalPageAgent(session, self)
+        # New: operator is the recommended way
+        self.operator = LocalPageAgent(session, self)
+        # Deprecated: agent is kept for backward compatibility
+        self._agent = self.operator
+        self._agent_deprecation_warned = False
         self._worker_thread = None
 
-    async def initialize(self, options: BrowserOption) -> bool:
+    async def initialize(self, option: BrowserOption = None) -> bool:
+        if self.is_initialized():
+            return True
+        
+        if option is None:
+            from agentbay import BrowserOption
+            option = BrowserOption()
+        
         if self._worker_thread is None:
             promise: concurrent.futures.Future[bool] = concurrent.futures.Future()
 
@@ -229,6 +248,8 @@ class LocalBrowser(Browser):
                     success = False
                     _logger.info("Start launching local browser")
                     try:
+                        if async_playwright is None:
+                            raise RuntimeError(_PLAYWRIGHT_REQUIRED_MSG)
                         async with async_playwright() as p:
                             # Define CDP port
                             # Recreate /tmp/chrome_cdp_ports.json with the required content
@@ -281,11 +302,17 @@ class LocalBrowser(Browser):
                 _logger.error("Failed to launch local browser")
                 return False
 
-        self.agent.initialize()
+        self.operator.initialize()
+        self._initialized = True
+        self._option = option
         return True
 
     def is_initialized(self) -> bool:
-        return True
+        return getattr(self, "_initialized", False)
+
+    def get_option(self):
+        """Returns the current BrowserOption used to initialize the browser, or None if not set."""
+        return getattr(self, "_option", None)
 
     async def get_endpoint_url(self) -> str:
         return f"http://localhost:{self._cdp_port}"
@@ -353,7 +380,7 @@ class LocalSession(Session):
         browser agent, which awaits session.call_mcp_tool. We return a real
         OperationResult instance to avoid 'await OperationResult' errors.
         """
-        return await self.browser.agent._call_mcp_tool_async(name, args)
+        return await self.browser.operator._call_mcp_tool_async(name, args)
 
     def delete(self, sync_context: bool = False) -> None:
         pass

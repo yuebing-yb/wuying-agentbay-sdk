@@ -26,6 +26,9 @@ public class CreateMcpSessionRequest extends TeaModel {
     @NameInMap("ImageId")
     public String imageId;
 
+    @NameInMap("Timeout")
+    public Integer timeout;
+
     @NameInMap("Labels")
     public String labels;
 
@@ -101,6 +104,14 @@ public class CreateMcpSessionRequest extends TeaModel {
     }
     public String getImageId() {
         return this.imageId;
+    }
+
+    public CreateMcpSessionRequest setTimeout(Integer timeout) {
+        this.timeout = timeout;
+        return this;
+    }
+    public Integer getTimeout() {
+        return this.timeout;
     }
 
     public CreateMcpSessionRequest setLabels(String labels) {

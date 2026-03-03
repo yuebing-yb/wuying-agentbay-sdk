@@ -47,12 +47,12 @@ async def main():
 
         # Navigate to a page and monitor network
         print("\n1. Navigating to example.com...")
-        await session.browser.agent.navigate("https://example.com")
+        await session.browser.operator.navigate("https://example.com")
         print("Page loaded")
 
         # Analyze network activity
         print("\n2. Analyzing network activity...")
-        success,network_result = await session.browser.agent.extract(
+        success,network_result = await session.browser.operator.extract(
             ExtractOptions(instruction="What resources were loaded on this page? (images, scripts, stylesheets)", schema=NetworkActivity)
         )
         if not success:
@@ -62,11 +62,11 @@ async def main():
 
         # Navigate to a more complex page
         print("\n3. Navigating to news.ycombinator.com...")
-        await session.browser.agent.navigate("https://news.ycombinator.com")
+        await session.browser.operator.navigate("https://news.ycombinator.com")
 
         # Check for API calls
         print("\n4. Checking for API calls...")
-        success,api_result = await session.browser.agent.extract(
+        success,api_result = await session.browser.operator.extract(
             ExtractOptions(instruction="Are there any API or AJAX requests being made?", schema=NetworkActivity)
         )
         if not success:
@@ -75,9 +75,9 @@ async def main():
 
         # Test page with known resources
         print("\n5. Testing resource loading...")
-        await session.browser.agent.navigate("https://httpbin.org/image/png")
+        await session.browser.operator.navigate("https://httpbin.org/image/png")
         
-        success,resource_result = await session.browser.agent.extract(
+        success,resource_result = await session.browser.operator.extract(
             ExtractOptions(instruction="What type of resource is displayed on this page?", schema=NetworkActivity)
         )
         if not success:
@@ -86,9 +86,9 @@ async def main():
 
         # Navigate to JSON endpoint
         print("\n6. Testing JSON API endpoint...")
-        await session.browser.agent.navigate("https://httpbin.org/json")
+        await session.browser.operator.navigate("https://httpbin.org/json")
         
-        success,json_result = await session.browser.agent.extract(
+        success,json_result = await session.browser.operator.extract(
             ExtractOptions(instruction="What is the content type and structure of the response?", schema=NetworkActivity)
         )
         if not success:
@@ -97,9 +97,9 @@ async def main():
 
         # Test redirect
         print("\n7. Testing redirect behavior...")
-        await session.browser.agent.navigate("https://httpbin.org/redirect/1")
+        await session.browser.operator.navigate("https://httpbin.org/redirect/1")
         
-        success,redirect_result = await session.browser.agent.extract(
+        success,redirect_result = await session.browser.operator.extract(
             ExtractOptions(instruction="What is the final URL after redirect?", schema=NetworkActivity)
         )
         if not success:
@@ -108,18 +108,18 @@ async def main():
 
         # Test status codes
         print("\n8. Testing different status codes...")
-        await session.browser.agent.navigate("https://httpbin.org/status/200")
+        await session.browser.operator.navigate("https://httpbin.org/status/200")
         
-        success,status_result = await session.browser.agent.extract(
+        success,status_result = await session.browser.operator.extract(
             ExtractOptions(instruction="What is displayed on this page?", schema=NetworkActivity)
         )
         print(f"Status 200 result: {status_result.content}")
 
         # Performance timing
         print("\n9. Analyzing page load performance...")
-        await session.browser.agent.navigate("https://example.com")
+        await session.browser.operator.navigate("https://example.com")
         
-        success,perf_result = await session.browser.agent.extract(
+        success,perf_result = await session.browser.operator.extract(
             ExtractOptions(instruction="How long did it take for the page to load? (if timing info is visible)", schema=NetworkActivity)
         )
         if not success:

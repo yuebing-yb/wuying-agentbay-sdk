@@ -4,7 +4,7 @@ from pathlib import Path
 from agentbay import AsyncAgentBay, CreateSessionParams
 
 
-IMAGE_ID = "imgc-0ab5ta4mn31wth5lh"
+IMAGE_ID = "mobile-use-android-12-gw"
 
 
 async def main() -> None:

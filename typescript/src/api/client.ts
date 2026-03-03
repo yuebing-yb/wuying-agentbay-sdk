@@ -220,6 +220,10 @@ export class Client extends OpenApi {
       body["ImageId"] = request.imageId;
     }
 
+    if (!$dara.isNull((request as any).timeout)) {
+      body["Timeout"] = (request as any).timeout;
+    }
+
     if (!$dara.isNull(request.labels)) {
       body["Labels"] = request.labels;
     }
@@ -853,6 +857,58 @@ export class Client extends OpenApi {
   ): Promise<$_model.PauseSessionAsyncResponse> {
     const runtime = new $dara.RuntimeOptions({});
     return await this.pauseSessionAsyncWithOptions(request, runtime);
+  }
+
+  /**
+   * Refresh session idle timer
+   *
+   * @param request - RefreshSessionIdleTimeRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns RefreshSessionIdleTimeResponse
+   */
+  async refreshSessionIdleTimeWithOptions(
+    request: $_model.RefreshSessionIdleTimeRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.RefreshSessionIdleTimeResponse> {
+    request.validate();
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.sessionId)) {
+      body["SessionId"] = request.sessionId;
+    }
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "RefreshSessionIdleTime",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.RefreshSessionIdleTimeResponse>(
+      await this.callApi(params, req, runtime),
+      new $_model.RefreshSessionIdleTimeResponse({})
+    );
+  }
+
+  /**
+   * Refresh session idle timer
+   *
+   * @param request - RefreshSessionIdleTimeRequest
+   * @returns RefreshSessionIdleTimeResponse
+   */
+  async refreshSessionIdleTime(
+    request: $_model.RefreshSessionIdleTimeRequest
+  ): Promise<$_model.RefreshSessionIdleTimeResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.refreshSessionIdleTimeWithOptions(request, runtime);
   }
 
   /**

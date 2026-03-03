@@ -20,7 +20,7 @@ public class MobileBetaScreenshotExample {
 
         AgentBay agentBay = new AgentBay();
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId("imgc-0ab5ta4mn31wth5lh");
+        params.setImageId("mobile-use-android-12-gw");
 
         SessionResult create = agentBay.create(params);
         if (!create.isSuccess() || create.getSession() == null) {
@@ -55,7 +55,7 @@ public class MobileBetaScreenshotExample {
             Files.write(p1, s1.getData());
             String size1 = "";
             if (s1.getWidth() != null && s1.getHeight() != null) {
-                size1 = ", size=" + s1.getWidth() + "x" + s1.getHeight();
+                size1 = ", mimeType=" + s1.getMimeType() + ", type=" + s1.getType() + ", size=" + s1.getWidth() + "x" + s1.getHeight();
             }
             System.out.println("Saved " + p1 + " (" + s1.getData().length + " bytes" + size1 + ")");
 
@@ -68,7 +68,7 @@ public class MobileBetaScreenshotExample {
             Files.write(p2, s2.getData());
             String size2 = "";
             if (s2.getWidth() != null && s2.getHeight() != null) {
-                size2 = ", size=" + s2.getWidth() + "x" + s2.getHeight();
+                size2 = ", mimeType=" + s2.getMimeType() + ", type=" + s2.getType() + ", size=" + s2.getWidth() + "x" + s2.getHeight();
             }
             System.out.println("Saved " + p2 + " (" + s2.getData().length + " bytes" + size2 + ")");
         } finally {

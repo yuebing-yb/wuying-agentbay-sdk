@@ -25,22 +25,22 @@ def main():
     session = session_result.session
     try:
         assert session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
-        agent.navigate("https://meeting.alibaba-inc.com/")
-        agent.act(
+        operator = session.browser.operator
+        operator.navigate("https://meeting.alibaba-inc.com/")
+        operator.act(
             ActOptions(
                 action="帮我登陆",
                 variables={"用户名": "xxxx", "密码": "123456"},
             )
         )
-        agent.act(
+        operator.act(
             ActOptions(
                 action="帮我找下下周三朝阳科技园C3六楼10点到12点有没有可用的会议室，如果有弹窗，帮我关掉",
             )
         )
         time.sleep(2)
     finally:
-        session.browser.agent.close()
+        session.browser.operator.close()
         agent_bay.delete(session)
 
 

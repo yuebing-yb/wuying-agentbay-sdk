@@ -1,31 +1,59 @@
-# Session API Reference
-
-## 🎯 Related Tutorial
-
-- [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Learn about session lifecycle and management
+# 🔧 Session API Reference
 
 ## Overview
 
 The Session class represents an active cloud environment instance in AgentBay. It provides access to all service modules (filesystem, command, browser, code, etc.) and manages the lifecycle of the cloud environment.
 
+
+## 📚 Tutorial
+
+[Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md)
+
+Detailed tutorial on session lifecycle and management
+
 ## Session
-
-```java
-public class Session
-```
-
-Represents a session in the AgentBay cloud environment.
 
 ### Constructor
 
 ```java
-public Session(String sessionId, AgentBay agentBay, SessionParams params)
 public Session(AgentBay agentBay, String sessionId)
 ```
 
-Create a Session object. Typically you don't create sessions directly; use `AgentBay.create()` instead.
+Creates a new Session instance.
 
-### Key Methods
+<p>Initializes all service instances (Agent, FileSystem, OSS, Code, Command, 
+ContextManager, Browser, Computer, Mobile) for this session.</p>
+
+**Parameters:**
+- `agentBay` (AgentBay): The AgentBay client instance
+- `sessionId` (String): The unique identifier for this session
+
+```java
+public Session(String sessionId, AgentBay agentBay)
+```
+
+Creates a new Session instance with alternative parameter order.
+
+<p>This constructor provides backward compatibility for code that uses
+the (String, AgentBay) parameter order.</p>
+
+**Parameters:**
+- `sessionId` (String): The unique identifier for this session
+- `agentBay` (AgentBay): The AgentBay client instance
+
+### Methods
+
+### getWsUrl
+
+```java
+public String getWsUrl()
+```
+
+### setWsUrl
+
+```java
+public void setWsUrl(String wsUrl)
+```
 
 ### getSessionId
 
@@ -36,15 +64,43 @@ public String getSessionId()
 Get the session ID.
 
 **Returns:**
-- `String`: The unique session identifier
+- `String`: The unique identifier for this session
 
-**Example:**
+### keepAlive
 
 ```java
-Session session = agentBay.create().getSession();
-String sessionId = session.getSessionId();
-System.out.println("Session ID: " + sessionId);
+public OperationResult keepAlive()
 ```
+
+Refresh the backend idle timer for this session.
+
+<p>This method calls the RefreshSessionIdleTime API to prevent the session
+from being automatically terminated due to inactivity.</p>
+
+**Returns:**
+- `OperationResult`: OperationResult containing request ID and success status
+
+### getAgentBay
+
+```java
+public AgentBay getAgentBay()
+```
+
+Get the AgentBay client.
+
+**Returns:**
+- `AgentBay`: The AgentBay client instance associated with this session
+
+### getAgent
+
+```java
+public Agent getAgent()
+```
+
+Get the agent for this session.
+
+**Returns:**
+- `Agent`: The Agent instance for AI-powered automation
 
 ### getFileSystem
 
@@ -52,287 +108,49 @@ System.out.println("Session ID: " + sessionId);
 public FileSystem getFileSystem()
 ```
 
-Get the file system service for this session.
+Get the file system for this session.
 
 **Returns:**
-- `FileSystem`: File system service instance
+- `FileSystem`: The FileSystem instance for file operations
 
-**Example:**
-
-```java
-FileSystem fs = session.getFileSystem();
-fs.writeFile("/tmp/test.txt", "Hello World");
-```
-
-### getCommand
+### fs
 
 ```java
-public Command getCommand()
+public FileSystem fs()
 ```
 
-Get the command execution service for this session.
+Alias for fileSystem.
+
+<p>Provides a shorthand way to access the file system service.</p>
 
 **Returns:**
-- `Command`: Command service instance
+- `FileSystem`: The FileSystem instance
 
-**Example:**
-
-```java
-Command cmd = session.getCommand();
-CommandResult result = cmd.executeCommand("ls -la", 1000);
-```
-
-### getOss
+### getFilesystem
 
 ```java
-public OSS getOss()
+public FileSystem getFilesystem()
 ```
 
-Get the OSS service for this session.
+Alias for fileSystem.
+
+<p>Provides an alternative way to access the file system service.</p>
 
 **Returns:**
-- `OSS`: OSS service instance
+- `FileSystem`: The FileSystem instance
 
-**Example:**
-
-```java
-OSS oss = session.getOss();
-oss.envInit(accessKeyId, accessKeySecret, securityToken, endpoint, region);
-oss.upload("bucket", "key", "/local/path");
-```
-
-### getCode
+### getFiles
 
 ```java
-public Code getCode()
+public FileSystem getFiles()
 ```
 
-Get the code execution service for this session.
+Alias for fileSystem.
+
+<p>Provides a shorthand way to access the file system service.</p>
 
 **Returns:**
-- `Code`: Code service instance
-
-**Example:**
-
-```java
-Code code = session.getCode();
-CodeExecutionResult result = code.runCode("print('Hello')", "python");
-```
-
-### getBrowser
-
-```java
-public Browser getBrowser()
-```
-
-Get the browser automation service for this session.
-
-**Returns:**
-- `Browser`: Browser service instance
-
-**Example:**
-
-```java
-Browser browser = session.getBrowser();
-BrowserOption option = new BrowserOption();
-browser.initialize(option);
-```
-
-### getContext
-
-```java
-public ContextManager getContext()
-```
-
-Get the context manager for this session. The ContextManager provides methods for context synchronization and status monitoring.
-
-**Returns:**
-- `ContextManager`: Context manager instance
-
-**Available Methods:**
-- `sync()` - Trigger context sync (non-blocking)
-- `sync(Consumer<Boolean> callback)` - Sync with callback (async mode)
-- `syncAndWait()` - Sync and wait for completion (blocking mode)
-- `info()` - Get context synchronization status
-
-**Example:**
-
-```java
-ContextManager context = session.getContext();
-
-// Basic sync (trigger only)
-ContextSyncResult result = context.sync();
-
-// Sync with callback (async)
-context.sync(success -> {
-    System.out.println("Sync completed: " + success);
-});
-
-// Sync and wait (blocking)
-ContextSyncResult waitResult = context.syncAndWait();
-if (waitResult.isSuccess()) {
-    System.out.println("Sync completed successfully");
-}
-
-// Get sync status
-ContextInfoResult info = context.info();
-for (ContextStatusData status : info.getContextStatusData()) {
-    System.out.println("Status: " + status.getStatus());
-}
-```
-
-**See Also:**
-- [Context API Reference](context.md) - Complete context management documentation
-- [Context Sync Lifecycle Example](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ContextSyncLifecycleExample.java) - Complete example demonstrating all sync modes
-
-### info
-
-```java
-public SessionInfoResult info() throws AgentBayException
-```
-
-Get detailed information about this session.
-
-**Returns:**
-- `SessionInfoResult`: Result containing session information
-
-**Throws:**
-- `AgentBayException`: If the operation fails
-
-**Example:**
-
-```java
-SessionInfoResult infoResult = session.info();
-if (infoResult.isSuccess()) {
-    SessionInfo info = infoResult.getSessionInfo();
-    System.out.println("Resource URL: " + info.getResourceUrl());
-    System.out.println("Session ID: " + info.getSessionId());
-}
-```
-
-### delete
-
-```java
-public DeleteResult delete()
-public DeleteResult delete(boolean syncContext)
-```
-
-Delete this session and release all associated resources.
-
-**Parameters:**
-- `syncContext` (boolean): Whether to sync context before deletion (default: false)
-
-**Returns:**
-- `DeleteResult`: Result containing success status
-
-**Example:**
-
-```java
-// Simple delete
-DeleteResult result = session.delete();
-
-// Delete with context sync
-DeleteResult syncResult = session.delete(true);
-if (syncResult.isSuccess()) {
-    System.out.println("Session deleted successfully");
-}
-```
-
-**Note:** When `syncContext` is true, the method will:
-1. Trigger context upload synchronization
-2. Wait for all upload tasks to complete (up to 5 minutes)
-3. Delete the session
-
-This ensures all data is saved to context before the session is terminated.
-
-### dumpState
-
-```java
-public String dumpState() throws AgentBayException
-```
-
-Dump session state to a JSON string for persistence and later restoration.
-
-**Returns:**
-- `String`: JSON string containing session state
-
-**Throws:**
-- `AgentBayException`: If serialization fails
-
-**Example:**
-
-```java
-String stateJson = session.dumpState();
-// Save stateJson for later restoration
-Files.writeString(Path.of("/tmp/session-state.json"), stateJson);
-```
-
-### restoreState
-
-```java
-public static Session restoreState(AgentBay agentBay, String stateJson) throws AgentBayException
-```
-
-Restore a session from a previously dumped state JSON string.
-
-**Parameters:**
-- `agentBay` (AgentBay): AgentBay client instance
-- `stateJson` (String): JSON string containing session state
-
-**Returns:**
-- `Session`: Restored session object
-
-**Throws:**
-- `AgentBayException`: If deserialization or restoration fails
-
-**Example:**
-
-```java
-// Load saved state
-String stateJson = Files.readString(Path.of("/tmp/session-state.json"));
-
-// Restore session
-Session restoredSession = Session.restoreState(agentBay, stateJson);
-System.out.println("Session restored: " + restoredSession.getSessionId());
-```
-
-### getLink
-
-```java
-public OperationResult getLink() throws AgentBayException
-public OperationResult getLink(String protocolType, Integer port) throws AgentBayException
-```
-
-Get a link URL for accessing the session environment (useful for VPC sessions or web services).
-
-**Parameters:**
-- `protocolType` (String): Protocol type (e.g., "https") - optional
-- `port` (Integer): Port number - optional
-
-**Returns:**
-- `OperationResult`: Result containing the link URL
-  - `getData()` returns the URL as a String
-
-**Throws:**
-- `AgentBayException`: If the request fails
-
-**Example:**
-
-```java
-// Get default link
-OperationResult linkResult = session.getLink();
-if (linkResult.isSuccess()) {
-    String url = (String) linkResult.getData();
-    System.out.println("Session URL: " + url);
-}
-
-// Get link for specific port
-OperationResult customLink = session.getLink("https", 8080);
-if (customLink.isSuccess()) {
-    String customUrl = (String) customLink.getData();
-    System.out.println("Custom URL: " + customUrl);
-}
-```
+- `FileSystem`: The FileSystem instance
 
 ### getMetrics
 
@@ -345,347 +163,409 @@ Get runtime metrics for this session via the MCP get_metrics tool.
 The underlying MCP tool returns a JSON string. This method parses it and returns structured metrics.
 
 **Returns:**
-- `SessionMetricsResult`: Result containing structured metrics data
-  - `isSuccess()`: Whether the operation succeeded
-  - `getMetrics()`: SessionMetrics object containing runtime metrics
-  - `getRaw()`: Raw metrics data as Map<String, Object>
-  - `getErrorMessage()`: Error message if operation failed
+- `SessionMetricsResult`: SessionMetricsResult containing structured metrics data
 
-**SessionMetrics Fields:**
-- `cpuCount`: CPU core count
-- `cpuUsedPct`: CPU usage percentage
-- `memTotal`, `memUsed`: Memory total/used (bytes)
-- `diskTotal`, `diskUsed`: Disk total/used (bytes)
-- `rxRateKBps`, `txRateKBps`: Network RX/TX rate (KB/s)
-- `rxUsedKB`, `txUsedKB`: Network RX/TX total used (KB)
-- `timestamp`: RFC3339-like timestamp string (with timezone offset)
-
-**Example:**
+### info
 
 ```java
-SessionResult result = agentBay.create(new CreateSessionParams().setImageId("linux_latest"));
-Session session = result.getSession();
-
-SessionMetricsResult metricsResult = session.getMetrics();
-if (metricsResult.isSuccess()) {
-    SessionMetrics metrics = metricsResult.getMetrics();
-    System.out.println("CPU Count: " + metrics.getCpuCount());
-    System.out.println("CPU Usage: " + metrics.getCpuUsedPct() + "%");
-    System.out.println("Memory Used: " + metrics.getMemUsed() + " / " + metrics.getMemTotal());
-    System.out.println("Disk Used: " + metrics.getDiskUsed() + " / " + metrics.getDiskTotal());
-    System.out.println("Timestamp: " + metrics.getTimestamp());
-}
-
-session.delete();
+public SessionInfoResult info() throws AgentBayException
 ```
 
-### Label Management
+Gets information about this session
 
-#### setLabels
+**Returns:**
+- `SessionInfoResult`: SessionInfoResult containing SessionInfo and request ID
+
+**Throws:**
+- `AgentBayException`: if the operation fails
+
+### getOss
+
+```java
+public OSS getOss()
+```
+
+Get the OSS service for this session
+
+**Returns:**
+- `OSS`: OSS instance
+
+### getCode
+
+```java
+public Code getCode()
+```
+
+Get the Code service for this session
+
+**Returns:**
+- `Code`: Code instance
+
+### getCommand
+
+```java
+public Command getCommand()
+```
+
+Get the Command service for this session
+
+**Returns:**
+- `Command`: Command instance
+
+### getContext
+
+```java
+public ContextManager getContext()
+```
+
+Get the context manager for this session
+
+**Returns:**
+- `ContextManager`: ContextManager instance
+
+### getBrowser
+
+```java
+public Browser getBrowser()
+```
+
+Get the browser service for this session
+
+**Returns:**
+- `Browser`: Browser instance
+
+### getComputer
+
+```java
+public Computer getComputer()
+```
+
+Get the computer service for this session
+
+**Returns:**
+- `Computer`: Computer instance
+
+### getMobile
+
+```java
+public Mobile getMobile()
+```
+
+Get the mobile service for this session
+
+**Returns:**
+- `Mobile`: Mobile instance
+
+### getFileTransferContextId
+
+```java
+public String getFileTransferContextId()
+```
+
+Get the file transfer context ID for this session
+
+**Returns:**
+- `String`: File transfer context ID
+
+### setFileTransferContextId
+
+```java
+public void setFileTransferContextId(String fileTransferContextId)
+```
+
+Set the file transfer context ID for this session
+
+**Parameters:**
+- `fileTransferContextId` (String): File transfer context ID
+
+### initializeBrowser
+
+```java
+public OperationResult initializeBrowser(BrowserOption option) throws AgentBayException
+```
+
+Initializes a browser instance with the given options.
+
+This method calls the AgentBay cloud service to create a browser instance for web automation and testing. The browser is initialized with a persistent path for storing browser data.
+
+**Parameters:**
+- `option` (BrowserOption): Browser configuration options including browser type, headless mode, etc.
+
+**Returns:**
+- `OperationResult`: OperationResult containing the initialization result
+
+**Throws:**
+- `AgentBayException`: if browser initialization fails
+
+### getApiKey
+
+```java
+public String getApiKey()
+```
+
+Get the API key for this session
+
+**Returns:**
+- `String`: API key
+
+### listMcpTools
+
+```java
+public McpToolsResult listMcpTools()
+```
+
+Lists all available MCP tools for this session.
+
+This method retrieves the list of MCP tools that can be called in this session,including their names, descriptions, input schemas, and server information.
+
+**Returns:**
+- `McpToolsResult`: McpToolsResult containing the list of available tools
+
+### setImageId
+
+```java
+public void setImageId(String imageId)
+```
+
+Sets the image ID for this session.
+This is used to specify the base image for the session environment.
+
+**Parameters:**
+- `imageId` (String): The image ID to set
+
+### getImageId
+
+```java
+public String getImageId()
+```
+
+Gets the image ID for this session.
+
+**Returns:**
+- `String`: The image ID, or empty string if not set
+
+### getEnableBrowserReplay
+
+```java
+public Boolean getEnableBrowserReplay()
+```
+
+Gets the enableBrowserReplay flag.
+This flag determines whether browser recording is enabled for this session.
+
+**Returns:**
+- `Boolean`: true if browser replay is enabled, false otherwise
+
+### setEnableBrowserReplay
+
+```java
+public void setEnableBrowserReplay(Boolean enableBrowserReplay)
+```
+
+Sets the enableBrowserReplay flag.
+This flag determines whether browser recording is enabled for this session.
+
+**Parameters:**
+- `enableBrowserReplay` (Boolean): true to enable browser replay, false to disable
+
+### getResourceUrl
+
+```java
+public String getResourceUrl()
+```
+
+Get the resource URL for accessing the session
+
+**Returns:**
+- `String`: Resource URL
+
+### setResourceUrl
+
+```java
+public void setResourceUrl(String resourceUrl)
+```
+
+Set the resource URL for accessing the session
+
+**Parameters:**
+- `resourceUrl` (String): Resource URL
+
+### getToken
+
+```java
+public String getToken()
+```
+
+Gets the token for LinkUrl tool calls.
+This token is used for authentication when calling MCP tools via the LinkUrl route.
+
+**Returns:**
+- `String`: The authentication token
+
+### setToken
+
+```java
+public void setToken(String token)
+```
+
+Sets the token for LinkUrl tool calls.
+This token is used for authentication when calling MCP tools via the LinkUrl route.
+
+**Parameters:**
+- `token` (String): The authentication token to set
+
+### getLinkUrl
+
+```java
+public String getLinkUrl()
+```
+
+Gets the LinkUrl for direct tool calls.
+This URL is used for calling MCP tools via the LinkUrl route in VPC environments.
+
+**Returns:**
+- `String`: The LinkUrl, or empty string if not set
+
+### setLinkUrl
+
+```java
+public void setLinkUrl(String linkUrl)
+```
+
+Sets the LinkUrl for direct tool calls.
+This URL is used for calling MCP tools via the LinkUrl route in VPC environments.
+
+**Parameters:**
+- `linkUrl` (String): The LinkUrl to set
+
+### getMcpTools
+
+```java
+public List<McpTool> getMcpTools()
+```
+
+Gets the list of MCP tools available for this session.
+
+**Returns:**
+- `List<McpTool>`: List of McpTool instances
+
+### setMcpTools
+
+```java
+public void setMcpTools(List<McpTool> mcpTools)
+```
+
+Sets the list of MCP tools for this session.
+
+**Parameters:**
+- `mcpTools` (List<McpTool>): The list of McpTool instances to set
+
+### getMcpServerForTool
+
+```java
+public String getMcpServerForTool(String toolName)
+```
+
+Gets the MCP server name for a specific tool.
+
+This method searches through the available MCP tools to find the server that provides the specified tool.
+
+**Parameters:**
+- `toolName` (String): The name of the tool to look up
+
+**Returns:**
+- `String`: The server name, or empty string if not found
+
+### getLink
+
+```java
+public OperationResult getLink(String protocolType, Integer port) throws AgentBayException
+```
+
+```java
+public OperationResult getLink() throws AgentBayException
+```
+
+Gets a connection link for the current session with specified parameters.
+
+This method generates a connection URL that can be used to access the session via the specified protocol and port.
+
+**Parameters:**
+- `protocolType` (String): The protocol type to use for the link (e.g., "https")
+- `port` (Integer): The port number to use for the connection
+
+**Returns:**
+- `OperationResult`: OperationResult containing the connection link URL
+
+**Throws:**
+- `AgentBayException`: if the request fails
+
+### delete
+
+```java
+public com.aliyun.agentbay.model.DeleteResult delete()
+```
+
+```java
+public com.aliyun.agentbay.model.DeleteResult delete(boolean syncContext)
+```
+
+Deletes this session with optional context synchronization.
+
+This method releases the cloud resources associated with this session.
+If syncContext is true, it will first synchronize the context (upload files)
+before deleting the session, waiting for all uploads to complete.
+
+**Parameters:**
+- `syncContext` (boolean): Whether to synchronize context before deletion
+
+**Returns:**
+- `com.aliyun.agentbay.model.DeleteResult`: DeleteResult containing the deletion result
+
+### setLabels
 
 ```java
 public OperationResult setLabels(Map<String, String> labels) throws AgentBayException
 ```
 
-Set labels for this session. Labels are key-value pairs that help organize and filter sessions.
+Sets labels for this session.
+
+Labels are key-value pairs that can be used to organize and filter sessions.
+All keys and values must be non-empty strings.
 
 **Parameters:**
-- `labels` (Map<String, String>): Map of label key-value pairs to set
+- `labels` (Map<String,String>): Map of label key-value pairs to set
 
 **Returns:**
-- `OperationResult`: Result containing the set labels in the data field
+- `OperationResult`: OperationResult indicating success or failure
 
 **Throws:**
-- `AgentBayException`: If the API call fails
-- `IllegalArgumentException`: If label validation fails
+- `AgentBayException`: if the API call fails or validation fails
+- `IllegalArgumentException`: if labels are null or contain invalid keys/values
 
-**Label Constraints:**
-- Maximum 20 labels per session
-- Label keys cannot be null or empty
-- Label keys cannot exceed 128 characters
-- Label values cannot exceed 256 characters
-- Label values can be null
-
-**Example:**
-
-```java
-Session session = agentBay.create(new CreateSessionParams()).getSession();
-
-// Set labels for the session
-Map<String, String> labels = new HashMap<>();
-labels.put("environment", "production");
-labels.put("team", "backend");
-labels.put("project", "data-pipeline");
-labels.put("version", "v2.1.0");
-
-OperationResult result = session.setLabels(labels);
-if (result.isSuccess()) {
-    System.out.println("Labels set successfully");
-    Map<String, String> setLabels = (Map<String, String>) result.getData();
-    System.out.println("Set " + setLabels.size() + " labels");
-}
-```
-
-**Use Cases:**
-- Organize sessions by environment (dev, staging, production)
-- Track sessions by team or project
-- Add version or release tags
-- Filter sessions in monitoring dashboards
-
-#### getLabels
+### getLabels
 
 ```java
 public OperationResult getLabels() throws AgentBayException
 ```
 
-Get all labels currently set on this session.
+Gets the labels for this session.
+
+This method retrieves all labels that have been set for this session.
 
 **Returns:**
-- `OperationResult`: Result containing the labels map in the data field
-  - `data` field contains `Map<String, String>` of all labels
-  - Returns empty map if no labels are set
+- `OperationResult`: OperationResult containing the labels map as JSON string in the data field
 
 **Throws:**
-- `AgentBayException`: If the API call fails
+- `AgentBayException`: if the API call fails
 
-**Example:**
 
-```java
-Session session = agentBay.create(new CreateSessionParams()).getSession();
 
-// Set some labels
-Map<String, String> labels = Map.of(
-    "environment", "production",
-    "team", "backend"
-);
-session.setLabels(labels);
+## 🔗 Related Resources
 
-// Later, retrieve the labels
-OperationResult result = session.getLabels();
-if (result.isSuccess()) {
-    Map<String, String> retrievedLabels = (Map<String, String>) result.getData();
-    System.out.println("Session has " + retrievedLabels.size() + " labels:");
-    for (Map.Entry<String, String> entry : retrievedLabels.entrySet()) {
-        System.out.println("  " + entry.getKey() + " = " + entry.getValue());
-    }
-}
-```
-
-**Complete Example - Label Lifecycle:**
-
-```java
-import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.session.Session;
-import com.aliyun.agentbay.session.CreateSessionParams;
-import com.aliyun.agentbay.model.OperationResult;
-import java.util.HashMap;
-import java.util.Map;
-
-public class LabelManagementExample {
-    public static void main(String[] args) throws Exception {
-        AgentBay agentBay = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
-
-        // Create session
-        Session session = agentBay.create(new CreateSessionParams()).getSession();
-
-        try {
-            // Set initial labels
-            Map<String, String> labels = new HashMap<>();
-            labels.put("environment", "production");
-            labels.put("team", "backend");
-            labels.put("project", "api-service");
-
-            OperationResult setResult = session.setLabels(labels);
-            System.out.println("Set labels: " + setResult.isSuccess());
-
-            // Retrieve labels
-            OperationResult getResult = session.getLabels();
-            Map<String, String> retrievedLabels = (Map<String, String>) getResult.getData();
-            System.out.println("Retrieved " + retrievedLabels.size() + " labels");
-
-            // Update labels (adds/updates, doesn't remove existing)
-            labels = new HashMap<>();
-            labels.put("environment", "staging");  // Update existing
-            labels.put("version", "v2.0.0");       // Add new
-
-            session.setLabels(labels);
-
-            // Get updated labels
-            getResult = session.getLabels();
-            retrievedLabels = (Map<String, String>) getResult.getData();
-            System.out.println("After update: " + retrievedLabels.size() + " labels");
-
-        } finally {
-            session.delete();
-        }
-    }
-}
-```
-
-**Note:** Setting labels will merge with existing labels. To remove labels, you need to explicitly set them to null or use a complete label map.
-
-### MCP Tool Operations
-
-### listTools
-
-```java
-public List<Object> listTools() throws AgentBayException
-```
-
-List all available MCP tools for this session.
-
-**Returns:**
-- `List<Object>`: List of available tool definitions
-
-**Throws:**
-- `AgentBayException`: If the operation fails
-
-### callTool
-
-```java
-public CallMcpToolResponse callTool(String toolName, Object args) throws AgentBayException
-```
-
-Call an MCP tool directly.
-
-**Parameters:**
-- `toolName` (String): Name of the tool to call
-- `args` (Object): Tool arguments (typically a Map or custom object)
-
-**Returns:**
-- `CallMcpToolResponse`: Tool execution response containing:
-  - `content` (List<Object>): Response content from the tool
-  - `isError` (boolean): Whether the call resulted in an error
-  - Other tool-specific fields
-
-**Throws:**
-- `AgentBayException`: If the call fails
-
-**Example:**
-
-```java
-// List available tools first
-List<Object> tools = session.listTools();
-System.out.println("Available tools: " + tools);
-
-// Call a tool with arguments
-Map<String, Object> args = new HashMap<>();
-args.put("path", "/tmp");
-CallMcpToolResponse response = session.callTool("list_directory", args);
-
-if (!response.isError()) {
-    System.out.println("Tool result: " + response.getContent());
-} else {
-    System.err.println("Tool call failed");
-}
-```
-
-## SessionInfo
-
-```java
-public class SessionInfo
-```
-
-Contains detailed information about a session.
-
-**Fields:**
-- `sessionId` (String): Session identifier
-- `resourceUrl` (String): Resource URL for accessing the session
-- `appId` (String): Application ID
-- `authCode` (String): Authentication code
-- `resourceId` (String): Resource identifier
-- `resourceType` (String): Type of resource
-- `ticket` (String): Access ticket
-- `connectionProperties` (Map<String, Object>): Connection properties
-
-## Session State Management
-
-Sessions can be persisted and restored using the dump/restore mechanism:
-
-```java
-// Save session state
-Session session = agentBay.create().getSession();
-String state = session.dumpState();
-Files.writeString(Path.of("session.json"), state);
-
-// ... Later, restore the session
-String savedState = Files.readString(Path.of("session.json"));
-Session restored = Session.restoreState(agentBay, savedState);
-
-// Continue using restored session
-FileContentResult result = restored.getFileSystem().readFile("/tmp/test.txt");
-```
-
-## VPC Sessions
-
-For sessions created with VPC networking:
-
-```java
-// Check if session is VPC-enabled
-boolean isVpc = session.isVpcEnabled();
-
-// Get VPC link (auto-refreshes if expired)
-String vpcUrl = session.getVpcLinkUrl();
-
-// Manually update VPC link
-session.updateVpcLinkUrl();
-```
-
-## Best Practices
-
-1. **Always Delete Sessions**: Call `session.delete()` when done to free resources
-2. **Context Sync on Delete**: Use `session.delete(true)` if you need to preserve data
-3. **Error Handling**: Check result success status before using data
-4. **Resource Management**: Minimize concurrent sessions to stay within quotas
-5. **State Persistence**: Use dump/restore for long-running workflows that span multiple runs
-6. **Timeout Configuration**: Set appropriate timeouts for long-running operations
-
-## Common Patterns
-
-### Basic Session Usage
-
-```java
-// Create and use session
-SessionResult result = agentBay.create();
-if (result.isSuccess()) {
-    Session session = result.getSession();
-    
-    // Use session services
-    session.getFileSystem().writeFile("/tmp/data.txt", "content");
-    CommandResult cmdResult = session.getCommand().execute("ls -la");
-    
-    // Clean up
-    session.delete();
-}
-```
-
-### Session with Context Sync
-
-```java
-// Create session with context
-ContextSync contextSync = ContextSync.create(contextId, "/data", SyncPolicy.defaultPolicy());
-CreateSessionParams params = new CreateSessionParams();
-params.setContextSyncs(Arrays.asList(contextSync));
-
-Session session = agentBay.create(params).getSession();
-
-// Work with files - they'll be synced to context
-session.getFileSystem().writeFile("/data/output.txt", "results");
-
-// Delete with sync to save data
-session.delete(true);
-```
-
-## Related Resources
-
-- [AgentBay API Reference](agentbay.md)
-- [FileSystem API Reference](filesystem.md)
-- [Command API Reference](command.md)
-- [Context API Reference](context.md)
-- [Session Context Example](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/SessionContextExample.java)
-- [Browser Context Example](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserContextExample.java)
-
----
-
-*Documentation for AgentBay Java SDK*
+- [FileSystem API Reference](../../../api/common-features/basics/filesystem.md)
+- [Command API Reference](../../../api/common-features/basics/command.md)
+- [Context API Reference](../../../api/common-features/basics/context.md)
+- [Context Manager API Reference](../../../api/common-features/basics/context-manager.md)
+- [OSS API Reference](../../../api/common-features/advanced/oss.md)
 

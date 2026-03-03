@@ -89,9 +89,11 @@ logger.info("Info message")
 
 ### File Logging
 
-> **Note**: File logging is currently only available in the Python SDK. TypeScript and Golang SDKs log to stdout/stderr.
+All SDKs (Python, TypeScript, Go) support file logging. Java uses SLF4J, so file logging is configured through the application's logging backend (e.g., Logback).
 
-The Python SDK supports file logging with automatic log rotation and retention. By default, logs are written to `python/agentbay.log`.
+#### Python
+
+The Python SDK supports file logging with automatic log rotation and retention via loguru. By default, logs are written to `python/agentbay.log`.
 
 ```python
 from agentbay import AgentBayLogger
@@ -100,9 +102,32 @@ from agentbay import AgentBayLogger
 AgentBayLogger.setup(
     level="DEBUG",
     log_file="/var/log/myapp.log",  # Custom log file path
-    rotation="100 MB",               # Rotate when file reaches 100 MB
+    max_file_size="100 MB",          # Rotate when file reaches 100 MB
     retention="30 days"              # Keep logs for 30 days
 )
+```
+
+#### TypeScript
+
+```typescript
+import { setupLogger } from 'wuying-agentbay-sdk';
+
+setupLogger({
+    level: 'DEBUG',
+    logFile: '/var/log/agentbay.log',
+    maxFileSize: '100 MB',
+    enableConsole: true
+});
+```
+
+#### Go
+
+```go
+agentbay.SetupLogger(agentbay.LoggerConfig{
+    Level:       "DEBUG",
+    LogFile:     "/var/log/agentbay.log",
+    MaxFileSize: "100 MB",
+})
 ```
 
 ---

@@ -19,6 +19,9 @@ public class ListSessionRequest extends TeaModel {
     @NameInMap("NextToken")
     public String nextToken;
 
+    @NameInMap("Status")
+    public String status;
+
     public static ListSessionRequest build(java.util.Map<String, ?> map) throws Exception {
         ListSessionRequest self = new ListSessionRequest();
         return TeaModel.build(map, self);
@@ -62,6 +65,14 @@ public class ListSessionRequest extends TeaModel {
     }
     public String getNextToken() {
         return this.nextToken;
+    }
+
+    public ListSessionRequest setStatus(String status) {
+        this.status = status;
+        return this;
+    }
+    public String getStatus() {
+        return this.status;
     }
 
 }

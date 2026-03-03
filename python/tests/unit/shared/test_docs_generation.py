@@ -14,13 +14,35 @@ def test_generate_python_api_docs():
     # Use the current Python executable (should be from virtual environment)
     python_executable = sys.executable
 
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+def test_generate_python_api_docs():
+    project_root = Path(__file__).resolve().parents[3]  # Go up to python directory
+    docs_dir = project_root / "docs" / "api"
+
+    if docs_dir.exists():
+        shutil.rmtree(docs_dir)
+
+    # Use the current Python executable (should be from virtual environment)
+    python_executable = sys.executable
+
+    # Set UTF-8 encoding for subprocess to handle Unicode characters on Windows
+    env = None
+    if sys.platform == "win32":
+        import os
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
+
     result = subprocess.run(
         [python_executable, "scripts/generate_api_docs.py"],
         cwd=project_root,
         capture_output=True,
         text=True,
+        env=env,
     )
-
     assert (
         result.returncode == 0
     ), f"Script failed with return code {result.returncode}\nStdout: {result.stdout}\nStderr: {result.stderr}"
@@ -45,13 +67,13 @@ def test_generate_python_api_docs():
     config_file = docs_dir / "common" / "config.md"
     assert config_file.exists(), "Common Config documentation was not generated"
 
-    # Browser Agent models should include constructor signatures (e.g., ActOptions.__init__)
-    browser_agent_models = docs_dir / "common" / "browser-agent-models.md"
-    assert browser_agent_models.exists(), "Browser Agent Models documentation was not generated"
-    browser_agent_content = browser_agent_models.read_text(encoding="utf-8")
+    # Browser Operator models should include constructor signatures (e.g., ActOptions.__init__)
+    browser_operator_models = docs_dir / "common" / "browser-operator-models.md"
+    assert browser_operator_models.exists(), "Browser Operator Models documentation was not generated"
+    browser_operator_content = browser_operator_models.read_text(encoding="utf-8")
     assert (
-        "(self, action: str" in browser_agent_content
-        or "def __init__(action: str" in browser_agent_content
+        "(self, action: str" in browser_operator_content
+        or "def __init__(action: str" in browser_operator_content
     ), "ActOptions constructor not documented"
 
     # Browser models should include BrowserProxy constructor signature

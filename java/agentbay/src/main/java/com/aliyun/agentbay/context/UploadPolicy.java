@@ -5,6 +5,12 @@ import java.util.Map;
 
 /**
  * Defines the upload policy for context synchronization
+ * 
+ * Attributes:
+ *     autoUpload: Enables automatic upload
+ *     uploadStrategy: Defines the upload strategy
+ *     uploadMode: Defines the upload mode (UploadMode.FILE or UploadMode.ARCHIVE)
+ *     period: Upload period in seconds (default: 30)
  */
 public class UploadPolicy {
     private boolean autoUpload = true;

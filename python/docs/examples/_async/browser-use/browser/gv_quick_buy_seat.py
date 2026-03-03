@@ -22,24 +22,24 @@ async def main():
     session = session_result.session
     try:
         assert await session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
-        await agent.navigate("https://www.gv.com.sg/")
+        operator = session.browser.operator
+        await operator.navigate("https://www.gv.com.sg/")
 
-        await agent.act(ActOptions(action='点击 "Quick Buy" 按钮'))
-        await agent.act(
+        await operator.act(ActOptions(action='点击 "Quick Buy" 按钮'))
+        await operator.act(
             ActOptions(
                 action="在 Quick-Buy 面板中选择任意影院、任意影片，日期选择 2025-08-12"
             )
         )
-        await agent.act(ActOptions(action='点击 "Go" 进入选座页面'))
-        await agent.act(ActOptions(action='点击 "12:55 PM" 的场次'))
-        await agent.act(
+        await operator.act(ActOptions(action='点击 "Go" 进入选座页面'))
+        await operator.act(ActOptions(action='点击 "12:55 PM" 的场次'))
+        await operator.act(
             ActOptions(
                 action="选择任意可用座位，确保只选择一个，如有两座被选中则取消多余的"
             )
         )
         await asyncio.sleep(3)
-        await agent.close()
+        await operator.close()
     finally:
         await agent_bay.delete(session)
 

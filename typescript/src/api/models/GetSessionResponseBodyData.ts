@@ -34,8 +34,10 @@ export class GetSessionResponseBodyData extends $dara.Model {
   sessionId?: string;
   success?: boolean;
   httpPort?: string;
+  linkUrl?: string;
   networkInterfaceIp?: string;
   token?: string;
+  wsUrl?: string;
   vpcResource?: boolean;
   resourceUrl?: string;
   status?: string;
@@ -48,8 +50,10 @@ export class GetSessionResponseBodyData extends $dara.Model {
       sessionId: 'SessionId',
       success: 'Success',
       httpPort: 'HttpPort',
+      linkUrl: 'LinkUrl',
       networkInterfaceIp: 'NetworkInterfaceIp',
       token: 'Token',
+      wsUrl: 'WsUrl',
       vpcResource: 'VpcResource',
       resourceUrl: 'ResourceUrl',
       status: 'Status',
@@ -65,8 +69,10 @@ export class GetSessionResponseBodyData extends $dara.Model {
       sessionId: 'string',
       success: 'boolean',
       httpPort: 'string',
+      linkUrl: 'string',
       networkInterfaceIp: 'string',
       token: 'string',
+      wsUrl: 'string',
       vpcResource: 'boolean',
       contexts: { 'type': 'array', 'itemType': GetSessionResponseBodyDataContexts },
       resourceUrl: 'string',

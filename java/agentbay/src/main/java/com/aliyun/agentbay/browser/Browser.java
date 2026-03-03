@@ -1,7 +1,9 @@
 package com.aliyun.agentbay.browser;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.aliyun.agentbay.Config;
-import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.exception.BrowserException;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.service.BaseService;
@@ -11,8 +13,6 @@ import com.aliyun.wuyingai20250506.models.InitBrowserRequest;
 import com.aliyun.wuyingai20250506.models.InitBrowserResponse;
 import com.aliyun.wuyingai20250506.models.InitBrowserResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Browser provides browser-related operations for the session.
@@ -25,20 +25,34 @@ public class Browser extends BaseService {
     private String endpointUrl;
     private boolean initialized;
     private BrowserOption option;
+    
+    /**
+     * The browser operator instance (recommended).
+     */
+    private BrowserOperator operator;
+    /**
+     * The browser agent instance (deprecated).
+     */
+    @Deprecated
     private BrowserAgent agent;
+    
     private Integer endpointRouterPort;
+    private volatile boolean agentDeprecationWarned = false;
 
     public Browser(Session session) {
         super(session);
         this.initialized = false;
+        
+        this.operator = new BrowserOperator(session, this);
         this.agent = new BrowserAgent(session, this);
     }
 
     /**
-     * Initialize the browser instance with the given options.
-     *
-     * @param option Browser initialization options
-     * @return true if successful, false otherwise
+     * Initialize the browser instance with the given options asynchronously.
+     * Returns true if successful, false otherwise.
+     * 
+     * @param option Browser configuration options. If null, default options are used
+     * @return true if initialization was successful, false otherwise
      */
     public boolean initialize(BrowserOption option) {
         if (isInitialized()) {
@@ -98,7 +112,7 @@ public class Browser extends BaseService {
     }
 
     /**
-     * Destroy the browser instance.
+     * Destroy the browser instance manually.
      */
     public void destroy() {
         if (isInitialized()) {
@@ -108,6 +122,7 @@ public class Browser extends BaseService {
                 this.initialized = false;
                 this.endpointUrl = null;
                 this.option = null;
+                this.endpointRouterPort = null;
             } catch (BrowserException e) {
             }
         }
@@ -116,11 +131,18 @@ public class Browser extends BaseService {
     /**
      * Takes a screenshot of the specified page with enhanced options and error handling.
      *
-     * @param page The Playwright Page object to take a screenshot of
+     * @param page The Playwright Page object to take a screenshot of. This is a required parameter.
      * @param fullPage Whether to capture the full scrollable page
-     * @param options Additional screenshot options
+     * @param options Additional screenshot options that will override defaults.
+     *                Common options include:
+     *                - type (ScreenshotType): Image type, either PNG or JPEG (default: PNG)
+     *                - timeout (Double): Maximum time in milliseconds (default: 60000)
+     *                - animations (String): How to handle animations (default: "disabled")
+     *                - caret (String): How to handle the caret (default: "hide")
+     *                - scale (String): Scale setting (default: "css")
      * @return Screenshot data as bytes
-     * @throws BrowserException if browser is not initialized
+     * @throws BrowserException if browser is not initialized or page is null
+     * @throws IllegalArgumentException if page is null
      */
     public byte[] screenshot(com.microsoft.playwright.Page page, boolean fullPage, Map<String, Object> options) throws BrowserException {
         if (!isInitialized()) {
@@ -185,6 +207,10 @@ public class Browser extends BaseService {
 
     /**
      * Scroll to load all content on the page.
+     * 
+     * @param page The Playwright Page object
+     * @param maxScrolls Maximum number of scroll attempts (default: 8)
+     * @param delayMs Delay between scrolls in milliseconds (default: 1200)
      */
     private void scrollToLoadAllContent(com.microsoft.playwright.Page page, int maxScrolls, int delayMs) {
         int lastHeight = 0;
@@ -201,8 +227,10 @@ public class Browser extends BaseService {
 
     /**
      * Stop the browser instance (internal use only).
+     * 
+     * @throws BrowserException if browser is not initialized or stop operation fails
      */
-    public void stopBrowser() throws BrowserException {
+    private void stopBrowser() throws BrowserException {
         if (!isInitialized()) {
             throw new BrowserException("Browser is not initialized. Cannot stop browser.");
         }
@@ -217,11 +245,12 @@ public class Browser extends BaseService {
     }
 
     /**
-     * Get the endpoint URL for browser connection.
+     * Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
      * When initialized, always fetches the latest CDP url from getCdpLink API.
      *
      * @return Browser endpoint URL
      * @throws BrowserException if browser is not initialized or endpoint URL cannot be retrieved
+     * 
      */
     public String getEndpointUrl() throws BrowserException {
         if (!isInitialized()) {
@@ -257,6 +286,7 @@ public class Browser extends BaseService {
      * Get the current BrowserOption used to initialize the browser.
      *
      * @return BrowserOption or null if not set
+     * 
      */
     public BrowserOption getOption() {
         return option;
@@ -266,17 +296,45 @@ public class Browser extends BaseService {
      * Check if the browser is initialized.
      *
      * @return true if initialized, false otherwise
+     * 
      */
     public boolean isInitialized() {
         return initialized;
     }
 
     /**
-     * Get the browser agent for advanced browser operations.
-     *
-     * @return BrowserAgent instance
+     * Get the browser operator for browser operations (recommended).
+     * 
+     * <p>The operator provides AI-powered browser automation capabilities including
+     * navigation, screenshots, actions, observations, and data extraction.</p>
+     * 
+     * @return BrowserOperator instance
      */
+    public BrowserOperator getOperator() {
+        return operator;
+    }
+
+    /**
+     * Get the browser agent for advanced browser operations.
+     * 
+     * <p><strong>⚠️ Deprecated</strong>: Use getOperator instead. This method will be removed in a future version.</p>
+     * 
+     * @return BrowserAgent instance
+     * @deprecated Use getOperator instead
+     */
+    @Deprecated
     public BrowserAgent getAgent() {
+        if (!agentDeprecationWarned) {
+            synchronized (this) {
+                if (!agentDeprecationWarned) {
+                    System.err.println(
+                        "[⚠️ DeprecationWarning] browser.agent is deprecated and will be removed in a future version. "
+                        + "Please use browser.operator instead."
+                    );
+                    agentDeprecationWarned = true;
+                }
+            }
+        }
         return agent;
     }
 

@@ -19,6 +19,8 @@ class TestComputer:
         """Set up test fixtures."""
         self.session = Mock()
         self.session.call_mcp_tool = MagicMock()
+        # Default to no link_url so screenshot() uses system_screenshot in unit tests.
+        self.session.get_link_url = Mock(return_value="")
         self.computer = Computer(self.session)
 
     @pytest.mark.sync
@@ -388,9 +390,31 @@ class TestComputer:
         )
 
     @pytest.mark.sync
+    def test_screenshot_fails_when_link_url_present(self):
+        """Test screenshot() fails and suggests beta_take_screenshot() when link_url is present."""
+        # Arrange
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session.call_mcp_tool = MagicMock()
+
+        # Act
+        result = self.computer.screenshot()
+
+        # Assert
+        assert isinstance(result, OperationResult)
+        assert result.success is False
+        assert result.data is None
+        assert (
+            result.error_message
+            == "This cloud environment does not support `screenshot()`. "
+            "Please use `beta_take_screenshot()` instead."
+        )
+        self.session.call_mcp_tool.assert_not_called()
+
+    @pytest.mark.sync
     def test_take_screenshot_success_with_jpg(self):
         """Test successful take_screenshot with jpg format (normalized to jpeg)."""
         # Arrange
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
         payload = b"\xff\xd8\xff" + b"hello-image-bytes"
         import base64
         import json
@@ -418,7 +442,8 @@ class TestComputer:
         assert result.success is True
         assert result.request_id == "test-req"
         assert result.error_message == ""
-        assert result.format == "jpeg"
+        assert result.type == "image"
+        assert result.mime_type == "image/jpeg"
         assert result.width == 1280
         assert result.height == 720
         assert result.data == payload
@@ -431,6 +456,7 @@ class TestComputer:
     def test_take_screenshot_strips_prefix_before_magic(self):
         """Test take_screenshot rejects non-JSON payloads."""
         # Arrange
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
         payload = b"\xff\xd8\xff" + b"rest"
         import base64
 
@@ -447,6 +473,7 @@ class TestComputer:
     def test_take_screenshot_accepts_mode_enum(self):
         """Test beta_take_screenshot works with png."""
         # Arrange
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
         payload = b"\x89PNG\r\n\x1a\n" + b"x"
         import base64
         import json
@@ -470,13 +497,15 @@ class TestComputer:
 
         # Assert
         assert result.success is True
-        assert result.format == "png"
+        assert result.type == "image"
+        assert result.mime_type == "image/png"
         assert result.width == 1280
         assert result.height == 720
 
     @pytest.mark.sync
     def test_take_screenshot_rejects_json_payload(self):
         """Test beta_take_screenshot accepts JSON payloads."""
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
         import base64
         import json
 
@@ -499,7 +528,8 @@ class TestComputer:
 
         result = self.computer.beta_take_screenshot(format="png")
         assert result.success is True
-        assert result.format == "png"
+        assert result.type == "image"
+        assert result.mime_type == "image/png"
         assert result.width == 1280
         assert result.height == 720
         assert result.data.startswith(b"\x89PNG\r\n\x1a\n")
@@ -507,6 +537,7 @@ class TestComputer:
     @pytest.mark.sync
     def test_take_screenshot_invalid_format_raises(self):
         """Test take_screenshot rejects invalid format."""
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
         with pytest.raises(ValueError, match="Invalid format"):
             self.computer.beta_take_screenshot(format="webp")
 
@@ -514,6 +545,7 @@ class TestComputer:
     def test_take_screenshot_mcp_failure_raises_agentbayerror(self):
         """Test take_screenshot raises AgentBayError when MCP tool fails."""
         # Arrange
+        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
         mock_result = Mock()
         mock_result.success = False
         mock_result.request_id = "test-req"

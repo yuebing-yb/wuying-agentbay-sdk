@@ -700,8 +700,10 @@ export function logAPICall(apiName: string, requestData?: unknown): void {
   currentRequestId = '';
 
   if (useColors) {
-    // Use cyan/bright blue for API calls
-    process.stdout.write(`${ANSI_CYAN}ℹ️  INFO: ${message}${ANSI_RESET}\n`);
+    if (consoleLoggingEnabled) {
+      process.stdout.write(`${ANSI_CYAN}ℹ️  INFO: ${message}${ANSI_RESET}\n`);
+    }
+    writeToFile(`ℹ️  INFO: ${message}`);
   } else {
     logInfo(message);
   }
@@ -773,8 +775,10 @@ export function logAPIResponseWithDetails(
       }
 
       if (useColors) {
-        // Use green for successful API responses
-        process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${mainMessage}${ANSI_RESET}\n`);
+        if (consoleLoggingEnabled) {
+          process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${mainMessage}${ANSI_RESET}\n`);
+        }
+        writeToFile(`ℹ️  INFO: ${mainMessage}`);
       } else {
         logInfo(mainMessage);
       }
@@ -784,7 +788,10 @@ export function logAPIResponseWithDetails(
           const maskedValue = maskSensitiveData({ [key]: value }) as Record<string, unknown>;
           const keyMessage = `  └─ ${key}=${maskedValue[key]}`;
           if (useColors) {
-            process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${keyMessage}${ANSI_RESET}\n`);
+            if (consoleLoggingEnabled) {
+              process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${keyMessage}${ANSI_RESET}\n`);
+            }
+            writeToFile(`ℹ️  INFO: ${keyMessage}`);
           } else {
             logInfo(keyMessage);
           }
@@ -804,8 +811,10 @@ export function logAPIResponseWithDetails(
       }
 
       if (useColors) {
-        // Use red for failed API responses
-        process.stderr.write(`${ANSI_RED}❌ ERROR: ${errorMessage}${ANSI_RESET}\n`);
+        if (consoleLoggingEnabled) {
+          process.stderr.write(`${ANSI_RED}❌ ERROR: ${errorMessage}${ANSI_RESET}\n`);
+        }
+        writeToFile(`❌ ERROR: ${errorMessage}`);
       } else {
         logError(errorMessage);
       }
@@ -815,7 +824,10 @@ export function logAPIResponseWithDetails(
           const maskedValue = maskSensitiveData({ [key]: value }) as Record<string, unknown>;
           const keyMessage = `  └─ ${key}=${maskedValue[key]}`;
           if (useColors) {
-            process.stderr.write(`${ANSI_RED}❌ ERROR: ${keyMessage}${ANSI_RESET}\n`);
+            if (consoleLoggingEnabled) {
+              process.stderr.write(`${ANSI_RED}❌ ERROR: ${keyMessage}${ANSI_RESET}\n`);
+            }
+            writeToFile(`❌ ERROR: ${keyMessage}`);
           } else {
             logError(keyMessage);
           }
@@ -825,7 +837,10 @@ export function logAPIResponseWithDetails(
       if (fullResponse) {
         const masked = truncateStringForLog(maskSensitiveDataString(fullResponse), 2000);
         if (useColors) {
-          process.stderr.write(`${ANSI_RED}❌ ERROR: 📥 Response: ${masked}${ANSI_RESET}\n`);
+          if (consoleLoggingEnabled) {
+            process.stderr.write(`${ANSI_RED}❌ ERROR: 📥 Response: ${masked}${ANSI_RESET}\n`);
+          }
+          writeToFile(`❌ ERROR: 📥 Response: ${masked}`);
         } else {
           logError(`📥 Response: ${masked}`);
         }
@@ -879,27 +894,23 @@ export function logCodeExecutionOutput(requestId: string, rawOutput: string): vo
     // Format the output with a clear separator
     const header = `📋 Code Execution Output (RequestID: ${requestId}):`;
 
-    if (useColors) {
-      process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${header}${ANSI_RESET}\n`);
-    } else {
-      logInfo(header);
-    }
-
-    // Print each line with indentation
     const lines = actualOutput.trimEnd().split('\n');
-    for (const line of lines) {
-      if (useColors) {
-        process.stdout.write(`${ANSI_GREEN}ℹ️  INFO:    ${line}${ANSI_RESET}\n`);
-      } else {
-        logInfo(`   ${line}`);
-      }
-    }
 
-    // Also write to file if enabled
-    if (fileLoggingEnabled && logFilePath) {
+    if (useColors) {
+      if (consoleLoggingEnabled) {
+        process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${header}${ANSI_RESET}\n`);
+        for (const line of lines) {
+          process.stdout.write(`${ANSI_GREEN}ℹ️  INFO:    ${line}${ANSI_RESET}\n`);
+        }
+      }
       writeToFile(header);
       for (const line of lines) {
         writeToFile(`   ${line}`);
+      }
+    } else {
+      logInfo(header);
+      for (const line of lines) {
+        logInfo(`   ${line}`);
       }
     }
   } catch (error) {

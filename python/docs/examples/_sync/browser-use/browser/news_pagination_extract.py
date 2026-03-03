@@ -18,6 +18,7 @@ from agentbay import AgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 from agentbay import ActOptions, ExtractOptions
+import json
 
 
 class PageLinkItem(BaseModel):
@@ -43,25 +44,31 @@ def main():
 
     try:
         assert session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
-        agent.navigate(url="https://www.baidu.com/")
+        operator = session.browser.operator
+        operator.navigate(url="https://www.baidu.com/")
 
-        agent.act(ActOptions(action="搜索框输入小米手机，并回车"))
-        agent.act(ActOptions(action="点击 资讯（或 新闻/资讯 tab）"))
+        operator.act(ActOptions(action="搜索框输入小米手机，并回车"))
+        operator.act(ActOptions(action="点击 资讯（或 新闻/资讯 tab）"))
 
-        ok, results = agent.extract(
+        ok, results = operator.extract(
             ExtractOptions(
                 instruction="提取搜索结果中所有的标题和链接",
                 schema=PageLinkList,
                 max_page=6,
             )
         )
-        assert ok, "extract failed"
-
-        logger.info("Final extract results count=%d", len(results.results))
+        if not ok:
+            print(f"Failed to extract: {results}")
+            try:
+                parsed_results = json.loads(results)
+                logger.info("Final extract results count=%d", len(parsed_results.results))
+            except Exception as e:
+                logger.error(f"Failed to parse non-standard JSON: {e}")
+        else:
+            logger.info("Final extract results count=%d", len(results.results))
 
         time.sleep(1)
-        agent.close()
+        operator.close()
 
     finally:
         agent_bay.delete(session)

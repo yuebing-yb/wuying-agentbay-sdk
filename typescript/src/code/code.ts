@@ -12,6 +12,8 @@ export class Code {
   private session: {
     getAPIKey(): string;
     getSessionId(): string;
+    getWsClient?: () => Promise<any>;
+    mcpTools?: Array<{ name?: string; server?: string }>;
     callMcpTool(
       toolName: string,
       args: any,
@@ -32,6 +34,8 @@ export class Code {
   constructor(session: {
     getAPIKey(): string;
     getSessionId(): string;
+    getWsClient?: () => Promise<any>;
+    mcpTools?: Array<{ name?: string; server?: string }>;
     callMcpTool(
       toolName: string,
       args: any,
@@ -152,6 +156,188 @@ export class Code {
     };
   }
 
+  private safeToString(v: any): string {
+    try {
+      if (typeof v === "string") return v;
+      return JSON.stringify(v);
+    } catch (_e) {
+      return String(v);
+    }
+  }
+
+  private toResultItem(payload: any): CodeExecutionResultItem {
+    const item: CodeExecutionResultItem = {};
+    if (!payload || typeof payload !== "object") {
+      item.text = String(payload);
+      return item;
+    }
+
+    if (payload.isMainResult) item.isMainResult = true;
+    if (payload.is_main_result) item.isMainResult = true;
+
+    if (payload["text/plain"]) item.text = payload["text/plain"];
+    if (payload["text/html"]) item.html = payload["text/html"];
+    if (payload["text/markdown"]) item.markdown = payload["text/markdown"];
+    if (payload["image/png"]) item.png = payload["image/png"];
+    if (payload["image/jpeg"]) item.jpeg = payload["image/jpeg"];
+    if (payload["image/svg+xml"]) item.svg = payload["image/svg+xml"];
+    if (payload["text/latex"]) item.latex = payload["text/latex"];
+    if (payload["application/json"]) item.json = payload["application/json"];
+
+    if (payload["application/vnd.vegalite.v4+json"]) {
+      item.chart = payload["application/vnd.vegalite.v4+json"];
+    } else if (payload["application/vnd.vegalite.v5+json"]) {
+      item.chart = payload["application/vnd.vegalite.v5+json"];
+    } else if (payload["application/vnd.vega.v5+json"]) {
+      item.chart = payload["application/vnd.vega.v5+json"];
+    }
+
+    if (payload.text && !item.text) item.text = payload.text;
+    return item;
+  }
+
+  private async runCodeStreamWs(params: {
+    code: string;
+    language: string;
+    timeoutS: number;
+    onStdout?: (chunk: string) => void;
+    onStderr?: (chunk: string) => void;
+    onError?: (err: any) => void;
+  }): Promise<CodeExecutionResult> {
+    const stdoutChunks: string[] = [];
+    const stderrChunks: string[] = [];
+    const results: CodeExecutionResultItem[] = [];
+    let errorObj: CodeExecutionError | undefined;
+    let errorMessage = "";
+
+    // Determine target from MCP tool list if available.
+    let target = "wuying_codespace";
+    for (const tool of this.session.mcpTools || []) {
+      if (tool && tool.name === "run_code" && tool.server) {
+        target = tool.server;
+        break;
+      }
+    }
+
+    if (!this.session.getWsClient) {
+      return {
+        requestId: "",
+        success: false,
+        result: "",
+        errorMessage: "WS streaming is not available in this session",
+      };
+    }
+
+    const wsClient = await this.session.getWsClient();
+
+    const handle = await wsClient.callStream({
+      target,
+      data: {
+        method: "run_code",
+        mode: "stream",
+        params: {
+          language: params.language,
+          timeoutS: params.timeoutS,
+          code: params.code,
+        },
+      },
+      onEvent: (_invocationId: string, data: any) => {
+        const eventType = data?.eventType;
+        if (eventType === "stdout") {
+          const chunk = String(data?.chunk ?? "");
+          stdoutChunks.push(chunk);
+          if (params.onStdout) params.onStdout(chunk);
+          return;
+        }
+        if (eventType === "stderr") {
+          const chunk = String(data?.chunk ?? "");
+          stderrChunks.push(chunk);
+          if (params.onStderr) params.onStderr(chunk);
+          return;
+        }
+        if (eventType === "result") {
+          const r = this.toResultItem(data?.result);
+          results.push(r);
+          return;
+        }
+        if (eventType === "error") {
+          const msg =
+            typeof data?.error === "string" ? data.error : this.safeToString(data);
+          errorMessage = msg;
+          errorObj = {
+            name: "ExecutionError",
+            value: msg,
+            traceback: "",
+          };
+          if (params.onError) params.onError(data);
+          return;
+        }
+      },
+      onEnd: (_invocationId: string, data: any) => {
+        const executionError = data?.executionError;
+        if (executionError && !errorObj) {
+          const msg = String(executionError);
+          errorMessage = msg;
+          errorObj = { name: "ExecutionError", value: msg, traceback: "" };
+        }
+      },
+      onError: (_invocationId: string, err: any) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        errorMessage = msg;
+        if (!errorObj) {
+          errorObj = { name: "ExecutionError", value: msg, traceback: "" };
+        }
+        if (params.onError) params.onError(err);
+      },
+    });
+
+    let endData: any = {};
+    try {
+      endData = await handle.waitEnd();
+    } catch (e: any) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        requestId: handle.invocationId,
+        success: false,
+        result: "",
+        errorMessage: msg,
+        logs: { stdout: stdoutChunks, stderr: stderrChunks },
+        results,
+        error: errorObj,
+      };
+    }
+
+    const ok = !errorObj && !endData?.executionError && endData?.status !== "failed";
+
+    const logs: CodeExecutionLogs = {
+      stdout: stdoutChunks,
+      stderr: stderrChunks,
+    };
+
+    // Determine legacy result string for backward compatibility
+    let resultText = "";
+    const mainRes = results.find((r) => r.isMainResult && r.text);
+    if (mainRes && mainRes.text) {
+      resultText = mainRes.text;
+    } else if (results.length > 0 && results[0].text) {
+      resultText = results[0].text;
+    } else if (logs.stdout.length > 0) {
+      resultText = logs.stdout.join("");
+    }
+
+    return {
+      requestId: handle.invocationId,
+      success: ok,
+      result: resultText,
+      errorMessage: ok ? "" : errorMessage || String(endData?.executionError || ""),
+      logs,
+      results,
+      error: errorObj,
+      executionTime: endData?.executionTime,
+      executionCount: endData?.executionCount,
+    };
+  }
+
   /**
    * Execute code in the specified language with a timeout.
    * Corresponds to Python's run_code() method
@@ -205,6 +391,10 @@ export class Code {
           errorMessage: `Unsupported language: ${rawLanguage}. Supported languages are 'python', 'javascript', 'r', and 'java'`,
         };
       }
+
+      // Streaming is temporarily disabled in this version.
+      // The streaming implementation is preserved in runCodeStreamWs()
+      // and will be re-enabled in a future release.
 
       const args = {
         code,

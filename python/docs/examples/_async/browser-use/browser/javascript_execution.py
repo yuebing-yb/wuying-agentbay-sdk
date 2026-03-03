@@ -56,12 +56,12 @@ async def main():
 
         # Navigate to a test page
         print("\n1. Navigating to example.com...")
-        await session.browser.agent.navigate("https://example.com")
+        await session.browser.operator.navigate("https://example.com")
 
         # Execute simple JavaScript
         print("\n2. Executing JavaScript to get page title...")
-        await session.browser.agent.act(ActOptions(action="Execute JavaScript: console.log(document.title)"))
-        success, title_result = await session.browser.agent.extract(ExtractOptions(instruction="What is the document title?", schema=TextContent))
+        await session.browser.operator.act(ActOptions(action="Execute JavaScript: console.log(document.title)"))
+        success, title_result = await session.browser.operator.extract(ExtractOptions(instruction="What is the document title?", schema=TextContent))
         if success:
             print(f"Page title: {title_result.content}")
         else:
@@ -69,26 +69,26 @@ async def main():
 
         # Get window dimensions
         print("\n3. Getting window dimensions via JavaScript...")
-        await session.browser.agent.act(ActOptions(
+        await session.browser.operator.act(ActOptions(
             action="Execute JavaScript to log window dimensions: "
             "console.log('Width:', window.innerWidth, 'Height:', window.innerHeight)"
         ))
 
         # Manipulate DOM
         print("\n4. Manipulating DOM with JavaScript...")
-        await session.browser.agent.act(ActOptions(
+        await session.browser.operator.act(ActOptions(
             action="Execute JavaScript to change the page background color to light blue"
         ))
         print("Background color changed")
 
         # Take screenshot to verify change
         print("\n5. Taking screenshot to verify DOM manipulation...")
-        screenshot_path = await session.browser.agent.screenshot()
+        screenshot_path = await session.browser.operator.screenshot()
         print(f"Screenshot saved: {screenshot_path}")
 
         # Extract computed styles
         print("\n6. Extracting computed styles...")
-        success, style_result = await session.browser.agent.extract(ExtractOptions(
+        success, style_result = await session.browser.operator.extract(ExtractOptions(
             instruction="What is the background color of the page body?",
             schema=TextContent
         ))
@@ -99,14 +99,14 @@ async def main():
 
         # Navigate to a page with more content
         print("\n7. Navigating to a page with more content...")
-        await session.browser.agent.navigate("https://news.ycombinator.com")
+        await session.browser.operator.navigate("https://news.ycombinator.com")
 
         # Count elements using JavaScript
         print("\n8. Counting story elements...")
-        await session.browser.agent.act(ActOptions(
+        await session.browser.operator.act(ActOptions(
             action="Execute JavaScript to count the number of story links on the page"
         ))
-        success, count_result = await session.browser.agent.extract(ExtractOptions(
+        success, count_result = await session.browser.operator.extract(ExtractOptions(
             instruction="How many story items are on the page?",
             schema=TextContent
         ))
@@ -117,12 +117,12 @@ async def main():
 
         # Scroll page using JavaScript
         print("\n9. Scrolling page with JavaScript...")
-        await session.browser.agent.act(ActOptions(action="Scroll down the page by 500 pixels"))
+        await session.browser.operator.act(ActOptions(action="Scroll down the page by 500 pixels"))
         print("Page scrolled")
 
         # Get scroll position
         print("\n10. Getting scroll position...")
-        success, scroll_result = await session.browser.agent.extract(ExtractOptions(
+        success, scroll_result = await session.browser.operator.extract(ExtractOptions(
             instruction="What is the current scroll position of the page?",
             schema=TextContent
         ))

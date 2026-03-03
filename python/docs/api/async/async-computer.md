@@ -10,8 +10,7 @@
 
 ## Overview
 
-The Computer module provides comprehensive desktop automation capabilities including mouse operations,
-keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
+The Computer module provides comprehensive desktop automation capabilities including mouse operations,keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
 
 
 ## Requirements
@@ -524,7 +523,8 @@ Takes a screenshot of the Computer.
 This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
 binary image data. The backend also returns the captured image dimensions
 (width/height in pixels), which are exposed on `ScreenshotResult.width`
-and `ScreenshotResult.height` when available.
+and `ScreenshotResult.height`. The backend metadata fields `type` and
+`mime_type` are exposed on `ScreenshotResult.type` and `ScreenshotResult.mime_type`.
 
 **Arguments**:
 
@@ -534,7 +534,7 @@ and `ScreenshotResult.height` when available.
 **Returns**:
 
     ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
-  including `width` and `height` when provided by the backend.
+  including `type`, `mime_type`, `width`, and `height` when provided by the backend.
   
 
 **Raises**:

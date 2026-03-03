@@ -39,12 +39,7 @@ The `session.command` module provides programmatic access to execute shell comma
 - ✅ Exit code and trace ID handling
 - ✅ Backward compatible output field
 
-### Recommended Aliases (Non-breaking)
-
-AgentBay SDK provides **non-breaking aliases** to improve ergonomics and LLM-generated code success rate:
-
-- Prefer **`session.command.run(...)`** or **`session.command.exec(...)`**
-- They are aliases of **`execute_command(...)`** and behave identically
+Use `session.command.execute_command(...)` to run shell commands.
 
 <a id="basic-command-execution"></a>
 ## 💻 Basic Command Execution
@@ -60,7 +55,7 @@ result = agent_bay.create()
 if result.success:
     session = result.session
 
-    cmd_result = session.command.run("ls -la /tmp")
+    cmd_result = session.command.execute_command("ls -la /tmp")
     if cmd_result.success:
         print("Output:", cmd_result.output)
     else:
@@ -97,7 +92,7 @@ commands = [
 ]
 
 for cmd in commands:
-    result = session.command.run(cmd)
+    result = session.command.execute_command(cmd)
     if result.success:
         print(f"{cmd} -> {result.output.strip()}")
     else:
@@ -126,14 +121,14 @@ agent_bay = AgentBay()
 session = agent_bay.create().session
 
 # Command completes within timeout
-result = session.command.run("sleep 3", timeout_ms=5000)
+result = session.command.execute_command("sleep 3", timeout_ms=5000)
 if result.success:
     print("Command completed within timeout")
 else:
     print("Command timed out or failed:", result.error_message)
 
 # Command exceeds timeout
-result = session.command.run("sleep 10", timeout_ms=2000)
+result = session.command.execute_command("sleep 10", timeout_ms=2000)
 if result.success:
     print("Command completed")
 else:
@@ -159,7 +154,7 @@ agent_bay = AgentBay()
 session = agent_bay.create().session
 
 # Timeout will be automatically limited to 50000ms (50s)
-result = session.command.run("sleep 1", timeout_ms=60000)
+result = session.command.execute_command("sleep 1", timeout_ms=60000)
 # Warning: Timeout 60000ms exceeds maximum allowed 50000ms. Limiting to 50000ms.
 
 agent_bay.delete(session)
@@ -189,7 +184,7 @@ from agentbay import AgentBay
 agent_bay = AgentBay()
 session = agent_bay.create().session
 
-result = session.command.run("df -h")
+result = session.command.execute_command("df -h")
 if result.success:
     print("Full output (stdout + stderr):")
     print(result.output)
@@ -526,7 +521,7 @@ asyncio.run(main())
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../README.md)
 
 Happy automating with AgentBay! 🚀

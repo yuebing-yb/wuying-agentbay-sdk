@@ -16,8 +16,7 @@ import com.aliyun.agentbay.model.Process;
 
 /**
  * Mobile module for mobile device UI automation and configuration.
- * Handles touch operations, UI element interactions, application management, screenshot capabilities,
- * and mobile environment configuration operations.
+ * Handles touch operations, UI element interactions, application management, screenshot capabilities,and mobile environment configuration operations.
  */
 public class Mobile extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -55,7 +54,9 @@ public class Mobile extends BaseService {
      *
      * @param x X coordinate in pixels
      * @param y Y coordinate in pixels
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Object with success status and error message if any
+     * 
+     * @see #swipe(int, int, int, int, int)
      */
     public BoolResult tap(int x, int y) {
         try {
@@ -97,7 +98,7 @@ public class Mobile extends BaseService {
      * @param endX Ending X coordinate
      * @param endY Ending Y coordinate
      * @param durationMs Duration of the swipe in milliseconds. Defaults to 300
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
      */
     public BoolResult swipe(int startX, int startY, int endX, int endY, int durationMs) {
         try {
@@ -141,7 +142,7 @@ public class Mobile extends BaseService {
      * @param startY Starting Y coordinate
      * @param endX Ending X coordinate
      * @param endY Ending Y coordinate
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
      */
     public BoolResult swipe(int startX, int startY, int endX, int endY) {
         return swipe(startX, startY, endX, endY, 300);
@@ -151,7 +152,7 @@ public class Mobile extends BaseService {
      * Inputs text into the active field.
      *
      * @param text The text to input
-     * @return BoolResult containing success status and error message if any
+     * @return BoolResult Result object containing success status and error message if any
      */
     public BoolResult inputText(String text) {
         try {
@@ -188,13 +189,13 @@ public class Mobile extends BaseService {
      * Sends a key press event.
      *
      * @param key The key code to send. Supported key codes:
-     *            - 3: HOME
-     *            - 4: BACK
-     *            - 24: VOLUME_UP
-     *            - 25: VOLUME_DOWN
-     *            - 26: POWER
-     *            - 82: MENU
-     * @return BoolResult containing success status and error message if any
+     *               - 3: HOME
+     *               - 4: BACK
+     *               - 24: VOLUME_UP
+     *               - 25: VOLUME_DOWN
+     *               - 26: POWER
+     *               - 82: MENU
+     * @return BoolResult Result object containing success status and error message if any
      */
     public BoolResult sendKey(int key) {
         try {
@@ -234,6 +235,9 @@ public class Mobile extends BaseService {
      *
      * @param timeoutMs Timeout in milliseconds. Defaults to 2000
      * @return UIElementListResult containing clickable UI elements and error message if any
+     * 
+     * <p><strong>Note</strong>: Each returned element may include from backend which is not stable in type.
+     * Use (dict with left/top/right/bottom) instead.</p>
      */
     public UIElementListResult getClickableUiElements(int timeoutMs) {
         try {
@@ -326,8 +330,8 @@ public class Mobile extends BaseService {
      * - "json": parse and return elements
      * - "xml": return raw XML and an empty elements list
      *
-     * @param timeoutMs Timeout in milliseconds
-     * @param format Output format of the underlying MCP tool ("json" or "xml")
+     * @param timeoutMs Timeout in milliseconds. Defaults to 2000.
+     * @param format Output format of the underlying MCP tool ("json" or "xml"), default to "json"
      * @return UIElementListResult containing UI elements or raw XML
      */
     public UIElementListResult getAllUiElements(int timeoutMs, String format) {
@@ -479,7 +483,7 @@ public class Mobile extends BaseService {
             Map<String, Object> args = new HashMap<>();
             args.put("start_menu", startMenu);
             args.put("desktop", desktop);
-            args.put("ignore_system_apps", ignoreSystemApps);
+            args.put("ignore_system_app", ignoreSystemApps);
             OperationResult result = callAppTool("get_installed_apps", args);
 
             if (!result.isSuccess()) {
@@ -706,6 +710,14 @@ public class Mobile extends BaseService {
      * @return OperationResult containing the path/URL to the screenshot and error message if any
      */
     public OperationResult screenshot() {
+        if (session.getLinkUrl() != null && !session.getLinkUrl().isEmpty()) {
+            return new OperationResult(
+                "",
+                false,
+                null,
+                "This cloud environment does not support `screenshot()`. Please use `beta_take_screenshot()` instead."
+            );
+        }
         try {
             OperationResult result = callSystemScreenshotTool();
 
@@ -735,32 +747,81 @@ public class Mobile extends BaseService {
     }
 
     /**
-     * Captures the current screen as a PNG image and returns raw image bytes.
+     * Takes a screenshot of the mobile device (beta).
+
+      This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+        binary image data. The backend also returns the captured image dimensions
+        (width/height in pixels), which are exposed on `ScreenshotResult.width`
+        and `ScreenshotResult.height` when available.
      *
      * @return ScreenshotBytesResult containing PNG bytes and error message if any
      */
     public ScreenshotBytesResult betaTakeScreenshot() {
+        return betaTakeScreenshot("png");
+    }
+
+    /**
+     * Capture the current screen and return raw image bytes (beta).
+     *
+     * Supported formats:
+     * - "png"
+     * - "jpeg" (or "jpg")
+     *
+     * @param format Output image format ("png" or "jpeg")
+     * @return ScreenshotBytesResult containing image bytes and error message if any
+     */
+    public ScreenshotBytesResult betaTakeScreenshot(String format) {
+        if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
+            return new ScreenshotBytesResult(
+                "",
+                false,
+                "",
+                "",
+                new byte[0],
+                null,
+                null,
+                "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead."
+            );
+        }
         try {
+            String formatNorm = normalizeImageFormat(format, "png");
+            if (!"png".equals(formatNorm) && !"jpeg".equals(formatNorm)) {
+                return new ScreenshotBytesResult(
+                    "",
+                    false,
+                    "",
+                    "",
+                    new byte[0],
+                    null,
+                    null,
+                    "Unsupported format: " + format + ". Supported values: 'png', 'jpeg'."
+                );
+            }
+
             Map<String, Object> args = new HashMap<>();
-            args.put("format", "png");
+            args.put("format", formatNorm);
             OperationResult result = callCaptureTool("screenshot", args);
 
             if (!result.isSuccess()) {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    "png",
+                    null,
+                    null,
                     result.getErrorMessage()
                 );
             }
 
-            DecodedImage decoded = decodeBase64Image(result.getData(), "png");
+            DecodedImage decoded = decodeBase64Image(result.getData(), formatNorm);
             return new ScreenshotBytesResult(
                 result.getRequestId(),
                 true,
+                decoded.type,
+                decoded.mimeType,
                 decoded.bytes,
-                decoded.format,
                 decoded.width,
                 decoded.height,
                 ""
@@ -769,15 +830,18 @@ public class Mobile extends BaseService {
             return new ScreenshotBytesResult(
                 "",
                 false,
+                "",
+                "",
                 new byte[0],
-                "png",
+                null,
+                null,
                 "Failed to take screenshot: " + e.getMessage()
             );
         }
     }
 
     /**
-     * Captures a long screenshot and returns raw image bytes.
+     * Takes a long screenshot (scroll + stitch) of the mobile device (beta).
      *
      * Supported formats:
      * - "png"
@@ -786,12 +850,12 @@ public class Mobile extends BaseService {
      * @param maxScreens Number of screens to stitch (range: [2, 10])
      * @param format Output image format ("png" or "jpeg")
      * @param quality JPEG quality (range: [1, 100]). Only used for jpeg.
-     * @return ScreenshotBytesResult containing image bytes and error message if any
+     * @return ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata including `width` and `height` when provided by the backend.
      */
     public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String format, Integer quality) {
         try {
             if (maxScreens < 2 || maxScreens > 10) {
-                return new ScreenshotBytesResult("", false, new byte[0], "", "Invalid maxScreens: must be in range [2, 10]");
+                return new ScreenshotBytesResult("", false, "", "", new byte[0], null, null, "Invalid maxScreens: must be in range [2, 10]");
             }
 
             String formatNorm = normalizeImageFormat(format, "png");
@@ -799,14 +863,15 @@ public class Mobile extends BaseService {
                 return new ScreenshotBytesResult(
                     "",
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    formatNorm,
                     "Unsupported format: " + format + ". Supported values: 'png', 'jpeg'."
                 );
             }
             if (quality != null) {
                 if (quality < 1 || quality > 100) {
-                    return new ScreenshotBytesResult("", false, new byte[0], formatNorm, "Invalid quality: must be in range [1, 100]");
+                    return new ScreenshotBytesResult("", false, "", "", new byte[0], null, null, "Invalid quality: must be in range [1, 100]");
                 }
             }
 
@@ -822,8 +887,9 @@ public class Mobile extends BaseService {
                 return new ScreenshotBytesResult(
                     result.getRequestId(),
                     false,
+                    "",
+                    "",
                     new byte[0],
-                    formatNorm,
                     result.getErrorMessage()
                 );
             }
@@ -832,8 +898,9 @@ public class Mobile extends BaseService {
             return new ScreenshotBytesResult(
                 result.getRequestId(),
                 true,
+                decoded.type,
+                decoded.mimeType,
                 decoded.bytes,
-                decoded.format,
                 decoded.width,
                 decoded.height,
                 ""
@@ -842,17 +909,31 @@ public class Mobile extends BaseService {
             return new ScreenshotBytesResult(
                 "",
                 false,
+                "",
+                "",
                 new byte[0],
-                normalizeImageFormat(format, "png"),
                 "Failed to take long screenshot: " + e.getMessage()
             );
         }
     }
 
+    /**
+     * Takes a long screenshot (scroll + stitch) of the mobile device (beta).
+     *
+     * @param maxScreens Number of screens to stitch (range: [2, 10])
+     * @param format Output image format ("png" or "jpeg")
+     * @return ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata including `width` and `height` when provided by the backend.
+     */
     public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens, String format) {
         return betaTakeLongScreenshot(maxScreens, format, null);
     }
 
+    /**
+     * Takes a long screenshot (scroll + stitch) of the mobile device (beta).
+     *
+     * @param maxScreens Number of screens to stitch (range: [2, 10])
+     * @return ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata including `width` and `height` when provided by the backend.
+     */
     public ScreenshotBytesResult betaTakeLongScreenshot(int maxScreens) {
         return betaTakeLongScreenshot(maxScreens, "png", null);
     }
@@ -861,10 +942,13 @@ public class Mobile extends BaseService {
 
     /**
      * Configure mobile settings from MobileExtraConfig.
-     * This method is typically called automatically during session creation when
-     * MobileExtraConfig is provided in CreateSessionParams.
+     * This method is typically called automatically during session creation when MobileExtraConfig is provided in CreateSessionParams. It can also be called manually to reconfigure mobile settings during a session.
      *
-     * @param mobileConfig Mobile configuration object
+     * @param mobileConfig mobile_config (MobileExtraConfig): Mobile configuration object with settings for:
+                - lock_resolution (bool): Whether to lock device resolution
+                - app_manager_rule (AppManagerRule): App whitelist/blacklist rules
+                - hide_navigation_bar (bool): Whether to hide navigation bar
+                - uninstall_blacklist (List[str]): Apps protected from uninstallation
      */
     public void configure(MobileExtraConfig mobileConfig) {
         if (mobileConfig == null) {
@@ -964,9 +1048,13 @@ public class Mobile extends BaseService {
 
     /**
      * Retrieves the ADB connection URL for the mobile environment.
-     *
+     *<p>
+     *This method is only supported in mobile environments (mobile_latest image).
+     *It uses the provided ADB public key to establish the connection and returns
+     *the ADB connect URL.
+     *</p>
      * @param adbkeyPub The ADB public key for connection authentication
-     * @return AdbUrlResult containing the ADB connection URL and request ID
+     * @return AdbUrlResult containing the ADB connection URL and request ID.Returns error if not in mobile environment.
      */
     public AdbUrlResult getAdbUrl(String adbkeyPub) {
         try {
@@ -1116,12 +1204,16 @@ public class Mobile extends BaseService {
         final String format;
         final Integer width;
         final Integer height;
+        final String type;
+        final String mimeType;
 
-        DecodedImage(byte[] bytes, String format, Integer width, Integer height) {
+        DecodedImage(byte[] bytes, String format, Integer width, Integer height, String type, String mimeType) {
             this.bytes = bytes;
             this.format = format;
             this.width = width;
             this.height = height;
+            this.type = type == null ? "" : type;
+            this.mimeType = mimeType == null ? "" : mimeType;
         }
     }
 
@@ -1153,10 +1245,20 @@ public class Mobile extends BaseService {
         }
         Integer width = null;
         Integer height = null;
+        String shotType;
+        String mimeType;
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> obj = objectMapper.readValue(s, Map.class);
+            Object typeObj = obj.get("type");
+            Object mimeTypeObj = obj.get("mime_type");
             Object b64Obj = obj.get("data");
+            if (!(typeObj instanceof String) || ((String) typeObj).trim().isEmpty()) {
+                throw new IllegalArgumentException("Invalid screenshot JSON: expected non-empty string 'type'");
+            }
+            if (!(mimeTypeObj instanceof String) || ((String) mimeTypeObj).trim().isEmpty()) {
+                throw new IllegalArgumentException("Invalid screenshot JSON: expected non-empty string 'mime_type'");
+            }
             if (!(b64Obj instanceof String) || ((String) b64Obj).trim().isEmpty()) {
                 throw new IllegalArgumentException("Screenshot JSON missing base64 field");
             }
@@ -1174,6 +1276,8 @@ public class Mobile extends BaseService {
                 }
                 height = ((Number) heightObj).intValue();
             }
+            shotType = ((String) typeObj).trim();
+            mimeType = ((String) mimeTypeObj).trim();
             s = ((String) b64Obj).trim();
         } catch (IllegalArgumentException e) {
             throw e;
@@ -1183,13 +1287,23 @@ public class Mobile extends BaseService {
 
         byte[] decoded = Base64.getDecoder().decode(s);
 
-        String fmt = expectedFormat;
-        if (startsWith(decoded, PNG_MAGIC)) {
-            fmt = "png";
-        } else if (startsWith(decoded, JPEG_MAGIC)) {
-            fmt = "jpeg";
+        String fmt = normalizeImageFormat(expectedFormat, "png");
+        String expectedMimeType = "png".equals(fmt) ? "image/png" : "jpeg".equals(fmt) ? "image/jpeg" : "";
+        if (expectedMimeType.isEmpty()) {
+            throw new IllegalArgumentException("Unsupported format: " + expectedFormat);
         }
-        return new DecodedImage(decoded, fmt, width, height);
+        if (!expectedMimeType.equalsIgnoreCase(mimeType)) {
+            throw new IllegalArgumentException(
+                "Screenshot JSON mime_type does not match expected format: expected " + expectedMimeType + ", got " + mimeType
+            );
+        }
+        if ("png".equals(fmt) && !startsWith(decoded, PNG_MAGIC)) {
+            throw new IllegalArgumentException("Screenshot data does not match expected format 'png'");
+        }
+        if ("jpeg".equals(fmt) && !startsWith(decoded, JPEG_MAGIC)) {
+            throw new IllegalArgumentException("Screenshot data does not match expected format 'jpeg'");
+        }
+        return new DecodedImage(decoded, fmt, width, height, shotType, mimeType);
     }
 
     private static boolean startsWith(byte[] data, byte[] prefix) {

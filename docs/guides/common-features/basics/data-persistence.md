@@ -101,6 +101,23 @@ session = agent_bay.create(CreateSessionParams(context_syncs=[context_sync])).se
 2. **Session Runtime**: You work with files in `/tmp/persistent` as normal local files  
 3. **Session End**: Uploads all changes from `/tmp/persistent` back to OSS directory
 
+### Beta: Skip waiting for non-critical contexts during session creation
+
+By default, when you create a session with `ContextSync`, the SDK will wait until the context download finishes before returning the session object. This is the safest default because your files are guaranteed to be present at the mount path.
+
+For latency-sensitive workloads, you may want to start the session as soon as possible and let large, non-critical contexts download in the background. You can do this by setting the beta flag on specific `ContextSync` entries:
+
+```python
+from agentbay import AgentBay, ContextSync, CreateSessionParams, SyncPolicy
+
+agent_bay = AgentBay()
+ctx = agent_bay.context.get("my-big-context", create=True).context
+
+# Do not block create() on this context download (beta)
+cs = ContextSync.new(ctx.id, "/tmp/persistent", SyncPolicy.default(), beta_wait_for_completion=False)
+session = agent_bay.create(CreateSessionParams(context_syncs=[cs])).session
+```
+
 **Visual Flow:**
 ```
 OSS Storage          Session Environment          OSS Storage After Upload
@@ -1260,8 +1277,9 @@ else:
 - [Session Management](session-management.md) - Session lifecycle and configuration
 - [File Operations](file-operations.md) - File handling and management
 - [OSS Integration](../advanced/oss-integration.md) - Object storage service integration
+- [Context Sync Use Case](../use-cases/context-sync-use-case.md) - Context Best Practices
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../README.md)

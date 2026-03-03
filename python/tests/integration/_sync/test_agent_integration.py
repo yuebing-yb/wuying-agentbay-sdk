@@ -152,7 +152,7 @@ class OutputSchema(BaseModel):
 
 @pytest.mark.sync
 def test_browser_execute_task_and_wait_success(browser_agent_session):
-    """Test executing a flux task successfully."""
+    """Test executing a browser task successfully."""
     agent = browser_agent_session.agent
 
     task = "Navigate to baidu.com and Query the date when Alibaba listed in the U.S"
@@ -163,7 +163,7 @@ def test_browser_execute_task_and_wait_success(browser_agent_session):
     logger.info("🚀 task of Query the date when Alibaba listed in the U.S")
 
     result = agent.browser.execute_task_and_wait(
-        task, timeout, use_vision=False, output_schema=OutputSchema
+        task, timeout, use_vision=True, output_schema=OutputSchema
     )
     assert result.success
     assert result.request_id != ""
@@ -179,7 +179,7 @@ class WeatherSchema(BaseModel):
 
 @pytest.mark.sync
 def test_browser_execute_task_success(browser_agent_session):
-    """Test executing a flux task successfully."""
+    """Test executing a browser task successfully."""
     agent = browser_agent_session.agent
 
     task = "Navigate to baidu.com and Query the weather in Shanghai"
@@ -190,7 +190,7 @@ def test_browser_execute_task_success(browser_agent_session):
     max_poll_attempts = timeout // 3
     logger.info("🚀 async task Query the weather in Shanghai.")
     result = agent.browser.execute_task(
-        task, use_vision=False, output_schema=WeatherSchema
+        task, use_vision=True, output_schema=WeatherSchema
     )
     assert result.success
     assert result.request_id != ""
@@ -210,6 +210,7 @@ def test_browser_execute_task_success(browser_agent_session):
     # Verify the final task status
     assert retry_times < max_poll_attempts
     logger.info(f"✅ result {query_result.task_product}")
+    time.sleep(60 * 10)
 
 
 @pytest.mark.sync

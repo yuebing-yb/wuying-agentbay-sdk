@@ -12,14 +12,15 @@ import com.aliyun.agentbay.filesystem.FileSystem;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.SessionInfo;
 import com.aliyun.agentbay.model.SessionInfoResult;
-import com.aliyun.agentbay.model.SessionParams;
 import com.aliyun.agentbay.model.SessionMetrics;
 import com.aliyun.agentbay.model.SessionMetricsResult;
+import com.aliyun.agentbay.model.SessionStatusResult;
 import com.aliyun.agentbay.oss.OSS;
 import com.aliyun.agentbay.code.Code;
 import com.aliyun.agentbay.command.Command;
 import com.aliyun.agentbay.mcp.McpTool;
 import com.aliyun.agentbay.mcp.McpToolsResult;
+import com.aliyun.agentbay._internal.WsClient;
 import com.aliyun.agentbay.util.ResponseUtil;
 import com.aliyun.wuyingai20250506.models.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,16 +31,12 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Represents a session in the AgentBay cloud environment
- */
 public class Session {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
     private final String sessionId;
     private final AgentBay agentBay;
-    private final SessionParams params;
     private Agent agent;
     private FileSystem fileSystem;
     private OSS oss;
@@ -53,14 +50,25 @@ public class Session {
     private String resourceUrl;
     private String token;
     private String linkUrl;
+    private String wsUrl;
+    private WsClient wsClient;
+    private okhttp3.OkHttpClient linkHttpClient;
     private Boolean enableBrowserReplay;
     private String imageId;
     private List<McpTool> mcpTools = new java.util.ArrayList<>();
 
-    public Session(String sessionId, AgentBay agentBay, SessionParams params) {
+    /**
+     * Creates a new Session instance.
+     * 
+     * <p>Initializes all service instances (Agent, FileSystem, OSS, Code, Command, 
+     * ContextManager, Browser, Computer, Mobile) for this session.</p>
+     * 
+     * @param agentBay The AgentBay client instance
+     * @param sessionId The unique identifier for this session
+     */
+    public Session(AgentBay agentBay, String sessionId) {
         this.sessionId = sessionId;
         this.agentBay = agentBay;
-        this.params = params;
         this.agent = new Agent(this);
         this.fileSystem = new FileSystem(this);
         this.oss = new OSS(this);
@@ -71,78 +79,254 @@ public class Session {
         this.computer = new Computer(this);
         this.mobile = new Mobile(this);
         this.imageId = "";
+        this.wsUrl = "";
+    }
+
+    public String getWsUrl() {
+        return wsUrl;
+    }
+
+    public void setWsUrl(String wsUrl) {
+        this.wsUrl = wsUrl;
     }
 
     /**
-     * Constructor compatible with Python SDK style (AgentBay, sessionId)
+     * Internal: get or create a session-scoped WS client.
+     * 
+     * <p>This method is internal API by convention. The WS client is lazily initialized
+     * and cached for the lifetime of this session. Callers are responsible for calling
+     * connect() on the returned client if needed.</p>
+     * 
+     * @return The WsClient instance for this session
+     * @throws RuntimeException if wsUrl or token is not available
      */
-    public Session(AgentBay agentBay, String sessionId) {
-        this(sessionId, agentBay, new SessionParams());
+    public synchronized WsClient getWsClient() {
+        if (this.wsUrl == null || this.wsUrl.trim().isEmpty()) {
+            throw new RuntimeException("wsUrl is not available for this session");
+        }
+        if (this.token == null || this.token.trim().isEmpty()) {
+            throw new RuntimeException("token is not available for WS connection");
+        }
+        if (this.wsClient == null) {
+            this.wsClient = new WsClient(this.wsUrl, this.token);
+        }
+        return this.wsClient;
+    }
+
+    private synchronized okhttp3.OkHttpClient getLinkHttpClient() {
+        if (this.linkHttpClient == null) {
+            this.linkHttpClient = new okhttp3.OkHttpClient.Builder()
+                .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
+                .writeTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
+                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .build();
+        }
+        return this.linkHttpClient;
+    }
+
+    private void closeLinkHttpClient() {
+        if (this.linkHttpClient != null) {
+            this.linkHttpClient.connectionPool().evictAll();
+            this.linkHttpClient.dispatcher().executorService().shutdown();
+            this.linkHttpClient = null;
+        }
     }
 
     /**
-     * Get the session ID
+     * Creates a new Session instance with alternative parameter order.
+     * 
+     * <p>This constructor provides backward compatibility for code that uses
+     * the (String, AgentBay) parameter order.</p>
+     * 
+     * @param sessionId The unique identifier for this session
+     * @param agentBay The AgentBay client instance
+     */
+    public Session(String sessionId, AgentBay agentBay) {
+        this(agentBay, sessionId);
+    }
+
+    /**
+     * Get the session ID.
      *
-     * @return Session ID
+     * @return The unique identifier for this session
      */
     public String getSessionId() {
         return sessionId;
     }
 
     /**
-     * Get the AgentBay client
+     * Get basic session status.
      *
-     * @return AgentBay instance
+     * <p>This method calls the GetSessionDetail API and returns status only.</p>
+     *
+     * @return SessionStatusResult containing session status information
+     */
+    public SessionStatusResult getStatus() {
+        try {
+            logger.debug("Calling GetSessionDetail API for session: {}", sessionId);
+            
+            GetSessionDetailRequest request = new GetSessionDetailRequest();
+            request.setAuthorization("Bearer " + getApiKey());
+            request.setSessionId(sessionId);
+
+            GetSessionDetailResponse response = agentBay.getClient().getSessionDetail(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response == null || response.getBody() == null) {
+                return new SessionStatusResult(requestId, 0, "", false, "", "Invalid response from GetSessionDetail API");
+            }
+
+            GetSessionDetailResponseBody body = response.getBody();
+            Integer httpStatusCode = body.getHttpStatusCode() != null ? body.getHttpStatusCode() : 0;
+            String code = body.getCode() != null ? body.getCode() : "";
+            Boolean success = body.getSuccess() != null ? body.getSuccess() : false;
+            String message = body.getMessage() != null ? body.getMessage() : "";
+
+            if (requestId == null || requestId.isEmpty()) {
+                requestId = body.getRequestId() != null ? body.getRequestId() : "";
+            }
+
+            if (!success && !code.isEmpty()) {
+                String errorMessage = message != null && !message.isEmpty() ? message : "Unknown error";
+                if (!code.isEmpty()) {
+                    errorMessage = "[" + code + "] " + errorMessage;
+                }
+                return new SessionStatusResult(requestId, httpStatusCode, code, false, "", errorMessage);
+            }
+
+            String status = "";
+            if (body.getData() != null) {
+                GetSessionDetailResponseBody.GetSessionDetailResponseBodyData data = body.getData();
+                logger.info("GetSessionDetail API call successful: {}", data);
+                status = data.getStatus() != null ? data.getStatus() : "";
+            }
+
+            logger.debug("GetSessionDetail API response - RequestId: {}, Success: {}, Status: {}", 
+                        requestId, success, status);
+
+            return new SessionStatusResult(requestId, httpStatusCode, code, success, status, "");
+
+        } catch (Exception e) {
+            String errorStr = e.getMessage() != null ? e.getMessage() : e.toString();
+            
+            // Check for NotFound error
+            if (errorStr.contains("InvalidMcpSession.NotFound") || errorStr.contains("NotFound")) {
+                logger.info("Session not found: {}", sessionId);
+                logger.debug("GetSessionDetail error details: {}", errorStr);
+                return new SessionStatusResult("", 400, "InvalidMcpSession.NotFound", false, "", 
+                                              "Session " + sessionId + " not found");
+            }
+
+            logger.error("Error calling GetSessionDetail: {}", errorStr, e);
+            return new SessionStatusResult("", 0, "", false, "", 
+                                          "Failed to get session status " + sessionId + ": " + errorStr);
+        }
+    }
+
+    /**
+     * Refresh the backend idle timer for this session.
+     *
+     * <p>This method calls the RefreshSessionIdleTime API to prevent the session
+     * from being automatically terminated due to inactivity.</p>
+     *
+     * @return OperationResult containing request ID and success status
+     */
+    public OperationResult keepAlive() {
+        try {
+            RefreshSessionIdleTimeRequest request = new RefreshSessionIdleTimeRequest();
+            request.setAuthorization("Bearer " + getApiKey());
+            request.setSessionId(sessionId);
+
+            RefreshSessionIdleTimeResponse response = agentBay.getClient().refreshSessionIdleTime(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response == null || response.getBody() == null) {
+                return new OperationResult(requestId, false, "", "Invalid response from RefreshSessionIdleTime API");
+            }
+
+            Boolean success = response.getBody().getSuccess();
+            if (success == null || !success) {
+                String code = response.getBody().getCode();
+                String message = response.getBody().getMessage();
+                String err = message != null && !message.isEmpty() ? message : "Unknown error";
+                if (code != null && !code.isEmpty()) {
+                    err = "[" + code + "] " + err;
+                }
+                return new OperationResult(requestId, false, "", err);
+            }
+
+            return new OperationResult(requestId, true, "", "");
+        } catch (Exception e) {
+            return new OperationResult("", false, "", "Failed to keep session alive: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get the AgentBay client.
+     *
+     * @return The AgentBay client instance associated with this session
      */
     public AgentBay getAgentBay() {
         return agentBay;
     }
 
     /**
-     * Get session parameters
+     * Get the agent for this session.
      *
-     * @return SessionParams
-     */
-    public SessionParams getParams() {
-        return params;
-    }
-
-    /**
-     * Get the agent for this session
-     *
-     * @return Agent instance
+     * @return The Agent instance for AI-powered automation
      */
     public Agent getAgent() {
         return agent;
     }
 
     /**
-     * Get the file system for this session
+     * Get the file system for this session.
      *
-     * @return FileSystem instance
+     * @return The FileSystem instance for file operations
      */
     public FileSystem getFileSystem() {
         return fileSystem;
     }
 
+    /**
+     * Alias for fileSystem.
+     * 
+     * <p>Provides a shorthand way to access the file system service.</p>
+     * 
+     * @return The FileSystem instance
+     */
     public FileSystem fs() {
         return fileSystem;
     }
 
+    /**
+     * Alias for fileSystem.
+     * 
+     * <p>Provides an alternative way to access the file system service.</p>
+     * 
+     * @return The FileSystem instance
+     */
     public FileSystem getFilesystem() {
         return fileSystem;
     }
 
+    /**
+     * Alias for fileSystem.
+     * 
+     * <p>Provides a shorthand way to access the file system service.</p>
+     * 
+     * @return The FileSystem instance
+     */
     public FileSystem getFiles() {
         return fileSystem;
     }
 
     /**
-     * Call an MCP tool (legacy method, returns raw API response)
+     * Call an MCP tool (legacy method, returns raw API response).
      *
      * @param toolName Tool name
      * @param args Tool arguments
-     * @return CallMcpToolResponse
+     * @return CallMcpToolResponse Raw API response
      * @throws AgentBayException if the call fails
      */
     public CallMcpToolResponse callTool(String toolName, Object args) throws AgentBayException {
@@ -157,9 +341,10 @@ public class Session {
     }
 
     /**
-     * Call an MCP tool and return structured OperationResult (similar to Python's call_mcp_tool).
-     * This is the preferred method for calling MCP tools as it provides unified routing logic
-     * (LinkUrl, VPC, API) and consistent error handling.
+     * Call an MCP tool and return structured OperationResult.
+     * 
+     * <p>This is the preferred method for calling MCP tools as it provides unified routing logic
+     * (LinkUrl, VPC, API) and consistent error handling.</p>
      *
      * @param toolName Tool name
      * @param args Tool arguments
@@ -184,12 +369,27 @@ public class Session {
         }
     }
 
+    /**
+     * Checks if a string is not null and not empty.
+     * 
+     * @param str The string to check
+     * @return true if the string is not null and not empty, false otherwise
+     */
     private boolean isNotEmpty(String str) {
         return str != null && !str.isEmpty();
     }
 
     /**
-     * Call MCP tool via traditional API route
+     * Calls an MCP tool via the traditional API route.
+     * 
+     * This method makes an HTTP API call to invoke the MCP tool and returns
+     * the result as an OperationResult. It handles response parsing, error checking,
+     * and data extraction.
+     * 
+     * @param toolName The name of the MCP tool to call
+     * @param args The arguments to pass to the tool
+     * @param serverName The MCP server name (can be null for server-side resolution)
+     * @return OperationResult containing the tool call result
      */
     private OperationResult callMcpToolApi(String toolName, Object args, String serverName) {
         try {
@@ -243,7 +443,15 @@ public class Session {
     }
 
     /**
-     * Call MCP tool via LinkUrl route (VPC mode)
+     * Calls an MCP tool via the LinkUrl route (VPC mode).
+     * 
+     * This method makes a direct HTTP call to the LinkUrl endpoint for faster
+     * tool execution in VPC environments. It requires both token and linkUrl to be set.
+     * 
+     * @param toolName The name of the MCP tool to call
+     * @param args The arguments to pass to the tool
+     * @param serverName The MCP server name (required for LinkUrl route)
+     * @return OperationResult containing the tool call result
      */
     private OperationResult callMcpToolLinkUrl(String toolName, Object args, String serverName) {
         try {
@@ -275,11 +483,7 @@ public class Session {
                 okhttp3.MediaType.parse("application/json")
             );
 
-            okhttp3.OkHttpClient httpClient = new okhttp3.OkHttpClient.Builder()
-                .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
-                .writeTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
-                .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                .build();
+            okhttp3.OkHttpClient httpClient = getLinkHttpClient();
 
             okhttp3.Request request = new okhttp3.Request.Builder()
                 .url(url)
@@ -367,6 +571,12 @@ public class Session {
         }
     }
 
+    /**
+     * Extracts error message from the content field of an MCP tool response.
+     * 
+     * @param dataMap The response data map
+     * @return The extracted error message, or a default error message if not found
+     */
     private String extractErrorMessageFromContent(Map<String, Object> dataMap) {
         Object content = dataMap.get("content");
         if (content instanceof java.util.List && !((java.util.List<?>) content).isEmpty()) {
@@ -381,6 +591,15 @@ public class Session {
         return "MCP tool execution error";
     }
 
+    /**
+     * Extracts text content from the data field of an MCP tool response.
+     * 
+     * This method looks for text, blob, or data fields in the content array
+     * and returns the first non-null value found.
+     * 
+     * @param dataMap The response data map
+     * @return The extracted text content as a string
+     */
     private String extractTextContentFromData(Map<String, Object> dataMap) {
         Object content = dataMap.get("content");
         if (content instanceof java.util.List && !((java.util.List<?>) content).isEmpty()) {
@@ -414,7 +633,7 @@ public class Session {
      * @return List of available tools
      * @throws AgentBayException if the call fails
      */
-    public List<Object> listTools() throws AgentBayException {
+    private List<Object> listTools() throws AgentBayException {
         String img = imageId;
         if (img == null || img.isEmpty()) {
             img = "linux_latest";
@@ -460,6 +679,15 @@ public class Session {
         }
     }
 
+    /**
+     * Parses raw metrics data from the MCP get_metrics tool response.
+     * 
+     * This method extracts various metrics including CPU, memory, disk, and network
+     * statistics from the raw data map and populates a SessionMetrics object.
+     * 
+     * @param raw The raw metrics data map from the MCP tool response
+     * @return A populated SessionMetrics object
+     */
     private SessionMetrics parseMetrics(Map<String, Object> raw) {
         SessionMetrics metrics = new SessionMetrics();
         metrics.setCpuCount(getIntValue(raw, "cpu_count"));
@@ -482,6 +710,15 @@ public class Session {
         return metrics;
     }
 
+    /**
+     * Gets a double value from a map with fallback keys.
+     * 
+     * Tries each key in order until a non-null value is found, then converts it to double.
+     * 
+     * @param map The map to search
+     * @param keys The keys to try in order
+     * @return The first non-null value converted to double, or 0.0 if none found
+     */
     private double getDoubleValueWithFallback(Map<String, Object> map, String... keys) {
         for (String key : keys) {
             Object value = map.get(key);
@@ -499,6 +736,13 @@ public class Session {
         return 0.0;
     }
 
+    /**
+     * Gets an integer value from a map.
+     * 
+     * @param map The map to search
+     * @param key The key to look up
+     * @return The integer value, or 0 if not found or conversion fails
+     */
     private int getIntValue(Map<String, Object> map, String key) {
         Object value = map.get(key);
         if (value == null) return 0;
@@ -512,6 +756,13 @@ public class Session {
         }
     }
 
+    /**
+     * Gets a long value from a map.
+     * 
+     * @param map The map to search
+     * @param key The key to look up
+     * @return The long value, or 0L if not found or conversion fails
+     */
     private long getLongValue(Map<String, Object> map, String key) {
         Object value = map.get(key);
         if (value == null) return 0L;
@@ -525,6 +776,13 @@ public class Session {
         }
     }
 
+    /**
+     * Gets a double value from a map.
+     * 
+     * @param map The map to search
+     * @param key The key to look up
+     * @return The double value, or 0.0 if not found or conversion fails
+     */
     private double getDoubleValue(Map<String, Object> map, String key) {
         Object value = map.get(key);
         if (value == null) return 0.0;
@@ -538,6 +796,13 @@ public class Session {
         }
     }
 
+    /**
+     * Gets a string value from a map.
+     * 
+     * @param map The map to search
+     * @param key The key to look up
+     * @return The string value, or empty string if not found
+     */
     private String getStringValue(Map<String, Object> map, String key) {
         Object value = map.get(key);
         return value != null ? value.toString() : "";
@@ -691,8 +956,13 @@ public class Session {
     }
 
     /**
-     * Initialize browser instance with the given options
-     * This calls the AgentBay cloud service to create a browser instance
+     * Initializes a browser instance with the given options.
+     * 
+     * This method calls the AgentBay cloud service to create a browser instance for web automation and testing. The browser is initialized with a persistent path for storing browser data.
+     * 
+     * @param option Browser configuration options including browser type, headless mode, etc.
+     * @return OperationResult containing the initialization result
+     * @throws AgentBayException if browser initialization fails
      */
     public OperationResult initializeBrowser(BrowserOption option) throws AgentBayException {
         try {
@@ -739,9 +1009,11 @@ public class Session {
     }
 
     /**
-     * List MCP tools for this session
-     *
-     * @return McpToolsResult
+     * Lists all available MCP tools for this session.
+     * 
+     * This method retrieves the list of MCP tools that can be called in this session,including their names, descriptions, input schemas, and server information.
+     * 
+     * @return McpToolsResult containing the list of available tools
      */
     public McpToolsResult listMcpTools() {
         try {
@@ -800,25 +1072,39 @@ public class Session {
     }
 
     /**
-     * Set image ID for this session (placeholder method)
+     * Sets the image ID for this session.
+     * This is used to specify the base image for the session environment.
+     * 
+     * @param imageId The image ID to set
      */
     public void setImageId(String imageId) {
         this.imageId = imageId;
     }
 
+    /**
+     * Gets the image ID for this session.
+     * 
+     * @return The image ID, or empty string if not set
+     */
     public String getImageId() {
         return imageId;
     }
 
     /**
-     * Get enableBrowserReplay flag
+     * Gets the enableBrowserReplay flag.
+     * This flag determines whether browser recording is enabled for this session.
+     * 
+     * @return true if browser replay is enabled, false otherwise
      */
     public Boolean getEnableBrowserReplay() {
         return enableBrowserReplay;
     }
 
     /**
-     * Set enableBrowserReplay flag
+     * Sets the enableBrowserReplay flag.
+     * This flag determines whether browser recording is enabled for this session.
+     * 
+     * @param enableBrowserReplay true to enable browser replay, false to disable
      */
     public void setEnableBrowserReplay(Boolean enableBrowserReplay) {
         this.enableBrowserReplay = enableBrowserReplay;
@@ -843,31 +1129,43 @@ public class Session {
     }
 
     /**
-     * Get the token for LinkUrl tool calls.
+     * Gets the token for LinkUrl tool calls.
+     * This token is used for authentication when calling MCP tools via the LinkUrl route.
+     * 
+     * @return The authentication token
      */
     public String getToken() {
         return token;
     }
 
     /**
-     * Set the token for LinkUrl tool calls.
+     * Sets the token for LinkUrl tool calls.
+     * This token is used for authentication when calling MCP tools via the LinkUrl route.
+     * 
+     * @param token The authentication token to set
      */
     public void setToken(String token) {
         this.token = token;
     }
 
     /**
-     * Get the LinkUrl for direct tool calls.
+     * Gets the LinkUrl for direct tool calls.
+     * This URL is used for calling MCP tools via the LinkUrl route in VPC environments.
+     * 
+     * @return The LinkUrl, or empty string if not set
      */
     public String getLinkUrl() {
-        return linkUrl;
+        return linkUrl == null ? "" : linkUrl;
     }
 
     /**
-     * Set the LinkUrl for direct tool calls.
+     * Sets the LinkUrl for direct tool calls.
+     * This URL is used for calling MCP tools via the LinkUrl route in VPC environments.
+     * 
+     * @param linkUrl The LinkUrl to set
      */
     public void setLinkUrl(String linkUrl) {
-        this.linkUrl = linkUrl;
+        this.linkUrl = linkUrl == null ? "" : linkUrl;
     }
 
     /**
@@ -910,8 +1208,13 @@ public class Session {
     }
 
     /**
-     * Update MCP tools for this session
-     *
+     * Updates the MCP tools list for this session from a JSON string.
+     * 
+     * This method parses the JSON string and updates the mcpTools list with
+     * the new tool definitions. It handles both Map and String representations
+     * of tool data.
+     * 
+     * @param dataJson JSON string containing the tool definitions
      */
     public void updateMcpTools(String dataJson) {
         try {
@@ -979,14 +1282,32 @@ public class Session {
         }
     }
 
+    /**
+     * Gets the list of MCP tools available for this session.
+     * 
+     * @return List of McpTool instances
+     */
     public List<McpTool> getMcpTools() {
         return mcpTools;
     }
 
+    /**
+     * Sets the list of MCP tools for this session.
+     * 
+     * @param mcpTools The list of McpTool instances to set
+     */
     public void setMcpTools(List<McpTool> mcpTools) {
         this.mcpTools = mcpTools != null ? mcpTools : new java.util.ArrayList<>();
     }
 
+    /**
+     * Gets the MCP server name for a specific tool.
+     * 
+     * This method searches through the available MCP tools to find the server that provides the specified tool.
+     * 
+     * @param toolName The name of the tool to look up
+     * @return The server name, or empty string if not found
+     */
     public String getMcpServerForTool(String toolName) {
         if (toolName == null || toolName.isEmpty()) {
             return "";
@@ -1003,11 +1324,13 @@ public class Session {
     }
 
     /**
-     * Get a link associated with the current session
-     *
-     * @param protocolType The protocol type to use for the link (optional)
-     * @param port The port to use for the link (optional)
-     * @return OperationResult containing the link URL
+     * Gets a connection link for the current session with specified parameters.
+     * 
+     * This method generates a connection URL that can be used to access the session via the specified protocol and port.
+     * 
+     * @param protocolType The protocol type to use for the link (e.g., "https")
+     * @param port The port number to use for the connection
+     * @return OperationResult containing the connection link URL
      * @throws AgentBayException if the request fails
      */
     public OperationResult getLink(String protocolType, Integer port) throws AgentBayException {
@@ -1037,67 +1360,39 @@ public class Session {
     }
 
     /**
-     * Get a link associated with the current session with default parameters
-     *
-     * @return OperationResult containing the link URL
+     * Gets a connection link for the current session with default parameters.
+     * 
+     * This method generates a connection URL using the default protocol and port.
+     * 
+     * @return OperationResult containing the connection link URL
      * @throws AgentBayException if the request fails
      */
     public OperationResult getLink() throws AgentBayException {
         return getLink(null, null);
     }
 
-    /**
-     * Dump session state to a JSON string for persistence
-     *
-     * @return JSON string containing session state
-     * @throws AgentBayException if serialization fails
-     */
-    public String dumpState() throws AgentBayException {
-        try {
-            SessionState state = new SessionState();
-            state.setSessionId(this.sessionId);
-            state.setFileTransferContextId(this.fileTransferContextId);
-            return objectMapper.writeValueAsString(state);
-        } catch (Exception e) {
-            throw new AgentBayException("Failed to dump session state: " + e.getMessage(), e);
-        }
-    }
 
     /**
-     * Restore session from a JSON state string
-     *
-     * @param agentBay AgentBay client instance
-     * @param stateJson JSON string containing session state
-     * @return Restored Session object
-     * @throws AgentBayException if deserialization or restoration fails
-     */
-    public static Session restoreState(AgentBay agentBay, String stateJson) throws AgentBayException {
-        try {
-            SessionState state = objectMapper.readValue(stateJson, SessionState.class);
-
-            Session session = new Session(state.getSessionId(), agentBay, new SessionParams());
-
-            session.setFileTransferContextId(state.getFileTransferContextId());
-            return session;
-        } catch (Exception e) {
-            throw new AgentBayException("Failed to restore session state: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Delete this session
-     *
-     * @return DeleteResult
+     * Deletes this session.
+     * 
+     * This method releases the cloud resources associated with this session.
+     * Context synchronization is not performed before deletion.
+     * 
+     * @return DeleteResult containing the deletion result
      */
     public com.aliyun.agentbay.model.DeleteResult delete() {
         return delete(false);
     }
 
     /**
-     * Delete this session with optional sync context
-     *
-     * @param syncContext Whether to sync context before deletion
-     * @return DeleteResult
+     * Deletes this session with optional context synchronization.
+     * 
+     * This method releases the cloud resources associated with this session.
+     * If syncContext is true, it will first synchronize the context (upload files)
+     * before deleting the session, waiting for all uploads to complete.
+     * 
+     * @param syncContext Whether to synchronize context before deletion
+     * @return DeleteResult containing the deletion result
      */
     public com.aliyun.agentbay.model.DeleteResult delete(boolean syncContext) {
         try {
@@ -1186,15 +1481,24 @@ public class Session {
         } catch (Exception e) {
             return new com.aliyun.agentbay.model.DeleteResult(
                 "", false, "Failed to delete session " + sessionId + ": " + e.getMessage());
+        } finally {
+            try {
+                closeLinkHttpClient();
+            } catch (Exception ignored) {
+            }
         }
     }
 
     /**
-     * Set labels for this session
-     *
+     * Sets labels for this session.
+     * 
+     * Labels are key-value pairs that can be used to organize and filter sessions.
+     * All keys and values must be non-empty strings.
+     * 
      * @param labels Map of label key-value pairs to set
      * @return OperationResult indicating success or failure
-     * @throws AgentBayException if the API call fails
+     * @throws AgentBayException if the API call fails or validation fails
+     * @throws IllegalArgumentException if labels are null or contain invalid keys/values
      */
     public OperationResult setLabels(Map<String, String> labels) throws AgentBayException {
         try {
@@ -1203,11 +1507,7 @@ public class Session {
                 throw new IllegalArgumentException("Labels cannot be null");
             }
 
-            // Validate label constraints
-            if (labels.size() > 20) {
-                throw new IllegalArgumentException("Maximum 20 labels allowed");
-            }
-
+            // Validate label keys and values
             for (Map.Entry<String, String> entry : labels.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
@@ -1215,11 +1515,8 @@ public class Session {
                 if (key == null || key.trim().isEmpty()) {
                     throw new IllegalArgumentException("Label key cannot be null or empty");
                 }
-                if (key.length() > 128) {
-                    throw new IllegalArgumentException("Label key cannot exceed 128 characters: " + key);
-                }
-                if (value != null && value.length() > 256) {
-                    throw new IllegalArgumentException("Label value cannot exceed 256 characters for key: " + key);
+                if (value == null || value.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Label value cannot be null or empty");
                 }
             }
 
@@ -1247,9 +1544,11 @@ public class Session {
     }
 
     /**
-     * Get labels for this session
-     *
-     * @return OperationResult containing the labels map in the data field
+     * Gets the labels for this session.
+     * 
+     * This method retrieves all labels that have been set for this session.
+     * 
+     * @return OperationResult containing the labels map as JSON string in the data field
      * @throws AgentBayException if the API call fails
      */
     public OperationResult getLabels() throws AgentBayException {
@@ -1285,11 +1584,15 @@ public class Session {
         }
     }
 
+    /**
+     * Returns a string representation of this session.
+     * 
+     * @return A string containing the session ID and parameters
+     */
     @Override
     public String toString() {
         return "Session{" +
                 "sessionId='" + sessionId + '\'' +
-                ", params=" + params +
                 '}';
     }
 }

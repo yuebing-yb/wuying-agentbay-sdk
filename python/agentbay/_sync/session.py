@@ -42,6 +42,7 @@ from ..api.models import (
     GetMcpResourceRequest,
     ListMcpToolsRequest,
     PauseSessionAsyncRequest,
+    RefreshSessionIdleTimeRequest,
     ReleaseMcpSessionRequest,
     ResumeSessionAsyncRequest,
     SetLabelRequest,
@@ -125,6 +126,15 @@ class Session:
         self.token = ""
         self.link_url = ""
 
+        # WebSocket URL for long connection (if provided by backend)
+        self.ws_url = ""
+
+        # Internal session-scoped WS client (lazy initialized)
+        self._ws_client = None
+
+        # Shared HTTP client for LinkUrl calls (lazy initialized)
+        self._link_http_client: Optional[httpx.Client] = None
+
         # Recording functionality
         self.enableBrowserReplay = (
             True  # Whether browser recording is enabled for this session
@@ -147,6 +157,36 @@ class Session:
         self.browser = Browser(self)
 
         self.agent = Agent(self)
+
+    def _get_link_http_client(self) -> httpx.Client:
+        """Internal: get or create a shared HTTP client for LinkUrl calls."""
+        if self._link_http_client is None:
+            self._link_http_client = httpx.Client(timeout=900)
+        return self._link_http_client
+
+    def _close_link_http_client(self) -> None:
+        """Internal: close the shared HTTP client for LinkUrl calls."""
+        client = self._link_http_client
+        self._link_http_client = None
+        if client is not None:
+            client.close()
+
+    def _get_ws_client(self):
+        """
+        Internal: get or create a session-scoped WS client.
+
+        This method is internal API by convention.
+        """
+        if not self.ws_url:
+            raise SessionError("ws_url is not available for this session")
+        if not self.token:
+            raise SessionError("token is not available for WS connection")
+
+        if self._ws_client is None:
+            from ._internal.ws_client import WsClient
+
+            self._ws_client = WsClient(ws_url=self.ws_url, ws_token=self.token)
+        return self._ws_client
 
     @property
     def fs(self) -> FileSystem:
@@ -296,6 +336,61 @@ class Session:
                 request_id="",
                 success=False,
                 error_message=f"Failed to get session status {self.session_id}: {e}",
+            )
+
+    def keep_alive(self) -> OperationResult:
+        """
+        Refresh the backend session idle timer.
+
+        This method calls the RefreshSessionIdleTime API.
+        """
+        try:
+            _log_api_call("RefreshSessionIdleTime", f"SessionId={self.session_id}")
+            request = RefreshSessionIdleTimeRequest(
+                authorization=f"Bearer {self._get_api_key()}",
+                session_id=self.session_id,
+            )
+            response = self._get_client().refresh_session_idle_time(request)
+            request_id = extract_request_id(response)
+
+            response_map = response.to_map() if response is not None else {}
+            body = response_map.get("body", {}) if isinstance(response_map, dict) else {}
+
+            success = bool(body.get("Success", False))
+            if not request_id:
+                request_id = body.get("RequestId", "") or ""
+
+            if not success:
+                code = body.get("Code", "") or ""
+                message = body.get("Message", "") or ""
+                error_message = f"[{code}] {message or 'Unknown error'}" if code else (message or "Unknown error")
+                _log_api_response_with_details(
+                    api_name="RefreshSessionIdleTime",
+                    request_id=request_id,
+                    success=False,
+                    full_response=json.dumps(body, ensure_ascii=False, indent=2)
+                    if isinstance(body, dict)
+                    else str(body),
+                )
+                return OperationResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_message,
+                )
+
+            _log_api_response_with_details(
+                api_name="RefreshSessionIdleTime",
+                request_id=request_id,
+                success=True,
+                key_fields={"session_id": self.session_id},
+            )
+            return OperationResult(request_id=request_id, success=True)
+        except Exception as e:
+            _log_operation_error("RefreshSessionIdleTime", str(e), exc_info=True)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to keep session alive {self.session_id}: {e}",
             )
 
     def delete(self, sync_context: bool = False) -> DeleteResult:
@@ -456,6 +551,18 @@ class Session:
                 success=False,
                 error_message=f"Failed to delete session {self.session_id}: {e}",
             )
+        finally:
+            ws_client = self._ws_client
+            self._ws_client = None
+            if ws_client is not None:
+                try:
+                    ws_client.close()
+                except Exception:
+                    pass
+            try:
+                self._close_link_http_client()
+            except Exception:
+                pass
 
     def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
         """
@@ -928,15 +1035,15 @@ class Session:
         }
 
         try:
-            with httpx.Client(timeout=900) as client:
-                resp = client.post(
-                    url,
-                    json=payload,
-                    headers={
-                        "Content-Type": "application/json",
-                        "X-Access-Token": token,
-                    },
-                )
+            client = self._get_link_http_client()
+            resp = client.post(
+                url,
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Access-Token": token,
+                },
+            )
 
             if resp.status_code < 200 or resp.status_code >= 300:
                 _log_api_response_with_details(
@@ -1261,92 +1368,21 @@ class Session:
         self, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionPauseResult:
         """
-        Asynchronously pause this session (beta), putting it into a dormant state.
-        This method waits until the session enters the PAUSED state.
+        Pause the session and wait until it enters PAUSED state.
+
+        Note:
+            This feature is currently in whitelist-only access.
+            Contact agentbay_dev@alibabacloud.com to request access.
+
+        Args:
+            timeout: Timeout in seconds, default 600
+            poll_interval: Polling interval in seconds, default 2.0
+
+        Returns:
+            SessionPauseResult: Result containing request ID, success status, and session status
         """
         try:
-            # Call the async initiate method first
-            result = self.beta_pause_async()
-            if not result.success:
-                return result
-
-            request_id = result.request_id
-
-            _log_operation_success(
-                "PauseSessionAsync",
-                f"Session {self.session_id} pause initiated successfully",
-            )
-
-            # Poll for session status until PAUSED or timeout
-            start_time = time.time()
-            max_attempts = int(timeout / poll_interval)
-            attempt = 0
-
-            while attempt < max_attempts:
-                attempt += 1
-
-                try:
-                    # Check session status using _get_session (internal)
-                    session_result = self.agent_bay._get_session(self.session_id)
-                    if session_result.success and session_result.data:
-                        status = session_result.data.status
-                        if status == "PAUSED":
-                            _log_operation_success(
-                                "PauseSessionAsync",
-                                f"Session {self.session_id} is now PAUSED",
-                            )
-                            return SessionPauseResult(
-                                request_id=request_id,
-                                success=True,
-                                status="PAUSED",
-                            )
-                        elif (
-                            status == "ERROR" or status == "FAILED"
-                        ):  # Add other failure states if known
-                            _log_operation_error(
-                                "PauseSessionAsync",
-                                f"Session entered error state: {status}",
-                            )
-                            return SessionPauseResult(
-                                request_id=request_id,
-                                success=False,
-                                error_message=f"Session entered error state: {status}",
-                                status=status,
-                            )
-                except Exception:
-                    pass
-
-                # Check timeout
-                if time.time() - start_time > timeout:
-                    break
-
-                # Wait before next poll
-                time.sleep(poll_interval)
-
-            _log_operation_error(
-                "PauseSessionAsync",
-                f"Timed out waiting for session {self.session_id} to pause",
-            )
-            return SessionPauseResult(
-                request_id=request_id,
-                success=False,
-                status="PAUSING",  # Still technically pausing or unknown
-                error_message=f"Timed out after {timeout} seconds waiting for session to pause",
-            )
-
-        except Exception as e:
-            _log_operation_error("PauseSessionAsync", str(e))
-            return SessionPauseResult(
-                request_id="",
-                success=False,
-                error_message=f"Unexpected error pausing session: {e}",
-            )
-
-    def beta_pause_async(self) -> SessionPauseResult:
-        """
-        Asynchronously initiate the pause session operation without waiting for completion.
-        """
-        try:
+            # Send pause request
             request = PauseSessionAsyncRequest(
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
@@ -1354,13 +1390,10 @@ class Session:
 
             _log_api_call("PauseSessionAsync", f"SessionId={self.session_id}")
 
-            client = self._get_client()
-            response = client.pause_session_async(request)
-
-            # Extract request ID
+            response = self._get_client().pause_session_async(request)
             request_id = extract_request_id(response)
 
-            # Check for API-level errors
+            # Check API response
             response_map = response.to_map()
             if not response_map:
                 return SessionPauseResult(
@@ -1377,133 +1410,83 @@ class Session:
                     error_message="Invalid response body",
                 )
 
-            # Extract fields from response body
             success = body.get("Success", False)
-            code = body.get("Code", "")
-            message = body.get("Message", "")
-            http_status_code = body.get("HttpStatusCode", 0)
-
-            _log_api_response_with_details(
-                api_name="PauseSessionAsync",
-                request_id=request_id,
-                success=True,
-                key_fields={"session_id": self.session_id},
-            )
-
             if not success:
-                error_message = (
-                    f"[{code}] {message}" if code or message else "Unknown error"
-                )
-                _log_operation_error("PauseSessionAsync", error_message)
+                code = body.get("Code", "")
+                message = body.get("Message", "")
+                error_message = f"[{code}] {message}" if code or message else "Unknown error"
+                _log_operation_error("beta_pause", error_message)
                 return SessionPauseResult(
                     request_id=request_id,
                     success=False,
                     error_message=error_message,
-                    code=code,
-                    message=message,
-                    http_status_code=http_status_code,
                 )
 
+            _logger.info(f"Pause request sent for session {self.session_id}, waiting for PAUSED state")
+
+            # Poll session status
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                try:
+                    session_result = self.agent_bay._get_session(self.session_id)
+                    if session_result.success and session_result.data:
+                        status = session_result.data.status
+                        poll_request_id = session_result.request_id
+                        _logger.info(f"Polling session status: {status}, request_id: {poll_request_id}")
+
+                        if status == "PAUSED":
+                            _log_operation_success("beta_pause", f"Session {self.session_id} paused successfully")
+                            return SessionPauseResult(
+                                request_id=request_id,
+                                success=True,
+                                status="PAUSED",
+                            )
+
+                        if status == "PAUSING":
+                            _logger.debug("Session is pausing, continue polling")
+                        else:
+                            _log_operation_error("beta_pause", f"Session in unexpected state: {status}")
+                            return SessionPauseResult(
+                                request_id=request_id,
+                                success=False,
+                                error_message=f"Pause failed, session in unexpected state: {status}",
+                                status=status,
+                            )
+                except Exception as e:
+                    _logger.debug(f"Failed to get session status: {e}")
+
+                time.sleep(poll_interval)
+
+            _log_operation_error("beta_pause", f"Timeout waiting for session {self.session_id} after {timeout}s")
             return SessionPauseResult(
-                request_id=request_id, success=True, status="PAUSING"
+                success=False,
+                status="",
+                error_message=f"Timed out after {timeout}s waiting for PAUSED state",
             )
 
         except Exception as e:
-            _log_operation_error("PauseSessionAsync", str(e))
+            _log_operation_error("beta_pause", str(e))
             return SessionPauseResult(
                 request_id="",
                 success=False,
-                error_message=f"Unexpected error pausing session: {e}",
+                error_message=f"Failed to pause session: {e}",
             )
 
     def beta_resume(
         self, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionResumeResult:
         """
-        Asynchronously resume this session (beta) from a paused state.
-        This method waits until the session enters the RUNNING state.
+        Resume the session and wait until it enters RUNNING state.
+
+        Args:
+            timeout: Timeout in seconds, default 600
+            poll_interval: Polling interval in seconds, default 2.0
+
+        Returns:
+            SessionResumeResult: Result containing request ID, success status, and session status
         """
         try:
-            # Call the async initiate method first
-            result = self.beta_resume_async()
-            if not result.success:
-                return result
-
-            request_id = result.request_id
-
-            _log_operation_success(
-                "ResumeSessionAsync",
-                f"Session {self.session_id} resume initiated successfully",
-            )
-
-            # Poll for session status until RUNNING or timeout
-            start_time = time.time()
-            max_attempts = int(timeout / poll_interval)
-            attempt = 0
-
-            while attempt < max_attempts:
-                attempt += 1
-
-                try:
-                    # Check session status using _get_session (internal)
-                    session_result = self.agent_bay._get_session(self.session_id)
-                    if session_result.success and session_result.data:
-                        status = session_result.data.status
-                        if status == "RUNNING":
-                            _log_operation_success(
-                                "ResumeSessionAsync",
-                                f"Session {self.session_id} is now RUNNING",
-                            )
-                            return SessionResumeResult(
-                                request_id=request_id,
-                                success=True,
-                                status="RUNNING",
-                            )
-                        elif status == "ERROR" or status == "FAILED":
-                            _log_operation_error(
-                                "ResumeSessionAsync",
-                                f"Session entered error state: {status}",
-                            )
-                            return SessionResumeResult(
-                                request_id=request_id,
-                                success=False,
-                                error_message=f"Session entered error state: {status}",
-                                status=status,
-                            )
-                except Exception:
-                    pass
-
-                # Check timeout
-                if time.time() - start_time > timeout:
-                    break
-
-                # Wait before next poll
-                time.sleep(poll_interval)
-
-            _log_operation_error(
-                "ResumeSessionAsync",
-                f"Timed out waiting for session {self.session_id} to resume",
-            )
-            return SessionResumeResult(
-                request_id=request_id,
-                success=False,
-                status="RESUMING",  # Still technically resuming or unknown
-                error_message=f"Timed out after {timeout} seconds waiting for session to resume",
-            )
-
-        except Exception as e:
-            _log_operation_error("ResumeSessionAsync", str(e))
-            return SessionResumeResult(
-                request_id="",
-                success=False,
-                error_message=f"Unexpected error resuming session: {e}",
-            )
-
-    def beta_resume_async(self) -> SessionResumeResult:
-        """
-        Asynchronously initiate the resume session operation without waiting for completion.
-        """
-        try:
+            # Send resume request
             request = ResumeSessionAsyncRequest(
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
@@ -1511,11 +1494,10 @@ class Session:
 
             _log_api_call("ResumeSessionAsync", f"SessionId={self.session_id}")
 
-            client = self._get_client()
-            response = client.resume_session_async(request)
-
+            response = self._get_client().resume_session_async(request)
             request_id = extract_request_id(response)
 
+            # Check API response
             response_map = response.to_map()
             if not response_map:
                 return SessionResumeResult(
@@ -1523,6 +1505,7 @@ class Session:
                     success=False,
                     error_message="Invalid response format",
                 )
+
             body = response_map.get("body", {})
             if not body:
                 return SessionResumeResult(
@@ -1532,39 +1515,63 @@ class Session:
                 )
 
             success = body.get("Success", False)
-            code = body.get("Code", "")
-            message = body.get("Message", "")
-            http_status_code = body.get("HttpStatusCode", 0)
-
             if not success:
-                error_message = (
-                    f"[{code}] {message}" if code or message else "Unknown error"
-                )
-                _log_operation_error("ResumeSessionAsync", error_message)
+                code = body.get("Code", "")
+                message = body.get("Message", "")
+                error_message = f"[{code}] {message}" if code or message else "Unknown error"
+                _log_operation_error("beta_resume", error_message)
                 return SessionResumeResult(
                     request_id=request_id,
                     success=False,
                     error_message=error_message,
-                    code=code,
-                    message=message,
-                    http_status_code=http_status_code,
                 )
 
-            _log_api_response_with_details(
-                api_name="ResumeSessionAsync",
-                request_id=request_id,
-                success=True,
-                key_fields={"session_id": self.session_id},
-            )
+            _logger.info(f"Resume request sent for session {self.session_id}, waiting for RUNNING state")
 
-            return SessionResumeResult(
-                request_id=request_id, success=True, status="RESUMING"
-            )
+            # Poll session status
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                try:
+                    session_result = self.agent_bay._get_session(self.session_id)
+                    if session_result.success and session_result.data:
+                        status = session_result.data.status
+                        poll_request_id = session_result.request_id
+                        _logger.info(f"Polling session status: {status}, request_id: {poll_request_id}")
 
-        except Exception as e:
-            _log_operation_error("ResumeSessionAsync", str(e))
+                        if status == "RUNNING":
+                            _log_operation_success("beta_resume", f"Session {self.session_id} resumed successfully")
+                            return SessionResumeResult(
+                                request_id=request_id,
+                                success=True,
+                                status="RUNNING",
+                            )
+
+                        if status == "RESUMING":
+                            _logger.debug("Session is resuming, continue polling")
+                        else:
+                            _log_operation_error("beta_resume", f"Session in unexpected state: {status}")
+                            return SessionResumeResult(
+                                request_id=request_id,
+                                success=False,
+                                error_message=f"Resume failed, session in unexpected state: {status}",
+                                status=status,
+                            )
+                except Exception as e:
+                    _logger.debug(f"Failed to get session status: {e}")
+
+                time.sleep(poll_interval)
+
+            _log_operation_error("beta_resume", f"Timeout waiting for session {self.session_id}")
             return SessionResumeResult(
                 request_id="",
                 success=False,
-                error_message=f"Unexpected error resuming session: {e}",
+                error_message=f"Timed out after {timeout}s waiting for RUNNING state",
+            )
+
+        except Exception as e:
+            _log_operation_error("beta_resume", str(e))
+            return SessionResumeResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to resume session: {e}",
             )

@@ -277,6 +277,8 @@ export interface CreateSessionParamsInterface {
   labels?: Record<string, string>;
   /** Image ID to use for the session. */
   imageId?: string;
+  /** SDK-side idle release timeout in seconds. Default is 300 seconds. */
+  idleReleaseTimeout?: number;
   /** List of context synchronization configurations. */
   contextSync?: ContextSync[];
   /** Optional configuration for browser data synchronization. */
@@ -307,6 +309,9 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
 
   /** Image ID to use for the session. */
   public imageId?: string;
+
+  /** SDK-side idle release timeout in seconds. Default is 300 seconds. */
+  public idleReleaseTimeout: number;
 
   /**
    * List of context synchronization configurations.
@@ -341,6 +346,14 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
   constructor(params?: CreateSessionParamsInterface) {
     this.labels = params?.labels || {};
     this.imageId = params?.imageId;
+    const idle = (params as any)?.idleReleaseTimeout;
+    if (idle === undefined || idle === null) {
+      this.idleReleaseTimeout = 0;
+    } else if (typeof idle !== "number" || !Number.isInteger(idle) || idle <= 0) {
+      throw new Error("idleReleaseTimeout must be a positive integer (seconds)");
+    } else {
+      this.idleReleaseTimeout = idle;
+    }
     this.isVpc = params?.isVpc || false;
     // Handle policyId mapping - if policyId is provided, use it, otherwise use mcpPolicyId
     this.mcpPolicyId = params?.mcpPolicyId ? params.mcpPolicyId :'';

@@ -8,8 +8,7 @@
 
 ## Overview
 
-The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
-screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
 
 
 ## Requirements
@@ -30,6 +29,25 @@ Browser provides browser-related operations for the session.
 
 ```python
 def __init__(self, session: "Session")
+```
+
+### agent
+
+```python
+@property
+def agent()
+```
+
+**Deprecated**: Use `operator` instead. This property will be removed in a future version.
+
+**Example**:
+
+```python
+# Old way (deprecated):
+# session.browser.operator.navigate(url)
+
+# New way (recommended):
+session.browser.operator.navigate(url)
 ```
 
 ### initialize

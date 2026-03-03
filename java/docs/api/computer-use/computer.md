@@ -1,148 +1,56 @@
-# Computer API Reference - Application Management
-
-## ⚡ Related Tutorial
-
-- [Computer Use Guide](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/computer-use/README.md) - Learn about computer automation capabilities
+# 🖥️ Computer API Reference
 
 ## Overview
 
-The Computer module provides application lifecycle management capabilities within a session in the AgentBay cloud environment. This document focuses on the application management APIs including starting, stopping, and listing applications.
+The Computer module provides comprehensive desktop automation capabilities including mouse operations,keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
 
-## Result Classes
 
-### ProcessListResult
+## 📚 Tutorial
 
-```java
-public class ProcessListResult extends ApiResponse
-```
+[Computer Use Guide](../../../../docs/guides/computer-use/README.md)
 
-Result of application start and list operations.
+Automate desktop applications
 
-**Fields:**
-- `success` (boolean): True if the operation succeeded
-- `data` (List\<Process\>): List of processes
-- `requestId` (String): Unique identifier for this API request
-- `errorMessage` (String): Error description (if success is false)
+## 📋 Requirements
 
-### Process
-
-```java
-public class Process
-```
-
-Represents a running process.
-
-**Fields:**
-- `pname` (String): Process name
-- `pid` (int): Process ID
-- `cmdline` (String): Command line used to start the process
-
-### AppOperationResult
-
-```java
-public class AppOperationResult extends ApiResponse
-```
-
-Result of application stop operations.
-
-**Fields:**
-- `success` (boolean): True if the operation succeeded
-- `requestId` (String): Unique identifier for this API request
-- `errorMessage` (String): Error description (if success is false)
-
-### InstalledAppListResult
-
-```java
-public class InstalledAppListResult extends ApiResponse
-```
-
-Result of getting installed applications.
-
-**Fields:**
-- `success` (boolean): True if the operation succeeded
-- `data` (List\<InstalledApp\>): List of installed applications
-- `requestId` (String): Unique identifier for this API request
-- `errorMessage` (String): Error description (if success is false)
-
-### InstalledApp
-
-```java
-public class InstalledApp
-```
-
-Represents an installed application.
-
-**Fields:**
-- `name` (String): Application name
-- `startCmd` (String): Command to start the application
-- `stopCmd` (String): Command to stop the application (optional)
-- `workDirectory` (String): Working directory (optional)
+- Requires `windows_latest` image for computer use features
 
 ## Computer
 
+Computer module for desktop UI automation.
+Provides comprehensive desktop automation capabilities including mouse, keyboard,window management, application management, and screen operations.
+
+### Constructor
+
 ```java
-public class Computer extends BaseService
+public Computer(Session session)
 ```
 
-Handles desktop UI automation and application management operations in the AgentBay cloud environment.
+### Methods
 
 ### startApp
 
 ```java
-public ProcessListResult startApp(String startCmd)
-public ProcessListResult startApp(String startCmd, String workDirectory)
 public ProcessListResult startApp(String startCmd, String workDirectory, String activity)
 ```
 
-Starts an application with the given command, optional working directory, and optional activity.
-
-**Parameters:**
-- `startCmd` (String): The command to start the application (e.g., "npm run dev", "notepad.exe", "sleep 30")
-- `workDirectory` (String, optional): Working directory for the application (e.g., "/tmp/app/react-site-demo-1"). Defaults to empty string.
-- `activity` (String, optional): Activity name to launch (for mobile apps, e.g., "com.package/.Activity"). Defaults to empty string.
-
-**Returns:**
-- `ProcessListResult`: Result object containing:
-  - `success` (boolean): True if the operation succeeded
-  - `data` (List\<Process\>): List of processes started, each containing:
-    - `pname` (String): Process name
-    - `pid` (int): Process ID
-    - `cmdline` (String): Command line
-  - `requestId` (String): Unique identifier for this API request
-  - `errorMessage` (String): Error description (if success is false)
-
-**Example:**
-
 ```java
-Session session = agentBay.create().getSession();
-
-// Simple command without work directory
-ProcessListResult result = session.getComputer().startApp("sleep 30");
-if (result.isSuccess()) {
-    for (Process process : result.getData()) {
-        System.out.println("Started: " + process.getPname() + " (PID: " + process.getPid() + ")");
-    }
-}
-
-// Command with work directory
-ProcessListResult result2 = session.getComputer().startApp("npm run dev", "/tmp/app/my-project");
-if (result2.isSuccess()) {
-    System.out.println("Application started successfully");
-}
-
-session.delete();
+public ProcessListResult startApp(String startCmd, String workDirectory)
 ```
 
-**Important Notes:**
-- The backend uses **systemd** to manage started applications
-- Simple commands like `sleep 30` work reliably
-- Complex commands that fork multiple processes (like `npm run dev`) may fail with "Failed to get main PID from systemd" error
-- **Before starting applications with work directories**, ensure:
-  1. The work directory exists (use `session.getFileSystem().createDirectory()`)
-  2. Required files (e.g., `package.json`) exist in the directory
-  3. Dependencies are installed if needed
+```java
+public ProcessListResult startApp(String startCmd)
+```
 
----
+Starts an application with the given command, optional working directory and optional activity.
+
+**Parameters:**
+- `startCmd` (String): The command to start the application
+- `workDirectory` (String): working directory for the application
+- `activity` (String): activity name to launch (for mobile apps). Defaults to empty string.
+
+**Returns:**
+- `ProcessListResult`: ProcessListResult containing the list of processes started and error message if any.
 
 ### stopAppByPName
 
@@ -150,24 +58,13 @@ session.delete();
 public AppOperationResult stopAppByPName(String pname)
 ```
 
-Stops an application by its process name.
+Stops an application by process name.
 
 **Parameters:**
-- `pname` (String): The process name of the application to stop (e.g., "sleep", "node", "chrome")
+- `pname` (String): The process name of the application to stop
 
 **Returns:**
-- `AppOperationResult`: Result object containing success status and error message if any
-
-**Example:**
-
-```java
-AppOperationResult result = session.getComputer().stopAppByPName("sleep");
-if (result.isSuccess()) {
-    System.out.println("Application stopped successfully");
-}
-```
-
----
+- `AppOperationResult`: AppOperationResult containing success status and error message if any
 
 ### stopAppByPID
 
@@ -175,31 +72,13 @@ if (result.isSuccess()) {
 public AppOperationResult stopAppByPID(int pid)
 ```
 
-Stops an application by its process ID.
+Stops an application by process ID.
 
 **Parameters:**
 - `pid` (int): The process ID of the application to stop
 
 **Returns:**
-- `AppOperationResult`: Result object containing success status and error message if any
-
-**Example:**
-
-```java
-// First, start an application and get its PID
-ProcessListResult startResult = session.getComputer().startApp("sleep 60");
-if (startResult.isSuccess() && !startResult.getData().isEmpty()) {
-    int pid = startResult.getData().get(0).getPid();
-    
-    // Later, stop it by PID
-    AppOperationResult stopResult = session.getComputer().stopAppByPID(pid);
-    if (stopResult.isSuccess()) {
-        System.out.println("Application stopped successfully");
-    }
-}
-```
-
----
+- `AppOperationResult`: AppOperationResult containing success status and error message if any
 
 ### stopAppByCmd
 
@@ -207,24 +86,13 @@ if (startResult.isSuccess() && !startResult.getData().isEmpty()) {
 public AppOperationResult stopAppByCmd(String stopCmd)
 ```
 
-Stops an application using a stop command.
+Stops an application by stop command.
 
 **Parameters:**
-- `stopCmd` (String): The command to stop the application (e.g., "pkill -f my-app")
+- `stopCmd` (String): The command to stop the application
 
 **Returns:**
-- `AppOperationResult`: Result object containing success status and error message if any
-
-**Example:**
-
-```java
-AppOperationResult result = session.getComputer().stopAppByCmd("pkill -f 'npm run dev'");
-if (result.isSuccess()) {
-    System.out.println("Application stopped successfully");
-}
-```
-
----
+- `AppOperationResult`: AppOperationResult containing success status and error message if any
 
 ### listVisibleApps
 
@@ -233,110 +101,280 @@ public ProcessListResult listVisibleApps()
 ```
 
 Lists all applications with visible windows.
+Returns detailed process information for applications that have visible windows,including process ID, name, command line, and other system information.
+This is useful for system monitoring and process management tasks.
 
 **Returns:**
-- `ProcessListResult`: Result object containing list of visible applications with detailed process information
-
-**Example:**
-
-```java
-ProcessListResult result = session.getComputer().listVisibleApps();
-if (result.isSuccess()) {
-    System.out.println("Found " + result.getData().size() + " visible app(s)");
-    for (Process process : result.getData()) {
-        System.out.println("  - " + process.getPname() + " (PID: " + process.getPid() + ")");
-    }
-}
-```
-
----
+- `ProcessListResult`: ProcessListResult containing list of visible applications with detailed process information
 
 ### getInstalledApps
 
 ```java
-public InstalledAppListResult getInstalledApps()
 public InstalledAppListResult getInstalledApps(boolean startMenu, boolean desktop, boolean ignoreSystemApps)
+```
+
+```java
+public InstalledAppListResult getInstalledApps()
 ```
 
 Gets the list of installed applications.
 
 **Parameters:**
-- `startMenu` (boolean, optional): Whether to include start menu applications. Defaults to true.
-- `desktop` (boolean, optional): Whether to include desktop applications. Defaults to false.
-- `ignoreSystemApps` (boolean, optional): Whether to ignore system applications. Defaults to true.
+- `startMenu` (boolean): Whether to include start menu applications. Defaults to true.
+- `desktop` (boolean): Whether to include desktop applications. Defaults to false.
+- `ignoreSystemApps` (boolean): Whether to ignore system applications. Defaults to true.
 
 **Returns:**
-- `InstalledAppListResult`: Result object containing list of installed apps and error message if any
+- `InstalledAppListResult`: InstalledAppListResult containing list of installed apps and error message if any
 
-**Example:**
-
-```java
-// Get installed apps with default settings
-InstalledAppListResult result = session.getComputer().getInstalledApps();
-if (result.isSuccess()) {
-    for (InstalledApp app : result.getData()) {
-        System.out.println("App: " + app.getName());
-        System.out.println("  Start: " + app.getStartCmd());
-    }
-}
-
-// Get apps including desktop shortcuts
-InstalledAppListResult result2 = session.getComputer().getInstalledApps(true, true, true);
-```
-
-## Best Practices
-
-1. **Always ensure work directory exists** before starting applications that require one
-2. **Use simple commands for testing** - `sleep N` is reliable for testing the API
-3. **Check result.isSuccess()** before accessing process data
-4. **Store PIDs** for later use if you need to stop processes
-5. **Handle the "Failed to get main PID from systemd" error** gracefully - it often indicates:
-   - Work directory doesn't exist
-   - Required files are missing
-   - Command forks in a way systemd can't track
-
-## Common Error Messages
-
-| Error Message | Cause | Solution |
-|--------------|-------|----------|
-| `Failed to get main PID from systemd` | Systemd couldn't track the process | Ensure work directory and files exist; use simpler commands |
-| `Work directory does not exist` | Specified directory not found | Create directory first using `FileSystem.createDirectory()` |
-| `Command not found` | Executable not available | Ensure the command/tool is installed in the environment |
-
-## Complete Example
+### clickMouse
 
 ```java
-// Complete workflow: Setup environment, start app, monitor, and stop
-Session session = agentBay.create(params).getSession();
-
-// 1. Create work directory
-String workDir = "/tmp/app/my-app";
-session.getFileSystem().createDirectory(workDir);
-
-// 2. Create necessary files
-String packageJson = "{\"name\": \"my-app\", \"scripts\": {\"dev\": \"node server.js\"}}";
-session.getFileSystem().writeFile(workDir + "/package.json", packageJson);
-
-String serverJs = "setInterval(() => console.log('Running...'), 1000);";
-session.getFileSystem().writeFile(workDir + "/server.js", serverJs);
-
-// 3. Start the application
-ProcessListResult startResult = session.getComputer().startApp("npm run dev", workDir);
-if (startResult.isSuccess()) {
-    int pid = startResult.getData().get(0).getPid();
-    System.out.println("Started with PID: " + pid);
-    
-    // 4. Do something...
-    Thread.sleep(5000);
-    
-    // 5. Stop the application
-    session.getComputer().stopAppByPID(pid);
-}
-
-session.delete();
+public BoolResult clickMouse(int x, int y, MouseButton button)
 ```
 
-## Beta Screenshot Operations
+```java
+public BoolResult clickMouse(int x, int y)
+```
+
+```java
+public BoolResult clickMouse(int x, int y, String button)
+```
+
+Clicks the mouse at the specified screen coordinates.
+
+**Parameters:**
+- `x` (int): X coordinate in pixels (0 is left edge of screen)
+- `y` (int): Y coordinate in pixels (0 is top edge of screen)
+- `button` (MouseButton): Mouse button to click. Options:
+              - MouseButton.LEFT: Single left click
+              - MouseButton.RIGHT: Right click (context menu)
+              - MouseButton.MIDDLE: Middle click (scroll wheel)
+              - MouseButton.DOUBLE_LEFT: Double left click
+              Defaults to MouseButton.LEFT
+
+**Returns:**
+- `BoolResult`: BoolResult Object containing:
+        - success (boolean): Whether the click succeeded
+        - data (Boolean): True if successful, null otherwise
+        - errorMessage (String): Error description if failed
+
+**Throws:**
+- `IllegalArgumentException`: If button is not one of the valid options
+
+<p>Behavior:
+<ul>
+  <li>Clicks at the exact pixel coordinates provided</li>
+  <li>Does not move the mouse cursor before clicking</li>
+  <li>For double-click, use MouseButton.DOUBLE_LEFT</li>
+  <li>Right-click typically opens context menus</li>
+</ul>
+
+
+<p>Note:
+<ul>
+  <li>Coordinates are absolute screen positions, not relative to windows</li>
+  <li>Use getScreenSize() to determine valid coordinate ranges</li>
+  <li>Consider using moveMouse() first if you need to see cursor movement</li>
+</ul>
+
+### moveMouse
+
+```java
+public BoolResult moveMouse(int x, int y)
+```
+
+Moves the mouse to the specified coordinates.
+
+**Parameters:**
+- `x` (int): X coordinate
+- `y` (int): Y coordinate
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+
+<p>Note:
+<ul>
+  <li>Moves the cursor smoothly to the target position</li>
+  <li>Does not click after moving</li>
+  <li>Use getCursorPosition() to verify the new position</li>
+</ul>
+
+### dragMouse
+
+```java
+public BoolResult dragMouse(int fromX, int fromY, int toX, int toY, MouseButton button)
+```
+
+```java
+public BoolResult dragMouse(int fromX, int fromY, int toX, int toY)
+```
+
+```java
+public BoolResult dragMouse(int fromX, int fromY, int toX, int toY, String button)
+```
+
+Drags the mouse from one point to another.
+
+**Parameters:**
+- `fromX` (int): Starting X coordinate
+- `fromY` (int): Starting Y coordinate
+- `toX` (int): Ending X coordinate
+- `toY` (int): Ending Y coordinate
+- `button` (MouseButton): Mouse button to use. Defaults to LEFT
+
+**Returns:**
+- `BoolResult`: BoolResult containing success status and error message if any
+
+### scroll
+
+```java
+public BoolResult scroll(int x, int y, ScrollDirection direction, int amount)
+```
+
+```java
+public BoolResult scroll(int x, int y)
+```
+
+```java
+public BoolResult scroll(int x, int y, String direction, int amount)
+```
+
+Scrolls the mouse wheel at the specified coordinates.
+
+**Parameters:**
+- `x` (int): X coordinate
+- `y` (int): Y coordinate
+- `direction` (ScrollDirection): Scroll direction. Defaults to UP
+- `amount` (int): Scroll amount. Defaults to 1
+
+**Returns:**
+- `BoolResult`: BoolResult containing success status and error message if any
+
+### getCursorPosition
+
+```java
+public OperationResult getCursorPosition()
+```
+
+Gets the current cursor position.
+
+**Returns:**
+- `OperationResult`: OperationResult Result object containing cursor position data with keys 'x' and 'y', and error message if any
+
+<p>Note:
+<ul>
+  <li>Returns the absolute screen coordinates</li>
+  <li>Useful for verifying mouse movements</li>
+  <li>Position is in pixels from top-left corner (0, 0)</li>
+</ul>
+
+### inputText
+
+```java
+public BoolResult inputText(String text)
+```
+
+Types text into the currently focused input field.
+
+**Parameters:**
+- `text` (String): The text to input. Supports Unicode characters
+
+**Returns:**
+- `BoolResult`: BoolResult Object with success status and error message if any
+
+<p>Note:
+<ul>
+  <li>Requires an input field to be focused first</li>
+  <li>Use clickMouse() or UI automation to focus the field</li>
+  <li>Supports special characters and Unicode</li>
+</ul>
+
+### pressKeys
+
+```java
+public BoolResult pressKeys(List<String> keys, boolean hold)
+```
+
+```java
+public BoolResult pressKeys(List<String> keys)
+```
+
+Presses the specified keys.
+
+**Parameters:**
+- `keys` (List<String>): List of keys to press (e.g., Arrays.asList("Ctrl", "a"))
+- `hold` (boolean): Whether to hold the keys. Defaults to false
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>Key names are case-sensitive</li>
+  <li>When hold=true, remember to call releaseKeys() afterwards</li>
+  <li>Supports modifier keys like Ctrl, Alt, Shift</li>
+  <li>Can press multiple keys simultaneously for shortcuts</li>
+</ul>
+
+### releaseKeys
+
+```java
+public BoolResult releaseKeys(List<String> keys)
+```
+
+Releases the specified keys.
+
+**Parameters:**
+- `keys` (List<String>): List of keys to release (e.g., Arrays.asList("Ctrl", "a"))
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>Should be used after pressKeys() with hold=true</li>
+  <li>Key names are case-sensitive</li>
+  <li>Releases all keys specified in the list</li>
+</ul>
+
+### getScreenSize
+
+```java
+public OperationResult getScreenSize()
+```
+
+Gets the screen size and DPI scaling factor.
+
+**Returns:**
+- `OperationResult`: OperationResult Result object containing screen size data with keys 'width', 'height', and 'dpiScalingFactor', and error message if any
+
+<p>Note:
+<ul>
+  <li>Returns the full screen dimensions in pixels</li>
+  <li>DPI scaling factor affects coordinate calculations on high-DPI displays</li>
+  <li>Use this to determine valid coordinate ranges for mouse operations</li>
+</ul>
+
+### screenshot
+
+```java
+public OperationResult screenshot()
+```
+
+Takes a screenshot of the current screen.
+
+**Returns:**
+- `OperationResult`: OperationResult Result object containing the path to the screenshot and error message if any
+
+<p>Note:
+<ul>
+  <li>Returns an OSS URL to the screenshot image</li>
+  <li>Screenshot captures the entire screen</li>
+  <li>Useful for debugging and verification</li>
+  <li>Image format is typically PNG</li>
+</ul>
 
 ### betaTakeScreenshot
 
@@ -344,37 +382,251 @@ session.delete();
 public ScreenshotBytesResult betaTakeScreenshot(String format)
 ```
 
-Captures the current screen and returns raw image bytes. The backend may also provide the captured image dimensions, exposed as `width` and `height` (in pixels).
-
-**Parameters:**
-- `format` (String): Image format (`png` or `jpg`)
-
-**Returns:**
-- `ScreenshotBytesResult`: Result object containing:
-  - `success` (boolean): True if the operation succeeded
-  - `data` (byte[]): Raw image bytes
-  - `format` (String): Image format (`png` or `jpeg`)
-  - `width` (Integer, optional): Image width in pixels
-  - `height` (Integer, optional): Image height in pixels
-  - `requestId` (String): Unique identifier for this API request
-  - `errorMessage` (String): Error description (if success is false)
-
-**Example:**
-
 ```java
-ScreenshotBytesResult s = session.getComputer().betaTakeScreenshot("jpg");
-if (s.isSuccess()) {
-    System.out.println("Bytes=" + s.getData().length + ", size=" + s.getWidth() + "x" + s.getHeight());
-}
+public ScreenshotBytesResult betaTakeScreenshot()
 ```
 
-## Related Resources
+Takes a screenshot of the Computer and returns raw binary image data (beta).
 
-- [Session API Reference](../common-features/basics/session.md)
-- [FileSystem API Reference](../common-features/basics/filesystem.md)
-- [Computer Start App Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ComputerStartAppExample.java)
+<p>This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+binary image data. The backend also returns the captured image dimensions
+(width/height in pixels), which are exposed on ScreenshotBytesResult.width
+and ScreenshotBytesResult.height. The backend metadata fields `type` and
+`mime_type` are exposed on ScreenshotBytesResult.type and ScreenshotBytesResult.mimeType.
 
----
+**Parameters:**
+- `format` (String): The desired image format (default: "png"). Supported: "png", "jpeg", "jpg"
 
-*Documentation for AgentBay Java SDK*
+**Returns:**
+- `ScreenshotBytesResult`: ScreenshotBytesResult Object containing the screenshot image data (bytes) and metadata
+        including `type`, `mimeType`, `width`, and `height` when provided by the backend
+
+**Throws:**
+- `IllegalArgumentException`: If format is invalid
+
+<p>Supported formats:
+<ul>
+  <li>"png"</li>
+  <li>"jpeg" (or "jpg")</li>
+</ul>
+
+### listRootWindows
+
+```java
+public WindowListResult listRootWindows(int timeoutMs)
+```
+
+```java
+public WindowListResult listRootWindows()
+```
+
+Lists all root windows.
+
+**Parameters:**
+- `timeoutMs` (int): Timeout in milliseconds. Defaults to 3000
+
+**Returns:**
+- `WindowListResult`: WindowListResult Result object containing list of windows and error message if any
+
+### getActiveWindow
+
+```java
+public WindowInfoResult getActiveWindow(int timeoutMs)
+```
+
+```java
+public WindowInfoResult getActiveWindow()
+```
+
+Gets the currently active window.
+
+**Parameters:**
+- `timeoutMs` (int): Timeout in milliseconds. Defaults to 3000
+
+**Returns:**
+- `WindowInfoResult`: WindowInfoResult Result object containing active window info and error message if any
+
+<p><strong>Note</strong>: Java version requires timeoutMs parameter, while Python version does not.
+
+### activateWindow
+
+```java
+public BoolResult activateWindow(int windowId)
+```
+
+Activates the specified window.
+
+**Parameters:**
+- `windowId` (int): The ID of the window to activate
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Use listRootWindows() to get available window IDs</li>
+  <li>Activating a window brings it to the foreground</li>
+</ul>
+
+### closeWindow
+
+```java
+public BoolResult closeWindow(int windowId)
+```
+
+Closes the specified window.
+
+**Parameters:**
+- `windowId` (int): The ID of the window to close
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Use listRootWindows() to get available window IDs</li>
+  <li>Closing a window terminates it permanently</li>
+</ul>
+
+### maximizeWindow
+
+```java
+public BoolResult maximizeWindow(int windowId)
+```
+
+Maximizes the specified window.
+
+**Parameters:**
+- `windowId` (int): The ID of the window to maximize
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Maximizing expands the window to fill the screen</li>
+  <li>Use restoreWindow() to return to previous size</li>
+</ul>
+
+### minimizeWindow
+
+```java
+public BoolResult minimizeWindow(int windowId)
+```
+
+Minimizes the specified window.
+
+**Parameters:**
+- `windowId` (int): The ID of the window to minimize
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Minimizing hides the window in the taskbar</li>
+  <li>Use restoreWindow() or activateWindow() to bring it back</li>
+</ul>
+
+### restoreWindow
+
+```java
+public BoolResult restoreWindow(int windowId)
+```
+
+Restores the specified window.
+
+**Parameters:**
+- `windowId` (int): The ID of the window to restore
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Restoring returns a minimized or maximized window to its normal state</li>
+  <li>Works for windows that were previously minimized or maximized</li>
+</ul>
+
+### resizeWindow
+
+```java
+public BoolResult resizeWindow(int windowId, int width, int height)
+```
+
+Resizes the specified window.
+
+**Parameters:**
+- `windowId` (int): The ID of the window to resize
+- `width` (int): New width of the window
+- `height` (int): New height of the window
+
+**Returns:**
+- `BoolResult`: BoolResult Result object containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Width and height are in pixels</li>
+  <li>Some windows may have minimum or maximum size constraints</li>
+</ul>
+
+### fullscreenWindow
+
+```java
+public BoolResult fullscreenWindow(int windowId)
+```
+
+Makes the specified window fullscreen.
+
+**Parameters:**
+- `windowId` (int): The ID of the window to make fullscreen
+
+**Returns:**
+- `BoolResult`: BoolResult containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>The window must exist in the system</li>
+  <li>Fullscreen mode hides window borders and taskbar</li>
+  <li>Different from maximizeWindow() which keeps window borders</li>
+  <li>Press F11 or ESC to exit fullscreen in most applications</li>
+</ul>
+
+### focusMode
+
+```java
+public BoolResult focusMode(boolean on)
+```
+
+Toggles focus mode on or off.
+
+**Parameters:**
+- `on` (boolean): True to enable focus mode, False to disable it
+
+**Returns:**
+- `BoolResult`: BoolResult containing success status and error message if any
+
+<p>Note:
+<ul>
+  <li>Focus mode helps reduce distractions by managing window focus</li>
+  <li>When enabled, may prevent background windows from stealing focus</li>
+  <li>Behavior depends on the window manager and OS settings</li>
+</ul>
+
+
+
+## 💡 Best Practices
+
+- Verify screen coordinates before mouse operations
+- Use appropriate delays between UI interactions
+- Handle window focus changes properly
+- Take screenshots for verification and debugging
+- Use keyboard shortcuts for efficient automation
+- Clean up windows and applications after automation
 

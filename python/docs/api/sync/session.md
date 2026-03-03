@@ -6,6 +6,11 @@
 
 - [Session Management Guide](../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
+## Overview
+
+The Session class represents an active cloud environment instance in AgentBay. It provides access to all service modules (filesystem, command, browser, code, etc.) and manages the lifecycle of the cloud environment.
+
+
 
 
 ## SessionStatusResult
@@ -117,6 +122,16 @@ Get basic session status asynchronously.
 
     SessionStatusResult: Result containing session status only.
 
+### keep_alive
+
+```python
+def keep_alive() -> OperationResult
+```
+
+Refresh the backend session idle timer.
+
+This method calls the RefreshSessionIdleTime API.
+
 ### delete
 
 ```python
@@ -216,16 +231,23 @@ def beta_pause(timeout: int = 600,
                poll_interval: float = 2.0) -> SessionPauseResult
 ```
 
-Asynchronously pause this session (beta), putting it into a dormant state.
-This method waits until the session enters the PAUSED state.
+Pause the session and wait until it enters PAUSED state.
 
-### beta_pause_async
+**Notes**:
 
-```python
-def beta_pause_async() -> SessionPauseResult
-```
+  This feature is currently in whitelist-only access.
+  Contact agentbay_dev@alibabacloud.com to request access.
+  
 
-Asynchronously initiate the pause session operation without waiting for completion.
+**Arguments**:
+
+    timeout: Timeout in seconds, default 600
+    poll_interval: Polling interval in seconds, default 2.0
+  
+
+**Returns**:
+
+    SessionPauseResult: Result containing request ID, success status, and session status
 
 ### beta_resume
 
@@ -234,16 +256,17 @@ def beta_resume(timeout: int = 600,
                 poll_interval: float = 2.0) -> SessionResumeResult
 ```
 
-Asynchronously resume this session (beta) from a paused state.
-This method waits until the session enters the RUNNING state.
+Resume the session and wait until it enters RUNNING state.
 
-### beta_resume_async
+**Arguments**:
 
-```python
-def beta_resume_async() -> SessionResumeResult
-```
+    timeout: Timeout in seconds, default 600
+    poll_interval: Polling interval in seconds, default 2.0
+  
 
-Asynchronously initiate the resume session operation without waiting for completion.
+**Returns**:
+
+    SessionResumeResult: Result containing request ID, success status, and session status
 
 ## See Also
 

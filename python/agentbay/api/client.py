@@ -275,6 +275,8 @@ class Client(OpenApiClient):
             body["ExternalUserId"] = request.external_user_id
         if not DaraCore.is_null(request.image_id):
             body["ImageId"] = request.image_id
+        if not DaraCore.is_null(request.timeout):
+            body["Timeout"] = request.timeout
         if not DaraCore.is_null(request.labels):
             body["Labels"] = request.labels
         if not DaraCore.is_null(request.mcp_policy_id):
@@ -335,6 +337,8 @@ class Client(OpenApiClient):
             body["ExternalUserId"] = request.external_user_id
         if not DaraCore.is_null(request.image_id):
             body["ImageId"] = request.image_id
+        if not DaraCore.is_null(request.timeout):
+            body["Timeout"] = request.timeout
         if not DaraCore.is_null(request.labels):
             body["Labels"] = request.labels
         if not DaraCore.is_null(request.mcp_policy_id):
@@ -1339,6 +1343,94 @@ class Client(OpenApiClient):
     ) -> main_models.PauseSessionAsyncResponse:
         runtime = RuntimeOptions()
         return await self.pause_session_async_with_options_async(request, runtime)
+
+    def refresh_session_idle_time_with_options(
+        self,
+        request: main_models.RefreshSessionIdleTimeRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.RefreshSessionIdleTimeResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="RefreshSessionIdleTime",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.RefreshSessionIdleTimeResponse(),
+            self.do_rpcrequest(
+                params.action,
+                params.version,
+                params.protocol,
+                params.method,
+                params.auth_type,
+                params.body_type,
+                req,
+                runtime,
+            ),
+        )
+
+    async def refresh_session_idle_time_with_options_async(
+        self,
+        request: main_models.RefreshSessionIdleTimeRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.RefreshSessionIdleTimeResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="RefreshSessionIdleTime",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.RefreshSessionIdleTimeResponse(),
+            await self.do_rpcrequest_async(
+                params.action,
+                params.version,
+                params.protocol,
+                params.method,
+                params.auth_type,
+                params.body_type,
+                req,
+                runtime,
+            ),
+        )
+
+    def refresh_session_idle_time(
+        self,
+        request: main_models.RefreshSessionIdleTimeRequest,
+    ) -> main_models.RefreshSessionIdleTimeResponse:
+        runtime = RuntimeOptions()
+        return self.refresh_session_idle_time_with_options(request, runtime)
+
+    async def refresh_session_idle_time_async(
+        self,
+        request: main_models.RefreshSessionIdleTimeRequest,
+    ) -> main_models.RefreshSessionIdleTimeResponse:
+        runtime = RuntimeOptions()
+        return await self.refresh_session_idle_time_with_options_async(request, runtime)
 
     def resume_session_async_with_options(
         self,

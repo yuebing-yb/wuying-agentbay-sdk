@@ -435,7 +435,7 @@ https://gw-cn-hangzhou-ai-linux.wuyinggw.com:8008/request_ai/{token}/path/
 If you encounter issues:
 
 1. Check this documentation for solutions
-2. Search [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+2. Search [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 3. Contact support with detailed error information
 
 Remember: Session Link Access is your gateway to cloud session connectivity! 🔗

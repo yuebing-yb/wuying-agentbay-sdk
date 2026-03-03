@@ -1,5 +1,7 @@
 import os
 import sys
+import ast
+import warnings
 import unasync
 import re
 import shutil
@@ -22,6 +24,90 @@ UNIT_TEST_SYNC_DIR = os.path.join(UNIT_TEST_DIR, "sync")
 EXAMPLES_DIR = os.path.join(ROOT, "docs", "examples")
 EXAMPLES_ASYNC_DIR = os.path.join(EXAMPLES_DIR, "_async")
 EXAMPLES_SYNC_DIR = os.path.join(EXAMPLES_DIR, "_sync")
+
+SKIP_SYNC_GENERATION_FILES = set()
+
+TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+
+# Extra sync-only files that cannot be mechanically converted by unasync.
+# We copy them from templates after unasync completes.
+SYNC_EXTRA_TEMPLATES: dict[str, str] = {
+    os.path.join(SYNC_DIR, "_internal", "ws_client.py"): os.path.join(
+        TEMPLATES_DIR, "sync_ws_client.py"
+    ),
+    os.path.join(
+        UNIT_TEST_SYNC_DIR, "test_run_code_ws_streaming.py"
+    ): os.path.join(TEMPLATES_DIR, "sync_test_run_code_ws_streaming.py"),
+}
+
+
+def _init_skip_sync_generation_files() -> None:
+    """
+    Some async-only modules cannot be mechanically converted to sync.
+
+    We skip generating their sync counterparts and instead provide explicit stubs
+    (or omit generated tests) to avoid broken sync code.
+    """
+    global SKIP_SYNC_GENERATION_FILES
+    SKIP_SYNC_GENERATION_FILES = {
+        os.path.join(ASYNC_DIR, "_internal", "ws_client.py"),
+        os.path.join(TEST_ASYNC_DIR, "test_ws_long_connection_integration.py"),
+        os.path.join(TEST_ASYNC_DIR, "test_ws_register_callback_integration.py"),
+        os.path.join(UNIT_TEST_ASYNC_DIR, "test_ws_long_connection.py"),
+        os.path.join(UNIT_TEST_ASYNC_DIR, "test_run_code_ws_streaming.py"),
+        os.path.join(
+            EXAMPLES_ASYNC_DIR,
+            "browser-use",
+            "browser",
+            "ws_push_callback_captcha_tongcheng.py",
+        ),
+    }
+
+
+def _should_skip_sync_generation(path: str) -> bool:
+    return os.path.normpath(path) in SKIP_SYNC_GENERATION_FILES
+
+
+def _copy_template_file(src: str, dst: str) -> None:
+    if not os.path.exists(src):
+        raise RuntimeError(f"Missing template file: {src}")
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    with open(src, "r", encoding="utf-8") as f:
+        content = f.read()
+    with open(dst, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
+def _write_sync_ws_client_stub() -> None:
+    """
+    Write a real sync WS client implementation.
+
+    It is copied from a template (not embedded in this script) to keep the sync
+    generator generic.
+    """
+    dst = os.path.join(SYNC_DIR, "_internal", "ws_client.py")
+    src = os.path.join(TEMPLATES_DIR, "sync_ws_client.py")
+    _copy_template_file(src, dst)
+
+
+def _write_sync_extra_templates() -> None:
+    for dst, src in SYNC_EXTRA_TEMPLATES.items():
+        _copy_template_file(src, dst)
+
+
+def _write_sync_ws_streaming_unit_test_stub() -> None:
+    dst = os.path.join(UNIT_TEST_SYNC_DIR, "test_run_code_ws_streaming.py")
+    src = os.path.join(TEMPLATES_DIR, "sync_test_run_code_ws_streaming.py")
+    _copy_template_file(src, dst)
+
+
+def _write_sync_ws_streaming_integration_test_stub() -> None:
+    """
+    Write a sync integration test stub for WS streaming.
+
+    WS long connection is async-only for now, so sync integration test is skipped.
+    """
+    return
 
 def _build_client_api_method_replacements() -> dict:
     """
@@ -78,7 +164,50 @@ def _apply_custom_replacements(content: str, file_path: str) -> str:
     )
     return content
 
+
+def _remove_unused_import_asyncio(content: str) -> str:
+    """
+    Remove `import asyncio` when it's not used.
+
+    unasync + our post-process rules may leave unused `import asyncio` behind.
+    This cleanup is usage-aware (AST-based) to avoid breaking files that still
+    rely on asyncio (e.g. eval utilities, WS client wrapper).
+    """
+    if "import asyncio" not in content:
+        return content
+
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=SyntaxWarning)
+            tree = ast.parse(content)
+    except Exception:
+        return content
+
+    used = False
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and node.id == "asyncio":
+            used = True
+            break
+        if (
+            isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "asyncio"
+        ):
+            used = True
+            break
+
+    if used:
+        return content
+
+    return re.sub(
+        r"^[ \t]*import asyncio(?:[ \t]+as[ \t]+\w+)?[ \t]*\n",
+        "",
+        content,
+        flags=re.MULTILINE,
+    )
+
 def generate_sync():
+    _init_skip_sync_generation_files()
     # Clean target directories to avoid stale generated files drifting over time.
     # Sync outputs must be fully derived from async sources.
     for d in [SYNC_DIR, TEST_SYNC_DIR, EXAMPLES_SYNC_DIR, UNIT_TEST_SYNC_DIR]:
@@ -103,7 +232,7 @@ def generate_sync():
         "AsyncFileTransfer": "FileTransfer",
         "AsyncOss": "Oss",
         "AsyncAgent": "Agent",
-        "AsyncBrowserAgent": "BrowserAgent",
+        "AsyncBrowserOperator": "BrowserOperator",
         "AsyncBrowserFingerprintGenerator": "BrowserFingerprintGenerator",
         "AsyncBaseService": "BaseService",
         "AsyncMobileSimulateService": "MobileSimulateService",
@@ -128,7 +257,7 @@ def generate_sync():
         "list_mcp_tools_async": "list_mcp_tools",
         "get_adb_link_async": "get_adb_link",
 
-        # Browser Agent specific
+        # Browser Operator specific
         "navigate_async": "navigate",
         "screenshot_async": "screenshot",
         "act_async": "act",
@@ -211,31 +340,46 @@ def generate_sync():
     for root, dirs, files in os.walk(ASYNC_DIR):
         for file in files:
             if file.endswith(".py"):
-                filepaths.append(os.path.join(root, file))
+                path = os.path.join(root, file)
+                if _should_skip_sync_generation(path):
+                    continue
+                filepaths.append(path)
 
     # Walk tests/_async dir
     if os.path.exists(TEST_ASYNC_DIR):
         for root, dirs, files in os.walk(TEST_ASYNC_DIR):
             for file in files:
                 if file.endswith(".py"):
-                    filepaths.append(os.path.join(root, file))
+                    path = os.path.join(root, file)
+                    if _should_skip_sync_generation(path):
+                        continue
+                    filepaths.append(path)
 
     # Walk examples/_async dir
     if os.path.exists(EXAMPLES_ASYNC_DIR):
         for root, dirs, files in os.walk(EXAMPLES_ASYNC_DIR):
             for file in files:
                 if file.endswith(".py"):
-                    filepaths.append(os.path.join(root, file))
+                    path = os.path.join(root, file)
+                    if _should_skip_sync_generation(path):
+                        continue
+                    filepaths.append(path)
 
     # Walk unit tests/_async dir
     if os.path.exists(UNIT_TEST_ASYNC_DIR):
         for root, dirs, files in os.walk(UNIT_TEST_ASYNC_DIR):
             for file in files:
                 if file.endswith(".py"):
-                    filepaths.append(os.path.join(root, file))
+                    path = os.path.join(root, file)
+                    if _should_skip_sync_generation(path):
+                        continue
+                    filepaths.append(path)
 
     # Unasync logic
     unasync.unasync_files(filepaths, rules)
+
+    # Copy sync-only templates for skipped async-only modules
+    _write_sync_extra_templates()
 
     # Post-process
     process_dirs = [SYNC_DIR, TEST_SYNC_DIR, EXAMPLES_SYNC_DIR, UNIT_TEST_SYNC_DIR]
@@ -251,6 +395,10 @@ def generate_sync():
                     with open(path, "r") as f:
                         content = f.read()
 
+                    is_sync_ws_client = path.endswith(
+                        os.path.join("_internal", "ws_client.py")
+                    )
+
                     # Header check (only for SDK code and tests, not examples)
                     if root.startswith(SYNC_DIR) or root.startswith(TEST_SYNC_DIR):
                         header = "# DO NOT EDIT THIS FILE MANUALLY.\n# This file is auto-generated by scripts/generate_sync.py\n\n"
@@ -264,24 +412,27 @@ def generate_sync():
 
                     # Fix httpx.SyncClient issue (unasync might produce this)
                     content = content.replace("httpx.SyncClient", "httpx.Client")
+                    # Fix httpx async close method: aclose() -> close() for sync Client
+                    content = content.replace(".aclose()", ".close()")
 
                     # Fix playwright import
                     content = content.replace("playwright.async_api", "playwright.sync_api")
 
                     # Docstring/examples cleanup: unasync does not reliably transform docstrings.
                     # Apply only to generated SDK sync code and sync examples (avoid mutating tests).
-                    if root.startswith(SYNC_DIR) or root.startswith(EXAMPLES_SYNC_DIR):
+                    if (root.startswith(SYNC_DIR) or root.startswith(EXAMPLES_SYNC_DIR)) and (not is_sync_ws_client):
                         content = re.sub(r"\bawait\s+", "", content)
 
                     # Custom Replacements
                     # Force replace asyncio.sleep if unasync missed it (common with await removal)
-                    content = content.replace("asyncio.sleep", "time.sleep")
-                    # Replace asyncio.Lock() with threading.Lock() for sync code
-                    content = content.replace("asyncio.Lock()", "threading.Lock()")
-                    # Replace asyncio.gather(*tasks) with a list comprehension to keep the expression valid
-                    content = content.replace("asyncio.gather(*tasks)", "[task for task in tasks]")
-                    # Also handle asyncio.gather with return_exceptions parameter
-                    content = content.replace("asyncio.gather(*tasks, return_exceptions=True)", "[task for task in tasks]")
+                    if not is_sync_ws_client:
+                        content = content.replace("asyncio.sleep", "time.sleep")
+                        # Replace asyncio.Lock() with threading.Lock() for sync code
+                        content = content.replace("asyncio.Lock()", "threading.Lock()")
+                        # Replace asyncio.gather(*tasks) with a list comprehension to keep the expression valid
+                        content = content.replace("asyncio.gather(*tasks)", "[task for task in tasks]")
+                        # Also handle asyncio.gather with return_exceptions parameter
+                        content = content.replace("asyncio.gather(*tasks, return_exceptions=True)", "[task for task in tasks]")
                     # Handle asyncio.gather with concurrent.futures for proper parallel execution
                     if "concurrent_sessions.py" in file:
                         # For concurrent sessions example, use ThreadPoolExecutor
@@ -295,7 +446,8 @@ def generate_sync():
                         )
                     else:
                         # For other cases, use sequential execution
-                        content = re.sub(r'asyncio\.gather\(\*([^)]+)\)', r'[task for task in \1]', content)
+                        if not is_sync_ws_client:
+                            content = re.sub(r'asyncio\.gather\(\*([^)]+)\)', r'[task for task in \1]', content)
                     # Handle asyncio.run calls - use a more robust approach
                     # This will match asyncio.run( and find the matching closing parenthesis
                     def remove_asyncio_run(text):
@@ -357,17 +509,12 @@ def generate_sync():
                     content = re.sub(r'if asyncio\.iscoroutine\([^)]+\):\s+(\w+)\s+=\s+(\w+)\s*\n\s*else:\s*\n\s*.*?\1\s*=', lambda m: f'{m.group(1)} =', content, flags=re.DOTALL)
 
                     # Remove asyncio event loop creation in sync code
-                    content = re.sub(r'loop\s*=\s*asyncio\.new_event_loop\(\)\s*\n\s*asyncio\.set_event_loop\(loop\)\s*\n', '', content)
-                    content = re.sub(r'loop\.close\(\)', '', content)
+                    if not is_sync_ws_client:
+                        content = re.sub(r'loop\s*=\s*asyncio\.new_event_loop\(\)\s*\n\s*asyncio\.set_event_loop\(loop\)\s*\n', '', content)
+                        content = re.sub(r'loop\.close\(\)', '', content)
 
                     # Remove standalone asyncio.iscoroutine checks without else clause
                     content = re.sub(r'\s*if asyncio\.iscoroutine\([^)]+\):\s*\n\s+\w+\s+=\s+\w+\s*#[^\n]*\n', '\n', content)
-
-                    # Remove import asyncio from sync files (but keep it in imports section)
-                    # We need to be careful to only remove standalone "import asyncio" lines
-                    # Skip for eval module which uses asyncio internally even in sync mode
-                    if "eval/" not in path:
-                        content = re.sub(r'^import asyncio\s*\n', '', content, flags=re.MULTILINE)
 
                     # Add threading import if threading.Lock() is used
                     if 'threading.Lock()' in content and 'import threading' not in content:
@@ -494,7 +641,7 @@ def generate_sync():
                             content
                         )
 
-                    if "browser_agent.py" in file:
+                    if "browser_operator.py" in file:
                         content = content.replace("asyncio.get_event_loop().run_until_complete(", "")
                         pass
 
@@ -521,6 +668,10 @@ def generate_sync():
                     # Handle coroutine checks in sync tests
                     content = re.sub(r'if inspect\.iscoroutine\([^)]+\):', 'if False:  # Sync version - no coroutines', content)
                     content = re.sub(r'pytest\.fail\("([^"]*should return a coroutine[^"]*)"\)', r'assert True  # Sync version - \1', content)
+
+                    # Remove unused asyncio import (usage-aware). Run late because earlier
+                    # replacements may remove asyncio usages (e.g. filesystem monitor helpers).
+                    content = _remove_unused_import_asyncio(content)
 
                     with open(path, "w") as f:
                         f.write(content)

@@ -52,10 +52,10 @@ async def main():
 
         # Create a page with iframes
         print("\n1. Creating test page with iframes...")
-        await session.browser.agent.navigate("https://example.com")
+        await session.browser.operator.navigate("https://example.com")
         
         # Add iframe via JavaScript
-        await session.browser.agent.act(ActOptions(
+        await session.browser.operator.act(ActOptions(
             action="Execute JavaScript to add an iframe: "
             "var iframe = document.createElement('iframe'); "
             "iframe.src = 'https://httpbin.org/html'; "
@@ -68,12 +68,12 @@ async def main():
 
         # Take screenshot
         print("\n2. Taking screenshot with iframe...")
-        screenshot_path = await session.browser.agent.screenshot()
+        screenshot_path = await session.browser.operator.screenshot()
         print(f"Screenshot saved: {screenshot_path}")
 
         # Detect iframes
         print("\n3. Detecting iframes on page...")
-        success, iframe_result = await session.browser.agent.extract(ExtractOptions(
+        success, iframe_result = await session.browser.operator.extract(ExtractOptions(
             instruction="Are there any iframes on this page? How many?",
             schema=TextContent
         ))
@@ -84,7 +84,7 @@ async def main():
 
         # Get iframe information
         print("\n4. Getting iframe information...")
-        success, iframe_info = await session.browser.agent.extract(ExtractOptions(
+        success, iframe_info = await session.browser.operator.extract(ExtractOptions(
             instruction="What is the source URL of the iframe?",
             schema=TextContent
         ))
@@ -95,12 +95,12 @@ async def main():
 
         # Switch to iframe context
         print("\n5. Switching to iframe context...")
-        await session.browser.agent.act(ActOptions(action="Focus on the iframe content"))
+        await session.browser.operator.act(ActOptions(action="Focus on the iframe content"))
         print("Switched to iframe context")
 
         # Extract content from iframe
         print("\n6. Extracting content from iframe...")
-        success, iframe_content = await session.browser.agent.extract(ExtractOptions(
+        success, iframe_content = await session.browser.operator.extract(ExtractOptions(
             instruction="What content is displayed inside the iframe?",
             schema=TextContent
         ))
@@ -111,17 +111,17 @@ async def main():
 
         # Interact with iframe content
         print("\n7. Interacting with iframe content...")
-        await session.browser.agent.act(ActOptions(action="Scroll down within the iframe"))
+        await session.browser.operator.act(ActOptions(action="Scroll down within the iframe"))
         print("Scrolled within iframe")
 
         # Switch back to main context
         print("\n8. Switching back to main context...")
-        await session.browser.agent.act(ActOptions(action="Switch focus back to the main page"))
+        await session.browser.operator.act(ActOptions(action="Switch focus back to the main page"))
         print("Switched back to main context")
 
         # Verify we're back in main context
         print("\n9. Verifying main context...")
-        success, main_content = await session.browser.agent.extract(ExtractOptions(
+        success, main_content = await session.browser.operator.extract(ExtractOptions(
             instruction="What is the main page title (not the iframe)?",
             schema=TextContent
         ))
@@ -132,7 +132,7 @@ async def main():
 
         # Test nested iframes
         print("\n10. Testing nested iframes...")
-        await session.browser.agent.act(ActOptions(
+        await session.browser.operator.act(ActOptions(
             action="Execute JavaScript to add a nested iframe: "
             "var iframes = document.getElementsByTagName('iframe'); "
             "if (iframes.length > 0) { "
@@ -147,7 +147,7 @@ async def main():
 
         # Count total iframes
         print("\n11. Counting total iframes...")
-        success, total_iframes = await session.browser.agent.extract(ExtractOptions(
+        success, total_iframes = await session.browser.operator.extract(ExtractOptions(
             instruction="How many iframes are now on the page?",
             schema=TextContent
         ))

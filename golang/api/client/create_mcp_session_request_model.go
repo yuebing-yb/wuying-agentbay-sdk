@@ -19,6 +19,8 @@ type iCreateMcpSessionRequest interface {
 	GetExternalUserId() *string
 	SetImageId(v string) *CreateMcpSessionRequest
 	GetImageId() *string
+	SetTimeout(v int32) *CreateMcpSessionRequest
+	GetTimeout() *int32
 	SetLabels(v string) *CreateMcpSessionRequest
 	GetLabels() *string
 	SetMcpPolicyId(v string) *CreateMcpSessionRequest
@@ -45,6 +47,7 @@ type CreateMcpSessionRequest struct {
 	EnableRecord        *bool                                         `json:"EnableRecord,omitempty" xml:"EnableRecord,omitempty"`
 	ExternalUserId      *string                                       `json:"ExternalUserId,omitempty" xml:"ExternalUserId,omitempty"`
 	ImageId             *string                                       `json:"ImageId,omitempty" xml:"ImageId,omitempty"`
+	Timeout             *int32                                        `json:"Timeout,omitempty" xml:"Timeout,omitempty"`
 	Labels              *string                                       `json:"Labels,omitempty" xml:"Labels,omitempty"`
 	McpPolicyId         *string                                       `json:"McpPolicyId,omitempty" xml:"McpPolicyId,omitempty"`
 	NetworkId           *string                                       `json:"NetworkId,omitempty" xml:"NetworkId,omitempty"`
@@ -82,6 +85,10 @@ func (s *CreateMcpSessionRequest) GetExternalUserId() *string {
 
 func (s *CreateMcpSessionRequest) GetImageId() *string {
 	return s.ImageId
+}
+
+func (s *CreateMcpSessionRequest) GetTimeout() *int32 {
+	return s.Timeout
 }
 
 func (s *CreateMcpSessionRequest) GetLabels() *string {
@@ -130,6 +137,11 @@ func (s *CreateMcpSessionRequest) SetExternalUserId(v string) *CreateMcpSessionR
 
 func (s *CreateMcpSessionRequest) SetImageId(v string) *CreateMcpSessionRequest {
 	s.ImageId = &v
+	return s
+}
+
+func (s *CreateMcpSessionRequest) SetTimeout(v int32) *CreateMcpSessionRequest {
+	s.Timeout = &v
 	return s
 }
 

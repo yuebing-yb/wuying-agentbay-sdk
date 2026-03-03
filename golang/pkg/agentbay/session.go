@@ -20,6 +20,7 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/mobile"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/oss"
@@ -62,6 +63,13 @@ type LinkResult struct {
 
 // DeleteResult wraps deletion operation result and RequestID
 type DeleteResult struct {
+	models.ApiResponse
+	Success      bool
+	ErrorMessage string
+}
+
+// KeepAliveResult wraps keep-alive operation result and RequestID
+type KeepAliveResult struct {
 	models.ApiResponse
 	Success      bool
 	ErrorMessage string
@@ -120,6 +128,14 @@ type Session struct {
 	Token   string
 	LinkUrl string
 
+	// WS URL for long connection (optional, for streaming output)
+	WsUrl string
+
+	wsClient *internal.WsClient
+
+	// Shared HTTP client for LinkUrl calls (lazy initialized)
+	linkHttpClient *http.Client
+
 	// Browser replay enabled flag
 	EnableBrowserReplay bool
 
@@ -141,6 +157,37 @@ type Session struct {
 
 	// Context management
 	Context *ContextManager
+}
+
+func (s *Session) getLinkHttpClient() *http.Client {
+	if s.linkHttpClient == nil {
+		s.linkHttpClient = &http.Client{Timeout: 900 * time.Second}
+	}
+	return s.linkHttpClient
+}
+
+func (s *Session) GetWsUrl() string {
+	return s.WsUrl
+}
+
+func (s *Session) GetMcpTools() []McpTool {
+	return s.McpTools
+}
+
+func (s *Session) GetWsClient() (interface{}, error) {
+	if s.WsUrl == "" {
+		return nil, fmt.Errorf("ws url is not available for this session")
+	}
+	if s.Token == "" {
+		return nil, fmt.Errorf("token is not available for WS connection")
+	}
+	if s.wsClient == nil {
+		s.wsClient = internal.NewWsClient(s.WsUrl, s.Token, LogDebug)
+	}
+	if err := s.wsClient.Connect(); err != nil {
+		return nil, err
+	}
+	return s.wsClient, nil
 }
 
 // SessionStatusResult represents the result of Session.GetStatus().
@@ -237,6 +284,73 @@ func (s *Session) GetStatus() (*SessionStatusResult, error) {
 	return result, nil
 }
 
+// KeepAlive refreshes the backend idle timer for this session.
+// It calls the RefreshSessionIdleTime API.
+func (s *Session) KeepAlive() (*KeepAliveResult, error) {
+	request := &mcp.RefreshSessionIdleTimeRequest{
+		Authorization: tea.String("Bearer " + s.GetAPIKey()),
+		SessionId:     tea.String(s.SessionID),
+	}
+
+	logAPICall("RefreshSessionIdleTime", fmt.Sprintf("SessionId=%s", s.SessionID))
+
+	response, err := s.GetClient().RefreshSessionIdleTime(request)
+	if err != nil {
+		logOperationError("RefreshSessionIdleTime", err.Error(), true)
+		return &KeepAliveResult{
+			ApiResponse: models.WithRequestID(""),
+			Success:     false,
+			ErrorMessage: fmt.Sprintf(
+				"Failed to refresh session idle time for session %s: %v",
+				s.SessionID,
+				err,
+			),
+		}, nil
+	}
+
+	requestID := models.ExtractRequestID(response)
+	if requestID == "" && response != nil && response.Body != nil && response.Body.RequestId != nil {
+		requestID = tea.StringValue(response.Body.RequestId)
+	}
+	if requestID == "" {
+		requestID = fmt.Sprintf("refresh-idle-%d-%d", time.Now().UnixMilli(), rand.Intn(1000000000))
+	}
+
+	if response != nil && response.Body != nil && response.Body.Success != nil && !*response.Body.Success {
+		code := ""
+		message := "Unknown error"
+		if response.Body.Code != nil {
+			code = tea.StringValue(response.Body.Code)
+		}
+		if response.Body.Message != nil && tea.StringValue(response.Body.Message) != "" {
+			message = tea.StringValue(response.Body.Message)
+		}
+		errorMessage := message
+		if code != "" {
+			errorMessage = fmt.Sprintf("[%s] %s", code, message)
+		}
+		logOperationError("RefreshSessionIdleTime", errorMessage, false, requestID)
+		return &KeepAliveResult{
+			ApiResponse:  models.WithRequestID(requestID),
+			Success:      false,
+			ErrorMessage: errorMessage,
+		}, nil
+	}
+
+	logAPIResponseWithDetails(
+		"RefreshSessionIdleTime",
+		requestID,
+		true,
+		map[string]interface{}{"session_id": s.SessionID},
+		"",
+	)
+	return &KeepAliveResult{
+		ApiResponse:  models.WithRequestID(requestID),
+		Success:      true,
+		ErrorMessage: "",
+	}, nil
+}
+
 // NewSession creates a new Session object.
 func NewSession(agentBay *AgentBay, sessionID string) *Session {
 	session := &Session{
@@ -314,6 +428,11 @@ func (s *Session) GetClient() *mcp.Client {
 // GetSessionId returns the session ID for this session.
 func (s *Session) GetSessionId() string {
 	return s.SessionID
+}
+
+// GetBrowser returns the Browser instance for this session.
+func (s *Session) GetBrowser() *browser.Browser {
+	return s.Browser
 }
 
 // GetImageID returns the image ID for this session.
@@ -1247,8 +1366,7 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Access-Token", token)
 
-	httpClient := &http.Client{Timeout: 900 * time.Second}
-	resp, err := httpClient.Do(req)
+	resp, err := s.getLinkHttpClient().Do(req)
 	if err != nil {
 		return &models.McpToolResult{
 			Success:      false,
@@ -1608,6 +1726,9 @@ func (s *Session) extractTextContentFromResponse(data interface{}) string {
 // BetaPause synchronously pauses this session (beta), putting it into a dormant state to reduce resource usage and costs.
 // BetaPause puts the session into a PAUSED state where computational resources are significantly reduced.
 // The session state is preserved and can be resumed later to continue work.
+//
+// Note: This feature is currently in whitelist-only access.
+// Contact agentbay_dev@alibabacloud.com to request access.
 //
 // Parameters:
 //   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.

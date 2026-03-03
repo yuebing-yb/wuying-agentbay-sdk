@@ -84,6 +84,7 @@ class GetSessionResponseBodyData(DaraModel):
         self,
         app_instance_id: str = None,
         http_port: str = None,
+        link_url: str = None,
         network_interface_ip: str = None,
         resource_id: str = None,
         resource_url: str = None,
@@ -93,9 +94,11 @@ class GetSessionResponseBodyData(DaraModel):
         tool_list: str = None,
         vpc_resource: bool = None,
         contexts: List[main_models.GetSessionResponseBodyDataContexts] = None,
+        ws_url: str = None,
     ):
         self.app_instance_id = app_instance_id
         self.http_port = http_port
+        self.link_url = link_url
         self.network_interface_ip = network_interface_ip
         self.resource_id = resource_id
         self.resource_url = resource_url
@@ -105,6 +108,7 @@ class GetSessionResponseBodyData(DaraModel):
         self.tool_list = tool_list
         self.vpc_resource = vpc_resource
         self.contexts = contexts
+        self.ws_url = ws_url
 
     def validate(self):
         if self.contexts:
@@ -122,6 +126,9 @@ class GetSessionResponseBodyData(DaraModel):
 
         if self.http_port is not None:
             result["HttpPort"] = self.http_port
+
+        if self.link_url is not None:
+            result["LinkUrl"] = self.link_url
 
         if self.network_interface_ip is not None:
             result["NetworkInterfaceIp"] = self.network_interface_ip
@@ -147,6 +154,9 @@ class GetSessionResponseBodyData(DaraModel):
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
 
+        if self.ws_url is not None:
+            result["WsUrl"] = self.ws_url
+
         result["contexts"] = []
         if self.contexts is not None:
             for k1 in self.contexts:
@@ -161,6 +171,9 @@ class GetSessionResponseBodyData(DaraModel):
 
         if m.get("HttpPort") is not None:
             self.http_port = m.get("HttpPort")
+
+        if m.get("LinkUrl") is not None:
+            self.link_url = m.get("LinkUrl")
 
         if m.get("NetworkInterfaceIp") is not None:
             self.network_interface_ip = m.get("NetworkInterfaceIp")
@@ -185,6 +198,11 @@ class GetSessionResponseBodyData(DaraModel):
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")
+
+        if m.get("WsUrl") is not None:
+            self.ws_url = m.get("WsUrl")
+        elif m.get("wsUrl") is not None:
+            self.ws_url = m.get("wsUrl")
 
         self.contexts = []
         if m.get("contexts") is not None:

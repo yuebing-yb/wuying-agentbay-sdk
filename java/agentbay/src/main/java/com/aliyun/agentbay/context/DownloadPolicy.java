@@ -5,6 +5,10 @@ import java.util.Map;
 
 /**
  * Defines the download policy for context synchronization
+ * 
+ * Attributes:
+ *     autoDownload: Enables automatic download
+ *     downloadStrategy: Defines the download strategy
  */
 public class DownloadPolicy {
     private boolean autoDownload = true;

@@ -6,8 +6,7 @@
 
 ## Overview
 
-The Mobile module provides mobile device automation capabilities including touch gestures,
-text input, app management, and screenshot capture. It supports Android device automation.
+The Mobile module provides mobile device automation capabilities including touch gestures,text input, app management, and screenshot capture. It supports Android device automation.
 
 
 ## Requirements
@@ -59,15 +58,21 @@ ___
 
 ### betaTakeScreenshot
 
-▸ **betaTakeScreenshot**(): `Promise`\<`BetaScreenshotResult`\>
+▸ **betaTakeScreenshot**(`format?`): `Promise`\<`BetaScreenshotResult`\>
 
-Capture the current screen as a PNG image and return raw image bytes.
+Capture the current screen and return raw image bytes.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `format` | `string` | `"png"` | Output image format ("png", "jpeg", or "jpg"). Default is "png" |
 
 #### Returns
 
 `Promise`\<`BetaScreenshotResult`\>
 
-Promise resolving to BetaScreenshotResult containing PNG bytes
+Promise resolving to BetaScreenshotResult containing image bytes
 
 ___
 

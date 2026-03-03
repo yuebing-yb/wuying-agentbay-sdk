@@ -10,6 +10,7 @@ import {
   GetMcpResourceRequest,
   GetSessionDetailRequest,
   ListMcpToolsRequest,
+  RefreshSessionIdleTimeRequest,
   SetLabelRequest,
 } from "./api/models/model";
 import { Browser } from "./browser";
@@ -24,6 +25,7 @@ import {
 import { FileSystem } from "./filesystem";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
+import { WsClient } from "./_internal/ws-client";
 import {
   ApiResponse,
   DeleteResult,
@@ -217,6 +219,10 @@ export class Session {
   public token = "";
   public linkUrl = "";
 
+  // WS long connection URL (for streaming output)
+  public wsUrl = "";
+  private _wsClient: WsClient | null = null;
+
   // Recording functionality
   public enableBrowserReplay = false; // Whether browser recording is enabled for this session
 
@@ -270,6 +276,23 @@ export class Session {
 
     // Initialize context manager (matching Go version)
     this.context = newContextManager(this);
+  }
+
+  /**
+   * Internal helper for WS streaming features.
+   */
+  async getWsClient(): Promise<WsClient> {
+    if (!this.wsUrl) {
+      throw new Error("Missing wsUrl on session; streaming is not available");
+    }
+    if (!this.token) {
+      throw new Error("Missing token on session; streaming is not available");
+    }
+    if (!this._wsClient) {
+      this._wsClient = new WsClient(this.wsUrl, this.token);
+    }
+    await this._wsClient.connect();
+    return this._wsClient;
   }
 
   /**
@@ -430,6 +453,65 @@ export class Session {
   }
 
   /**
+   * Refresh the backend idle timer for this session.
+   *
+   * This method calls the RefreshSessionIdleTime API.
+   */
+  async keepAlive(): Promise<OperationResult> {
+    try {
+      logAPICall("RefreshSessionIdleTime", { sessionId: this.sessionId });
+
+      const request = new RefreshSessionIdleTimeRequest({
+        authorization: `Bearer ${this.getAPIKey()}`,
+        sessionId: this.sessionId,
+      });
+
+      const response = await this.getClient().refreshSessionIdleTime(request);
+      const requestId = extractRequestId(response) || response?.body?.requestId || "";
+
+      const body = response?.body;
+      if (body?.success === false && body.code) {
+        const errorMessage = `[${body.code}] ${body.message || "Unknown error"}`;
+        logAPIResponseWithDetails(
+          "RefreshSessionIdleTime",
+          requestId,
+          false,
+          {},
+          JSON.stringify(body, null, 2)
+        );
+        return {
+          requestId,
+          success: false,
+          errorMessage,
+        };
+      }
+
+      logAPIResponseWithDetails("RefreshSessionIdleTime", requestId, true, {
+        session_id: this.sessionId,
+      });
+
+      return {
+        requestId,
+        success: true,
+      };
+    } catch (error) {
+      logError("Error calling RefreshSessionIdleTime:", error);
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: `Failed to keep session alive ${this.sessionId}: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * Alias of keepAlive for API compatibility.
+   */
+  async keepAliveAsync(): Promise<OperationResult> {
+    return await this.keepAlive();
+  }
+
+  /**
    * Delete this session.
    *
    * @param syncContext - Whether to sync context data (trigger file uploads) before deleting the session. Defaults to false.
@@ -479,6 +561,13 @@ export class Session {
    */
   async delete(syncContext = false): Promise<DeleteResult> {
     try {
+      if (this._wsClient) {
+        try {
+          await this._wsClient.close();
+        } catch (_e) {
+        }
+        this._wsClient = null;
+      }
       if (syncContext) {
         logDebug(
           "Triggering context synchronization before session deletion..."
@@ -1701,6 +1790,9 @@ export class Session {
 
   /**
    * Asynchronously pause this session (beta), putting it into a dormant state.
+   *
+   * **Note**: This feature is currently in whitelist-only access.
+   * Contact agentbay_dev@alibabacloud.com to request access.
    *
    * This method calls the PauseSessionAsync API to initiate the pause operation and then polls
    * the GetSession API to check the session status until it becomes PAUSED or until timeout is reached.

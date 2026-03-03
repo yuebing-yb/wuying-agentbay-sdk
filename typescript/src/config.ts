@@ -8,6 +8,8 @@ interface Config {
   region_id?: string;
 }
 
+type ConfigOptions = Partial<Config>;
+
 /**
  * Browser data path constant
  */
@@ -143,29 +145,29 @@ if (!dotEnvLoaded) {
  * @param customEnvPath Custom path to .env file (optional)
  * @returns Configuration object
  */
-function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
+function loadConfig(customConfig?: ConfigOptions, customEnvPath?: string): Config {
   // If custom config is provided, do NOT load env/.env.
   // Fill missing/empty fields with defaults, but preserve explicit values.
   if (customConfig) {
     const config = defaultConfig();
 
     // Treat empty string as "not provided" for endpoint
-    if (typeof (customConfig as any).endpoint === "string" && (customConfig as any).endpoint) {
-      config.endpoint = (customConfig as any).endpoint;
+    if (typeof customConfig.endpoint === "string" && customConfig.endpoint) {
+      config.endpoint = customConfig.endpoint;
     }
 
     // Treat non-positive numbers as "not provided" for timeout
     if (
-      typeof (customConfig as any).timeout_ms === "number" &&
-      Number.isFinite((customConfig as any).timeout_ms) &&
-      (customConfig as any).timeout_ms > 0
+      typeof customConfig.timeout_ms === "number" &&
+      Number.isFinite(customConfig.timeout_ms) &&
+      customConfig.timeout_ms > 0
     ) {
-      config.timeout_ms = (customConfig as any).timeout_ms;
+      config.timeout_ms = customConfig.timeout_ms;
     }
 
     // Preserve empty string if explicitly provided
-    if (Object.prototype.hasOwnProperty.call(customConfig as any, "region_id")) {
-      config.region_id = (customConfig as any).region_id;
+    if (Object.prototype.hasOwnProperty.call(customConfig, "region_id")) {
+      config.region_id = customConfig.region_id;
     }
 
     return config;
@@ -201,3 +203,4 @@ function loadConfig(customConfig?: Config, customEnvPath?: string): Config {
 }
 
 export { Config, loadConfig, loadDotEnvWithFallback };
+export type { ConfigOptions };

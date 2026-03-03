@@ -177,7 +177,7 @@ describe('Command', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should limit timeout to maximum 50s', async () => {
+    it('should pass custom timeout through without limiting', async () => {
       const mockResult = {
         requestId: 'request-123',
         success: true,
@@ -186,23 +186,13 @@ describe('Command', () => {
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
-      // Test with timeout exceeding 50s (50000ms)
-      await command.executeCommand('ls -la', 60000);
+      await command.executeCommand('ls -la', 120000);
 
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
         command: 'ls -la',
-        timeout_ms: 50000, // Should be limited to 50s
+        timeout_ms: 120000,
       }, false);
 
-      // Test with timeout exactly at limit
-      mockSession.callMcpTool.mockClear();
-      await command.executeCommand('ls -la', 50000);
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {
-        command: 'ls -la',
-        timeout_ms: 50000, // Should remain 50s
-      }, false);
-
-      // Test with timeout below limit
       mockSession.callMcpTool.mockClear();
       await command.executeCommand('ls -la', 30000);
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('shell', {

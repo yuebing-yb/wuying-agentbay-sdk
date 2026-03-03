@@ -12,5 +12,5 @@ Computer Use is AgentBay's desktop automation environment for Windows and Linux 
 
 ## Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Main Documentation](../../README.md)

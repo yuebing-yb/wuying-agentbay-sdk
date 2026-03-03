@@ -8,6 +8,7 @@ from agentbay import get_logger
 from agentbay import OperationResult
 from agentbay import Agent
 from agentbay import ExecutionResult
+from agentbay import Browser
 
 logger = get_logger("agentbay-unit-test")
 
@@ -227,7 +228,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
 
 class TestAsyncAgentBrowser(unittest.TestCase):
     def setUp(self):
-        self.session = DummySession()
+        self.session = MagicMock()
         self.agent = Agent(self.session)
         timeout = os.environ.get("AGENT_TASK_TIMEOUT")
         if not timeout:

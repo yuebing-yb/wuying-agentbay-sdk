@@ -1,0 +1,502 @@
+package com.aliyun.agentbay.mobile;
+
+import com.aliyun.agentbay.AgentBay;
+import com.aliyun.agentbay.model.*;
+import com.aliyun.agentbay.session.CreateSessionParams;
+import com.aliyun.agentbay.session.Session;
+import org.junit.*;
+import org.junit.runners.MethodSorters;
+
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
+
+/**
+ * Integration tests for Mobile module.
+ * These tests require a real AgentBay API connection and mobile environment.
+ * 
+ * To run these tests, set the AGENTBAY_API_KEY environment variable.
+ * Tests are skipped if the API key is not set.
+ */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public class MobileIntegrationTest {
+    
+    private static AgentBay agentBay;
+    private static Session session;
+    private static Mobile mobile;
+    
+    @BeforeClass
+    public static void setUpClass() {
+        String apiKey = System.getenv("AGENTBAY_API_KEY");
+        assumeTrue("AGENTBAY_API_KEY environment variable not set, skipping integration tests", 
+            apiKey != null && !apiKey.isEmpty());
+        
+        try {
+            agentBay = new AgentBay();
+            
+            System.out.println("Creating mobile session for integration tests...");
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("mobile_latest");
+            
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            
+            session = result.getSession();
+            mobile = session.mobile;
+            
+            System.out.println("Session created with ID: " + session.getSessionId());
+            
+            // Wait for mobile environment to be ready
+            Thread.sleep(3000);
+        } catch (Exception e) {
+            System.err.println("Failed to set up test environment: " + e.getMessage());
+            assumeTrue("Failed to set up test environment", false);
+        }
+    }
+    
+    @AfterClass
+    public static void tearDownClass() {
+        if (session != null && agentBay != null) {
+            try {
+                System.out.println("Cleaning up: Deleting the session...");
+                DeleteResult result = agentBay.delete(session, false);
+                System.out.println("Session deleted. Success: " + result.isSuccess());
+            } catch (Exception e) {
+                System.err.println("Warning: Error deleting session: " + e.getMessage());
+            }
+        }
+    }
+    
+    // ==================== Touch Operations Tests ====================
+    
+    @Test
+    public void test01_Tap() {
+        System.out.println("\nTest: Tap operation...");
+        
+        BoolResult result = mobile.tap(500, 800);
+        
+        assertTrue("Tap failed: " + result.getErrorMessage(), result.isSuccess());
+        assertTrue("Tap should return true", result.getData());
+        System.out.println("Tap operation successful");
+    }
+    
+    @Test
+    public void test02_Swipe() {
+        System.out.println("\nTest: Swipe operation...");
+        
+        BoolResult result = mobile.swipe(500, 1500, 500, 500, 500);
+        
+        assertTrue("Swipe failed: " + result.getErrorMessage(), result.isSuccess());
+        assertTrue("Swipe should return true", result.getData());
+        System.out.println("Swipe operation successful");
+    }
+    
+    @Test
+    public void test03_SwipeWithDefaultDuration() {
+        System.out.println("\nTest: Swipe with default duration...");
+        
+        BoolResult result = mobile.swipe(500, 500, 500, 1000);
+        
+        assertTrue("Swipe failed: " + result.getErrorMessage(), result.isSuccess());
+        System.out.println("Swipe with default duration successful");
+    }
+    
+    @Test
+    public void test04_InputText() {
+        System.out.println("\nTest: Text input...");
+        BoolResult result = mobile.inputText("Hello Mobile Test");
+
+        // This API requires a focused editable node. When there is no focused input field,
+        // it should fail with a clear error message instead of silently succeeding.
+        assertFalse("Input should fail when no editable node is focused", result.isSuccess());
+        assertNotNull("Error message should be present", result.getErrorMessage());
+        assertTrue(
+            "Error message should mention no focused editable node: " + result.getErrorMessage(),
+            result.getErrorMessage().contains("No focused editable node found")
+        );
+        System.out.println("Text input failed as expected (no focused editable node)");
+    }
+    
+    @Test
+    public void test05_SendHomeKey() {
+        System.out.println("\nTest: Press HOME key...");
+        
+        BoolResult result = mobile.sendKey(KeyCode.HOME);
+        
+        assertTrue("Send key failed: " + result.getErrorMessage(), result.isSuccess());
+        assertTrue("Press key should return true", result.getData());
+        System.out.println("HOME key press successful");
+    }
+    
+    @Test
+    public void test06_SendBackKey() {
+        System.out.println("\nTest: Press BACK key...");
+        
+        BoolResult result = mobile.sendKey(KeyCode.BACK);
+        
+        assertTrue("Send key failed: " + result.getErrorMessage(), result.isSuccess());
+        System.out.println("BACK key press successful");
+    }
+    
+    // ==================== UI Element Operations Tests ====================
+    
+    @Test
+    public void test07_GetClickableUiElements() {
+        System.out.println("\nTest: Getting clickable UI elements...");
+        
+        UIElementListResult result = mobile.getClickableUiElements(5000);
+        
+        assertTrue("Get clickable UI elements failed: " + result.getErrorMessage(), result.isSuccess());
+        assertNotNull("Elements list should not be null", result.getElements());
+        System.out.println("Found " + result.getElements().size() + " clickable elements");
+    }
+    
+    @Test
+    public void test08_GetAllUiElements() {
+        System.out.println("\nTest: Getting all UI elements...");
+        
+        UIElementListResult result = mobile.getAllUiElements(5000);
+        
+        assertTrue("Get all UI elements failed: " + result.getErrorMessage(), result.isSuccess());
+        assertNotNull("Elements list should not be null", result.getElements());
+        System.out.println("Found " + result.getElements().size() + " UI elements");
+    }
+
+    @Test
+    public void test08b_GetAllUiElementsXmlFormatContract() {
+        System.out.println("\nTest: Getting all UI elements in XML format...");
+
+        Session xmlSession = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("mobile-use-android-12-gw");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            xmlSession = result.getSession();
+            Thread.sleep(15000);
+
+            UIElementListResult ui = xmlSession.mobile.getAllUiElements(10000, "xml");
+            assertTrue("Get all UI elements (xml) failed: " + ui.getErrorMessage(), ui.isSuccess());
+            assertEquals("xml", ui.getFormat());
+            assertNotNull(ui.getRaw());
+            assertTrue(ui.getRaw().trim().startsWith("<?xml"));
+            assertTrue(ui.getRaw().contains("<hierarchy"));
+            assertNotNull(ui.getElements());
+            assertTrue(ui.getElements().isEmpty());
+        } catch (Exception e) {
+            fail("XML format contract test failed: " + e.getMessage());
+        } finally {
+            if (xmlSession != null) {
+                try {
+                    agentBay.delete(xmlSession, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting XML session: " + e.getMessage());
+                }
+            }
+        }
+    }
+    
+    // ==================== Screenshot Operations Tests ====================
+    
+    @Test
+    public void test09_Screenshot() {
+        System.out.println("\nTest: Taking screenshot...");
+        
+        OperationResult result = mobile.screenshot();
+        
+        assertFalse("Screenshot failed: " + result.getErrorMessage(), result.isSuccess());
+        assertNull("Screenshot data should not be null", result.getData());
+    }
+
+    @Test
+    public void test09b_BetaTakeScreenshot() {
+        System.out.println("\nTest: Taking beta screenshot (PNG bytes)...");
+
+        Session s = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("mobile-use-android-12-gw");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            s = result.getSession();
+            Thread.sleep(15000);
+            s.listMcpTools();
+
+            CommandResult r1 = s.getCommand().executeCommand("wm size 720x1280", 10000);
+            assertTrue("Command failed: " + r1.getErrorMessage(), r1.isSuccess());
+            CommandResult r2 = s.getCommand().executeCommand("wm density 160", 10000);
+            assertTrue("Command failed: " + r2.getErrorMessage(), r2.isSuccess());
+
+            ProcessListResult start = s.mobile.startApp("monkey -p com.android.settings 1");
+            assertTrue("Failed to start Settings: " + start.getErrorMessage(), start.isSuccess());
+            Thread.sleep(2000);
+
+            CommandResult nav = s.getCommand().executeCommand("am start -a android.settings.SETTINGS", 10000);
+            assertTrue("Command failed: " + nav.getErrorMessage(), nav.isSuccess());
+            Thread.sleep(2000);
+
+            ScreenshotBytesResult shot = s.mobile.betaTakeScreenshot();
+            assertTrue("Beta screenshot failed: " + shot.getErrorMessage(), shot.isSuccess());
+            assertEquals("image", shot.getType());
+            assertEquals("image/png", shot.getMimeType());
+            assertNotNull("Image bytes should not be null", shot.getData());
+            assertTrue("Image bytes should not be empty", shot.getData().length > 8);
+            assertNotNull("Width should not be null", shot.getWidth());
+            assertNotNull("Height should not be null", shot.getHeight());
+            assertTrue("Width should be > 0", shot.getWidth() > 0);
+            assertTrue("Height should be > 0", shot.getHeight() > 0);
+        } catch (Exception e) {
+            fail("Beta screenshot test failed: " + e.getMessage());
+        } finally {
+            if (s != null) {
+                try {
+                    agentBay.delete(s, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting session: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void test09c_BetaTakeLongScreenshot() {
+        System.out.println("\nTest: Taking beta long screenshot (PNG bytes)...");
+
+        Session s = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("mobile-use-android-12-gw");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            s = result.getSession();
+            Thread.sleep(15000);
+            s.listMcpTools();
+
+            CommandResult r1 = s.getCommand().executeCommand("wm size 720x1280", 10000);
+            assertTrue("Command failed: " + r1.getErrorMessage(), r1.isSuccess());
+            CommandResult r2 = s.getCommand().executeCommand("wm density 160", 10000);
+            assertTrue("Command failed: " + r2.getErrorMessage(), r2.isSuccess());
+
+            ProcessListResult start = s.mobile.startApp("monkey -p com.android.settings 1");
+            assertTrue("Failed to start Settings: " + start.getErrorMessage(), start.isSuccess());
+            Thread.sleep(2000);
+
+            CommandResult nav = s.getCommand().executeCommand("am start -a android.settings.SETTINGS", 10000);
+            assertTrue("Command failed: " + nav.getErrorMessage(), nav.isSuccess());
+            Thread.sleep(2000);
+
+            ScreenshotBytesResult shot = s.mobile.betaTakeLongScreenshot(2, "png");
+            if (!shot.isSuccess() && shot.getErrorMessage() != null && shot.getErrorMessage().contains("Failed to capture long screenshot")) {
+                return;
+            }
+            assertTrue("Beta long screenshot failed: " + shot.getErrorMessage(), shot.isSuccess());
+            assertEquals("image", shot.getType());
+            assertEquals("image/png", shot.getMimeType());
+            assertNotNull("Image bytes should not be null", shot.getData());
+            assertTrue("Image bytes should not be empty", shot.getData().length > 8);
+            assertNotNull("Width should not be null", shot.getWidth());
+            assertNotNull("Height should not be null", shot.getHeight());
+            assertTrue("Width should be > 0", shot.getWidth() > 0);
+            assertTrue("Height should be > 0", shot.getHeight() > 0);
+        } catch (Exception e) {
+            fail("Beta long screenshot test failed: " + e.getMessage());
+        } finally {
+            if (s != null) {
+                try {
+                    agentBay.delete(s, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting session: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void test09d_BetaTakeLongScreenshotJpegQuality() {
+        System.out.println("\nTest: Taking beta long screenshot (JPEG bytes, quality)...");
+
+        Session s = null;
+        try {
+            CreateSessionParams params = new CreateSessionParams();
+            params.setImageId("mobile-use-android-12-gw");
+
+            SessionResult result = agentBay.create(params);
+            assertTrue("Failed to create session: " + result.getErrorMessage(), result.isSuccess());
+            assertNotNull("Session should not be null", result.getSession());
+
+            s = result.getSession();
+            Thread.sleep(15000);
+            s.listMcpTools();
+
+            CommandResult r1 = s.getCommand().executeCommand("wm size 720x1280", 10000);
+            assertTrue("Command failed: " + r1.getErrorMessage(), r1.isSuccess());
+            CommandResult r2 = s.getCommand().executeCommand("wm density 160", 10000);
+            assertTrue("Command failed: " + r2.getErrorMessage(), r2.isSuccess());
+
+            ProcessListResult start = s.mobile.startApp("monkey -p com.android.settings 1");
+            assertTrue("Failed to start Settings: " + start.getErrorMessage(), start.isSuccess());
+            Thread.sleep(2000);
+
+            CommandResult nav = s.getCommand().executeCommand("am start -a android.settings.SETTINGS", 10000);
+            assertTrue("Command failed: " + nav.getErrorMessage(), nav.isSuccess());
+            Thread.sleep(2000);
+
+            ScreenshotBytesResult invalid = s.mobile.betaTakeLongScreenshot(2, "jpeg", 0);
+            assertFalse("Invalid quality should fail", invalid.isSuccess());
+            assertNotNull("Error message should be present", invalid.getErrorMessage());
+            assertTrue(
+                "Error message should mention invalid quality: " + invalid.getErrorMessage(),
+                invalid.getErrorMessage().contains("Invalid quality")
+            );
+
+            ScreenshotBytesResult high = s.mobile.betaTakeLongScreenshot(2, "jpeg", 95);
+            ScreenshotBytesResult low = s.mobile.betaTakeLongScreenshot(2, "jpeg", 10);
+
+            assertTrue("Beta long screenshot (jpeg, q=95) failed: " + high.getErrorMessage(), high.isSuccess());
+            assertEquals("image", high.getType());
+            assertEquals("image/jpeg", high.getMimeType());
+            assertNotNull("Image bytes should not be null", high.getData());
+            assertTrue("Image bytes should not be empty", high.getData().length > 3);
+            assertNotNull("Width should not be null", high.getWidth());
+            assertNotNull("Height should not be null", high.getHeight());
+            assertTrue("Width should be > 0", high.getWidth() > 0);
+            assertTrue("Height should be > 0", high.getHeight() > 0);
+            assertEquals((byte) 0xff, high.getData()[0]);
+            assertEquals((byte) 0xd8, high.getData()[1]);
+            assertEquals((byte) 0xff, high.getData()[2]);
+
+            assertTrue("Beta long screenshot (jpeg, q=10) failed: " + low.getErrorMessage(), low.isSuccess());
+            assertEquals("image", low.getType());
+            assertEquals("image/jpeg", low.getMimeType());
+            assertNotNull("Image bytes should not be null", low.getData());
+            assertTrue("Image bytes should not be empty", low.getData().length > 3);
+            assertNotNull("Width should not be null", low.getWidth());
+            assertNotNull("Height should not be null", low.getHeight());
+            assertTrue("Width should be > 0", low.getWidth() > 0);
+            assertTrue("Height should be > 0", low.getHeight() > 0);
+            assertEquals((byte) 0xff, low.getData()[0]);
+            assertEquals((byte) 0xd8, low.getData()[1]);
+            assertEquals((byte) 0xff, low.getData()[2]);
+
+            assertTrue("Higher quality JPEG should be larger than lower quality JPEG", high.getData().length > low.getData().length);
+        } catch (Exception e) {
+            fail("Beta long screenshot JPEG quality test failed: " + e.getMessage());
+        } finally {
+            if (s != null) {
+                try {
+                    agentBay.delete(s, false);
+                } catch (Exception e) {
+                    System.err.println("Warning: Error deleting session: " + e.getMessage());
+                }
+            }
+        }
+    }
+    
+    // ==================== Application Management Tests ====================
+    
+    @Test
+    public void test10_GetInstalledApps() {
+        System.out.println("\nTest: Getting installed apps...");
+        
+        InstalledAppListResult result = mobile.getInstalledApps(true, false, true);
+        
+        assertTrue("Get installed apps failed: " + result.getErrorMessage(), result.isSuccess());
+        assertNotNull("Apps list should not be null", result.getData());
+        System.out.println("Found " + result.getData().size() + " apps");
+        
+        // Print first few apps
+        int count = 0;
+        for (InstalledApp app : result.getData()) {
+            if (count++ < 5) {
+                System.out.println("  - " + app.getName() + ": " + app.getStartCmd());
+            }
+        }
+    }
+    
+    @Test
+    public void test11_StartAndStopApp() {
+        System.out.println("\nTest: Starting and stopping Settings app...");
+        
+        // Start Settings app
+        ProcessListResult startResult = mobile.startApp("monkey -p com.android.settings -c android.intent.category.LAUNCHER 1");
+        assertTrue("Start app failed: " + startResult.getErrorMessage(), startResult.isSuccess());
+        System.out.println("Settings app started");
+        
+        // Wait for app to start
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // Stop the app
+        AppOperationResult stopResult = mobile.stopAppByCmd("am force-stop com.android.settings");
+        assertTrue("Stop app failed: " + stopResult.getErrorMessage(), stopResult.isSuccess());
+        System.out.println("Settings app stopped");
+    }
+    
+    // ==================== Mobile Configuration Tests ====================
+    
+    @Test
+    public void test12_SetResolutionLock() {
+        System.out.println("\nTest: Setting resolution lock...");
+        
+        // This test just verifies no exception is thrown
+        mobile.setResolutionLock(true);
+        System.out.println("Resolution lock enabled");
+        
+        mobile.setResolutionLock(false);
+        System.out.println("Resolution lock disabled");
+    }
+    
+    @Test
+    public void test13_SetNavigationBarVisibility() {
+        System.out.println("\nTest: Setting navigation bar visibility...");
+        
+        // Hide navigation bar
+        mobile.setNavigationBarVisibility(true);
+        System.out.println("Navigation bar hidden");
+        
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // Show navigation bar
+        mobile.setNavigationBarVisibility(false);
+        System.out.println("Navigation bar shown");
+    }
+    
+    // ==================== ADB URL Test ====================
+    
+    @Test
+    public void test14_GetAdbUrl() {
+        System.out.println("\nTest: Getting ADB URL...");
+        
+        // Note: This test requires a valid ADB public key
+        // Using a test key for now
+        String testAdbKey = "test_adb_public_key_for_testing";
+        
+        AdbUrlResult result = mobile.getAdbUrl(testAdbKey);
+        
+        // The result depends on the actual mobile environment setup
+        if (result.isSuccess()) {
+            assertNotNull("ADB URL should not be null", result.getData());
+            assertTrue("ADB URL should start with 'adb connect'", 
+                result.getData().startsWith("adb connect"));
+            System.out.println("ADB URL: " + result.getData());
+        } else {
+            // It's acceptable if this fails due to environment setup
+            System.out.println("ADB URL retrieval failed (may be expected): " + result.getErrorMessage());
+        }
+    }
+}

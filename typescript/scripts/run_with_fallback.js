@@ -7,7 +7,7 @@ const { spawnSync } = require('child_process')
 const fallbackPackagesByBin = {
   tsup: ['tsup@8.5.0', 'typescript@4.9.5'],
   jest: ['jest@26.6.3', 'ts-jest@26.5.6', 'ts-node@10.9.2', 'typescript@4.9.5'],
-  eslint: ['eslint@8.35.0'],
+  eslint: ['eslint@8.57.0', '@typescript-eslint/eslint-plugin@5.62.0', '@typescript-eslint/parser@5.62.0'],
   prettier: ['prettier@2.8.4'],
   typedoc: ['typedoc@0.28.3', 'typescript@4.9.5'],
   tsc: ['typescript@4.9.5'],

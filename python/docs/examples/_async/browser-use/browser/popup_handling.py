@@ -53,44 +53,44 @@ async def main():
 
         # Navigate to a test page
         print("\n1. Navigating to test page...")
-        await session.browser.agent.navigate("https://example.com")
+        await session.browser.operator.navigate("https://example.com")
 
         # Trigger an alert (via JavaScript)
         print("\n2. Testing alert dialog...")
-        await session.browser.agent.act(
+        await session.browser.operator.act(
             ActOptions(action="Execute JavaScript: alert('This is a test alert')")
         )
         print("Alert triggered")
 
         # Handle the alert
-        await session.browser.agent.act(ActOptions(action="Accept the alert dialog"))
+        await session.browser.operator.act(ActOptions(action="Accept the alert dialog"))
         print("Alert handled")
 
         # Test confirm dialog
         print("\n3. Testing confirm dialog...")
-        await session.browser.agent.act(
+        await session.browser.operator.act(
             ActOptions(action="Execute JavaScript: confirm('Do you want to continue?')")
         )
         print("Confirm dialog triggered")
 
         # Accept confirm
-        await session.browser.agent.act(ActOptions(action="Accept the confirm dialog"))
+        await session.browser.operator.act(ActOptions(action="Accept the confirm dialog"))
         print("Confirm dialog accepted")
 
         # Test prompt dialog
         print("\n4. Testing prompt dialog...")
-        await session.browser.agent.act(
+        await session.browser.operator.act(
             ActOptions(action="Execute JavaScript: prompt('Please enter your name:', 'John Doe')")
         )
         print("Prompt dialog triggered")
 
         # Handle prompt
-        await session.browser.agent.act(ActOptions(action="Enter 'Test User' in the prompt and submit"))
+        await session.browser.operator.act(ActOptions(action="Enter 'Test User' in the prompt and submit"))
         print("Prompt handled")
 
         # Test modal-like overlay
         print("\n5. Testing modal overlay...")
-        await session.browser.agent.act(
+        await session.browser.operator.act(
             ActOptions(action="Execute JavaScript to create a modal overlay: "
             "var modal = document.createElement('div'); "
             "modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:2px solid black;z-index:1000'; "
@@ -101,17 +101,17 @@ async def main():
 
         # Take screenshot of modal
         print("\n6. Taking screenshot of modal...")
-        modal_screenshot = await session.browser.agent.screenshot()
+        modal_screenshot = await session.browser.operator.screenshot()
         print(f"Modal screenshot saved: {modal_screenshot}")
 
         # Close modal
         print("\n7. Closing modal...")
-        await session.browser.agent.act(ActOptions(action="Click the Close button in the modal"))
+        await session.browser.operator.act(ActOptions(action="Click the Close button in the modal"))
         print("Modal closed")
 
         # Verify modal is closed
         print("\n8. Verifying modal is closed...")
-        suceesss, verify_result = await session.browser.agent.extract(
+        suceesss, verify_result = await session.browser.operator.extract(
             ExtractOptions(instruction="Is there a modal dialog visible on the page?", schema=ModalStatus)
         )
         if not suceesss:
@@ -120,7 +120,7 @@ async def main():
 
         # Test new window/tab popup
         print("\n9. Testing new window popup...")
-        await session.browser.agent.act(
+        await session.browser.operator.act(
             ActOptions(action="Execute JavaScript to open a new window: "
             "window.open('https://httpbin.org', '_blank', 'width=600,height=400')")
         )
@@ -128,7 +128,7 @@ async def main():
 
         # Check for new windows
         print("\n10. Checking for new windows...")
-        success, tab_count = await session.browser.agent.extract(
+        success, tab_count = await session.browser.operator.extract(
             ExtractOptions(instruction="How many browser windows or tabs are open?", schema=TabCount)
         )
         if not success:

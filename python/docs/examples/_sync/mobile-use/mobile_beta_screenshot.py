@@ -27,7 +27,9 @@ def main() -> None:
     agent_bay = AgentBay(api_key=api_key)
     session = None
     try:
-        result = agent_bay.create(CreateSessionParams(image_id="imgc-0ab5ta4mn31wth5lh"))
+        result = agent_bay.create(
+            CreateSessionParams(image_id="mobile-use-android-12-gw")
+        )
         if not result.success or not result.session:
             raise RuntimeError(f"Failed to create session: {result.error_message}")
         session = result.session
@@ -45,7 +47,7 @@ def main() -> None:
         with open("./tmp/mobile_beta_screenshot.png", "wb") as f:
             f.write(s1.data)
         print(
-            f"Saved ./tmp/mobile_beta_screenshot.png ({len(s1.data)} bytes, size={s1.width}x{s1.height})"
+            f"Saved ./tmp/mobile_beta_screenshot.png ({len(s1.data)} bytes, mime_type={s1.mime_type}, type={s1.type}, size={s1.width}x{s1.height})"
         )
 
         try:
@@ -53,7 +55,7 @@ def main() -> None:
             with open("./tmp/mobile_beta_long_screenshot.png", "wb") as f:
                 f.write(s2.data)
             print(
-                f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(s2.data)} bytes, size={s2.width}x{s2.height})"
+                f"Saved ./tmp/mobile_beta_long_screenshot.png ({len(s2.data)} bytes, mime_type={s2.mime_type}, type={s2.type}, size={s2.width}x{s2.height})"
             )
         except AgentBayError as e:
             print(f"Long screenshot failed: {e}")

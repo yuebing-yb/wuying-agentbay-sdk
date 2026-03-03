@@ -58,7 +58,7 @@ user permissions in a Linux shell environment.
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `command` | `string` | `undefined` | The shell command to execute |
-| `timeoutMs` | `number` | `1000` | Timeout in milliseconds (default: 1000ms/1s). Maximum allowed timeout is 50000ms (50s). If a larger value is provided, it will be automatically limited to 50000ms |
+| `timeoutMs` | `number` | `1000` | Timeout in milliseconds (default: 50000ms/50s). |
 | `cwd?` | `string` | `undefined` | The working directory for command execution. If not specified, the command runs in the default session directory |
 | `envs?` | `Record`\<`string`, `string`\> | `undefined` | Environment variables as a dictionary of key-value pairs. These variables are set for the command execution only |
 

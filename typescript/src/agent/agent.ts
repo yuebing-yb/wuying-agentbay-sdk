@@ -1,5 +1,6 @@
+import { BrowserOption } from 'src/browser';
 import { ApiResponse } from '../types/api-response';
-import { log, logDebug } from '../utils/logger';
+import { logWarn, logDebug, logInfo } from '../utils/logger';
 import { z, ZodTypeAny } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
@@ -392,6 +393,46 @@ export class ComputerUseAgent extends BaseTaskAgent {
 
 export class BrowserUseAgent extends BaseTaskAgent {
   protected toolPrefix = 'browser_use';
+  private initialized = false;
+
+  /**
+   * Initialize the browser on which the agent performs tasks.
+   * You are supposed to call this API before executeTask is called, but it's optional.
+   * If you want to perform a hybrid usage of browser, you must call this API before executeTask is called.
+   * 
+   * @param option - Browser configuration options. If not provided, default options will be used.
+   * @returns Promise<boolean> - True if the browser is successfully initialized, False otherwise.
+   * 
+   * @example
+   * ```typescript
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create({ imageId: 'browser_latest' });
+   * if (result.success) {
+   *   const success = await result.session.agent.browser.initialize();
+   *   console.log('Browser initialized:', success);
+   *   await result.session.delete();
+   * }
+   * ```
+   */
+  async initialize(option?: BrowserOption): Promise<boolean> {
+    if (this.initialized) {
+      return true;
+    }
+
+    if (!option) {
+      option = {};
+    }
+
+    try {
+      // Access browser through session - assuming session has a browser property
+      const success = await (this.session as any).browser.initializeAsync(option);
+      this.initialized = success;
+      return success;
+    } catch (error) {
+      logWarn(`Failed to initialize browser: ${error}`);
+      return false
+    }
+  }
 
   /**
      * Execute a task described in human language on a browser without waiting for completion
@@ -420,6 +461,21 @@ export class BrowserUseAgent extends BaseTaskAgent {
      */
   async executeTask<TSchema extends ZodTypeAny>(task: string, use_vision = true, output_schema?: TSchema):
     Promise<ExecutionResult> {
+    if (!this.initialized) {
+      logInfo('Browser is not initialized, initializing browser!');
+      const success = await this.initialize();
+      if (!success) {
+        logWarn('Browser initialization failed!');
+        return {
+          requestId: '',
+          success: false,
+          errorMessage: 'Browser initialization failed',
+          taskStatus: 'failed',
+          taskId: '',
+          taskResult: 'Browser initialization failed',
+        };
+      }
+    }
     try {
       let json_schema = null;
       if (output_schema !== undefined) {

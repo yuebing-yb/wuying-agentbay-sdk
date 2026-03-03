@@ -10,25 +10,28 @@ import java.util.Map;
 
 /**
  * Handles Object Storage Service operations in the AgentBay cloud environment.
- * Similar to Python's Oss class.
  */
 public class OSS extends BaseService {
     private static final String SERVER_OSS = "wuying_oss";
 
+    /**
+     * Initialize an OSS object.
+     *
+     * @param session The Session instance that this OSS belongs to
+     */
     public OSS(Session session) {
         super(session);
     }
 
     /**
-     * Create an OSS client with the provided credentials.
-     * Similar to Python's env_init method.
+     * Create an OSS client with the provided STS temporary credentials.
      *
-     * @param accessKeyId The Access Key ID for OSS authentication
-     * @param accessKeySecret The Access Key Secret for OSS authentication
-     * @param securityToken Optional security token for temporary credentials
-     * @param endpoint The OSS service endpoint
-     * @param region The OSS region
-     * @return OSSClientResult containing client configuration and error message if any
+     * @param accessKeyId The Access Key ID from STS temporary credentials.
+     * @param accessKeySecret The Access Key Secret from STS temporary credentials.
+     * @param securityToken Security token from STS temporary credentials. Required for security.
+     * @param endpoint The OSS service endpoint. If not specified, the default is used.
+     * @param region The OSS region. If not specified, the default is used.
+     * @return OSSClientResult containing client configuration and error message if any.
      */
     public OSSClientResult envInit(String accessKeyId, String accessKeySecret, String securityToken, String endpoint, String region) {
         try {
@@ -46,6 +49,16 @@ public class OSS extends BaseService {
 
             OperationResult result = callMcpTool("oss_env_init", args);
             if (result.isSuccess()) {
+                // Check if data contains "failed" field
+                String data = result.getData();
+                if (data != null && data.toLowerCase().contains("failed")) {
+                    return new OSSClientResult(
+                        result.getRequestId(),
+                        false,
+                        null,
+                        "OSS environment initialization failed: " + data
+                    );
+                }
                 return new OSSClientResult(result.getRequestId(), true, result.getData(), "");
             } else {
                 return new OSSClientResult(result.getRequestId(), false, null,
@@ -59,12 +72,14 @@ public class OSS extends BaseService {
 
     /**
      * Upload a local file or directory to OSS.
-     * Similar to Python's upload method.
      *
-     * @param bucket OSS bucket name
-     * @param object Object key in OSS
-     * @param path Local file or directory path to upload
-     * @return OSSUploadResult containing upload result and error message if any
+     * <p>Note: Before calling this API, you must first call envInit to initialize
+     * the OSS environment.</p>
+     *
+     * @param bucket OSS bucket name.
+     * @param object Object key in OSS.
+     * @param path Local file or directory path to upload.
+     * @return OSSUploadResult containing upload result and error message if any.
      */
     public OSSUploadResult upload(String bucket, String object, String path) {
         try {
@@ -99,11 +114,10 @@ public class OSS extends BaseService {
 
     /**
      * Upload a local file or directory to a URL anonymously.
-     * Similar to Python's upload_anonymous method.
      *
-     * @param url The HTTP/HTTPS URL to upload the file to
-     * @param path Local file or directory path to upload
-     * @return OSSUploadResult containing upload result and error message if any
+     * @param url The HTTP/HTTPS URL to upload the file to.
+     * @param path Local file or directory path to upload.
+     * @return OSSUploadResult containing upload result and error message if any.
      */
     public OSSUploadResult uploadAnonymous(String url, String path) {
         try {
@@ -134,12 +148,14 @@ public class OSS extends BaseService {
 
     /**
      * Download an object from OSS to a local file or directory.
-     * Similar to Python's download method.
      *
-     * @param bucket OSS bucket name
-     * @param object Object key in OSS
-     * @param path Local file or directory path to download to
-     * @return OSSDownloadResult containing download status and error message if any
+     * <p>Note: Before calling this API, you must first call envInit to initialize
+     * the OSS environment.</p>
+     *
+     * @param bucket OSS bucket name.
+     * @param object Object key in OSS.
+     * @param path Local file or directory path to download to.
+     * @return OSSDownloadResult containing download status and error message if any.
      */
     public OSSDownloadResult download(String bucket, String object, String path) {
         try {
@@ -174,11 +190,10 @@ public class OSS extends BaseService {
 
     /**
      * Download a file from a URL anonymously to a local file path.
-     * Similar to Python's download_anonymous method.
      *
-     * @param url The HTTP/HTTPS URL to download the file from
-     * @param path Local file or directory path to download to
-     * @return OSSDownloadResult containing download status and error message if any
+     * @param url The HTTP/HTTPS URL to download the file from.
+     * @param path Local file or directory path to download to.
+     * @return OSSDownloadResult containing download status and error message if any.
      */
     public OSSDownloadResult downloadAnonymous(String url, String path) {
         try {
@@ -210,7 +225,7 @@ public class OSS extends BaseService {
     // Legacy method aliases for backwards compatibility
 
     /**
-     * @deprecated Use {@link #upload(String, String, String)} instead
+     * @deprecated Use upload instead
      */
     @Deprecated
     public OSSUploadResult uploadFile(String localPath, String remotePath) throws OSSException {
@@ -221,7 +236,7 @@ public class OSS extends BaseService {
     }
 
     /**
-     * @deprecated Use {@link #download(String, String, String)} instead
+     * @deprecated Use download instead
      */
     @Deprecated
     public OSSDownloadResult downloadFile(String remotePath, String localPath) throws OSSException {
@@ -254,7 +269,7 @@ public class OSS extends BaseService {
     }
 
     /**
-     * @deprecated Use {@link #upload(String, String, String)} instead
+     * @deprecated Use upload instead
      */
     @Deprecated
     public OSSUploadResult uploadLegacy(String localPath, String remotePath, String bucketName) throws OSSException {
@@ -262,7 +277,7 @@ public class OSS extends BaseService {
     }
 
     /**
-     * @deprecated Use {@link #uploadAnonymous(String, String)} instead
+     * @deprecated Use uploadAnonymous instead
      */
     @Deprecated
     public OSSUploadResult uploadAnonymousLegacy(String localPath, String remotePath) throws OSSException {
@@ -270,7 +285,7 @@ public class OSS extends BaseService {
     }
 
     /**
-     * @deprecated Use {@link #download(String, String, String)} instead
+     * @deprecated Use download instead
      */
     @Deprecated
     public OSSDownloadResult downloadLegacy(String remotePath, String localPath, String bucketName) throws OSSException {

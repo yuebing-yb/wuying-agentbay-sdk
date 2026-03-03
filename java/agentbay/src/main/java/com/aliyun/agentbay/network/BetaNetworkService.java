@@ -3,19 +3,38 @@ package com.aliyun.agentbay.network;
 import com.aliyun.agentbay.AgentBay;
 
 /**
- * Beta network service (trial feature).
+ * Beta network service for managing network bindings in the AgentBay cloud environment.
+ * This is a trial feature that allows sessions to connect to specific networks.
  */
 public class BetaNetworkService {
     private AgentBay agentBay;
 
+    /**
+     * Initialize a BetaNetworkService instance.
+     *
+     * @param agentBay The AgentBay client instance
+     */
     public BetaNetworkService(AgentBay agentBay) {
         this.agentBay = agentBay;
     }
 
+    /**
+     * Get a network bind token for the default network.
+     * This method creates a new network binding and returns the network ID and token.
+     *
+     * @return NetworkResult containing the network ID, token, and request ID
+     */
     public NetworkResult betaGetNetworkBindToken() {
         return betaGetNetworkBindToken(null);
     }
 
+    /**
+     * This method creates a network (or reuses provided networkId) and returns networkId + networkToken.
+     * networkId is optional: pass no args to create a new network; pass one value to reuse an existing network.
+     *
+     * @param networkId Optional network ID to bind to. If null, creates a new network.
+     * @return NetworkResult containing the network ID, token, and request ID
+     */
     public NetworkResult betaGetNetworkBindToken(String networkId) {
         try {
             com.aliyun.wuyingai20250506.models.CreateNetworkRequest request =
@@ -103,6 +122,12 @@ public class BetaNetworkService {
         }
     }
 
+    /**
+     * This method queries beta network status (online/offline).
+     *
+     * @param networkId The network ID to describe. Must be a non-empty string.
+     * @return NetworkStatusResult containing the online status and request ID
+     */
     public NetworkStatusResult betaDescribe(String networkId) {
         if (networkId == null || networkId.isEmpty()) {
             return new NetworkStatusResult(
@@ -189,5 +214,3 @@ public class BetaNetworkService {
         }
     }
 }
-
-

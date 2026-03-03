@@ -109,6 +109,9 @@ public class CreateMcpSessionResponseBody extends TeaModel {
         @NameInMap("ToolList")
         public String toolList;
 
+        @NameInMap("WsUrl")
+        public String wsUrl;
+
         @NameInMap("VpcResource")
         public Boolean vpcResource;
 
@@ -203,6 +206,14 @@ public class CreateMcpSessionResponseBody extends TeaModel {
         }
         public String getToolList() {
             return this.toolList;
+        }
+
+        public CreateMcpSessionResponseBodyData setWsUrl(String wsUrl) {
+            this.wsUrl = wsUrl;
+            return this;
+        }
+        public String getWsUrl() {
+            return this.wsUrl;
         }
 
         public CreateMcpSessionResponseBodyData setVpcResource(Boolean vpcResource) {

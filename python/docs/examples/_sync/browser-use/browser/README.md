@@ -16,7 +16,7 @@ Demonstrates how to capture screenshots using both the browser agent and direct 
 - Customizing screenshot options (full page, image format, quality)
 
 **Key Features:**
-1. **Browser Agent Screenshots** - Uses `session.browser.agent.screenshot_async()` which returns base64 encoded data
+1. **Browser Operator Screenshots** - Uses `session.browser.operator.screenshot_async()` which returns base64 encoded data
 2. **Direct Playwright Screenshots** - Uses `session.browser.screenshot(page)` which returns raw bytes data
 3. **Multiple Formats** - Supports both PNG and JPEG formats with customizable quality
 4. **Full Page Capture** - Ability to capture entire web pages including content below the fold

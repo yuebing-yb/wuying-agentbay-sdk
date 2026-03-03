@@ -54,11 +54,11 @@ def main():
 
         # Navigate to a page
         print("\n1. Navigating to example.com...")
-        session.browser.agent.navigate("https://example.com")
+        session.browser.operator.navigate("https://example.com")
 
         # Extract page title
         print("\n2. Extracting page title...")
-        success, title_result = session.browser.agent.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent,timeout=600))
+        success, title_result = session.browser.operator.extract(ExtractOptions(instruction="What is the page title?", schema=TextContent,timeout=600))
         if success:
             print(f"Page title: {title_result.content}")
         else:
@@ -66,7 +66,7 @@ def main():
 
         # Extract page description
         print("\n3. Extracting page description...")
-        success, desc_result = session.browser.agent.extract(ExtractOptions(instruction="What is the main content or description on this page?", schema=TextContent,timeout=600))
+        success, desc_result = session.browser.operator.extract(ExtractOptions(instruction="What is the main content or description on this page?", schema=TextContent,timeout=600))
         if success:
             print(f"Page description: {desc_result.content}")
         else:
@@ -74,11 +74,11 @@ def main():
 
         # Navigate to a more complex page
         print("\n4. Navigating to www.baidu.com...")
-        session.browser.agent.navigate("https://www.baidu.com")
+        session.browser.operator.navigate("https://www.baidu.com")
 
         # Extract structured data
         print("\n5. Extracting top 5 story titles...")
-        success, stories_result = session.browser.agent.extract(ExtractOptions(
+        success, stories_result = session.browser.operator.extract(ExtractOptions(
             instruction="List the titles of the top 5 stories on the page",
             schema=TextContent,
             timeout=600
@@ -90,7 +90,7 @@ def main():
 
         # Analyze page structure
         print("\n6. Analyzing page structure...")
-        success, structure_result = session.browser.agent.extract(ExtractOptions(
+        success, structure_result = session.browser.operator.extract(ExtractOptions(
             instruction="Describe the main sections and layout of this page",
             schema=TextContent,
             timeout=600
@@ -102,7 +102,7 @@ def main():
 
         # Find specific elements
         print("\n7. Finding navigation elements...")
-        success, nav_result = session.browser.agent.extract(ExtractOptions(
+        success, nav_result = session.browser.operator.extract(ExtractOptions(
             instruction="What navigation options are available on this page?",
             schema=TextContent,
             timeout=600
@@ -114,7 +114,7 @@ def main():
 
         # Extract metadata
         print("\n8. Extracting page metadata...")
-        success, meta_result = session.browser.agent.extract(ExtractOptions(
+        success, meta_result = session.browser.operator.extract(ExtractOptions(
             instruction="What is the page URL and any visible metadata?",
             schema=TextContent,
             timeout=600

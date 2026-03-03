@@ -9,7 +9,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["chai", "jest", "node"],
     "lib": ["es2018", "es2019", "es2020"],
     "baseUrl": ".",
     "paths": {

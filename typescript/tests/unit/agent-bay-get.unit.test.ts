@@ -1,7 +1,29 @@
 import { AgentBay } from "../../src/agent-bay";
-import { Session } from "../../src/session";
+import * as sinon from "sinon";
 
 describe("AgentBay.get unit tests", () => {
+  let mockClient: any;
+
+  beforeEach(() => {
+    mockClient = {
+      getSession: sinon.stub(),
+      getSessionDetail: sinon.stub(),
+      createMcpSession: sinon.stub(),
+      listSession: sinon.stub(),
+      deleteSessionAsync: sinon.stub(),
+      getContextInfo: sinon.stub(),
+    };
+
+    sinon.stub(require("../../src/api/client"), "Client").callsFake(() => mockClient);
+    sinon.stub(require("../../src/context"), "ContextService").callsFake(() => ({
+      get: sinon.stub().resolves({ success: false, errorMessage: "Context not found" }),
+    }));
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
   describe("Input validation", () => {
     let agentBay: AgentBay;
 

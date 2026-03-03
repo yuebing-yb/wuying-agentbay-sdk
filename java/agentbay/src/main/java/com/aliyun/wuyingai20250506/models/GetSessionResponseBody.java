@@ -112,6 +112,9 @@ public class GetSessionResponseBody extends TeaModel {
         @NameInMap("HttpPort")
         public String httpPort;
 
+        @NameInMap("LinkUrl")
+        public String linkUrl;
+
         @NameInMap("NetworkInterfaceIp")
         public String networkInterfaceIp;
 
@@ -129,6 +132,12 @@ public class GetSessionResponseBody extends TeaModel {
 
         @NameInMap("Token")
         public String token;
+
+        @NameInMap("WsUrl")
+        public String wsUrl;
+
+        @NameInMap("wsUrl")
+        public String wsUrlLower;
 
         @NameInMap("ToolList")
         public String toolList;
@@ -158,6 +167,14 @@ public class GetSessionResponseBody extends TeaModel {
         }
         public String getHttpPort() {
             return this.httpPort;
+        }
+
+        public GetSessionResponseBodyData setLinkUrl(String linkUrl) {
+            this.linkUrl = linkUrl;
+            return this;
+        }
+        public String getLinkUrl() {
+            return this.linkUrl;
         }
 
         public GetSessionResponseBodyData setNetworkInterfaceIp(String networkInterfaceIp) {
@@ -206,6 +223,17 @@ public class GetSessionResponseBody extends TeaModel {
         }
         public String getToken() {
             return this.token;
+        }
+
+        public GetSessionResponseBodyData setWsUrl(String wsUrl) {
+            this.wsUrl = wsUrl;
+            return this;
+        }
+        public String getWsUrl() {
+            if (this.wsUrl != null) {
+                return this.wsUrl;
+            }
+            return this.wsUrlLower;
         }
 
         public GetSessionResponseBodyData setToolList(String toolList) {

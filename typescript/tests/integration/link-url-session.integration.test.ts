@@ -26,6 +26,15 @@ describe("LinkUrl session integration", () => {
         return;
       }
 
+      const restored = await client.get(session.sessionId);
+      expect(restored.success).toBe(true);
+      expect(restored.session).toBeDefined();
+      if (!restored.session) {
+        return;
+      }
+      expect(restored.session.getToken()).not.toBe("");
+      expect(restored.session.getLinkUrl()).not.toBe("");
+
       const cmdResult = await session.command.executeCommand(
         "echo link-url-route-ok"
       );
@@ -40,6 +49,15 @@ describe("LinkUrl session integration", () => {
       );
       expect(direct.success).toBe(true);
       expect(direct.data).toContain("direct-link-url-route-ok");
+
+      const restoredDirect = await restored.session.callMcpTool(
+        "shell",
+        { command: "echo restored-direct-link-url-route-ok" },
+        false,
+        "wuying_shell"
+      );
+      expect(restoredDirect.success).toBe(true);
+      expect(restoredDirect.data).toContain("restored-direct-link-url-route-ok");
     } finally {
       await session.delete();
     }

@@ -18,6 +18,7 @@
 
 - [executeTask](#executetask)
 - [executeTaskAndWait](#executetaskandwait)
+- [initialize](#initialize)
 - [terminateTask](#terminatetask)
 
 ## Properties
@@ -152,6 +153,40 @@ if (result.success) {
 #### Overrides
 
 BaseTaskAgent.executeTaskAndWait
+
+### initialize
+
+▸ **initialize**(`option?`): `Promise`\<`boolean`\>
+
+Initialize the browser on which the agent performs tasks.
+You are supposed to call this API before executeTask is called, but it's optional.
+If you want to perform a hybrid usage of browser, you must call this API before executeTask is called.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `option?` | ``BrowserOption`` | Browser configuration options. If not provided, default options will be used. |
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+Promise<boolean> - True if the browser is successfully initialized, False otherwise.
+
+**`Example`**
+
+```typescript
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+const result = await agentBay.create({ imageId: 'browser_latest' });
+if (result.success) {
+  const success = await result.session.agent.browser.initialize();
+  console.log('Browser initialized:', success);
+  await result.session.delete();
+}
+```
+
+___
 
 ### terminateTask
 

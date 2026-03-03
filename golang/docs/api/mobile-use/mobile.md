@@ -6,8 +6,7 @@
 
 ## Overview
 
-The Mobile module provides mobile device automation capabilities including touch gestures,
-text input, app management, and screenshot capture. It supports Android device automation.
+The Mobile module provides mobile device automation capabilities including touch gestures,text input, app management, and screenshot capture. It supports Android device automation.
 
 ## Requirements
 
@@ -32,8 +31,9 @@ AdbUrlResult represents the result of ADB URL retrieval operation
 type BetaScreenshotResult struct {
 	models.ApiResponse
 	Success		bool	`json:"success"`
+	Type		string	`json:"type"`
+	MimeType	string	`json:"mime_type"`
 	Data		[]byte	`json:"data"`
-	Format		string	`json:"format"`
 	Width		*int	`json:"width,omitempty"`
 	Height		*int	`json:"height,omitempty"`
 	ErrorMessage	string	`json:"error_message"`
@@ -86,6 +86,7 @@ type Mobile struct {
 	Session	interface {
 		GetAPIKey() string
 		GetClient() *mcp.Client
+		GetLinkUrl() string
 		GetSessionId() string
 		GetImageID() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
@@ -116,12 +117,12 @@ Supported formats: - "png" - "jpeg" (or "jpg")
 ### BetaTakeScreenshot
 
 ```go
-func (m *Mobile) BetaTakeScreenshot() *BetaScreenshotResult
+func (m *Mobile) BetaTakeScreenshot(format ...string) *BetaScreenshotResult
 ```
 
-BetaTakeScreenshot captures the current screen as a PNG image and returns raw image bytes.
+BetaTakeScreenshot captures the current screen and returns raw image bytes.
 
-It calls the MCP tool "screenshot" with format="png".
+Supported formats: - "png" - "jpeg" (or "jpg")
 
 ### Configure
 
@@ -417,6 +418,7 @@ tapResult := result.Session.Mobile.Tap(500, 500)
 func NewMobile(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	GetImageID() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
@@ -467,6 +469,7 @@ ScreenshotResult represents the result of a screenshot operation
 type SessionWithCommand interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetCommand() *command.Command

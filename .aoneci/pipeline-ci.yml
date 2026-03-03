@@ -9,11 +9,6 @@ triggers:
     target-branches:
       - "**"
 
-# Strategy configuration to prevent jobs from being accidentally cancelled
-strategy:
-  cancel-in-progress: false
-  fail-fast: false
-
 params:
   python_enabled:
     name: Enable Python Testing
@@ -50,11 +45,6 @@ jobs:
       - "${{params.runs_on_resources}}"
     image: alios-8u
     timeout: 30m
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       - uses: checkout
       - uses: setup-env
@@ -89,11 +79,6 @@ jobs:
       - "${{params.runs_on_resources}}"
     image: alios-8u
     timeout: 1h
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
 
       - uses: checkout
@@ -103,20 +88,16 @@ jobs:
           pip-cache: true
       
       - id: python-lint
-        continue-on-error: true
-        name: "Python Code Format Check & Security Check"
+        continue-on-error: false
+        name: "Python Code Quality Check & Security Check"
         when: "${{params.python_enabled}}"
         run: |
           cd python
           python -m pip install --upgrade pip
           # Install tools for linting
-          pip install black isort flake8 mypy bandit pip-audit
+          pip install flake8 mypy bandit pip-audit
           pip install types-requests types-aiohttp types-Pillow types-setuptools types-pydantic || true
           # Run all checks
-          black agentbay tests --check --diff
-          echo "Format check completed"
-          isort --check-only --diff --verbose agentbay tests
-          echo "Quality check completed"
           flake8 agentbay tests --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=agentbay/modules/browser/eval
           echo "Flake8 check completed"
           mypy agentbay --install-types --no-error-summary --install-types --non-interactive
@@ -134,11 +115,6 @@ jobs:
     image: alios-8u
     runs-on:
       - "${{params.runs_on_resources}}"
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       - uses: checkout
       - uses: setup-env
@@ -148,20 +124,15 @@ jobs:
           tnpm-cache: true
         
       - id: typescript-lint
-        continue-on-error: true
+        continue-on-error: false
         name: "TypeScript Code Format Check"
         when: "${{params.typescript_enabled}}"
         run: |
           cd typescript
-          # Set tnpm timeout and retry strategy
-          # Only install lint-related packages for better performance
-          tnpm install --prefer-offline --no-audit \
-            eslint@8.35.0 \
-            @typescript-eslint/eslint-plugin@5.54.0 \
-            @typescript-eslint/parser@5.54.0 \
-            typescript@4.9.5
+          # Skip lifecycle scripts (prepare/build) since lint does not need build artifacts
+          tnpm ci --ignore-scripts
           # Run lint using fallback script
-          node scripts/run_with_fallback.js eslint eslint@8.35.0 "src/**/*.ts"
+          tnpm run lint
       
 
   # Golang testing job
@@ -171,11 +142,6 @@ jobs:
     image: alios-8u
     runs-on:
       - "${{params.runs_on_resources}}"
-    retry:
-      max: 2
-      when:
-        - runner_system_failure
-        - stuck_or_timeout_failure
     steps:
       
       - uses: checkout
@@ -186,29 +152,27 @@ jobs:
           go-cache: true
       
       - id: golang-lint
-        continue-on-error: true
-        name: "Golang Code Format Check"
+        continue-on-error: false
+        name: "Golang Code Quality & Security Check"
         when: "${{params.golang_enabled}}"
         run: |
           # Configure Go environment
           cd golang
+          
           # Download dependencies (use go-mod-cache from setup-env)
           go mod download
           go mod verify
+          
+          # NOTE: Skip installing Go linting/security tools in CI to avoid curl timeouts.
+          
           # Run basic checks that don't require additional tools
           echo "Building code..."
           go build -v ./api/client/... || echo "Build completed with warnings"
           echo "Running go vet..."
           go vet ./...
-          # Run go fmt check (non-destructive)
-          echo "Checking code formatting..."
-          UNFORMATTED=$(gofmt -l . | grep -v "api/client" || true)
-          if [ -n "$UNFORMATTED" ]; then
-            echo "The following files need formatting:"
-            echo "$UNFORMATTED"
-          else
-            echo "All files are properly formatted"
-          fi
+          
+          # NOTE: Skip golangci-lint/gosec/govulncheck in CI (tools not installed).
+          echo "All Golang quality checks completed"
       
 
   summary:

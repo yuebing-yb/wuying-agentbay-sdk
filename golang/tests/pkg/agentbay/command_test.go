@@ -194,11 +194,9 @@ func TestCommand_NewReturnFormat(t *testing.T) {
 	})
 }
 
-func TestCommand_TimeoutLimit(t *testing.T) {
-	// Create session parameters with ImageId set to code_latest
+func TestCommand_CustomTimeout(t *testing.T) {
 	params := agentbay.NewCreateSessionParams().WithImageId("code_latest")
 
-	// Setup session with cleanup
 	session, cleanup := testutil.SetupAndCleanup(t, params)
 	defer cleanup()
 
@@ -206,47 +204,17 @@ func TestCommand_TimeoutLimit(t *testing.T) {
 		t.Skip("Command interface is nil, skipping test")
 	}
 
-	// Test with timeout exceeding 50s (50000ms) - should be limited to 50s
-	// Note: We can't directly verify the timeout was limited without mocking,
-	// but we can verify the command still executes successfully
-	t.Run("TestTimeoutExceedingLimit", func(t *testing.T) {
-		cmdResult, err := session.Command.ExecuteCommand("echo 'timeout test'", 60000)
-		if err != nil {
-			t.Logf("Note: Timeout limit test failed: %v", err)
-		} else {
-			if !cmdResult.Success {
-				t.Errorf("Command should succeed even with timeout > 50s")
-			}
-			if cmdResult.ExitCode != 0 {
-				t.Errorf("Exit code should be 0, got: %d", cmdResult.ExitCode)
-			}
-		}
-	})
-
-	// Test with timeout exactly at limit
-	t.Run("TestTimeoutAtLimit", func(t *testing.T) {
-		cmdResult, err := session.Command.ExecuteCommand("echo 'timeout test 50s'", 50000)
-		if err != nil {
-			t.Logf("Note: Timeout at limit test failed: %v", err)
-		} else {
-			if !cmdResult.Success {
-				t.Errorf("Command should succeed with timeout = 50s")
-			}
-		}
-	})
-
-	// Test with timeout below limit
-	t.Run("TestTimeoutBelowLimit", func(t *testing.T) {
-		cmdResult, err := session.Command.ExecuteCommand("echo 'timeout test 30s'", 30000)
-		if err != nil {
-			t.Logf("Note: Timeout below limit test failed: %v", err)
-		} else {
-			if !cmdResult.Success {
-				t.Errorf("Command should succeed with timeout < 50s")
-			}
-		}
-		t.Logf("✓ Timeout limit test passed")
-	})
+	cmdResult, err := session.Command.ExecuteCommand("echo 'timeout test'", 120000)
+	if err != nil {
+		t.Fatalf("Custom timeout test failed: %v", err)
+	}
+	if !cmdResult.Success {
+		t.Errorf("Command should succeed with custom timeout")
+	}
+	if cmdResult.ExitCode != 0 {
+		t.Errorf("Exit code should be 0, got: %d", cmdResult.ExitCode)
+	}
+	t.Logf("✓ Custom timeout test passed")
 }
 
 func TestCommand_CwdWithSpaces(t *testing.T) {

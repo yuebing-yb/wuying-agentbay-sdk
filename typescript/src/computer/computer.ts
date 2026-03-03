@@ -13,8 +13,9 @@ export interface ScreenshotResult extends OperationResult {
 }
 
 export interface BetaScreenshotResult extends OperationResult {
+  type: string;
+  mimeType: string;
   data: Uint8Array;
-  format: string;
   width?: number;
   height?: number;
 }
@@ -45,6 +46,7 @@ interface ComputerSession {
   sessionId: string;
   getAPIKey(): string;
   getSessionId(): string;
+  getLinkUrl(): string;
 }
 
 export class Computer {
@@ -86,7 +88,7 @@ export class Computer {
   private static decodeScreenshotJsonStrict(
     jsonText: string,
     expectedFormat: string
-  ): { bytes: Uint8Array; width?: number; height?: number } {
+  ): { bytes: Uint8Array; width?: number; height?: number; type: string; mimeType: string } {
     const s = String(jsonText || "").trim();
     if (!s) {
       throw new Error("Empty image data");
@@ -105,7 +107,15 @@ export class Computer {
       throw new Error("Invalid screenshot JSON: expected object");
     }
 
+    const shotType = obj.type;
+    const mimeType = obj.mime_type;
     const b64 = obj.data;
+    if (typeof shotType !== "string" || !shotType.trim()) {
+      throw new Error("Invalid screenshot JSON: expected non-empty string 'type'");
+    }
+    if (typeof mimeType !== "string" || !mimeType.trim()) {
+      throw new Error("Invalid screenshot JSON: expected non-empty string 'mime_type'");
+    }
     if (typeof b64 !== "string" || !b64.trim()) {
       throw new Error("Screenshot JSON missing base64 field");
     }
@@ -139,7 +149,12 @@ export class Computer {
           throw new Error("Screenshot data does not match expected format 'png'");
         }
       }
-      return { bytes, width, height };
+      if (String(mimeType).trim().toLowerCase() !== "image/png") {
+        throw new Error(
+          `Screenshot JSON mime_type does not match expected format: expected "image/png", got ${JSON.stringify(mimeType)}`
+        );
+      }
+      return { bytes, width, height, type: String(shotType).trim(), mimeType: String(mimeType).trim() };
     }
     if (fmt === "jpeg") {
       const jpgMagic = new Uint8Array([0xff, 0xd8, 0xff]);
@@ -148,7 +163,12 @@ export class Computer {
           throw new Error("Screenshot data does not match expected format 'jpeg'");
         }
       }
-      return { bytes, width, height };
+      if (String(mimeType).trim().toLowerCase() !== "image/jpeg") {
+        throw new Error(
+          `Screenshot JSON mime_type does not match expected format: expected "image/jpeg", got ${JSON.stringify(mimeType)}`
+        );
+      }
+      return { bytes, width, height, type: String(shotType).trim(), mimeType: String(mimeType).trim() };
     }
     throw new Error(`Unsupported format: ${JSON.stringify(expectedFormat)}`);
   }
@@ -604,6 +624,15 @@ export class Computer {
    * ```
    */
   async screenshot(): Promise<ScreenshotResult> {
+    if (this.session.getLinkUrl()) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage:
+          "This cloud environment does not support `screenshot()`. Please use `beta_take_screenshot()` instead.",
+        data: "",
+      };
+    }
     try {
       const result = await this.session.callMcpTool('system_screenshot', {}, false);
       if (!result.success) {
@@ -649,13 +678,25 @@ export class Computer {
    */
   async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
     const fmt = Computer.normalizeImageFormat(format, "png");
+    if (!this.session.getLinkUrl()) {
+      return {
+        success: false,
+        requestId: "",
+        errorMessage:
+          "This cloud environment does not support `beta_take_screenshot()`. Please use `screenshot()` instead.",
+        data: new Uint8Array(),
+        type: "",
+        mimeType: "",
+      };
+    }
     if (fmt !== "png" && fmt !== "jpeg") {
       return {
         success: false,
         requestId: "",
         errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
         data: new Uint8Array(),
-        format: fmt,
+        type: "",
+        mimeType: "",
       };
     }
 
@@ -668,7 +709,8 @@ export class Computer {
           requestId,
           errorMessage: result.errorMessage || "Failed to take screenshot",
           data: new Uint8Array(),
-          format: fmt,
+          type: "",
+          mimeType: "",
         };
       }
       const decoded = Computer.decodeScreenshotJsonStrict(String(result.data || ""), fmt);
@@ -677,7 +719,8 @@ export class Computer {
         requestId,
         errorMessage: "",
         data: decoded.bytes,
-        format: fmt,
+        type: decoded.type,
+        mimeType: decoded.mimeType,
         width: decoded.width,
         height: decoded.height,
       };
@@ -687,7 +730,8 @@ export class Computer {
         requestId: "",
         errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
         data: new Uint8Array(),
-        format: fmt,
+        type: "",
+        mimeType: "",
       };
     }
   }
@@ -1112,7 +1156,7 @@ export class Computer {
       const args = {
         start_menu: startMenu,
         desktop,
-        ignore_system_apps: ignoreSystemApps,
+        ignore_system_app: ignoreSystemApps,
       };
 
     const response = await this.session.callMcpTool('get_installed_apps', args, false);

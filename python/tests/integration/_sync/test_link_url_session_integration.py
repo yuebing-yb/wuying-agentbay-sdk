@@ -35,6 +35,20 @@ def test_link_url_session_mcp_tools_and_call_tool():
         assert cmd_result.success, cmd_result.error_message
         assert "link-url-route-ok" in cmd_result.output
 
+        restored = agent_bay.get(session.session_id)
+        assert restored.success, restored.error_message
+        assert restored.session is not None
+        restored_session = restored.session
+        assert restored_session.get_token() != ""
+        assert restored_session.get_link_url() != ""
+
+        restored_direct = restored_session.call_mcp_tool(
+            "shell",
+            {"command": "echo restored-direct-link-url-route-ok"},
+        )
+        assert restored_direct.success, restored_direct.error_message
+        assert "restored-direct-link-url-route-ok" in restored_direct.data
+
         direct = session.call_mcp_tool(
             "shell",
             {"command": "echo direct-link-url-route-ok"},

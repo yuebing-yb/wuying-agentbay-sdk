@@ -38,9 +38,7 @@ class Command(BaseService):
 
         Args:
             command: The shell command to execute
-            timeout_ms: Timeout in milliseconds (default: 50000ms/50s). Maximum allowed
-                timeout is 50000ms (50s). If a larger value is provided, it will be
-                automatically limited to 50000ms
+            timeout_ms: Timeout in milliseconds (default: 50000ms/50s).
             cwd: The working directory for command execution. If not specified,
                 the command runs in the default session directory
             envs: Environment variables as a dictionary of key-value pairs.
@@ -93,15 +91,6 @@ class Command(BaseService):
                 )
 
         try:
-            # Limit timeout to maximum 50s (50000ms) as per SDK constraints
-            MAX_TIMEOUT_MS = 50000
-            if timeout_ms > MAX_TIMEOUT_MS:
-                _logger.warning(
-                    f"Timeout {timeout_ms}ms exceeds maximum allowed {MAX_TIMEOUT_MS}ms. "
-                    f"Limiting to {MAX_TIMEOUT_MS}ms."
-                )
-                timeout_ms = MAX_TIMEOUT_MS
-
             # Build request arguments
             args = {"command": command, "timeout_ms": timeout_ms}
             if cwd is not None:

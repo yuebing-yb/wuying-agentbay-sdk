@@ -1,5 +1,13 @@
 # Mobile Simulate API Reference
 
+## 🧪 Related Tutorial
+
+- [Mobile Simulate Guide](../../../../docs/guides/mobile-use/mobile-simulate.md) - Use mobile simulate to emulate device properties and persist them with context sync
+
+## Overview
+
+Mobile Simulate helps you apply and persist device simulation settings (properties, sensors, packages, services) by storing a device profile in a context and applying it during session creation.
+
 ## Type MobileSimulateService
 
 ```go
@@ -154,6 +162,11 @@ func NewMobileSimulateService(agentBay *AgentBay) (*MobileSimulateService, error
 ```
 
 NewMobileSimulateService creates a new MobileSimulateService instance
+
+## Related Resources
+
+- [Mobile API Reference](mobile.md)
+- [Context Sync API Reference](../common-features/basics/context-sync.md)
 
 ---
 

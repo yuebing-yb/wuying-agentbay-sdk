@@ -10,7 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 
 /**
- * File system operations for a session
+ * Handles file operations in the AgentBay cloud environment.
+ *
  */
 public class FileSystem extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -21,6 +22,11 @@ public class FileSystem extends BaseService {
 
     private FileTransfer fileTransfer;
 
+    /**
+     * Initialize FileSystem with FileTransfer capability.
+     *
+     * @param session The session object for file operations
+     */
     public FileSystem(Session session) {
         super(session);
     }
@@ -33,6 +39,12 @@ public class FileSystem extends BaseService {
         return callMcpTool("shell", args);
     }
 
+    /**
+     * Ensure FileTransfer is initialized with the current session.
+     *
+     * @return The FileTransfer instance
+     * @throws RuntimeException if AgentBay instance or session is not available
+     */
     private FileTransfer ensureFileTransfer() {
         if (fileTransfer == null) {
             if (session.getAgentBay() == null) {
@@ -46,15 +58,23 @@ public class FileSystem extends BaseService {
         return fileTransfer;
     }
 
+    /**
+     * Get the context path for file transfer operations.
+     *
+     * <p>This method ensures the context ID is loaded and returns the associated
+     * context path that was retrieved from GetAndLoadInternalContext API.</p>
+     *
+     * @return The context path if available, null otherwise
+     */
     public String getFileTransferContextPath() {
         FileTransfer transfer = ensureFileTransfer();
         return transfer.getContextPath();
     }
 
     /**
-     * Read a file
+     * Read a file, alias of readFile().
      *
-     * @param path File path
+     * @param path The path of the file to read
      * @return File content as string
      * @throws AgentBayException if reading fails
      */
@@ -70,10 +90,10 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Write content to a file
+     * Write content to a file.
      *
-     * @param path File path
-     * @param content Content to write
+     * @param path The path of the file to write
+     * @param content The content to write to the file
      * @return Write result as string
      * @throws AgentBayException if writing fails
      */
@@ -90,9 +110,9 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * List directory contents
+     * List the contents of a directory.
      *
-     * @param path Directory path
+     * @param path The path of the directory to list
      * @return Directory listing as string
      * @throws AgentBayException if listing fails or directory does not exist
      */
@@ -108,7 +128,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Check if a file or directory exists
+     * Check if a file or directory exists.
      *
      * @param path Path to check
      * @return true if exists, false otherwise
@@ -126,7 +146,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Create a directory
+     * Create a directory.
      *
      * @param path Directory path to create
      * @return Creation result as string
@@ -144,12 +164,12 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Remove a file or directory using shell command
+     * Remove a file or directory using shell command.
      *
      * @param path Path to remove
      * @return Removal result
      * @throws AgentBayException if removal fails
-     * @deprecated Use {@link #deleteFile(String)} instead. This method uses shell command which may not work in all environments.
+     * @deprecated Use deleteFile instead. This method uses shell command which may not work in all environments.
      */
     @Deprecated
     public String removeLegacy(String path) throws AgentBayException {
@@ -164,7 +184,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Copy a file or directory
+     * Copy a file or directory.
      *
      * @param source Source path to copy from
      * @param destination Destination path to copy to
@@ -183,7 +203,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Move a file or directory
+     * Move a file or directory.
      *
      * @param source Source path to move from
      * @param destination Destination path to move to
@@ -202,7 +222,7 @@ public class FileSystem extends BaseService {
     }
 
     /**
-     * Get file information
+     * Get file information.
      *
      * @param path File path to inspect
      * @return File information as string (ls -la output)
@@ -221,7 +241,8 @@ public class FileSystem extends BaseService {
 
     /**
      * Write content to a file. Automatically handles large files by chunking.
-     * Similar to Python's write_file method.
+     * 
+     * <p>Similar to Python's write_file method.</p>
      *
      * @param path File path
      * @param content Content to write
@@ -348,7 +369,15 @@ public class FileSystem extends BaseService {
     public FileSearchResult searchFiles(String directory, String pattern) {
         return searchFiles(directory, pattern, null);
     }
-
+    
+    /**
+     * Search for files matching a pattern
+     *
+     * @param directory Directory to search in
+     * @param pattern Wildcard pattern to match against file names. Supports * (any characters) and ? (single character). Examples: "*.py", "test_*", "*config*".
+     * @param excludePatterns  Optional list of wildcard patterns to exclude from the search.
+     * @return FileSearchResult containing list of matching file paths and error message if any
+     */
     public FileSearchResult searchFiles(String directory, String pattern, List<String> excludePatterns) {
         try {
             Map<String, Object> args = new HashMap<>();
@@ -456,8 +485,14 @@ public class FileSystem extends BaseService {
      * List the contents of a directory.
      *
      * @param path The path of the directory to list
-     * @return DirectoryListResult containing directory entries and error message if any.
-     *
+     * @return DirectoryListResult containing directory entries and error message if any
+     *  - success (bool): True if the operation succeeded
+     *   - entries (List[Dict[str, Union[str, bool]]]): List of directory entries (if success is True)
+     *      Each entry contains:
+     *      - name (str): Name of the file or directory
+     *     - isDirectory (bool): True if entry is a directory, False if file
+     *- requestId (str): Unique identifier for this API request
+     *- errorMessage (str): Error description (if success is False)
      */
     public com.aliyun.agentbay.model.DirectoryListResult listDirectory(String path) {
         try {
@@ -670,8 +705,7 @@ public class FileSystem extends BaseService {
      *
      *             ---
      *
-     *             /path/to/file2.txt:
-     *             Content of file2
+     *             /path/to/file2.txt:Content of file2
      * @return A map mapping file paths to their content
      */
     private Map<String, String> parseMultipleFilesResponse(String text) {
@@ -708,7 +742,7 @@ public class FileSystem extends BaseService {
             else if ("---".equals(line.trim())) {
                 // Save the current file content
                 if (currentPath != null) {
-                    result.put(currentPath, String.join("\\n", currentContent).trim());
+                    result.put(currentPath, String.join("\n", currentContent).trim());
                     currentPath = null;
                     currentContent.clear();
                 }
@@ -721,7 +755,7 @@ public class FileSystem extends BaseService {
 
         // Save the last file content if exists
         if (currentPath != null) {
-            result.put(currentPath, String.join("\\n", currentContent).trim());
+            result.put(currentPath, String.join("\n", currentContent).trim());
         }
 
         return result;
@@ -730,7 +764,7 @@ public class FileSystem extends BaseService {
     /**
      * Upload a local file to remote path using pre-signed URLs.
      *
-     * @param localPath Local file path to upload from
+     * @param localPath Local file path to upload
      * @param remotePath Remote file path to upload to
      * @param contentType Optional content type for the file (can be null)
      * @param wait Whether to wait for the sync operation to complete
@@ -748,7 +782,18 @@ public class FileSystem extends BaseService {
     ) {
         return uploadFile(localPath, remotePath, contentType, wait, waitTimeout, pollInterval, null);
     }
-
+    /**
+     * Upload a local file to remote path using pre-signed URLs.
+     *
+     * @param localPath Local file path to upload
+     * @param remotePath Remote file path to upload to
+     * @param contentType Optional content type for the file (can be null)
+     * @param wait Whether to wait for the sync operation to complete
+     * @param waitTimeout Timeout for waiting for sync completion (seconds)
+     * @param pollInterval Interval between polling for sync completion (seconds)
+     * @param progressCallback Callback for upload progress updates
+     * @return UploadResult containing the result of the upload operation
+     */
     public UploadResult uploadFile(
         String localPath,
         String remotePath,

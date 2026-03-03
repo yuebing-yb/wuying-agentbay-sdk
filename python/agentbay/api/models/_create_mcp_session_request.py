@@ -18,6 +18,7 @@ class CreateMcpSessionRequest(DaraModel):
         enable_record: Optional[bool] = None,
         external_user_id: Optional[str] = None,
         image_id: Optional[str] = None,
+        timeout: Optional[int] = None,
         labels: Optional[str] = None,
         mcp_policy_id: Optional[str] = None,
         network_id: Optional[str] = None,
@@ -35,6 +36,7 @@ class CreateMcpSessionRequest(DaraModel):
         self.enable_record = enable_record
         self.external_user_id = external_user_id
         self.image_id = image_id
+        self.timeout = timeout
         self.labels = labels
         self.mcp_policy_id = mcp_policy_id
         self.network_id = network_id
@@ -72,6 +74,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if self.image_id is not None:
             result["ImageId"] = self.image_id
+
+        if self.timeout is not None:
+            result["Timeout"] = self.timeout
 
         if self.labels is not None:
             result["Labels"] = self.labels
@@ -120,6 +125,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if m.get("ImageId") is not None:
             self.image_id = m.get("ImageId")
+
+        if m.get("Timeout") is not None:
+            self.timeout = m.get("Timeout")
 
         if m.get("Labels") is not None:
             self.labels = m.get("Labels")

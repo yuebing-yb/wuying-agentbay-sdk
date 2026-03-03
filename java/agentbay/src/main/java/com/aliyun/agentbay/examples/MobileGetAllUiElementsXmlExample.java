@@ -24,7 +24,7 @@ public class MobileGetAllUiElementsXmlExample {
 
         AgentBay agentBay = new AgentBay();
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId("imgc-0ab5ta4mn31wth5lh");
+        params.setImageId("mobile-use-android-12-gw");
 
         SessionResult sessionResult = agentBay.create(params);
         if (!sessionResult.isSuccess() || sessionResult.getSession() == null) {

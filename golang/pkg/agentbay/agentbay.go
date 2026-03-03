@@ -254,6 +254,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		createSessionRequest.NetworkId = tea.String(params.BetaNetworkId)
 	}
 
+	// SDK idle release timeout (seconds)
+	if params.IdleReleaseTimeout > 0 {
+		createSessionRequest.Timeout = tea.Int32(params.IdleReleaseTimeout)
+	}
+
 	// Add labels if provided
 	if len(params.Labels) > 0 {
 		labelsJSON, err := params.GetLabelsJSON()
@@ -276,6 +281,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	// Flag to indicate if we need to wait for context synchronization
 	needsContextSync := false
+	waitContextIDs := map[string]struct{}{}
 
 	// Add context sync configurations if provided
 	var persistenceDataList []*mcp.CreateMcpSessionRequestPersistenceDataList
@@ -297,6 +303,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			}
 
 			persistenceDataList = append(persistenceDataList, persistenceItem)
+			if contextSync.BetaWaitForCompletion == nil || *contextSync.BetaWaitForCompletion {
+				waitContextIDs[contextSync.ContextID] = struct{}{}
+			}
 		}
 	}
 
@@ -308,6 +317,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 		persistenceDataList = append(persistenceDataList, item)
 		needsContextSync = true
+		if params.BrowserContext.ContextID != "" {
+			waitContextIDs[params.BrowserContext.ContextID] = struct{}{}
+		}
 	}
 
 	// Add mobile simulate context sync if needed
@@ -334,6 +346,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 				Path:      tea.String(MobileInfoDefaultPath),
 			}
 			persistenceDataList = append(persistenceDataList, mobilePersistence)
+		}
+		if simContextID != "" {
+			waitContextIDs[simContextID] = struct{}{}
 		}
 	}
 
@@ -425,6 +440,9 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	if response.Body.Data.LinkUrl != nil {
 		session.LinkUrl = *response.Body.Data.LinkUrl
 	}
+	if response.Body.Data.WsUrl != nil {
+		session.WsUrl = *response.Body.Data.WsUrl
+	}
 	if response.Body.Data.ToolList != nil {
 		session.McpTools = parseToolListToMcpTools(*response.Body.Data.ToolList)
 	}
@@ -448,17 +466,17 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 	}
 
 	// If we have persistence data, wait for context synchronization
-	if needsContextSync {
+	if needsContextSync && len(waitContextIDs) > 0 {
 		fmt.Println("Waiting for context synchronization to complete...")
 
 		// Exponential backoff configuration
 		// Starts with short intervals (0.5s) for fast completion detection
 		// Gradually increases intervals (up to 5s max) to reduce server load
 		// Uses exponential backoff factor of 1.1
-		const initialInterval = 500 * time.Millisecond  // Start with 0.5 seconds for quick response
-		const maxInterval = 5000 * time.Millisecond     // Maximum interval to avoid excessive delays
-		const backoffFactor = 1.1                       // Multiply interval by this factor each retry
-		const maxRetries = 50                           // Maximum number of retries
+		const initialInterval = 500 * time.Millisecond // Start with 0.5 seconds for quick response
+		const maxInterval = 5000 * time.Millisecond    // Maximum interval to avoid excessive delays
+		const backoffFactor = 1.1                      // Multiply interval by this factor each retry
+		const maxRetries = 50                          // Maximum number of retries
 
 		currentInterval := initialInterval
 
@@ -476,17 +494,15 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 				continue
 			}
 
-			// Check if all context items have status "Success" or "Failed"
-			allCompleted := true
 			hasFailure := false
+			statusByContextID := map[string]string{}
 
 			for _, item := range infoResult.ContextStatusData {
-				fmt.Printf("Context %s status: %s, path: %s\n", item.ContextId, item.Status, item.Path)
-
-				if item.Status != "Success" && item.Status != "Failed" {
-					allCompleted = false
-					break
+				if _, ok := waitContextIDs[item.ContextId]; !ok {
+					continue
 				}
+				statusByContextID[item.ContextId] = item.Status
+				fmt.Printf("Context %s status: %s, path: %s\n", item.ContextId, item.Status, item.Path)
 
 				if item.Status == "Failed" {
 					hasFailure = true
@@ -494,7 +510,16 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 				}
 			}
 
-			if allCompleted || len(infoResult.ContextStatusData) == 0 {
+			allCompleted := true
+			for ctxID := range waitContextIDs {
+				st, ok := statusByContextID[ctxID]
+				if !ok || (st != "Success" && st != "Failed") {
+					allCompleted = false
+					break
+				}
+			}
+
+			if allCompleted {
 				if hasFailure {
 					fmt.Println("Context synchronization completed with failures")
 				} else {
@@ -928,6 +953,8 @@ type GetSessionData struct {
 	HttpPort           string
 	NetworkInterfaceIP string
 	Token              string
+	LinkUrl            string
+	WsUrl              string
 	VpcResource        bool
 	ResourceUrl        string
 	Status             string
@@ -1090,6 +1117,12 @@ func (a *AgentBay) getSession(sessionID string) (*GetSessionResult, error) {
 			if response.Body.Data.GetToken() != nil {
 				data.Token = *response.Body.Data.GetToken()
 			}
+			if response.Body.Data.GetLinkUrl() != nil {
+				data.LinkUrl = *response.Body.Data.GetLinkUrl()
+			}
+			if response.Body.Data.GetWsUrl() != nil {
+				data.WsUrl = *response.Body.Data.GetWsUrl()
+			}
 			if response.Body.Data.GetVpcResource() != nil {
 				data.VpcResource = *response.Body.Data.GetVpcResource()
 			}
@@ -1214,6 +1247,9 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 	if getResult.Data != nil {
 		session.ResourceUrl = getResult.Data.ResourceUrl
 		session.McpTools = parseToolListToMcpTools(getResult.Data.ToolList)
+		session.Token = getResult.Data.Token
+		session.LinkUrl = getResult.Data.LinkUrl
+		session.WsUrl = getResult.Data.WsUrl
 	}
 
 	// Log successful retrieval
@@ -1240,6 +1276,9 @@ func (a *AgentBay) Get(sessionID string) (*SessionResult, error) {
 // BetaPause synchronously pauses a session (beta), putting it into a dormant state to reduce resource usage and costs.
 // BetaPause puts the session into a PAUSED state where computational resources are significantly reduced.
 // The session state is preserved and can be resumed later to continue work.
+//
+// Note: This feature is currently in whitelist-only access.
+// Contact agentbay_dev@alibabacloud.com to request access.
 //
 // Parameters:
 //   - session: The session to pause.
@@ -1334,6 +1373,7 @@ func (a *AgentBay) GetRegionID() string {
 func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateSessionParams {
 	copy := &CreateSessionParams{
 		ImageId:             params.ImageId,
+		IdleReleaseTimeout:  params.IdleReleaseTimeout,
 		PolicyId:            params.PolicyId,
 		BetaNetworkId:       params.BetaNetworkId,
 		Framework:           params.Framework,
@@ -1353,8 +1393,9 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 		copy.ContextSync = make([]*ContextSync, 0, len(params.ContextSync))
 		for _, cs := range params.ContextSync {
 			csCopy := &ContextSync{
-				ContextID: cs.ContextID,
-				Path:      cs.Path,
+				ContextID:             cs.ContextID,
+				Path:                  cs.Path,
+				BetaWaitForCompletion: cs.BetaWaitForCompletion,
 			}
 			// Copy Policy if it exists (assuming SyncPolicy is a struct that can be shallow copied)
 			if cs.Policy != nil {

@@ -57,21 +57,27 @@ try:
     print(f"✅ Extension uploaded successfully!")
     print(f"   - Name: {extension.name}")
     print(f"   - ID: {extension.id}")
-    
+
     # Create extension option for browser session
     ext_option = extensions_service.create_extension_option([extension.id])
-    
-    # Create browser session with extension
-    session_params = CreateSessionParams(
-        labels={"purpose": "basic_extension_example", "type": "demo"},
-        browser_context=BrowserContext(
-            context_id="basic_extension_session",
-            auto_upload=True,
-            extension_option=ext_option
-        )
+
+    # Create persistent context
+    context_result = agent_bay.context.get("cookie-demo-context", create=True)
+    context = context_result.context
+
+    browser_context = BrowserContext(
+        context_id=context.id,
+        auto_upload=True,
+        extension_option=ext_option
     )
-    
-    session_result = agent_bay.create(session_params)
+
+    params = CreateSessionParams(
+        image_id="browser_latest",
+        labels={"purpose": "basic_extension_example", "type": "demo"},
+        browser_context=browser_context
+    )
+
+    session_result = agent_bay.create(params)
     if not session_result.success:
         print(f"❌ Failed to create session: {session_result.error_message}")
     else:
@@ -79,12 +85,12 @@ try:
         print(f"✅ Browser session created successfully!")
         print(f"   - Session ID: {session.session_id}")
         print(f"   - Extensions synchronized to: /tmp/extensions/")
-    
+
     # List available extensions in context
     extensions = extensions_service.list()
     for ext in extensions:
         print(f"   - {ext.name} (ID: {ext.id})")
-    
+
 finally:
     # Clean up resources
     extensions_service.cleanup()
@@ -107,35 +113,42 @@ try:
         "/path/to/extension2.zip",
         "/path/to/extension3.zip"
     ]
-    
+
     # Filter existing files
     existing_paths = [path for path in extension_paths if os.path.exists(path)]
-    
+
     # Upload all extensions
     extension_ids = []
     for path in existing_paths:
         ext = extensions_service.create(path)
         extension_ids.append(ext.id)
         print(f"   ✅ {ext.name} uploaded (ID: {ext.id})")
-    
+
     # Create session with all extensions
     ext_option = extensions_service.create_extension_option(extension_ids)
-    
-    session_params = CreateSessionParams(
-        labels={"purpose": "multiple_extensions", "count": str(len(extension_ids))},
-        browser_context=BrowserContext(
-            context_id="multi_extension_session",
-            auto_upload=True,
-            extension_option=ext_option
-        )
+
+    # Create persistent context
+    context_result = agent_bay.context.get("cookie-demo-context", create=True)
+    context = context_result.context
+
+    browser_context = BrowserContext(
+        context_id=context.id,
+        auto_upload=True,
+        extension_option=ext_option
     )
-    
-    session_result = agent_bay.create(session_params)
+
+    params = CreateSessionParams(
+        image_id="browser_latest",
+        labels={"purpose": "multiple_extensions", "count": str(len(extension_ids))},
+        browser_context=browser_context
+    )
+
+    session_result = agent_bay.create(params)
     session = session_result.session
-    
+
     print(f"✅ Session created with {len(extension_ids)} extensions!")
     print(f"   - Session ID: {session.session_id}")
-    
+
 finally:
     extensions_service.cleanup()
 ```
@@ -153,118 +166,124 @@ from agentbay import BrowserContext
 class ExtensionDevelopmentWorkflow:
     """
     A helper class for extension development and testing workflow.
-    
+
     This class provides methods to:
     - Upload extensions for development
     - Create test sessions with extensions
     - Update extensions during development
     - Manage development lifecycle
     """
-    
+
     def __init__(self, api_key: str, project_name: str = "dev_extensions"):
         """Initialize the development workflow."""
         self.agent_bay = AgentBay(api_key=api_key)
         self.extensions_service = ExtensionsService(self.agent_bay, project_name)
         self.extension_id: Optional[str] = None
         self.project_name = project_name
-        
+
         print(f"🛠️  Extension Development Workflow initialized")
         print(f"   - Project: {project_name}")
-    
+
     def upload_extension(self, extension_path: str) -> str:
         """Upload an extension for development testing."""
         if not os.path.exists(extension_path):
             raise FileNotFoundError(f"Extension file not found: {extension_path}")
-        
+
         extension = self.extensions_service.create(extension_path)
         self.extension_id = extension.id
-        
+
         print(f"✅ Extension uploaded successfully!")
         print(f"   - Name: {extension.name}")
         print(f"   - ID: {extension.id}")
-        
+
         return extension.id
-    
+
     def update_extension(self, new_extension_path: str) -> str:
         """Update existing extension during development."""
         if not self.extension_id:
             raise ValueError("No extension uploaded yet. Call upload_extension() first.")
-        
+
         updated_ext = self.extensions_service.update(self.extension_id, new_extension_path)
-        
+
         print(f"✅ Extension updated successfully!")
         print(f"   - Name: {updated_ext.name}")
         print(f"   - ID: {self.extension_id}")
-        
+
         return self.extension_id
-    
+
     def create_test_session(self, session_name: Optional[str] = None):
         """Create a browser session with the current extension for testing."""
         if not self.extension_id:
             raise ValueError("No extension available. Upload an extension first.")
-        
+
         # Generate session name if not provided
         if not session_name:
             timestamp = int(time.time())
             session_name = f"dev_session_{timestamp}"
-        
+
         print(f"🌐 Creating test session: {session_name}")
-        
+
         # Create extension option
         ext_option = self.extensions_service.create_extension_option([self.extension_id])
-        
-        # Create session parameters
-        session_params = CreateSessionParams(
+
+        # Create persistent context
+        context_result = self.agent_bay.context.get(session_name, create=True)
+        context = context_result.context
+
+        browser_context = BrowserContext(
+            context_id=context.id,
+            auto_upload=True,
+            extension_option=ext_option
+        )
+
+        params = CreateSessionParams(
+            image_id="browser_latest",
             labels={
                 "purpose": "extension_development",
                 "project": self.project_name,
                 "extension_id": self.extension_id
             },
-            browser_context=BrowserContext(
-                context_id=session_name,
-                auto_upload=True,
-                extension_option=ext_option
-            )
+            browser_context=browser_context
         )
-        
+
         # Create session
-        session_result = self.agent_bay.create(session_params)
+        session_result = self.agent_bay.create(params)
         if not session_result.success:
             raise Exception(f"Session creation failed: {session_result.error_message}")
-        
+
         session = session_result.session
-        
+
         print(f"✅ Test session created successfully!")
         print(f"   - Session ID: {session.session_id}")
         print(f"   - Extension available at: /tmp/extensions/{self.extension_id}/")
-        
+
         return session
-    
+
     def cleanup(self):
         """Clean up development resources."""
         if self.extension_id:
             deleted = self.extensions_service.delete(self.extension_id)
             if deleted:
                 print(f"   ✅ Deleted extension: {self.extension_id}")
-        
+
         self.extensions_service.cleanup()
         print("✅ Cleanup completed")
 
 
 # Usage example
-workflow = ExtensionDevelopmentWorkflow(api_key=os.getenv("AGENTBAY_API_KEY"), 
+workflow = ExtensionDevelopmentWorkflow(api_key=os.getenv("AGENTBAY_API_KEY"),
                                        project_name="my_extension_project")
 try:
     # Development cycle
     workflow.upload_extension("/path/to/extension-v1.zip")
     session1 = workflow.create_test_session()
     # Test extension functionality...
-    
+
     # Update and test again
     workflow.update_extension("/path/to/extension-v2.zip")
     session2 = workflow.create_test_session()
     # Test updated functionality...
-    
+
 finally:
     workflow.cleanup()
 ```
@@ -287,16 +306,16 @@ console.log(`Extension uploaded: ${extension.name} (ID: ${extension.id})`);
 // Create extension option for browser integration
 const extOption = extensionsService.createExtensionOption([extension.id]);
 
+// Create persistent context
+const contextResult = await agentBay.context.get("cookie-demo-context", true);
+const context = contextResult.context;
+
 // Create browser session with extension
-const sessionParams :CreateSessionParams = {
-    imageId:'browser_latest',
-    labels:{ purpose: "extension_testing" },
-    browserContext:new BrowserContext(
-        "extension_test_session",
-        true,
-        extOption
-    )
-}
+const sessionParams: CreateSessionParams = {
+    imageId: "browser_latest",
+    labels: { purpose: "extension_testing" },
+    browserContext: new BrowserContext(context.id, true, extOption)
+};
 
 // Create session - extension will be automatically synchronized
 const sessionResult = await agentBay.create(sessionParams);
@@ -329,13 +348,15 @@ for (const path of extensionPaths) {
 // Create session with all extensions
 const extOption = extensionsService.createExtensionOption(extensionIds);
 
-const sessionParams:CreateSessionParams = { 
-    browserContext:new BrowserContext(
-        "multi_extension_session",
-        true,
-        extOption
-    )
-}
+// Create persistent context
+const contextResult = await agentBay.context.get("cookie-demo-context", true);
+const context = contextResult.context;
+
+const sessionParams: CreateSessionParams = {
+    imageId: "browser_latest",
+    labels: { purpose: "multiple_extensions", count: String(extensionIds.length) },
+    browserContext: new BrowserContext(context.id, true, extOption)
+};
 
 const session = (await agentBay.create(sessionParams)).session;
 
@@ -418,13 +439,13 @@ extensions_service = ExtensionsService(agent_bay)
 
 try:
     extension_path = "/path/to/extension.zip"
-    
+
     if not os.path.exists(extension_path):
         print(f"❌ Extension file not found: {extension_path}")
     else:
         extension = extensions_service.create(extension_path)
         print(f"✅ Extension uploaded: {extension.name}")
-        
+
 except FileNotFoundError as e:
     print(f"❌ Extension file not found: {e}")
 except ValueError as e:
@@ -516,9 +537,10 @@ try:
     # Upload extension
     extension = extensions_service.create("/path/to/extension.zip")
     ext_option = extensions_service.create_extension_option([extension.id])
-    
+
     # Use both in session
-    session_params = CreateSessionParams(
+    params = CreateSessionParams(
+        image_id="browser_latest",
         labels={"purpose": "persistent_with_extension"},
         browser_context=BrowserContext(
             context_id=browser_context.id,  # Persistent browser state
@@ -526,14 +548,14 @@ try:
             extension_option=ext_option     # Extension integration
         )
     )
-    
-    session_result = agent_bay.create(session_params)
+
+    session_result = agent_bay.create(params)
     session = session_result.session
-    
+
     print(f"✅ Session created with persistent browser state and extensions")
     print(f"   - Session ID: {session.session_id}")
     # Session has both persistent browser state AND extensions
-    
+
 finally:
     extensions_service.cleanup()
 ```
@@ -546,5 +568,5 @@ finally:
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../../README.md)

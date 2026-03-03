@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/invopop/jsonschema"
 )
@@ -526,6 +527,7 @@ type ComputerUseAgent struct {
 // > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 type BrowserUseAgent struct {
 	*baseTaskAgent
+	initialized bool
 }
 
 // MobileUseAgent represents an agent to perform tasks on mobile devices
@@ -549,6 +551,7 @@ type McpSession interface {
 	GetAPIKey() string
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
+	GetBrowser() *browser.Browser
 }
 
 func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {
@@ -557,6 +560,7 @@ func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {
 			Session:    session,
 			ToolPrefix: "browser_use",
 		},
+		initialized: false,
 	}
 }
 
@@ -648,6 +652,29 @@ func (a *ComputerUseAgent) TerminateTask(taskID string) *ExecutionResult {
 	return a.baseTaskAgent.terminateTask(taskID)
 }
 
+/**
+* Initialize the browser on which the agent performs tasks.
+* You are supposed to call this API before executeTask is called, but is't optional.
+* @param option Browser option
+* @return True if the browser is successfully initialized, False otherwise.
+ */
+func (a *BrowserUseAgent) Initialize(option *browser.BrowserOption) (bool, error) {
+	if a.initialized {
+		return true, nil
+	}
+
+	success, err := a.Session.GetBrowser().Initialize(option)
+	if err != nil {
+		return false, err
+	}
+
+	if success {
+		a.initialized = true
+	}
+
+	return success, nil
+}
+
 /*
 Execute a task described in human language on a browser without waiting for completion (non-blocking).
 
@@ -701,6 +728,20 @@ await session.delete()
 ```
 */
 func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schema interface{}) *ExecutionResult {
+	if a.initialized == false {
+		fmt.Printf("Browser is not initialized yet, initializing now\n")
+		success, err := a.Initialize(&browser.BrowserOption{})
+		if err != nil || !success {
+			fmt.Printf("❌BrowserInitializationFailed: %v", err)
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: ""},
+				Success:      false,
+				ErrorMessage: "BrowserInitializationFailed",
+				TaskStatus:   "failed",
+				TaskID:       "",
+			}
+		}
+	}
 	args := map[string]interface{}{
 		"task":          task,
 		"use_vision":    use_vision,

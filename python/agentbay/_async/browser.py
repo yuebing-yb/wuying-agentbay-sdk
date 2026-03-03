@@ -1,22 +1,16 @@
-import asyncio
-import base64
-import os
-import time
-import typing
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Optional
 
 from .._common.config import _BROWSER_DATA_PATH
 from .._common.exceptions import BrowserError
 from .._common.logger import _log_api_response_with_details, get_logger
 from ..api.models import InitBrowserRequest
 from .base_service import AsyncBaseService
-from .browser_agent import AsyncBrowserAgent
+from .browser_operator import AsyncBrowserOperator
 
 # Initialize logger for this module
 _logger = get_logger("browser")
 
 if TYPE_CHECKING:
-    from .._common.models import FingerprintFormat
     from .._common.models import BrowserOption
     from .session import AsyncSession
 
@@ -30,8 +24,37 @@ class AsyncBrowser(AsyncBaseService):
         self._endpoint_url = None
         self._initialized = False
         self._option = None
-        self.agent = AsyncBrowserAgent(self.session, self)
+        
+        # New: operator is the recommended way
+        self.operator = AsyncBrowserOperator(self.session, self)
+        
+        # Deprecated: agent is kept for backward compatibility
+        self._agent = self.operator
+        self._agent_deprecation_warned = False
+        
         self.endpoint_router_port = None
+    
+    @property
+    def agent(self):
+        """
+        **Deprecated**: Use `operator` instead. This property will be removed in a future version.
+        
+        Example:
+            ```python
+            # Old way (deprecated):
+            # await session.browser.operator.navigate(url)
+            
+            # New way (recommended):
+            await session.browser.operator.navigate(url)
+            ```
+        """
+        if not self._agent_deprecation_warned:
+            _logger.warning(
+                f"[ ⚠️ DeprecationWarning] browser.agent is deprecated and will be removed in a future version. "
+                "Please use browser.operator instead.",
+            )
+            self._agent_deprecation_warned = True
+        return self._agent
 
     async def initialize(self, option: Optional["BrowserOption"] = None) -> bool:
         """

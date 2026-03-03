@@ -1,12 +1,34 @@
 package com.aliyun.agentbay.context;
 
 /**
- * Defines the context synchronization configuration
+ * Defines the context synchronization configuration.
+ * 
+ * <p>This class configures how a context should be synchronized with a session,
+ * including the context ID, mount path, synchronization policy, and whether to
+ * wait for initial download completion.</p>
  */
 public class ContextSync {
+    /**
+     * ID of the context to synchronize.
+     */
     private String contextId;
+    
+    /**
+     * Path where the context should be mounted.
+     */
     private String path;
+    
+    /**
+     * Defines the synchronization policy.
+     */
     private SyncPolicy policy;
+    
+    /**
+     * Beta feature flag to control whether session creation should wait for this context's
+     * initial download to finish. If set to false, the SDK will not block create() on this context.
+     * Defaults to null (treated as true for backward compatibility).
+     */
+    private Boolean betaWaitForCompletion;
 
     public ContextSync() {
     }
@@ -23,6 +45,11 @@ public class ContextSync {
 
     public ContextSync withPolicy(SyncPolicy policy) {
         this.policy = policy;
+        return this;
+    }
+
+    public ContextSync withBetaWaitForCompletion(Boolean wait) {
+        this.betaWaitForCompletion = wait;
         return this;
     }
 
@@ -48,5 +75,13 @@ public class ContextSync {
 
     public void setPolicy(SyncPolicy policy) {
         this.policy = policy;
+    }
+
+    public Boolean getBetaWaitForCompletion() {
+        return betaWaitForCompletion;
+    }
+
+    public void setBetaWaitForCompletion(Boolean betaWaitForCompletion) {
+        this.betaWaitForCompletion = betaWaitForCompletion;
     }
 }

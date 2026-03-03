@@ -226,7 +226,7 @@ def main():
         for url in SITES:
             try:
                 process_site(
-                    session.browser.agent, url, out_dir=f"./results_{date_str}"
+                    session.browser.operator, url, out_dir=f"./results_{date_str}"
                 )
             except Exception as e:
                 print(f"[ERR] {domain_of(url)} -> {e}")

@@ -104,17 +104,19 @@ func (s *GetSessionResponseBody) Validate() error {
 }
 
 type GetSessionResponseBodyData struct {
-	AppInstanceId      *string `json:"AppInstanceId,omitempty" xml:"AppInstanceId,omitempty"`
-	HttpPort           *string `json:"HttpPort,omitempty" xml:"HttpPort,omitempty"`
-	NetworkInterfaceIp *string `json:"NetworkInterfaceIp,omitempty" xml:"NetworkInterfaceIp,omitempty"`
-	ResourceId         *string `json:"ResourceId,omitempty" xml:"ResourceId,omitempty"`
-	ResourceUrl        *string `json:"ResourceUrl,omitempty" xml:"ResourceUrl,omitempty"`
-	SessionId          *string `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
-	Status             *string `json:"Status,omitempty" xml:"Status,omitempty"`
-	Success            *bool   `json:"Success,omitempty" xml:"Success,omitempty"`
-	Token              *string `json:"Token,omitempty" xml:"Token,omitempty"`
-	ToolList           *string `json:"ToolList,omitempty" xml:"ToolList,omitempty"`
-	VpcResource        *bool   `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
+	AppInstanceId      *string                               `json:"AppInstanceId,omitempty" xml:"AppInstanceId,omitempty"`
+	HttpPort           *string                               `json:"HttpPort,omitempty" xml:"HttpPort,omitempty"`
+	LinkUrl            *string                               `json:"LinkUrl,omitempty" xml:"LinkUrl,omitempty"`
+	NetworkInterfaceIp *string                               `json:"NetworkInterfaceIp,omitempty" xml:"NetworkInterfaceIp,omitempty"`
+	ResourceId         *string                               `json:"ResourceId,omitempty" xml:"ResourceId,omitempty"`
+	ResourceUrl        *string                               `json:"ResourceUrl,omitempty" xml:"ResourceUrl,omitempty"`
+	SessionId          *string                               `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
+	Status             *string                               `json:"Status,omitempty" xml:"Status,omitempty"`
+	Success            *bool                                 `json:"Success,omitempty" xml:"Success,omitempty"`
+	Token              *string                               `json:"Token,omitempty" xml:"Token,omitempty"`
+	ToolList           *string                               `json:"ToolList,omitempty" xml:"ToolList,omitempty"`
+	WsUrl              *string                               `json:"WsUrl,omitempty" xml:"WsUrl,omitempty"`
+	VpcResource        *bool                                 `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 	Contexts           []*GetSessionResponseBodyDataContexts `json:"contexts,omitempty" xml:"contexts,omitempty" type:"Repeated"`
 }
 
@@ -132,6 +134,10 @@ func (s *GetSessionResponseBodyData) GetAppInstanceId() *string {
 
 func (s *GetSessionResponseBodyData) GetHttpPort() *string {
 	return s.HttpPort
+}
+
+func (s *GetSessionResponseBodyData) GetLinkUrl() *string {
+	return s.LinkUrl
 }
 
 func (s *GetSessionResponseBodyData) GetNetworkInterfaceIp() *string {
@@ -166,6 +172,10 @@ func (s *GetSessionResponseBodyData) GetToolList() *string {
 	return s.ToolList
 }
 
+func (s *GetSessionResponseBodyData) GetWsUrl() *string {
+	return s.WsUrl
+}
+
 func (s *GetSessionResponseBodyData) GetVpcResource() *bool {
 	return s.VpcResource
 }
@@ -181,6 +191,11 @@ func (s *GetSessionResponseBodyData) SetAppInstanceId(v string) *GetSessionRespo
 
 func (s *GetSessionResponseBodyData) SetHttpPort(v string) *GetSessionResponseBodyData {
 	s.HttpPort = &v
+	return s
+}
+
+func (s *GetSessionResponseBodyData) SetLinkUrl(v string) *GetSessionResponseBodyData {
+	s.LinkUrl = &v
 	return s
 }
 
@@ -221,6 +236,11 @@ func (s *GetSessionResponseBodyData) SetToken(v string) *GetSessionResponseBodyD
 
 func (s *GetSessionResponseBodyData) SetToolList(v string) *GetSessionResponseBodyData {
 	s.ToolList = &v
+	return s
+}
+
+func (s *GetSessionResponseBodyData) SetWsUrl(v string) *GetSessionResponseBodyData {
+	s.WsUrl = &v
 	return s
 }
 

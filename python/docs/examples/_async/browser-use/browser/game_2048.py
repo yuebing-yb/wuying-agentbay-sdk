@@ -29,7 +29,7 @@ async def main():
     session = session_result.session
     try:
         assert await session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
         endpoint_url = await session.browser.get_endpoint_url()
         async with async_playwright() as p:
@@ -68,7 +68,7 @@ Extract the current game state:
                     use_text_extract=False,
                 )
 
-                success, game_state = await agent.extract(options=options, page=page)
+                success, game_state = await operator.extract(options=options, page=page)
                 if not success:
                     print("❌ Failed to extract game state, retry observing")
                     continue

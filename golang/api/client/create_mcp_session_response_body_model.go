@@ -110,6 +110,7 @@ type CreateMcpSessionResponseBodyData struct {
 	Success            *bool   `json:"Success,omitempty" xml:"Success,omitempty"`
 	Token              *string `json:"Token,omitempty" xml:"Token,omitempty"`
 	ToolList           *string `json:"ToolList,omitempty" xml:"ToolList,omitempty"`
+	WsUrl              *string `json:"WsUrl,omitempty" xml:"WsUrl,omitempty"`
 	VpcResource        *bool   `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 }
 
@@ -163,6 +164,10 @@ func (s *CreateMcpSessionResponseBodyData) GetToken() *string {
 
 func (s *CreateMcpSessionResponseBodyData) GetToolList() *string {
 	return s.ToolList
+}
+
+func (s *CreateMcpSessionResponseBodyData) GetWsUrl() *string {
+	return s.WsUrl
 }
 
 func (s *CreateMcpSessionResponseBodyData) GetVpcResource() *bool {
@@ -221,6 +226,11 @@ func (s *CreateMcpSessionResponseBodyData) SetToken(v string) *CreateMcpSessionR
 
 func (s *CreateMcpSessionResponseBodyData) SetToolList(v string) *CreateMcpSessionResponseBodyData {
 	s.ToolList = &v
+	return s
+}
+
+func (s *CreateMcpSessionResponseBodyData) SetWsUrl(v string) *CreateMcpSessionResponseBodyData {
+	s.WsUrl = &v
 	return s
 }
 

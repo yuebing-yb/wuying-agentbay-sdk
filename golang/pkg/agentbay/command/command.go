@@ -64,8 +64,6 @@ type commandOptions struct {
 type CommandOption func(*commandOptions)
 
 // WithTimeoutMs sets the timeout for command execution in milliseconds.
-// Maximum allowed timeout is 50000ms (50s). If a larger value is provided,
-// it will be automatically limited to 50000ms.
 //
 // Example:
 //
@@ -117,8 +115,7 @@ func WithEnvs(envs map[string]string) CommandOption {
 //   - command: The shell command to execute
 //   - options: Either an int (timeoutMs in milliseconds) for legacy usage, or
 //     CommandOption functions for Functional Options pattern.
-//     Maximum allowed timeout is 50000ms (50s). If a larger value is provided,
-//     it will be automatically limited to 50000ms
+//     Default is 50000ms (50s).
 //
 // Returns:
 //   - *CommandResult: Result containing command output, exit code, stdout,
@@ -184,14 +181,6 @@ func (c *Command) executeCommandInternal(
 	cwd string,
 	envs map[string]string,
 ) (*CommandResult, error) {
-	// Limit timeout to maximum 50s (50000ms) as per SDK constraints
-	const MAX_TIMEOUT_MS = 50000
-	if timeout > MAX_TIMEOUT_MS {
-		// Log warning (in production, you might want to use a proper logger)
-		// fmt.Printf("Warning: Timeout %dms exceeds maximum allowed %dms. Limiting to %dms.\n", timeout, MAX_TIMEOUT_MS, MAX_TIMEOUT_MS)
-		timeout = MAX_TIMEOUT_MS
-	}
-
 	// Note: In Go, envs is typed as map[string]string, which enforces type safety at compile time.
 	// All keys and values are guaranteed to be strings by the type system.
 	// This validation is kept for consistency with other SDKs and documentation purposes.

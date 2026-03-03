@@ -18,6 +18,7 @@ from agentbay import (
     SyncPolicy,
     UploadPolicy,
     WhiteList,
+    Config,
 )
 from agentbay import BrowserContext, CreateSessionParams
 from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
@@ -463,6 +464,100 @@ class TestBrowserContext(unittest.TestCase):
         except Exception as e:
             print(f"Warning: Failed to delete browser context: {e}")
 
+
+class TestSessionPauseResume(unittest.TestCase):
+    """Test cases for session pause and resume functionality."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        api_key = get_test_api_key()
+        endpoint = os.environ.get("AGENTBAY_ENDPOINT")
+        self.agent_bay = AgentBay(api_key=api_key, 
+                                        cfg=Config(endpoint=endpoint, timeout_ms=60000))
+        self.session = None
+
+    def tearDown(self):
+        """Tear down test fixtures."""
+        if self.session:
+            try:
+                print("Cleaning up session...")
+                delete_result = self.agent_bay.delete(self.session)
+                print(
+                    f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
+                )
+            except Exception as e:
+                print(f"Warning: Error deleting session: {e}")
+
+    @pytest.mark.sync
+    def test_session_pause_and_resume(self):
+        """Test pausing and resuming a session."""
+        print("Creating a new session for pause/resume testing...")
+
+        # Create session
+        params = CreateSessionParams(
+        image_id="imgc-0ab5ta4myt0ntw12x",
+        # image_id="imgc-0ae8jvkn0mtjfs9ag",
+        # image_id="linux_latest",
+        # image_id="moltbot-linux-ubuntu-2204",
+        # image_id="windows_latest",
+        labels={"project": "piaoyun-demo", "environment": "testing"},
+    )
+
+        create_result = self.agent_bay.create()
+        self.assertTrue(
+            create_result.success, 
+            f"Session creation failed: {create_result.error_message}"
+        )
+        self.assertIsNotNone(create_result.session, "Session object is None")
+
+        self.session = create_result.session
+        print(f"Session created with ID: {self.session.session_id}")
+
+        # Test pause
+        print("\n=== Testing session pause ===")
+        pause_result = self.session.beta_pause(timeout=300, poll_interval=2)
+
+        print(f"Pause result - Success: {pause_result.success}")
+        print(f"Pause result - Status: {pause_result.status}")
+        print(f"Pause result - RequestId: {pause_result.request_id}")
+
+        if not pause_result.success:
+            print(f"Pause error message: {pause_result.error_message}")
+
+        self.assertTrue(
+            pause_result.success, 
+            f"Session pause failed: {pause_result.error_message}"
+        )
+        self.assertEqual(
+            pause_result.status, 
+            "PAUSED", 
+            f"Expected status PAUSED, got {pause_result.status}"
+        )
+        print("✓ Session paused successfully")
+
+        # Test resume
+        print("\n=== Testing session resume ===")
+        resume_result = self.session.beta_resume(timeout=300, poll_interval=2)
+
+        print(f"Resume result - Success: {resume_result.success}")
+        print(f"Resume result - Status: {resume_result.status}")
+        print(f"Resume result - RequestId: {resume_result.request_id}")
+
+        if not resume_result.success:
+            print(f"Resume error message: {resume_result.error_message}")
+
+        self.assertTrue(
+            resume_result.success, 
+            f"Session resume failed: {resume_result.error_message}"
+        )
+        self.assertEqual(
+            resume_result.status, 
+            "RUNNING", 
+            f"Expected status RUNNING, got {resume_result.status}"
+        )
+        print("✓ Session resumed successfully")
+
+        print("\n=== Pause/Resume test completed successfully ===")
 
 if __name__ == "__main__":
     unittest.main()

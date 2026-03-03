@@ -6,8 +6,7 @@
 
 ## Overview
 
-The Computer module provides comprehensive desktop automation capabilities including mouse operations,
-keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
+The Computer module provides comprehensive desktop automation capabilities including mouse operations,keyboard input, screen capture, and window management. It enables automated UI testing and RPA workflows.
 
 ## Requirements
 
@@ -40,8 +39,9 @@ Keyboard modifier keys: Ctrl, Alt, Shift, Win
 type BetaScreenshotResult struct {
 	models.ApiResponse
 	Success		bool
+	Type		string
+	MimeType	string
 	Data		[]byte
-	Format		string
 	Width		*int
 	Height		*int
 	ErrorMessage	string
@@ -69,6 +69,7 @@ type Computer struct {
 	Session interface {
 		GetAPIKey() string
 		GetClient() *mcp.Client
+		GetLinkUrl() string
 		GetSessionId() string
 		CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	}
@@ -522,6 +523,7 @@ stopResult := result.Session.Computer.StopAppByPName("notepad.exe")
 func NewComputer(session interface {
 	GetAPIKey() string
 	GetClient() *mcp.Client
+	GetLinkUrl() string
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 }) *Computer
@@ -638,7 +640,7 @@ ScrollDirection represents scroll directions
 ```go
 type Window struct {
 	WindowID		int		`json:"window_id"`
-	Title			string		`json:"title"`
+	Title			string		`json:"window_title"`
 	AbsoluteUpperLeftX	int		`json:"absolute_upper_left_x,omitempty"`
 	AbsoluteUpperLeftY	int		`json:"absolute_upper_left_y,omitempty"`
 	Width			int		`json:"width,omitempty"`
@@ -667,7 +669,7 @@ WindowDetailResult represents the result of getting window details
 ```go
 type WindowInfo struct {
 	WindowID	int	`json:"window_id"`
-	Title		string	`json:"title"`
+	Title		string	`json:"window_title"`
 	PID		int	`json:"pid"`
 	PName		string	`json:"pname"`
 }

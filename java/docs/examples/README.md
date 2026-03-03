@@ -907,7 +907,7 @@ mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="in
 
 ## 🤝 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation](../../../docs/README.md)
 
 ---

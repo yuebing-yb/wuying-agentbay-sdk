@@ -1,5 +1,14 @@
 # Session Params API Reference
 
+## ⚙️ Related Tutorial
+
+- [Session Configuration Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Learn how to configure session parameters for different use cases
+
+## Overview
+
+The CreateSessionParams class provides configuration options for creating AgentBay sessions.
+It supports session labels, image selection, context synchronization, and SDK-side idle release timeout.
+
 ## Type CreateSessionParams
 
 ```go
@@ -9,6 +18,10 @@ type CreateSessionParams struct {
 
 	// ImageId specifies the image ID to use for the session.
 	ImageId	string
+
+	// IdleReleaseTimeout specifies the SDK-side idle release timeout in seconds.
+	// Default is 300 seconds.
+	IdleReleaseTimeout	int32
 
 	// ContextSync is a list of context synchronization configurations.
 	// These configurations define how contexts should be synchronized and mounted.
@@ -116,6 +129,15 @@ func (p *CreateSessionParams) WithExtraConfigs(extraConfigs *models.ExtraConfigs
 WithExtraConfigs sets the extra configurations for the session parameters and returns the updated
 parameters.
 
+### WithIdleReleaseTimeout
+
+```go
+func (p *CreateSessionParams) WithIdleReleaseTimeout(timeoutSeconds int32) *CreateSessionParams
+```
+
+WithIdleReleaseTimeout sets the SDK-side idle release timeout in seconds and returns the updated
+parameters. Only positive values are accepted.
+
 ### WithImageId
 
 ```go
@@ -189,6 +211,19 @@ func NewListSessionParams() *ListSessionParams
 ```
 
 NewListSessionParams creates a new ListSessionParams with default values
+
+## Best Practices
+
+1. Configure browser type based on your automation needs (Chrome for compatibility, Firefox for specific features)
+2. Use headless mode for server environments and headed mode for debugging
+3. Set appropriate user agent strings for web scraping to avoid detection
+4. Configure timezone and language settings to match your target audience
+5. Enable cookies when session state persistence is required
+
+## Related Resources
+
+- [Session API Reference](session.md)
+- [AgentBay API Reference](agentbay.md)
 
 ---
 

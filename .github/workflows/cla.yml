@@ -29,7 +29,7 @@ jobs:
           path-to-document: 'https://gist.github.com/alibaba-oss/151a13b0a72e44ba471119c7eb737d74' # e.g. a CLA or a DCO document
           # branch should not be protected
           branch: 'main'
-          allowlist: user1,bot*
+          allowlist: yuebing-yb,Bryan2Lee,SuHangNewCommer,litiantian257,big-saltedfish,piaoyun12,shadow-cyan,daisyUnicorn,Muzhiyu93,bot*,dependabot[bot]
 
          # the followings are the optional inputs - If the optional inputs are not given, then default values will be taken
           #remote-organization-name: enter the remote organization name where the signatures should be stored (Default is storing the signatures in the same repository)

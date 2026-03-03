@@ -61,15 +61,15 @@ Remove `_async` suffix from all method names:
 
 ```python
 # Before (v0.12.x)
-await session.browser.agent.navigate_async(url)
+await session.browser.operator.navigate_async(url)
 await session.command.execute_command("ls")
 
 # After (v0.13.0+ sync)
-session.browser.agent.navigate(url)
+session.browser.operator.navigate(url)
 session.command.execute_command("ls")
 
 # After (v0.13.0+ async)
-await session.browser.agent.navigate(url)
+await session.browser.operator.navigate(url)
 await session.command.execute_command("ls")
 ```
 

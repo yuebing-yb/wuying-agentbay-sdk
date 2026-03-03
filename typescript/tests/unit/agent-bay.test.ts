@@ -52,6 +52,7 @@ describe("AgentBay", () => {
     let getSessionDetailStub: sinon.SinonStub;
     let clientConstructorStub: sinon.SinonStub;
     let contextServiceConstructorStub: sinon.SinonStub;
+    let contextStatusEntries: any[];
 
     beforeEach(() => {
         // Create mock client
@@ -71,16 +72,26 @@ describe("AgentBay", () => {
         getSessionStub = mockClient.getSession;
         getSessionDetailStub = mockClient.getSessionDetail;
 
-        // Mock getContextInfo to return successful response with empty context status list
-        mockClient.getContextInfo.resolves({
-            statusCode: 200,
-            body: {
-                success: true,
-                data: {
-                    contextStatusDataList: [],
+        // Mock getContextInfo used by ContextManager.info().
+        // In unit tests, we should not actually wait. We return "Success" statuses immediately
+        // when a test sets contextStatusEntries to include the expected context IDs.
+        contextStatusEntries = [];
+        mockClient.getContextInfo.callsFake(async () => {
+            return {
+                statusCode: 200,
+                body: {
+                    success: true,
+                    data: {
+                        contextStatus: JSON.stringify([
+                            {
+                                type: "data",
+                                data: JSON.stringify(contextStatusEntries),
+                            },
+                        ]),
+                    },
+                    requestId: "mock-request-id-context-info",
                 },
-                requestId: "mock-request-id-context-info",
-            },
+            };
         });
 
         // Set environment variables for config instead of stubbing loadConfig
@@ -280,6 +291,7 @@ describe("AgentBay", () => {
 
             const createCallArgs = createMcpSessionStub.getCall(0).args[0];
             expect(createCallArgs.authorization).toBe("Bearer test-api-key");
+            expect((createCallArgs as any).timeout).toBeUndefined();
 
             const deleteCallArgs = deleteSessionAsyncStub.getCall(0).args[0];
             expect(deleteCallArgs.sessionId).toBe(mockSessionData.sessionId);
@@ -482,6 +494,29 @@ describe("AgentBay", () => {
             expect(createMcpSessionStub.calledOnce).toBe(true);
             const createCallArgs = createMcpSessionStub.getCall(0).args[0];
             expect(createCallArgs.mcpPolicyId).toBe(policyId);
+            expect((createCallArgs as any).timeout).toBeUndefined();
+        });
+    });
+
+    describe("idleReleaseTimeout passthrough", () => {
+        it("should pass idleReleaseTimeout to CreateMcpSession request body", async () => {
+            const apiKey = "test-api-key";
+            const agentBay = new AgentBay({ apiKey });
+
+            const createMockResponse = {
+                statusCode: 200,
+                body: {
+                    data: mockSessionData,
+                    requestId: "mock-request-id-create",
+                },
+            };
+            createMcpSessionStub.resolves(createMockResponse);
+
+            await agentBay.create({ idleReleaseTimeout: 123 });
+
+            expect(createMcpSessionStub.calledOnce).toBe(true);
+            const createCallArgs = createMcpSessionStub.getCall(0).args[0];
+            expect((createCallArgs as any).timeout).toBe(123);
         });
     });
 
@@ -519,7 +554,23 @@ describe("AgentBay", () => {
             const originalLabelsRef = params.labels;
             const originalContextSyncsRef = params.contextSync;
 
+            // Make the first GetContextInfo call report all contexts as completed.
+            contextStatusEntries = originalContextSyncs.map((cs: any) => {
+                return {
+                    contextId: cs.contextId,
+                    path: cs.path,
+                    errorMessage: "",
+                    status: "Success",
+                    startTime: 0,
+                    finishTime: 0,
+                    taskType: "download",
+                };
+            });
+
             await agentBay.create(params);
+
+            // Ensure we didn't sleep/retry: create() should break on the first status check.
+            expect(mockClient.getContextInfo.calledOnce).toBe(true);
 
             // Verify the original params object was not modified
             expect(params.labels).toEqual(originalLabels);
@@ -560,7 +611,23 @@ describe("AgentBay", () => {
             const originalLabelsRef = params.labels;
             const originalContextSyncRef = params.contextSync;
 
+            // Make GetContextInfo report the simulated context as completed immediately.
+            contextStatusEntries = [
+                {
+                    contextId: "mobile-sim-ctx-123",
+                    path: "/data/agentbay_mobile_info",
+                    errorMessage: "",
+                    status: "Success",
+                    startTime: 0,
+                    finishTime: 0,
+                    taskType: "download",
+                },
+            ];
+
             await agentBay.create(params);
+
+            // Ensure we didn't sleep/retry: create() should break on the first status check.
+            expect(mockClient.getContextInfo.calledOnce).toBe(true);
 
             // Verify the original params object was not modified
             expect(params.labels).toEqual(originalLabels);

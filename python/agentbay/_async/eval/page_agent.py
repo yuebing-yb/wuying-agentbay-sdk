@@ -3,8 +3,19 @@ import concurrent.futures
 import os
 from typing import Any, Dict, List, Literal, Optional, Type, TypeVar, Union
 
-from playwright.async_api import Page, async_playwright, Playwright
+try:
+    from playwright.async_api import Page, async_playwright, Playwright
+except ImportError:
+    Page = None  # type: ignore[misc, assignment]
+    async_playwright = None  # type: ignore[misc, assignment]
+    Playwright = None  # type: ignore[misc, assignment]
+
 from pydantic import BaseModel
+
+_PLAYWRIGHT_REQUIRED_MSG = (
+    "Playwright is required for browser agent. "
+    "Install it with: pip install wuying-agentbay-sdk[playwright] or poetry install --with playwright"
+)
 
 from agentbay import AsyncAgentBay
 from agentbay import get_logger
@@ -75,6 +86,8 @@ class PageAgent:
                     endpoint_url = await self.session.browser.get_endpoint_url()
                     _logger.info(f"endpoint_url = {endpoint_url}")
 
+                    if async_playwright is None:
+                        raise RuntimeError(_PLAYWRIGHT_REQUIRED_MSG)
                     self.playwright = await async_playwright().start()
                     self.browser = await self.playwright.chromium.connect_over_cdp(
                         endpoint_url
@@ -229,7 +242,7 @@ class PageAgent:
                     "Session is not initialized. Call initialize() first."
                 )
 
-            await self.session.browser.agent.navigate(url)
+            await self.session.browser.operator.navigate(url)
             return f"Successfully navigated to {url}"
         except Exception as e:
             _logger.error(f"Error in navigate: {e}", exc_info=True)
@@ -242,7 +255,7 @@ class PageAgent:
                     "Session is not initialized. Call initialize() first."
                 )
 
-            data_url_or_error = await self.session.browser.agent.screenshot()
+            data_url_or_error = await self.session.browser.operator.screenshot()
             if data_url_or_error.startswith("screenshot failed:"):
                 _logger.error(data_url_or_error)
                 return data_url_or_error
@@ -293,7 +306,7 @@ class PageAgent:
                 selector=selector,
             )
 
-            success, extracted_data = await self.session.browser.agent.extract(
+            success, extracted_data = await self.session.browser.operator.extract(
                 options=options, page=self.current_page
             )
             if not success or extracted_data is None:
@@ -329,7 +342,7 @@ class PageAgent:
                 instruction=instruction,
                 use_vision=use_vision,
             )
-            _, observed_elements = await self.session.browser.agent.observe(
+            _, observed_elements = await self.session.browser.operator.observe(
                 options=options, page=self.current_page
             )
             return observed_elements
@@ -368,11 +381,11 @@ class PageAgent:
                     action=action_input,
                     use_vision=use_vision,
                 )
-                return await self.session.browser.agent.act(
+                return await self.session.browser.operator.act(
                     action_input=options, page=self.current_page
                 )
             else:
-                return await self.session.browser.agent.act(
+                return await self.session.browser.operator.act(
                     action_input=action_input, page=self.current_page
                 )
         except Exception as e:

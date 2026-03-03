@@ -10,6 +10,7 @@ import (
 // MockSessionForComputer is a mock implementation of the session interface for Computer/Mobile testing
 type MockSessionForComputer struct {
 	mock.Mock
+	LinkUrl string
 }
 
 // GetAPIKey returns the API key
@@ -28,6 +29,15 @@ func (m *MockSessionForComputer) GetClient() *mcp.Client {
 func (m *MockSessionForComputer) GetSessionId() string {
 	args := m.Called()
 	return args.String(0)
+}
+
+// GetLinkUrl returns the link url for direct tool calls.
+// Default behavior for unit tests: empty string.
+//
+// NOTE: We intentionally do NOT use testify's Called() here because most unit tests
+// do not care about LinkUrl routing, and enforcing an expectation would make tests brittle.
+func (m *MockSessionForComputer) GetLinkUrl() string {
+	return m.LinkUrl
 }
 
 // IsVpc returns whether this session uses VPC resources

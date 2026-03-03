@@ -25,6 +25,7 @@ Main class for interacting with the AgentBay cloud runtime environment.
 
 ```typescript
 betaNetwork: [`BetaNetworkService`](../advanced/network.md)
+betaSkills: `BetaSkillsService`
 client: ``Client``
 context: [`ContextService`](context.md)
 network: [`BetaNetworkService`](../advanced/network.md)
@@ -38,6 +39,9 @@ network: [`BetaNetworkService`](../advanced/network.md)
 ▸ **betaPauseAsync**(`session`, `timeout?`, `pollInterval?`): `Promise`\<`SessionPauseResult`\>
 
 Asynchronously pause a session, putting it into a dormant state.
+
+**Note**: This feature is currently in whitelist-only access.
+Contact agentbay_dev@alibabacloud.com to request access.
 
 This method directly calls the PauseSessionAsync API without waiting for the session
 to reach the PAUSED state.
@@ -137,7 +141,7 @@ Creates a new AgentBay session with specified configuration.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `params` | [`CreateSessionParams`](session-params.md) | Configuration parameters for the session: - labels: Key-value pairs for session metadata - imageId: Custom image ID for the session environment - contextSync: Array of context synchronization configurations - browserContext: Browser-specific context configuration - policyId: Security policy ID - enableBrowserReplay: Enable browser session recording - extraConfigs: Additional configuration options - framework: Framework identifier for tracking |
+| `params` | ``CreateSessionParamsInterface`` | Configuration parameters for the session: - labels: Key-value pairs for session metadata - imageId: Custom image ID for the session environment - contextSync: Array of context synchronization configurations - browserContext: Browser-specific context configuration - policyId: Security policy ID - enableBrowserReplay: Enable browser session recording - extraConfigs: Additional configuration options - framework: Framework identifier for tracking |
 
 #### Returns
 
@@ -269,7 +273,7 @@ SessionListResult - Paginated list of session IDs that match the labels and stat
 const agentBay = new AgentBay({ apiKey: "your_api_key" });
 const result = await agentBay.list({ project: "demo" }, 1, 10, "RUNNING");
 if (result.success) {
-  console.log(`Found ${result.sessionIds.length} sessions`);
+ log(`Found ${result.sessionIds.length} sessions`);
 }
 ```
 

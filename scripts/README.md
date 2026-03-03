@@ -237,8 +237,8 @@ Generate `llms.txt` and `llms-full.txt` files for AI coding assistants (Claude, 
 
 **Purpose:**
 These files provide context to AI assistants when helping with code development ("vibe coding"):
-- `llms.txt`: Concise index with links to documentation (~900 tokens)
-- `llms-full.txt`: Complete documentation content (~140k tokens)
+- `llms.txt`: Concise overview with READMEs and config (~14k tokens)
+- `llms-full.txt`: Core SDK source + API docs + examples + guides (~210k tokens)
 
 **Usage:**
 
@@ -252,33 +252,23 @@ Custom output directory:
 python scripts/build_llms_txt.py --out-root /path/to/output
 ```
 
-Adjust token limits:
-```bash
-python scripts/build_llms_txt.py --index-limit 100000 --full-limit 1000000
-```
+**Tiered knowledge construction:**
+- **Tier 1** (20K chars/file): Core SDK public API source files (Python async, TypeScript, Go)
+- **Tier 2** (12K chars/file): API reference documentation summaries
+- **Tier 3** (8K chars/file): Key examples and developer guides
+- **Tier 4** (5K chars/file): READMEs and project configuration
 
-**What gets included:**
-- Main repository README
-- All documentation from `docs/` directory
-- Language-specific documentation (Python, TypeScript, Golang)
-- API references for all languages
-- Cookbook examples
+Truncated source files automatically include a method/function signature index
+so LLMs can discover the full API surface even when file bodies are cut short.
 
-**Automatic exclusions:**
-- `node_modules/` directories
-- `__pycache__/` directories
-- `.git/` directories
-- `venv/` and `test_venv/` directories
+**Key design decisions:**
+- Only async Python code is included (`_sync/` is auto-generated and excluded)
+- ~96 carefully selected files instead of the entire repository
+- No external dependencies required (pure Python 3.9+)
+- Generates in <0.1 seconds
 
 **Dependencies:**
-- Python 3.9+
-- Optional: `markdown` and `beautifulsoup4` for better text conversion
-  ```bash
-  pip install markdown beautifulsoup4
-  ```
-- Optional: `tiktoken` for accurate token counting
-  ```bash
-  pip install tiktoken
+- Python 3.9+ (no additional packages required)
   ```
 
 **How to use the generated files:**
@@ -293,4 +283,4 @@ In your AI coding assistant (e.g., Cursor), reference these files as context:
 - For Python: Python with flake8, black, bandit, and pip-audit
 - For Golang: Go with necessary tools (gofmt, golint, gosec, govulncheck)
 - For Documentation Check: Python 3.6+ (no external dependencies)
-- For AI Context Files: Python 3.9+ (optional: markdown, beautifulsoup4, tiktoken)
+- For AI Context Files: Python 3.9+ (no external dependencies)

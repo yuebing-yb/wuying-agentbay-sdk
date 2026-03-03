@@ -207,11 +207,8 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIn("Network error", result.error_message)
 
-    @patch("httpx.Client")
     @pytest.mark.sync
-    def test_call_mcp_tool_link_url_success_uses_session_tool_list(
-        self, mock_httpx_client
-    ):
+    def test_call_mcp_tool_link_url_success_uses_session_tool_list(self):
         """Test LinkUrl mode uses server resolved from session tool list."""
         self.session.link_url = "http://127.0.0.1:9999/"
         self.session.token = "link_token_123"
@@ -231,11 +228,10 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         mock_resp.text = ""
 
         mock_client_instance = MagicMock()
-        mock_httpx_client.return_value.__enter__ = MagicMock(
+        mock_client_instance.post = MagicMock(return_value=mock_resp)
+        self.session._get_link_http_client = MagicMock(
             return_value=mock_client_instance
         )
-        mock_httpx_client.return_value.__exit__ = MagicMock(return_value=None)
-        mock_client_instance.post = MagicMock(return_value=mock_resp)
 
         result = self.session.call_mcp_tool(
             "shell",
@@ -250,10 +246,9 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         self.assertEqual(call_kwargs["headers"]["X-Access-Token"], "link_token_123")
 
     @patch("agentbay._sync.session._log_api_response_with_details")
-    @patch("httpx.Client")
     @pytest.mark.sync
     def test_call_mcp_tool_link_url_success_logs_response_info(
-        self, mock_httpx_client, mock_log_api_response
+        self, mock_log_api_response
     ):
         """Success responses should log business data at INFO level."""
         self.session.link_url = "http://127.0.0.1:9999/"
@@ -274,11 +269,10 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         mock_resp.text = ""
 
         mock_client_instance = MagicMock()
-        mock_httpx_client.return_value.__enter__ = MagicMock(
+        mock_client_instance.post = MagicMock(return_value=mock_resp)
+        self.session._get_link_http_client = MagicMock(
             return_value=mock_client_instance
         )
-        mock_httpx_client.return_value.__exit__ = MagicMock(return_value=None)
-        mock_client_instance.post = MagicMock(return_value=mock_resp)
 
         result = self.session.call_mcp_tool(
             "shell",

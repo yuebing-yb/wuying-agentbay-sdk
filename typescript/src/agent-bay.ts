@@ -9,6 +9,7 @@ import type { McpTool } from "./session";
 import { Client } from "./api/client";
 
 import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
+import type { ConfigOptions } from "./config";
 import { ContextService } from "./context";
 import { BetaNetworkService } from "./beta-network";
 import { BetaSkillsService } from "./beta-skills";
@@ -95,7 +96,7 @@ export class AgentBay {
   constructor(
     options: {
       apiKey?: string;
-      config?: Config;
+      config?: ConfigOptions;
       envFile?: string;
     } = {}
   ) {
@@ -319,8 +320,14 @@ export class AgentBay {
         (request as any).networkId = (paramsCopy as any).betaNetworkId;
       }
 
+      // SDK idle release timeout (seconds)
+      if ((paramsCopy as any).idleReleaseTimeout !== undefined && (paramsCopy as any).idleReleaseTimeout !== null && (paramsCopy as any).idleReleaseTimeout > 0) {
+        (request as any).timeout = (paramsCopy as any).idleReleaseTimeout;
+      }
+
       // Flag to indicate if we need to wait for context synchronization
       let needsContextSync = false;
+      const waitContextIds = new Set<string>();
 
       // Flag to indicate if we need to wait for mobile simulate
       let needsMobileSim = false;
@@ -342,6 +349,9 @@ export class AgentBay {
           }
 
           persistenceDataList.push(persistenceItem);
+          if ((contextSync as any).betaWaitForCompletion !== false) {
+            waitContextIds.add(contextSync.contextId);
+          }
         }
         request.persistenceDataList = persistenceDataList;
         needsContextSync = persistenceDataList.length > 0;
@@ -371,6 +381,7 @@ export class AgentBay {
         }
         request.persistenceDataList.push(browserContextSync);
         needsContextSync = true;
+        waitContextIds.add(paramsCopy.browserContext.contextId);
       }
 
       // Add extra configs if provided
@@ -513,6 +524,7 @@ export class AgentBay {
       // LinkUrl/token may be returned by the server for direct tool calls.
       session.token = data.token || "";
       session.linkUrl = data.linkUrl || "";
+      session.wsUrl = data.wsUrl || "";
       session.mcpTools = this.parseToolListToMcpTools(data.toolList);
 
       // Set browser recording state
@@ -539,7 +551,7 @@ export class AgentBay {
       }
 
       // If we have persistence data, wait for context synchronization
-      if (needsContextSync) {
+      if (needsContextSync && waitContextIds.size > 0) {
         logDebug("Waiting for context synchronization to complete...");
 
         // Exponential backoff configuration
@@ -558,17 +570,15 @@ export class AgentBay {
             // Get context status data
             const infoResult = await session.context.info();
 
-            // Check if all context items have status "Success" or "Failed"
-            let allCompleted = true;
             let hasFailure = false;
+            const statusByContextId = new Map<string, string>();
 
             for (const item of infoResult.contextStatusData) {
-              logDebug(`Context ${item.contextId} status: ${item.status}, path: ${item.path}`);
-
-              if (item.status !== "Success" && item.status !== "Failed") {
-                allCompleted = false;
-                break;
+              if (!waitContextIds.has(item.contextId)) {
+                continue;
               }
+              statusByContextId.set(item.contextId, item.status);
+              logDebug(`Context ${item.contextId} status: ${item.status}, path: ${item.path}`);
 
               if (item.status === "Failed") {
                 hasFailure = true;
@@ -576,7 +586,16 @@ export class AgentBay {
               }
             }
 
-            if (allCompleted || infoResult.contextStatusData.length === 0) {
+            let allCompleted = true;
+            for (const ctxId of waitContextIds) {
+              const st = statusByContextId.get(ctxId);
+              if (!st || (st !== "Success" && st !== "Failed")) {
+                allCompleted = false;
+                break;
+              }
+            }
+
+            if (allCompleted) {
               if (hasFailure) {
                 logDebug("Context synchronization completed with failures");
               } else {
@@ -939,7 +958,8 @@ export class AgentBay {
           }
         }
 
-        result.data = {
+        const wsUrl = (body.data as any).wsUrl || "";
+        const data = {
           appInstanceId: body.data.appInstanceId || "",
           resourceId: body.data.resourceId || "",
           sessionId: body.data.sessionId || "",
@@ -947,21 +967,24 @@ export class AgentBay {
           httpPort: body.data.httpPort || "",
           networkInterfaceIp: body.data.networkInterfaceIp || "",
           token: body.data.token || "",
+          linkUrl: (body.data as any).linkUrl || "",
+          wsUrl,
           vpcResource: body.data.vpcResource || false,
           resourceUrl: body.data.resourceUrl || "",
           status: body.data.status || "",
           toolList: body.data.toolList || "",
           contexts: contexts.length > 0 ? contexts : undefined,
         };
+        result.data = data;
 
         logAPIResponseWithDetails(
           "GetSession",
           requestId,
           true,
           {
-            sessionId: result.data.sessionId,
-            resourceId: result.data.resourceId,
-            httpPort: result.data.httpPort,
+            sessionId: data.sessionId,
+            resourceId: data.resourceId,
+            httpPort: data.httpPort,
           }
         );
       }
@@ -1051,6 +1074,8 @@ export class AgentBay {
     if (getResult.data) {
       session.resourceUrl = getResult.data.resourceUrl;
       session.token = getResult.data.token || "";
+      session.linkUrl = getResult.data.linkUrl || "";
+      session.wsUrl = getResult.data.wsUrl || "";
       session.mcpTools = this.parseToolListToMcpTools(getResult.data.toolList);
     }
 
@@ -1096,6 +1121,9 @@ export class AgentBay {
 
   /**
    * Asynchronously pause a session, putting it into a dormant state.
+   *
+   * **Note**: This feature is currently in whitelist-only access.
+   * Contact agentbay_dev@alibabacloud.com to request access.
    *
    * This method directly calls the PauseSessionAsync API without waiting for the session
    * to reach the PAUSED state.
@@ -1237,6 +1265,7 @@ export class AgentBay {
       result = {
         labels: params.labels,
         imageId: params.imageId,
+        idleReleaseTimeout: (params as any).idleReleaseTimeout,
         contextSync: params.contextSync, // Already contains merged extension contexts
         browserContext: params.browserContext,
         isVpc: params.isVpc,
@@ -1269,7 +1298,7 @@ export class AgentBay {
       if (result.contextSync && Array.isArray(result.contextSync)) {
         result.contextSync = result.contextSync.map((cs: any) => {
           // Reconstruct from plain object (JSON.parse converts class instances to plain objects)
-          return new ContextSync(cs.contextId, cs.path, cs.policy);
+          return new ContextSync(cs.contextId, cs.path, cs.policy, cs.betaWaitForCompletion);
         });
       }
 

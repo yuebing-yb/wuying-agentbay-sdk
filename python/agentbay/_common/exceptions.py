@@ -8,6 +8,10 @@ class AgentBayError(Exception):
         self.extra = kwargs
 
 
+class WsCancelledError(AgentBayError):
+    """Raised when a WS stream is cancelled by the caller."""
+
+
 class AuthenticationError(AgentBayError):
     """Raised when there is an authentication error."""
 

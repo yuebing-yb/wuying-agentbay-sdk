@@ -37,17 +37,17 @@ def main():
             print("Browser init failed")
             return
 
-        agent = session.browser.agent
+        operator = session.browser.operator
 
-        agent.navigate("https://work.aliyun-inc.com/")
-        agent.act(
+        operator.navigate("https://work.aliyun-inc.com/")
+        operator.act(
             ActOptions(
                 action="帮我登陆",
                 variables={"用户名": "xxx", "密码": "123456"},
             )
         )
-        agent.act(ActOptions(action="点击报销链接或按钮"))
-        agent.act(ActOptions(action="在报销单列表中点击第一个项目"))
+        operator.act(ActOptions(action="点击报销链接或按钮"))
+        operator.act(ActOptions(action="在报销单列表中点击第一个项目"))
 
         invoices = [
             "/Users/user/Desktop/20250711114033.pdf",
@@ -55,19 +55,19 @@ def main():
             "/Users/user/Desktop/20250711114035.pdf",
         ]
         for path in invoices:
-            agent.act(
+            operator.act(
                 ActOptions(action="在快速新增费用列表中选择'差旅-餐费'")
             )
-            agent.act(ActOptions(action="点击'上传电子发票'按钮"))
-            agent.act(ActOptions(action=f"上传位于 '{path}' 的文件"))
-            agent.act(ActOptions(action="点击'保存'按钮"))
+            operator.act(ActOptions(action="点击'上传电子发票'按钮"))
+            operator.act(ActOptions(action=f"上传位于 '{path}' 的文件"))
+            operator.act(ActOptions(action="点击'保存'按钮"))
 
-        agent.act(ActOptions(action="点击提交报销单"))
+        operator.act(ActOptions(action="点击提交报销单"))
         time.sleep(3)
     finally:
         if session is not None:
             try:
-                session.browser.agent.close()
+                session.browser.operator.close()
             except Exception:
                 pass
             agent_bay.delete(session)

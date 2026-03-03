@@ -14,6 +14,7 @@ export class CreateMcpSessionResponseBodyData extends $dara.Model {
   success?: boolean;
   token?: string;
   toolList?: string;
+  wsUrl?: string;
   vpcResource?: boolean;
   static names(): { [key: string]: string } {
     return {
@@ -28,6 +29,7 @@ export class CreateMcpSessionResponseBodyData extends $dara.Model {
       success: 'Success',
       token: 'Token',
       toolList: 'ToolList',
+      wsUrl: 'WsUrl',
       vpcResource: 'VpcResource',
     };
   }
@@ -45,6 +47,7 @@ export class CreateMcpSessionResponseBodyData extends $dara.Model {
       success: 'boolean',
       token: 'string',
       toolList: 'string',
+      wsUrl: 'string',
       vpcResource: 'boolean',
     };
   }

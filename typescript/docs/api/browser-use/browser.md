@@ -6,8 +6,7 @@
 
 ## Overview
 
-The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
-screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
 
 
 ## Requirements
@@ -37,7 +36,7 @@ screenshot capture, and content extraction. It enables automated testing and web
 ## Properties
 
 ```typescript
-agent: [`BrowserAgent`](browser-agent.md)
+operator: [`BrowserOperator`](browser-operator.md)
 ```
 
 

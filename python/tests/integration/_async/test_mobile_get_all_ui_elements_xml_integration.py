@@ -9,7 +9,7 @@ import pytest_asyncio
 from agentbay import AsyncAgentBay, CreateSessionParams
 
 
-IMAGE_ID = "imgc-0ab5ta4mn31wth5lh"
+IMAGE_ID = "mobile-use-android-12-gw"
 
 
 @pytest_asyncio.fixture(scope="module")

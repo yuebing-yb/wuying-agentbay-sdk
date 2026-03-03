@@ -279,9 +279,9 @@ describe('BrowserProxy Integration Tests', () => {
 
   test('should handle proxy validation errors', () => {
     // Test invalid proxy type
-    expect(() => {
-      new BrowserProxyClass('invalid');
-    }).toThrow('proxy_type must be custom or wuying');
+    expect(() => { 
+      new BrowserProxyClass({ proxyType: 'invalid' });
+     }).toThrow('proxy_type must be custom, wuying, or managed');
 
     // Test custom proxy without server
     expect(() => {

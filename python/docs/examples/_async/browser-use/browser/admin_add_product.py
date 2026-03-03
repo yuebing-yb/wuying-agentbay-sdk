@@ -22,10 +22,10 @@ async def main():
     session = session_result.session
     try:
         assert await session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
+        operator = session.browser.operator
 
-        await agent.navigate("http://116.62.195.152:3000")
-        await agent.act(
+        await operator.navigate("http://116.62.195.152:3000")
+        await operator.act(
             ActOptions(
                 action="填写表单",
                 variables={
@@ -38,9 +38,9 @@ async def main():
                 },
             )
         )
-        await agent.act(ActOptions(action="点击提交/保存按钮"))
+        await operator.act(ActOptions(action="点击提交/保存按钮"))
         await asyncio.sleep(2)
-        await agent.close()
+        await operator.close()
     finally:
         await agent_bay.delete(session)
 

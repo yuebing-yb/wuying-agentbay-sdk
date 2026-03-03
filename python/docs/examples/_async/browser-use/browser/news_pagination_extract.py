@@ -15,6 +15,7 @@ from agentbay import AsyncAgentBay as AgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
 from agentbay import ActOptions, ExtractOptions
+import json
 
 
 class PageLinkItem(BaseModel):
@@ -40,25 +41,31 @@ async def main():
 
     try:
         assert await session.browser.initialize(BrowserOption())
-        agent = session.browser.agent
-        await agent.navigate(url="https://www.baidu.com/")
+        operator = session.browser.operator
+        await operator.navigate(url="https://www.baidu.com/")
 
-        await agent.act(ActOptions(action="搜索框输入小米手机，并回车"))
-        await agent.act(ActOptions(action="点击 资讯（或 新闻/资讯 tab）"))
+        await operator.act(ActOptions(action="搜索框输入小米手机，并回车"))
+        await operator.act(ActOptions(action="点击 资讯（或 新闻/资讯 tab）"))
 
-        ok, results = await agent.extract(
+        ok, results = await operator.extract(
             ExtractOptions(
                 instruction="提取搜索结果中所有的标题和链接",
                 schema=PageLinkList,
                 max_page=6,
             )
         )
-        assert ok, "extract failed"
-
-        logger.info("Final extract results count=%d", len(results.results))
+        if not ok:
+            print(f"Failed to extract: {results}")
+            try:
+                parsed_results = json.loads(results)
+                logger.info("Final extract results count=%d", len(parsed_results.results))
+            except Exception as e:
+                logger.error(f"Failed to parse non-standard JSON: {e}")
+        else:
+            logger.info("Final extract results count=%d", len(results.results))
 
         await asyncio.sleep(1)
-        await agent.close()
+        await operator.close()
 
     finally:
         await agent_bay.delete(session)

@@ -50,6 +50,12 @@ public class CreateMcpSessionShrinkRequest extends TeaModel {
     @NameInMap("VpcResource")
     public Boolean vpcResource;
 
+    @NameInMap("ExtraConfigs")
+    public String extraConfigs;
+
+    @NameInMap("Timeout")
+    public Integer timeout;
+
     public static CreateMcpSessionShrinkRequest build(java.util.Map<String, ?> map) throws Exception {
         CreateMcpSessionShrinkRequest self = new CreateMcpSessionShrinkRequest();
         return TeaModel.build(map, self);
@@ -165,6 +171,22 @@ public class CreateMcpSessionShrinkRequest extends TeaModel {
     }
     public Boolean getVpcResource() {
         return this.vpcResource;
+    }
+
+    public CreateMcpSessionShrinkRequest setExtraConfigs(String extraConfigs) {
+        this.extraConfigs = extraConfigs;
+        return this;
+    }
+    public String getExtraConfigs() {
+        return this.extraConfigs;
+    }
+
+    public CreateMcpSessionShrinkRequest setTimeout(Integer timeout) {
+        this.timeout = timeout;
+        return this;
+    }
+    public Integer getTimeout() {
+        return this.timeout;
     }
 
 }

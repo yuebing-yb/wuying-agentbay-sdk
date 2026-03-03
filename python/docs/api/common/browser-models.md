@@ -8,8 +8,7 @@
 
 ## Overview
 
-The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,
-screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
+The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
 
 
 ## Requirements
@@ -54,17 +53,17 @@ class BrowserProxy()
 Browser proxy configuration.
 Supports three types of proxy: custom proxy, wuying proxy, and managed proxy.
 
-- **custom proxy**: User-provided proxy server
-- **wuying proxy**: Wuying built-in proxy service
-  * restricted: Fixed IP per session
-  * polling: Allocates multiple proxies per session (size controlled by pollsize)
-- **managed proxy**: Client-provided proxies managed by Wuying platform (requires setup - contact us)
-  * polling: Allocates one proxy per session from pool (round-robin)
-  * sticky: Keep same IP for specific user
-  * rotating: Force different IP for specific user
-  * matched: Filter proxies by ISP/country/province/city attributes
+- custom proxy: User-provided proxy server
+- wuying proxy: Wuying built-in proxy service
+* restricted: Fixed IP per session
+* polling: Allocates multiple proxies per session (size controlled by pollsize)
+- managed proxy: Client-provided proxies managed by Wuying platform
+* polling: Allocates one proxy per session from pool (round-robin)
+* sticky: Keep same IP for specific user
+* rotating: Force different IP for specific user
+* matched: Filter proxies by ISP/country/province/city attributes
 
-> **Note**: To use managed proxy, please contact us or your account manager to set up your proxy pool first.
+Note: The "polling" strategy has different semantics for wuying vs managed types.
 
 ### __init__
 
@@ -73,7 +72,8 @@ def __init__(self, proxy_type: Literal["custom", "wuying", "managed"],
              server: Optional[str] = None,
              username: Optional[str] = None,
              password: Optional[str] = None,
-             strategy: Optional[Literal["restricted", "polling", "sticky", "rotating", "matched"]] = None,
+             strategy: Optional[Literal["restricted", "polling", "sticky",
+                                        "rotating", "matched"]] = None,
              pollsize: int = 10,
              user_id: Optional[str] = None,
              isp: Optional[str] = None,
@@ -91,62 +91,75 @@ Initialize a BrowserProxy.
     username: Proxy username (optional for custom type)
     password: Proxy password (optional for custom type)
     strategy: Proxy allocation strategy:
-        - For wuying: "restricted" (fixed IP) or "polling" (allocates multiple proxies per session)
-        - For managed: "polling" (allocates one proxy per session from pool), 
-                       "sticky" (keep same IP for user), 
-                       "rotating" (force different IP for user), 
-                       "matched" (filter by ISP/country/province/city attributes)
+  - For wuying: "restricted" (fixed IP) or "polling" (allocates multiple proxies per session)
+  - For managed: "polling" (allocates one proxy per session from pool),
+  "sticky" (keep same IP for user),
+  "rotating" (force different IP for user),
+  "matched" (filter by ISP/country/province/city attributes)
     pollsize: Pool size for wuying polling strategy (default: 10). Not used for managed type.
     user_id: Custom user identifier for tracking proxy allocation records (required for managed type).
-             - sticky/rotating strategies: Associates with historical allocations to maintain or rotate IPs per user
-             - polling/matched strategies: Each session gets an independent allocation
+  - sticky/rotating strategies: Associates with historical allocations to maintain or rotate IPs per user
+  - polling/matched strategies: Each session gets an independent allocation
     isp: ISP filter for managed matched strategy (e.g., "China Telecom", "China Unicom")
     country: Country filter for managed matched strategy (e.g., "China", "United States")
     province: Province filter for managed matched strategy (e.g., "Beijing", "Guangdong")
     city: City filter for managed matched strategy (e.g., "Beijing", "Shenzhen")
   
+
 **Examples**:
 
-```python
-# Custom proxy
-proxy_type: custom
-server: "127.0.0.1:9090"
-username: "username"
-password: "password"
-
-# Wuying proxy with polling strategy
-proxy_type: wuying
-strategy: "polling"
-pollsize: 10
-
-# Wuying proxy with restricted strategy
-proxy_type: wuying
-strategy: "restricted"
-
-# Managed proxy with polling strategy
-proxy_type: managed
-strategy: "polling"
-user_id: "user123"
-
-# Managed proxy with sticky strategy
-proxy_type: managed
-strategy: "sticky"
-user_id: "user123"
-
-# Managed proxy with rotating strategy
-proxy_type: managed
-strategy: "rotating"
-user_id: "user123"
-
-# Managed proxy with matched strategy
-proxy_type: managed
-strategy: "matched"
-user_id: "user123"
-isp: "China Telecom"
-country: "China"
-province: "Beijing"
-city: "Beijing"
-```
+  # Custom proxy
+  BrowserProxy(
+  proxy_type="custom",
+  server="127.0.0.1:9090",
+  username="username",
+  password="password"
+  )
+  
+  # Wuying proxy with polling strategy
+  BrowserProxy(
+  proxy_type="wuying",
+  strategy="polling",
+  pollsize=10
+  )
+  
+  # Wuying proxy with restricted strategy
+  BrowserProxy(
+  proxy_type="wuying",
+  strategy="restricted"
+  )
+  
+  # Managed proxy with polling strategy (pool-based, one proxy per session)
+  BrowserProxy(
+  proxy_type="managed",
+  strategy="polling",
+  user_id="user123"
+  )
+  
+  # Managed proxy with sticky strategy (user-based, keep same IP)
+  BrowserProxy(
+  proxy_type="managed",
+  strategy="sticky",
+  user_id="user123"
+  )
+  
+  # Managed proxy with rotating strategy (user-based, force new IP)
+  BrowserProxy(
+  proxy_type="managed",
+  strategy="rotating",
+  user_id="user123"
+  )
+  
+  # Managed proxy with matched strategy (pool-based, attribute filter)
+  BrowserProxy(
+  proxy_type="managed",
+  strategy="matched",
+  user_id="user123",
+  isp="China Telecom",
+  country="China",
+  province="Guangdong",
+  city="Shenzhen"
+  )
 
 ## BrowserViewport
 

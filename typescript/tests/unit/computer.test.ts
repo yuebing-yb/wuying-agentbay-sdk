@@ -10,6 +10,7 @@ import { Session } from '../../src/session';
 interface MockSession {
   callMcpTool: jest.Mock;
   getAPIKey: () => string;
+  getLinkUrl: jest.Mock;
   sessionId: string;
 }
 
@@ -21,6 +22,7 @@ describe('Computer', () => {
     mockSession = {
       callMcpTool: jest.fn(),
       getAPIKey: () => 'test-api-key',
+      getLinkUrl: jest.fn(() => ''),
       sessionId: 'test-session-id'
     };
     computer = new Computer(mockSession as any);
@@ -267,6 +269,7 @@ describe('Computer', () => {
   describe('Screen Operations', () => {
     test('betaTakeScreenshot should call MCP tool and return JPEG bytes', async () => {
       // Arrange
+      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
       const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
       const payload = Buffer.concat([jpgHeader, Buffer.from('jpegpayload')]).toString('base64');
       const mockResult = {
@@ -290,7 +293,8 @@ describe('Computer', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'jpeg' }, false);
       expect(result.success).toBe(true);
       expect(result.requestId).toBe('test-beta-jpg-123');
-      expect(result.format).toBe('jpeg');
+      expect(result.type).toBe('image');
+      expect(result.mimeType).toBe('image/jpeg');
       expect(result.width).toBe(1280);
       expect(result.height).toBe(720);
       expect(Buffer.from(result.data).slice(0, 3).equals(jpgHeader)).toBe(true);
@@ -298,6 +302,7 @@ describe('Computer', () => {
 
     test('betaTakeScreenshot should reject non-JSON payloads', async () => {
       // Arrange
+      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
       const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
       const payload = Buffer.concat([jpgHeader, Buffer.from('jpegpayload')]).toString('base64');
       const mockResult = {
@@ -427,7 +432,7 @@ describe('Computer', () => {
       expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_installed_apps', {
         start_menu: true,
         desktop: false,
-        ignore_system_apps: true
+        ignore_system_app: true
       }, false);
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);

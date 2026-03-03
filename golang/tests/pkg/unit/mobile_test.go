@@ -314,9 +314,9 @@ func (suite *MobileTestSuite) TestGetInstalledApps_Success() {
 	}
 
 	suite.mockSession.On("CallMcpTool", "get_installed_apps", map[string]interface{}{
-		"start_menu":         false,
-		"desktop":            true,
-		"ignore_system_apps": true,
+		"start_menu":        false,
+		"desktop":           true,
+		"ignore_system_app": true,
 	}).Return(expectedResult, nil)
 
 	// Act
@@ -445,6 +445,7 @@ func (suite *MobileTestSuite) TestScreenshot_Success() {
 
 func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 	// Arrange
+	suite.mockSession.LinkUrl = "https://dummy-link-url"
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
@@ -467,7 +468,8 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 	// Assert
 	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-screenshot", result.RequestID)
-	assert.Equal(suite.T(), "png", result.Format)
+	assert.Equal(suite.T(), "image", result.Type)
+	assert.Equal(suite.T(), "image/png", result.MimeType)
 	if assert.NotNil(suite.T(), result.Width) {
 		assert.Equal(suite.T(), 720, *result.Width)
 	}
@@ -480,6 +482,7 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_SuccessPng() {
 
 func (suite *MobileTestSuite) TestBetaTakeScreenshot_AcceptsJsonPayload() {
 	// Arrange
+	suite.mockSession.LinkUrl = "https://dummy-link-url"
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
@@ -502,13 +505,15 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_AcceptsJsonPayload() {
 	// Assert
 	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-screenshot-json", result.RequestID)
-	assert.Equal(suite.T(), "png", result.Format)
+	assert.Equal(suite.T(), "image", result.Type)
+	assert.Equal(suite.T(), "image/png", result.MimeType)
 	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
 	assert.Empty(suite.T(), result.ErrorMessage)
 }
 
 func (suite *MobileTestSuite) TestBetaTakeScreenshot_RejectsNonJsonPayload() {
 	// Arrange
+	suite.mockSession.LinkUrl = "https://dummy-link-url"
 	pngHeader := []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 	payload := append(append([]byte{}, pngHeader...), []byte("test")...)
 	encoded := base64.StdEncoding.EncodeToString(payload)
@@ -530,7 +535,6 @@ func (suite *MobileTestSuite) TestBetaTakeScreenshot_RejectsNonJsonPayload() {
 	// Assert
 	assert.False(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-screenshot-non-json", result.RequestID)
-	assert.Equal(suite.T(), "png", result.Format)
 	assert.Nil(suite.T(), result.Data)
 	assert.Contains(suite.T(), result.ErrorMessage, "failed to decode screenshot data")
 }
@@ -560,7 +564,8 @@ func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_SuccessPng() {
 	// Assert
 	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-long-screenshot", result.RequestID)
-	assert.Equal(suite.T(), "png", result.Format)
+	assert.Equal(suite.T(), "image", result.Type)
+	assert.Equal(suite.T(), "image/png", result.MimeType)
 	if assert.NotNil(suite.T(), result.Width) {
 		assert.Equal(suite.T(), 720, *result.Width)
 	}
@@ -595,7 +600,8 @@ func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_AcceptsJsonPayload() {
 	// Assert
 	assert.True(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-long-screenshot-json", result.RequestID)
-	assert.Equal(suite.T(), "png", result.Format)
+	assert.Equal(suite.T(), "image", result.Type)
+	assert.Equal(suite.T(), "image/png", result.MimeType)
 	assert.True(suite.T(), bytes.HasPrefix(result.Data, pngHeader))
 	assert.Empty(suite.T(), result.ErrorMessage)
 }
@@ -624,7 +630,6 @@ func (suite *MobileTestSuite) TestBetaTakeLongScreenshot_RejectsNonJsonPayload()
 	// Assert
 	assert.False(suite.T(), result.Success)
 	assert.Equal(suite.T(), "test-beta-long-screenshot-non-json", result.RequestID)
-	assert.Equal(suite.T(), "png", result.Format)
 	assert.Nil(suite.T(), result.Data)
 	assert.Contains(suite.T(), result.ErrorMessage, "failed to decode long screenshot data")
 }

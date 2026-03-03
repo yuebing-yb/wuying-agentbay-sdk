@@ -74,14 +74,19 @@ TEST_PATTERNS = [
     "oss.test.ts",             # TypeScript OSS test files
     "oss_test.go",             # Golang OSS test files
     "TestOss_",                # Golang OSS test function prefix
+    "OSSManagementIntegrationTest", # Java OSS integration test class suffix
     "test_agent_integration",   # Agent integration tests
     "agent-integration",        # Agent integration related tests
     "agent_test",              # Agent test files
     "test_browser_agent",      # Browser Agent tests
     "test_network_integration",
     "network_integration_test",
-    "network.integration.test"
-    
+    "network.integration.test",
+    # Image ID is not supported in CI/CD, requires local integration test execution
+    "WsRegisterCallbackIntegrationTest",
+    "RunCodeWsStreamingBetaIntegrationTest",
+    "WsStreamCancelIntegrationTest",
+    "AgentBayGetIntegrationTest"
 ]
 
 # State Definition
@@ -118,20 +123,31 @@ def should_skip_oss_test(test_id: str, skip_oss: bool = False) -> bool:
 def filter_oss_tests(test_ids: List[str], skip_oss: bool = False) -> List[str]:
     """过滤掉 OSS 测试"""
     if not skip_oss:
+        print(f"⚠️ skip_oss=False，不进行测试过滤")
         return test_ids
+    
+    print(f"🔍 开始过滤测试，skip_oss={skip_oss}")
+    print(f"📋 过滤模式列表: {TEST_PATTERNS}")
     
     filtered_tests = []
     skipped_count = 0
     
     for test_id in test_ids:
-        if should_skip_oss_test(test_id, skip_oss):
+        should_skip = should_skip_oss_test(test_id, skip_oss)
+        if should_skip:
             skipped_count += 1
-            print(f"⏭️ 跳过 OSS 测试: {test_id}")
+            print(f"⏭️ 跳过测试: {test_id}")
+            # 输出匹配的模式
+            for pattern in TEST_PATTERNS:
+                if pattern in test_id:
+                    print(f"   ✓ 匹配模式: {pattern}")
         else:
             filtered_tests.append(test_id)
     
     if skipped_count > 0:
-        print(f"📋 总共跳过 {skipped_count} 个 OSS 测试")
+        print(f"📋 总共跳过 {skipped_count} 个测试")
+    else:
+        print(f"📋 没有测试被跳过")
     
     return filtered_tests
 
@@ -168,6 +184,8 @@ def discover_tests(state: AgentState) -> AgentState:
             return discover_typescript_tests(state, pattern)
         elif test_type == "golang":
             return discover_golang_tests(state, pattern)
+        elif test_type == "java":
+            return discover_java_tests(state, pattern)
         elif test_type == "all":
             return discover_all_tests(state, pattern)
         else:
@@ -564,6 +582,132 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
             "test_type": "golang"
         }
 
+def discover_java_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
+    """发现Java集成测试"""
+    print("☕ 正在发现Java测试...")
+    
+    cwd = os.path.join(PROJECT_ROOT, "java", "agentbay")
+    
+    print(f"📂 Java工作目录: {cwd}")
+    print(f"🔍 目录存在: {os.path.exists(cwd)}")
+    
+    # 检查Maven是否安装，包括常见的安装路径
+    mvn_paths = ["mvn", "/usr/bin/mvn", "/usr/local/bin/mvn", "mvn.cmd"]
+    mvn_cmd = None
+    
+    for mvn_path in mvn_paths:
+        try:
+            mvn_version_result = subprocess.run([mvn_path, "--version"], capture_output=True, text=True, timeout=10)
+            if mvn_version_result.returncode == 0:
+                mvn_cmd = mvn_path
+                print(f"✅ Maven环境检查通过: {mvn_version_result.stdout.splitlines()[0]}")
+                print(f"✅ Maven路径: {mvn_cmd}")
+                break
+        except FileNotFoundError:
+            continue
+        except Exception as e:
+            print(f"⚠️ Maven路径 {mvn_path} 检查失败: {e}")
+            continue
+    
+    if mvn_cmd is None:
+        print("❌ Maven命令未找到")
+        print("💡 提示: 当前CI环境不支持Java测试，请使用python、typescript或golang测试类型")
+        print("🔍 检查的路径: " + ", ".join(mvn_paths))
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "java"
+        }
+    
+    # 检查pom.xml是否存在
+    pom_path = os.path.join(cwd, "pom.xml")
+    if not os.path.exists(pom_path):
+        print(f"❌ 未找到pom.xml: {pom_path}")
+        return {
+            "test_queue": [],
+            "current_test_index": 0,
+            "results": [],
+            "sdk_context": "",
+            "is_finished": True,
+            "specific_test_pattern": pattern,
+            "test_type": "java"
+        }
+    
+    # 直接扫描集成测试目录
+    integration_test_dir = os.path.join(cwd, "src", "integration-test", "java")
+    test_ids = []
+    
+    if os.path.exists(integration_test_dir):
+        print(f"📂 扫描集成测试目录: {integration_test_dir}")
+        for root, dirs, files in os.walk(integration_test_dir):
+            for file in files:
+                # 处理所有 .java 文件（集成测试目录下的所有 Java 文件都是测试）
+                if file.endswith('.java'):
+                    # 获取完整路径
+                    full_path = os.path.join(root, file)
+                    
+                    # 计算包名（相对于src/integration-test/java）
+                    rel_path = os.path.relpath(full_path, integration_test_dir)
+                    package_path = os.path.dirname(rel_path).replace(os.sep, '.')
+                    class_name = file[:-5]  # 移除.java后缀
+                    
+                    # 完整的测试类名
+                    if package_path:
+                        full_class_name = f"{package_path}.{class_name}"
+                    else:
+                        full_class_name = class_name
+                    
+                    # 检查是否应该跳过（匹配 TEST_PATTERNS）
+                    should_skip = False
+                    skip_oss = state.get("skip_oss", False)
+                    if skip_oss:
+                        for test_pattern in TEST_PATTERNS:
+                            if test_pattern in full_class_name or test_pattern in class_name:
+                                should_skip = True
+                                print(f"⏭️ 发现阶段跳过测试类: {full_class_name} (匹配模式: {test_pattern})")
+                                break
+                    
+                    # 如果不应该跳过，再应用用户的模式过滤
+                    if not should_skip and (not pattern or pattern.lower() in full_class_name.lower()):
+                        test_ids.append(f"java:{full_class_name}")
+        
+        print(f"✅ 在目录扫描中找到 {len(test_ids)} 个Java集成测试。")
+        if len(test_ids) > 0:
+            print("📋 测试类列表:")
+            for test_id in test_ids[:5]:  # 只显示前5个
+                print(f"   - {test_id}")
+            if len(test_ids) > 5:
+                print(f"   ... 还有 {len(test_ids) - 5} 个测试类")
+    else:
+        print(f"❌ 集成测试目录不存在: {integration_test_dir}")
+    
+    print(f"✅ 总共找到 {len(test_ids)} 个Java集成测试。")
+    
+    # Load SDK Context
+    context = ""
+    if os.path.exists(LLMS_FULL_PATH):
+        try:
+            with open(LLMS_FULL_PATH, "r", encoding="utf-8") as f:
+                context = f.read()
+            print(f"📚 已加载SDK上下文 ({len(context)} 字符)")
+        except Exception as e:
+            print(f"⚠️ 读取llms-full.txt失败: {e}")
+
+    return {
+        "test_queue": test_ids,
+        "current_test_index": 0,
+        "results": [],
+        "sdk_context": context,
+        "is_finished": False,
+        "specific_test_pattern": pattern,
+        "test_type": "java",
+        "skip_oss": state.get("skip_oss", False)
+    }
+
 def discover_all_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
     """发现所有语言的集成测试"""
     print("🌍 正在发现所有语言的测试...")
@@ -584,6 +728,10 @@ def discover_all_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
         # 发现Golang测试
         golang_state = discover_golang_tests(state, pattern)
         all_test_ids.extend(golang_state["test_queue"])
+        
+        # 发现Java测试
+        java_state = discover_java_tests(state, pattern)
+        all_test_ids.extend(java_state["test_queue"])
         
         print(f"✅ 总共找到 {len(all_test_ids)} 个测试。")
         
@@ -616,6 +764,8 @@ def execute_next_test(state: AgentState) -> AgentState:
         result = execute_typescript_test(test_id)
     elif test_id.startswith("golang:"):
         result = execute_golang_test(test_id)
+    elif test_id.startswith("java:"): 
+        result = execute_java_test(test_id)
     else:
         # 默认为Python测试
         result = execute_python_test(test_id)
@@ -634,12 +784,22 @@ def execute_next_test(state: AgentState) -> AgentState:
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
-        "test_type": state.get("test_type", "python")
+        "test_type": state["test_type"],
+        "skip_oss": state.get("skip_oss", False)
     }
 
 def execute_python_test(test_id: str) -> Dict[str, Any]:
     """执行Python测试"""
     print(f"🐍 执行Python测试: {test_id}")
+    
+    # 二次检查：确保不执行应该被跳过的测试
+    for pattern in TEST_PATTERNS:
+        if pattern in test_id:
+            print(f"⚠️ 安全防护：检测到测试 {test_id} 匹配跳过模式 '{pattern}'，跳过执行")
+            return {
+                "status": "passed",
+                "output": f"测试被跳过：匹配模式 '{pattern}'（安全防护机制）"
+            }
     
     cwd = os.path.join(PROJECT_ROOT, "python")
     env = os.environ.copy()
@@ -663,6 +823,15 @@ def execute_python_test(test_id: str) -> Dict[str, Any]:
 def execute_typescript_test(test_id: str) -> Dict[str, Any]:
     """执行TypeScript测试"""
     print(f"📜 执行TypeScript测试: {test_id}")
+    
+    # 二次检查：确保不执行应该被跳过的测试
+    for pattern in TEST_PATTERNS:
+        if pattern in test_id:
+            print(f"⚠️ 安全防护：检测到测试 {test_id} 匹配跳过模式 '{pattern}'，跳过执行")
+            return {
+                "status": "passed",
+                "output": f"测试被跳过：匹配模式 '{pattern}'（安全防护机制）"
+            }
     
     # 移除typescript:前缀
     actual_test_id = test_id[11:]  # len("typescript:") = 11
@@ -688,6 +857,15 @@ def execute_typescript_test(test_id: str) -> Dict[str, Any]:
 def execute_golang_test(test_id: str) -> Dict[str, Any]:
     """执行Golang测试"""
     print(f"🐹 执行Golang测试: {test_id}")
+    
+    # 二次检查：确保不执行应该被跳过的测试
+    for pattern in TEST_PATTERNS:
+        if pattern in test_id:
+            print(f"⚠️ 安全防护：检测到测试 {test_id} 匹配跳过模式 '{pattern}'，跳过执行")
+            return {
+                "status": "passed",
+                "output": f"测试被跳过：匹配模式 '{pattern}'（安全防护机制）"
+            }
     
     # 查找Go命令
     go_paths = ["go", "/usr/local/go/bin/go", "/usr/bin/go"]
@@ -734,6 +912,82 @@ def execute_golang_test(test_id: str) -> Dict[str, Any]:
     
     return {"status": status, "output": output}
 
+def execute_java_test(test_id: str) -> Dict[str, Any]:
+    """执行Java测试"""
+    print(f"☕ 执行Java测试: {test_id}")
+    
+    # 查找Maven命令
+    mvn_paths = ["mvn", "/usr/bin/mvn", "/usr/local/bin/mvn", "mvn.cmd"]
+    mvn_cmd = None
+    
+    for mvn_path in mvn_paths:
+        try:
+            subprocess.run([mvn_path, "--version"], capture_output=True, text=True, timeout=5)
+            mvn_cmd = mvn_path
+            break
+        except:
+            continue
+    
+    if mvn_cmd is None:
+        print("❌ 执行测试时未找到Maven命令")
+        return {"status": "failed", "output": "Maven命令未找到，无法执行测试"}
+    
+    # 移除java:前缀获取测试类名
+    actual_test_id = test_id[5:]  # len("java:") = 5
+    
+    cwd = os.path.join(PROJECT_ROOT, "java", "agentbay")
+    env = os.environ.copy()
+    
+    # Ensure AGENTBAY_API_KEY is present
+    if "AGENTBAY_API_KEY" not in env:
+        print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
+
+    # 构建集成测试的Maven命令
+    # 注意：此函数只处理集成测试，所有测试都来自 src/integration-test/java 目录
+    simple_class_name = actual_test_id.split('.')[-1] if '.' in actual_test_id else actual_test_id
+    
+    cmd = [mvn_cmd, "verify", "-Dsurefire.skip=true", f"-Dit.test={simple_class_name}"]
+    print(f"   📋 测试类型: 集成测试")
+    print(f"   🔧 使用 maven-failsafe-plugin")
+    print(f"   ⚠️ 使用 -Dsurefire.skip=true 跳过单元测试")
+    print(f"   📝 完全限定类名: {actual_test_id}")
+    print(f"   📝 简单类名: {simple_class_name}")
+    
+    print(f"   执行命令: {' '.join(cmd)}")
+    print(f"   工作目录: {cwd}")
+    
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
+    
+    # 输出详细的执行结果日志
+    print(f"   返回码: {result.returncode}")
+    print(f"   标准输出长度: {len(result.stdout)} 字符")
+    print(f"   标准错误长度: {len(result.stderr)} 字符")
+    
+    if result.stdout:
+        print(f"   标准输出（前500字符）:")
+        print("   " + "-" * 60)
+        for line in result.stdout[:500].split('\n'):
+            print(f"   {line}")
+        if len(result.stdout) > 500:
+            print(f"   ... (还有 {len(result.stdout) - 500} 字符)")
+        print("   " + "-" * 60)
+    
+    if result.stderr:
+        print(f"   标准错误（前500字符）:")
+        print("   " + "-" * 60)
+        for line in result.stderr[:500].split('\n'):
+            print(f"   {line}")
+        if len(result.stderr) > 500:
+            print(f"   ... (还有 {len(result.stderr) - 500} 字符)")
+        print("   " + "-" * 60)
+    
+    status = "passed" if result.returncode == 0 else "failed"
+    output = result.stdout + "\n" + result.stderr
+    
+    print(f"   结果: {status.upper()}")
+    
+    return {"status": status, "output": output}
+
 def analyze_failure(state: AgentState) -> AgentState:
     """Analyzes the last failed test."""
     last_result = state["results"][-1]
@@ -752,20 +1006,54 @@ def analyze_failure(state: AgentState) -> AgentState:
     # but allow enough for the model to understand the SDK.
     sdk_context_snippet = state["sdk_context"][:50000] + "...(truncated)" if len(state["sdk_context"]) > 50000 else state["sdk_context"]
     
-    # Get test code
-    test_file_path = os.path.join(PROJECT_ROOT, "python", last_result["test_id"].split("::")[0])
+    # Get test code - 根据测试类型构建正确的文件路径
+    test_id = last_result["test_id"]
     test_code = ""
-    if os.path.exists(test_file_path):
+    
+    if test_id.startswith("typescript:"):
+        # TypeScript测试
+        test_file_path = os.path.join(PROJECT_ROOT, "typescript", test_id[11:])
+    elif test_id.startswith("golang:"):
+        # Golang测试 - 无法直接读取文件，从输出中提取
+        test_code = "Golang测试文件内容需要从go test输出中提取"
+        test_file_path = None
+    elif test_id.startswith("java:"):
+        # Java测试 - 根据类名构建文件路径
+        class_name = test_id[5:]  # 移除java:前缀
+        file_path = class_name.replace('.', os.sep) + '.java'
+        test_file_path = os.path.join(PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java", file_path)
+    else:
+        # Python测试（默认）
+        test_file_path = os.path.join(PROJECT_ROOT, "python", test_id.split("::")[0])
+    
+    # 读取测试文件内容
+    if test_file_path and os.path.exists(test_file_path):
         try:
-            with open(test_file_path, "r") as f:
+            with open(test_file_path, "r", encoding="utf-8") as f:
                 test_code = f.read()
-        except:
-            test_code = "Could not read test file."
+        except Exception as e:
+            test_code = f"无法读取测试文件: {e}"
+    elif not test_code:  # 如果还没有设置test_code（非Golang情况）
+        test_code = "Could not read test file."
 
     error_log = last_result["output"][-5000:] # Last 5000 chars of log
 
+    # 根据测试类型确定语言和专家角色
+    if test_id.startswith("typescript:"):
+        language = "TypeScript"
+        code_lang = "typescript"
+    elif test_id.startswith("golang:"):
+        language = "Golang"
+        code_lang = "go"
+    elif test_id.startswith("java:"):
+        language = "Java"
+        code_lang = "java"
+    else:
+        language = "Python"
+        code_lang = "python"
+
     prompt = ChatPromptTemplate.from_template("""
-你是一位资深的Python SDK测试专家。请用中文进行分析和回答。
+你是一位资深的{language} SDK测试专家。请用中文进行分析和回答。
 
 ### SDK Context (Documentation/Codebase)
 {sdk_context}
@@ -778,7 +1066,7 @@ def analyze_failure(state: AgentState) -> AgentState:
 测试ID: {test_id}
 
 测试代码:
-```python
+```{code_lang}
 {test_code}
 ```
 
@@ -797,6 +1085,8 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
     try:
         chain = prompt | model
         response = chain.invoke({
+            "language": language,
+            "code_lang": code_lang,
             "sdk_context": sdk_context_snippet,
             "test_id": last_result["test_id"],
             "test_code": test_code,
@@ -825,7 +1115,8 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
-        "test_type": state.get("test_type", "python")
+        "test_type": state["test_type"],
+        "skip_oss": state.get("skip_oss", False)
     }
 
 def increment_index(state: AgentState) -> AgentState:
@@ -839,7 +1130,8 @@ def increment_index(state: AgentState) -> AgentState:
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
-        "test_type": state.get("test_type", "python")
+        "test_type": state["test_type"],
+        "skip_oss": state.get("skip_oss", False)
     }
 
 def generate_report(state: AgentState) -> AgentState:
@@ -898,7 +1190,8 @@ def generate_report(state: AgentState) -> AgentState:
         "current_test_index": state["current_test_index"],
         "sdk_context": state["sdk_context"],
         "specific_test_pattern": state["specific_test_pattern"],
-        "test_type": state.get("test_type", "python")
+        "test_type": state["test_type"],
+        "skip_oss": state.get("skip_oss", False)
     }
 
 def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
@@ -915,6 +1208,11 @@ def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
     elif test_id.startswith("golang:"):
         # Golang测试 - 需要特殊处理
         test_file_content = "Golang测试文件内容需要从go test输出中提取"
+    elif test_id.startswith("java:"):
+        # Java测试 - 根据类名构建文件路径
+        class_name = test_id[5:]  # 移除java:前缀
+        file_path = class_name.replace('.', os.sep) + '.java'
+        test_file_path = os.path.join(PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java", file_path)
     else:
         # Python测试
         test_file_path = os.path.join(PROJECT_ROOT, "python", test_id.split("::")[0])
@@ -949,7 +1247,16 @@ def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
     # 测试代码片段（如果文件不太大）
     if test_file_content and len(test_file_content) < 5000:
         prompt_lines.append("**测试代码**:")
-        prompt_lines.append("```python" if not test_id.startswith("typescript:") else "```typescript")
+        # 根据测试类型选择代码块语言
+        if test_id.startswith("typescript:"):
+            code_lang = "typescript"
+        elif test_id.startswith("java:"):
+            code_lang = "java"
+        elif test_id.startswith("golang:"):
+            code_lang = "go"
+        else:
+            code_lang = "python"
+        prompt_lines.append(f"```{code_lang}")
         prompt_lines.append(test_file_content)
         prompt_lines.append("```")
         prompt_lines.append("")
@@ -957,18 +1264,38 @@ def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
         # 文件太大，只显示相关函数
         lines = test_file_content.split('\n')
         relevant_lines = []
-        for j, line in enumerate(lines):
-            if 'def test_' in line or 'async def test_' in line or 'it(' in line or 'test(' in line:
-                # 提取测试函数（前后10行）
-                start = max(0, j-5)
-                end = min(len(lines), j+20)
-                relevant_lines.extend(lines[start:end])
-                relevant_lines.append("... (其他代码)")
-                break
+        
+        # 根据语言类型查找测试方法
+        if test_id.startswith("java:"):
+            # Java: 查找 @Test 注解或 public void test 方法
+            for j, line in enumerate(lines):
+                if '@Test' in line or ('public' in line and 'void' in line and 'test' in line.lower()):
+                    start = max(0, j-5)
+                    end = min(len(lines), j+30)
+                    relevant_lines.extend(lines[start:end])
+                    relevant_lines.append("... (其他代码)")
+                    break
+        else:
+            # Python/TypeScript/Golang
+            for j, line in enumerate(lines):
+                if 'def test_' in line or 'async def test_' in line or 'it(' in line or 'test(' in line or 'func Test' in line:
+                    start = max(0, j-5)
+                    end = min(len(lines), j+20)
+                    relevant_lines.extend(lines[start:end])
+                    relevant_lines.append("... (其他代码)")
+                    break
         
         if relevant_lines:
             prompt_lines.append("**相关测试代码片段**:")
-            prompt_lines.append("```python" if not test_id.startswith("typescript:") else "```typescript")
+            if test_id.startswith("typescript:"):
+                code_lang = "typescript"
+            elif test_id.startswith("java:"):
+                code_lang = "java"
+            elif test_id.startswith("golang:"):
+                code_lang = "go"
+            else:
+                code_lang = "python"
+            prompt_lines.append(f"```{code_lang}")
             prompt_lines.append('\n'.join(relevant_lines))
             prompt_lines.append("```")
             prompt_lines.append("")
@@ -1063,7 +1390,7 @@ def main():
     
     parser = argparse.ArgumentParser(description="Smart Integration Test Runner with AI Analysis")
     parser.add_argument("-k", "--keyword", help="Run tests which match the given substring expression (same as pytest -k)", type=str)
-    parser.add_argument("--test-type", help="Test type to run (all, python, typescript, golang)", type=str, default="all")
+    parser.add_argument("--test-type", help="Test type to run (all, python, typescript, golang, java)", type=str, default="all")
     parser.add_argument("--report", help="Path to save the report", default=REPORT_FILE)
     parser.add_argument("--skip-oss", help="Skip OSS integration tests", action="store_true", default=False)
     

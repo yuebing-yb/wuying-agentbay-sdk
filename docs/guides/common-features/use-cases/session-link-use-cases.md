@@ -2,7 +2,7 @@
 
 This document provides practical use cases for Session Link Access, showing you how to connect external tools to services running in your AgentBay cloud sessions.
 
-> **⚠️ Important Notice**: The Session Link feature is currently in whitelist-only access. To request access to this feature, please send your application to agentbay_dev@alibabacloud.com. For product feedback or suggestions, please submit through the [Alibaba Cloud ticket system](https://smartservice.console.aliyun.com/service/list).
+> **⚠️ Important Notice**: The Session Link feature is an exclusive premium feature for paid subscription users (Pro/Ultra). For more details about pricing and subscription plans, please visit the [AgentBay Billing Instructions](https://help.aliyun.com/zh/agentbay/product-overview/agentbay-billing-instructions).
 
 ## 📋 Table of Contents
 
@@ -525,7 +525,7 @@ if __name__ == "__main__":
 If you encounter issues:
 
 1. Check the [Session Link Access Guide](../advanced/session-link-access.md) for detailed documentation
-2. Search [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+2. Search [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 3. Contact support with detailed error information
 
 Remember: Session Link Access is your gateway to cloud session connectivity! 🔗
@@ -538,5 +538,5 @@ Remember: Session Link Access is your gateway to cloud session connectivity! �
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../../README.md)

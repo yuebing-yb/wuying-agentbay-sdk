@@ -15,9 +15,9 @@ Different image types provide different levels of browser automation capabilitie
 | **Browser Proxies** | ✅ Supported | ✅ Supported | ❌ Not Supported |
 | **Browser Context** | ✅ Supported | ✅ Supported | ❌ Not Supported |
 | **Browser Random Fingerprint** | ✅ Supported | ✅ Supported | ✅ Supported |
-| **Browser Fingerprint Local Sync** | ✅ Supported | ❌ Not Supported | ❌ Not Supported |
-| **Browser Fingerprint Construct** | ✅ Supported | ❌ Not Supported | ❌ Not Supported |
-| **Browser Fingerprint Persistence** | ✅ Supported | ❌ Not Supported | ❌ Not Supported |
+| **Browser Fingerprint Local Sync** | ✅ Supported | ✅ Supported | ❌ Not Supported |
+| **Browser Fingerprint Construct** | ✅ Supported | ✅ Supported | ❌ Not Supported |
+| **Browser Fingerprint Persistence** | ✅ Supported | ✅ Supported | ❌ Not Supported |
 | **Browser Command-line Args** | ✅ Supported | ✅ Supported | ❌ Not Supported |
 | **Browser Default Navigate** | ✅ Supported | ✅ Supported | ❌ Not Supported |
 | **CAPTCHA Solving** | ✅ Supported | ✅ Supported | ❌ Not Supported |
@@ -185,5 +185,5 @@ result, err := agentBay.Create(params)
 - [Computer Use Guide](README.md) - Desktop automation guide
 - [Browser Core Features](../browser-use/core-features.md) - Essential browser features
 - [Browser Advanced Features](../browser-use/advance-features.md) - Advanced capabilities
-- [Page Use Agent](../browser-use/advance-features/page-use-agent.md) - AI-powered automation
+- [Page Use Agent](../browser-use/advance-features/browser-operator.md) - AI-powered automation
 

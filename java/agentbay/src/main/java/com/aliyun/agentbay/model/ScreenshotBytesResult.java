@@ -5,36 +5,57 @@ package com.aliyun.agentbay.model;
  */
 public class ScreenshotBytesResult extends ApiResponse {
     private boolean success;
+    private String type;
+    private String mimeType;
     private byte[] data;
-    private String format;
     private Integer width;
     private Integer height;
     private String errorMessage;
 
     public ScreenshotBytesResult() {
-        this("", false, new byte[0], "png", null, null, "");
-    }
-
-    public ScreenshotBytesResult(String requestId, boolean success, byte[] data, String format, String errorMessage) {
-        this(requestId, success, data, format, null, null, errorMessage);
+        this("", false, "", "", new byte[0], null, null, "");
     }
 
     public ScreenshotBytesResult(
         String requestId,
         boolean success,
         byte[] data,
-        String format,
+        Integer width,
+        Integer height,
+        String errorMessage
+    ) {
+        this(requestId, success, "", "", data, width, height, errorMessage);
+    }
+
+    public ScreenshotBytesResult(
+        String requestId,
+        boolean success,
+        String type,
+        String mimeType,
+        byte[] data,
         Integer width,
         Integer height,
         String errorMessage
     ) {
         super(requestId);
         this.success = success;
+        this.type = type != null ? type : "";
+        this.mimeType = mimeType != null ? mimeType : "";
         this.data = data != null ? data : new byte[0];
-        this.format = format != null ? format : "png";
         this.width = width;
         this.height = height;
         this.errorMessage = errorMessage != null ? errorMessage : "";
+    }
+
+    public ScreenshotBytesResult(
+        String requestId,
+        boolean success,
+        String type,
+        String mimeType,
+        byte[] data,
+        String errorMessage
+    ) {
+        this(requestId, success, type, mimeType, data, null, null, errorMessage);
     }
 
     public boolean isSuccess() {
@@ -51,14 +72,6 @@ public class ScreenshotBytesResult extends ApiResponse {
 
     public void setData(byte[] data) {
         this.data = data != null ? data : new byte[0];
-    }
-
-    public String getFormat() {
-        return format;
-    }
-
-    public void setFormat(String format) {
-        this.format = format != null ? format : "png";
     }
 
     public Integer getWidth() {
@@ -83,6 +96,22 @@ public class ScreenshotBytesResult extends ApiResponse {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage != null ? errorMessage : "";
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type != null ? type : "";
+    }
+
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType != null ? mimeType : "";
     }
 }
 

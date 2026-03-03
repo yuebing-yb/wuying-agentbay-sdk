@@ -1,22 +1,31 @@
-# Browser API Reference
-
-## 🌐 Related Tutorial
-
-- [Browser Use Guide](https://github.com/aliyun/wuying-agentbay-sdk/tree/main/docs/guides/browser-use/README.md) - Complete guide to browser automation
+# 🌐 Browser API Reference
 
 ## Overview
 
-The Browser module provides browser automation capabilities using Playwright integration. It enables web scraping, automated testing, form filling, and other browser-based automation tasks in a cloud environment.
+The Browser module provides comprehensive browser automation capabilities including navigation, element interaction,screenshot capture, and content extraction. It enables automated testing and web scraping workflows.
 
-The Browser module includes both traditional Playwright integration and an AI-powered BrowserAgent that provides natural language automation capabilities with synchronous and asynchronous methods.
+
+## 📚 Tutorial
+
+[Browser Use Guide](../../../../docs/guides/browser-use/README.md)
+
+Complete guide to browser automation
+
+## 📋 Requirements
+
+- Requires `browser_latest` image for browser automation features
 
 ## Browser
 
+Browser provides browser-related operations for the session.
+
+### Constructor
+
 ```java
-public class Browser extends BaseService
+public Browser(Session session)
 ```
 
-Provides browser-related operations for the session.
+### Methods
 
 ### initialize
 
@@ -24,53 +33,88 @@ Provides browser-related operations for the session.
 public boolean initialize(BrowserOption option)
 ```
 
-Initialize the browser instance with the given options.
+Initialize the browser instance with the given options asynchronously.
+Returns true if successful, false otherwise.
+
+**Parameters:**
+- `option` (BrowserOption): Browser configuration options. If null, default options are used
+
+**Returns:**
+- `boolean`: true if initialization was successful, false otherwise
+
+### init
+
+```java
+public boolean init(BrowserOption option)
+```
+
+Alias for initialize method.
 
 **Parameters:**
 - `option` (BrowserOption): Browser initialization options
 
 **Returns:**
-- `boolean`: True if initialization succeeded, false otherwise
+- `boolean`: true if successful, false otherwise
 
-**Example:**
+### destroy
 
 ```java
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("browser_latest");
-Session session = agentBay.create(params).getSession();
-
-// Create browser options
-BrowserOption option = new BrowserOption();
-option.setUseStealth(true);
-option.setBehaviorSimulate(true);
-
-// Initialize browser
-boolean success = session.getBrowser().initialize(option);
-if (success) {
-    System.out.println("Browser initialized successfully");
-}
+public void destroy()
 ```
+
+Destroy the browser instance manually.
+
+### screenshot
+
+```java
+public byte[] screenshot(com.microsoft.playwright.Page page, boolean fullPage, Map<String, Object> options) throws BrowserException
+```
+
+Takes a screenshot of the specified page with enhanced options and error handling.
+
+**Parameters:**
+- `page` (com.microsoft.playwright.Page): The Playwright Page object to take a screenshot of. This is a required parameter.
+- `fullPage` (boolean): Whether to capture the full scrollable page
+- `options` (Map<String,Object>): Additional screenshot options that will override defaults.
+               Common options include:
+               - type (ScreenshotType): Image type, either PNG or JPEG (default: PNG)
+               - timeout (Double): Maximum time in milliseconds (default: 60000)
+               - animations (String): How to handle animations (default: "disabled")
+               - caret (String): How to handle the caret (default: "hide")
+               - scale (String): Scale setting (default: "css")
+
+**Returns:**
+- `byte[]`: Screenshot data as bytes
+
+**Throws:**
+- `BrowserException`: if browser is not initialized or page is null
+- `IllegalArgumentException`: if page is null
 
 ### getEndpointUrl
 
 ```java
-public String getEndpointUrl()
+public String getEndpointUrl() throws BrowserException
 ```
 
-Get the browser endpoint URL for Playwright connection.
+Returns the endpoint URL if the browser is initialized, otherwise raises an exception.
+When initialized, always fetches the latest CDP url from getCdpLink API.
 
 **Returns:**
-- `String`: CDP (Chrome DevTools Protocol) endpoint URL
+- `String`: Browser endpoint URL
 
 **Throws:**
-- `BrowserException`: If browser is not initialized
+- `BrowserException`: if browser is not initialized or endpoint URL cannot be retrieved
 
-**Example:**
+### getOption
 
 ```java
-String endpointUrl = session.getBrowser().getEndpointUrl();
-System.out.println("Browser endpoint: " + endpointUrl);
+public BrowserOption getOption()
 ```
+
+Get the current BrowserOption used to initialize the browser.
+
+**Returns:**
+- `BrowserOption`: BrowserOption or null if not set
 
 ### isInitialized
 
@@ -78,440 +122,122 @@ System.out.println("Browser endpoint: " + endpointUrl);
 public boolean isInitialized()
 ```
 
-Check if the browser has been initialized.
+Check if the browser is initialized.
 
 **Returns:**
-- `boolean`: True if browser is initialized
+- `boolean`: true if initialized, false otherwise
 
-## BrowserContext
-
-```java
-public class BrowserContext
-```
-
-Browser context configuration for session. Enables browser data persistence (cookies, localStorage) across multiple sessions using the same context ID.
-
-### Constructors
-
-#### Basic Constructor
+### getOperator
 
 ```java
-public BrowserContext(String contextId, boolean autoUpload)
+public BrowserOperator getOperator()
 ```
 
-Initialize BrowserContext with minimal configuration.
+Get the browser operator for browser operations (recommended).
 
-**Parameters:**
-- `contextId` (String): ID of the browser context to bind to the session
-- `autoUpload` (boolean): Whether to automatically upload browser data when session ends
+<p>The operator provides AI-powered browser automation capabilities including
+navigation, screenshots, actions, observations, and data extraction.</p>
 
-**Example:**
+**Returns:**
+- `BrowserOperator`: BrowserOperator instance
+
+### getAgent
 
 ```java
-// Create a persistent context
-ContextResult contextResult = agentBay.getContext().get("my-browser-context", true);
-Context context = contextResult.getContext();
-
-// Create BrowserContext with auto-upload
-BrowserContext browserContext = new BrowserContext(context.getId(), true);
-
-// Create session with BrowserContext
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("browser_latest");
-params.setBrowserContext(browserContext);
-Session session = agentBay.create(params).getSession();
+public BrowserAgent getAgent()
 ```
 
-#### Default Constructor
+Get the browser agent for advanced browser operations.
+
+<p><strong>⚠️ Deprecated</strong>: Use getOperator instead. This method will be removed in a future version.</p>
+
+**Returns:**
+- `BrowserAgent`: BrowserAgent instance
+
+### getEndpointRouterPort
 
 ```java
-public BrowserContext(String contextId)
+public Integer getEndpointRouterPort()
 ```
 
-Initialize BrowserContext with default `autoUpload=true`.
+Get the endpoint router port.
 
-**Parameters:**
-- `contextId` (String): ID of the browser context
+**Returns:**
+- `Integer`: Port number or null if not set
 
-#### Full Constructor
 
-```java
-public BrowserContext(String contextId, boolean autoUpload, 
-                     ExtensionOption extensionOption,
-                     BrowserFingerprintContext fingerprintContext)
-```
 
-Initialize BrowserContext with optional extension and fingerprint support.
+## BrowserOperator
 
-**Parameters:**
-- `contextId` (String): ID of the browser context
-- `autoUpload` (boolean): Whether to automatically upload browser data
-- `extensionOption` (ExtensionOption): Extension configuration (can be null)
-- `fingerprintContext` (BrowserFingerprintContext): Browser fingerprint configuration (can be null)
+BrowserOperator handles browser automation and small parts of agentic logic.
 
-**Example:**
-
-```java
-// With extensions
-ExtensionOption extOption = new ExtensionOption(
-    "my_extensions",
-    Arrays.asList("ext1.zip", "ext2.zip")
-);
-
-BrowserContext browserContext = new BrowserContext(
-    context.getId(),
-    true,
-    extOption,
-    null
-);
-```
-
-### Key Methods
-
-#### getContextId
-
-```java
-public String getContextId()
-```
-
-Get the browser context ID.
-
-#### isAutoUpload
-
-```java
-public boolean isAutoUpload()
-```
-
-Check if auto-upload is enabled.
-
-### Cookie Persistence Example
-
-```java
-import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.browser.BrowserContext;
-import com.aliyun.agentbay.context.Context;
-import com.aliyun.agentbay.session.Session;
-import com.microsoft.playwright.*;
-import com.microsoft.playwright.options.Cookie;
-
-// Step 1: Create persistent context
-ContextResult contextResult = agentBay.getContext().get("browser-context", true);
-Context context = contextResult.getContext();
-
-// Step 2: Create first session with BrowserContext
-BrowserContext browserContext = new BrowserContext(context.getId(), true);
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("browser_latest");
-params.setBrowserContext(browserContext);
-Session session1 = agentBay.create(params).getSession();
-
-// Step 3: Set cookies in first session
-session1.getBrowser().initialize(new BrowserOption());
-String endpointUrl = session1.getBrowser().getEndpointUrl();
-
-try (Playwright playwright = Playwright.create()) {
-    Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
-    BrowserContext context = browser.contexts().get(0);
-    Page page = context.newPage();
-    
-    page.navigate("https://example.com");
-    
-    // Add cookies
-    List<Cookie> cookies = new ArrayList<>();
-    cookies.add(new Cookie("sessionId", "abc123")
-        .setDomain("example.com")
-        .setPath("/"));
-    context.addCookies(cookies);
-    
-    browser.close();
-}
-
-// Step 4: Delete first session WITH context sync
-agentBay.delete(session1, true);  // sync_context=true
-
-// Wait for sync
-Thread.sleep(3000);
-
-// Step 5: Create second session with same context
-Session session2 = agentBay.create(params).getSession();
-
-// Cookies are automatically restored!
-session2.getBrowser().initialize(new BrowserOption());
-String endpointUrl2 = session2.getBrowser().getEndpointUrl();
-
-try (Playwright playwright = Playwright.create()) {
-    Browser browser = playwright.chromium().connectOverCDP(endpointUrl2);
-    BrowserContext context = browser.contexts().get(0);
-    
-    // Cookies from first session are available
-    List<Cookie> cookies = context.cookies();
-    System.out.println("Restored cookies: " + cookies.size());
-}
-
-agentBay.delete(session2, false);
-```
-
-## ExtensionOption
-
-```java
-public class ExtensionOption
-```
-
-Configuration for browser extensions. Extensions are loaded from a cloud context.
+<p><strong>⚠️ Note</strong>: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), 
+we do not provide services for overseas users registered with <strong>alibabacloud.com</strong>.</p>
 
 ### Constructor
 
 ```java
-public ExtensionOption(String contextId, List<String> extensionIds)
+public BrowserOperator(Session session, Browser browser)
 ```
+
+### Methods
+
+### navigate
+
+```java
+public String navigate(String url) throws BrowserException
+```
+
+Navigates a specific page to the given URL.
 
 **Parameters:**
-- `contextId` (String): Context ID where extension files are stored
-- `extensionIds` (List<String>): List of extension file names (e.g., "adblock.zip")
+- `url` (String): The URL to navigate to
 
-**Example:**
+**Returns:**
+- `String`: A string indicating the result of the navigation
 
-```java
-ExtensionOption extOption = new ExtensionOption(
-    "extensions-context",
-    Arrays.asList("ublock.zip", "metamask.zip")
-);
+**Throws:**
+- `BrowserException`: if browser is not initialized
 
-BrowserContext browserContext = new BrowserContext(
-    "browser-session",
-    true,
-    extOption,
-    null
-);
-```
-
-## BrowserFingerprintContext
+### close
 
 ```java
-public class BrowserFingerprintContext
+public boolean close() throws BrowserException
 ```
 
-Browser fingerprint context configuration for enhanced privacy and anti-detection.
+Closes the remote browser operator session.
+This will terminate the browser process managed by the operator.
 
-### Constructor
+**Returns:**
+- `boolean`: true if successful, false otherwise
+
+**Throws:**
+- `BrowserException`: if operation fails
+
+### screenshot
 
 ```java
-public BrowserFingerprintContext(String fingerprintContextId)
+public String screenshot(Page page, boolean fullPage, int quality, Map<String, Double> clip, Integer timeout) throws BrowserException
 ```
+
+```java
+public String screenshot(Page page) throws BrowserException
+```
+
+Takes a screenshot of the specified page.
 
 **Parameters:**
-- `fingerprintContextId` (String): ID of the fingerprint context
+- `page` (Page): The Playwright Page object to take a screenshot of. If null, the operator's currently focused page will be used
+- `fullPage` (boolean): Whether to capture the full scrollable page
+- `quality` (int): The quality of the image (0-100), for JPEG format
+- `clip` (Map<String,Double>): An object specifying the clipping region {x, y, width, height}
+- `timeout` (Integer): Custom timeout for the operation in seconds
 
-**Example:**
+**Returns:**
+- `String`: A base64 encoded data URL of the screenshot, or an error message
 
-```java
-BrowserFingerprintContext fingerprintCtx = new BrowserFingerprintContext(
-    "my-fingerprint"
-);
-
-BrowserContext browserContext = new BrowserContext(
-    "browser-session",
-    true,
-    null,
-    fingerprintCtx
-);
-```
-
-## BrowserOption
-
-```java
-public class BrowserOption
-```
-
-Configuration options for browser initialization.
-
-### Key Fields
-
-#### useStealth
-
-```java
-public void setUseStealth(boolean useStealth)
-public boolean getUseStealth()
-```
-
-Enable stealth mode to avoid bot detection.
-
-**Default**: false
-
-**Example:**
-
-```java
-BrowserOption option = new BrowserOption();
-option.setUseStealth(true);
-```
-
-#### behaviorSimulate
-
-```java
-public void setBehaviorSimulate(boolean behaviorSimulate)
-public boolean getBehaviorSimulate()
-```
-
-Simulate human-like behavior (mouse movements, typing delays).
-
-**Default**: false
-
-#### solveCaptchas
-
-```java
-public void setSolveCaptchas(boolean solveCaptchas)
-public boolean getSolveCaptchas()
-```
-
-Enable automatic CAPTCHA solving.
-
-**Default**: false
-
-#### viewport
-
-```java
-public void setViewport(BrowserViewport viewport)
-public BrowserViewport getViewport()
-```
-
-Set browser viewport size.
-
-**Example:**
-
-```java
-BrowserViewport viewport = new BrowserViewport();
-viewport.setWidth(1920);
-viewport.setHeight(1080);
-option.setViewport(viewport);
-```
-
-#### screen
-
-```java
-public void setScreen(BrowserScreen screen)
-public BrowserScreen getScreen()
-```
-
-Set screen resolution.
-
-**Example:**
-
-```java
-BrowserScreen screen = new BrowserScreen();
-screen.setWidth(1920);
-screen.setHeight(1080);
-option.setScreen(screen);
-```
-
-#### proxies
-
-```java
-public void setProxies(List<BrowserProxy> proxies)
-public List<BrowserProxy> getProxies()
-```
-
-Set proxy configuration for browser requests.
-
-**Example:**
-
-```java
-BrowserProxy proxy = new BrowserProxy();
-proxy.setType("http");
-proxy.setServer("proxy.example.com:8080");
-proxy.setUsername("user");
-proxy.setPassword("pass");
-
-option.setProxies(Arrays.asList(proxy));
-```
-
-#### fingerprint
-
-```java
-public void setFingerprint(BrowserFingerprint fingerprint)
-public BrowserFingerprint getFingerprint()
-```
-
-Set browser fingerprint configuration for enhanced privacy.
-
-#### userAgent
-
-```java
-public void setUserAgent(String userAgent)
-public String getUserAgent()
-```
-
-Set custom user agent string.
-
-## Complete Playwright Integration Example
-
-```java
-import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.session.Session;
-import com.aliyun.agentbay.session.CreateSessionParams;
-import com.aliyun.agentbay.browser.BrowserOption;
-import com.microsoft.playwright.*;
-
-public class PlaywrightExample {
-    public static void main(String[] args) throws Exception {
-        AgentBay agentBay = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
-        
-        // Create browser session
-        CreateSessionParams params = new CreateSessionParams();
-        params.setImageId("browser_latest");
-        Session session = agentBay.create(params).getSession();
-        
-        // Initialize browser with options
-        BrowserOption option = new BrowserOption();
-        option.setUseStealth(true);
-        option.setBehaviorSimulate(true);
-        
-        session.getBrowser().initialize(option);
-        
-        // Get endpoint for Playwright
-        String endpointUrl = session.getBrowser().getEndpointUrl();
-        
-        // Connect Playwright
-        try (Playwright playwright = Playwright.create()) {
-            BrowserType chromium = playwright.chromium();
-            Browser browser = chromium.connectOverCDP(endpointUrl);
-            
-            // Get or create context
-            BrowserContext context = browser.contexts().isEmpty() 
-                ? browser.newContext()
-                : browser.contexts().get(0);
-            
-            Page page = context.newPage();
-            
-            // Navigate and interact
-            page.navigate("https://example.com");
-            System.out.println("Page title: " + page.title());
-            
-            // Take screenshot
-            page.screenshot(new Page.ScreenshotOptions()
-                .setPath(java.nio.file.Paths.get("screenshot.png")));
-            
-            // Close
-            browser.close();
-        }
-        
-        // Clean up
-        session.delete();
-    }
-}
-```
-
-## Browser Agent (AI-Powered Automation)
-
-The Browser module also includes an AI-powered agent for natural language automation:
-
-```java
-BrowserAgent agent = session.getBrowser().getAgent();
-```
-
-The BrowserAgent provides both synchronous and asynchronous variants of key browser automation methods:
-
-- **Synchronous methods** (`act`, `extract`, `observe`): Use `page_use_act` and `page_use_extract` MCP tools - suitable for simple, quick operations
-- **Asynchronous methods** (`actAsync`, `extractAsync`): Use `page_use_act_async` and `page_use_extract_async` MCP tools - designed for complex, time-consuming tasks with task polling mechanisms
+**Throws:**
+- `BrowserException`: if browser is not initialized
 
 ### act
 
@@ -519,607 +245,187 @@ The BrowserAgent provides both synchronous and asynchronous variants of key brow
 public ActResult act(Page page, Object actionInput) throws BrowserException
 ```
 
-Perform a browser action using natural language or structured action.
+Perform an action on a web page.
+Uses synchronous execution.
 
 **Parameters:**
-- `page` (Page): Playwright Page object (can be null to use focused page)
-- `actionInput` (Object): Either ActOptions or ObserveResult
-  - `ActOptions`: Contains action description and options
-  - `ObserveResult`: Result from previous observe() call
+- `page` (Page): The Playwright Page object to act on. If null, the operator's currently focused page will be used automatically
+- `actionInput` (Object): The action to perform (either ActOptions or ObserveResult)
 
 **Returns:**
-- `ActResult`: Result containing action outcome
+- `ActResult`: The result of the action
 
 **Throws:**
-- `BrowserException`: If browser is not initialized or action fails
-
-**Example:**
-
-```java
-import com.microsoft.playwright.*;
-
-// Initialize browser
-BrowserOption option = new BrowserOption();
-option.setUseStealth(true);
-session.getBrowser().initialize(option);
-
-// Get Playwright page
-String endpointUrl = session.getBrowser().getEndpointUrl();
-try (Playwright playwright = Playwright.create()) {
-    Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
-    Page page = browser.contexts().get(0).newPage();
-
-    // Get browser agent
-    BrowserAgent agent = session.getBrowser().getAgent();
-
-    // Perform actions using natural language
-    ActOptions options = new ActOptions();
-    options.setAction("Go to google.com");
-    ActResult result = agent.act(page, options);
-
-    if (result.isSuccess()) {
-        System.out.println("Navigation successful");
-    }
-
-    // Perform another action
-    ActOptions searchOptions = new ActOptions();
-    searchOptions.setAction("Search for 'AgentBay SDK'");
-    ActResult searchResult = agent.act(page, searchOptions);
-}
-```
+- `BrowserException`: if browser is not initialized
 
 ### actAsync
 
 ```java
-public ActResult actAsync(Page page, Object actionInput) throws BrowserException
+public ActResult actAsync(Object actionInput, Page page) throws BrowserException
 ```
-
-Perform browser actions asynchronously with task polling support. Designed for complex, time-consuming operations.
-
-**Parameters:**
-- `page` (Page): Playwright Page object (can be null to use focused page)
-- `actionInput` (Object): Either `ActOptions` or `ObserveResult`
-
-**Returns:**
-- `ActResult`: Result containing success status and execution details
-
-**Throws:**
-- `BrowserException`: If browser is not initialized, task creation fails, or task timeout
-
-**Example:**
 
 ```java
-// Basic navigation
-ActOptions options = new ActOptions("goto('https://example.com')");
-ActResult result = agent.actAsync(page, options);
-
-// Click operation
-ActOptions clickOptions = new ActOptions("click('#submit-button')");
-ActResult clickResult = agent.actAsync(page, clickOptions);
-
-// With custom timeout
-ActOptions timeoutOptions = new ActOptions("goto('https://example.com')");
-timeoutOptions.setTimeoutMS(30000);
-ActResult result = agent.actAsync(page, timeoutOptions);
+public ActResult actAsync(Object actionInput) throws BrowserException
 ```
 
-**When to use `actAsync`:**
-- Performing complex multi-step actions
-- Navigating to pages with heavy resources
-- Executing operations that may take significant time
-- You want explicit async semantics in your code
+Perform an action on the page asynchronously - matches Python act_async method
+Uses asynchronous execution with task polling for long-running operations
 
-**Polling Configuration:**
-- Max 30 retries, 5-second intervals (150 seconds total)
+**Parameters:**
+- `actionInput` (Object): Either ActOptions or ObserveResult describing the action
+- `page` (Page): Playwright page object (null to use currently focused page)
+
+**Returns:**
+- `ActResult`: ActResult containing success status and execution details
+
+**Throws:**
+- `BrowserException`: if browser is not initialized or action fails
 
 ### observe
 
 ```java
-public ObserveResult observe(Page page, Object observeInput) throws BrowserException
+public ObserveResultTuple observe(Page page, ObserveOptions options) throws BrowserException
 ```
 
-Extract information from the page using natural language.
+Observe elements or state on a web page.
 
 **Parameters:**
-- `page` (Page): Playwright Page object
-- `observeInput` (Object): ObserveOptions containing extraction instructions
+- `page` (Page): The Playwright Page object to observe. If null, the operator's currently focused page will be used
+- `options` (ObserveOptions): Options to configure the observation behavior
 
 **Returns:**
-- `ObserveResult`: Result containing extracted data
+- `ObserveResultTuple`: A tuple containing a success boolean and a list of observation results
 
 **Throws:**
-- `BrowserException`: If browser is not initialized or observation fails
-
-**Example:**
-
-```java
-try (Playwright playwright = Playwright.create()) {
-    Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
-    Page page = browser.contexts().get(0).newPage();
-
-    BrowserAgent agent = session.getBrowser().getAgent();
-
-    ObserveOptions options = new ObserveOptions();
-    options.setInstruction("Extract all product names and prices");
-    ObserveResult result = agent.observe(page, options);
-
-    if (result.isSuccess()) {
-        System.out.println("Extracted data: " + result.getData());
-    }
-}
-```
+- `BrowserException`: if browser is not initialized
 
 ### extract
 
 ```java
-public <T> ExtractResultTuple<T> extract(Page page, ExtractOptions<T> options) throws BrowserException
+public ExtractResultTuple<T> extract(Page page, ExtractOptions<T> options) throws BrowserException
 ```
 
-Extract structured data from web pages using AI-powered extraction.
+Extract information from a web page.
+Uses synchronous execution.
 
 **Parameters:**
-- `page` (Page): Playwright Page object (can be null to use focused page)
-- `options` (ExtractOptions<T>): Contains instruction and schema class
+- `page` (Page): The Playwright Page object to extract from. If null, the operator's currently focused page will be used
+- `options` (ExtractOptions<T>): Options to configure the extraction, including schema
+- `<T>` (Object): The type of data to extract
 
 **Returns:**
-- `ExtractResultTuple<T>`: Result containing success status and extracted data of type T
+- `ExtractResultTuple<T>`: A tuple containing a success boolean and the extracted data as a Pydantic model instance, or null on failure
 
 **Throws:**
-- `BrowserException`: If browser is not initialized or extraction fails
-
-**Example:**
-
-```java
-// Define data model
-public class ProductInfo {
-    @JsonProperty("title")
-    private String title;
-
-    @JsonProperty("price")
-    private String price;
-
-    // getters and setters...
-}
-
-// Extract data
-String instruction = "Extract product title and price from the page";
-ExtractOptions<ProductInfo> options = new ExtractOptions<>(instruction, ProductInfo.class);
-options.setUseTextExtract(true);
-options.setUseVision(false);
-
-ExtractResultTuple<ProductInfo> result = agent.extract(page, options);
-
-if (result.isSuccess()) {
-    ProductInfo product = result.getData();
-    System.out.println("Title: " + product.getTitle());
-    System.out.println("Price: " + product.getPrice());
-}
-```
+- `BrowserException`: if browser is not initialized
 
 ### extractAsync
 
 ```java
-public <T> ExtractResultTuple<T> extractAsync(Page page, ExtractOptions<T> options) throws BrowserException
+public ExtractResultTuple<T> extractAsync(ExtractOptions<T> options, Page page) throws BrowserException
 ```
 
-Extract structured data from web pages asynchronously using AI-powered extraction with task polling support.
+```java
+public ExtractResultTuple<T> extractAsync(ExtractOptions<T> options) throws BrowserException
+```
+
+Extract structured data from the page asynchronously - matches Python extract_async method
+Uses asynchronous execution with task polling for complex extraction operations
 
 **Parameters:**
-- `page` (Page): Playwright Page object (can be null to use focused page)
-- `options` (ExtractOptions<T>): Contains instruction and schema class
+- `options` (ExtractOptions<T>): ExtractOptions containing instruction, schema, and extraction parameters
+- `page` (Page): Playwright page object (null to use currently focused page)
+- `<T>` (Object): The type of data to extract (must match the schema class)
 
 **Returns:**
-- `ExtractResultTuple<T>`: Result containing success status and extracted data of type T
+- `ExtractResultTuple<T>`: ExtractResultTuple containing success status and extracted data of type T
 
 **Throws:**
-- `BrowserException`: If browser is not initialized, task creation fails, or task timeout
+- `BrowserException`: if browser is not initialized or extraction fails
 
-**Example:**
-
-```java
-// Define data model
-public class ProductInfo {
-    @JsonProperty("title")
-    private String title;
-
-    @JsonProperty("price")
-    private String price;
-
-    // getters and setters...
-}
-
-// Extract data asynchronously
-String instruction = "Extract product title and price from the page";
-ExtractOptions<ProductInfo> options = new ExtractOptions<>(instruction, ProductInfo.class);
-options.setUseTextExtract(true);
-options.setUseVision(false);
-
-ExtractResultTuple<ProductInfo> result = agent.extractAsync(page, options);
-
-if (result.isSuccess()) {
-    ProductInfo product = result.getData();
-    System.out.println("Title: " + product.getTitle());
-    System.out.println("Price: " + product.getPrice());
-}
-```
-
-**When to use `extractAsync`:**
-- Extracting complex structured data from pages
-- Working with pages that have dynamic content
-- Extraction requires AI analysis of visual elements
-- The extraction task may be time-consuming
-
-**Polling Configuration:**
-- Max 20 retries, 8-second intervals (160 seconds total)
-
-### Complete Async Example
-
-Here's a complete example demonstrating async methods:
+### navigateTo
 
 ```java
-package examples;
-
-import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.browser.*;
-import com.aliyun.agentbay.session.Session;
-import com.microsoft.playwright.*;
-
-public class AsyncExample {
-    public static void main(String[] args) throws Exception {
-        // Initialize
-        AgentBay agentBay = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
-        Session session = agentBay.create(new CreateSessionParams().setImageId("browser_latest")).getSession();
-        session.getBrowser().initialize(new BrowserOption());
-
-        try (Playwright playwright = Playwright.create()) {
-            String endpointUrl = session.getBrowser().getEndpointUrl();
-            Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
-            com.microsoft.playwright.BrowserContext context = browser.contexts().get(0);
-            Page page = context.newPage();
-            BrowserAgent agent = session.getBrowser().getAgent();
-
-            // Navigate using actAsync
-            ActOptions navOptions = new ActOptions("goto('https://example.com')");
-            ActResult navResult = agent.actAsync(page, navOptions);
-            System.out.println("Navigation: " + navResult.isSuccess());
-
-            // Extract data using extractAsync
-            ExtractOptions<PageData> extractOptions =
-                new ExtractOptions<>("Extract page title", PageData.class);
-            ExtractResultTuple<PageData> extractResult =
-                agent.extractAsync(page, extractOptions);
-
-            if (extractResult.isSuccess()) {
-                PageData data = extractResult.getData();
-                System.out.println("Title: " + data.getTitle());
-            }
-
-            page.close();
-            browser.close();
-        }
-    }
-
-    public static class PageData {
-        @JsonProperty("title")
-        private String title;
-
-        public String getTitle() { return title; }
-        public void setTitle(String title) { this.title = title; }
-    }
-}
+public ActResult navigateTo(Page page, String url) throws BrowserException
 ```
 
-### Task Polling Mechanism
+Navigate to a URL using act method.
 
-Both async methods implement a task polling mechanism:
+**Parameters:**
+- `page` (Page): Playwright page object
+- `url` (String): URL to navigate to
 
-1. **Initial Request**: Call `page_use_act_async` or `page_use_extract_async`
-2. **Task ID**: Receive a task ID from the server
-3. **Polling Loop**: Periodically check task status using `page_use_get_act_result` or `page_use_get_extract_result`
-4. **Completion**: Return result when task completes or timeout
+**Returns:**
+- `ActResult`: ActResult
 
-### Comparison with Python SDK
+**Throws:**
+- `BrowserException`: if operation fails
 
-The Java implementation matches the Python SDK's async behavior:
-
-**Python:**
-```python
-# Async variant
-result = await browser.agent.act_async(page, options)
-extracted = await browser.agent.extract_async(page, options)
-```
-
-**Java:**
-```java
-// Async variant (note: still synchronous Java method, but uses async MCP tool)
-ActResult result = browser.getAgent().actAsync(page, options);
-ExtractResultTuple<T> extracted = browser.getAgent().extractAsync(page, options);
-```
-
-Note: The Java methods are synchronous (blocking) at the API level but use the async MCP tools internally with polling.
-
-## Common Patterns
-
-### Basic Browser Automation
+### click
 
 ```java
-// Create and initialize browser
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("browser_latest");
-Session session = agentBay.create(params).getSession();
-
-BrowserOption option = new BrowserOption();
-option.setUseStealth(true);
-session.getBrowser().initialize(option);
-
-// Connect Playwright and automate
-String endpoint = session.getBrowser().getEndpointUrl();
-try (Playwright pw = Playwright.create()) {
-    Browser browser = pw.chromium().connectOverCDP(endpoint);
-    Page page = browser.contexts().get(0).newPage();
-    
-    page.navigate("https://example.com");
-    page.click("button#submit");
-    page.fill("input#email", "user@example.com");
-    
-    browser.close();
-}
-
-session.delete();
+public ActResult click(Page page, String selector) throws BrowserException
 ```
 
-### Browser Context with Persistence
+Click on an element using act method.
+
+**Parameters:**
+- `page` (Page): Playwright page object
+- `selector` (String): Element selector
+
+**Returns:**
+- `ActResult`: ActResult
+
+**Throws:**
+- `BrowserException`: if operation fails
+
+### type
 
 ```java
-// Create persistent context
-ContextResult ctxResult = agentBay.getContext().get("my-browser-ctx", true);
-Context context = ctxResult.getContext();
-
-// Create BrowserContext
-BrowserContext browserContext = new BrowserContext(context.getId(), true);
-
-// Create session with context
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("browser_latest");
-params.setBrowserContext(browserContext);
-Session session = agentBay.create(params).getSession();
-
-// Use browser (cookies will be persisted)
-BrowserOption option = new BrowserOption();
-session.getBrowser().initialize(option);
-
-// Delete session WITH context sync to save browser data
-agentBay.delete(session, true);
-
-// Next session with same context will have cookies restored
-Session session2 = agentBay.create(params).getSession();
-session2.getBrowser().initialize(option);
-// Cookies from first session are available!
-agentBay.delete(session2, false);
+public ActResult type(Page page, String selector, String text) throws BrowserException
 ```
 
-### Stealth Mode with Human Behavior
+Type text into an input field using act method.
+
+**Parameters:**
+- `page` (Page): Playwright page object
+- `selector` (String): Input field selector
+- `text` (String): Text to type
+
+**Returns:**
+- `ActResult`: ActResult
+
+**Throws:**
+- `BrowserException`: if operation fails
+
+### takeScreenshot
 
 ```java
-BrowserOption option = new BrowserOption();
-option.setUseStealth(true);           // Avoid bot detection
-option.setBehaviorSimulate(true);     // Human-like behavior
-option.setSolveCaptchas(true);        // Auto-solve CAPTCHAs
-
-session.getBrowser().initialize(option);
+public ActResult takeScreenshot(Page page) throws BrowserException
 ```
 
-### Proxy Configuration
+Take a screenshot using act method.
 
-AgentBay supports three types of proxies:
-- **Custom proxy**: User-provided proxy servers
-- **Wuying proxy**: Alibaba Cloud proxy service
-- **Managed proxy**: Client-provided proxies managed by Wuying platform
+**Parameters:**
+- `page` (Page): Playwright page object
 
-> **📞 Note**: To use managed proxy, please contact us or your account manager to set up your proxy pool first.
+**Returns:**
+- `ActResult`: ActResult
 
-#### Custom Proxy
+**Throws:**
+- `BrowserException`: if operation fails
 
-```java
-BrowserProxy proxy = new BrowserProxy("custom", "proxy.example.com:8080", "user", "password");
 
-BrowserOption option = new BrowserOption();
-option.setProxies(Arrays.asList(proxy));
 
-session.getBrowser().initialize(option);
-```
+## 💡 Best Practices
 
-#### Wuying Proxy
+- Wait for page load completion before interacting with elements
+- Use appropriate selectors (CSS, XPath) for reliable element identification
+- Handle navigation timeouts and errors gracefully
+- Take screenshots for debugging and verification
+- Clean up browser resources after automation tasks
 
-```java
-// Polling strategy
-BrowserProxy wuyingProxy = new BrowserProxy("wuying", "polling", 10);
+## 🔗 Related Resources
 
-// Restricted strategy
-// BrowserProxy wuyingProxy = new BrowserProxy("wuying", "restricted", 10);
+- [Session API Reference](../../api/common-features/basics/session.md)
 
-BrowserOption option = new BrowserOption();
-option.setProxies(Arrays.asList(wuyingProxy));
-
-session.getBrowser().initialize(option);
-```
-
-#### Managed Proxy
-
-**Parameters for managed proxy:**
-- `userId`: Custom user identifier for tracking proxy allocation records (**Required**)
-  - `sticky`/`rotating` strategies: Associates with historical allocations to maintain or rotate IPs per user
-  - `polling`/`matched` strategies: Each session gets an independent allocation
-- `isp`, `country`, `province`, `city`: Filters for matched strategy (at least one required for matched)
-
-```java
-// Sticky strategy - Same user always gets the same proxy
-BrowserProxy stickyProxy = new BrowserProxy("managed", "sticky", "user123", null, null, null, null);
-
-// Rotating strategy - Same user gets different proxies each time
-BrowserProxy rotatingProxy = new BrowserProxy("managed", "rotating", "user123", null, null, null, null);
-
-// Polling strategy - Round-robin from pool
-BrowserProxy pollingProxy = new BrowserProxy("managed", "polling", "user123", null, null, null, null);
-
-// Matched strategy - Filter by geography and ISP
-BrowserProxy matchedProxy = new BrowserProxy(
-    "managed", 
-    "matched", 
-    "user123", 
-    "China Telecom",  // isp
-    "China",          // country
-    "Beijing",        // province
-    "Beijing"         // city
-);
-
-BrowserOption option = new BrowserOption();
-option.setProxies(Arrays.asList(matchedProxy));
-
-session.getBrowser().initialize(option);
-```
-
-### Custom Viewport
-
-```java
-BrowserViewport viewport = new BrowserViewport();
-viewport.setWidth(1920);
-viewport.setHeight(1080);
-
-BrowserOption option = new BrowserOption();
-option.setViewport(viewport);
-
-session.getBrowser().initialize(option);
-```
-
-### AI-Powered Automation with Agent
-
-```java
-// Initialize browser
-CreateSessionParams params = new CreateSessionParams();
-params.setImageId("browser_latest");
-Session session = agentBay.create(params).getSession();
-
-BrowserOption option = new BrowserOption();
-option.setUseStealth(true);
-session.getBrowser().initialize(option);
-
-// Get Playwright page
-String endpointUrl = session.getBrowser().getEndpointUrl();
-try (Playwright playwright = Playwright.create()) {
-    Browser browser = playwright.chromium().connectOverCDP(endpointUrl);
-    Page page = browser.contexts().get(0).newPage();
-    
-    // Use AI agent for natural language automation
-    BrowserAgent agent = session.getBrowser().getAgent();
-    
-    // Navigate
-    ActOptions navOptions = new ActOptions();
-    navOptions.setAction("Go to https://example.com");
-    agent.act(page, navOptions);
-    
-    // Fill form
-    ActOptions fillOptions = new ActOptions();
-    fillOptions.setAction("Fill the email field with test@example.com");
-    agent.act(page, fillOptions);
-    
-    // Submit
-    ActOptions submitOptions = new ActOptions();
-    submitOptions.setAction("Click the submit button");
-    agent.act(page, submitOptions);
-    
-    browser.close();
-}
-
-session.delete();
-```
-
-## Best Practices
-
-1. **Always initialize browser first**: Call `session.getBrowser().initialize()` before using agent methods
-2. **Stealth Mode**: Enable stealth mode for web scraping to avoid detection
-3. **Behavior Simulation**: Use behavior simulation for more realistic interactions
-4. **Resource Cleanup**: Always close browser and delete session when done
-5. **Error Handling**: Check initialization success before using browser and wrap async calls in try-catch blocks
-6. **Session Image**: Use `browser_latest` image for optimal browser support
-7. **Timeouts**: Set appropriate timeouts for page loads and interactions - use `setTimeoutMS()` for async operations
-8. **Context Reuse**: Reuse browser contexts for better performance
-9. **Agent Usage**: Use BrowserAgent for complex, natural language-driven automation
-10. **Async vs Sync**: Use async methods (`actAsync`, `extractAsync`) for time-consuming tasks, sync methods for simple operations
-11. **Check success status**: Always check `isSuccess()` before accessing result data
-12. **Use typed extraction**: Define proper data models with Jackson annotations for type-safe extraction
-
-## Use Cases
-
-- **Web Scraping**: Extract data from websites with stealth mode
-- **Automated Testing**: Test web applications end-to-end with persistent sessions
-- **Form Automation**: Fill and submit forms automatically
-- **Screenshot Capture**: Take screenshots of web pages
-- **Data Extraction**: Extract structured data from websites
-- **E-commerce Automation**: Automate online shopping with persistent login sessions
-- **Social Media Automation**: Automate social media interactions with cookie persistence
-- **AI-Powered Testing**: Use natural language to describe test scenarios
-- **Multi-Session Workflows**: Persist browser state across multiple automation sessions
-- **Extension Integration**: Use browser extensions for enhanced functionality
-
-## Troubleshooting
-
-### Common Issues
-
-**Problem**: BrowserException "Browser is not initialized"
-**Solution**: Call `session.getBrowser().initialize(new BrowserOption())` first
-
-**Problem**: Task timeout with async methods
-**Solution**: Increase timeout with `options.setTimeoutMS(60000)` or check network connectivity
-
-**Problem**: Extraction returns unexpected data
-**Solution**: Refine the instruction string and ensure page is fully loaded
-
-**Problem**: ClassCastException when accessing extracted data
-**Solution**: Ensure data model class matches the schema and has proper Jackson annotations
-
-## Limitations
-
-- Browser automation requires `browser_latest` image
-- AI-powered agent features may have additional latency
-- CAPTCHA solving success rate depends on CAPTCHA type
-- Some websites may still detect and block automation
-- BrowserAgent requires Playwright Page object for all operations
-- Java async methods are synchronous (blocking) at the API level but use async MCP tools internally
-
-## Important Notes
-
-1. **Method Name**: Use `initialize()` method to set up the browser, not `init()`.
-2. **Page Requirement**: BrowserAgent methods require a Playwright `Page` object.
-3. **Error Handling**: Always check `isInitialized()` before calling `getEndpointUrl()`.
-4. **Resource Management**: Proper cleanup is essential to avoid resource leaks.
-
-## Testing
-
-See `TestBrowserAgentAsync.java` for comprehensive test cases covering:
-- Basic navigation with actAsync
-- Click operations
-- Game state extraction
-- Custom options and timeouts
-- Comparison with synchronous methods
-- Error handling
-
-Run tests with:
-```bash
-mvn test -Dtest=TestBrowserAgentAsync
-```
-
-## Related Resources
-
-- [BrowserAgent.java](../../../agentbay/src/main/java/com/aliyun/agentbay/browser/BrowserAgent.java) - Main implementation
-- [TestBrowserAgentAsync.java](../../../agentbay/src/test/java/com/aliyun/agentbay/test/TestBrowserAgentAsync.java) - Async test cases
-- [BrowserAgentAsyncExample.java](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserAgentAsyncExample.java) - Complete async working example
-- [Browser Context Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/BrowserContextExample.java) - Complete browser context usage examples
-- [Playwright Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/PlaywrightExample.java) - Basic Playwright integration
-- [Visit Aliyun Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/VisitAliyunExample.java) - Real-world automation
-- [Game 2048 Example](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/Game2048Example.java) - AI-powered automation
-- [Playwright Java Documentation](https://playwright.dev/java/) - Official Playwright docs
-
----
-
-*Documentation for AgentBay Java SDK*

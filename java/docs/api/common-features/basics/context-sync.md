@@ -1,844 +1,569 @@
-# Context Sync API Reference
-
-## 📦 Related Tutorial
-
-- [First Session Tutorial](../../../../../docs/quickstart/first-session.md) - Get started with creating your first AgentBay session
+# 🔄 Context-sync API Reference
 
 ## Overview
 
-The Context Sync API provides configuration classes for defining how data is synchronized between sessions and persistent storage contexts. These classes allow fine-grained control over upload, download, extraction, and deletion policies.
+Context Sync provides a mechanism to persist files and directories across sessions by synchronizing local paths to a named context. It supports policies for upload/download behavior and selective path inclusion.
 
-## UploadStrategy
 
-```java
-public enum UploadStrategy
-```
+## 📚 Tutorial
 
-Upload strategy for context synchronization.
+[Data Persistence Guide](../../../../../docs/guides/common-features/basics/data-persistence.md)
 
-### UPLOAD_BEFORE_RESOURCE_RELEASE
-
-```java
-UPLOAD_BEFORE_RESOURCE_RELEASE
-```
-
-Upload context data before releasing session resources.
-
-**Value**: `"UploadBeforeResourceRelease"`
-
-## DownloadStrategy
-
-```java
-public enum DownloadStrategy
-```
-
-Download strategy for context synchronization.
-
-### DOWNLOAD_ASYNC
-
-```java
-DOWNLOAD_ASYNC
-```
-
-Download context data asynchronously.
-
-**Value**: `"DownloadAsync"`
-
-## UploadMode
-
-```java
-public enum UploadMode
-```
-
-Upload mode for context synchronization.
-
-### FILE
-
-```java
-FILE
-```
-
-Upload files individually.
-
-**Value**: `"File"`
-
-### ARCHIVE
-
-```java
-ARCHIVE
-```
-
-Upload files as an archive.
-
-**Value**: `"Archive"`
-
-## UploadPolicy
-
-```java
-public class UploadPolicy
-```
-
-Defines the upload policy for context synchronization.
-
-### Fields
-
-#### autoUpload
-
-```java
-private boolean autoUpload = true
-```
-
-Enables automatic upload of context data.
-
-**Default**: `true`
-
-#### uploadStrategy
-
-```java
-private UploadStrategy uploadStrategy = UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
-```
-
-Defines when to upload context data.
-
-**Default**: `UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE`
-
-#### uploadMode
-
-```java
-private UploadMode uploadMode = UploadMode.FILE
-```
-
-Defines how to upload context data.
-
-**Default**: `UploadMode.FILE`
-
-#### period
-
-```java
-private Integer period = 30
-```
-
-Upload period in seconds (for periodic uploads).
-
-**Default**: `30`
-
-### Constructor
-
-```java
-public UploadPolicy()
-public UploadPolicy(boolean autoUpload, UploadStrategy uploadStrategy, Integer period)
-public UploadPolicy(boolean autoUpload, UploadStrategy uploadStrategy, UploadMode uploadMode, Integer period)
-```
-
-### Methods
-
-#### defaultPolicy
-
-```java
-public static UploadPolicy defaultPolicy()
-```
-
-Creates a new upload policy with default values.
-
-**Returns:**
-- `UploadPolicy`: Default upload policy
-
-**Example:**
-
-```java
-UploadPolicy policy = UploadPolicy.defaultPolicy();
-```
-
-#### Getters and Setters
-
-```java
-public boolean isAutoUpload()
-public void setAutoUpload(boolean autoUpload)
-
-public UploadStrategy getUploadStrategy()
-public void setUploadStrategy(UploadStrategy uploadStrategy)
-
-public UploadMode getUploadMode()
-public void setUploadMode(UploadMode uploadMode)
-
-public Integer getPeriod()
-public void setPeriod(Integer period)
-```
-
-**Example:**
-
-```java
-UploadPolicy uploadPolicy = new UploadPolicy();
-uploadPolicy.setAutoUpload(true);
-uploadPolicy.setUploadStrategy(UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE);
-uploadPolicy.setUploadMode(UploadMode.FILE);
-uploadPolicy.setPeriod(30);
-```
-
-## DownloadPolicy
-
-```java
-public class DownloadPolicy
-```
-
-Defines the download policy for context synchronization.
-
-### Fields
-
-#### autoDownload
-
-```java
-private boolean autoDownload = true
-```
-
-Enables automatic download of context data.
-
-**Default**: `true`
-
-#### downloadStrategy
-
-```java
-private DownloadStrategy downloadStrategy = DownloadStrategy.DOWNLOAD_ASYNC
-```
-
-Defines when to download context data.
-
-**Default**: `DownloadStrategy.DOWNLOAD_ASYNC`
-
-### Constructor
-
-```java
-public DownloadPolicy()
-public DownloadPolicy(boolean autoDownload, DownloadStrategy downloadStrategy)
-```
-
-### Methods
-
-#### defaultPolicy
-
-```java
-public static DownloadPolicy defaultPolicy()
-```
-
-Creates a new download policy with default values.
-
-**Returns:**
-- `DownloadPolicy`: Default download policy
-
-**Example:**
-
-```java
-DownloadPolicy policy = DownloadPolicy.defaultPolicy();
-```
-
-#### Getters and Setters
-
-```java
-public boolean isAutoDownload()
-public void setAutoDownload(boolean autoDownload)
-
-public DownloadStrategy getDownloadStrategy()
-public void setDownloadStrategy(DownloadStrategy downloadStrategy)
-```
-
-**Example:**
-
-```java
-DownloadPolicy downloadPolicy = new DownloadPolicy();
-downloadPolicy.setAutoDownload(true);
-downloadPolicy.setDownloadStrategy(DownloadStrategy.DOWNLOAD_ASYNC);
-```
-
-## DeletePolicy
-
-```java
-public class DeletePolicy
-```
-
-Defines the delete policy for context synchronization.
-
-### Fields
-
-#### syncLocalFile
-
-```java
-private boolean syncLocalFile = true
-```
-
-Enables synchronization of local file deletions to context storage.
-
-**Default**: `true`
-
-### Constructor
-
-```java
-public DeletePolicy()
-public DeletePolicy(boolean syncLocalFile)
-```
-
-### Methods
-
-#### defaultPolicy
-
-```java
-public static DeletePolicy defaultPolicy()
-```
-
-Creates a new delete policy with default values.
-
-**Returns:**
-- `DeletePolicy`: Default delete policy
-
-**Example:**
-
-```java
-DeletePolicy policy = DeletePolicy.defaultPolicy();
-```
-
-#### Getters and Setters
-
-```java
-public boolean isSyncLocalFile()
-public void setSyncLocalFile(boolean syncLocalFile)
-```
-
-**Example:**
-
-```java
-DeletePolicy deletePolicy = new DeletePolicy();
-deletePolicy.setSyncLocalFile(true);
-```
-
-## ExtractPolicy
-
-```java
-public class ExtractPolicy
-```
-
-Defines the extract policy for context synchronization.
-
-### Fields
-
-#### extract
-
-```java
-private boolean extract = true
-```
-
-Enables file extraction from archives.
-
-**Default**: `true`
-
-#### deleteSrcFile
-
-```java
-private boolean deleteSrcFile = true
-```
-
-Enables deletion of source archive file after extraction.
-
-**Default**: `true`
-
-#### extractCurrentFolder
-
-```java
-private boolean extractCurrentFolder = false
-```
-
-Extract to current folder instead of creating a new folder.
-
-**Default**: `false`
-
-### Constructor
-
-```java
-public ExtractPolicy()
-public ExtractPolicy(boolean extract, boolean deleteSrcFile, boolean extractCurrentFolder)
-```
-
-### Methods
-
-#### defaultPolicy
-
-```java
-public static ExtractPolicy defaultPolicy()
-```
-
-Creates a new extract policy with default values.
-
-**Returns:**
-- `ExtractPolicy`: Default extract policy
-
-**Example:**
-
-```java
-ExtractPolicy policy = ExtractPolicy.defaultPolicy();
-```
-
-#### Getters and Setters
-
-```java
-public boolean isExtract()
-public void setExtract(boolean extract)
-
-public boolean isDeleteSrcFile()
-public void setDeleteSrcFile(boolean deleteSrcFile)
-
-public boolean isExtractCurrentFolder()
-public void setExtractCurrentFolder(boolean extractCurrentFolder)
-```
-
-**Example:**
-
-```java
-ExtractPolicy extractPolicy = new ExtractPolicy();
-extractPolicy.setExtract(true);
-extractPolicy.setDeleteSrcFile(true);
-extractPolicy.setExtractCurrentFolder(false);
-```
-
-## WhiteList
-
-```java
-public class WhiteList
-```
-
-Defines the white list configuration for selective synchronization.
-
-### Fields
-
-#### path
-
-```java
-private String path = ""
-```
-
-Path to include in the white list.
-
-**Default**: `""` (all paths)
-
-#### excludePaths
-
-```java
-private List<String> excludePaths = new ArrayList<>()
-```
-
-Paths to exclude from the white list.
-
-**Default**: Empty list
-
-### Constructor
-
-```java
-public WhiteList()
-public WhiteList(String path, List<String> excludePaths)
-```
-
-### Methods
-
-#### Getters and Setters
-
-```java
-public String getPath()
-public void setPath(String path)
-
-public List<String> getExcludePaths()
-public void setExcludePaths(List<String> excludePaths)
-```
-
-**Example:**
-
-```java
-// Include all files in /data, except /data/temp
-WhiteList whiteList = new WhiteList("/data", Arrays.asList("/data/temp"));
-```
-
-## BWList
-
-```java
-public class BWList
-```
-
-Defines the black and white list configuration.
-
-### Fields
-
-#### whiteLists
-
-```java
-private List<WhiteList> whiteLists = new ArrayList<>()
-```
-
-List of white list configurations.
-
-**Default**: Empty list
-
-### Constructor
-
-```java
-public BWList()
-public BWList(List<WhiteList> whiteLists)
-```
-
-### Methods
-
-#### Getters and Setters
-
-```java
-public List<WhiteList> getWhiteLists()
-public void setWhiteLists(List<WhiteList> whiteLists)
-```
-
-**Example:**
-
-```java
-WhiteList dataWhiteList = new WhiteList("/data", Arrays.asList("/data/temp"));
-WhiteList configWhiteList = new WhiteList("/config", new ArrayList<>());
-
-BWList bwList = new BWList(Arrays.asList(dataWhiteList, configWhiteList));
-```
-
-## SyncPolicy
-
-```java
-public class SyncPolicy
-```
-
-Defines the complete synchronization policy combining all sub-policies.
-
-### Fields
-
-#### uploadPolicy
-
-```java
-private UploadPolicy uploadPolicy
-```
-
-Defines the upload policy.
-
-#### downloadPolicy
-
-```java
-private DownloadPolicy downloadPolicy
-```
-
-Defines the download policy.
-
-#### deletePolicy
-
-```java
-private DeletePolicy deletePolicy
-```
-
-Defines the delete policy.
-
-#### extractPolicy
-
-```java
-private ExtractPolicy extractPolicy
-```
-
-Defines the extract policy.
-
-#### bwList
-
-```java
-private BWList bwList
-```
-
-Defines the black and white list configuration.
-
-### Constructor
-
-```java
-public SyncPolicy()
-public SyncPolicy(UploadPolicy uploadPolicy, DownloadPolicy downloadPolicy,
-                 DeletePolicy deletePolicy, ExtractPolicy extractPolicy, BWList bwList)
-```
-
-### Methods
-
-#### defaultPolicy
-
-```java
-public static SyncPolicy defaultPolicy()
-```
-
-Creates a new sync policy with default values for all sub-policies.
-
-**Returns:**
-- `SyncPolicy`: Default sync policy
-
-**Example:**
-
-```java
-SyncPolicy policy = SyncPolicy.defaultPolicy();
-```
-
-#### Getters and Setters
-
-```java
-public UploadPolicy getUploadPolicy()
-public void setUploadPolicy(UploadPolicy uploadPolicy)
-
-public DownloadPolicy getDownloadPolicy()
-public void setDownloadPolicy(DownloadPolicy downloadPolicy)
-
-public DeletePolicy getDeletePolicy()
-public void setDeletePolicy(DeletePolicy deletePolicy)
-
-public ExtractPolicy getExtractPolicy()
-public void setExtractPolicy(ExtractPolicy extractPolicy)
-
-public BWList getBwList()
-public void setBwList(BWList bwList)
-```
-
-**Example:**
-
-```java
-// Create custom sync policy
-UploadPolicy uploadPolicy = new UploadPolicy();
-uploadPolicy.setUploadMode(UploadMode.ARCHIVE);
-
-DownloadPolicy downloadPolicy = DownloadPolicy.defaultPolicy();
-DeletePolicy deletePolicy = DeletePolicy.defaultPolicy();
-ExtractPolicy extractPolicy = ExtractPolicy.defaultPolicy();
-
-WhiteList whiteList = new WhiteList("/data", new ArrayList<>());
-BWList bwList = new BWList(Arrays.asList(whiteList));
-
-SyncPolicy syncPolicy = new SyncPolicy(
-    uploadPolicy,
-    downloadPolicy,
-    deletePolicy,
-    extractPolicy,
-    bwList
-);
-```
+Learn how context synchronization works and how to persist data across sessions
 
 ## ContextSync
 
-```java
-public class ContextSync
-```
+Defines the context synchronization configuration.
 
-Defines the context synchronization configuration linking a context to a session path.
-
-### Fields
-
-#### contextId
-
-```java
-private String contextId
-```
-
-ID of the context to synchronize.
-
-#### path
-
-```java
-private String path
-```
-
-Path where the context should be mounted in the session.
-
-#### policy
-
-```java
-private SyncPolicy policy
-```
-
-Defines the synchronization policy.
+<p>This class configures how a context should be synchronized with a session,
+including the context ID, mount path, synchronization policy, and whether to
+wait for initial download completion.</p>
 
 ### Constructor
 
 ```java
 public ContextSync()
+```
+
+```java
 public ContextSync(String contextId, String path, SyncPolicy policy)
 ```
 
 ### Methods
 
-#### create
+### create
 
 ```java
 public static ContextSync create(String contextId, String path, SyncPolicy policy)
 ```
 
-Creates a new context sync configuration.
-
-**Parameters:**
-- `contextId` (String): Context ID
-- `path` (String): Mount path in session
-- `policy` (SyncPolicy): Synchronization policy
-
-**Returns:**
-- `ContextSync`: New context sync configuration
-
-**Example:**
-
-```java
-ContextSync contextSync = ContextSync.create(
-    "context-id-123",
-    "/data",
-    SyncPolicy.defaultPolicy()
-);
-```
-
-#### withPolicy
+### withPolicy
 
 ```java
 public ContextSync withPolicy(SyncPolicy policy)
 ```
 
-Sets the synchronization policy and returns this instance for method chaining.
-
-**Parameters:**
-- `policy` (SyncPolicy): Synchronization policy
-
-**Returns:**
-- `ContextSync`: This instance
-
-**Example:**
+### withBetaWaitForCompletion
 
 ```java
-ContextSync contextSync = ContextSync.create("context-id", "/data", null)
-    .withPolicy(SyncPolicy.defaultPolicy());
+public ContextSync withBetaWaitForCompletion(Boolean wait)
 ```
 
-#### Getters and Setters
+### getPolicy
 
 ```java
-public String getContextId()
-public void setContextId(String contextId)
-
-public String getPath()
-public void setPath(String path)
-
 public SyncPolicy getPolicy()
+```
+
+### setPolicy
+
+```java
 public void setPolicy(SyncPolicy policy)
 ```
 
-## Complete Usage Example
+### getBetaWaitForCompletion
 
 ```java
-import com.aliyun.agentbay.AgentBay;
-import com.aliyun.agentbay.session.Session;
-import com.aliyun.agentbay.session.CreateSessionParams;
-import com.aliyun.agentbay.context.*;
-import com.aliyun.agentbay.model.ContextResult;
-
-public class ContextSyncExample {
-    public static void main(String[] args) throws Exception {
-        AgentBay agentBay = new AgentBay(System.getenv("AGENTBAY_API_KEY"));
-        
-        // Get or create context
-        ContextResult contextResult = agentBay.getContext().get("my-project", true);
-        Context context = contextResult.getContext();
-        
-        // Create custom sync policy
-        UploadPolicy uploadPolicy = new UploadPolicy();
-        uploadPolicy.setAutoUpload(true);
-        uploadPolicy.setUploadMode(UploadMode.ARCHIVE);
-        
-        DownloadPolicy downloadPolicy = new DownloadPolicy();
-        downloadPolicy.setAutoDownload(true);
-        
-        // Configure white list - sync only /data, exclude /data/temp
-        WhiteList whiteList = new WhiteList("/data", Arrays.asList("/data/temp"));
-        BWList bwList = new BWList(Arrays.asList(whiteList));
-        
-        SyncPolicy syncPolicy = new SyncPolicy(
-            uploadPolicy,
-            downloadPolicy,
-            DeletePolicy.defaultPolicy(),
-            ExtractPolicy.defaultPolicy(),
-            bwList
-        );
-        
-        // Create context sync configuration
-        ContextSync contextSync = ContextSync.create(
-            context.getId(),
-            "/data",
-            syncPolicy
-        );
-        
-        // Create session with context sync
-        CreateSessionParams params = new CreateSessionParams();
-        params.setContextSyncs(Arrays.asList(contextSync));
-        
-        Session session = agentBay.create(params).getSession();
-        
-        // Work with files - they'll be synced according to policy
-        session.getFileSystem().writeFile("/data/output.txt", "results", "overwrite", false);
-        session.getFileSystem().writeFile("/data/temp/cache.txt", "temp", "overwrite", false);
-        
-        // Delete with sync - only /data/output.txt will be synced (temp excluded)
-        session.delete(true);
-        
-        System.out.println("Session completed with context synchronization");
-    }
-}
+public Boolean getBetaWaitForCompletion()
 ```
 
-## Best Practices
-
-1. **Default Policies**: Use `SyncPolicy.defaultPolicy()` for most cases
-2. **Archive Mode**: Use `UploadMode.ARCHIVE` for large numbers of small files
-3. **White Lists**: Configure white lists to sync only necessary files
-4. **Auto Upload**: Enable auto upload to ensure data is saved on session deletion
-5. **Extract Policy**: Configure extract policy for compressed context data
-6. **Path Organization**: Use clear directory structures for easier white list configuration
-
-## Common Patterns
-
-### Simple Context Sync
+### setBetaWaitForCompletion
 
 ```java
-// Using default policy
-ContextSync contextSync = ContextSync.create(
-    contextId,
-    "/workspace",
-    SyncPolicy.defaultPolicy()
-);
+public void setBetaWaitForCompletion(Boolean betaWaitForCompletion)
 ```
 
-### Archive Upload Mode
+
+
+## SyncPolicy
+
+Defines the synchronization policy
+
+Attributes:
+    - uploadPolicy: Defines the upload policy
+    - downloadPolicy: Defines the download policy
+    - deletePolicy: Defines the delete policy
+    - extractPolicy: Defines the extract policy
+    - recyclePolicy: Defines the recycle policy
+    - bwList: Defines the black and white list
+
+### Constructor
 
 ```java
-// Upload as archive for better performance with many files
-UploadPolicy uploadPolicy = new UploadPolicy();
-uploadPolicy.setUploadMode(UploadMode.ARCHIVE);
-
-SyncPolicy policy = SyncPolicy.defaultPolicy();
-policy.setUploadPolicy(uploadPolicy);
-
-ContextSync contextSync = ContextSync.create(contextId, "/data", policy);
+public SyncPolicy()
 ```
-
-### Selective Synchronization
 
 ```java
-// Sync only specific directories
-WhiteList dataWhiteList = new WhiteList("/data/output", new ArrayList<>());
-WhiteList logsWhiteList = new WhiteList("/logs", Arrays.asList("/logs/temp"));
-BWList bwList = new BWList(Arrays.asList(dataWhiteList, logsWhiteList));
-
-SyncPolicy policy = SyncPolicy.defaultPolicy();
-policy.setBwList(bwList);
-
-ContextSync contextSync = ContextSync.create(contextId, "/workspace", policy);
+public SyncPolicy(UploadPolicy uploadPolicy, DownloadPolicy downloadPolicy, DeletePolicy deletePolicy, ExtractPolicy extractPolicy, BWList bwList)
 ```
 
-## Related Resources
+```java
+public SyncPolicy(UploadPolicy uploadPolicy, DownloadPolicy downloadPolicy, DeletePolicy deletePolicy, ExtractPolicy extractPolicy, RecyclePolicy recyclePolicy, BWList bwList)
+```
 
-- [Context API Reference](context.md)
-- [Session API Reference](session.md)
-- [AgentBay API Reference](agentbay.md)
-- [Session Context Example](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/SessionContextExample.java)
-- [Context Sync Lifecycle Example](../../../../agentbay/src/main/java/com/aliyun/agentbay/examples/ContextSyncLifecycleExample.java)
+### Methods
 
----
+### defaultPolicy
 
-*Documentation for AgentBay Java SDK*
+```java
+public static SyncPolicy defaultPolicy()
+```
+
+### getUploadPolicy
+
+```java
+public UploadPolicy getUploadPolicy()
+```
+
+### setUploadPolicy
+
+```java
+public void setUploadPolicy(UploadPolicy uploadPolicy)
+```
+
+### getDownloadPolicy
+
+```java
+public DownloadPolicy getDownloadPolicy()
+```
+
+### setDownloadPolicy
+
+```java
+public void setDownloadPolicy(DownloadPolicy downloadPolicy)
+```
+
+### getDeletePolicy
+
+```java
+public DeletePolicy getDeletePolicy()
+```
+
+### setDeletePolicy
+
+```java
+public void setDeletePolicy(DeletePolicy deletePolicy)
+```
+
+### getExtractPolicy
+
+```java
+public ExtractPolicy getExtractPolicy()
+```
+
+### setExtractPolicy
+
+```java
+public void setExtractPolicy(ExtractPolicy extractPolicy)
+```
+
+### getRecyclePolicy
+
+```java
+public RecyclePolicy getRecyclePolicy()
+```
+
+### setRecyclePolicy
+
+```java
+public void setRecyclePolicy(RecyclePolicy recyclePolicy)
+```
+
+### getBwList
+
+```java
+public BWList getBwList()
+```
+
+### setBwList
+
+```java
+public void setBwList(BWList bwList)
+```
+
+
+
+## UploadPolicy
+
+Defines the upload policy for context synchronization
+
+Attributes:
+    autoUpload: Enables automatic upload
+    uploadStrategy: Defines the upload strategy
+    uploadMode: Defines the upload mode (UploadMode.FILE or UploadMode.ARCHIVE)
+    period: Upload period in seconds (default: 30)
+
+### Constructor
+
+```java
+public UploadPolicy()
+```
+
+```java
+public UploadPolicy(boolean autoUpload, UploadStrategy uploadStrategy, Integer period)
+```
+
+```java
+public UploadPolicy(boolean autoUpload, UploadStrategy uploadStrategy, UploadMode uploadMode, Integer period)
+```
+
+### Methods
+
+### defaultPolicy
+
+```java
+public static UploadPolicy defaultPolicy()
+```
+
+### isAutoUpload
+
+```java
+public boolean isAutoUpload()
+```
+
+### setAutoUpload
+
+```java
+public void setAutoUpload(boolean autoUpload)
+```
+
+### getUploadStrategy
+
+```java
+public UploadStrategy getUploadStrategy()
+```
+
+### setUploadStrategy
+
+```java
+public void setUploadStrategy(UploadStrategy uploadStrategy)
+```
+
+### getPeriod
+
+```java
+public Integer getPeriod()
+```
+
+### setPeriod
+
+```java
+public void setPeriod(Integer period)
+```
+
+### getUploadMode
+
+```java
+public UploadMode getUploadMode()
+```
+
+### setUploadMode
+
+```java
+public void setUploadMode(UploadMode uploadMode)
+```
+
+
+
+## DownloadPolicy
+
+Defines the download policy for context synchronization
+
+Attributes:
+    autoDownload: Enables automatic download
+    downloadStrategy: Defines the download strategy
+
+### Constructor
+
+```java
+public DownloadPolicy()
+```
+
+```java
+public DownloadPolicy(boolean autoDownload, DownloadStrategy downloadStrategy)
+```
+
+### Methods
+
+### defaultPolicy
+
+```java
+public static DownloadPolicy defaultPolicy()
+```
+
+### isAutoDownload
+
+```java
+public boolean isAutoDownload()
+```
+
+### setAutoDownload
+
+```java
+public void setAutoDownload(boolean autoDownload)
+```
+
+### getDownloadStrategy
+
+```java
+public DownloadStrategy getDownloadStrategy()
+```
+
+### setDownloadStrategy
+
+```java
+public void setDownloadStrategy(DownloadStrategy downloadStrategy)
+```
+
+
+
+## DeletePolicy
+
+Defines the delete policy for context synchronization
+
+Attributes:
+    syncLocalFile: Enables synchronization of local file deletions
+
+### Constructor
+
+```java
+public DeletePolicy()
+```
+
+```java
+public DeletePolicy(boolean syncLocalFile)
+```
+
+### Methods
+
+### defaultPolicy
+
+```java
+public static DeletePolicy defaultPolicy()
+```
+
+### isSyncLocalFile
+
+```java
+public boolean isSyncLocalFile()
+```
+
+### setSyncLocalFile
+
+```java
+public void setSyncLocalFile(boolean syncLocalFile)
+```
+
+
+
+## ExtractPolicy
+
+Defines the extract policy for context synchronization
+
+Attributes:
+    extract: Enables file extraction
+    deleteSrcFile: Enables deletion of source file after extraction
+    extractCurrentFolder: Enables extraction to current folder
+
+### Constructor
+
+```java
+public ExtractPolicy()
+```
+
+```java
+public ExtractPolicy(boolean extract, boolean deleteSrcFile, boolean extractCurrentFolder)
+```
+
+### Methods
+
+### defaultPolicy
+
+```java
+public static ExtractPolicy defaultPolicy()
+```
+
+### isExtract
+
+```java
+public boolean isExtract()
+```
+
+### setExtract
+
+```java
+public void setExtract(boolean extract)
+```
+
+### isDeleteSrcFile
+
+```java
+public boolean isDeleteSrcFile()
+```
+
+### setDeleteSrcFile
+
+```java
+public void setDeleteSrcFile(boolean deleteSrcFile)
+```
+
+### isExtractCurrentFolder
+
+```java
+public boolean isExtractCurrentFolder()
+```
+
+### setExtractCurrentFolder
+
+```java
+public void setExtractCurrentFolder(boolean extractCurrentFolder)
+```
+
+
+
+## RecyclePolicy
+
+Defines the recycle policy for context synchronization
+
+Attributes:
+    lifecycle: Defines how long the context data should be retained
+        Available options:
+        - LIFECYCLE_1DAY: Keep data for 1 day
+        - LIFECYCLE_3DAYS: Keep data for 3 days
+        - LIFECYCLE_5DAYS: Keep data for 5 days
+        - LIFECYCLE_10DAYS: Keep data for 10 days
+        - LIFECYCLE_15DAYS: Keep data for 15 days
+        - LIFECYCLE_30DAYS: Keep data for 30 days
+        - LIFECYCLE_90DAYS: Keep data for 90 days
+        - LIFECYCLE_180DAYS: Keep data for 180 days
+        - LIFECYCLE_360DAYS: Keep data for 360 days
+        - LIFECYCLE_FOREVER: Keep data permanently (default)
+    paths: Specifies which directories or files should be subject to the recycle policy
+        Rules:
+        - Must use exact directory/file paths
+        - Wildcard patterns (* ? [ ]) are NOT supported
+        - Empty string "" means apply to all paths in the context
+        - Multiple paths can be specified as a list
+        Default: [""] (applies to all paths)
+
+### Constructor
+
+```java
+public RecyclePolicy()
+```
+
+```java
+public RecyclePolicy(Lifecycle lifecycle, List<String> paths)
+```
+
+### Methods
+
+### defaultPolicy
+
+```java
+public static RecyclePolicy defaultPolicy()
+```
+
+Creates a new recycle policy with default values
+
+**Returns:**
+- `RecyclePolicy`: RecyclePolicy with default values
+
+### getLifecycle
+
+```java
+public Lifecycle getLifecycle()
+```
+
+### setLifecycle
+
+```java
+public void setLifecycle(Lifecycle lifecycle)
+```
+
+### getPaths
+
+```java
+public List<String> getPaths()
+```
+
+### setPaths
+
+```java
+public void setPaths(List<String> paths)
+```
+
+
+
+## WhiteList
+
+Defines the white list configuration
+
+Attributes:
+    path: Path to include in the white list
+    excludePaths: Paths to exclude from the white list
+
+### Constructor
+
+```java
+public WhiteList()
+```
+
+```java
+public WhiteList(String path, List<String> excludePaths)
+```
+
+### Methods
+
+### getExcludePaths
+
+```java
+public List<String> getExcludePaths()
+```
+
+### setExcludePaths
+
+```java
+public void setExcludePaths(List<String> excludePaths)
+```
+
+
+
+## BWList
+
+Defines the black and white list configuration
+
+Attributes:
+    whiteLists: Defines the white lists
+
+### Constructor
+
+```java
+public BWList()
+```
+
+```java
+public BWList(List<WhiteList> whiteLists)
+```
+
+### Methods
+
+### getWhiteLists
+
+```java
+public List<WhiteList> getWhiteLists()
+```
+
+### setWhiteLists
+
+```java
+public void setWhiteLists(List<WhiteList> whiteLists)
+```
+
+
+
+## 🔗 Related Resources
+
+- [Context Manager API Reference](../../../api/common-features/basics/context-manager.md)
+- [Session API Reference](../../../api/common-features/basics/session.md)
+

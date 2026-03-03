@@ -6,6 +6,15 @@ import java.util.Map;
 
 /**
  * Defines the synchronization policy
+ * 
+ * Attributes:
+ *     - uploadPolicy: Defines the upload policy
+ *     - downloadPolicy: Defines the download policy
+ *     - deletePolicy: Defines the delete policy
+ *     - extractPolicy: Defines the extract policy
+ *     - recyclePolicy: Defines the recycle policy
+ *     - bwList: Defines the black and white list
+ * 
  */
 public class SyncPolicy {
     private UploadPolicy uploadPolicy;

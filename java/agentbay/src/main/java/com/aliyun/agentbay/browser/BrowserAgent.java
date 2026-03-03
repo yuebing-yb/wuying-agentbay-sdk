@@ -1,23 +1,37 @@
 package com.aliyun.agentbay.browser;
 
-import com.aliyun.agentbay.exception.AgentBayException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.aliyun.agentbay.exception.BrowserException;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.CDPSession;
 import com.microsoft.playwright.Page;
-import java.util.*;
 
 /**
  * BrowserAgent provides AI-powered browser automation capabilities
  * Matches Python BrowserAgent functionality completely
+ * 
+ * @deprecated Use BrowserOperator instead. This class will be removed in a future version.
+ *             For migration, simply replace BrowserAgent with BrowserOperator:
+ *             <pre>{@code
+ *             // Old way (deprecated):
+ *             BrowserAgent agent = browser.getAgent();
+ *             
+ *             // New way (recommended):
+ *             BrowserOperator operator = browser.getOperator();
+ *             }</pre>
  */
+@Deprecated
 public class BrowserAgent extends BaseService {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String SERVER_BROWSER_USE = "wuying_browseruse";

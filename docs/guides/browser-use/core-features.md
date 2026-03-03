@@ -25,10 +25,10 @@
 ## 📚 Related Guides
 
 - [Browser Use Overview](README.md) - Complete browser automation features
-- [Advanced Features](advance-features.md) - PageUseAgent and advanced capabilities
+- [Advanced Features](advance-features.md) - BrowserOperator and advanced capabilities
 - [Code Examples](code-example.md) - Code examples for browser automation
 
 ## 🆘 Getting Help
 
-- [GitHub Issues](https://github.com/aliyun/wuying-agentbay-sdk/issues)
+- [GitHub Issues](https://github.com/agentbay-ai/wuying-agentbay-sdk/issues)
 - [Documentation Home](../README.md)

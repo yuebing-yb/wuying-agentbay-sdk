@@ -29,7 +29,8 @@ func TestComputerBetaScreenshotJPEG(t *testing.T) {
 
 	s := session.Computer.BetaTakeScreenshot("jpg")
 	require.True(t, s.Success, "beta screenshot failed: %s", s.ErrorMessage)
-	require.Equal(t, "jpeg", s.Format)
+	require.Equal(t, "image", s.Type)
+	require.Equal(t, "image/jpeg", s.MimeType)
 	require.NotNil(t, s.Width)
 	require.NotNil(t, s.Height)
 	require.Greater(t, *s.Width, 0)

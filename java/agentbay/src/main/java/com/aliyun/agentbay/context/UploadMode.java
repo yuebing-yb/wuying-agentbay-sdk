@@ -1,5 +1,8 @@
 package com.aliyun.agentbay.context;
 
+/**
+ * Upload mode for context synchronization
+ */
 public enum UploadMode {
     FILE("File"),
     ARCHIVE("Archive");

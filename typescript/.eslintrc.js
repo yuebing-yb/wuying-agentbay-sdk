@@ -13,5 +13,9 @@ module.exports = {
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         '@typescript-eslint/no-explicit-any': 'warn',
         '@typescript-eslint/no-unused-vars': ['warn', { 'argsIgnorePattern': '^_' }],
+        // Disable no-empty-function to prevent getTokens crash when ESLint
+        // and @typescript-eslint versions are mismatched (e.g. npx fallback)
+        '@typescript-eslint/no-empty-function': 'off',
+        'no-empty-function': 'off',
     },
 };

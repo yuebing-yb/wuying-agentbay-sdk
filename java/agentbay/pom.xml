@@ -6,17 +6,17 @@
 
     <groupId>com.aliyun</groupId>
     <artifactId>agentbay-sdk</artifactId>
-    <version>0.15.1</version>
+    <version>0.16.0</version>
     <packaging>jar</packaging>
 
     <name>AgentBay Java SDK</name>
     <description>Java SDK for Aliyun AgentBay Service</description>
-    <url>https://github.com/aliyun/wuying-agentbay-sdk</url>
+    <url>https://github.com/agentbay-ai/wuying-agentbay-sdk</url>
 
     <scm>
-        <url>https://github.com/aliyun/wuying-agentbay-sdk</url>
-        <connection>scm:git:https://github.com/aliyun/wuying-agentbay-sdk</connection>
-        <developerConnection>scm:git:ssh://git@github.com:aliyun/wuying-agentbay-sdk.git</developerConnection>
+        <url>https://github.com/agentbay-ai/wuying-agentbay-sdk</url>
+        <connection>scm:git:https://github.com/agentbay-ai/wuying-agentbay-sdk</connection>
+        <developerConnection>scm:git:ssh://git@github.com:agentbay-ai/wuying-agentbay-sdk.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
@@ -170,6 +170,16 @@
     </dependencies>
 
     <build>
+        <!-- 添加测试资源目录 -->
+        <testResources>
+            <testResource>
+                <directory>src/unit-test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>src/integration-test/resources</directory>
+            </testResource>
+        </testResources>
+
         <plugins>
             <!-- 编译插件 -->
             <plugin>
@@ -183,6 +193,39 @@
                         <arg>-parameters</arg>
                     </compilerArgs>
                 </configuration>
+            </plugin>
+
+            <!-- Build Helper插件 - 添加单元测试和集成测试源目录 -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <id>add-unit-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/unit-test/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-integration-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/integration-test/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- JAR插件 - 确保MANIFEST.MF包含版本信息和发布标志 -->
@@ -204,11 +247,57 @@
                 </configuration>
             </plugin>
 
-            <!-- 测试插件 -->
+            <!-- 单元测试插件 - 只运行 src/unit-test/java 目录 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.1.2</version>
+                <configuration>
+                    <!-- 只运行单元测试，排除集成测试 -->
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*IntegrationTest.java</exclude>
+                    </excludes>
+                    <!-- 允许通过命令行参数 -Dsurefire.skip=true 跳过单元测试 -->
+                    <skip>${surefire.skip}</skip>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit4</artifactId>
+                        <version>3.1.2</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit-platform</artifactId>
+                        <version>3.1.2</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- 集成测试插件 - 只运行 src/integration-test/java 目录 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <!-- 默认运行所有集成测试 -->
+                    <!-- 使用 -Dit.test 参数可以指定单个测试类 -->
+                    <includes>
+                        <include>**/*IntegrationTest.java</include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-tests</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.surefire</groupId>

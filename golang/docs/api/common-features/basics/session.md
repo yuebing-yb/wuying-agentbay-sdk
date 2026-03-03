@@ -4,6 +4,10 @@
 
 - [Session Management Guide](../../../../../docs/guides/common-features/basics/session-management.md) - Detailed tutorial on session lifecycle and management
 
+## Overview
+
+The Session class represents an active cloud environment instance in AgentBay. It provides access to all service modules (filesystem, command, browser, code, etc.) and manages the lifecycle of the cloud environment.
+
 ## Type Session
 
 ```go
@@ -19,6 +23,14 @@ type Session struct {
 	// LinkUrl-based direct tool call (non-VPC)
 	Token	string
 	LinkUrl	string
+
+	// WS URL for long connection (optional, for streaming output)
+	WsUrl	string
+
+	wsClient	*internal.WsClient
+
+	// Shared HTTP client for LinkUrl calls (lazy initialized)
+	linkHttpClient	*http.Client
 
 	// Browser replay enabled flag
 	EnableBrowserReplay	bool
@@ -61,6 +73,9 @@ BetaPause synchronously pauses this session (beta), putting it into a dormant st
 resource usage and costs. BetaPause puts the session into a PAUSED state where computational
 resources are significantly reduced. The session state is preserved and can be resumed later to
 continue work.
+
+Note: This feature is currently in whitelist-only access. Contact agentbay_dev@alibabacloud.com to
+request access.
 
 Parameters:
   - timeout: Timeout in seconds to wait for the session to pause. Defaults to 600 seconds.
@@ -190,6 +205,14 @@ func (s *Session) Fs() *filesystem.FileSystem
 
 Fs returns the FileSystem module (alias of FileSystem).
 
+### GetBrowser
+
+```go
+func (s *Session) GetBrowser() *browser.Browser
+```
+
+GetBrowser returns the Browser instance for this session.
+
 ### GetEnableBrowserReplay
 
 ```go
@@ -283,6 +306,14 @@ func (s *Session) GetStatus() (*SessionStatusResult, error)
 GetStatus retrieves basic session status for the current session. This method calls the
 GetSessionDetail API and returns status only.
 
+### GetStreamingWsClient
+
+```go
+func (s *Session) GetStreamingWsClient() (WsStreamingClient, error)
+```
+
+GetStreamingWsClient returns a WS streaming client for this session.
+
 ### GetToken
 
 ```go
@@ -290,6 +321,18 @@ func (s *Session) GetToken() string
 ```
 
 GetToken returns the token for LinkUrl-based direct tool calls.
+
+### GetWsClient
+
+```go
+func (s *Session) GetWsClient() (interface{}, error)
+```
+
+### GetWsUrl
+
+```go
+func (s *Session) GetWsUrl() string
+```
 
 ### Info
 
@@ -317,6 +360,15 @@ result, _ := client.Create(nil)
 defer result.Session.Delete()
 infoResult, _ := result.Session.Info()
 ```
+
+### KeepAlive
+
+```go
+func (s *Session) KeepAlive() (*KeepAliveResult, error)
+```
+
+KeepAlive refreshes the backend idle timer for this session. It calls the RefreshSessionIdleTime
+API.
 
 ### ListMcpTools
 
@@ -396,6 +448,10 @@ type CreateSessionParams struct {
 
 	// ImageId specifies the image ID to use for the session.
 	ImageId	string
+
+	// IdleReleaseTimeout specifies the SDK-side idle release timeout in seconds.
+	// Default is 300 seconds.
+	IdleReleaseTimeout	int32
 
 	// ContextSync is a list of context synchronization configurations.
 	// These configurations define how contexts should be synchronized and mounted.
@@ -502,6 +558,15 @@ func (p *CreateSessionParams) WithExtraConfigs(extraConfigs *models.ExtraConfigs
 
 WithExtraConfigs sets the extra configurations for the session parameters and returns the updated
 parameters.
+
+### WithIdleReleaseTimeout
+
+```go
+func (p *CreateSessionParams) WithIdleReleaseTimeout(timeoutSeconds int32) *CreateSessionParams
+```
+
+WithIdleReleaseTimeout sets the SDK-side idle release timeout in seconds and returns the updated
+parameters. Only positive values are accepted.
 
 ### WithImageId
 

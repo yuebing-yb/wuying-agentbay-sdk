@@ -673,6 +673,21 @@ class Computer(BaseService):
         See Also:
             get_screen_size
         """
+        link_url = ""
+        try:
+            link_url = self.session.get_link_url() or ""
+        except Exception:
+            link_url = getattr(self.session, "link_url", "") or ""
+        if link_url:
+            return OperationResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=(
+                    "This cloud environment does not support `screenshot()`. "
+                    "Please use `beta_take_screenshot()` instead."
+                ),
+            )
         args = {}
         try:
             result = self.session.call_mcp_tool(
@@ -712,19 +727,30 @@ class Computer(BaseService):
         This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
         binary image data. The backend also returns the captured image dimensions
         (width/height in pixels), which are exposed on `ScreenshotResult.width`
-        and `ScreenshotResult.height` when available.
+        and `ScreenshotResult.height`. The backend metadata fields `type` and
+        `mime_type` are exposed on `ScreenshotResult.type` and `ScreenshotResult.mime_type`.
 
         Args:
             format: The desired image format (default: "png"). Supported: "png", "jpeg", "jpg".
 
         Returns:
             ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
-                including `width` and `height` when provided by the backend.
+                including `type`, `mime_type`, `width`, and `height` when provided by the backend.
 
         Raises:
             AgentBayError: If screenshot fails or response cannot be decoded.
             ValueError: If `format` is invalid.
         """
+        link_url = ""
+        try:
+            link_url = self.session.get_link_url() or ""
+        except Exception:
+            link_url = getattr(self.session, "link_url", "") or ""
+        if not link_url:
+            raise AgentBayError(
+                "This cloud environment does not support `beta_take_screenshot()`. "
+                "Please use `screenshot()` instead."
+            )
         fmt = (format or "").strip().lower()
         if fmt == "jpg":
             fmt = "jpeg"
@@ -763,9 +789,17 @@ class Computer(BaseService):
 
         if not isinstance(obj, dict):
             raise AgentBayError("Invalid screenshot JSON: expected object")
+        shot_type = obj.get("type")
+        mime_type = obj.get("mime_type")
         b64 = obj.get("data")
         if not isinstance(b64, str) or not b64.strip():
             raise AgentBayError("Screenshot JSON missing base64 field")
+        if not isinstance(shot_type, str) or not shot_type.strip():
+            raise AgentBayError("Invalid screenshot JSON: expected non-empty string 'type'")
+        if not isinstance(mime_type, str) or not mime_type.strip():
+            raise AgentBayError(
+                "Invalid screenshot JSON: expected non-empty string 'mime_type'"
+            )
         width = obj.get("width")
         height = obj.get("height")
         if width is not None and not isinstance(width, int):
@@ -784,12 +818,20 @@ class Computer(BaseService):
         if not raw.startswith(magic):
             raise AgentBayError(f"Screenshot data does not match expected format '{fmt}'")
 
+        expected_mime_type = "image/png" if fmt == "png" else "image/jpeg"
+        if mime_type.strip().lower() != expected_mime_type:
+            raise AgentBayError(
+                "Screenshot JSON mime_type does not match expected format: "
+                f"expected {expected_mime_type!r}, got {mime_type!r}"
+            )
+
         return ScreenshotResult(
             request_id=result.request_id,
             success=True,
             error_message="",
+            type=shot_type,
             data=raw,
-            format=fmt,
+            mime_type=mime_type,
             width=width,
             height=height,
         )
@@ -1410,7 +1452,7 @@ class Computer(BaseService):
             args = {
                 "start_menu": start_menu,
                 "desktop": desktop,
-                "ignore_system_apps": ignore_system_apps,
+                "ignore_system_app": ignore_system_apps,
             }
 
             result = self.session.call_mcp_tool(

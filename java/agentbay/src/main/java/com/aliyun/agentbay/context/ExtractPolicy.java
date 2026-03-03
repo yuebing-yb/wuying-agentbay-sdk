@@ -5,6 +5,11 @@ import java.util.Map;
 
 /**
  * Defines the extract policy for context synchronization
+ * 
+ * Attributes:
+ *     extract: Enables file extraction
+ *     deleteSrcFile: Enables deletion of source file after extraction
+ *     extractCurrentFolder: Enables extraction to current folder
  */
 public class ExtractPolicy {
     private boolean extract = true;
