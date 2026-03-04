@@ -133,6 +133,93 @@ class AsyncAgentBay:
         except:
             return str(obj)
 
+    def _apply_browser_context(self, browser_context, request) -> None:
+        """Build persistence data for BrowserContext and append it to the request."""
+        from ..api.models import CreateMcpSessionRequestPersistenceDataList
+        from .._common.params.context_sync import (
+            BWList,
+            RecyclePolicy,
+            SyncPolicy,
+            UploadPolicy,
+            WhiteList,
+        )
+        from .._common.params.session_params import BrowserSyncMode
+
+        upload_policy = UploadPolicy(auto_upload=browser_context.auto_upload)
+        recycle_policy = RecyclePolicy.default()
+
+        sync_mode = getattr(browser_context, "sync_mode", None) or BrowserSyncMode.STANDARD
+
+        if sync_mode == BrowserSyncMode.MINIMAL:
+            white_lists = [
+                WhiteList(path="/Local State", exclude_paths=[]),
+                WhiteList(path="/Default/Cookies", exclude_paths=[]),
+                WhiteList(path="/Default/Cookies-journal", exclude_paths=[]),
+            ]
+            _logger.info("Browser sync: MINIMAL mode (Cookies + Local State)")
+        else:
+            white_lists = [
+                # Auth core
+                WhiteList(path="/Local State", exclude_paths=[]),
+                WhiteList(path="/Default/Cookies", exclude_paths=[]),
+                WhiteList(path="/Default/Cookies-journal", exclude_paths=[]),
+                # Anti-risk-control device fingerprint (localStorage / IndexedDB)
+                WhiteList(path="/Default/Local Storage", exclude_paths=[]),
+                WhiteList(path="/Default/IndexedDB", exclude_paths=[]),
+                WhiteList(path="/Default/Session Storage", exclude_paths=[]),
+                # Saved passwords and form autofill
+                WhiteList(path="/Default/Login Data", exclude_paths=[]),
+                WhiteList(path="/Default/Login Data-journal", exclude_paths=[]),
+                WhiteList(path="/Default/Login Data For Account", exclude_paths=[]),
+                WhiteList(path="/Default/Login Data For Account-journal", exclude_paths=[]),
+                WhiteList(path="/Default/Web Data", exclude_paths=[]),
+                WhiteList(path="/Default/Web Data-journal", exclude_paths=[]),
+                # Browser settings and permission consistency
+                WhiteList(path="/Default/Preferences", exclude_paths=[]),
+                WhiteList(path="/Default/Secure Preferences", exclude_paths=[]),
+                # Network behavior consistency (HSTS / QUIC)
+                WhiteList(path="/Default/TransportSecurity", exclude_paths=[]),
+                WhiteList(path="/Default/Network Persistent State", exclude_paths=[]),
+                # Rendering fingerprint stability
+                WhiteList(path="/Default/GPUCache", exclude_paths=[]),
+                # Cross-domain password matching
+                WhiteList(path="/Default/Affiliation Database", exclude_paths=[]),
+                WhiteList(path="/Default/Affiliation Database-journal", exclude_paths=[]),
+            ]
+            _logger.info("Browser sync: STANDARD mode (login state + anti-risk-control)")
+
+        sync_policy = SyncPolicy(
+            upload_policy=upload_policy,
+            bw_list=BWList(white_lists=white_lists),
+            recycle_policy=recycle_policy,
+        )
+
+        import json as _json
+        policy_json = _json.dumps(
+            sync_policy, default=self._safe_serialize, ensure_ascii=False
+        )
+
+        browser_context_sync = CreateMcpSessionRequestPersistenceDataList(
+            context_id=browser_context.context_id,
+            path=_BROWSER_DATA_PATH,
+            policy=policy_json,
+        )
+
+        if not hasattr(request, "persistence_data_list") or request.persistence_data_list is None:
+            request.persistence_data_list = []
+        request.persistence_data_list.append(browser_context_sync)
+
+        _logger.info(
+            f"📋 Added browser context to persistence_data_list. Total items: {len(request.persistence_data_list)}"
+        )
+        for i, item in enumerate(request.persistence_data_list):
+            _logger.info(
+                f"📋 persistence_data_list[{i}]: context_id={item.context_id}, path={item.path}, policy_length={len(item.policy) if item.policy else 0}"
+            )
+            _logger.info(
+                f"📋 persistence_data_list[{i}] policy content: {item.policy}"
+            )
+
     def _parse_tool_list_to_mcp_tools(self, tool_list: Any) -> list[McpTool]:
         """
         Parse backend ToolList field into a list of McpTool objects.
@@ -551,69 +638,7 @@ class AsyncAgentBay:
 
             # Add BrowserContext as a ContextSync if provided
             if hasattr(params, "browser_context") and params.browser_context:
-                from ..api.models import CreateMcpSessionRequestPersistenceDataList
-                from .._common.params.context_sync import (
-                    BWList,
-                    RecyclePolicy,
-                    SyncPolicy,
-                    UploadPolicy,
-                    WhiteList,
-                )
-
-                # Create a new SyncPolicy with default values for browser context
-                upload_policy = UploadPolicy(
-                    auto_upload=params.browser_context.auto_upload
-                )
-
-                # Create BWList with white lists for browser data paths
-                white_lists = [
-                    WhiteList(path="/Local State", exclude_paths=[]),
-                    WhiteList(path="/Default/Cookies", exclude_paths=[]),
-                    WhiteList(path="/Default/Cookies-journal", exclude_paths=[]),
-                ]
-                bw_list = BWList(white_lists=white_lists)
-
-                # Use custom recycle_policy if provided, otherwise use default
-                recycle_policy = RecyclePolicy.default()
-
-                sync_policy = SyncPolicy(
-                    upload_policy=upload_policy,
-                    bw_list=bw_list,
-                    recycle_policy=recycle_policy,
-                )
-
-                # Serialize policy to JSON string
-                import json as _json
-
-                policy_json = _json.dumps(
-                    sync_policy, default=self._safe_serialize, ensure_ascii=False
-                )
-
-                # Create browser context sync item
-                browser_context_sync = CreateMcpSessionRequestPersistenceDataList(
-                    context_id=params.browser_context.context_id,
-                    path=_BROWSER_DATA_PATH,  # Using a constant path for browser data
-                    policy=policy_json,
-                )
-
-                # Add to persistence data list or create new one if not exists
-                if (
-                    not hasattr(request, "persistence_data_list")
-                    or request.persistence_data_list is None
-                ):
-                    request.persistence_data_list = []
-                request.persistence_data_list.append(browser_context_sync)
-                _logger.info(
-                    f"📋 Added browser context to persistence_data_list. Total items: {len(request.persistence_data_list)}"
-                )
-                for i, item in enumerate(request.persistence_data_list):
-                    _logger.info(
-                        f"📋 persistence_data_list[{i}]: context_id={item.context_id}, path={item.path}, policy_length={len(item.policy) if item.policy else 0}"
-                    )
-                    _logger.info(
-                        f"📋 persistence_data_list[{i}] policy content: {item.policy}"
-                    )
-
+                self._apply_browser_context(params.browser_context, request)
                 needs_context_sync = True
 
             # Add labels if provided

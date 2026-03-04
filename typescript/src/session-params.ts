@@ -5,6 +5,21 @@ import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
 
 // Browser fingerprint persistent path constant (moved from config.ts)
 const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
+
+/**
+ * Browser data synchronization mode.
+ *
+ * Controls the scope of browser data synchronized between sessions.
+ * - MINIMAL: Only Cookies + Local State. Smallest footprint, sufficient for basic cookie-based auth.
+ * - STANDARD: Login state + anti-risk-control data. Includes Cookies, localStorage, IndexedDB,
+ *   saved passwords, preferences, HSTS, GPU cache, etc. Recommended for most scenarios.
+ */
+export enum BrowserSyncMode {
+  /** Synchronize only essential files (Cookies, Local State). */
+  MINIMAL = "minimal",
+  /** Synchronize login state and anti-risk-control data (recommended). */
+  STANDARD = "standard",
+}
 import {
   log,
   logError,
@@ -62,6 +77,8 @@ export class BrowserContext {
   contextId: string;
   /** Whether to automatically upload browser data when the session ends */
   autoUpload: boolean;
+  /** Browser data synchronization mode. Defaults to STANDARD. */
+  syncMode: BrowserSyncMode;
   /** Optional browser fingerprint context configuration object containing fingerprintContextId */
   fingerprintContext?: BrowserFingerprintContext;
   /** ID of the fingerprint context for browser fingerprint. Set automatically from fingerprint_context. */
@@ -92,6 +109,10 @@ export class BrowserContext {
    *                            fingerprintContextId. This encapsulates
    *                            all fingerprint-related configuration.
    *                            Defaults to undefined.
+   * @param syncMode - Browser data synchronization mode.
+   *                  MINIMAL: only Cookies + Local State.
+   *                  STANDARD: login state + anti-risk-control data (recommended).
+   *                  Defaults to STANDARD.
    *
    * Extension Configuration:
    * - **ExtensionOption**: Use extensionOption parameter with an ExtensionOption object
@@ -113,10 +134,12 @@ export class BrowserContext {
     contextId: string,
     autoUpload = true,
     extensionOption?: ExtensionOption,
-    fingerprintContext?: BrowserFingerprintContext
+    fingerprintContext?: BrowserFingerprintContext,
+    syncMode: BrowserSyncMode = BrowserSyncMode.STANDARD
   ) {
     this.contextId = contextId;
     this.autoUpload = autoUpload;
+    this.syncMode = syncMode;
     this.extensionOption = extensionOption;
     this.fingerprintContext = fingerprintContext;
 

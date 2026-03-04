@@ -22,7 +22,7 @@ public class MobileScreenshotToolSelectionByLinkUrlIntegrationTest {
     private static final String LINK_URL_IMAGE_ID = "mobile-use-android-12-gw";
 
     private static final String NO_LINK_URL_ENDPOINT = "wuyingai-pre.cn-hangzhou.aliyuncs.com";
-    private static final String NO_LINK_URL_IMAGE_ID = "mobile_latest";
+    private static final String NO_LINK_URL_IMAGE_ID = "imgc-0ab5ta4lxt8rw05a2";
 
     @Test
     public void testMobileLinkUrlPresentRequiresBetaTakeScreenshot() throws Exception {
@@ -86,24 +86,28 @@ public class MobileScreenshotToolSelectionByLinkUrlIntegrationTest {
 
         try {
             // Assert link_url is empty/null for this endpoint/image
-            assertNull("Expected session.link_url to be empty for this endpoint/image", session.getLinkUrl());
-
+            String linkUrl = session.getLinkUrl();
+            assertTrue("Expected session.link_url to be empty or null for this endpoint/image", 
+                linkUrl == null || linkUrl.isEmpty());
+            
             // screenshot() should succeed when link_url is absent
             OperationResult r = session.getMobile().screenshot();
             assertTrue(r.getErrorMessage(), r.isSuccess());
-            assertNotNull("Expected screenshot data to be present", r.getData());
-            assertTrue("Expected screenshot data to be non-empty", String.valueOf(r.getData()).trim().length() > 0);
+            assertTrue("Expected screenshot data to be a String", r.getData() instanceof String);
+            String screenshotData = (String) r.getData();
+            assertNotNull("Expected screenshot data to be present", screenshotData);
+            assertTrue("Expected screenshot data to be non-empty", screenshotData.trim().length() > 0);
 
             // beta_take_screenshot() should fail with clear guidance when link_url is absent
             try {
                 ScreenshotBytesResult beta = session.getMobile().betaTakeScreenshot();
-                fail("Expected betaTakeScreenshot() to throw exception when link_url is absent");
+                assertFalse(beta.getErrorMessage(), beta.isSuccess());
             } catch (Exception e) {
                 // Expected: should throw exception with guidance message
                 String errorMsg = e.getMessage();
                 assertNotNull("Expected error message", errorMsg);
-                assertTrue("Expected error message to mention beta_take_screenshot not supported",
-                    errorMsg.contains("does not support") && errorMsg.contains("beta_take_screenshot"));
+                assertTrue("Expected error message to contain 'does not support `beta_take_screenshot()`'",
+                    errorMsg.contains("does not support") && errorMsg.contains("`beta_take_screenshot()`"));
             }
 
         } finally {

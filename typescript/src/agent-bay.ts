@@ -17,6 +17,7 @@ import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
 import { BrowserContext, CreateSessionParamsInterface, CreateSessionParams as CreateSessionParamsClass } from "./session-params";
+import { BrowserSyncMode } from "./session-params";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
 import {
@@ -359,19 +360,60 @@ export class AgentBay {
 
       // Add BrowserContext as a ContextSync if provided
       if (paramsCopy.browserContext) {
-        // Create a simple sync policy for browser context
+        const bc = paramsCopy.browserContext;
+        const syncMode = bc.syncMode ?? BrowserSyncMode.STANDARD;
+
+        let whiteLists: { path: string; excludePaths: string[] }[];
+        if (syncMode === BrowserSyncMode.MINIMAL) {
+          whiteLists = [
+            { path: "/Local State", excludePaths: [] },
+            { path: "/Default/Cookies", excludePaths: [] },
+            { path: "/Default/Cookies-journal", excludePaths: [] },
+          ];
+        } else {
+          // STANDARD mode: login state + anti-risk-control data
+          whiteLists = [
+            // Auth core
+            { path: "/Local State", excludePaths: [] },
+            { path: "/Default/Cookies", excludePaths: [] },
+            { path: "/Default/Cookies-journal", excludePaths: [] },
+            // Anti-risk-control device fingerprint (localStorage / IndexedDB)
+            { path: "/Default/Local Storage", excludePaths: [] },
+            { path: "/Default/IndexedDB", excludePaths: [] },
+            { path: "/Default/Session Storage", excludePaths: [] },
+            // Saved passwords and form autofill
+            { path: "/Default/Login Data", excludePaths: [] },
+            { path: "/Default/Login Data-journal", excludePaths: [] },
+            { path: "/Default/Login Data For Account", excludePaths: [] },
+            { path: "/Default/Login Data For Account-journal", excludePaths: [] },
+            { path: "/Default/Web Data", excludePaths: [] },
+            { path: "/Default/Web Data-journal", excludePaths: [] },
+            // Browser settings and permission consistency
+            { path: "/Default/Preferences", excludePaths: [] },
+            { path: "/Default/Secure Preferences", excludePaths: [] },
+            // Network behavior consistency (HSTS / QUIC)
+            { path: "/Default/TransportSecurity", excludePaths: [] },
+            { path: "/Default/Network Persistent State", excludePaths: [] },
+            // Rendering fingerprint stability
+            { path: "/Default/GPUCache", excludePaths: [] },
+            // Cross-domain password matching
+            { path: "/Default/Affiliation Database", excludePaths: [] },
+            { path: "/Default/Affiliation Database-journal", excludePaths: [] },
+          ];
+        }
+
         const syncPolicy = {
-          uploadPolicy: { autoUpload: paramsCopy.browserContext.autoUpload },
+          uploadPolicy: { autoUpload: bc.autoUpload },
           downloadPolicy: null,
           deletePolicy: null,
-          bwList: null,
+          bwList: { whiteLists },
           recyclePolicy: null,
         };
 
         // Create browser context sync item
         const browserContextSync = new CreateMcpSessionRequestPersistenceDataList({
-          contextId: paramsCopy.browserContext.contextId,
-          path: BROWSER_DATA_PATH, // Using a constant path for browser data
+          contextId: bc.contextId,
+          path: BROWSER_DATA_PATH,
           policy: JSON.stringify(syncPolicy)
         });
 
@@ -1305,16 +1347,15 @@ export class AgentBay {
       // Reconstruct BrowserContext if it exists
       if (result.browserContext) {
         const bc = result.browserContext as any;
-        // Use the BrowserContext constructor to properly recreate the instance
         result.browserContext = new BrowserContext(
           bc.contextId,
           bc.autoUpload,
-          bc.extensionOption
+          bc.extensionOption,
+          bc.fingerprintContext,
+          bc.syncMode
         );
       }
     }
-
-    
 
     return result;
   }

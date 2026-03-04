@@ -40,6 +40,7 @@ from ._common.params.context_sync import (
 from ._sync.extension import Extension, ExtensionOption, ExtensionsService
 from ._common.params.session_params import (
     BrowserContext,
+    BrowserSyncMode,
     CreateSessionParams,
     ListSessionParams,
 )
@@ -173,6 +174,7 @@ __all__ = [
     "AsyncSession",
     # Enums
     "SessionStatus",
+    "BrowserSyncMode",
     # Functional Modules
     "Browser",
     "AsyncBrowser",

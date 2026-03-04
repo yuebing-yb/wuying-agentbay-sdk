@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Dict, List, Optional
+from enum import Enum
 
 from agentbay.api.models._create_mcp_session_request import ExtraConfigs
 
@@ -23,6 +24,21 @@ if TYPE_CHECKING:
     from .browser import BrowserFingerprintContext
 
 
+class BrowserSyncMode(Enum):
+    """
+    Browser data synchronization mode.
+
+    Attributes:
+        MINIMAL: Synchronize only essential files (Cookies, Local State).
+                 Smallest footprint. Sufficient for basic cookie-based auth.
+        STANDARD: Synchronize login state and anti-risk-control data.
+                  Includes Cookies, localStorage, IndexedDB, saved passwords,
+                  preferences, HSTS, GPU cache, etc. Recommended for most scenarios.
+    """
+    MINIMAL = "minimal"    # Only Cookies + Local State
+    STANDARD = "standard"  # Login state + anti-risk-control (recommended)
+
+
 class BrowserContext:
     """
     Browser context configuration for session.
@@ -40,6 +56,9 @@ class BrowserContext:
     Attributes:
         context_id (str): ID of the browser context to bind to the session
         auto_upload (bool): Whether to automatically upload browser data when session ends
+        sync_mode (BrowserSyncMode): Browser data synchronization mode
+            - MINIMAL: Only sync essential files (Cookies, Local State) - fastest
+            - STANDARD: Sync login state + anti-risk-control data - recommended
         fingerprint_context (Optional[BrowserFingerprintContext]):
             Browser fingerprint context configuration object containing fingerprint_context_id.
         extension_option (Optional[ExtensionOption]): Extension configuration object containing
@@ -85,6 +104,7 @@ class BrowserContext:
         self,
         context_id: str,
         auto_upload: bool = True,
+        sync_mode: "BrowserSyncMode" = None,
         extension_option: Optional["ExtensionOption"] = None,
         fingerprint_context: Optional["BrowserFingerprintContext"] = None,
     ):
@@ -97,6 +117,12 @@ class BrowserContext:
 
             auto_upload (bool, optional): Whether to automatically upload browser data
                                         when the session ends. Defaults to True.
+
+            sync_mode (BrowserSyncMode, optional): Browser data synchronization mode.
+                                                  - MINIMAL: Only sync essential files (Cookies, Local State) - fastest
+                                                  - STANDARD: Sync login state + anti-risk-control data (Cookies, localStorage,
+                                                    IndexedDB, passwords, preferences, HSTS, GPUCache, etc.) - recommended
+                                                  Defaults to MINIMAL.
 
             fingerprint_context (Optional[BrowserFingerprintContext], optional):
                         Browser fingerprint context configuration object containing fingerprint_context_id.
@@ -150,6 +176,7 @@ class BrowserContext:
         """
         self.context_id = context_id
         self.auto_upload = auto_upload
+        self.sync_mode = sync_mode if sync_mode is not None else BrowserSyncMode.STANDARD
         self.extension_option = extension_option
         self.fingerprint_context = fingerprint_context
 
