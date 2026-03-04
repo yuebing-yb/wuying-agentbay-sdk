@@ -7,7 +7,7 @@ from typing import Optional
 from agentbay import AgentBay, CreateSessionParams
 
 OPENCLAW_IMAGE_ID = "moltbot-linux-ubuntu-2204"
-OPENCLAW_CONSOLE_URL = "http://127.0.0.1:30120"
+DEFAULT_GATEWAY_PORT = 18789
 
 @dataclass(frozen=True)
 class OpenClawEnv:
@@ -125,6 +125,20 @@ def execute_command(session, command: str, timeout_ms: int = 50000) -> None:
         return
     raise RuntimeError(result.error_message or "Command execution failed")
 
+def detect_gateway_port(session, bot_cmd: str) -> int:
+    """Dynamically detect the gateway port from moltbot config."""
+    cmd = f"{bot_cmd} config get gateway.port 2>/dev/null | grep -E '^[0-9]+$'"
+    result = session.command.execute_command(cmd, timeout_ms=15000)
+    if result.success:
+        port_str = (result.output or "").strip()
+        lines = [l for l in port_str.splitlines() if l.strip().isdigit()]
+        if lines:
+            port = int(lines[-1].strip())
+            if 1 <= port <= 65535:
+                return port
+    print(f"Warning: Could not detect gateway port, using default {DEFAULT_GATEWAY_PORT}")
+    return DEFAULT_GATEWAY_PORT
+
 def detect_openclaw_command(session) -> str:
     cmd = (
         "command -v openclaw >/dev/null 2>&1 && echo openclaw || "
@@ -187,6 +201,10 @@ def main() -> None:
         bot_cmd = detect_openclaw_command(session)
         print(f"Using bot command: {bot_cmd}")
 
+        gateway_port = detect_gateway_port(session, bot_cmd)
+        console_url = f"http://127.0.0.1:{gateway_port}"
+        print(f"Detected console URL: {console_url}")
+
         config_cmd = build_openclaw_config_command(env, bot_cmd=bot_cmd)
         if config_cmd:
             execute_command(session, config_cmd)
@@ -197,7 +215,7 @@ def main() -> None:
                 "Skipping OpenClaw configuration."
             )
 
-        open_console_with_delay(session, OPENCLAW_CONSOLE_URL)
+        open_console_with_delay(session, console_url)
 
         resource_url = (getattr(session, "resource_url", "") or "").strip()
         if resource_url:
