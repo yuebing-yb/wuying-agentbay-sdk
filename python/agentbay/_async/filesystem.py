@@ -2062,17 +2062,140 @@ class AsyncFileSystem(BaseService):
             ```
         """
 
-        async def _monitor_directory():
-            """Internal function to monitor directory changes."""
+        fs_self = self
+
+        link_url = getattr(self.session, "link_url", "") or ""
+        token = getattr(self.session, "token", "") or ""
+        server_name = ""
+        for t in getattr(self.session, "mcpTools", None) or []:
+            try:
+                if getattr(t, "name", None) == "get_file_change":
+                    server_name = getattr(t, "server", "") or ""
+                    break
+            except Exception:
+                pass
+
+        def _poll_file_change():
+            """Fetch file changes using a synchronous HTTP call so the
+            background thread is fully independent of the caller's
+            event loop. Falls back to the async path in sync SDK context."""
+            if link_url and token and server_name:
+                return _poll_file_change_via_http()
+            change_result = fs_self._get_file_change(path)
+            if asyncio.iscoroutine(change_result):
+                evl = asyncio.new_event_loop()
+                try:
+                    return evl.run_until_complete(change_result)
+                finally:
+                    evl.close()
+            return change_result
+
+        def _poll_file_change_via_http():
+            """Direct synchronous HTTP call to the LinkUrl endpoint,
+            bypassing the session's async HTTP client entirely."""
+            import random as _random
+            req_id = f"link-{int(time.time() * 1000)}-{_random.randint(0, 999999999):09d}"
+            url = link_url.rstrip("/") + "/callTool"
+            payload = {
+                "args": {"path": path},
+                "server": server_name,
+                "requestId": req_id,
+                "tool": "get_file_change",
+                "token": token,
+            }
+            try:
+                resp = httpx.post(
+                    url,
+                    json=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Access-Token": token,
+                    },
+                    timeout=30,
+                )
+                if resp.status_code < 200 or resp.status_code >= 300:
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message=f"HTTP {resp.status_code}",
+                    )
+                outer = resp.json()
+                data_field = outer.get("data")
+                if data_field is None:
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message="No data field in response",
+                    )
+                if isinstance(data_field, str):
+                    parsed_data = json.loads(data_field)
+                elif isinstance(data_field, dict):
+                    parsed_data = data_field
+                else:
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message="Invalid data field type",
+                    )
+                result_field = parsed_data.get("result", {})
+                if not isinstance(result_field, dict):
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message="No result field in response data",
+                    )
+                is_error = bool(result_field.get("isError", False))
+                content = result_field.get("content", [])
+                text_content = ""
+                if isinstance(content, list) and content:
+                    first = content[0]
+                    if isinstance(first, str):
+                        text_content = first
+                    elif isinstance(first, dict):
+                        text_content = (
+                            first.get("text")
+                            or first.get("blob")
+                            or first.get("data")
+                            or ""
+                        )
+                if is_error:
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message=str(text_content),
+                    )
+                events: List[FileChangeEvent] = []
+                try:
+                    change_data = json.loads(text_content)
+                    if isinstance(change_data, list):
+                        for ed in change_data:
+                            if isinstance(ed, dict):
+                                events.append(FileChangeEvent._from_dict(ed))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+                return FileChangeResult(
+                    request_id=req_id,
+                    success=True,
+                    events=events,
+                    raw_data=text_content,
+                )
+            except Exception as e:
+                return FileChangeResult(
+                    request_id=req_id,
+                    success=False,
+                    error_message=f"HTTP request failed: {e}",
+                )
+
+        def _monitor_directory_sync():
+            """Synchronous monitor function that runs in a background thread."""
             print(f"Starting directory monitoring for: {path}")
             print(f"Polling interval: {interval} seconds")
 
             while not stop_event.is_set():
                 try:
-                    # Check if session is still valid
                     if (
-                        hasattr(self.session, "_is_expired")
-                        and self.session._is_expired()
+                        hasattr(fs_self.session, "_is_expired")
+                        and fs_self.session._is_expired()
                     ):
                         print(
                             f"Session expired, stopping directory monitoring for: {path}"
@@ -2080,13 +2203,11 @@ class AsyncFileSystem(BaseService):
                         stop_event.set()
                         break
 
-                    # Get current file changes
-                    result = await self._get_file_change(path)
+                    result = _poll_file_change()
 
                     if result.success:
                         current_events = result.events
 
-                        # Only call callback if there are actual events
                         if current_events:
                             print(f"Detected {len(current_events)} file changes:")
                             for event in current_events:
@@ -2098,7 +2219,6 @@ class AsyncFileSystem(BaseService):
                                 print(f"Error in callback function: {e}")
 
                     else:
-                        # Check if error is due to session expiry
                         error_msg = result.error_message or ""
                         if "session" in error_msg.lower() and (
                             "expired" in error_msg.lower()
@@ -2111,12 +2231,10 @@ class AsyncFileSystem(BaseService):
                             break
                         print(f"Error monitoring directory: {result.error_message}")
 
-                    # Wait for the next poll
                     stop_event.wait(interval)
 
                 except Exception as e:
                     print(f"Unexpected error in directory monitoring: {e}")
-                    # Check if exception indicates session expiry
                     error_str = str(e).lower()
                     if "session" in error_str and (
                         "expired" in error_str or "invalid" in error_str
@@ -2134,22 +2252,8 @@ class AsyncFileSystem(BaseService):
         if stop_event is None:
             stop_event = threading.Event()
 
-        # Create and configure the monitoring thread
-        def _sync_monitor():
-            """Synchronous wrapper for async monitoring function."""
-            import asyncio
-
-            # Create a new event loop for this thread
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-            try:
-                loop.run_until_complete(_monitor_directory())
-            finally:
-                loop.close()
-
         monitor_thread = threading.Thread(
-            target=_sync_monitor,
+            target=_monitor_directory_sync,
             name=f"DirectoryWatcher-{path.replace('/', '_')}",
             daemon=True,
         )
