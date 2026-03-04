@@ -1230,7 +1230,7 @@ FILE: python/pyproject.toml
 ================================================
 [tool.poetry]
 name = "wuying-agentbay-sdk"
-version = "0.16.0"
+version = "0.16.1"
 description = "Python SDK for interacting with the Wuying AgentBay cloud runtime environment"
 readme = ["README.md", "CHANGELOG.md"]
 packages = [{include = "agentbay"}]
@@ -1444,7 +1444,7 @@ FILE: typescript/package.json
         "test:unit": "node scripts/run_with_fallback.js jest jest@26.6.3 tests/unit",
         "test:integration": "node scripts/run_with_fallback.js jest jest@26.6.3 tests/integration",
         "test:coverage": "node scripts/run_with_fallback.js jest jest@26.6.3 --coverage",
-        "lint": "node scripts/run_with_fallback.js eslint eslint@8.35.0 \"src/**/*.ts\"",
+        "lint": "node scripts/run_with_fallback.js eslint eslint@8.57.0 \"src/**/*.ts\"",
         "format": "node scripts/run_with_fallback.js prettier prettier@2.8.4 --write \"src/**/*.ts\"",
         "prepare": "npm run build",
         "docs:generate": "node scripts/generate_api_docs.js",
@@ -1477,13 +1477,13 @@ FILE: typescript/package.json
         "@types/mocha": "^10.0.10",
         "@types/node": "^18.19.130",
         "@types/sinon": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^5.54.0",
-        "@typescript-eslint/parser": "^5.54.0",
+        "@typescript-eslint/eslint-plugin": "~5.62.0",
+        "@typescript-eslint/parser": "~5.62.0",
         "abort-controller": "^3.0.0",
         "axios-mock-adapter": "^2.1.0",
         "chai": "^4.3.7",
         "dotenv": "^16.5.0",
-        "eslint": "^8.35.0",
+        "eslint": "~8.57.0",
         "jest": "^26.6.3",
         "js-yaml": "^4.1.0",
         "prettier": "^2.8.4",
