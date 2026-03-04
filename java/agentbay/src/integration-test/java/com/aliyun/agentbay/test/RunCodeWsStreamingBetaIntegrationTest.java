@@ -58,7 +58,6 @@ public class RunCodeWsStreamingBetaIntegrationTest {
     }
 
     @Test
-    @Ignore("Requires ws_url-enabled image; set AGENTBAY_WS_IMAGE_ID to run")
     public void testRunCodeWsStreamingBetaE2E() {
         List<String> stdoutChunks = new ArrayList<>();
         List<String> errors = new ArrayList<>();

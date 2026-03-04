@@ -12,7 +12,6 @@ import (
 )
 
 func TestRunCodeWsStreamingBetaE2E(t *testing.T) {
-	t.Skip("Requires ws_url-enabled image; set AGENTBAY_WS_IMAGE_ID to run")
 	apiKey := testutil.GetTestAPIKey(t)
 	ab, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {

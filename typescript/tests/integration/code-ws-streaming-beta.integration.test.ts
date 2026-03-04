@@ -3,7 +3,7 @@
 import { AgentBay, Session } from "../../src";
 import { log, logError } from "../../src/utils/logger";
 
-describe.skip("runCode WS streaming (beta) Integration Test", () => {
+describe("runCode WS streaming (beta) Integration Test", () => {
   let agentBay: AgentBay | null = null;
   let session: Session | null = null;
 
