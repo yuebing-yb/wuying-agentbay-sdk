@@ -50,22 +50,22 @@ def wait_for_captcha_solving(
     """
     print(f"Waiting for captcha pause event, timeout: {captcha_detect_timeout}s")
     pause_detected = captcha_pause_event.wait(timeout=captcha_detect_timeout)
-    
+
     if not pause_detected:
         # No pause event within timeout, proceed directly
         print("No captcha pause event detected within timeout, proceeding next step")
         return True
-    
+
     # Captcha pause event occurred, wait for captcha resume event
     global max_captcha_solving_timeout
     print(f"Waiting for captcha resume event, timeout: {max_captcha_solving_timeout}s")
     resume_detected = captcha_resume_or_takeover_event.wait(timeout=max_captcha_solving_timeout)
-    
+
     if not resume_detected:
         # No resume event within timeout, proceed directly
         print("No captcha resume event detected within timeout, should takeover")
         return False
-    
+
     global should_takeover
     if should_takeover:
         print("Captcha solving failed, takeover event detected")

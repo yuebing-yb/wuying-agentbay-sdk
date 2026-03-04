@@ -87,7 +87,11 @@ async def main():
             print("🔑 Captcha triggered, waiting for takeover notification...")
 
             # Wait for captcha takeover if needed
-            await asyncio.wait_for(captcha_detect_event.wait(), timeout=max_captcha_detect_timeout)
+            try:
+                await asyncio.wait_for(captcha_detect_event.wait(), timeout=max_captcha_detect_timeout)
+            except asyncio.TimeoutError:
+                print("ℹ️ No captcha takeover event within timeout, continuing...")
+                pass
             if should_takeover:
                 print("⏰ Captcha should takeover...")
                 import webbrowser
