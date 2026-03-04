@@ -4,11 +4,12 @@ import time
 
 import json
 import sys
-from typing import TYPE_CHECKING, Type, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type
 
 from .._common.exceptions import AgentBayError, AgentError
 from .._common.logger import get_logger
 from .._common.models.agent import (
+    AgentEvent,
     ExecutionResult,
     QueryResult,
     DefaultSchema,
@@ -57,6 +58,8 @@ class Agent(BaseService):
     class _BaseTaskAgent(BaseService):
         """Base class for task execution agents."""
 
+        _AGENT_TYPE: str = ""
+
         def __init__(self, session: "Session", tool_prefix: str):
             """
             Initialize base task agent.
@@ -95,6 +98,144 @@ class Agent(BaseService):
             if isinstance(e, AgentBayError):
                 return AgentError(str(e))
             return e
+
+        @staticmethod
+        def _has_streaming_params(
+            stream: bool,
+            on_event: Optional[Callable] = None,
+            on_thought: Optional[Callable] = None,
+            on_tool_call: Optional[Callable] = None,
+            on_tool_result: Optional[Callable] = None,
+            on_response: Optional[Callable] = None,
+        ) -> bool:
+            return stream or any([on_event, on_thought, on_tool_call, on_tool_result, on_response])
+
+        def _dispatch_event(
+            self,
+            data: Dict[str, Any],
+            on_event: Optional[Callable[[AgentEvent], None]] = None,
+            on_thought: Optional[Callable[[AgentEvent], None]] = None,
+            on_tool_call: Optional[Callable[[AgentEvent], None]] = None,
+            on_tool_result: Optional[Callable[[AgentEvent], None]] = None,
+            on_response: Optional[Callable[[AgentEvent], None]] = None,
+        ) -> None:
+            """Parse WS event data and dispatch to appropriate callbacks."""
+            event = AgentEvent.from_ws_data(data)
+
+            if on_event is not None:
+                try:
+                    on_event(event)
+                except Exception:
+                    _logger.exception("on_event callback raised an exception")
+
+            typed_cb = {
+                "thought": on_thought,
+                "tool_call": on_tool_call,
+                "tool_result": on_tool_result,
+                "response": on_response,
+            }.get(event.type)
+
+            if typed_cb is not None:
+                try:
+                    typed_cb(event)
+                except Exception:
+                    _logger.exception(f"on_{event.type} callback raised an exception")
+
+        def _resolve_ws_target(self) -> str:
+            """Resolve WS target from MCP tools list by matching the execute_task tool."""
+            execute_tool_name = self._get_tool_name("execute")
+            for tool in getattr(self.session, "mcpTools", []) or []:
+                try:
+                    if getattr(tool, "name", "") == execute_tool_name and getattr(tool, "server", ""):
+                        return tool.server
+                except Exception:
+                    continue
+            return f"wuying_{self._AGENT_TYPE}_agent"
+
+        def _execute_task_via_ws(
+            self,
+            task_params: Dict[str, Any],
+            stream: bool = False,
+            on_event: Optional[Callable[[AgentEvent], None]] = None,
+            on_thought: Optional[Callable[[AgentEvent], None]] = None,
+            on_tool_call: Optional[Callable[[AgentEvent], None]] = None,
+            on_tool_result: Optional[Callable[[AgentEvent], None]] = None,
+            on_response: Optional[Callable[[AgentEvent], None]] = None,
+        ) -> ExecutionResult:
+            """Execute task via WebSocket streaming channel."""
+            try:
+                ws_client = self.session._get_ws_client()
+            except Exception as e:
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Failed to get WS client: {e}",
+                    task_status="failed",
+                )
+
+            target = self._resolve_ws_target()
+            _logger.info(f"WS streaming target resolved to: {target}")
+
+            ws_data = {
+                "method": "run_agent",
+                "stream": stream,
+                "params": {
+                    "agentType": self._AGENT_TYPE,
+                    **task_params,
+                },
+            }
+
+            def _on_ws_event(invocation_id: str, data: Dict[str, Any]) -> None:
+                self._dispatch_event(
+                    data,
+                    on_event=on_event,
+                    on_thought=on_thought,
+                    on_tool_call=on_tool_call,
+                    on_tool_result=on_tool_result,
+                    on_response=on_response,
+                )
+
+            try:
+                handle = ws_client.call_stream(
+                    target=target,
+                    data=ws_data,
+                    on_event=_on_ws_event,
+                    on_end=None,
+                    on_error=None,
+                )
+
+                end_data = handle.wait_end()
+
+                status = end_data.get("status", "")
+                task_result = end_data.get("taskResult", "")
+                error_msg = end_data.get("error", "")
+
+                if status == "finished":
+                    return ExecutionResult(
+                        request_id="",
+                        success=True,
+                        error_message="",
+                        task_id="",
+                        task_status="finished",
+                        task_result=task_result,
+                    )
+                else:
+                    return ExecutionResult(
+                        request_id="",
+                        success=False,
+                        error_message=error_msg or f"Agent ended with status: {status}",
+                        task_id="",
+                        task_status=status or "failed",
+                        task_result=task_result,
+                    )
+            except Exception as e:
+                handled_error = self._handle_error(AgentBayError(str(e)))
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"WS execution failed: {handled_error}",
+                    task_status="failed",
+                )
 
         def execute_task(self, task: str) -> ExecutionResult:
             """
@@ -165,7 +306,15 @@ class Agent(BaseService):
                 )
 
         def execute_task_and_wait(
-            self, task: str, timeout: int
+            self,
+            task: str,
+            timeout: int,
+            stream: bool = False,
+            on_event: Optional[Callable[["AgentEvent"], None]] = None,
+            on_thought: Optional[Callable[["AgentEvent"], None]] = None,
+            on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
+            on_tool_result: Optional[Callable[["AgentEvent"], None]] = None,
+            on_response: Optional[Callable[["AgentEvent"], None]] = None,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
@@ -173,10 +322,19 @@ class Agent(BaseService):
             This is a synchronous interface that blocks until the task is completed or
             an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
+            When stream or any callback parameter is provided, the method uses
+            WebSocket for real-time event streaming instead of HTTP polling.
+
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
                     Used to control how long to wait for task completion.
+                stream: Enable token-level streaming for thought/response events.
+                on_event: Callback for all event types.
+                on_thought: Callback for thought events.
+                on_tool_call: Callback for tool_call events.
+                on_tool_result: Callback for tool_result events.
+                on_response: Callback for response events.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -191,6 +349,17 @@ class Agent(BaseService):
                 session.delete()
                 ```
             """
+            if self._has_streaming_params(stream, on_event, on_thought, on_tool_call, on_tool_result, on_response):
+                return self._execute_task_via_ws(
+                    task_params={"task": task},
+                    stream=stream,
+                    on_event=on_event,
+                    on_thought=on_thought,
+                    on_tool_call=on_tool_call,
+                    on_tool_result=on_tool_result,
+                    on_response=on_response,
+                )
+
             poll_interval = 3
             max_poll_attempts = timeout // poll_interval
 
@@ -431,6 +600,8 @@ class Agent(BaseService):
         > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
 
+        _AGENT_TYPE = "computer"
+
         def __init__(self, session: "Session"):
             super().__init__(session, tool_prefix="flux")
 
@@ -439,6 +610,8 @@ class Agent(BaseService):
 
         > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
+
+        _AGENT_TYPE = "browser"
 
         def __init__(self, session: "Session"):
             super().__init__(session, tool_prefix="browser_use")
@@ -578,12 +751,21 @@ class Agent(BaseService):
             use_vision: bool = False,
             output_schema: Type[Schema] = None,
             full_page_screenshot: Optional[bool] = False,
+            stream: bool = False,
+            on_event: Optional[Callable[["AgentEvent"], None]] = None,
+            on_thought: Optional[Callable[["AgentEvent"], None]] = None,
+            on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
+            on_tool_result: Optional[Callable[["AgentEvent"], None]] = None,
+            on_response: Optional[Callable[["AgentEvent"], None]] = None,
         ) -> ExecutionResult:
             """
             Execute a task described in human language on a browser synchronously.
 
             This is a synchronous interface that blocks until the task is completed or
             an error occurs, or timeout happens. The default polling interval is 3 seconds.
+
+            When stream or any callback parameter is provided, the method uses
+            WebSocket for real-time event streaming instead of HTTP polling.
 
             Args:
                 task: Task description in human language.
@@ -592,11 +774,12 @@ class Agent(BaseService):
                 use_vision: Whether to use vision to performe the task.
                 output_schema: The schema of the structured output.
                 full_page_screenshot: Whether to take a full page screenshot. This only works when use_vision is true.
-                When use_vision is enabled, we need to provide a screenshot of the webpage to the LLM for grounding. There are two ways of screenshot:
-                1. Full-page screenshot: Captures the entire webpage content, including parts not currently visible in the viewport.  
-                2. Viewport screenshot: Captures only the currently visible portion of the webpage.
-                The first approach delivers all information to the LLM in one go, which can improve task success rates in certain information extraction scenarios. However, it also results in higher token consumption and increases the LLM's processing time.
-                Therefore, we would like to give you the choice—you can decide whether to enable full-page screenshot based on your actual needs.
+                stream: Enable token-level streaming for thought/response events.
+                on_event: Callback for all event types.
+                on_thought: Callback for thought events.
+                on_tool_call: Callback for tool_call events.
+                on_tool_result: Callback for tool_result events.
+                on_response: Callback for response events.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -625,6 +808,26 @@ class Agent(BaseService):
                         task_status="failed",
                         task_id="",
                     )
+
+            if self._has_streaming_params(stream, on_event, on_thought, on_tool_call, on_tool_result, on_response):
+                task_params = {
+                    "task": task,
+                    "use_vision": use_vision,
+                    "full_page_screenshot": full_page_screenshot,
+                }
+                if output_schema:
+                    task_params["output_schema"] = json.dumps(output_schema.model_json_schema())
+                else:
+                    task_params["output_schema"] = json.dumps(DefaultSchema.model_json_schema())
+                return self._execute_task_via_ws(
+                    task_params=task_params,
+                    stream=stream,
+                    on_event=on_event,
+                    on_thought=on_thought,
+                    on_tool_call=on_tool_call,
+                    on_tool_result=on_tool_result,
+                    on_response=on_response,
+                )
 
             poll_interval = 3
             max_poll_attempts = timeout // poll_interval
@@ -750,6 +953,8 @@ class Agent(BaseService):
         > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
 
+        _AGENT_TYPE = "mobile"
+
         def __init__(self, session: "Session"):
             super().__init__(session, tool_prefix="")
 
@@ -848,6 +1053,12 @@ class Agent(BaseService):
             task: str,
             timeout: int,
             max_steps: int = 50,
+            stream: bool = False,
+            on_event: Optional[Callable[["AgentEvent"], None]] = None,
+            on_thought: Optional[Callable[["AgentEvent"], None]] = None,
+            on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
+            on_tool_result: Optional[Callable[["AgentEvent"], None]] = None,
+            on_response: Optional[Callable[["AgentEvent"], None]] = None,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
@@ -856,6 +1067,9 @@ class Agent(BaseService):
             completed or an error occurs, or timeout happens. The default
             polling interval is 3 seconds.
 
+            When stream or any callback parameter is provided, the method uses
+            WebSocket for real-time event streaming instead of HTTP polling.
+
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
@@ -863,6 +1077,12 @@ class Agent(BaseService):
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
+                stream: Enable token-level streaming for thought/response events.
+                on_event: Callback for all event types.
+                on_thought: Callback for thought events.
+                on_tool_call: Callback for tool_call events.
+                on_tool_result: Callback for tool_result events.
+                on_response: Callback for response events.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -881,6 +1101,17 @@ class Agent(BaseService):
                 session.delete()
                 ```
             """
+            if self._has_streaming_params(stream, on_event, on_thought, on_tool_call, on_tool_result, on_response):
+                return self._execute_task_via_ws(
+                    task_params={"task": task, "max_steps": max_steps},
+                    stream=stream,
+                    on_event=on_event,
+                    on_thought=on_thought,
+                    on_tool_call=on_tool_call,
+                    on_tool_result=on_tool_result,
+                    on_response=on_response,
+                )
+
             args = {
                 "task": task,
                 "max_steps": max_steps,

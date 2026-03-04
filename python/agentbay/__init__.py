@@ -103,7 +103,7 @@ from ._sync.mobile import Mobile
 from ._common.models.mobile import KeyCode, UIElementListResult
 from ._sync.mobile_simulate import MobileSimulateService
 from ._sync.agent import Agent
-from ._common.models.agent import ExecutionResult
+from ._common.models.agent import ExecutionResult, AgentEvent
 from ._sync.command import Command, CommandResult
 from ._sync.filesystem import (
     FileSystem,
@@ -285,6 +285,7 @@ __all__ = [
     "GetSessionData",
     "extract_request_id",
     "ExecutionResult",
+    "AgentEvent",
     "CommandResult",
     "CodeExecutionResult",
     "EnhancedCodeExecutionResult",
