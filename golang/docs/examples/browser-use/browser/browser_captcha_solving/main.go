@@ -150,7 +150,7 @@ func main() {
 	}
 
 	params := &agentbay.CreateSessionParams{
-		ImageId: "imgc-0ab5ta4kuo0x3pa70",
+		ImageId: "browser_latest",
 	}
 	sessionResult, err := client.Create(params)
 	if err != nil {

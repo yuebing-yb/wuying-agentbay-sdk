@@ -100,7 +100,7 @@ def on_browser_callback(msg: BrowserNotifyMessage):
 async def main():
     api_key = os.getenv("AGENTBAY_API_KEY")
     agent_bay = AgentBay(api_key=api_key)
-    params = CreateSessionParams(image_id="imgc-0ab5ta4kuo0x3pa70")
+    params = CreateSessionParams(image_id="browser_latest")
     session_result = await agent_bay.create(params)
     assert session_result.success and session_result.session is not None
     session: Session = session_result.session

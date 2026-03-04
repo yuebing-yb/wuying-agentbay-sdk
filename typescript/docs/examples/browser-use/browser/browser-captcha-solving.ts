@@ -119,7 +119,7 @@ async function main() {
   }
 
   const agentBay = new AgentBay({ apiKey });
-  const sessionResult = await agentBay.create({ imageId: "imgc-0ab5ta4kuo0x3pa70" });
+  const sessionResult = await agentBay.create({ imageId: "browser_latest" });
   
   if (!sessionResult.success || !sessionResult.session) {
     throw new Error("Failed to create session");
