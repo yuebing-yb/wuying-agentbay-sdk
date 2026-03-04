@@ -47,7 +47,7 @@ def _get_version() -> str:
         pass
 
     # Last resort fallback
-    return "0.16.0-dev"
+    return "0.16.1-dev"
 
 
 def _is_release_build() -> bool:
