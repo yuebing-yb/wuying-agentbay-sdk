@@ -18,22 +18,24 @@ Currently, distinct session environments are implemented:
 
 1. [Form-Filling Agent](./browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
 2. [E-commerce Inspector](./browser/e-commerce-inspector/) - Automated product information extraction from e-commerce websites with AI-powered navigation
+3. [Browser Login Persistence](./browser/login-persistence/) - Persist browser login state (cookies, localStorage, etc.) across multiple cloud sessions using BrowserContext
 
 ### Codespace Environment
 
-3. [Auto Testing Agent](./codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
-4. [OpenAI Data Analysis](./codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
-5. [AI Code Assistant](./codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
+4. [Auto Testing Agent](./codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+5. [OpenAI Data Analysis](./codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
+6. [AI Code Assistant](./codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
 
 ### Mobile Environment
 
-6. [App Login Persistence](./mobile/app-login-persistence/) - Demonstrates how to maintain login state for mobile applications (Xiaohongshu, Pinduoduo, Weibo, Ele.me) across sessions
+7. [App Login Persistence](./mobile/app-login-persistence/) - Demonstrates how to maintain login state for mobile applications (Xiaohongshu, Pinduoduo, Weibo, Ele.me) across sessions
+8. [Device Simulation](./mobile/device-simulation/) - Make a cloud phone appear as a real physical device with persistent device identity across sessions
 
 ### Desktop Environment
 
-7. [OpenClaw Session Setup](./openclaw/) - Create and configure an OpenClaw (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
-8. [Official Skills Sandbox (AgentScope)](./skills/agentscope-official-skills-sandbox/) - Experience official skills running inside a sandbox with AgentScope
-9. [Official Skills Sandbox (LangChain DeepAgents)](./skills/langchain-deepagents-official-skills-sandbox/) - Experience official skills running inside a sandbox with LangChain DeepAgents
+9. [OpenClaw Session Setup](./openclaw/) - Create and configure an OpenClaw (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
+10. [Official Skills Sandbox (AgentScope)](./skills/agentscope-official-skills-sandbox/) - Experience official skills running inside a sandbox with AgentScope
+11. [Official Skills Sandbox (LangChain DeepAgents)](./skills/langchain-deepagents-official-skills-sandbox/) - Experience official skills running inside a sandbox with LangChain DeepAgents
 
 ## Overview
 
@@ -80,6 +82,14 @@ This cookbook demonstrates how to build an interactive web-based AI code assista
 - Session persistence for continuous development workflow
 - Dark mode UI with responsive design
 
+### Browser Login Persistence
+This cookbook demonstrates how to persist browser login state across cloud sessions using BrowserContext. The example shows:
+- Creating a persistent Context for browser data storage
+- Setting cookies in a cloud browser session via Playwright
+- Saving browser data when a session ends (sync_context=True)
+- Restoring cookies automatically in a new session
+- Understanding MINIMAL vs STANDARD sync modes
+
 ### App Login Persistence (Mobile)
 This cookbook demonstrates how to persist mobile application login states across session lifecycles using Context Synchronization. It includes examples for:
 - **Xiaohongshu (Red)**
@@ -88,6 +98,13 @@ This cookbook demonstrates how to persist mobile application login states across
 - **Ele.me**
 
 It shows how to mount application data directories to persistent Contexts so that you don't need to re-login every time you start a new mobile agent session.
+
+### Device Simulation (Mobile)
+This cookbook demonstrates how to make a cloud phone appear as a real physical device using MobileSimulateService. The example shows:
+- Uploading device info (brand, model, manufacturer) to simulate a specific device
+- Creating sessions with simulated device properties
+- Persisting device identity across multiple sessions using simulate_context_id
+- Verifying device properties match the target device
 
 ## Framework Integration
 
