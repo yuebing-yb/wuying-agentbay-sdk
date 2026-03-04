@@ -16,7 +16,7 @@ func TestWsStreamCancelE2E(t *testing.T) {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	imageID := "imgc-0ab5ta4n2htfrppyw"
+	imageID := "imgc-0ab5taki2khozz0p8"
 	if v := os.Getenv("AGENTBAY_WS_IMAGE_ID"); v != "" {
 		imageID = v
 	}

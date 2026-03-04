@@ -35,7 +35,7 @@ public class WsStreamCancelIntegrationTest {
 
         String imageId = System.getenv("AGENTBAY_WS_IMAGE_ID");
         if (imageId == null || imageId.isEmpty()) {
-            imageId = "imgc-0ab5ta4n2htfrppyw";
+            imageId = "imgc-0ab5taki2khozz0p8";
         }
 
         CreateSessionParams params = new CreateSessionParams();

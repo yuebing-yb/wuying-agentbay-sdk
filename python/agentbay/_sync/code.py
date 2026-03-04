@@ -236,6 +236,10 @@ class Code(BaseService):
         code: str,
         language: str,
         timeout_s: int = 60,
+        stream_beta: bool = False,
+        on_stdout: Optional[Callable[[str], None]] = None,
+        on_stderr: Optional[Callable[[str], None]] = None,
+        on_error: Optional[Callable[[Any], None]] = None,
     ) -> EnhancedCodeExecutionResult:
         """
         Execute code in the specified language with a timeout.
@@ -246,6 +250,14 @@ class Code(BaseService):
                 Supported values: 'python', 'javascript', 'r', 'java'.
             timeout_s: The timeout for the code execution in seconds. Default is 60s.
                 Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+            stream_beta: If True, use WebSocket streaming for real-time stdout/stderr
+                output. Requires the session to have a valid ws_url. Default is False.
+            on_stdout: Callback invoked with each stdout chunk during streaming.
+                Only used when stream_beta=True.
+            on_stderr: Callback invoked with each stderr chunk during streaming.
+                Only used when stream_beta=True.
+            on_error: Callback invoked when an error occurs during streaming.
+                Only used when stream_beta=True.
 
         Returns:
             EnhancedCodeExecutionResult: Result object containing success status, execution
@@ -323,9 +335,15 @@ class Code(BaseService):
                     ),
                 )
 
-            # Streaming is temporarily disabled in this version.
-            # The streaming implementation is preserved in _run_code_stream_ws()
-            # and will be re-enabled in a future release.
+            if stream_beta:
+                return self._run_code_stream_ws(
+                    code=code,
+                    language=canonical_language,
+                    timeout_s=timeout_s,
+                    on_stdout=on_stdout,
+                    on_stderr=on_stderr,
+                    on_error=on_error,
+                )
 
             args = {"code": code, "language": canonical_language, "timeout_s": timeout_s}
 
@@ -540,17 +558,47 @@ class Code(BaseService):
             )
 
     def run(
-        self, code: str, language: str, timeout_s: int = 60
+        self,
+        code: str,
+        language: str,
+        timeout_s: int = 60,
+        stream_beta: bool = False,
+        on_stdout: Optional[Callable[[str], None]] = None,
+        on_stderr: Optional[Callable[[str], None]] = None,
+        on_error: Optional[Callable[[Any], None]] = None,
     ) -> EnhancedCodeExecutionResult:
         """
         Alias of run_code() for better ergonomics and LLM friendliness.
         """
-        return self.run_code(code=code, language=language, timeout_s=timeout_s)
+        return self.run_code(
+            code=code,
+            language=language,
+            timeout_s=timeout_s,
+            stream_beta=stream_beta,
+            on_stdout=on_stdout,
+            on_stderr=on_stderr,
+            on_error=on_error,
+        )
 
     def execute(
-        self, code: str, language: str, timeout_s: int = 60
+        self,
+        code: str,
+        language: str,
+        timeout_s: int = 60,
+        stream_beta: bool = False,
+        on_stdout: Optional[Callable[[str], None]] = None,
+        on_stderr: Optional[Callable[[str], None]] = None,
+        on_error: Optional[Callable[[Any], None]] = None,
     ) -> EnhancedCodeExecutionResult:
         """
         Alias of run_code() for better ergonomics and LLM friendliness.
         """
-        return self.run_code(code=code, language=language, timeout_s=timeout_s)
+        return self.run_code(
+            code=code,
+            language=language,
+            timeout_s=timeout_s,
+            stream_beta=stream_beta,
+            on_stdout=on_stdout,
+            on_stderr=on_stderr,
+            on_error=on_error,
+        )

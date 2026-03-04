@@ -5,9 +5,6 @@
 """
 AgentBay SDK - run_code streaming output (beta)
 
-NOTE: Streaming API is temporarily disabled in this version and will be
-re-enabled in a future release. This example is for reference only.
-
 This example demonstrates how to receive stdout/stderr in real time by enabling
 WS streaming output via `stream_beta=True`.
 
@@ -28,7 +25,7 @@ def main() -> None:
     if not api_key:
         raise RuntimeError("Missing AGENTBAY_API_KEY environment variable")
 
-    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5ta4n2htfrppyw"
+    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5taki2khozz0p8"
     agentbay = AgentBay(api_key=api_key)
 
     created = agentbay.create(CreateSessionParams(image_id=image_id))
