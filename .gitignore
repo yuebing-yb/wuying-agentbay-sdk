@@ -83,6 +83,7 @@ start_app
 .history
 IFLOW.md
 tmp/
+.docs/
 
 # Example result files
 **/results_*/
