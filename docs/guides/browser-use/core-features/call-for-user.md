@@ -4,145 +4,171 @@ The Call For User feature handles scenarios where browser automation encounters 
 
 > **Use Cases:** This feature is triggered when the browser encounters user information requests, authentication challenges, or other scenarios that require manual human interaction to proceed.
 
-## When Call For User is Triggered
+The interface is unified across BrowserUse, ComputerUse, and MobileUse. Messages are delivered as a structured payload (e.g. JSON) with the following shape:
 
-The system automatically triggers a "wuying-call-for-user" message when it encounters:
-
-- **Authentication challenges** that cannot be automatically resolved
-- **Complex verification processes** that need user input
-- **Security measures** that require manual verification
-- **User information requests** that need human intervention
-- **Situations** where automated solutions are insufficient
-
-## Event Monitoring
-
-Monitor Call For User events through console messages to implement custom handling logic:
-
-```python
-def handle_console(msg):
-    print(f"🔍 Received console message: {msg.text}")
-    
-    # Parse JSON message
-    try:
-        message_data = json.loads(msg.text)
-        message_type = message_data.get('type', '')
-        print(f"📋 Parsed message type: {message_type}")
-    except (json.JSONDecodeError, AttributeError):
-        # If not JSON, treat as plain text
-        message_type = msg.text
-        print(f"📋 Plain text message: {message_type}")
-
-    if message_type == "wuying-call-for-user":
-        print("📞 Received wuying-call-for-user message")
-        print(f"session resource url is {info.resource_url}")
-        # Open browser for user interaction
-        import webbrowser
-        print("🌐 Opening browser with session resource URL...")
-        webbrowser.open(info.resource_url)
-        # Wait for user to complete interaction
-        print("⏳ Starting 20 second wait for user interaction...")
-        time.sleep(20)
-
-page.on("console", handle_console)
+```ts
+interface CallForUserMessage {
+  type: string;      // "call-for-user"
+  id: number;        // notify id (used for send_takeover_done)
+  code: number;      // scenario code
+  message: string;   // human-readable message
+  action: string;    // "none" | "pause" | "resume" | "takeover" | "takeoverdone"
+  extraParams: {};   // optional params, e.g. { max_wait_time: 180 }
+}
 ```
 
-## Handling User Intervention
+## Call For User Scenarios
 
-When a Call For User event is triggered, the recommended flow is:
+Common scenarios and their `type`, `code`, `message`, `action`, and `extraParams` are listed below. This table may be extended as more scenarios are added.
 
-1. **Parse the console message** to identify the message type (JSON or plain text)
-2. **Detect the "wuying-call-for-user" message** from the parsed message type
-3. **Open the session resource URL** in a browser for user interaction
-4. **Allow the user to interact** with the browser to complete the required action
-5. **Wait for completion** (typically 20-30 seconds using `time.sleep()`)
-6. **Continue with automation** flow after user completes the interaction
+| type           | code | message                 | action       | extraParams            | Notes |
+|----------------|------|-------------------------|-------------|------------------------|-------|
+| call-for-user  | 0    | "common notice message" | none        | {}                     | Reserved for generic notifications. No action required. |
+| call-for-user  | 101  | "captcha request"       | takeover    | {"max_wait_time": 180} | User intervention required; open session URL for user. Max wait 180s. Includes login, payment, or captcha failure. |
+| call-for-user  | 102  | "login request"         | takeover    | {"max_wait_time": 180} | Login requires user intervention. Max wait 180s. |
+| call-for-user  | 103  | "pay request"           | takeover    | {"max_wait_time": 180} | Payment requires user intervention. Max wait 180s. |
+| call-for-user  | 199  | "user handle done"      | takeoverdone| {}                     | Reverse notification: user takeover completed (mirror → SDK). |
+| call-for-user  | 201  | "captcha solving start" | pause       | {"max_wait_time": 60}  | Pause business flow; captcha is being solved automatically. Max wait 60s. |
+| call-for-user  | 202  | "captcha solving finish"| resume      | {}                     | Resume business flow after captcha solved. |
+| call-for-user  | 301  | "auto login start"      | pause       | {"max_wait_time": 100}  | Pause business flow; auto login in progress. Max wait 100s. |
+| call-for-user  | 302  | "auto login finish"     | resume      | {}                     | Resume business flow after auto login succeeded. |
 
-## Complete Example
+## Action Handling
 
-Here's a complete example demonstrating the Call For User feature:
+After your app receives a call-for-user message, handle it according to `action`:
+
+| action       | Meaning | What to do |
+|-------------|--------|------------|
+| **none**    | No operation | Ignore; no response needed. |
+| **pause**   | Automation in progress | Pause your business flow and wait. Max wait time is in `extraParams.max_wait_time` (seconds). Resume only after a **resume** message. Example: user is logging in; a captcha appears → you get `pause`; wait until you get `resume` before continuing. |
+| **resume**  | Automation done | Leave the pause state and continue your business flow. |
+| **takeover**| User must intervene | Have the user complete the task (e.g. open session resource URL in a browser). When done, call `session.browser.send_takeover_done(notify_id)`. If you do not call it, the system will continue after the max wait time. |
+| **takeoverdone** | User takeover completed (reverse) | Mirror notifies that user takeover is done; SDK side can continue. |
+
+## SDK Integration
+
+### Registering a callback
+
+Use `session.browser.register_callback` to receive call-for-user messages from the mirror:
 
 ```python
+from agentbay import BrowserNotifyMessage
+
+def on_browser_callback(msg: BrowserNotifyMessage):
+    print(f"call-for-user: type={msg.type}, id={msg.id}, code={msg.code}, action={msg.action}, extra={msg.extra_params}")
+    if msg.type != "call-for-user":
+        return
+    action = msg.action
+    extra = msg.extra_params or {}
+    if action == "pause":
+        # Pause business flow, wait up to extra.get("max_wait_time", 60) seconds for resume
+        ...
+    elif action == "resume":
+        # Resume business flow
+        ...
+    elif action == "takeover":
+        # Open session resource URL for user, then call send_takeover_done(msg.id) when done
+        webbrowser.open(session.resource_url)
+        time.sleep(extra.get("max_wait_time", 180))
+        session.browser.send_takeover_done(msg.id)
+```
+
+```python
+await session.browser.register_callback(on_browser_callback)
+```
+
+### Notifying takeover done
+
+When the user has finished the takeover task, notify the mirror so it can continue:
+
+```python
+# notify_id is msg.id from the takeover message
+await session.browser.send_takeover_done(notify_id)
+```
+
+If you do not call this, the mirror will still continue after the `max_wait_time` in `extraParams`.
+
+## Example
+
+The following example uses the new call-for-user interface: register a callback, handle `pause` / `resume` / `takeover` by `action` and `code`, and call `send_takeover_done` when the user finishes. For a full runnable sample, see `browser_captcha_solving.py`.
+
+```python
+import asyncio
 import os
-import time
-import json
-from agentbay import AgentBay, CreateSessionParams, BrowserOption
-from playwright.sync_api import sync_playwright
+from agentbay import AsyncAgentBay as AgentBay, AsyncSession as Session, CreateSessionParams, BrowserOption, BrowserNotifyMessage
+from playwright.async_api import async_playwright
 
-# Get API key from environment variable
-api_key = os.getenv("AGENTBAY_API_KEY")
-agent_bay = AgentBay(api_key=api_key)
+takeover_notify_id = None
+takeover_event = asyncio.Event()
+pause_event = asyncio.Event()
+resume_event = asyncio.Event()
 
-# Create a session
-params = CreateSessionParams(
-    image_id="browser_latest",
-)
-session_result = agent_bay.create(params)
+def on_browser_callback(msg: BrowserNotifyMessage):
+    print(f"🔔 call-for-user: type={msg.type}, id={msg.id}, code={msg.code}, action={msg.action}, extra={msg.extra_params}")
+    if msg.type != "call-for-user":
+        return
+    action = msg.action
+    code = msg.code
+    extra = msg.extra_params or {}
+    if action == "pause":
+        pause_event.set()
+    elif action == "resume":
+        resume_event.set()
+    elif action == "takeover":
+        global takeover_notify_id
+        takeover_notify_id = msg.id
+        takeover_event.set()
 
-if session_result.success:
+async def main():
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    agent_bay = AgentBay(api_key=api_key)
+    session_result = await agent_bay.create(CreateSessionParams(image_id="browser_latest"))
+    assert session_result.success and session_result.session is not None
     session = session_result.session
-    print(f"Session created with ID: {session.session_id}")
-    
-    if session.browser.initialize(BrowserOption()):
-        print("Browser initialized successfully")
-        endpoint_url = session.browser.get_endpoint_url()
-        
-        # Get session info to access resource URL
-        result = session.info()
-        info = result.data
-        print(f"session resource url is {info.resource_url}")
+    takeover_url = session.resource_url
 
-        with sync_playwright() as p:
-            browser = p.chromium.connect_over_cdp(endpoint_url)
-            context = browser.contexts[0]
-            page = context.new_page()
-            
-            # Navigate to target site
-            page.goto("https://www.jd.com/")
+    await session.browser.register_callback(on_browser_callback)
 
-            # Listen for console messages
-            def handle_console(msg):
-                print(f"🔍 Received console message: {msg.text}")
-                
-                # Parse JSON message
-                try:
-                    message_data = json.loads(msg.text)
-                    message_type = message_data.get('type', '')
-                    print(f"📋 Parsed message type: {message_type}")
-                except (json.JSONDecodeError, AttributeError):
-                    # If not JSON, treat as plain text
-                    message_type = msg.text
-                    print(f"📋 Plain text message: {message_type}")
+    browser_option = BrowserOption(use_stealth=True, solve_captchas=True, call_for_user=True)
+    await session.browser.initialize(browser_option)
+    endpoint_url = await session.browser.get_endpoint_url()
 
-                if message_type == "wuying-call-for-user":
-                    print("📞 Received wuying-call-for-user message")
-                    print(f"session resource url is {info.resource_url}")
-                    import webbrowser
-                    print("🌐 Opening browser with session resource URL...")
-                    webbrowser.open(info.resource_url)
-                    print("⏳ Starting 20 second wait for user interaction...")
-                    time.sleep(20)
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(endpoint_url)
+        page = (await browser.contexts()[0].new_page())
+        await page.goto("https://www.jd.com/")
 
-            page.on("console", handle_console)
+        # Wait for possible takeover (e.g. code 101/102/103)
+        try:
+            await asyncio.wait_for(takeover_event.wait(), timeout=5.0)
+        except asyncio.TimeoutError:
+            pass
+        else:
+            if takeover_notify_id is not None:
+                import webbrowser
+                webbrowser.open(takeover_url)
+                await asyncio.sleep(180)  # or use extraParams["max_wait_time"]
+                await session.browser.send_takeover_done(takeover_notify_id)
+                print("✅ User takeover completed")
 
-            # Trigger login action that may require user intervention
-            time.sleep(5)
-            page.click('.link-login')
-            time.sleep(25)
-            
-            print("Test completed")
-            browser.close()
+        await session.browser.unregister_callback()
+    await agent_bay.delete(session)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Usage Tips
 
-- **Monitor console events** using `page.on("console", handle_console)` to detect when user intervention is needed
-- **Parse both JSON and plain text** messages to handle different message formats
-- **Use `webbrowser.open()`** to open the session resource URL in the user's default browser
-- **Implement proper waiting** mechanisms using `time.sleep(20)` (20-30 seconds) for user interaction
-- **Provide clear feedback** with print statements to inform users about what action is required
-- **Plan for user interaction time** in your automation workflows
-- **Connect via CDP protocol** using Playwright's `connect_over_cdp()` method for browser control
+- **Use the callback API** — Prefer `session.browser.register_callback(on_browser_callback)` to receive call-for-user messages instead of parsing console output.
+- **Branch on `action` and `code`** — Handle `pause` / `resume` / `takeover` by `action`; use `code` to distinguish captcha, login, or takeover.
+- **Respect `extraParams.max_wait_time`** — For `pause` and `takeover`, wait at most this many seconds before timing out.
+- **Always call `send_takeover_done(notify_id)`** after the user completes a takeover so the mirror can continue; use the `id` from the takeover message.
+- **Reference examples** — See `browser_captcha_solving.py`, `browser_captcha_takeover.py`, `browser_auto_login.py`, and `browser_login_takeover.py` for full flows.
 
+## Backward Compatibility
+
+The legacy **wuying-call-for-user** console message format will be supported for a few more versions. New implementations should use the call-for-user callback and the `type` / `code` / `action` / `extraParams` interface above.
 
 ## 📚 Related Guides
 
