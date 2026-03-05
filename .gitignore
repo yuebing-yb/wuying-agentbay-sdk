@@ -84,6 +84,7 @@ start_app
 IFLOW.md
 tmp/
 .docs/
+PROGRESS.md
 
 # Example result files
 **/results_*/
