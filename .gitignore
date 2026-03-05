@@ -84,6 +84,8 @@ CLAUDE.md
 .history
 IFLOW.md
 tmp/
+.docs/
+PROGRESS.md
 
 # Example result files
 **/results_*/
