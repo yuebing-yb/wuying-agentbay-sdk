@@ -2,12 +2,31 @@ import os
 import shlex
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
+
+from dotenv import load_dotenv
 
 from agentbay import AgentBay, CreateSessionParams
 
 OPENCLAW_IMAGE_ID = "moltbot-linux-ubuntu-2204"
 DEFAULT_GATEWAY_PORT = 18789
+
+# Load .env file from project root (fallback if env vars not set)
+_dotenv_loaded = False
+def _load_dotenv_once():
+    global _dotenv_loaded
+    if _dotenv_loaded:
+        return
+    # Try to find .env file in project root (3 levels up from this script)
+    script_dir = Path(__file__).resolve().parent
+    dotenv_path = script_dir.parent.parent.parent / ".env"
+    if dotenv_path.exists():
+        load_dotenv(dotenv_path=dotenv_path)
+    _dotenv_loaded = True
+
+# Load .env as fallback
+_load_dotenv_once()
 
 @dataclass(frozen=True)
 class OpenClawEnv:
@@ -18,6 +37,7 @@ class OpenClawEnv:
     feishu_app_secret: Optional[str]
 
 def _get_optional_env(name: str) -> Optional[str]:
+    # Priority 1: System environment variable
     value = os.getenv(name)
     if value is None:
         return None
