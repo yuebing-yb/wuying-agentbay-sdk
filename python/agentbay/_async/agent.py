@@ -98,14 +98,14 @@ class AsyncAgent(AsyncBaseService):
 
         @staticmethod
         def _has_streaming_params(
-            stream: bool,
+            stream_beta: bool,
             on_event: Optional[Callable] = None,
             on_thought: Optional[Callable] = None,
             on_tool_call: Optional[Callable] = None,
             on_tool_result: Optional[Callable] = None,
             on_response: Optional[Callable] = None,
         ) -> bool:
-            return stream or any([on_event, on_thought, on_tool_call, on_tool_result, on_response])
+            return stream_beta or any([on_event, on_thought, on_tool_call, on_tool_result, on_response])
 
         def _dispatch_event(
             self,
@@ -152,7 +152,7 @@ class AsyncAgent(AsyncBaseService):
         async def _execute_task_via_ws(
             self,
             task_params: Dict[str, Any],
-            stream: bool = False,
+            stream_beta: bool = False,
             on_event: Optional[Callable[[AgentEvent], None]] = None,
             on_thought: Optional[Callable[[AgentEvent], None]] = None,
             on_tool_call: Optional[Callable[[AgentEvent], None]] = None,
@@ -174,10 +174,9 @@ class AsyncAgent(AsyncBaseService):
             _logger.info(f"WS streaming target resolved to: {target}")
 
             ws_data = {
-                "method": "run_agent",
-                "stream": stream,
+                "method": "exec_task",
+                "stream": stream_beta,
                 "params": {
-                    "agentType": self._AGENT_TYPE,
                     **task_params,
                 },
             }
@@ -306,7 +305,7 @@ class AsyncAgent(AsyncBaseService):
             self,
             task: str,
             timeout: int,
-            stream: bool = False,
+            stream_beta: bool = False,
             on_event: Optional[Callable[["AgentEvent"], None]] = None,
             on_thought: Optional[Callable[["AgentEvent"], None]] = None,
             on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
@@ -319,14 +318,14 @@ class AsyncAgent(AsyncBaseService):
             This is a synchronous interface that blocks until the task is completed or
             an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
-            When stream or any callback parameter is provided, the method uses
+            When stream_beta or any callback parameter is provided, the method uses
             WebSocket for real-time event streaming instead of HTTP polling.
 
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
                     Used to control how long to wait for task completion.
-                stream: Enable token-level streaming for thought/response events.
+                stream_beta: Enable token-level streaming for thought/response events (beta).
                 on_event: Callback for all event types.
                 on_thought: Callback for thought events.
                 on_tool_call: Callback for tool_call events.
@@ -346,10 +345,10 @@ class AsyncAgent(AsyncBaseService):
                 await session.delete()
                 ```
             """
-            if self._has_streaming_params(stream, on_event, on_thought, on_tool_call, on_tool_result, on_response):
+            if self._has_streaming_params(stream_beta, on_event, on_thought, on_tool_call, on_tool_result, on_response):
                 return await self._execute_task_via_ws(
                     task_params={"task": task},
-                    stream=stream,
+                    stream_beta=stream_beta,
                     on_event=on_event,
                     on_thought=on_thought,
                     on_tool_call=on_tool_call,
@@ -748,7 +747,7 @@ class AsyncAgent(AsyncBaseService):
             use_vision: bool = False,
             output_schema: Type[Schema] = None,
             full_page_screenshot: Optional[bool] = False,
-            stream: bool = False,
+            stream_beta: bool = False,
             on_event: Optional[Callable[["AgentEvent"], None]] = None,
             on_thought: Optional[Callable[["AgentEvent"], None]] = None,
             on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
@@ -761,7 +760,7 @@ class AsyncAgent(AsyncBaseService):
             This is a synchronous interface that blocks until the task is completed or
             an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
-            When stream or any callback parameter is provided, the method uses
+            When stream_beta or any callback parameter is provided, the method uses
             WebSocket for real-time event streaming instead of HTTP polling.
 
             Args:
@@ -771,7 +770,7 @@ class AsyncAgent(AsyncBaseService):
                 use_vision: Whether to use vision to performe the task.
                 output_schema: The schema of the structured output.
                 full_page_screenshot: Whether to take a full page screenshot. This only works when use_vision is true.
-                stream: Enable token-level streaming for thought/response events.
+                stream_beta: Enable token-level streaming for thought/response events (beta).
                 on_event: Callback for all event types.
                 on_thought: Callback for thought events.
                 on_tool_call: Callback for tool_call events.
@@ -806,7 +805,7 @@ class AsyncAgent(AsyncBaseService):
                         task_id="",
                     )
 
-            if self._has_streaming_params(stream, on_event, on_thought, on_tool_call, on_tool_result, on_response):
+            if self._has_streaming_params(stream_beta, on_event, on_thought, on_tool_call, on_tool_result, on_response):
                 task_params = {
                     "task": task,
                     "use_vision": use_vision,
@@ -818,7 +817,7 @@ class AsyncAgent(AsyncBaseService):
                     task_params["output_schema"] = json.dumps(DefaultSchema.model_json_schema())
                 return await self._execute_task_via_ws(
                     task_params=task_params,
-                    stream=stream,
+                    stream_beta=stream_beta,
                     on_event=on_event,
                     on_thought=on_thought,
                     on_tool_call=on_tool_call,
@@ -1050,7 +1049,7 @@ class AsyncAgent(AsyncBaseService):
             task: str,
             timeout: int,
             max_steps: int = 50,
-            stream: bool = False,
+            stream_beta: bool = False,
             on_event: Optional[Callable[["AgentEvent"], None]] = None,
             on_thought: Optional[Callable[["AgentEvent"], None]] = None,
             on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
@@ -1064,7 +1063,7 @@ class AsyncAgent(AsyncBaseService):
             completed or an error occurs, or timeout happens. The default
             polling interval is 3 seconds.
 
-            When stream or any callback parameter is provided, the method uses
+            When stream_beta or any callback parameter is provided, the method uses
             WebSocket for real-time event streaming instead of HTTP polling.
 
             Args:
@@ -1074,7 +1073,7 @@ class AsyncAgent(AsyncBaseService):
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
-                stream: Enable token-level streaming for thought/response events.
+                stream_beta: Enable token-level streaming for thought/response events (beta).
                 on_event: Callback for all event types.
                 on_thought: Callback for thought events.
                 on_tool_call: Callback for tool_call events.
@@ -1098,10 +1097,10 @@ class AsyncAgent(AsyncBaseService):
                 await session.delete()
                 ```
             """
-            if self._has_streaming_params(stream, on_event, on_thought, on_tool_call, on_tool_result, on_response):
+            if self._has_streaming_params(stream_beta, on_event, on_thought, on_tool_call, on_tool_result, on_response):
                 return await self._execute_task_via_ws(
                     task_params={"task": task, "max_steps": max_steps},
-                    stream=stream,
+                    stream_beta=stream_beta,
                     on_event=on_event,
                     on_thought=on_thought,
                     on_tool_call=on_tool_call,

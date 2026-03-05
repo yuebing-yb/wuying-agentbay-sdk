@@ -312,7 +312,7 @@ class TestMobileAgentStreamingWSPath(unittest.IsolatedAsyncioTestCase):
         result = await self.agent.mobile.execute_task_and_wait(
             "Open Settings",
             timeout=30,
-            stream=True,
+            stream_beta=True,
         )
 
         self.assertIsInstance(result, ExecutionResult)
@@ -503,7 +503,7 @@ class TestMobileAgentStreamingWSPath(unittest.IsolatedAsyncioTestCase):
         result = await self.agent.mobile.execute_task_and_wait(
             "Do something",
             timeout=30,
-            stream=True,
+            stream_beta=True,
         )
 
         self.assertIsInstance(result, ExecutionResult)
@@ -524,7 +524,7 @@ class TestMobileAgentStreamingWSPath(unittest.IsolatedAsyncioTestCase):
         result = await self.agent.mobile.execute_task_and_wait(
             "Do something",
             timeout=30,
-            stream=True,
+            stream_beta=True,
         )
 
         self.assertIsInstance(result, ExecutionResult)
@@ -551,19 +551,19 @@ class TestMobileAgentStreamingWSPath(unittest.IsolatedAsyncioTestCase):
             "Open WeChat",
             timeout=60,
             max_steps=100,
-            stream=True,
+            stream_beta=True,
         )
 
         self.assertIn("target", captured_kwargs)
         self.assertEqual(captured_kwargs["target"], "wuying_mobile_agent")
         self.assertIn("data", captured_kwargs)
         ws_data = captured_kwargs["data"]
-        self.assertEqual(ws_data["method"], "run_agent")
+        self.assertEqual(ws_data["method"], "exec_task")
         self.assertEqual(ws_data["stream"], True)
         self.assertIn("params", ws_data)
         self.assertEqual(ws_data["params"]["task"], "Open WeChat")
         self.assertEqual(ws_data["params"]["max_steps"], 100)
-        self.assertEqual(ws_data["params"]["agentType"], "mobile")
+        self.assertNotIn("agentType", ws_data["params"])
 
     async def test_callback_exception_does_not_break_execution(self):
         """Callback throwing exception should not break the main execution."""
@@ -626,7 +626,7 @@ class TestBrowserAgentStreamingWSPath(unittest.IsolatedAsyncioTestCase):
         result = await self.agent.browser.execute_task_and_wait(
             "Search Google for AgentBay",
             timeout=60,
-            stream=True,
+            stream_beta=True,
         )
 
         self.assertIsInstance(result, ExecutionResult)

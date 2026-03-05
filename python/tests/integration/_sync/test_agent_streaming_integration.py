@@ -82,7 +82,7 @@ def test_mobile_streaming_with_on_event(mobile_streaming_session):
         task="Open Settings app",
         timeout=180,
         max_steps=10,
-        stream=False,
+        stream_beta=False,
         on_event=on_event,
     )
 
@@ -138,7 +138,7 @@ def test_mobile_streaming_with_typed_callbacks(mobile_streaming_session):
         task="Open Settings app",
         timeout=180,
         max_steps=10,
-        stream=False,
+        stream_beta=False,
         on_thought=on_thought,
         on_tool_call=on_tool_call,
         on_tool_result=on_tool_result,
@@ -189,7 +189,7 @@ def test_mobile_streaming_token_level(mobile_streaming_session):
         task="Open Settings app",
         timeout=180,
         max_steps=10,
-        stream=True,
+        stream_beta=True,
         on_event=on_event,
         on_thought=on_thought,
         on_tool_call=on_tool_call,
