@@ -79,7 +79,6 @@ start_app
 .cursor
 *.patch
 *.lock
-CLAUDE.md
 .tmp_usr/
 .history
 IFLOW.md
