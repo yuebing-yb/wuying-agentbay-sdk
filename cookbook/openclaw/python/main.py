@@ -6,13 +6,21 @@ import shlex
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 from dotenv import load_dotenv
 
-from agentbay import AgentBay, CreateSessionParams
+from agentbay import (
+    AgentBay,
+    Context,
+    ContextSync,
+    CreateSessionParams,
+    SessionResult,
+    SyncPolicy,
+)
 
 OPENCLAW_IMAGE_ID = "imgc-0a8urjaf5l1v84ny5"
+OPENCLAW_CONTEXT_PATH = "/home/wuying/.openclaw"
 
 # Deferred .env loading - only load as fallback when env var is not found in system
 _dotenv_loaded = False
@@ -235,8 +243,8 @@ def get_openclaw_sse_url(session, port: int, token: Optional[str] = None) -> str
     Raises:
         RuntimeError: If failed to get the link
     """
-    if not (30100 <= port <= 30199):
-        raise ValueError(f"Port must be in range [30100, 30199], got {port}")
+    # if not (30100 <= port <= 30199):
+    #     raise ValueError(f"Port must be in range [30100, 30199], got {port}")
 
     print(f"Getting openclaw dashboard URL (port={port})...")
     result = session.get_link(protocol_type="https", port=port)
@@ -252,6 +260,83 @@ def get_openclaw_sse_url(session, port: int, token: Optional[str] = None) -> str
         raise RuntimeError(f"Failed to get SSE link: {result.error_message}")
 
 
+def create_session_with_context(
+    agent_bay: AgentBay,
+    context_name: str,
+    image_id: str,
+) -> Tuple[SessionResult, Context]:
+    """
+    Create a session with OpenClaw Skills context synchronization.
+
+    Args:
+        agent_bay: AgentBay client
+        context_name: Name of the context to use/create
+        image_id: Image ID for the session
+
+    Returns:
+        Tuple of (session_result, context)
+
+    Raises:
+        RuntimeError: If context or session creation fails
+    """
+    # Get or create context
+    print(f"Getting/creating context: {context_name}")
+    context_result = agent_bay.context.get(context_name, create=True)
+    if not context_result.success:
+        raise RuntimeError(
+            f"Failed to get/create context: {context_result.error_message}"
+        )
+
+    context = context_result.context
+    print(f"Context ID: {context.id}")
+
+    # Configure sync policy
+    sync_policy = SyncPolicy.default()
+
+    # Configure ContextSync - sync OpenClaw config directory
+    context_sync = ContextSync.new(
+        context_id=context.id,
+        path=OPENCLAW_CONTEXT_PATH,
+        policy=sync_policy,
+    )
+
+    # Create session with context sync
+    params = CreateSessionParams(image_id=image_id)
+    params.context_syncs = [context_sync]
+
+    print(f"Creating session with context sync (path: {OPENCLAW_CONTEXT_PATH})...")
+    session_result = agent_bay.create(params)
+
+    return session_result, context
+
+
+def reset_context(agent_bay: AgentBay, context_name: str) -> None:
+    """
+    Reset (clear all data in) a context.
+
+    Args:
+        agent_bay: AgentBay client
+        context_name: Name of the context to reset
+
+    Raises:
+        RuntimeError: If context reset fails
+    """
+    print(f"Getting context: {context_name}")
+    context_result = agent_bay.context.get(context_name, create=False)
+    if not context_result.success:
+        raise RuntimeError(f"Failed to get context: {context_result.error_message}")
+
+    context = context_result.context
+    print(f"Context ID: {context.id}")
+    print(f"Clearing context data...")
+
+    clear_result = agent_bay.context.clear(context.id, timeout=60)
+    if not clear_result.success:
+        raise RuntimeError(f"Failed to clear context: {clear_result.error_message}")
+
+    print(f"Context '{context_name}' cleared successfully")
+
+
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
@@ -261,6 +346,25 @@ def parse_args():
         "--no-sse",
         action="store_true",
         help="Skip getting SSE URL via get_link()",
+    )
+    parser.add_argument(
+        "--no-context",
+        action="store_true",
+        help="Disable Context synchronization",
+    )
+    parser.add_argument(
+        "--context",
+        type=str,
+        default="openclaw-skills",
+        metavar="NAME",
+        help="Context name for OpenClaw Skills synchronization (default: openclaw-skills)",
+    )
+    parser.add_argument(
+        "--reset-context",
+        type=str,
+        default=None,
+        metavar="NAME",
+        help="Reset (clear all data in) the specified context and exit",
     )
     return parser.parse_args()
 
@@ -278,11 +382,29 @@ def main() -> None:
     print("Initializing AgentBay client...")
     agent_bay = AgentBay(api_key=api_key.strip())
 
+    # Handle --reset-context flag
+    if args.reset_context:
+        try:
+            reset_context(agent_bay, args.reset_context)
+        except Exception as e:
+            print(f"Error resetting context: {e}")
+        return
+
     session = None
+    context = None
     try:
-        print(f"Creating session with image ID: {OPENCLAW_IMAGE_ID}")
-        params = CreateSessionParams(image_id=OPENCLAW_IMAGE_ID)
-        session_result = agent_bay.create(params)
+        # Create session with or without context
+        if not args.no_context:
+            session_result, context = create_session_with_context(
+                agent_bay,
+                context_name=args.context,
+                image_id=OPENCLAW_IMAGE_ID,
+            )
+        else:
+            print(f"Creating session with image ID: {OPENCLAW_IMAGE_ID}")
+            params = CreateSessionParams(image_id=OPENCLAW_IMAGE_ID)
+            session_result = agent_bay.create(params)
+
         if not session_result.success:
             raise RuntimeError(session_result.error_message or "Failed to create session")
 
@@ -323,7 +445,6 @@ def main() -> None:
 
         # Parse dashboard URL to extract port and token
         dashboard_info = parse_dashboard_url(dashboard_output)
-        console_url = dashboard_info.url
 
         # Get SSE access URL via get_link() using port from dashboard
         sse_url = None
@@ -338,7 +459,7 @@ def main() -> None:
             except Exception as e:
                 print(f"Warning: Failed to get SSE URL: {e}")
 
-        open_console_with_delay(session, console_url)
+        # open_console_with_delay(session, console_url)
 
         resource_url = (getattr(session, "resource_url", "") or "").strip()
 
@@ -348,6 +469,9 @@ def main() -> None:
         print("Session Information:")
         print("=" * 60)
         print(f"  Session ID:    {session.session_id}")
+        if context:
+            print(f"  Context Name:  {args.context}")
+            print(f"  Context ID:    {context.id}")
         if sse_url:
             print(f"  openclaw dashboard URL:       {sse_url}")
         # print(f"  Dashboard URL: {console_url}")
