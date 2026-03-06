@@ -21,6 +21,7 @@ from agentbay import (
 
 OPENCLAW_IMAGE_ID = "imgc-0a8urjaf5l1v84ny5"
 OPENCLAW_CONTEXT_PATH = "/home/wuying/.openclaw"
+OPENCLAW_CONFIG_FILE = "/home/wuying/.openclaw/openclaw.json"
 
 # Deferred .env loading - only load as fallback when env var is not found in system
 _dotenv_loaded = False
@@ -337,6 +338,45 @@ def reset_context(agent_bay: AgentBay, context_name: str) -> None:
     print(f"Context '{context_name}' cleared successfully")
 
 
+def download_openclaw_config(
+    session,
+    local_path: Optional[str] = None,
+) -> str:
+    """
+    Download openclaw.json configuration file from the session to local.
+
+    Args:
+        session: AgentBay session object
+        local_path: Local path to save the config file. If None, saves to
+                    ./openclaw.json in the current directory.
+
+    Returns:
+        The local path where the file was saved
+
+    Raises:
+        RuntimeError: If download fails
+    """
+    if local_path is None:
+        local_path = "./openclaw.json"
+
+    print(f"Reading {OPENCLAW_CONFIG_FILE} from session...")
+
+    # Use read_file instead of download_file (simpler and more reliable)
+    result = session.file_system.read_file(OPENCLAW_CONFIG_FILE)
+
+    if not result.success:
+        raise RuntimeError(f"Failed to read config file: {result.error_message}")
+
+    # Write content to local file
+    try:
+        with open(local_path, "w", encoding="utf-8") as f:
+            f.write(result.content)
+        print(f"Config file saved to: {local_path}")
+        return local_path
+    except Exception as e:
+        raise RuntimeError(f"Failed to write config file to {local_path}: {e}")
+
+
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
@@ -489,6 +529,14 @@ def main() -> None:
     finally:
         # Delete session before exiting
         if session is not None:
+            print("")
+            # Download openclaw.json to local before deleting session
+            print("Downloading openclaw.json from session...")
+            try:
+                download_openclaw_config(session)
+            except Exception as e:
+                print(f"Warning: Failed to download openclaw.json: {e}")
+
             print("")
             print("Cleaning up session...")
             agent_bay.delete(session)
