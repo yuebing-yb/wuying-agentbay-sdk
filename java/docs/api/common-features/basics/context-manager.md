@@ -102,6 +102,49 @@ Sync context data with optional parameters and wait for completion
 **Returns:**
 - `ContextSyncResult`: ContextSyncResult indicating success/failure after waiting for completion
 
+### bind
+
+```java
+public ContextBindResult bind(List<ContextSync> contexts, boolean waitForCompletion)
+```
+
+```java
+public ContextBindResult bind(ContextSync context)
+```
+
+Dynamically binds one or more contexts to the current session.
+
+<pre>{@code
+ContextSync cs = ContextSync.create(contextId, "/tmp/ctx-data", null);
+ContextBindResult result = session.getContext().bind(cs);
+System.out.println("Bind success: " + result.isSuccess());
+}</pre>
+
+**Parameters:**
+- `contexts` (List<ContextSync>): List of ContextSync objects to bind
+- `waitForCompletion` (boolean): Whether to poll until all bindings are confirmed
+
+**Returns:**
+- `ContextBindResult`: ContextBindResult with the result of the operation
+
+### listBindings
+
+```java
+public ContextBindingsResult listBindings()
+```
+
+Lists all context bindings for the current session.
+
+<pre>{@code
+ContextBindingsResult result = session.getContext().listBindings();
+for (ContextBinding b : result.getBindings()) {
+    System.out.println("Context " + b.getContextId() + " at " + b.getPath());
+}
+}</pre>
+
+**Returns:**
+- `ContextBindingsResult`: ContextBindingsResult with the list of bindings
+
 
 
 ## 🔗 Related Resources

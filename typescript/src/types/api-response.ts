@@ -799,3 +799,33 @@ export interface CursorPosition extends OperationResult {
   /** Y coordinate in pixels (0 is top edge of screen) */
   y: number;
 }
+
+/**
+ * Represents a single context binding entry returned by DescribeSessionContexts.
+ */
+export interface ContextBinding {
+  contextId: string;
+  contextName?: string;
+  path: string;
+  policy?: string;
+  bindTime?: string;
+}
+
+/**
+ * Result of a bind() operation on contexts.
+ */
+export interface ContextBindResult extends ApiResponse {
+  requestId: string;
+  success: boolean;
+  errorMessage?: string;
+}
+
+/**
+ * Result of a listBindings() operation.
+ */
+export interface ContextBindingsResult extends ApiResponse {
+  requestId: string;
+  success: boolean;
+  bindings: ContextBinding[];
+  errorMessage?: string;
+}

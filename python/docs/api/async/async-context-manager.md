@@ -23,6 +23,58 @@ status and to synchronize contexts with the session.
 def __init__(self, session)
 ```
 
+### bind
+
+```python
+async def bind(*contexts: ContextSync,
+               wait_for_completion: bool = True) -> ContextBindResult
+```
+
+Dynamically bind one or more contexts to the running session.
+
+**Arguments**:
+
+    *contexts: One or more ContextSync objects specifying context_id, path, and optional policy.
+    wait_for_completion: If True, polls list_bindings() until all bound contexts appear.
+  
+
+**Returns**:
+
+  ContextBindResult with success status, error_message, and request_id.
+  
+  Example
+  
+
+```python
+result = await session.context.bind(
+ContextSync(context_id="SdkCtx-xxx", path="/tmp/ctx-data"),
+)
+print(f"Bind success: {result.success}")
+
+```
+
+### list_bindings
+
+```python
+async def list_bindings() -> ContextBindingsResult
+```
+
+Query all context bindings on the current session.
+
+**Returns**:
+
+  ContextBindingsResult with list of ContextBinding objects.
+  
+  Example
+  
+
+```python
+result = await session.context.list_bindings()
+for binding in result.bindings:
+print(f"Context {binding.context_id} at {binding.path}")
+
+```
+
 ### info
 
 ```python

@@ -20,6 +20,9 @@ An Agent to perform tasks on mobile devices.
 
 - [executeTask](#executetask)
 - [executeTaskAndWait](#executetaskandwait)
+- [executeTaskStreamWs](#executetaskstreamws)
+- [hasStreamingParams](#hasstreamingparams)
+- [resolveAgentTarget](#resolveagenttarget)
 - [terminateTask](#terminatetask)
 
 ## Properties
@@ -88,7 +91,7 @@ ___
 
 ### executeTaskAndWait
 
-▸ **executeTaskAndWait**(`task`, `timeout`, `maxSteps?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTaskAndWait**(`task`, `timeout`, `maxSteps_or_options?`, `options_param?`): `Promise`\<``ExecutionResult``\>
 
 Execute a specific task described in human language synchronously.
 This is a synchronous interface that blocks until the task is completed or
@@ -97,11 +100,12 @@ an error occurs, or timeout happens. The default polling interval is
 
 #### Parameters
 
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `task` | `string` | `undefined` | Task description in human language. |
-| `timeout` | `number` | `undefined` | Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion. |
-| `maxSteps` | `number` | `50` | Maximum number of steps (clicks/swipes/etc.) allowed. Used to prevent infinite loops or excessive resource consumption. Default is 50. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `task` | `string` | Task description in human language. |
+| `timeout` | `number` | Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion. |
+| `maxSteps_or_options?` | `number` \| ``AgentStreamingOptions`` | - |
+| `options_param?` | ``AgentStreamingOptions`` | - |
 
 #### Returns
 
@@ -127,6 +131,70 @@ if (result.success) {
 #### Overrides
 
 BaseTaskAgent.executeTaskAndWait
+
+___
+
+### executeTaskStreamWs
+
+▸ **executeTaskStreamWs**(`params`): `Promise`\<``ExecutionResult``\>
+
+Execute a task via WebSocket streaming channel.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | `Object` |
+| `params.options?` | ``AgentStreamingOptions`` |
+| `params.stream` | `boolean` |
+| `params.taskParams` | `Record`\<`string`, `any`\> |
+| `params.timeout` | `number` |
+
+#### Returns
+
+`Promise`\<``ExecutionResult``\>
+
+#### Inherited from
+
+BaseTaskAgent.executeTaskStreamWs
+
+### hasStreamingParams
+
+▸ **hasStreamingParams**(`options?`): `boolean`
+
+Check if any streaming option is provided.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options?` | ``AgentStreamingOptions`` |
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+BaseTaskAgent.hasStreamingParams
+
+___
+
+### resolveAgentTarget
+
+▸ **resolveAgentTarget**(): `string`
+
+Resolve the WS target for this agent from MCP tools list.
+
+#### Returns
+
+`string`
+
+#### Inherited from
+
+BaseTaskAgent.resolveAgentTarget
+
+___
 
 ### terminateTask
 

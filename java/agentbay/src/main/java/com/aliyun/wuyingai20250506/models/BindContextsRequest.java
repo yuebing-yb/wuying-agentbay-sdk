@@ -1,0 +1,84 @@
+// This file is auto-generated, don't edit it. Thanks.
+package com.aliyun.wuyingai20250506.models;
+
+import com.aliyun.tea.*;
+
+public class BindContextsRequest extends TeaModel {
+    @NameInMap("Authorization")
+    public String authorization;
+
+    @NameInMap("PersistenceDataList")
+    public java.util.List<BindContextsRequestPersistenceDataList> persistenceDataList;
+
+    @NameInMap("SessionId")
+    public String sessionId;
+
+    public static BindContextsRequest build(java.util.Map<String, ?> map) throws Exception {
+        BindContextsRequest self = new BindContextsRequest();
+        return TeaModel.build(map, self);
+    }
+
+    public BindContextsRequest setAuthorization(String authorization) {
+        this.authorization = authorization;
+        return this;
+    }
+    public String getAuthorization() {
+        return this.authorization;
+    }
+
+    public BindContextsRequest setPersistenceDataList(java.util.List<BindContextsRequestPersistenceDataList> persistenceDataList) {
+        this.persistenceDataList = persistenceDataList;
+        return this;
+    }
+    public java.util.List<BindContextsRequestPersistenceDataList> getPersistenceDataList() {
+        return this.persistenceDataList;
+    }
+
+    public BindContextsRequest setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+        return this;
+    }
+    public String getSessionId() {
+        return this.sessionId;
+    }
+
+    public static class BindContextsRequestPersistenceDataList extends TeaModel {
+        @NameInMap("ContextId")
+        public String contextId;
+
+        @NameInMap("Path")
+        public String path;
+
+        @NameInMap("Policy")
+        public String policy;
+
+        public static BindContextsRequestPersistenceDataList build(java.util.Map<String, ?> map) throws Exception {
+            BindContextsRequestPersistenceDataList self = new BindContextsRequestPersistenceDataList();
+            return TeaModel.build(map, self);
+        }
+
+        public BindContextsRequestPersistenceDataList setContextId(String contextId) {
+            this.contextId = contextId;
+            return this;
+        }
+        public String getContextId() {
+            return this.contextId;
+        }
+
+        public BindContextsRequestPersistenceDataList setPath(String path) {
+            this.path = path;
+            return this;
+        }
+        public String getPath() {
+            return this.path;
+        }
+
+        public BindContextsRequestPersistenceDataList setPolicy(String policy) {
+            this.policy = policy;
+            return this;
+        }
+        public String getPolicy() {
+            return this.policy;
+        }
+    }
+}

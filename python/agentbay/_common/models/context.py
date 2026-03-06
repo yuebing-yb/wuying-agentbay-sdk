@@ -3,6 +3,61 @@ from typing import Any, Dict, List, Optional
 from .response import ApiResponse
 
 
+class ContextBinding:
+    """A context binding entry on a session."""
+
+    def __init__(
+        self,
+        context_id: str = "",
+        context_name: str = "",
+        path: str = "",
+        policy: str = "",
+        bind_time: str = "",
+    ):
+        self.context_id = context_id
+        self.context_name = context_name
+        self.path = path
+        self.policy = policy
+        self.bind_time = bind_time
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ContextBinding":
+        return cls(
+            context_id=data.get("ContextId", ""),
+            context_name=data.get("ContextName", ""),
+            path=data.get("Path", ""),
+            policy=data.get("Policy", ""),
+            bind_time=data.get("BindTime", ""),
+        )
+
+
+class ContextBindResult(ApiResponse):
+    """Result of bind() call."""
+
+    def __init__(
+        self, request_id: str = "", success: bool = False, error_message: str = ""
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+
+
+class ContextBindingsResult(ApiResponse):
+    """Result of list_bindings() call."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        bindings: Optional[List["ContextBinding"]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.bindings = bindings or []
+        self.error_message = error_message
+
+
 class ContextInfoResult(ApiResponse):
     def __init__(
         self,

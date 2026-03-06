@@ -72,6 +72,24 @@ ContextManager handles context operations for a specific session.
 
 ### Methods
 
+### Bind
+
+```go
+func (cm *ContextManager) Bind(contexts []*ContextSync, waitForCompletion bool) (*ContextBindResult, error)
+```
+
+Bind dynamically binds one or more contexts to the current session.
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+session := result.Session
+contextSync, _ := agentbay.NewContextSync(contextID, "/tmp/ctx-data", nil)
+bindResult, _ := session.Context.Bind([]*ContextSync{contextSync}, true)
+```
+
 ### Info
 
 ```go
@@ -96,6 +114,26 @@ func (cm *ContextManager) InfoWithParams(contextId, path, taskType string) (*Con
 ```
 
 InfoWithParams retrieves context information for the current session with optional parameters.
+
+### ListBindings
+
+```go
+func (cm *ContextManager) ListBindings() (*ContextBindingsResult, error)
+```
+
+ListBindings lists all context bindings for the current session.
+
+**Example:**
+
+```go
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+result, _ := client.Create(nil)
+session := result.Session
+bindingsResult, _ := session.Context.ListBindings()
+for _, b := range bindingsResult.Bindings {
+    fmt.Printf("Context %s at %s\n", b.ContextID, b.Path)
+}
+```
 
 ### Sync
 
