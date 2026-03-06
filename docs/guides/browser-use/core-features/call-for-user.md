@@ -47,6 +47,19 @@ After your app receives a call-for-user message, handle it according to `action`
 
 ## SDK Integration
 
+### Browser option: call_for_user
+
+Enable call-for-user (manual user takeover) by setting `call_for_user=True` when initializing the browser. The mirror will then send call-for-user messages when intervention is needed (e.g. captcha, login, payment).
+
+```python
+from agentbay import BrowserOption
+
+browser_option = BrowserOption(
+    call_for_user=True,  # enable call-for-user notifications
+)
+await session.browser.initialize(browser_option)
+```
+
 ### Registering a callback
 
 Use `session.browser.register_callback` to receive call-for-user messages from the mirror:
@@ -87,6 +100,14 @@ await session.browser.send_takeover_done(notify_id)
 ```
 
 If you do not call this, the mirror will still continue after the `max_wait_time` in `extraParams`.
+
+### Unregistering the callback
+
+When you no longer need to receive call-for-user messages (e.g. before closing the session or switching flows), unregister the callback:
+
+```python
+await session.browser.unregister_callback()
+```
 
 ## Example
 
