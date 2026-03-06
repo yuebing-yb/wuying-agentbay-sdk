@@ -57,7 +57,7 @@ def _build_policy_dict(white_list_paths):
     return json.loads(policy_json)
 
 
-class TestSyncBrowserContextPolicy(unittest.TestCase):
+class TestAsyncBrowserContextPolicy(unittest.TestCase):
     """Test that browser_context policy includes BWList with white lists."""
 
     @pytest.mark.sync

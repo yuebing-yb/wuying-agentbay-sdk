@@ -2,6 +2,7 @@
 Unit tests for watch_directory functionality in FileSystem module.
 """
 
+import asyncio
 import json
 import pytest
 import threading
@@ -189,8 +190,10 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
         self.session = self.mock_session  # Add session reference
         self.mock_session.get_api_key.return_value = "test-api-key"
         self.mock_session.get_session_id.return_value = "test-session-id"
-        # Mock _is_expired to return False so the watch thread doesn't stop prematurely
         self.mock_session._is_expired.return_value = False
+        self.mock_session.link_url = ""
+        self.mock_session.token = ""
+        self.mock_session.mcpTools = []
 
         self.filesystem = AsyncFileSystem(self.mock_session)
 
@@ -306,11 +309,12 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
 
         # Start the thread
         thread.start()
-        time.sleep(0.05)  # Brief pause to let the thread run
+        # Use async sleep so the event loop can process run_coroutine_threadsafe calls
+        await asyncio.sleep(0.5)
 
         # Stop the thread
         stop_event.set()
-        thread.join(timeout=1.0)
+        thread.join(timeout=2.0)
 
         # Verify callback was called with events
         self.assertGreater(len(callback_events), 0)
@@ -343,11 +347,12 @@ class TestAsyncFileSystemWatchDirectory(unittest.IsolatedAsyncioTestCase):
 
         # Start the thread
         thread.start()
-        time.sleep(0.05)
+        # Use async sleep so the event loop can process run_coroutine_threadsafe calls
+        await asyncio.sleep(0.5)
 
         # Stop the thread - should not crash despite callback exception
         stop_event.set()
-        thread.join(timeout=1.0)
+        thread.join(timeout=2.0)
 
         # Thread should have completed without crashing
         self.assertFalse(thread.is_alive())

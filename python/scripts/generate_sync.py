@@ -645,6 +645,141 @@ def generate_sync():
                         content = content.replace("asyncio.get_event_loop().run_until_complete(", "")
                         pass
 
+                    # Handle browser_captcha_takeover.py and browser_login_takeover.py - convert asyncio.Event to threading.Event
+                    if ("browser_captcha_takeover.py" in file or "browser_login_takeover.py" in file) and "examples" in path:
+                        # Step 1: Replace asyncio.Event with threading.Event
+                        content = content.replace("asyncio.Event()", "threading.Event()")
+                        content = content.replace("asyncio.Event", "threading.Event")
+
+                        # Step 2: Replace import asyncio with import threading
+                        content = re.sub(r"^import asyncio\s*$", "import threading", content, flags=re.MULTILINE)
+
+                        # Step 3: Replace asyncio.wait_for(event.wait(), timeout=x) with event.wait(timeout=x)
+                        content = re.sub(
+                            r"asyncio\.wait_for\(\s*(\w+)\.wait\(\),\s*timeout=(\w+)\s*\)",
+                            r"\1.wait(timeout=\2)",
+                            content,
+                            flags=re.DOTALL,
+                        )
+
+                        # Step 4: Both files now use same structure (try/except + return|pass + if should_takeover); one pattern, one replacement
+                        takeover_wait_pattern = re.compile(
+                            r"(?:(# Wait for .*\n)\s+)?"
+                            r"\s+try:\s*\n\s+"
+                            r"(\w+)\.wait\(timeout=(\w+)\)\s*\n\s+"
+                            r"except asyncio\.TimeoutError:\s*\n\s+"
+                            r"print\(([^)]+)\)\s*\n\s+"
+                            r"(return|pass)\s*\n\s+"
+                            r"\s+if should_takeover:",
+                            re.MULTILINE,
+                        )
+
+                        def _replace_takeover_wait(m):
+                            comment = m.group(1) or ""
+                            ev, timeout, msg, action = m.group(2), m.group(3), m.group(4), m.group(5)
+                            # captcha: 12 spaces (main+async with), fixed message, elif; login: 4 spaces, use msg, return, if
+                            indent = "            " if "browser_captcha_takeover.py" in file else "    "
+                            is_captcha = "browser_captcha_takeover.py" in file
+                            print_line = f'{indent}    print("⏰ No captcha detected within timeout, continuing...")\n' if is_captcha else f"{indent}    print({msg})\n"
+                            return_line = "" if is_captcha else (f"{indent}    return\n" if action == "return" else "")
+                            cond_line = f"{indent}elif should_takeover:" if is_captcha else f"{indent}if should_takeover:"
+                            return (
+                                f"{comment}{indent}detected = {ev}.wait(timeout={timeout})\n"
+                                f"{indent}if not detected:\n"
+                                f"{print_line}"
+                                f"{return_line}"
+                                f"{cond_line}"
+                            )
+
+                        if takeover_wait_pattern.search(content):
+                            content = takeover_wait_pattern.sub(_replace_takeover_wait, content)
+
+                    # Handle browser_captcha_solving.py and browser_auto_login.py - same pattern: asyncio.Event -> threading.Event, wait_for -> return-value logic
+                    if ("browser_captcha_solving.py" in file or "browser_auto_login.py" in file) and "examples" in path:
+                        # Step 1: Replace asyncio.Event with threading.Event
+                        content = content.replace("asyncio.Event()", "threading.Event()")
+                        content = content.replace("asyncio.Event", "threading.Event")
+
+                        # Step 2: Replace import asyncio with import threading
+                        content = re.sub(r"^import asyncio\s*$", "import threading", content, flags=re.MULTILINE)
+
+                        # Step 3: Replace asyncio.wait_for(event.wait(), timeout=x) with event.wait(timeout=x)
+                        content = re.sub(
+                            r"asyncio\.wait_for\(\s*(\w+)\.wait\(\),\s*timeout=(\w+)\s*\)",
+                            r"\1.wait(timeout=\2)",
+                            content,
+                            flags=re.DOTALL,
+                        )
+
+                        # Step 4: Convert try/except asyncio.TimeoutError to return-value logic (unified for captcha and autologin)
+                        outer_pattern = re.compile(
+                            r'    try:\s*\n\s+print\(f"Waiting for (captcha|autologin) pause event[^"]*"\)\s*\n\s+'
+                            r"(\w+)\.wait\(timeout=(\w+)\)\s*\n\s+try:\s*\n\s+"
+                            r"# (Captcha|Autologin) pause event occurred[^\n]*\n\s*global max_(captcha|autologin)_solving_timeout\s*\n\s+"
+                            r'print\(f"Waiting for (captcha|autologin) resume event[^"]*"\)\s*\n\s+'
+                            r"(\w+)\.wait\(timeout=(\w+)\)\s*\n\s+global should_takeover\s*\n\s+"
+                            r"if should_takeover:\s*\n\s+print\([^)]+\)\s*\n\s+return False\s*\n\s+(?:else:\s*\n\s+)?return True\s*\n\s+"
+                            r"except asyncio\.TimeoutError:\s*\n\s+# No resume event[^\n]*\n\s*print\([^)]+\)\s*\n\s+return False\s*\n\s+"
+                            r"except asyncio\.TimeoutError:\s*\n\s+# No pause event[^\n]*\n\s*print\([^)]+\)\s*\n\s+return True",
+                            re.MULTILINE,
+                        )
+
+                        def _replace_wait_solving(m):
+                            topic = m.group(1)  # captcha or autologin
+                            # Groups: 1=topic, 2=pause_ev, 3=detect_timeout, 4=Topic, 5=topic, 6=topic again, 7=resume_ev, 8=solving_timeout
+                            takeover_msg = (
+                                "Captcha solving failed, takeover event detected"
+                                if topic == "captcha"
+                                else "Autologin failed, takeover event detected"
+                            )
+                            topic_cap = topic.capitalize()
+                            return (
+                                f'    print(f"Waiting for {topic} pause event, timeout: {{{m.group(3)}}}s")\n'
+                                f"    pause_detected = {m.group(2)}.wait(timeout={m.group(3)})\n"
+                                f"\n"
+                                f"    if not pause_detected:\n"
+                                f"        # No pause event within timeout, proceed directly\n"
+                                f'        print("No {topic} pause event detected within timeout, proceeding next step")\n'
+                                f"        return True\n"
+                                f"\n"
+                                f"    # {topic_cap} pause event occurred, wait for {topic} resume event\n"
+                                f"    global max_{topic}_solving_timeout\n"
+                                f'    print(f"Waiting for {topic} resume event, timeout: {{max_{topic}_solving_timeout}}s")\n'
+                                f"    resume_detected = {m.group(7)}.wait(timeout={m.group(8)})\n"
+                                f"\n"
+                                f"    if not resume_detected:\n"
+                                f"        # No resume event within timeout, proceed directly\n"
+                                f'        print("No {topic} resume event detected within timeout, should takeover")\n'
+                                f"        return False\n"
+                                f"\n"
+                                f"    global should_takeover\n"
+                                f"    if should_takeover:\n"
+                                f'        print("{takeover_msg}")\n'
+                                f"        return False\n"
+                                f"    else:\n"
+                                f"        return True"
+                            )
+
+                        if outer_pattern.search(content):
+                            content = outer_pattern.sub(_replace_wait_solving, content)
+
+                        # Step 5: Remove any remaining asyncio.TimeoutError blocks (fallback)
+                        content = re.sub(
+                            r"    except asyncio\.TimeoutError:\s*\n\s+# No pause event[^\n]*\n\s*print\([^)]+\)\s*\n\s+return True\s*\n",
+                            "",
+                            content,
+                            flags=re.MULTILINE,
+                        )
+                        content = re.sub(
+                            r"        except asyncio\.TimeoutError:\s*\n\s+# No resume event[^\n]*\n\s*print\([^)]+\)\s*\n\s+return False\s*\n",
+                            "",
+                            content,
+                            flags=re.MULTILINE,
+                        )
+
+                        # Step 6: Clean up trailing whitespace
+                        content = re.sub(r"(\n\s*return True)\s+(\n\ndef )", r"\1\2", content)
+
                     # Test specific cleanup
                     content = content.replace("@pytest.mark.asyncio", "@pytest.mark.sync")
                     content = content.replace("@pytest_asyncio.fixture", "@pytest.fixture")

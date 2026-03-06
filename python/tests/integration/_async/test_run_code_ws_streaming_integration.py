@@ -7,13 +7,12 @@ from agentbay import AsyncAgentBay, CreateSessionParams
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Streaming API temporarily disabled; will be re-enabled in a future release")
 async def test_run_code_ws_streaming_e2e():
     api_key = os.getenv("AGENTBAY_API_KEY")
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
 
-    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5ta4n2htfrppyw"
+    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5taki2khozz0p8"
     agentbay = AsyncAgentBay(api_key=api_key)
 
     result = await agentbay.create(CreateSessionParams(image_id=image_id))

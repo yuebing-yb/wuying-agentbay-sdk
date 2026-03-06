@@ -347,6 +347,8 @@ export class Code {
    *                  Supported values: 'python', 'javascript', 'r', 'java'.
    * @param timeoutS - The timeout for the code execution in seconds. Default is 60s.
    *                   Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+   * @param options - Optional streaming options. When streamBeta is true, uses WebSocket
+   *                 streaming for real-time stdout/stderr output.
    * @returns CodeExecutionResult with code execution output and requestId
    * @throws Error if an unsupported language is specified.
    *
@@ -367,7 +369,13 @@ export class Code {
   async runCode(
     code: string,
     language: string,
-    timeoutS = 60
+    timeoutS = 60,
+    options?: {
+      streamBeta?: boolean;
+      onStdout?: (chunk: string) => void;
+      onStderr?: (chunk: string) => void;
+      onError?: (err: any) => void;
+    }
   ): Promise<CodeExecutionResult> {
     try {
       // Normalize and validate language (case-insensitive)
@@ -392,9 +400,16 @@ export class Code {
         };
       }
 
-      // Streaming is temporarily disabled in this version.
-      // The streaming implementation is preserved in runCodeStreamWs()
-      // and will be re-enabled in a future release.
+      if (options?.streamBeta) {
+        return await this.runCodeStreamWs({
+          code,
+          language: canonicalLanguage,
+          timeoutS,
+          onStdout: options.onStdout,
+          onStderr: options.onStderr,
+          onError: options.onError,
+        });
+      }
 
       const args = {
         code,
@@ -453,9 +468,15 @@ export class Code {
   async run(
     code: string,
     language: string,
-    timeoutS = 60
+    timeoutS = 60,
+    options?: {
+      streamBeta?: boolean;
+      onStdout?: (chunk: string) => void;
+      onStderr?: (chunk: string) => void;
+      onError?: (err: any) => void;
+    }
   ): Promise<CodeExecutionResult> {
-    return await this.runCode(code, language, timeoutS);
+    return await this.runCode(code, language, timeoutS, options);
   }
 
   /**
@@ -464,8 +485,14 @@ export class Code {
   async execute(
     code: string,
     language: string,
-    timeoutS = 60
+    timeoutS = 60,
+    options?: {
+      streamBeta?: boolean;
+      onStdout?: (chunk: string) => void;
+      onStderr?: (chunk: string) => void;
+      onError?: (err: any) => void;
+    }
   ): Promise<CodeExecutionResult> {
-    return await this.runCode(code, language, timeoutS);
+    return await this.runCode(code, language, timeoutS, options);
   }
 }

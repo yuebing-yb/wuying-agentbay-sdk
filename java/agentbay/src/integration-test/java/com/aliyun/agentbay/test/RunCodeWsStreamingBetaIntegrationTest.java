@@ -3,6 +3,7 @@ package com.aliyun.agentbay.test;
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.model.DeleteResult;
+import com.aliyun.agentbay.model.code.EnhancedCodeExecutionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import org.junit.AfterClass;
@@ -10,6 +11,9 @@ import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -26,7 +30,7 @@ public class RunCodeWsStreamingBetaIntegrationTest {
 
         String imageId = System.getenv("AGENTBAY_WS_IMAGE_ID");
         if (imageId == null || imageId.isEmpty()) {
-            imageId = "imgc-0ab5ta4n2htfrppyw";
+            imageId = "imgc-0ab5taki2khozz0p8";
         }
 
         CreateSessionParams params = new CreateSessionParams();
@@ -54,10 +58,27 @@ public class RunCodeWsStreamingBetaIntegrationTest {
     }
 
     @Test
-    @Ignore("Streaming API temporarily disabled; will be re-enabled in a future release")
     public void testRunCodeWsStreamingBetaE2E() {
-        // Streaming runCode overload was removed in this release.
-        // Test body will be restored when the streaming API is re-enabled.
+        List<String> stdoutChunks = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+
+        EnhancedCodeExecutionResult r = session.getCode().runCode(
+            "import time\nprint('hello', flush=True)\ntime.sleep(1.0)\nprint(2, flush=True)\n",
+            "python",
+            60,
+            true,
+            stdoutChunks::add,
+            null,
+            err -> errors.add(String.valueOf(err))
+        );
+
+        assertTrue("errors should be empty: " + errors, errors.isEmpty());
+        assertTrue("expected success: " + r.getErrorMessage(), r.isSuccess());
+        assertTrue("expected >=2 stdout events, got " + stdoutChunks.size(), stdoutChunks.size() >= 2);
+
+        String joined = String.join("", stdoutChunks);
+        assertTrue("expected stdout contains hello", joined.contains("hello"));
+        assertTrue("expected stdout contains 2", joined.contains("2"));
     }
 }
 

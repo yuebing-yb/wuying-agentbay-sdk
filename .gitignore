@@ -79,11 +79,13 @@ start_app
 .cursor
 *.patch
 *.lock
-CLAUDE.md
 .tmp_usr/
 .history
 IFLOW.md
 tmp/
+.docs/
+PROGRESS.md
+CLAUDE.md
 
 # Example result files
 **/results_*/

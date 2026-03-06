@@ -165,6 +165,114 @@ Get the endpoint router port.
 **Returns:**
 - `Integer`: Port number or null if not set
 
+### registerCallback
+
+```java
+public boolean registerCallback(BrowserCallback callback)
+```
+
+Register a callback function to handle browser-related push notifications from sandbox.
+
+<p>Example usage:</p>
+<pre>{@code
+BrowserCallback callback = (notifyMsg) -> {
+    System.out.println("Type: " + notifyMsg.getType());
+    System.out.println("Code: " + notifyMsg.getCode());
+    System.out.println("Message: " + notifyMsg.getMessage());
+    System.out.println("Action: " + notifyMsg.getAction());
+    System.out.println("Extra params: " + notifyMsg.getExtraParams());
+};
+
+CreateResult createResult = agentBay.create();
+Session session = createResult.getSession();
+session.getBrowser().initialize(new BrowserOption());
+boolean success = session.getBrowser().registerCallback(callback);
+// ... do work ...
+session.getBrowser().unregisterCallback();
+session.delete();
+}</pre>
+
+**Parameters:**
+- `callback` (BrowserCallback): Callback function that receives a BrowserNotifyMessage
+
+**Returns:**
+- `boolean`: true if the callback was successfully registered
+
+### unregisterCallback
+
+```java
+public void unregisterCallback()
+```
+
+Unregister the previously registered callback function.
+
+<p>Example usage:</p>
+<pre>{@code
+session.getBrowser().registerCallback(callback);
+// ... do work ...
+session.getBrowser().unregisterCallback();
+}</pre>
+
+### sendNotifyMessage
+
+```java
+public boolean sendNotifyMessage(BrowserNotifyMessage notifyMessage)
+```
+
+Send a notify message to sandbox through WebSocket.
+
+<p>Example usage:</p>
+<pre>{@code
+BrowserNotifyMessage notifyMsg = new BrowserNotifyMessage(
+    "call-for-user",
+    1,
+    199,
+    "user handle done",
+    "takeoverdone",
+    new HashMap<>()
+);
+boolean success = session.getBrowser().sendNotifyMessage(notifyMsg);
+}</pre>
+
+**Parameters:**
+- `notifyMessage` (BrowserNotifyMessage): The notification message to send
+
+**Returns:**
+- `boolean`: true if the message was successfully sent, false otherwise
+
+### sendTakeoverDone
+
+```java
+public boolean sendTakeoverDone(int notifyId)
+```
+
+Send a takeoverdone notify message to sandbox.
+
+<p>Example usage:</p>
+<pre>{@code
+BrowserCallback callback = (notifyMsg) -> {
+    if ("takeover".equals(notifyMsg.getAction())) {
+        int takeoverNotifyId = notifyMsg.getId();
+        // ... do work in other thread...
+        session.getBrowser().sendTakeoverDone(takeoverNotifyId);
+    }
+};
+
+CreateResult createResult = agentBay.create();
+Session session = createResult.getSession();
+session.getBrowser().initialize(new BrowserOption());
+session.getBrowser().registerCallback(callback);
+// ... do work ...
+session.getBrowser().unregisterCallback();
+session.delete();
+}</pre>
+
+**Parameters:**
+- `notifyId` (int): The notification ID associated with the takeover request message
+
+**Returns:**
+- `boolean`: true if the takeoverdone notify message was successfully sent, false otherwise
+
 
 
 ## BrowserOperator

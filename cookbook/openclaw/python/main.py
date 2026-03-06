@@ -1,183 +1,234 @@
+import argparse
 import os
-import shlex
-import sys
+import re
+import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple
 
-from agentbay import AgentBay, CreateSessionParams
+from agentbay import (
+    AgentBay,
+    Context,
+    ContextSync,
+    CreateSessionParams,
+    SessionResult,
+    SyncPolicy,
+)
 
-OPENCLAW_IMAGE_ID = "moltbot-linux-ubuntu-2204"
-OPENCLAW_CONSOLE_URL = "http://127.0.0.1:30120"
+OPENCLAW_IMAGE_ID = "openclaw-linux-ubuntu-2204"
+OPENCLAW_CONTEXT_PATH = "/home/wuying/.openclaw"
+OPENCLAW_CONTEXT_NAME = "openclaw-files"
+GATEWAY_PORT = 30100
 
-@dataclass(frozen=True)
-class OpenClawEnv:
-    dashscope_api_key: Optional[str]
-    dingtalk_client_id: Optional[str]
-    dingtalk_client_secret: Optional[str]
-    feishu_app_id: Optional[str]
-    feishu_app_secret: Optional[str]
 
-def _get_optional_env(name: str) -> Optional[str]:
+def _get_env(name: str) -> Optional[str]:
+    """Get environment variable from system (e.g. export AGENTBAY_API_KEY=xxx)."""
     value = os.getenv(name)
-    if value is None:
-        return None
-    value = value.strip()
-    if not value:
-        return None
-    return value
+    if value is not None and value.strip():
+        return value.strip()
+    return None
 
-def load_openclaw_env() -> OpenClawEnv:
-    return OpenClawEnv(
-        dashscope_api_key=_get_optional_env("DASHSCOPE_API_KEY"),
-        dingtalk_client_id=_get_optional_env("DINGTALK_CLIENT_ID"),
-        dingtalk_client_secret=_get_optional_env("DINGTALK_CLIENT_SECRET"),
-        feishu_app_id=_get_optional_env("FEISHU_APP_ID"),
-        feishu_app_secret=_get_optional_env("FEISHU_APP_SECRET"),
-    )
 
-def build_openclaw_config_command(env: OpenClawEnv, bot_cmd: str) -> Optional[str]:
-    parts: list[str] = []
-    if env.dashscope_api_key:
-        parts.append(
-            f"{bot_cmd} config set models.providers.bailian.apiKey "
-            f"{shlex.quote(env.dashscope_api_key)}"
-        )
-    if env.feishu_app_id and env.feishu_app_secret:
-        parts.append(
-            f"{bot_cmd} config set channels.feishu.appId {shlex.quote(env.feishu_app_id)}"
-        )
-        parts.append(
-            f"{bot_cmd} config set channels.feishu.appSecret {shlex.quote(env.feishu_app_secret)}"
-        )
-    elif env.feishu_app_id or env.feishu_app_secret:
-        raise ValueError(
-            "FEISHU_APP_ID and FEISHU_APP_SECRET must be both set, or both unset"
-        )
-    if env.dingtalk_client_id and env.dingtalk_client_secret:
-        parts.append(
-            f"{bot_cmd} config set channels.dingtalk.clientId "
-            f"{shlex.quote(env.dingtalk_client_id)}"
-        )
-        parts.append(
-            f"{bot_cmd} config set channels.dingtalk.clientSecret "
-            f"{shlex.quote(env.dingtalk_client_secret)}"
-        )
-    elif env.dingtalk_client_id or env.dingtalk_client_secret:
-        raise ValueError(
-            "DINGTALK_CLIENT_ID and DINGTALK_CLIENT_SECRET must be both set, or both unset"
-        )
-    if not parts:
-        return None
-    parts.append(f"{bot_cmd} gateway restart")
-    return " && ".join(parts)
-
-def wait_for_ctrl_q() -> None:
-    print("")
-    print("Cloud Desktop is ready.")
-    print("Press Ctrl+Q in this terminal to continue and release the session.")
-    try:
-        if not sys.stdin.isatty():
-            while True:
-                ch = sys.stdin.read(1)
-                if not ch:
-                    raise EOFError("stdin closed before hotkey was received")
-                if ch == "\x11":
-                    break
-            return
-
-        if os.name == "nt":
-            import msvcrt
-
-            while True:
-                ch = msvcrt.getwch()
-                if ch == "\x11":
-                    break
-            return
-
-        import termios
-        import tty
-
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(fd)
-            while True:
-                ch = sys.stdin.read(1)
-                if ch == "\x11":
-                    break
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    except Exception:
-        print("Failed to read hotkey, falling back to Enter.")
-        try:
-            input("Press Enter to continue...")
-        except EOFError:
-            return
-
-def execute_command(session, command: str, timeout_ms: int = 50000) -> None:
-    print("")
-    print(f"Executing: {command}")
+def run_command(session, command: str, timeout_ms: int = 50000) -> str:
+    """Execute command and return output. Prints the command before execution and result after."""
+    print(f"[CMD]: {command}")
     result = session.command.execute_command(command, timeout_ms=timeout_ms)
     if result.success:
         output = (result.output or "").strip()
-        if output:
-            print(output)
-        return
-    raise RuntimeError(result.error_message or "Command execution failed")
+        print(f"[OUTPUT]: {output if output else '(no output)'}")
+        return output
+    else:
+        error_msg = result.error_message or "Command execution failed"
+        print(f"[ERROR]: {error_msg}")
+        raise RuntimeError(error_msg)
+
 
 def detect_openclaw_command(session) -> str:
-    cmd = (
-        "command -v openclaw >/dev/null 2>&1 && echo openclaw || "
-        "command -v moltbot >/dev/null 2>&1 && echo moltbot || "
-        "echo clawdbot"
-    )
-    result = session.command.execute_command(cmd, timeout_ms=50000)
-    if not result.success:
-        raise RuntimeError(result.error_message or "Failed to detect openclaw command")
-    detected = (result.output or "").strip()
-    if detected not in {"openclaw", "moltbot", "clawdbot"}:
-        raise RuntimeError(f"Unexpected bot command detected: {detected!r}")
-    return detected
+    """Detect which openclaw command is available in the session."""
+    print("Checking if openclaw is in PATH...")
+    cmd = "which openclaw"
+    try:
+        run_command(session, cmd, timeout_ms=10000)
+        print("openclaw already in the PATH")
+        return "openclaw"
+    except RuntimeError:
+        pass
 
-def open_console_with_delay(session, url: str) -> None:
-    quoted_url = shlex.quote(url)
-    cmd = (
-        "bash -lc "
-        + shlex.quote(
-            "URL="
-            + quoted_url
-            + "; "
-            + "for i in $(seq 1 15); do "
-            + "if command -v curl >/dev/null 2>&1; then "
-            + "curl -fsS \"$URL\" >/dev/null 2>&1 && break; "
-            + "elif command -v wget >/dev/null 2>&1; then "
-            + "wget -qO- \"$URL\" >/dev/null 2>&1 && break; "
-            + "else "
-            + "sleep 6; break; "
-            + "fi; "
-            + "sleep 2; "
-            + "done; "
-            + "nohup firefox \"$URL\" >/dev/null 2>&1 &"
+    print("openclaw not found in PATH, registering to PATH...")
+    cmd = "sudo ln -s $HOME/.npm-global/bin/openclaw /usr/local/bin/"
+    try:
+        run_command(session, cmd, timeout_ms=10000)
+        print("openclaw registered to PATH")
+    except RuntimeError as e:
+        print(f"Warning: Failed to register openclaw to PATH: {e}")
+
+    print("Verifying openclaw is now in PATH...")
+    try:
+        run_command(session, "which openclaw", timeout_ms=10000)
+        print("openclaw successfully verified in PATH")
+        return "openclaw"
+    except RuntimeError:
+        raise RuntimeError(
+            "openclaw command not found in PATH after registration. "
+            "Please ensure openclaw is installed in the session."
         )
+
+
+@dataclass(frozen=True)
+class DashboardInfo:
+    """Parsed information from openclaw dashboard command."""
+    url: str
+    port: int
+    token: Optional[str]
+
+
+def parse_dashboard_url(dashboard_output: str) -> DashboardInfo:
+    """
+    Parse the dashboard URL to extract port and token.
+
+    Args:
+        dashboard_output: Output from 'openclaw dashboard' command
+
+    Returns:
+        DashboardInfo with url, port, and token
+
+    Raises:
+        RuntimeError: If failed to parse the dashboard URL
+    """
+    url_match = re.search(r'http://[^\s]+', dashboard_output)
+    if not url_match:
+        raise RuntimeError(f"Failed to parse dashboard URL from output: {dashboard_output}")
+
+    url = url_match.group(0)
+    print(f"OpenClaw Dashboard URL: {url}")
+
+    port_match = re.search(r'http://[^:/]+:(\d+)', url)
+    if not port_match:
+        raise RuntimeError(f"Failed to extract port from dashboard URL: {url}")
+    port = int(port_match.group(1))
+
+    token = None
+    token_match = re.search(r'#token=([a-f0-9]+)', url)
+    if token_match:
+        token = token_match.group(1)
+
+    return DashboardInfo(url=url, port=port, token=token)
+
+
+def get_openclaw_weburl_outside(
+    session, port: int, token: Optional[str] = None
+) -> str:
+    """
+    Get the external web URL for OpenClaw gateway.
+
+    Args:
+        session: AgentBay session object
+        port: OpenClaw gateway port (range: 30100-30199)
+        token: Optional token to append to the URL
+
+    Returns:
+        External accessible HTTPS URL for web access
+
+    Raises:
+        ValueError: If port is not in the valid range [30100, 30199]
+        RuntimeError: If failed to get the link
+    """
+    if not (30100 <= port <= 30199):
+        raise ValueError(
+            f"Port must be in range [30100, 30199], got {port}. "
+            "This method only supports ports 30100-30199."
+        )
+
+    print(f"Getting openclaw dashboard URL (port={port})...")
+    result = session.get_link(protocol_type="https", port=port)
+
+    if result.success:
+        sse_url = result.data
+        if token:
+            sse_url = f"{sse_url}/#token={token}"
+        print(f"SSE URL: {sse_url}")
+        return sse_url
+    else:
+        raise RuntimeError(f"Failed to get SSE link: {result.error_message}")
+
+
+def create_session_with_context(
+    agent_bay: AgentBay,
+    context_name: str,
+    image_id: str,
+) -> Tuple[SessionResult, Context]:
+    """
+    Create a session with OpenClaw Skills context synchronization.
+
+    Args:
+        agent_bay: AgentBay client
+        context_name: Name of the context to use/create
+        image_id: Image ID for the session
+
+    Returns:
+        Tuple of (session_result, context)
+
+    Raises:
+        RuntimeError: If context or session creation fails
+    """
+    print(f"Getting/creating context: {context_name}")
+    context_result = agent_bay.context.get(context_name, create=True)
+    if not context_result.success:
+        raise RuntimeError(
+            f"Failed to get/create context: {context_result.error_message}"
+        )
+
+    context = context_result.context
+    print(f"Context ID: {context.id}")
+
+    sync_policy = SyncPolicy.default()
+    context_sync = ContextSync.new(
+        context_id=context.id,
+        path=OPENCLAW_CONTEXT_PATH,
+        policy=sync_policy,
     )
-    execute_command(session, cmd)
+
+    params = CreateSessionParams(image_id=image_id)
+    params.context_syncs = [context_sync]
+
+    print(f"Creating session with context sync (path: {OPENCLAW_CONTEXT_PATH})...")
+    session_result = agent_bay.create(params)
+
+    return session_result, context
+
+
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="OpenClaw session manager for AgentBay"
+    )
+    parser.add_argument(
+        "--expose-web",
+        action="store_true",
+        help="Expose OpenClaw web URL outside the sandbox (ports 30100-30199)",
+    )
+    return parser.parse_args()
+
 
 def main() -> None:
-    api_key = os.getenv("AGENTBAY_API_KEY")
+    args = parse_args()
+
+    api_key = _get_env("AGENTBAY_API_KEY")
     if api_key is None or not api_key.strip():
         print("Error: AGENTBAY_API_KEY environment variable not set")
         return
-
-    env = load_openclaw_env()
 
     print("Initializing AgentBay client...")
     agent_bay = AgentBay(api_key=api_key.strip())
 
     session = None
+    context = None
     try:
-        print(f"Creating session with image ID: {OPENCLAW_IMAGE_ID}")
-        params = CreateSessionParams(image_id=OPENCLAW_IMAGE_ID)
-        session_result = agent_bay.create(params)
+        session_result, context = create_session_with_context(
+            agent_bay,
+            context_name=OPENCLAW_CONTEXT_NAME,
+            image_id=OPENCLAW_IMAGE_ID,
+        )
+
         if not session_result.success:
             raise RuntimeError(session_result.error_message or "Failed to create session")
 
@@ -187,33 +238,119 @@ def main() -> None:
         bot_cmd = detect_openclaw_command(session)
         print(f"Using bot command: {bot_cmd}")
 
-        config_cmd = build_openclaw_config_command(env, bot_cmd=bot_cmd)
-        if config_cmd:
-            execute_command(session, config_cmd)
+        gateway_log = "/tmp/openclaw_gateway.log"
+        dashboard_log = "/tmp/openclaw_dashboard.log"
+
+        if args.expose_web:
+            print("")
+            print("Configuring gateway for external web access...")
+            config_cmds = [
+                f"{bot_cmd} config set gateway.port {GATEWAY_PORT}",
+                f"{bot_cmd} config set gateway.mode local",
+                f"{bot_cmd} config set gateway.bind lan",
+                f"{bot_cmd} config set gateway.controlUi.allowedOrigins '[\"*\"]'",
+                f"{bot_cmd} config set gateway.controlUi.dangerouslyDisableDeviceAuth true",
+            ]
+            run_command(
+                session,
+                " && ".join(config_cmds),
+                timeout_ms=15000,
+            )
+
+        print("")
+        print("Killing any existing openclaw gateway and dashboard processes...")
+        session.command.execute_command(
+            "pkill -f 'openclaw gateway' 2>/dev/null || true",
+            timeout_ms=5000,
+        )
+        session.command.execute_command(
+            "pkill -f 'openclaw dashboard' 2>/dev/null || true",
+            timeout_ms=5000,
+        )
+        print("Done.")
+        time.sleep(2)
+
+        if args.expose_web:
+            print("")
+            print("Starting openclaw gateway in background (--port 30100)...")
+            run_command(
+                session,
+                f"nohup {bot_cmd} gateway --port {GATEWAY_PORT} --bind lan > {gateway_log} 2>&1 &",
+                timeout_ms=5000,
+            )
+            print("Waiting for gateway to be ready (5 seconds)...")
+            time.sleep(5)
+            print("Getting dashboard URL...")
+            dashboard_output = run_command(
+                session,
+                f"{bot_cmd} dashboard --no-open 2>&1",
+                timeout_ms=15000,
+            )
+            print(f"Dashboard output: {dashboard_output[:500] if dashboard_output else '(empty)'}")
+        else:
+            print("")
+            print("Starting openclaw dashboard in background...")
+            run_command(
+                session,
+                f"nohup {bot_cmd} dashboard > {dashboard_log} 2>&1 &",
+                timeout_ms=5000,
+            )
+            print("Waiting for dashboard to start (3 seconds)...")
+            time.sleep(3)
+            cat_result = session.file_system.read_file(dashboard_log)
+            dashboard_output = (cat_result.content or "") if cat_result.success else ""
+            print(f"Dashboard log: {dashboard_output[:500] if dashboard_output else '(empty)'}")
+
+        dashboard_info = parse_dashboard_url(dashboard_output)
+        resource_url = (getattr(session, "resource_url", "") or "").strip()
+
+        external_url = None
+        if args.expose_web:
+            print("")
+            try:
+                external_url = get_openclaw_weburl_outside(
+                    session,
+                    port=dashboard_info.port,
+                    token=dashboard_info.token
+                )
+            except Exception as e:
+                print(f"Warning: Failed to get external URL: {e}")
         else:
             print("")
             print(
-                "No provider/channel credentials found in environment variables. "
-                "Skipping OpenClaw configuration."
+                "Tip: Use --expose-web to get an external accessible URL "
+                "for OpenClaw dashboard."
             )
 
-        open_console_with_delay(session, OPENCLAW_CONSOLE_URL)
-
-        resource_url = (getattr(session, "resource_url", "") or "").strip()
+        print("")
+        print("=" * 60)
+        print("Session Information:")
+        print("=" * 60)
+        print(f"  Session ID:    {session.session_id}")
+        if context:
+            print(f"  Context Name:  {OPENCLAW_CONTEXT_NAME}")
+            print(f"  Context ID:    {context.id}")
+        if external_url:
+            print(f"  External Dashboard URL: {external_url}")
         if resource_url:
-            print("")
-            print(f"Cloud Desktop URL: {resource_url}")
-        else:
-            print("")
-            print("Cloud Desktop URL is not available (session.resource_url is empty).")
+            print(f"  Desktop URL:   {resource_url}")
+        print("=" * 60)
 
-        wait_for_ctrl_q()
+        print("")
+        print("Press Ctrl+C to exit and release the session.")
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n\nInterrupted by user.")
     finally:
         if session is not None:
-            print("")
             print("Cleaning up session...")
             agent_bay.delete(session)
             print("Session cleanup completed.")
+
+    print("")
+    print("Session released.")
+
 
 if __name__ == "__main__":
     main()

@@ -9,7 +9,6 @@ import pytest
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Streaming API temporarily disabled; will be re-enabled in a future release")
 class TestRunCodeWsStreaming:
     async def _start_ws_server(
         self,

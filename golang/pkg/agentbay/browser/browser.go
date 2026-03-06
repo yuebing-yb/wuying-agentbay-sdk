@@ -7,6 +7,7 @@ import (
 
 	"github.com/alibabacloud-go/tea/dara"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/playwright-community/playwright-go"
 )
 
@@ -297,6 +298,8 @@ type BrowserOption struct {
 	Screen             *BrowserScreen      `json:"screen,omitempty"`             // Screen configuration
 	Fingerprint        *BrowserFingerprint `json:"fingerprint,omitempty"`        // Fingerprint configuration
 	SolveCaptchas      bool                `json:"solveCaptchas,omitempty"`      // Auto-solve captchas
+	AutoLogin          bool                `json:"autoLogin,omitempty"`          // Enable auto login feature
+	CallForUser        bool                `json:"callForUser,omitempty"`        // Enable call for user feature
 	Proxies            []*BrowserProxy     `json:"proxies,omitempty"`            // Proxy configurations
 	ExtensionPath      *string             `json:"extensionPath,omitempty"`      // Path to extensions directory
 	CmdArgs            []string            `json:"cmdArgs,omitempty"`            // Additional command line arguments
@@ -315,6 +318,8 @@ func NewBrowserOption() *BrowserOption {
 	return &BrowserOption{
 		UseStealth:    false,
 		SolveCaptchas: false,
+		AutoLogin:     false,
+		CallForUser:   false,
 		ExtensionPath: &defaultExtPath,
 		BrowserType:   nil, // Default to nil (no browser type specified)
 	}
@@ -400,6 +405,8 @@ func (o *BrowserOption) toMap() map[string]interface{} {
 	}
 
 	optionMap["solveCaptchas"] = o.SolveCaptchas
+	optionMap["autoLogin"] = o.AutoLogin
+	optionMap["callForUser"] = o.CallForUser
 
 	if len(o.Proxies) > 0 {
 		proxies := make([]map[string]interface{}, len(o.Proxies))
@@ -450,16 +457,109 @@ type SessionInterface interface {
 	GetClient() *client.Client
 	CallMcpToolForBrowser(toolName string, args interface{}) (*McpToolResult, error)
 	GetLinkForBrowser(protocolType *string, port *int32, options *string) (*LinkResult, error)
+	GetWsClient() (interface{}, error)
 }
 
 // Browser provides browser-related operations for the session
 //
 // > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+// BrowserNotifyMessage represents a browser notify message for SDK and sandbox communication
+type BrowserNotifyMessage struct {
+	Type        *string                `json:"type,omitempty"`
+	ID          *int                   `json:"id,omitempty"`
+	Code        *int                   `json:"code,omitempty"`
+	Message     *string                `json:"message,omitempty"`
+	Action      *string                `json:"action,omitempty"`
+	ExtraParams map[string]interface{} `json:"extraParams,omitempty"`
+}
+
+// NewBrowserNotifyMessage creates a new BrowserNotifyMessage
+func NewBrowserNotifyMessage(msgType *string, id *int, code *int, message *string, action *string, extraParams map[string]interface{}) *BrowserNotifyMessage {
+	if extraParams == nil {
+		extraParams = make(map[string]interface{})
+	}
+	return &BrowserNotifyMessage{
+		Type:        msgType,
+		ID:          id,
+		Code:        code,
+		Message:     message,
+		Action:      action,
+		ExtraParams: extraParams,
+	}
+}
+
+// ToMap converts BrowserNotifyMessage to map format
+func (b *BrowserNotifyMessage) ToMap() map[string]interface{} {
+	notifyMap := make(map[string]interface{})
+
+	if b.Type != nil {
+		notifyMap["type"] = *b.Type
+	}
+	if b.ID != nil {
+		notifyMap["id"] = *b.ID
+	}
+	if b.Code != nil {
+		notifyMap["code"] = *b.Code
+	}
+	if b.Message != nil {
+		notifyMap["message"] = *b.Message
+	}
+	if b.Action != nil {
+		notifyMap["action"] = *b.Action
+	}
+	if len(b.ExtraParams) > 0 {
+		notifyMap["extraParams"] = b.ExtraParams
+	}
+
+	return notifyMap
+}
+
+// FromMap creates BrowserNotifyMessage from map format
+func BrowserNotifyMessageFromMap(m map[string]interface{}) *BrowserNotifyMessage {
+	if m == nil {
+		return nil
+	}
+
+	msg := &BrowserNotifyMessage{}
+
+	if v, ok := m["type"].(string); ok {
+		msg.Type = &v
+	}
+	if v, ok := m["id"].(float64); ok {
+		id := int(v)
+		msg.ID = &id
+	} else if v, ok := m["id"].(int); ok {
+		msg.ID = &v
+	}
+	if v, ok := m["code"].(float64); ok {
+		code := int(v)
+		msg.Code = &code
+	} else if v, ok := m["code"].(int); ok {
+		msg.Code = &v
+	}
+	if v, ok := m["message"].(string); ok {
+		msg.Message = &v
+	}
+	if v, ok := m["action"].(string); ok {
+		msg.Action = &v
+	}
+	if v, ok := m["extraParams"].(map[string]interface{}); ok {
+		msg.ExtraParams = v
+	}
+
+	return msg
+}
+
+// BrowserCallback is a function type for browser notification callbacks
+type BrowserCallback func(*BrowserNotifyMessage)
+
 type Browser struct {
-	session     SessionInterface
-	endpointURL string
-	initialized bool
-	option      *BrowserOption
+	session              SessionInterface
+	endpointURL          string
+	initialized          bool
+	option               *BrowserOption
+	userCallback         BrowserCallback
+	wsCallbackRegistered bool
 }
 
 // NewBrowser creates a new Browser instance
@@ -857,4 +957,257 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// internalWsCallback is the internal WebSocket callback handler
+func (b *Browser) internalWsCallback(payload map[string]interface{}) {
+	// Basic validation: data field should exist and not be nil
+	data, ok := payload["data"]
+	if !ok || data == nil {
+		return
+	}
+
+	// Dispatch to user callback if set
+	if b.userCallback != nil {
+		dataMap, ok := data.(map[string]interface{})
+		if !ok {
+			return
+		}
+
+		notifyMsg := BrowserNotifyMessageFromMap(dataMap)
+		if notifyMsg != nil {
+			b.userCallback(notifyMsg)
+		}
+	}
+}
+
+// RegisterCallback registers a callback function to handle browser-related push notifications from sandbox.
+//
+// The callback function receives a BrowserNotifyMessage object containing notification details
+// such as type, code, message, action, and extra_params.
+//
+// Returns true if the callback was successfully registered.
+//
+// Example:
+//
+//	func onBrowserCallback(notifyMsg *browser.BrowserNotifyMessage) {
+//	    fmt.Printf("Type: %s\n", *notifyMsg.Type)
+//	    fmt.Printf("Code: %d\n", *notifyMsg.Code)
+//	    fmt.Printf("Message: %s\n", *notifyMsg.Message)
+//	    fmt.Printf("Action: %s\n", *notifyMsg.Action)
+//	    fmt.Printf("Extra params: %v\n", notifyMsg.ExtraParams)
+//	}
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+//	defer result.Session.Delete()
+//	session := result.Session
+//
+//	// Initialize browser
+//	session.Browser.Initialize(browser.NewBrowserOption())
+//
+//	// Register callback
+//	success, _ := session.Browser.RegisterCallback(onBrowserCallback)
+//
+//	// ... do work ...
+//
+//	// Unregister when done
+//	session.Browser.UnregisterCallback()
+func (b *Browser) RegisterCallback(callback BrowserCallback) (bool, error) {
+	// Set user callback (replaces any existing callback)
+	b.userCallback = callback
+
+	// Register internal callback to ws_client only once
+	if !b.wsCallbackRegistered {
+		wsClientInterface, err := b.session.GetWsClient()
+		if err != nil {
+			return false, fmt.Errorf("failed to get ws_client: %w", err)
+		}
+
+		wsClient, ok := wsClientInterface.(*internal.WsClient)
+		if !ok {
+			return false, fmt.Errorf("ws_client type assertion failed")
+		}
+
+		err = wsClient.Connect()
+		if err != nil {
+			return false, fmt.Errorf("failed to connect ws_client: %w", err)
+		}
+
+		wsClient.RegisterCallback("wuying_cdp_mcp_server", b.internalWsCallback)
+		b.wsCallbackRegistered = true
+	}
+
+	return true, nil
+}
+
+// UnregisterCallback unregisters the previously registered callback function.
+//
+// Example:
+//
+//	func onBrowserCallback(notifyMsg *browser.BrowserNotifyMessage) {
+//	    fmt.Printf("Notification - Type: %s, Message: %s\n", *notifyMsg.Type, *notifyMsg.Message)
+//	}
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+//	defer result.Session.Delete()
+//	session := result.Session
+//
+//	session.Browser.Initialize(browser.NewBrowserOption())
+//
+//	session.Browser.RegisterCallback(onBrowserCallback)
+//
+//	// ... do work ...
+//
+//	// Unregister callback
+//	session.Browser.UnregisterCallback()
+func (b *Browser) UnregisterCallback() error {
+	// Clear user callback
+	b.userCallback = nil
+
+	// Unregister from ws_client
+	if b.wsCallbackRegistered {
+		wsClientInterface, err := b.session.GetWsClient()
+		if err != nil {
+			return fmt.Errorf("failed to get ws_client: %w", err)
+		}
+
+		wsClient, ok := wsClientInterface.(*internal.WsClient)
+		if !ok {
+			return fmt.Errorf("ws_client type assertion failed")
+		}
+
+		wsClient.UnregisterCallback("wuying_cdp_mcp_server")
+		err = wsClient.Close()
+		if err != nil {
+			return fmt.Errorf("failed to close ws_client: %w", err)
+		}
+
+		b.wsCallbackRegistered = false
+	}
+
+	return nil
+}
+
+// SendNotifyMessage sends a BrowserNotifyMessage to sandbox.
+//
+// Returns true if the notify message was successfully sent, false otherwise.
+//
+// Example:
+//
+//	func onBrowserCallback(notifyMsg *browser.BrowserNotifyMessage) {
+//	    fmt.Printf("Type: %s\n", *notifyMsg.Type)
+//	    fmt.Printf("Code: %d\n", *notifyMsg.Code)
+//	    fmt.Printf("Message: %s\n", *notifyMsg.Message)
+//	    fmt.Printf("Action: %s\n", *notifyMsg.Action)
+//	    fmt.Printf("Extra params: %v\n", notifyMsg.ExtraParams)
+//	}
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+//	defer result.Session.Delete()
+//	session := result.Session
+//
+//	// Initialize browser
+//	session.Browser.Initialize(browser.NewBrowserOption())
+//
+//	// Register callback
+//	session.Browser.RegisterCallback(onBrowserCallback)
+//
+//	// ... do work ...
+//
+//	// Send notify message
+//	msgType := "call-for-user"
+//	id := 3
+//	code := 199
+//	message := "user handle done"
+//	action := "takeoverdone"
+//	notifyMessage := browser.NewBrowserNotifyMessage(&msgType, &id, &code, &message, &action, map[string]interface{}{})
+//	session.Browser.SendNotifyMessage(notifyMessage)
+//
+//	// Unregister when done
+//	session.Browser.UnregisterCallback()
+func (b *Browser) SendNotifyMessage(notifyMessage *BrowserNotifyMessage) (bool, error) {
+	wsClientInterface, err := b.session.GetWsClient()
+	if err != nil {
+		return false, fmt.Errorf("failed to get ws_client: %w", err)
+	}
+
+	wsClient, ok := wsClientInterface.(*internal.WsClient)
+	if !ok {
+		return false, fmt.Errorf("ws_client type assertion failed")
+	}
+
+	// Send notify message through ws_client
+	err = wsClient.SendMessage("wuying_cdp_mcp_server", notifyMessage.ToMap())
+	if err != nil {
+		return false, fmt.Errorf("failed to send notify message: %w", err)
+	}
+
+	return true, nil
+}
+
+// SendTakeoverDone sends a takeoverdone notify message to sandbox.
+//
+// The notifyId parameter is the notification ID associated with the takeover request message.
+//
+// Returns true if the takeoverdone notify message was successfully sent, false otherwise.
+//
+// Example:
+//
+//	func onBrowserCallback(notifyMsg *browser.BrowserNotifyMessage) {
+//	    // receive call-for-user "takeover" action
+//	    if notifyMsg.Action != nil && *notifyMsg.Action == "takeover" {
+//	        takeoverNotifyId := *notifyMsg.ID
+//
+//	        // ... do work in other thread...
+//	        // send takeoverdone notify message
+//	        session.Browser.SendTakeoverDone(takeoverNotifyId)
+//	        // ... end...
+//	    }
+//	}
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+//	defer result.Session.Delete()
+//	session := result.Session
+//
+//	// Initialize browser
+//	session.Browser.Initialize(browser.NewBrowserOption())
+//
+//	// Register callback
+//	session.Browser.RegisterCallback(onBrowserCallback)
+//
+//	// ... do work ...
+//
+//	// Unregister when done
+//	session.Browser.UnregisterCallback()
+func (b *Browser) SendTakeoverDone(notifyId int) (bool, error) {
+	// Get ws_client
+	wsClientInterface, err := b.session.GetWsClient()
+	if err != nil {
+		return false, fmt.Errorf("failed to get ws_client: %w", err)
+	}
+
+	wsClient, ok := wsClientInterface.(*internal.WsClient)
+	if !ok {
+		return false, fmt.Errorf("ws_client type assertion failed")
+	}
+
+	// Build takeoverdone notify message
+	msgType := "call-for-user"
+	code := 199
+	message := "user handle done"
+	action := "takeoverdone"
+	notifyMessage := NewBrowserNotifyMessage(&msgType, &notifyId, &code, &message, &action, map[string]interface{}{})
+	messageData := notifyMessage.ToMap()
+
+	// Send message through ws_client
+	err = wsClient.SendMessage("wuying_cdp_mcp_server", messageData)
+	if err != nil {
+		return false, fmt.Errorf("failed to send browser notify message: %w", err)
+	}
+
+	return true, nil
 }

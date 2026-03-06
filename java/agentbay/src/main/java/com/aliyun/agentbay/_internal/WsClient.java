@@ -348,6 +348,41 @@ public class WsClient {
         }
     }
 
+    /**
+     * Send a message to the specified target without expecting a response.
+     * This is a fire-and-forget operation.
+     * 
+     * @param target The target service to send the message to
+     * @param data The data to send
+     */
+    public void sendMessage(String target, Map<String, Object> data) {
+        connect().thenAccept(_v -> {
+            WebSocket ws = webSocket;
+            if (ws == null) {
+                logger.warn("Failed to send message: WS is not connected");
+                return;
+            }
+
+            String invocationId = newInvocationId();
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("invocationId", invocationId);
+            payload.put("source", "SDK");
+            payload.put("target", target);
+            payload.put("data", data);
+            logFrame(">>", payload);
+
+            try {
+                String raw = objectMapper.writeValueAsString(payload);
+                ws.send(raw);
+            } catch (Exception e) {
+                logger.warn("Failed to send message: {}", e.getMessage());
+            }
+        }).exceptionally(e -> {
+            logger.warn("Failed to connect for sending message: {}", e.getMessage());
+            return null;
+        });
+    }
+
     private static String newInvocationId() {
         return Long.toHexString(System.nanoTime());
     }

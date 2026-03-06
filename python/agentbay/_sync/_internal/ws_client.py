@@ -193,3 +193,21 @@ class WsClient:
         async_handle = f.result()
         return WsStreamHandle(self, async_handle, loop=self._loop)
 
+    def send_message(
+        self,
+        *,
+        target: str,
+        data: dict[str, Any],
+    ) -> None:
+        self._ensure_thread()
+        assert self._loop is not None
+        assert self._async_client is not None
+        f = asyncio.run_coroutine_threadsafe(
+            self._async_client.send_message(
+                target=target,
+                data=data,
+            ),
+            self._loop,
+        )
+        f.result()
+

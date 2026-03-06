@@ -3,7 +3,7 @@ Browser module data models.
 """
 import os
 import base64
-from typing import Literal, Optional
+from typing import Literal, Optional, Callable
 
 from ..config import _BROWSER_FINGERPRINT_PERSIST_PATH
 from .fingerprint import FingerprintFormat
@@ -452,6 +452,150 @@ class BrowserFingerprint:
         return self
 
 
+class BrowserNotifyMessage:
+    """
+    Browser notify message for sdk and sandbox, like call-for-user message.
+
+    Args:
+        type: Type of the notification (e.g., 'call-for-user')
+        id: ID of the notification (e.g., 1)
+        code: Status code of the notification (e.g., 201)
+        message: Descriptive message (e.g., 'captcha solving start')
+        action: Action to be taken (e.g., 'pause')
+        extra_params: Additional parameters as a dictionary (e.g., {'max_wait_time': 30})
+
+    Example:
+        ```python
+        notify_msg = BrowserNotifyMessage(
+            type='call-for-user',
+            id=3,
+            code=201,
+            message='captcha solving start',
+            action='pause',
+            extra_params={'max_wait_time': 30}
+        )
+        ```
+    """
+
+    def __init__(
+        self,
+        type: Optional[str] = None,
+        id: Optional[int] = None,
+        code: Optional[int] = None,
+        message: Optional[str] = None,
+        action: Optional[str] = None,
+        extra_params: Optional[dict] = None,
+    ):
+        """
+        Initialize a BrowserNotifyMessage.
+
+        Args:
+            type: Type of the notification (e.g., 'call-for-user')
+            id: ID of the notification (e.g., 3)
+            code: Status code of the notification (e.g., 201)
+            message: Descriptive message (e.g., 'captcha solving start')
+            action: Action to be taken (e.g., 'pause')
+            extra_params: Additional parameters as a dictionary (e.g., {'max_wait_time': 30})
+
+        Example:
+            ```python
+            notify_msg = BrowserNotifyMessage(
+                type='call-for-user',
+                id=3,
+                code=201,
+                message='captcha solving start',
+                action='pause',
+                extra_params={'max_wait_time': 30}
+            )
+            ```
+        """
+        self.type = type
+        self.id = id
+        self.code = code
+        self.message = message
+        self.action = action
+        self.extra_params = extra_params or {}
+
+    def _to_map(self):
+        """
+        Convert BrowserNotifyMessage to dictionary format.
+
+        Returns:
+            dict: Dictionary representation of the notify message.
+
+        Example:
+            ```python
+            notify_msg = BrowserNotifyMessage(
+                type='call-for-user',
+                id=3,
+                code=201,
+                message='captcha solving start',
+                action='pause',
+                extra_params={'max_wait_time': 30}
+            )
+            msg_dict = notify_msg._to_map()
+            print(msg_dict)
+            ```
+        """
+        notify_map = {}
+        
+        if self.type is not None:
+            notify_map["type"] = self.type
+        if self.id is not None:
+            notify_map["id"] = self.id
+        if self.code is not None:
+            notify_map["code"] = self.code
+        if self.message is not None:
+            notify_map["message"] = self.message
+        if self.action is not None:
+            notify_map["action"] = self.action
+        if self.extra_params:
+            notify_map["extraParams"] = self.extra_params
+        
+        return notify_map
+
+    @classmethod
+    def _from_map(cls, m: dict = None):
+        """
+        Create BrowserNotifyMessage from dictionary format.
+
+        Args:
+            m (dict): Dictionary containing notify message data.
+
+        Returns:
+            BrowserNotifyMessage: BrowserNotifyMessage instance created from the dictionary,
+                                 or None if m is None.
+
+        Example:
+            ```python
+            msg_dict = {
+                'type': 'call-for-user',
+                'id': 3,
+                'code': 201,
+                'message': 'captcha solving start',
+                'action': 'pause',
+                'extraParams': {'max_wait_time': 30}
+            }
+            notify_msg = BrowserNotifyMessage._from_map(msg_dict)
+            print(f"Type: {notify_msg.type}, Code: {notify_msg.code}")
+            ```
+        """
+        if not m:
+            return None
+        
+        return cls(
+            type=m.get("type") if m.get("type") is not None else None,
+            id=m.get("id") if m.get("id") is not None else None,
+            code=m.get("code") if m.get("code") is not None else None,
+            message=m.get("message") if m.get("message") is not None else None,
+            action=m.get("action") if m.get("action") is not None else None,
+            extra_params=m.get("extraParams") if m.get("extraParams") is not None else None,
+        )
+
+# Type alias for browser callback function
+BrowserCallback = Callable[[BrowserNotifyMessage], None]
+
+
 class BrowserOption:
     """
     browser initialization options.
@@ -467,6 +611,8 @@ class BrowserOption:
         fingerprint_format: Optional["FingerprintFormat"] = None,
         fingerprint_persistent: bool = False,
         solve_captchas: bool = False,
+        auto_login: bool = False,
+        call_for_user: bool = False,
         proxies: Optional[list[BrowserProxy]] = None,
         extension_path: Optional[str] = "/tmp/extensions/",
         cmd_args: Optional[list[str]] = None,
@@ -480,6 +626,8 @@ class BrowserOption:
         self.fingerprint = fingerprint
         self.fingerprint_format = fingerprint_format
         self.solve_captchas = solve_captchas
+        self.auto_login = auto_login
+        self.call_for_user = call_for_user
         self.proxies = proxies
         self.extension_path = extension_path
         self.cmd_args = cmd_args
@@ -541,6 +689,10 @@ class BrowserOption:
             option_map["fingerprintPersistPath"] = self.fingerprint_persist_path
         if self.solve_captchas is not None:
             option_map["solveCaptchas"] = self.solve_captchas
+        if self.auto_login is not None:
+            option_map["autoLogin"] = self.auto_login
+        if self.call_for_user is not None:
+            option_map["callForUser"] = self.call_for_user
         if self.proxies is not None:
             option_map["proxies"] = [proxy._to_map() for proxy in self.proxies]
         if self.extension_path is not None:
@@ -587,6 +739,14 @@ class BrowserOption:
             self.solve_captchas = m.get("solveCaptchas")
         else:
             self.solve_captchas = False
+        if m.get("autoLogin") is not None:
+            self.auto_login = m.get("autoLogin")
+        else:
+            self.auto_login = False
+        if m.get("callForUser") is not None:
+            self.call_for_user = m.get("callForUser")
+        else:
+            self.call_for_user = False
         if m.get("proxies") is not None:
             proxy_list = m.get("proxies")
             if len(proxy_list) > 1:

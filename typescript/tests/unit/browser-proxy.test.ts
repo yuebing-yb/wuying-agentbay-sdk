@@ -410,7 +410,7 @@ describe('BrowserOption with Proxies', () => {
     const proxy2 = new BrowserProxyClass('custom', 'http://proxy2.com');
 
     expect(() => {
-      new BrowserOptionClass(false, undefined, undefined, undefined, undefined, undefined, false, false, [proxy1, proxy2]);
+      new BrowserOptionClass(false, undefined, undefined, undefined, undefined, undefined, false, false, false, false, [proxy1, proxy2]);
     }).toThrow('proxies list length must be limited to 1');
   });
 
@@ -418,7 +418,7 @@ describe('BrowserOption with Proxies', () => {
     const proxy = new BrowserProxyClass('custom', 'http://proxy.com');
 
     expect(() => {
-      new BrowserOptionClass(false, undefined, undefined, undefined, undefined, undefined, false, false, proxy as any);
+      new BrowserOptionClass(false, undefined, undefined, undefined, undefined, undefined, false, false, false, false, proxy as any);
     }).toThrow('proxies must be a list');
   });
 

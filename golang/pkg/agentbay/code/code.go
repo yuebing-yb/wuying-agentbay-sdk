@@ -91,9 +91,9 @@ func NewCode(session interface {
 }
 
 // RunCodeStreamBetaOptions holds streaming callback options for run_code.
-// Temporarily unexported while streaming API is disabled in this release.
-// Will be re-exported in a future release.
-type runCodeStreamBetaOptions struct {
+// When passed as an argument to RunCode, enables WebSocket streaming for
+// real-time stdout/stderr output.
+type RunCodeStreamBetaOptions struct {
 	TimeoutS   int
 	StreamBeta bool
 	OnStdout   func(chunk string)
@@ -101,7 +101,7 @@ type runCodeStreamBetaOptions struct {
 	OnError    func(err error)
 }
 
-func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts *runCodeStreamBetaOptions) (*CodeResult, error) {
+func (c *Code) runCodeStreamWs(code string, language string, timeoutS int, opts *RunCodeStreamBetaOptions) (*CodeResult, error) {
 	if timeoutS <= 0 {
 		timeoutS = 60
 	}
@@ -516,6 +516,7 @@ func parseBackendResponse(data string) (*CodeResult, error) {
 //	codeResult, _ := sessionResult.Session.Code.RunCode("print('Hello')", "python")
 func (c *Code) RunCode(code string, language string, args ...interface{}) (*CodeResult, error) {
 	timeout := 60
+	var streamOpts *RunCodeStreamBetaOptions
 	for _, a := range args {
 		if a == nil {
 			continue
@@ -533,14 +534,15 @@ func (c *Code) RunCode(code string, language string, args ...interface{}) (*Code
 			if v > 0 {
 				timeout = int(v)
 			}
+		case *RunCodeStreamBetaOptions:
+			streamOpts = v
+			if v.TimeoutS > 0 {
+				timeout = v.TimeoutS
+			}
 		default:
 			return nil, fmt.Errorf("unsupported RunCode argument type: %T", a)
 		}
 	}
-
-	// Streaming is temporarily disabled in this version.
-	// The streaming implementation is preserved in runCodeStreamWs()
-	// and will be re-enabled in a future release.
 
 	// Normalize and validate language (case-insensitive)
 	rawLanguage := language
@@ -564,6 +566,10 @@ func (c *Code) RunCode(code string, language string, args ...interface{}) (*Code
 			"unsupported language: %s. Supported languages are 'python', 'javascript', 'r', and 'java'",
 			rawLanguage,
 		)
+	}
+
+	if streamOpts != nil && streamOpts.StreamBeta {
+		return c.runCodeStreamWs(code, normalizedLanguage, timeout, streamOpts)
 	}
 
 	toolArgs := map[string]interface{}{
