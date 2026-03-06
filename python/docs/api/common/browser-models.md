@@ -206,6 +206,79 @@ def __init__(self, devices: list[Literal["desktop", "mobile"]] = None,
              locales: list[str] = None)
 ```
 
+## BrowserNotifyMessage
+
+```python
+class BrowserNotifyMessage()
+```
+
+Browser notify message for sdk and sandbox, like call-for-user message.
+
+**Arguments**:
+
+    type: Type of the notification (e.g., 'call-for-user')
+    id: ID of the notification (e.g., 1)
+    code: Status code of the notification (e.g., 201)
+    message: Descriptive message (e.g., 'captcha solving start')
+    action: Action to be taken (e.g., 'pause')
+    extra_params: Additional parameters as a dictionary (e.g., {'max_wait_time': 30})
+  
+
+**Example**:
+
+```python
+notify_msg = BrowserNotifyMessage(
+  type='call-for-user',
+  id=3,
+  code=201,
+  message='captcha solving start',
+  action='pause',
+  extra_params={'max_wait_time': 30}
+)
+```
+
+### __init__
+
+```python
+def __init__(self, type: Optional[str] = None,
+             id: Optional[int] = None,
+             code: Optional[int] = None,
+             message: Optional[str] = None,
+             action: Optional[str] = None,
+             extra_params: Optional[dict] = None)
+```
+
+Initialize a BrowserNotifyMessage.
+
+**Arguments**:
+
+    type: Type of the notification (e.g., 'call-for-user')
+    id: ID of the notification (e.g., 3)
+    code: Status code of the notification (e.g., 201)
+    message: Descriptive message (e.g., 'captcha solving start')
+    action: Action to be taken (e.g., 'pause')
+    extra_params: Additional parameters as a dictionary (e.g., {'max_wait_time': 30})
+  
+
+**Example**:
+
+```python
+notify_msg = BrowserNotifyMessage(
+  type='call-for-user',
+  id=3,
+  code=201,
+  message='captcha solving start',
+  action='pause',
+  extra_params={'max_wait_time': 30}
+)
+```
+
+#### BrowserCallback
+
+```python
+BrowserCallback = Callable[[BrowserNotifyMessage], None]
+```
+
 ## BrowserOption
 
 ```python
@@ -225,6 +298,8 @@ def __init__(self, use_stealth: bool = False,
              fingerprint_format: Optional["FingerprintFormat"] = None,
              fingerprint_persistent: bool = False,
              solve_captchas: bool = False,
+             auto_login: bool = False,
+             call_for_user: bool = False,
              proxies: Optional[list[BrowserProxy]] = None,
              extension_path: Optional[str] = "/tmp/extensions/",
              cmd_args: Optional[list[str]] = None,

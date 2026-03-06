@@ -20,9 +20,6 @@ An Agent to perform tasks on the computer.
 
 - [executeTask](#executetask)
 - [executeTaskAndWait](#executetaskandwait)
-- [executeTaskStreamWs](#executetaskstreamws)
-- [hasStreamingParams](#hasstreamingparams)
-- [resolveAgentTarget](#resolveagenttarget)
 - [terminateTask](#terminatetask)
 
 ## Properties
@@ -71,12 +68,11 @@ ___
 
 ### executeTaskAndWait
 
-▸ **executeTaskAndWait**(`task`, `timeout`, `options?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTaskAndWait**(`task`, `timeout`): `Promise`\<``ExecutionResult``\>
 
 Execute a specific task described in human language synchronously.
 This is a synchronous interface that blocks until the task is completed or
 an error occurs, or timeout happens. The default polling interval is 3 seconds.
-When streamBeta or any on* callback is provided, uses WebSocket streaming instead of HTTP polling.
 
 #### Parameters
 
@@ -84,7 +80,6 @@ When streamBeta or any on* callback is provided, uses WebSocket streaming instea
 | :------ | :------ |
 | `task` | `string` |
 | `timeout` | `number` |
-| `options?` | ``AgentStreamingOptions`` |
 
 #### Returns
 
@@ -93,70 +88,6 @@ When streamBeta or any on* callback is provided, uses WebSocket streaming instea
 #### Inherited from
 
 BaseTaskAgent.executeTaskAndWait
-
-___
-
-### executeTaskStreamWs
-
-▸ **executeTaskStreamWs**(`params`): `Promise`\<``ExecutionResult``\>
-
-Execute a task via WebSocket streaming channel.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `params` | `Object` |
-| `params.options?` | ``AgentStreamingOptions`` |
-| `params.stream` | `boolean` |
-| `params.taskParams` | `Record`\<`string`, `any`\> |
-| `params.timeout` | `number` |
-
-#### Returns
-
-`Promise`\<``ExecutionResult``\>
-
-#### Inherited from
-
-BaseTaskAgent.executeTaskStreamWs
-
-### hasStreamingParams
-
-▸ **hasStreamingParams**(`options?`): `boolean`
-
-Check if any streaming option is provided.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `options?` | ``AgentStreamingOptions`` |
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-BaseTaskAgent.hasStreamingParams
-
-___
-
-### resolveAgentTarget
-
-▸ **resolveAgentTarget**(): `string`
-
-Resolve the WS target for this agent from MCP tools list.
-
-#### Returns
-
-`string`
-
-#### Inherited from
-
-BaseTaskAgent.resolveAgentTarget
-
-___
 
 ### terminateTask
 

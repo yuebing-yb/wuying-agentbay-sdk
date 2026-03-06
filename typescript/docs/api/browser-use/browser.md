@@ -31,7 +31,11 @@ The Browser module provides comprehensive browser automation capabilities includ
 - [initialize](#initialize)
 - [initializeAsync](#initializeasync)
 - [isInitialized](#isinitialized)
+- [registerCallback](#registercallback)
 - [screenshot](#screenshot)
+- [sendNotifyMessage](#sendnotifymessage)
+- [sendTakeoverDone](#sendtakeoverdone)
+- [unregisterCallback](#unregistercallback)
 
 ## Properties
 
@@ -116,6 +120,53 @@ Returns true if the browser was initialized, false otherwise.
 
 ___
 
+### registerCallback
+
+▸ **registerCallback**(`callback`): `Promise`\<`boolean`\>
+
+Register a callback function to handle browser-related push notifications from sandbox.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `callback` | ``BrowserCallback`` | Callback function that receives a BrowserNotifyMessage object containing notification details such as type, code, message, action, and extra_params. |
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+Promise<boolean> - True if the callback was successfully registered.
+
+**`Example`**
+
+```typescript
+function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+  console.log(`Type: ${notifyMsg.type}`);
+  console.log(`Code: ${notifyMsg.code}`);
+  console.log(`Message: ${notifyMsg.message}`);
+  console.log(`Action: ${notifyMsg.action}`);
+  console.log(`Extra params: ${JSON.stringify(notifyMsg.extraParams)}`);
+}
+
+const createResult = await agentBay.create();
+const session = createResult.session;
+
+// Initialize browser
+await session.browser.initialize();
+
+// Register callback
+const success = await session.browser.registerCallback(onBrowserCallback);
+
+// ... do work ...
+
+// Unregister when done
+await session.browser.unregisterCallback();
+await session.delete();
+```
+
+___
+
 ### screenshot
 
 ▸ **screenshot**(`page`, `fullPage?`, `options?`): `Promise`\<`Uint8Array`\>
@@ -165,6 +216,149 @@ if (result.success) {
   await browser.close();
   await result.session.delete();
 }
+```
+
+___
+
+### sendNotifyMessage
+
+▸ **sendNotifyMessage**(`notifyMessage`): `Promise`\<`boolean`\>
+
+Send a BrowserNotifyMessage to sandbox.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `notifyMessage` | ``BrowserNotifyMessage`` | The notify message to send. |
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+Promise<boolean> - True if the notify message was successfully sent, False otherwise.
+
+**`Example`**
+
+```typescript
+function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+  console.log(`Type: ${notifyMsg.type}`);
+  console.log(`Code: ${notifyMsg.code}`);
+  console.log(`Message: ${notifyMsg.message}`);
+  console.log(`Action: ${notifyMsg.action}`);
+  console.log(`Extra params: ${JSON.stringify(notifyMsg.extraParams)}`);
+}
+
+const createResult = await agentBay.create();
+const session = createResult.session;
+
+// Initialize browser
+await session.browser.initialize();
+
+// Register callback
+const success = await session.browser.registerCallback(onBrowserCallback);
+
+// ... do work ...
+
+// Send notify message
+const notifyMessage = new BrowserNotifyMessage(
+  'call-for-user',
+  3,
+  199,
+  'user handle done',
+  'takeoverdone',
+  {}
+);
+await session.browser.sendNotifyMessage(notifyMessage);
+
+// Unregister when done
+await session.browser.unregisterCallback();
+await session.delete();
+```
+
+___
+
+### sendTakeoverDone
+
+▸ **sendTakeoverDone**(`notifyId`): `Promise`\<`boolean`\>
+
+Send a takeoverdone notify message to sandbox.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `notifyId` | `number` | The notification ID associated with the takeover request message. |
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+Promise<boolean> - True if the takeoverdone notify message was successfully sent, False otherwise.
+
+**`Example`**
+
+```typescript
+function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+  // receive call-for-user "takeover" action
+  if (notifyMsg.action === 'takeover') {
+    const takeoverNotifyId = notifyMsg.id;
+
+    // ... do work in other thread...
+    // send takeoverdone notify message
+    await session.browser.sendTakeoverDone(takeoverNotifyId);
+    // ... end...
+  }
+}
+
+const createResult = await agentBay.create();
+const session = createResult.session;
+
+// Initialize browser
+await session.browser.initialize();
+
+// Register callback
+const success = await session.browser.registerCallback(onBrowserCallback);
+
+// ... do work ...
+
+// Unregister when done
+await session.browser.unregisterCallback();
+await session.delete();
+```
+
+___
+
+### unregisterCallback
+
+▸ **unregisterCallback**(): `Promise`\<`void`\>
+
+Unregister the previously registered callback function.
+
+#### Returns
+
+`Promise`\<`void`\>
+
+**`Example`**
+
+```typescript
+function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+  console.log(`Notification - Type: ${notifyMsg.type}, Message: ${notifyMsg.message}`);
+}
+
+const createResult = await agentBay.create();
+const session = createResult.session;
+
+await session.browser.initialize();
+
+await session.browser.registerCallback(onBrowserCallback);
+
+// ... do work ...
+
+// Unregister callback
+await session.browser.unregisterCallback();
+
+await session.delete();
 ```
 
 ## Best Practices
