@@ -164,6 +164,50 @@ func (c *WsClient) Close() error {
 	return nil
 }
 
+// SendMessage sends a message to the target without expecting a response.
+// Used for one-way notifications like browser callback messages.
+//
+// Parameters:
+//   - target: The target service identifier
+//   - data: The message data to send
+//
+// Returns an error if the connection is not established or sending fails.
+func (c *WsClient) SendMessage(target string, data map[string]interface{}) error {
+	if err := c.Connect(); err != nil {
+		return err
+	}
+
+	invocationID := newInvocationID()
+	
+	c.mu.Lock()
+	conn := c.conn
+	c.mu.Unlock()
+
+	if conn == nil {
+		return fmt.Errorf("WS is not connected")
+	}
+
+	payload := map[string]interface{}{
+		"invocationId": invocationID,
+		"source":       "SDK",
+		"target":       target,
+		"data":         data,
+	}
+
+	c.logFrame(">>", payload)
+	
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	if err := websocket.Message.Send(conn, string(payloadBytes)); err != nil {
+		return fmt.Errorf("failed to send message: %w", err)
+	}
+
+	return nil
+}
+
 func (c *WsClient) CallStream(target string, data map[string]interface{}, onEvent OnEvent, onEnd OnEnd, onError OnError) (*WsStreamHandle, error) {
 	if err := c.Connect(); err != nil {
 		return nil, err

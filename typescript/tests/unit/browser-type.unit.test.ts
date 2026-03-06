@@ -64,6 +64,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprintFormat
           false,  // fingerprintPersistent
           false,  // solveCaptchas
+          false,  // autoLogin
+          false,  // callForUser
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
@@ -83,6 +85,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprintFormat
           false,  // fingerprintPersistent
           false,  // solveCaptchas
+          false,  // autoLogin
+          false,  // callForUser
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
@@ -102,6 +106,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprintFormat
           false,  // fingerprintPersistent
           false,  // solveCaptchas
+          false,  // autoLogin
+          false,  // callForUser
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
@@ -121,6 +127,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprintFormat
           false,  // fingerprintPersistent
           false,  // solveCaptchas
+          false,  // autoLogin
+          false,  // callForUser
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
@@ -140,6 +148,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprintFormat
           false,  // fingerprintPersistent
           false,  // solveCaptchas
+          false,  // autoLogin
+          false,  // callForUser
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
@@ -400,6 +410,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprintFormat
           false,  // fingerprintPersistent
           false,  // solveCaptchas
+          false,  // autoLogin
+          false,  // callForUser
           undefined,  // proxies - use valid proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
@@ -457,6 +469,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprintFormat
           false,  // fingerprintPersistent
           false,  // solveCaptchas
+          false,  // autoLogin
+          false,  // callForUser
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl
@@ -476,6 +490,8 @@ describe("Browser Type - Unit Tests", () => {
           undefined,  // fingerprintFormat
           false,  // fingerprintPersistent
           false,  // solveCaptchas
+          false,  // autoLogin
+          false,  // callForUser
           undefined,  // proxies
           [],         // cmdArgs
           undefined,  // defaultNavigateUrl

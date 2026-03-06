@@ -76,6 +76,7 @@ from ._sync.browser import (
 from ._common.models import (
     FingerprintFormat,
     BrowserOption,
+    BrowserNotifyMessage,
     BrowserViewport,
     BrowserScreen,
     BrowserProxy,
@@ -242,6 +243,7 @@ __all__ = [
     "BrowserFingerprint",
     "BrowserProxy",
     "BrowserFingerprintContext",
+    "BrowserNotifyMessage",
     "BrowserOperator",
     "AsyncBrowserOperator",
     "BrowserFingerprintGenerator",

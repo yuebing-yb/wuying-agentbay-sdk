@@ -38,6 +38,11 @@ public class Browser extends BaseService {
     
     private Integer endpointRouterPort;
     private volatile boolean agentDeprecationWarned = false;
+    
+    // Callback-related fields
+    private BrowserCallback userCallback;
+    private volatile boolean wsCallbackRegistered = false;
+    private com.aliyun.agentbay._internal.WsClient.PushCallback internalWsCallback;
 
     public Browser(Session session) {
         super(session);
@@ -345,5 +350,182 @@ public class Browser extends BaseService {
      */
     public Integer getEndpointRouterPort() {
         return endpointRouterPort;
+    }
+    
+    /**
+     * Register a callback function to handle browser-related push notifications from sandbox.
+     * 
+     * <p>Example usage:</p>
+     * <pre>{@code
+     * BrowserCallback callback = (notifyMsg) -> {
+     *     System.out.println("Type: " + notifyMsg.getType());
+     *     System.out.println("Code: " + notifyMsg.getCode());
+     *     System.out.println("Message: " + notifyMsg.getMessage());
+     *     System.out.println("Action: " + notifyMsg.getAction());
+     *     System.out.println("Extra params: " + notifyMsg.getExtraParams());
+     * };
+     * 
+     * CreateResult createResult = agentBay.create();
+     * Session session = createResult.getSession();
+     * session.getBrowser().initialize(new BrowserOption());
+     * boolean success = session.getBrowser().registerCallback(callback);
+     * // ... do work ...
+     * session.getBrowser().unregisterCallback();
+     * session.delete();
+     * }</pre>
+     * 
+     * @param callback Callback function that receives a BrowserNotifyMessage
+     * @return true if the callback was successfully registered
+     */
+    public boolean registerCallback(BrowserCallback callback) {
+        try {
+            // Store user callback
+            this.userCallback = callback;
+            
+            // Register internal callback to ws_client only once
+            if (!wsCallbackRegistered) {
+                com.aliyun.agentbay._internal.WsClient wsClient = session.getWsClient();
+                if (wsClient == null) {
+                    throw new BrowserException("WebSocket client is not available");
+                }
+                
+                // Create internal callback wrapper
+                internalWsCallback = (payload) -> {
+                    try {
+                        if (userCallback != null) {
+                            BrowserNotifyMessage notifyMsg = BrowserNotifyMessage.fromMap(payload);
+                            userCallback.onNotify(notifyMsg);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error in internal ws_callback: " + e.getMessage());
+                    }
+                };
+                
+                wsClient.registerCallback(SERVER_CDP, internalWsCallback);
+                wsCallbackRegistered = true;
+            }
+            
+            return true;
+        } catch (Exception e) {
+            System.err.println("Failed to register callback: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Unregister the previously registered callback function.
+     * 
+     * <p>Example usage:</p>
+     * <pre>{@code
+     * session.getBrowser().registerCallback(callback);
+     * // ... do work ...
+     * session.getBrowser().unregisterCallback();
+     * }</pre>
+     */
+    public void unregisterCallback() {
+        try {
+            // Clear user callback
+            userCallback = null;
+            
+            // Unregister from ws_client
+            if (wsCallbackRegistered) {
+                com.aliyun.agentbay._internal.WsClient wsClient = session.getWsClient();
+                if (wsClient != null && internalWsCallback != null) {
+                    wsClient.unregisterCallback(SERVER_CDP, internalWsCallback);
+                    wsClient.close();
+                }
+                wsCallbackRegistered = false;
+                internalWsCallback = null;
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to unregister callback: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send a notify message to sandbox through WebSocket.
+     * 
+     * <p>Example usage:</p>
+     * <pre>{@code
+     * BrowserNotifyMessage notifyMsg = new BrowserNotifyMessage(
+     *     "call-for-user",
+     *     1,
+     *     199,
+     *     "user handle done",
+     *     "takeoverdone",
+     *     new HashMap<>()
+     * );
+     * boolean success = session.getBrowser().sendNotifyMessage(notifyMsg);
+     * }</pre>
+     * 
+     * @param notifyMessage The notification message to send
+     * @return true if the message was successfully sent, false otherwise
+     */
+    public boolean sendNotifyMessage(BrowserNotifyMessage notifyMessage) {
+        try {
+            com.aliyun.agentbay._internal.WsClient wsClient = session.getWsClient();
+            if (wsClient == null) {
+                throw new BrowserException("WebSocket client is not available");
+            }
+            
+            // Send notify message through ws_client
+            wsClient.sendMessage(SERVER_CDP, notifyMessage.toMap());
+            return true;
+        } catch (Exception e) {
+            System.err.println("Failed to send notify message: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Send a takeoverdone notify message to sandbox.
+     * 
+     * <p>Example usage:</p>
+     * <pre>{@code
+     * BrowserCallback callback = (notifyMsg) -> {
+     *     if ("takeover".equals(notifyMsg.getAction())) {
+     *         int takeoverNotifyId = notifyMsg.getId();
+     *         // ... do work in other thread...
+     *         session.getBrowser().sendTakeoverDone(takeoverNotifyId);
+     *     }
+     * };
+     * 
+     * CreateResult createResult = agentBay.create();
+     * Session session = createResult.getSession();
+     * session.getBrowser().initialize(new BrowserOption());
+     * session.getBrowser().registerCallback(callback);
+     * // ... do work ...
+     * session.getBrowser().unregisterCallback();
+     * session.delete();
+     * }</pre>
+     * 
+     * @param notifyId The notification ID associated with the takeover request message
+     * @return true if the takeoverdone notify message was successfully sent, false otherwise
+     */
+    public boolean sendTakeoverDone(int notifyId) {
+        try {
+            // Get ws_client
+            com.aliyun.agentbay._internal.WsClient wsClient = session.getWsClient();
+            if (wsClient == null) {
+                throw new BrowserException("WebSocket client is not available");
+            }
+            
+            // Build takeoverdone notify message
+            BrowserNotifyMessage notifyMessage = new BrowserNotifyMessage(
+                "call-for-user",
+                notifyId,
+                199,
+                "user handle done",
+                "takeoverdone",
+                new HashMap<>()
+            );
+            
+            // Send message through ws_client
+            wsClient.sendMessage(SERVER_CDP, notifyMessage.toMap());
+            return true;
+        } catch (Exception e) {
+            System.err.println("Failed to send browser notify message: " + e.getMessage());
+            return false;
+        }
     }
 }

@@ -392,3 +392,8 @@ func (m *mockSessionForBrowser) GetNetworkInterfaceIP() string {
 func (m *mockSessionForBrowser) GetHttpPortNumber() string {
 	return ""
 }
+
+func (m *mockSessionForBrowser) GetWsClient() (interface{}, error) {
+	// Return nil for unit tests - we're not testing actual WS client
+	return nil, nil
+}
