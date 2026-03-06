@@ -4,7 +4,7 @@ Agent module data models.
 
 from .response import ApiResponse
 from pydantic import BaseModel
-from typing import Any, Dict, Optional, TypeVar
+from typing import TypeVar, Optional
 
 Schema = TypeVar("Schema", bound=BaseModel)
 
@@ -16,13 +16,14 @@ class DefaultSchema(BaseModel):
 
 class AgentEvent:
     """
-    Represents a single event emitted during Agent streaming execution.
+    Represents a streaming event from an Agent execution.
 
-    Depending on the event type, different fields are populated:
-    - thought/response: content is set
-    - tool_call: tool_call_id, tool_name, args are set
-    - tool_result: tool_call_id, tool_name, result are set
-    - error: error is set
+    Event types map directly to LLM output field names:
+    - "reasoning": from LLM reasoning_content (model's internal reasoning/thinking)
+    - "content": from LLM content (model's text output, intermediate analysis or final answer)
+    - "tool_call": from LLM tool_calls (tool invocation request)
+    - "tool_result": tool execution result (rich media)
+    - "error": execution error
     """
 
     def __init__(
@@ -33,9 +34,9 @@ class AgentEvent:
         content: str = "",
         tool_call_id: str = "",
         tool_name: str = "",
-        args: Optional[Dict[str, Any]] = None,
-        result: Optional[Dict[str, Any]] = None,
-        error: Optional[Dict[str, Any]] = None,
+        args: Optional[dict] = None,
+        result: Optional[dict] = None,
+        error: Optional[dict] = None,
     ):
         self.type = type
         self.seq = seq
@@ -43,35 +44,17 @@ class AgentEvent:
         self.content = content
         self.tool_call_id = tool_call_id
         self.tool_name = tool_name
-        self.args = args if args is not None else {}
-        self.result = result if result is not None else {}
-        self.error = error if error is not None else {}
+        self.args = args or {}
+        self.result = result or {}
+        self.error = error or {}
 
     def __repr__(self) -> str:
-        parts = [f"type={self.type!r}", f"seq={self.seq}", f"round={self.round}"]
+        fields = [f"type={self.type!r}", f"seq={self.seq}", f"round={self.round}"]
         if self.content:
-            parts.append(f"content={self.content!r}")
-        if self.tool_call_id:
-            parts.append(f"tool_call_id={self.tool_call_id!r}")
+            fields.append(f"content={self.content!r}")
         if self.tool_name:
-            parts.append(f"tool_name={self.tool_name!r}")
-        return f"AgentEvent({', '.join(parts)})"
-
-    @classmethod
-    def from_ws_data(cls, data: Dict[str, Any]) -> "AgentEvent":
-        """Construct an AgentEvent from a WS event data dict."""
-        event_type = data.get("eventType", "")
-        return cls(
-            type=event_type,
-            seq=data.get("seq", 0),
-            round=data.get("round", 0),
-            content=data.get("content", ""),
-            tool_call_id=data.get("toolCallId", ""),
-            tool_name=data.get("toolName", ""),
-            args=data.get("args") if isinstance(data.get("args"), dict) else {},
-            result=data.get("result") if isinstance(data.get("result"), dict) else {},
-            error=data.get("error") if isinstance(data.get("error"), dict) else {},
-        )
+            fields.append(f"tool_name={self.tool_name!r}")
+        return f"AgentEvent({', '.join(fields)})"
 
 class QueryResult(ApiResponse):
     """Result of query operations."""

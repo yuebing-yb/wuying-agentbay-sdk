@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/invopop/jsonschema"
 )
@@ -26,6 +27,33 @@ type StreamItem struct {
 	Content     string `json:"content,omitempty"`
 	Reasoning   string `json:"reasoning,omitempty"`
 	TimestampMs *int64 `json:"timestamp_ms,omitempty"`
+}
+
+// AgentEvent represents a streaming event from an Agent execution.
+// Event types: "reasoning", "content", "tool_call", "tool_result", "error"
+type AgentEvent struct {
+	Type       string                 `json:"type"`
+	Seq        int                    `json:"seq"`
+	Round      int                    `json:"round"`
+	Content    string                 `json:"content,omitempty"`
+	ToolCallID string                 `json:"toolCallId,omitempty"`
+	ToolName   string                 `json:"toolName,omitempty"`
+	Args       map[string]interface{} `json:"args,omitempty"`
+	Result     map[string]interface{} `json:"result,omitempty"`
+	Error      map[string]interface{} `json:"error,omitempty"`
+}
+
+// AgentEventCallback is a function type for handling agent streaming events.
+type AgentEventCallback func(event AgentEvent)
+
+// StreamOptions holds streaming callback options for ExecuteTaskAndWaitStream.
+type StreamOptions struct {
+	StreamBeta   bool
+	OnEvent      AgentEventCallback
+	OnReasoning  AgentEventCallback
+	OnContent    AgentEventCallback
+	OnToolCall   AgentEventCallback
+	OnToolResult AgentEventCallback
 }
 
 // QueryResult represents the result of query operations
@@ -87,12 +115,14 @@ func (b *baseTaskAgent) getToolName(action string) string {
 	return baseName
 }
 
-func (b *baseTaskAgent) getServerName() string {
-	if b.ToolPrefix == "flux" {
-		return "flux"
-	}
+// getWsTarget returns the WebSocket target for agent streaming.
+// browser_use -> wuying_browseruse, flux -> wuying_computer_agent, empty -> wuying_mobile_agent
+func (b *baseTaskAgent) getWsTarget() string {
 	if b.ToolPrefix == "browser_use" {
 		return "wuying_browseruse"
+	}
+	if b.ToolPrefix == "flux" {
+		return "wuying_computer_agent"
 	}
 	return "wuying_mobile_agent"
 }
@@ -335,6 +365,182 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 	}
 }
 
+// executeTaskStreamWs executes a task via WebSocket streaming channel.
+func (b *baseTaskAgent) executeTaskStreamWs(taskParams map[string]interface{}, timeout int, opts StreamOptions) *ExecutionResult {
+	wsClientRaw, err := b.Session.GetWsClient()
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: err.Error(),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+	wsClient, wsOk := wsClientRaw.(*internal.WsClient)
+	if !wsOk || wsClient == nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: "invalid or nil WsClient returned from session",
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+
+	target := b.getWsTarget()
+	var contentParts []string
+	var lastError map[string]interface{}
+	var streamErr error
+
+	handle, err := wsClient.CallStream(
+		target,
+		map[string]interface{}{
+			"method": "exec_task",
+			"stream": opts.StreamBeta,
+			"params": taskParams,
+		},
+		func(_ string, data map[string]interface{}) {
+			eventType, _ := data["eventType"].(string)
+			seq, _ := toIntAgent(data["seq"])
+			round, _ := toIntAgent(data["round"])
+
+			evt := AgentEvent{Type: eventType, Seq: seq, Round: round}
+			if opts.OnEvent != nil {
+				opts.OnEvent(evt)
+			}
+
+			switch eventType {
+			case "reasoning":
+				evt.Content, _ = data["content"].(string)
+				if opts.OnReasoning != nil {
+					opts.OnReasoning(evt)
+				}
+			case "content":
+				contentText, _ := data["content"].(string)
+				contentParts = append(contentParts, contentText)
+				evt.Content = contentText
+				if opts.OnContent != nil {
+					opts.OnContent(evt)
+				}
+			case "tool_call":
+				evt.ToolCallID, _ = data["toolCallId"].(string)
+				evt.ToolName, _ = data["toolName"].(string)
+				if args, ok := data["args"].(map[string]interface{}); ok {
+					evt.Args = args
+				}
+				if opts.OnToolCall != nil {
+					opts.OnToolCall(evt)
+				}
+			case "tool_result":
+				evt.ToolCallID, _ = data["toolCallId"].(string)
+				evt.ToolName, _ = data["toolName"].(string)
+				if res, ok := data["result"].(map[string]interface{}); ok {
+					evt.Result = res
+				}
+				if opts.OnToolResult != nil {
+					opts.OnToolResult(evt)
+				}
+			case "error":
+				if e, ok := data["error"].(map[string]interface{}); ok {
+					lastError = e
+				} else {
+					lastError = data
+				}
+				evt.Error = lastError
+				if opts.OnEvent != nil {
+					opts.OnEvent(evt)
+				}
+			}
+		},
+		func(_ string, _ map[string]interface{}) {},
+		func(_ string, e error) {
+			streamErr = e
+		},
+	)
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
+			Success:      false,
+			ErrorMessage: err.Error(),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
+		}
+	}
+
+	endData, err := handle.WaitEnd()
+	if err != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: handle.InvocationID},
+			Success:      false,
+			ErrorMessage: err.Error(),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   strings.Join(contentParts, ""),
+		}
+	}
+
+	if streamErr != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: handle.InvocationID},
+			Success:      false,
+			ErrorMessage: streamErr.Error(),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   strings.Join(contentParts, ""),
+		}
+	}
+
+	if lastError != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: handle.InvocationID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("%v", lastError),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   strings.Join(contentParts, ""),
+		}
+	}
+
+	status, _ := endData["status"].(string)
+	if status == "" {
+		status = "finished"
+	}
+	taskResult, _ := endData["taskResult"].(string)
+	if taskResult == "" {
+		taskResult = strings.Join(contentParts, "")
+	}
+
+	return &ExecutionResult{
+		ApiResponse: models.ApiResponse{RequestID: handle.InvocationID},
+		Success:     status == "finished",
+		ErrorMessage: func() string {
+			if status == "finished" {
+				return ""
+			}
+			return fmt.Sprintf("Task ended with status: %s", status)
+		}(),
+		TaskStatus: status,
+		TaskResult: taskResult,
+	}
+}
+
+func toIntAgent(v interface{}) (int, bool) {
+	switch t := v.(type) {
+	case float64:
+		return int(t), true
+	case int:
+		return t, true
+	case int64:
+		return int(t), true
+	default:
+		return 0, false
+	}
+}
+
 // getTaskStatus gets the status of the task with the given task ID
 func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 	args := map[string]interface{}{
@@ -552,6 +758,7 @@ type McpSession interface {
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetBrowser() *browser.Browser
+	GetWsClient() (interface{}, error)
 }
 
 func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {
@@ -624,6 +831,12 @@ func (a *ComputerUseAgent) ExecuteTask(task string, timeout ...int) *ExecutionRe
 //	result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 60)
 func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, timeout int) *ExecutionResult {
 	return a.baseTaskAgent.executeTaskAndWait(task, timeout)
+}
+
+// ExecuteTaskAndWaitStream executes a task via WebSocket streaming and waits for completion.
+// Use StreamOptions to enable streaming and register event callbacks.
+func (a *ComputerUseAgent) ExecuteTaskAndWaitStream(task string, timeout int, opts StreamOptions) *ExecutionResult {
+	return a.baseTaskAgent.executeTaskStreamWs(map[string]interface{}{"task": task}, timeout, opts)
 }
 
 // GetTaskStatus gets the status of the task with the given task ID
@@ -851,6 +1064,30 @@ result = await session.Agent.Browser.ExecuteTaskAndWait(task="Query the weather 
 fmt.Printf("Task status: %s\n", executionResult.TaskStatus)
 ```
 */
+func (a *BrowserUseAgent) ExecuteTaskAndWaitStream(task string, timeout int, useVision bool, outputSchema interface{}, fullPageScreenshot bool, opts StreamOptions) *ExecutionResult {
+	if !a.initialized {
+		fmt.Printf("Browser is not initialized yet, initializing now\n")
+		success, err := a.Initialize(&browser.BrowserOption{})
+		if err != nil || !success {
+			fmt.Printf("❌BrowserInitializationFailed: %v", err)
+			return &ExecutionResult{
+				ApiResponse:  models.ApiResponse{RequestID: ""},
+				Success:      false,
+				ErrorMessage: "BrowserInitializationFailed",
+				TaskStatus:   "failed",
+				TaskID:       "",
+			}
+		}
+	}
+	taskParams := map[string]interface{}{
+		"task":                  task,
+		"use_vision":            useVision,
+		"full_page_screenshot":  fullPageScreenshot,
+		"output_schema":          generateJsonSchema(outputSchema),
+	}
+	return a.baseTaskAgent.executeTaskStreamWs(taskParams, timeout, opts)
+}
+
 func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_vision bool, output_schema interface{}) *ExecutionResult {
 	result := a.ExecuteTask(task, use_vision, output_schema)
 	if !result.Success {

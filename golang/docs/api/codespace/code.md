@@ -148,6 +148,21 @@ type CodeResult struct {
 
 CodeResult represents the result of a code execution
 
+## Type RunCodeStreamBetaOptions
+
+```go
+type RunCodeStreamBetaOptions struct {
+	TimeoutS	int
+	StreamBeta	bool
+	OnStdout	func(chunk string)
+	OnStderr	func(chunk string)
+	OnError		func(err error)
+}
+```
+
+RunCodeStreamBetaOptions holds streaming callback options for run_code. When passed as an argument
+to RunCode, enables WebSocket streaming for real-time stdout/stderr output.
+
 ## Type WsStreamClient
 
 ```go
@@ -182,21 +197,6 @@ type backendResponse struct {
 ```
 
 backendResponse represents the raw JSON structure returned by the backend tool
-
-## Type runCodeStreamBetaOptions
-
-```go
-type runCodeStreamBetaOptions struct {
-	TimeoutS	int
-	StreamBeta	bool
-	OnStdout	func(chunk string)
-	OnStderr	func(chunk string)
-	OnError		func(err error)
-}
-```
-
-RunCodeStreamBetaOptions holds streaming callback options for run_code. Temporarily unexported while
-streaming API is disabled in this release. Will be re-exported in a future release.
 
 ## Best Practices
 

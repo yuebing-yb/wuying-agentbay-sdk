@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.aliyun.agentbay._internal.WsClient;
 import com.aliyun.agentbay.browser.BrowserOption;
 import com.aliyun.agentbay.model.ExecutionResult;
 import com.aliyun.agentbay.model.OperationResult;
@@ -33,6 +36,7 @@ public class Agent extends BaseService {
     private static final Gson gson = new Gson();
     private static final String SERVER_MOBILE_AGENT = "wuying_mobile_agent";
     private static final String SERVER_BROWSER_USE = "wuying_browseruse";
+    private static final String SERVER_COMPUTER_AGENT = "wuying_computer_agent";
 
     private final Computer computer;
     private final Browser browser;
@@ -137,6 +141,182 @@ public class Agent extends BaseService {
             logger.error("Failed to generate JSON schema: {}", e.getMessage());
             return "schema: null";
           }
+        }
+    }
+
+    /**
+     * Resolves the WebSocket target for the given execute tool name.
+     * browser_use -> wuying_browseruse, flux -> wuying_computer_agent, empty -> wuying_mobile_agent.
+     */
+    private static String resolveAgentTarget(Session session, String executeToolName, String defaultTarget) {
+        try {
+            String server = session.getMcpServerForTool(executeToolName);
+            if (server != null && !server.isEmpty()) {
+                return server;
+            }
+        } catch (Exception e) {
+            // fall through to default
+        }
+        return defaultTarget;
+    }
+
+    /**
+     * Execute a task via WebSocket streaming channel.
+     * Used by Computer, Browser, and Mobile when StreamOptions indicates streaming.
+     */
+    @SuppressWarnings("unchecked")
+    private static ExecutionResult executeTaskStreamWs(
+            Session session,
+            String executeToolName,
+            String defaultTarget,
+            Map<String, Object> taskParams,
+            int timeout,
+            StreamOptions options) {
+        Logger streamLogger = LoggerFactory.getLogger(Agent.class);
+        try {
+            String target = resolveAgentTarget(session, executeToolName, defaultTarget);
+            WsClient wsClient = session.getWsClient();
+
+            final List<String> finalContentParts = new ArrayList<>();
+            final Map<String, Object>[] lastError = new Map[1];
+
+            StreamOptions opts = options != null ? options : new StreamOptions();
+            boolean stream = opts.isStreamBeta();
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("method", "exec_task");
+            data.put("stream", stream);
+            data.put("params", taskParams);
+
+            WsClient.StreamHandle handle = wsClient.callStream(
+                    target,
+                    data,
+                    (_invocationId, eventData) -> {
+                        Object eventTypeObj = eventData.get("eventType");
+                        String eventType = eventTypeObj != null ? eventTypeObj.toString() : "";
+                        Object seqObj = eventData.get("seq");
+                        int seq = seqObj instanceof Number ? ((Number) seqObj).intValue() : 0;
+                        Object roundObj = eventData.get("round");
+                        int round = roundObj instanceof Number ? ((Number) roundObj).intValue() : 0;
+
+                        AgentEvent event = new AgentEvent(eventType, seq, round);
+
+                        if ("reasoning".equals(eventType)) {
+                            Object c = eventData.get("content");
+                            event.setContent(c != null ? c.toString() : "");
+                            dispatchEvent(opts, event, "reasoning");
+                        } else if ("content".equals(eventType)) {
+                            String contentText = String.valueOf(eventData.getOrDefault("content", ""));
+                            finalContentParts.add(contentText);
+                            event.setContent(contentText);
+                            dispatchEvent(opts, event, "content");
+                        } else if ("tool_call".equals(eventType)) {
+                            event.setToolCallId(String.valueOf(eventData.getOrDefault("toolCallId", "")));
+                            event.setToolName(String.valueOf(eventData.getOrDefault("toolName", "")));
+                            Object argsObj = eventData.get("args");
+                            event.setArgs(argsObj instanceof Map ? (Map<String, Object>) argsObj : new HashMap<>());
+                            dispatchEvent(opts, event, "tool_call");
+                        } else if ("tool_result".equals(eventType)) {
+                            event.setToolCallId(String.valueOf(eventData.getOrDefault("toolCallId", "")));
+                            event.setToolName(String.valueOf(eventData.getOrDefault("toolName", "")));
+                            Object resultObj = eventData.get("result");
+                            event.setResult(resultObj instanceof Map ? (Map<String, Object>) resultObj : new HashMap<>());
+                            dispatchEvent(opts, event, "tool_result");
+                        } else if ("error".equals(eventType)) {
+                            Object errObj = eventData.get("error");
+                            Map<String, Object> errMap = errObj instanceof Map ? (Map<String, Object>) errObj : new HashMap<>();
+                            if (errObj != null && !(errObj instanceof Map)) {
+                                errMap.put("message", String.valueOf(errObj));
+                            }
+                            lastError[0] = errMap;
+                            event.setError(errMap);
+                            dispatchEvent(opts, event, "error");
+                        }
+                    },
+                    (_invocationId, endData) -> { /* onEnd - data captured in waitEnd */ },
+                    (_invocationId, err) -> streamLogger.warn("WS stream error: {}", err.getMessage())
+            ).join();
+
+            Map<String, Object> endData;
+            try {
+                endData = handle.waitEnd().get(timeout, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                try {
+                    handle.cancel();
+                } catch (Exception ignored) {
+                }
+                String accumulated = String.join("", finalContentParts);
+                return new ExecutionResult(
+                        "",
+                        false,
+                        "Task execution timed out after " + timeout + " seconds.",
+                        "",
+                        "failed",
+                        accumulated.isEmpty() ? "Task execution timed out." : accumulated
+                );
+            }
+
+            if (lastError[0] != null) {
+                String errMsg = String.valueOf(lastError[0].getOrDefault("message", lastError[0]));
+                return new ExecutionResult(
+                        "",
+                        false,
+                        errMsg,
+                        "",
+                        "failed",
+                        String.join("", finalContentParts)
+                );
+            }
+
+            String status = endData != null ? String.valueOf(endData.getOrDefault("status", "finished")) : "finished";
+            Object taskResultObj = endData != null ? endData.get("taskResult") : null;
+            String taskResult = taskResultObj != null ? taskResultObj.toString() : "";
+            if (taskResult.isEmpty()) {
+                taskResult = String.join("", finalContentParts);
+            }
+
+            return new ExecutionResult(
+                    "",
+                    "finished".equals(status),
+                    "finished".equals(status) ? "" : "Task ended with status: " + status,
+                    "",
+                    status,
+                    taskResult
+            );
+        } catch (Exception e) {
+            return new ExecutionResult(
+                    "",
+                    false,
+                    "Failed to execute: " + e.getMessage(),
+                    "",
+                    "failed",
+                    "Task Failed"
+            );
+        }
+    }
+
+    private static void dispatchEvent(StreamOptions opts, AgentEvent event, String type) {
+        try {
+            if (opts.getOnEvent() != null) {
+                opts.getOnEvent().accept(event);
+            }
+        } catch (Exception ex) {
+            LoggerFactory.getLogger(Agent.class).warn("onEvent callback error: {}", ex.getMessage());
+        }
+        try {
+            java.util.function.Consumer<AgentEvent> cb = null;
+            switch (type) {
+                case "reasoning": cb = opts.getOnReasoning(); break;
+                case "content": cb = opts.getOnContent(); break;
+                case "tool_call": cb = opts.getOnToolCall(); break;
+                case "tool_result": cb = opts.getOnToolResult(); break;
+                default: break;
+            }
+            if (cb != null) {
+                cb.accept(event);
+            }
+        } catch (Exception ex) {
+            LoggerFactory.getLogger(Agent.class).warn("on{} callback error: {}", type, ex.getMessage());
         }
     }
 
@@ -354,6 +534,24 @@ public class Agent extends BaseService {
                     "Task Failed"
                 );
             }
+        }
+
+        /**
+         * Execute a task synchronously with optional WebSocket streaming.
+         * When {@code options} is non-null and has streaming params, uses WS streaming for real-time events.
+         *
+         * @param task Task description in human language
+         * @param timeout Maximum time to wait for task completion in seconds
+         * @param options StreamOptions for streaming (null to use HTTP polling)
+         * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
+         */
+        public ExecutionResult executeTaskAndWait(String task, int timeout, StreamOptions options) {
+            if (options != null && options.hasStreamingParams()) {
+                Map<String, Object> params = new HashMap<>();
+                params.put("task", task);
+                return executeTaskStreamWs(session, "flux_execute_task", SERVER_COMPUTER_AGENT, params, timeout, options);
+            }
+            return executeTaskAndWait(task, timeout);
         }
 
         /**
@@ -671,6 +869,48 @@ public class Agent extends BaseService {
                         "Failed to execute: " + e.getMessage(),
                         "", "failed", "Task Failed");
             }
+        }
+
+        /**
+         * Execute a task synchronously with optional WebSocket streaming.
+         * When {@code options} is non-null and has streaming params, uses WS streaming for real-time events.
+         *
+         * @param task Task description in human language
+         * @param timeout Maximum time to wait for task completion in seconds
+         * @param useVision Whether to use vision in the task
+         * @param outputSchema Optional schema for structured task output
+         * @param fullPageScreenShot Whether to take a full page screenshot (when useVision is true)
+         * @param options StreamOptions for streaming (null to use HTTP polling)
+         * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
+         */
+        public ExecutionResult executeTaskAndWait(String task, int timeout,
+                boolean useVision,
+                Object outputSchema, boolean fullPageScreenShot,
+                StreamOptions options) {
+            if (!this.initialized) {
+                logger.info("Browser is not initialized. Initialize browser first.");
+                boolean success = initialize(new BrowserOption());
+                if (!success) {
+                    return new ExecutionResult("", false,
+                            "Browser initialization failed.",
+                            "", "failed");
+                }
+            }
+            if (options != null && options.hasStreamingParams()) {
+                String schemaJson = "";
+                if (outputSchema instanceof String) {
+                    schemaJson = (String) outputSchema;
+                } else if (outputSchema instanceof Class) {
+                    schemaJson = SchemaHelper.generateJsonSchema((Class<?>) outputSchema);
+                }
+                Map<String, Object> params = new HashMap<>();
+                params.put("task", task);
+                params.put("use_vision", useVision);
+                params.put("output_schema", schemaJson);
+                params.put("full_page_screenshot", fullPageScreenShot);
+                return executeTaskStreamWs(session, "browser_use_execute_task", SERVER_BROWSER_USE, params, timeout, options);
+            }
+            return executeTaskAndWait(task, timeout, useVision, outputSchema, fullPageScreenShot);
         }
 
         /**
@@ -1206,6 +1446,26 @@ public class Agent extends BaseService {
                     "Task Failed"
                 );
             }
+        }
+
+        /**
+         * Execute a task synchronously with optional WebSocket streaming.
+         * When {@code options} is non-null and has streaming params, uses WS streaming for real-time events.
+         *
+         * @param task Task description in human language
+         * @param maxSteps Maximum number of steps (clicks/swipes/etc.) allowed
+         * @param timeout Maximum time to wait for task completion in seconds
+         * @param options StreamOptions for streaming (null to use HTTP polling)
+         * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
+         */
+        public ExecutionResult executeTaskAndWait(String task, int maxSteps, int timeout, StreamOptions options) {
+            if (options != null && options.hasStreamingParams()) {
+                Map<String, Object> params = new HashMap<>();
+                params.put("task", task);
+                params.put("max_steps", maxSteps);
+                return executeTaskStreamWs(session, getToolName("execute"), SERVER_MOBILE_AGENT, params, timeout, options);
+            }
+            return executeTaskAndWait(task, maxSteps, timeout);
         }
 
         /**

@@ -10,6 +10,12 @@
 
 
 
+#### AgentEventCallback
+
+```python
+AgentEventCallback = Optional[Callable[[AgentEvent], None]]
+```
+
 ## AsyncAgent
 
 ```python
@@ -129,7 +135,13 @@ async def execute_task_and_wait(
         timeout: int,
         use_vision: bool = False,
         output_schema: Type[Schema] = None,
-        full_page_screenshot: Optional[bool] = False) -> ExecutionResult
+        full_page_screenshot: Optional[bool] = False,
+        stream_beta: bool = False,
+        on_event: AgentEventCallback = None,
+        on_reasoning: AgentEventCallback = None,
+        on_content: AgentEventCallback = None,
+        on_tool_call: AgentEventCallback = None,
+        on_tool_result: AgentEventCallback = None) -> ExecutionResult
 ```
 
 Execute a task described in human language on a browser synchronously.
@@ -137,19 +149,23 @@ Execute a task described in human language on a browser synchronously.
 This is a synchronous interface that blocks until the task is completed or
 an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
+When ``stream_beta`` or any ``on_*`` callback is provided, the method uses
+the WebSocket streaming channel for real-time event delivery instead of
+HTTP polling.
+
 **Arguments**:
 
     task: Task description in human language.
     timeout: Maximum time to wait for task completion in seconds.
-  Used to control how long to wait for task completion.
-    use_vision: Whether to use vision to performe the task.
+    use_vision: Whether to use vision to perform the task.
     output_schema: The schema of the structured output.
-    full_page_screenshot: Whether to take a full page screenshot. This only works when use_vision is true.
-  When use_vision is enabled, we need to provide a screenshot of the webpage to the LLM for grounding. There are two ways of screenshot:
-  1. Full-page screenshot: Captures the entire webpage content, including parts not currently visible in the viewport.
-  2. Viewport screenshot: Captures only the currently visible portion of the webpage.
-  The first approach delivers all information to the LLM in one go, which can improve task success rates in certain information extraction scenarios. However, it also results in higher token consumption and increases the LLM's processing time.
-  Therefore, we would like to give you the choice—you can decide whether to enable full-page screenshot based on your actual needs.
+    full_page_screenshot: Whether to take a full page screenshot.
+    stream_beta: Enable token-level streaming via WebSocket.
+    on_event: Callback for all event types.
+    on_reasoning: Callback for reasoning events (LLM reasoning_content).
+    on_content: Callback for content events (LLM content output).
+    on_tool_call: Callback for tool_call events.
+    on_tool_result: Callback for tool_result events.
   
 
 **Returns**:
@@ -166,7 +182,7 @@ session = session_result.session
 class WeatherSchema(BaseModel):
   city:str
   weather: str
-result = await session.agent.computer.execute_task_and_wait(task="Query the weather in Shanghai",timeout=60, use_vision=False, output_schema=WeatherSchema, full_page_screenshot=True)
+result = await session.agent.browser.execute_task_and_wait(task="Query the weather in Shanghai",timeout=60, use_vision=False, output_schema=WeatherSchema, full_page_screenshot=True)
 print(f"Task result: {result.task_result}")
 await session.delete()
 ```

@@ -29,6 +29,33 @@ func NewAgent(session McpSession) *Agent
 
 NewAgent creates a new Agent instance
 
+## Type AgentEvent
+
+```go
+type AgentEvent struct {
+	Type		string			`json:"type"`
+	Seq		int			`json:"seq"`
+	Round		int			`json:"round"`
+	Content		string			`json:"content,omitempty"`
+	ToolCallID	string			`json:"toolCallId,omitempty"`
+	ToolName	string			`json:"toolName,omitempty"`
+	Args		map[string]interface{}	`json:"args,omitempty"`
+	Result		map[string]interface{}	`json:"result,omitempty"`
+	Error		map[string]interface{}	`json:"error,omitempty"`
+}
+```
+
+AgentEvent represents a streaming event from an Agent execution. Event types: "reasoning",
+"content", "tool_call", "tool_result", "error"
+
+## Type AgentEventCallback
+
+```go
+type AgentEventCallback func(event AgentEvent)
+```
+
+AgentEventCallback is a function type for handling agent streaming events.
+
 ## Type BrowserUseAgent
 
 ```go
@@ -113,6 +140,12 @@ status = await session.Agent.Browser.GetTaskStatus(result.task_id) fmt.Printf(f"
 
 ```go
 func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_vision bool, output_schema interface{}) *ExecutionResult
+```
+
+### ExecuteTaskAndWaitStream
+
+```go
+func (a *BrowserUseAgent) ExecuteTaskAndWaitStream(task string, timeout int, useVision bool, outputSchema interface{}, fullPageScreenshot bool, opts StreamOptions) *ExecutionResult
 ```
 
 Execute a task described in human language on a browser synchronously.
@@ -287,6 +320,15 @@ defer sessionResult.Session.Delete()
 result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 60)
 ```
 
+### ExecuteTaskAndWaitStream
+
+```go
+func (a *ComputerUseAgent) ExecuteTaskAndWaitStream(task string, timeout int, opts StreamOptions) *ExecutionResult
+```
+
+ExecuteTaskAndWaitStream executes a task via WebSocket streaming and waits for completion. Use
+StreamOptions to enable streaming and register event callbacks.
+
 ### GetTaskStatus
 
 ```go
@@ -362,6 +404,7 @@ type McpSession interface {
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetBrowser() *browser.Browser
+	GetWsClient() (interface{}, error)
 }
 ```
 
@@ -480,6 +523,21 @@ type StreamItem struct {
 ```
 
 StreamItem represents a single stream fragment
+
+## Type StreamOptions
+
+```go
+type StreamOptions struct {
+	StreamBeta	bool
+	OnEvent		AgentEventCallback
+	OnReasoning	AgentEventCallback
+	OnContent	AgentEventCallback
+	OnToolCall	AgentEventCallback
+	OnToolResult	AgentEventCallback
+}
+```
+
+StreamOptions holds streaming callback options for ExecuteTaskAndWaitStream.
 
 ## Type baseTaskAgent
 

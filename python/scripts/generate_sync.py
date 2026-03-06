@@ -38,6 +38,9 @@ SYNC_EXTRA_TEMPLATES: dict[str, str] = {
     os.path.join(
         UNIT_TEST_SYNC_DIR, "test_run_code_ws_streaming.py"
     ): os.path.join(TEMPLATES_DIR, "sync_test_run_code_ws_streaming.py"),
+    os.path.join(
+        UNIT_TEST_SYNC_DIR, "test_agent_streaming.py"
+    ): os.path.join(TEMPLATES_DIR, "sync_test_agent_streaming.py"),
 }
 
 

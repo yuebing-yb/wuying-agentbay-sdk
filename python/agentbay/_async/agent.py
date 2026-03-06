@@ -1,7 +1,7 @@
 import asyncio
 import json
 import sys
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, Type, Optional
 
 from .._common.exceptions import AgentBayError, AgentError
 from .._common.logger import get_logger
@@ -19,8 +19,9 @@ from .base_service import AsyncBaseService
 if TYPE_CHECKING:
     from .session import AsyncSession
 
-# Initialize logger for this module
 _logger = get_logger("agent")
+
+AgentEventCallback = Optional[Callable[[AgentEvent], None]]
 
 
 class AsyncAgent(AsyncBaseService):
@@ -54,8 +55,6 @@ class AsyncAgent(AsyncBaseService):
 
     class _BaseTaskAgent(AsyncBaseService):
         """Base class for task execution agents."""
-
-        _AGENT_TYPE: str = ""
 
         def __init__(self, session: "AsyncSession", tool_prefix: str):
             """
@@ -95,143 +94,6 @@ class AsyncAgent(AsyncBaseService):
             if isinstance(e, AgentBayError):
                 return AgentError(str(e))
             return e
-
-        @staticmethod
-        def _has_streaming_params(
-            stream_beta: bool,
-            on_event: Optional[Callable] = None,
-            on_thought: Optional[Callable] = None,
-            on_tool_call: Optional[Callable] = None,
-            on_tool_result: Optional[Callable] = None,
-            on_response: Optional[Callable] = None,
-        ) -> bool:
-            return stream_beta or any([on_event, on_thought, on_tool_call, on_tool_result, on_response])
-
-        def _dispatch_event(
-            self,
-            data: Dict[str, Any],
-            on_event: Optional[Callable[[AgentEvent], None]] = None,
-            on_thought: Optional[Callable[[AgentEvent], None]] = None,
-            on_tool_call: Optional[Callable[[AgentEvent], None]] = None,
-            on_tool_result: Optional[Callable[[AgentEvent], None]] = None,
-            on_response: Optional[Callable[[AgentEvent], None]] = None,
-        ) -> None:
-            """Parse WS event data and dispatch to appropriate callbacks."""
-            event = AgentEvent.from_ws_data(data)
-
-            if on_event is not None:
-                try:
-                    on_event(event)
-                except Exception:
-                    _logger.exception("on_event callback raised an exception")
-
-            typed_cb = {
-                "thought": on_thought,
-                "tool_call": on_tool_call,
-                "tool_result": on_tool_result,
-                "response": on_response,
-            }.get(event.type)
-
-            if typed_cb is not None:
-                try:
-                    typed_cb(event)
-                except Exception:
-                    _logger.exception(f"on_{event.type} callback raised an exception")
-
-        def _resolve_ws_target(self) -> str:
-            """Resolve WS target from MCP tools list by matching the execute_task tool."""
-            execute_tool_name = self._get_tool_name("execute")
-            for tool in getattr(self.session, "mcpTools", []) or []:
-                try:
-                    if getattr(tool, "name", "") == execute_tool_name and getattr(tool, "server", ""):
-                        return tool.server
-                except Exception:
-                    continue
-            return f"wuying_{self._AGENT_TYPE}_agent"
-
-        async def _execute_task_via_ws(
-            self,
-            task_params: Dict[str, Any],
-            stream_beta: bool = False,
-            on_event: Optional[Callable[[AgentEvent], None]] = None,
-            on_thought: Optional[Callable[[AgentEvent], None]] = None,
-            on_tool_call: Optional[Callable[[AgentEvent], None]] = None,
-            on_tool_result: Optional[Callable[[AgentEvent], None]] = None,
-            on_response: Optional[Callable[[AgentEvent], None]] = None,
-        ) -> ExecutionResult:
-            """Execute task via WebSocket streaming channel."""
-            try:
-                ws_client = await self.session._get_ws_client()
-            except Exception as e:
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Failed to get WS client: {e}",
-                    task_status="failed",
-                )
-
-            target = self._resolve_ws_target()
-            _logger.info(f"WS streaming target resolved to: {target}")
-
-            ws_data = {
-                "method": "exec_task",
-                "stream": stream_beta,
-                "params": {
-                    **task_params,
-                },
-            }
-
-            def _on_ws_event(invocation_id: str, data: Dict[str, Any]) -> None:
-                self._dispatch_event(
-                    data,
-                    on_event=on_event,
-                    on_thought=on_thought,
-                    on_tool_call=on_tool_call,
-                    on_tool_result=on_tool_result,
-                    on_response=on_response,
-                )
-
-            try:
-                handle = await ws_client.call_stream(
-                    target=target,
-                    data=ws_data,
-                    on_event=_on_ws_event,
-                    on_end=None,
-                    on_error=None,
-                )
-
-                end_data = await handle.wait_end()
-
-                status = end_data.get("status", "")
-                task_result = end_data.get("taskResult", "")
-                error_msg = end_data.get("error", "")
-
-                if status == "finished":
-                    return ExecutionResult(
-                        request_id="",
-                        success=True,
-                        error_message="",
-                        task_id="",
-                        task_status="finished",
-                        task_result=task_result,
-                    )
-                else:
-                    return ExecutionResult(
-                        request_id="",
-                        success=False,
-                        error_message=error_msg or f"Agent ended with status: {status}",
-                        task_id="",
-                        task_status=status or "failed",
-                        task_result=task_result,
-                    )
-            except Exception as e:
-                handled_error = self._handle_error(AgentBayError(str(e)))
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"WS execution failed: {handled_error}",
-                    task_status="failed",
-                )
 
         async def execute_task(self, task: str) -> ExecutionResult:
             """
@@ -301,16 +163,186 @@ class AsyncAgent(AsyncBaseService):
                     task_id="",
                 )
 
+        def _has_streaming_params(
+            self,
+            stream_beta: bool = False,
+            on_event: AgentEventCallback = None,
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
+        ) -> bool:
+            return stream_beta or any([on_event, on_reasoning, on_content, on_tool_call, on_tool_result])
+
+        def _resolve_agent_target(self) -> str:
+            """Resolve the WS target for this agent from MCP tools list."""
+            execute_tool_name = self._get_tool_name("execute")
+            for tool in getattr(self.session, "mcpTools", []) or []:
+                try:
+                    if getattr(tool, "name", "") == execute_tool_name and getattr(tool, "server", ""):
+                        return tool.server
+                except Exception:
+                    continue
+            if self.tool_prefix == "browser_use":
+                return "wuying_browseruse"
+            elif self.tool_prefix == "flux":
+                return "wuying_computer_agent"
+            else:
+                return "wuying_mobile_agent"
+
+        async def _execute_task_stream_ws(
+            self,
+            task_params: dict,
+            timeout: int,
+            stream: bool,
+            on_event: AgentEventCallback = None,
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
+        ) -> ExecutionResult:
+            """Execute a task via WS streaming channel."""
+            target = self._resolve_agent_target()
+            ws_client = await self.session._get_ws_client()
+
+            final_content_parts: list[str] = []
+            last_error: Optional[dict] = None
+
+            def _dispatch_event(event: AgentEvent) -> None:
+                try:
+                    if on_event:
+                        on_event(event)
+                except Exception as ex:
+                    _logger.warning(f"on_event callback error: {ex}")
+                try:
+                    cb = {
+                        "reasoning": on_reasoning,
+                        "content": on_content,
+                        "tool_call": on_tool_call,
+                        "tool_result": on_tool_result,
+                    }.get(event.type)
+                    if cb:
+                        cb(event)
+                except Exception as ex:
+                    _logger.warning(f"on_{event.type} callback error: {ex}")
+
+            def _on_event(invocation_id: str, data: dict[str, Any]) -> None:
+                nonlocal last_error
+                event_type = data.get("eventType", "")
+                seq = data.get("seq", 0)
+                round_num = data.get("round", 0)
+
+                if event_type == "reasoning":
+                    event = AgentEvent(
+                        type="reasoning", seq=seq, round=round_num,
+                        content=data.get("content", ""),
+                    )
+                    _dispatch_event(event)
+                elif event_type == "content":
+                    content_text = data.get("content", "")
+                    final_content_parts.append(content_text)
+                    event = AgentEvent(
+                        type="content", seq=seq, round=round_num,
+                        content=content_text,
+                    )
+                    _dispatch_event(event)
+                elif event_type == "tool_call":
+                    event = AgentEvent(
+                        type="tool_call", seq=seq, round=round_num,
+                        tool_call_id=data.get("toolCallId", ""),
+                        tool_name=data.get("toolName", ""),
+                        args=data.get("args", {}),
+                    )
+                    _dispatch_event(event)
+                elif event_type == "tool_result":
+                    event = AgentEvent(
+                        type="tool_result", seq=seq, round=round_num,
+                        tool_call_id=data.get("toolCallId", ""),
+                        tool_name=data.get("toolName", ""),
+                        result=data.get("result", {}),
+                    )
+                    _dispatch_event(event)
+                elif event_type == "error":
+                    last_error = data.get("error", data)
+                    event = AgentEvent(
+                        type="error", seq=seq, round=round_num,
+                        error=last_error,
+                    )
+                    _dispatch_event(event)
+
+            errors: list[Exception] = []
+
+            def _on_error(invocation_id: str, err: Exception) -> None:
+                errors.append(err)
+
+            handle = await ws_client.call_stream(
+                target=target,
+                data={
+                    "method": "exec_task",
+                    "stream": stream,
+                    "params": task_params,
+                },
+                on_event=_on_event,
+                on_end=None,
+                on_error=_on_error,
+            )
+
+            try:
+                end_data = await asyncio.wait_for(handle.wait_end(), timeout=timeout)
+            except asyncio.TimeoutError:
+                try:
+                    await handle.cancel()
+                except Exception:
+                    pass
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Task execution timed out after {timeout} seconds.",
+                    task_status="failed",
+                    task_result="".join(final_content_parts) or "Task execution timed out.",
+                )
+
+            if errors:
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=str(errors[0]),
+                    task_status="failed",
+                    task_result="".join(final_content_parts),
+                )
+
+            if last_error:
+                return ExecutionResult(
+                    request_id="",
+                    success=False,
+                    error_message=str(last_error),
+                    task_status="failed",
+                    task_result="".join(final_content_parts),
+                )
+
+            status = end_data.get("status", "finished") if end_data else "finished"
+            task_result = end_data.get("taskResult", "") if end_data else ""
+            if not task_result:
+                task_result = "".join(final_content_parts)
+
+            return ExecutionResult(
+                request_id="",
+                success=(status == "finished"),
+                error_message="" if status == "finished" else f"Task ended with status: {status}",
+                task_status=status,
+                task_result=task_result,
+            )
+
         async def execute_task_and_wait(
             self,
             task: str,
             timeout: int,
             stream_beta: bool = False,
-            on_event: Optional[Callable[["AgentEvent"], None]] = None,
-            on_thought: Optional[Callable[["AgentEvent"], None]] = None,
-            on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
-            on_tool_result: Optional[Callable[["AgentEvent"], None]] = None,
-            on_response: Optional[Callable[["AgentEvent"], None]] = None,
+            on_event: AgentEventCallback = None,
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
@@ -318,19 +350,19 @@ class AsyncAgent(AsyncBaseService):
             This is a synchronous interface that blocks until the task is completed or
             an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
-            When stream_beta or any callback parameter is provided, the method uses
-            WebSocket for real-time event streaming instead of HTTP polling.
+            When ``stream_beta`` or any ``on_*`` callback is provided, the method uses
+            the WebSocket streaming channel for real-time event delivery instead of
+            HTTP polling.
 
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
-                    Used to control how long to wait for task completion.
-                stream_beta: Enable token-level streaming for thought/response events (beta).
+                stream_beta: Enable token-level streaming via WebSocket.
                 on_event: Callback for all event types.
-                on_thought: Callback for thought events.
+                on_reasoning: Callback for reasoning events (LLM reasoning_content).
+                on_content: Callback for content events (LLM content output).
                 on_tool_call: Callback for tool_call events.
                 on_tool_result: Callback for tool_result events.
-                on_response: Callback for response events.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -345,15 +377,18 @@ class AsyncAgent(AsyncBaseService):
                 await session.delete()
                 ```
             """
-            if self._has_streaming_params(stream_beta, on_event, on_thought, on_tool_call, on_tool_result, on_response):
-                return await self._execute_task_via_ws(
+            if self._has_streaming_params(
+                stream_beta, on_event, on_reasoning, on_content, on_tool_call, on_tool_result
+            ):
+                return await self._execute_task_stream_ws(
                     task_params={"task": task},
-                    stream_beta=stream_beta,
+                    timeout=timeout,
+                    stream=stream_beta,
                     on_event=on_event,
-                    on_thought=on_thought,
+                    on_reasoning=on_reasoning,
+                    on_content=on_content,
                     on_tool_call=on_tool_call,
                     on_tool_result=on_tool_result,
-                    on_response=on_response,
                 )
 
             poll_interval = 3
@@ -405,7 +440,6 @@ class AsyncAgent(AsyncBaseService):
                         await asyncio.sleep(poll_interval)
                         tried_time += 1
                     _logger.warning("⚠️ task execution timeout!")
-                    # Automatically terminate the task on timeout
                     try:
                         terminate_result = await self.terminate_task(task_id)
                         if terminate_result.success:
@@ -596,8 +630,6 @@ class AsyncAgent(AsyncBaseService):
         > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
 
-        _AGENT_TYPE = "computer"
-
         def __init__(self, session: "AsyncSession"):
             super().__init__(session, tool_prefix="flux")
 
@@ -606,8 +638,6 @@ class AsyncAgent(AsyncBaseService):
 
         > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
-
-        _AGENT_TYPE = "browser"
 
         def __init__(self, session: "AsyncSession"):
             super().__init__(session, tool_prefix="browser_use")
@@ -748,11 +778,11 @@ class AsyncAgent(AsyncBaseService):
             output_schema: Type[Schema] = None,
             full_page_screenshot: Optional[bool] = False,
             stream_beta: bool = False,
-            on_event: Optional[Callable[["AgentEvent"], None]] = None,
-            on_thought: Optional[Callable[["AgentEvent"], None]] = None,
-            on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
-            on_tool_result: Optional[Callable[["AgentEvent"], None]] = None,
-            on_response: Optional[Callable[["AgentEvent"], None]] = None,
+            on_event: AgentEventCallback = None,
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
         ) -> ExecutionResult:
             """
             Execute a task described in human language on a browser synchronously.
@@ -760,22 +790,22 @@ class AsyncAgent(AsyncBaseService):
             This is a synchronous interface that blocks until the task is completed or
             an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
-            When stream_beta or any callback parameter is provided, the method uses
-            WebSocket for real-time event streaming instead of HTTP polling.
+            When ``stream_beta`` or any ``on_*`` callback is provided, the method uses
+            the WebSocket streaming channel for real-time event delivery instead of
+            HTTP polling.
 
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
-                    Used to control how long to wait for task completion.
-                use_vision: Whether to use vision to performe the task.
+                use_vision: Whether to use vision to perform the task.
                 output_schema: The schema of the structured output.
-                full_page_screenshot: Whether to take a full page screenshot. This only works when use_vision is true.
-                stream_beta: Enable token-level streaming for thought/response events (beta).
+                full_page_screenshot: Whether to take a full page screenshot.
+                stream_beta: Enable token-level streaming via WebSocket.
                 on_event: Callback for all event types.
-                on_thought: Callback for thought events.
+                on_reasoning: Callback for reasoning events (LLM reasoning_content).
+                on_content: Callback for content events (LLM content output).
                 on_tool_call: Callback for tool_call events.
                 on_tool_result: Callback for tool_result events.
-                on_response: Callback for response events.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -788,7 +818,7 @@ class AsyncAgent(AsyncBaseService):
                 class WeatherSchema(BaseModel):
                     city:str
                     weather: str
-                result = await session.agent.computer.execute_task_and_wait(task="Query the weather in Shanghai",timeout=60, use_vision=False, output_schema=WeatherSchema, full_page_screenshot=True)
+                result = await session.agent.browser.execute_task_and_wait(task="Query the weather in Shanghai",timeout=60, use_vision=False, output_schema=WeatherSchema, full_page_screenshot=True)
                 print(f"Task result: {result.task_result}")
                 await session.delete()
                 ```
@@ -805,24 +835,25 @@ class AsyncAgent(AsyncBaseService):
                         task_id="",
                     )
 
-            if self._has_streaming_params(stream_beta, on_event, on_thought, on_tool_call, on_tool_result, on_response):
+            if self._has_streaming_params(
+                stream_beta, on_event, on_reasoning, on_content, on_tool_call, on_tool_result
+            ):
                 task_params = {
                     "task": task,
                     "use_vision": use_vision,
                     "full_page_screenshot": full_page_screenshot,
                 }
-                if output_schema:
-                    task_params["output_schema"] = json.dumps(output_schema.model_json_schema())
-                else:
-                    task_params["output_schema"] = json.dumps(DefaultSchema.model_json_schema())
-                return await self._execute_task_via_ws(
+                schema_cls = output_schema if output_schema else DefaultSchema
+                task_params["output_schema"] = json.dumps(schema_cls.model_json_schema())
+                return await self._execute_task_stream_ws(
                     task_params=task_params,
-                    stream_beta=stream_beta,
+                    timeout=timeout,
+                    stream=stream_beta,
                     on_event=on_event,
-                    on_thought=on_thought,
+                    on_reasoning=on_reasoning,
+                    on_content=on_content,
                     on_tool_call=on_tool_call,
                     on_tool_result=on_tool_result,
-                    on_response=on_response,
                 )
 
             poll_interval = 3
@@ -949,8 +980,6 @@ class AsyncAgent(AsyncBaseService):
         > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
         """
 
-        _AGENT_TYPE = "mobile"
-
         def __init__(self, session: "AsyncSession"):
             super().__init__(session, tool_prefix="")
 
@@ -1049,12 +1078,6 @@ class AsyncAgent(AsyncBaseService):
             task: str,
             timeout: int,
             max_steps: int = 50,
-            stream_beta: bool = False,
-            on_event: Optional[Callable[["AgentEvent"], None]] = None,
-            on_thought: Optional[Callable[["AgentEvent"], None]] = None,
-            on_tool_call: Optional[Callable[["AgentEvent"], None]] = None,
-            on_tool_result: Optional[Callable[["AgentEvent"], None]] = None,
-            on_response: Optional[Callable[["AgentEvent"], None]] = None,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
@@ -1063,9 +1086,6 @@ class AsyncAgent(AsyncBaseService):
             completed or an error occurs, or timeout happens. The default
             polling interval is 3 seconds.
 
-            When stream_beta or any callback parameter is provided, the method uses
-            WebSocket for real-time event streaming instead of HTTP polling.
-
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
@@ -1073,12 +1093,6 @@ class AsyncAgent(AsyncBaseService):
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
-                stream_beta: Enable token-level streaming for thought/response events (beta).
-                on_event: Callback for all event types.
-                on_thought: Callback for thought events.
-                on_tool_call: Callback for tool_call events.
-                on_tool_result: Callback for tool_result events.
-                on_response: Callback for response events.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -1097,17 +1111,6 @@ class AsyncAgent(AsyncBaseService):
                 await session.delete()
                 ```
             """
-            if self._has_streaming_params(stream_beta, on_event, on_thought, on_tool_call, on_tool_result, on_response):
-                return await self._execute_task_via_ws(
-                    task_params={"task": task, "max_steps": max_steps},
-                    stream_beta=stream_beta,
-                    on_event=on_event,
-                    on_thought=on_thought,
-                    on_tool_call=on_tool_call,
-                    on_tool_result=on_tool_result,
-                    on_response=on_response,
-                )
-
             args = {
                 "task": task,
                 "max_steps": max_steps,
