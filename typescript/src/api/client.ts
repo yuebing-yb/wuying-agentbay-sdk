@@ -2067,4 +2067,116 @@ export class Client extends OpenApi {
     const runtime = new $dara.RuntimeOptions({});
     return await this.getAdbLinkWithOptions(request, runtime);
   }
+
+  async bindContextsWithOptions(
+    tmpReq: $_model.BindContextsRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.BindContextsResponse> {
+    tmpReq.validate();
+    const request = new $_model.BindContextsShrinkRequest({});
+    OpenApiUtil.convert(tmpReq, request);
+    if (!$dara.isNull(tmpReq.persistenceDataList)) {
+      request.persistenceDataListShrink =
+        OpenApiUtil.arrayToStringWithSpecifiedStyle(
+          tmpReq.persistenceDataList,
+          "PersistenceDataList",
+          "json"
+        );
+    }
+
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.persistenceDataListShrink)) {
+      body["PersistenceDataList"] = request.persistenceDataListShrink;
+    }
+    if (!$dara.isNull(request.sessionId)) {
+      body["SessionId"] = request.sessionId;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "BindContexts",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.BindContextsResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.BindContextsResponse({})
+    );
+  }
+
+  async bindContexts(
+    request: $_model.BindContextsRequest
+  ): Promise<$_model.BindContextsResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.bindContextsWithOptions(request, runtime);
+  }
+
+  async describeSessionContextsWithOptions(
+    request: $_model.DescribeSessionContextsRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.DescribeSessionContextsResponse> {
+    request.validate();
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.sessionId)) {
+      body["SessionId"] = request.sessionId;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "DescribeSessionContexts",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.DescribeSessionContextsResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.DescribeSessionContextsResponse({})
+    );
+  }
+
+  async describeSessionContexts(
+    request: $_model.DescribeSessionContextsRequest
+  ): Promise<$_model.DescribeSessionContextsResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.describeSessionContextsWithOptions(request, runtime);
+  }
 }

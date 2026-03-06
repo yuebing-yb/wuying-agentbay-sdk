@@ -122,7 +122,13 @@ from ._sync.filesystem import (
 )
 from ._sync.oss import Oss, OSSClientResult, OSSDownloadResult, OSSUploadResult
 from ._sync.context_manager import ContextManager
-from ._common.models.context import ContextInfoResult, ContextSyncResult
+from ._common.models.context import (
+    ContextBinding,
+    ContextBindingsResult,
+    ContextBindResult,
+    ContextInfoResult,
+    ContextSyncResult,
+)
 from ._common.models.context import ContextStatusData
 from ._sync.context import (
     ContextListParams,
@@ -250,6 +256,9 @@ __all__ = [
     "FingerprintFormat",
     # Context related
     "ContextListParams",
+    "ContextBinding",
+    "ContextBindingsResult",
+    "ContextBindResult",
     "ContextInfoResult",
     "ContextSyncResult",
     "ContextService",

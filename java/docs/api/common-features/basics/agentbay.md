@@ -144,33 +144,37 @@ Create a new session with CreateSessionParams
 ### getContextService
 
 ```java
-public com.aliyun.agentbay.context.ContextService getContextService()
+public ContextService getContextService()
 ```
 
 Get context service for this AgentBay instance
 
 **Returns:**
-- `com.aliyun.agentbay.context.ContextService`: ContextService instance
+- `ContextService`: ContextService instance
 
 ### getContext
 
 ```java
-public com.aliyun.agentbay.context.ContextService getContext()
+public ContextService getContext()
 ```
 
 Get context service for this AgentBay instance (alias for getContextService)
 
 **Returns:**
-- `com.aliyun.agentbay.context.ContextService`: ContextService instance
+- `ContextService`: ContextService instance
 
 ### list
 
 ```java
-public com.aliyun.agentbay.model.SessionListResult list(java.util.Map<String, String> labels, Integer page, Integer limit, String status)
+public SessionListResult list(java.util.Map<String, String> labels, Integer page, Integer limit, String status)
 ```
 
 ```java
-public com.aliyun.agentbay.model.SessionListResult list()
+public SessionListResult list()
+```
+
+```java
+public SessionListResult list(String status)
 ```
 
 Returns paginated list of sessions filtered by labels.
@@ -182,12 +186,12 @@ Returns paginated list of sessions filtered by labels.
 - `status` (String): Status to filter sessions: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED (optional)
 
 **Returns:**
-- `com.aliyun.agentbay.model.SessionListResult`: SessionListResult containing paginated list of session information
+- `SessionListResult`: SessionListResult containing paginated list of session information
 
 ### delete
 
 ```java
-public com.aliyun.agentbay.model.DeleteResult delete(Session session, boolean syncContext)
+public DeleteResult delete(Session session, boolean syncContext)
 ```
 
 Delete a session
@@ -197,7 +201,57 @@ Delete a session
 - `syncContext` (boolean): Whether to sync context before deletion
 
 **Returns:**
-- `com.aliyun.agentbay.model.DeleteResult`: DeleteResult
+- `DeleteResult`: DeleteResult
+
+### betaPause
+
+```java
+public SessionPauseResult betaPause(Session session, int timeout, double pollInterval) throws AgentBayException
+```
+
+```java
+public SessionPauseResult betaPause(Session session) throws AgentBayException
+```
+
+Pause a session (beta feature), putting it into a dormant state.
+
+This is a convenience method that delegates to the session's betaPause method.
+
+**Parameters:**
+- `session` (Session): The session to pause
+- `timeout` (int): Maximum time to wait for pause completion in seconds (default: 600)
+- `pollInterval` (double): Interval between status checks in seconds (default: 2.0)
+
+**Returns:**
+- `SessionPauseResult`: SessionPauseResult containing the pause operation result
+
+**Throws:**
+- `AgentBayException`: if the API call fails
+
+### betaResume
+
+```java
+public SessionResumeResult betaResume(Session session, int timeout, double pollInterval) throws AgentBayException
+```
+
+```java
+public SessionResumeResult betaResume(Session session) throws AgentBayException
+```
+
+Resume a paused session and wait until it enters RUNNING state (beta feature).
+
+This is a convenience method that delegates to the session's betaResume method.
+
+**Parameters:**
+- `session` (Session): The session to resume
+- `timeout` (int): Maximum time to wait for resume completion in seconds (default: 600)
+- `pollInterval` (double): Interval between status checks in seconds (default: 2.0)
+
+**Returns:**
+- `SessionResumeResult`: SessionResumeResult containing the resume operation result
+
+**Throws:**
+- `AgentBayException`: if the API call fails
 
 
 

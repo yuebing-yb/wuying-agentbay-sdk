@@ -2,6 +2,13 @@
 # This file is auto-generated, don't edit it. Thanks.
 from __future__ import annotations
 
+from ._bind_contexts_request import (
+    BindContextsRequest,
+    BindContextsRequestPersistenceDataList,
+)
+from ._bind_contexts_response import BindContextsResponse
+from ._bind_contexts_response_body import BindContextsResponseBody
+from ._bind_contexts_shrink_request import BindContextsShrinkRequest
 from ._call_mcp_tool_request import CallMcpToolRequest
 from ._call_mcp_tool_response import CallMcpToolResponse
 from ._call_mcp_tool_response_body import CallMcpToolResponseBody
@@ -46,6 +53,12 @@ from ._delete_context_response_body import DeleteContextResponseBody
 from ._delete_session_async_request import DeleteSessionAsyncRequest
 from ._delete_session_async_response import DeleteSessionAsyncResponse
 from ._delete_session_async_response_body import DeleteSessionAsyncResponseBody
+from ._describe_session_contexts_request import DescribeSessionContextsRequest
+from ._describe_session_contexts_response import DescribeSessionContextsResponse
+from ._describe_session_contexts_response_body import (
+    DescribeSessionContextsResponseBody,
+    DescribeSessionContextsResponseBodyData,
+)
 from ._describe_context_files_request import DescribeContextFilesRequest
 from ._describe_context_files_response import DescribeContextFilesResponse
 from ._describe_context_files_response_body import (
@@ -170,6 +183,11 @@ from ._sync_context_response import SyncContextResponse
 from ._sync_context_response_body import SyncContextResponseBody
 
 __all__ = [
+    BindContextsRequest,
+    BindContextsRequestPersistenceDataList,
+    BindContextsResponseBody,
+    BindContextsResponse,
+    BindContextsShrinkRequest,
     CallMcpToolRequest,
     CallMcpToolResponseBody,
     CallMcpToolResponse,
@@ -189,6 +207,10 @@ __all__ = [
     DescribeContextFilesRequest,
     DescribeContextFilesResponseBody,
     DescribeContextFilesResponse,
+    DescribeSessionContextsRequest,
+    DescribeSessionContextsResponseBody,
+    DescribeSessionContextsResponseBodyData,
+    DescribeSessionContextsResponse,
     DeleteSessionAsyncRequest,
     DeleteSessionAsyncResponseBody,
     DeleteSessionAsyncResponse,

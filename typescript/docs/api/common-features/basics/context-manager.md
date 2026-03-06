@@ -9,11 +9,42 @@
 
 ### Methods
 
+- [bind](#bind)
 - [info](#info)
 - [infoWithParams](#infowithparams)
+- [listBindings](#listbindings)
 - [sync](#sync)
 
 ## Methods
+
+### bind
+
+▸ **bind**(`contexts`, `waitForCompletion?`): `Promise`\<`ContextBindResult`\>
+
+Dynamically binds one or more contexts to the current session.
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `contexts` | [`ContextSync`](context-sync.md) \| [`ContextSync`](context-sync.md)[] | `undefined` | One or more ContextSync objects specifying contexts to bind |
+| `waitForCompletion` | `boolean` | `true` | Whether to poll until all bindings are confirmed (default: true) |
+
+#### Returns
+
+`Promise`\<`ContextBindResult`\>
+
+Promise resolving to ContextBindResult
+
+**`Example`**
+
+```typescript
+const contextSync = new ContextSync(context.id, '/tmp/ctx-data');
+const result = await session.context.bind(contextSync);
+console.log(`Bind success: ${result.success}`);
+```
+
+___
 
 ### info
 
@@ -78,6 +109,29 @@ if (result.success) {
   const info = await result.session.context.infoWithParams('SdkCtx-xxx', '/mnt/persistent');
   console.log(`Context status: ${info.contextStatusData[0]?.status}`);
   await result.session.delete();
+}
+```
+
+___
+
+### listBindings
+
+▸ **listBindings**(): `Promise`\<`ContextBindingsResult`\>
+
+Lists all context bindings for the current session.
+
+#### Returns
+
+`Promise`\<`ContextBindingsResult`\>
+
+Promise resolving to ContextBindingsResult with the list of bindings
+
+**`Example`**
+
+```typescript
+const result = await session.context.listBindings();
+for (const binding of result.bindings) {
+  console.log(`Context ${binding.contextId} bound at ${binding.path}`);
 }
 ```
 

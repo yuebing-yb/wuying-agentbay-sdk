@@ -42,6 +42,30 @@ type ContextSyncResult struct {
 	ErrorMessage string
 }
 
+// ContextBinding represents a single context binding entry returned by DescribeSessionContexts.
+type ContextBinding struct {
+	ContextID   string
+	ContextName string
+	Path        string
+	Policy      string
+	BindTime    string
+}
+
+// ContextBindResult wraps the result of a Bind operation.
+type ContextBindResult struct {
+	models.ApiResponse
+	Success      bool
+	ErrorMessage string
+}
+
+// ContextBindingsResult wraps the result of a ListBindings operation.
+type ContextBindingsResult struct {
+	models.ApiResponse
+	Success      bool
+	Bindings     []ContextBinding
+	ErrorMessage string
+}
+
 // SyncCallback defines the callback function type for async sync operations
 type SyncCallback func(success bool)
 
@@ -519,6 +543,184 @@ func (cm *ContextManager) pollForCompletion(callback SyncCallback, contextId, pa
 	// If we've exhausted all retries, call callback with failure
 	fmt.Printf("Context sync polling timed out after %d attempts\n", maxRetries)
 	callback(false)
+}
+
+// Bind dynamically binds one or more contexts to the current session.
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//	result, _ := client.Create(nil)
+//	session := result.Session
+//	contextSync, _ := agentbay.NewContextSync(contextID, "/tmp/ctx-data", nil)
+//	bindResult, _ := session.Context.Bind([]*ContextSync{contextSync}, true)
+func (cm *ContextManager) Bind(contexts []*ContextSync, waitForCompletion bool) (*ContextBindResult, error) {
+	if len(contexts) == 0 {
+		return &ContextBindResult{
+			Success:      false,
+			ErrorMessage: "At least one context is required",
+		}, nil
+	}
+
+	var persistenceDataList []*mcp.BindContextsRequestPersistenceDataList
+	for _, ctx := range contexts {
+		item := &mcp.BindContextsRequestPersistenceDataList{
+			ContextId: tea.String(ctx.ContextID),
+			Path:      tea.String(ctx.Path),
+		}
+		if ctx.Policy != nil {
+			policyJSON, err := json.Marshal(ctx.Policy)
+			if err == nil {
+				item.Policy = tea.String(string(policyJSON))
+			}
+		}
+		persistenceDataList = append(persistenceDataList, item)
+	}
+
+	request := &mcp.BindContextsRequest{
+		Authorization:       tea.String("Bearer " + cm.Session.GetAPIKey()),
+		SessionId:           tea.String(cm.Session.GetSessionId()),
+		PersistenceDataList: persistenceDataList,
+	}
+
+	contextIDs := make([]string, len(contexts))
+	for i, ctx := range contexts {
+		contextIDs[i] = ctx.ContextID
+	}
+	logAPICall("BindContexts", fmt.Sprintf("SessionId=%s, Contexts=%v", cm.Session.GetSessionId(), contextIDs))
+
+	response, err := cm.Session.GetClient().BindContexts(request)
+	if err != nil {
+		logOperationError("BindContexts", err.Error(), true)
+		return nil, fmt.Errorf("failed to bind contexts: %w", err)
+	}
+
+	requestID := models.ExtractRequestID(response)
+
+	if response != nil && response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success {
+			code := tea.StringValue(response.Body.Code)
+			message := tea.StringValue(response.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+			logAPIResponseWithDetails("BindContexts", requestID, false, nil, string(respJSON))
+			return &ContextBindResult{
+				ApiResponse:  models.ApiResponse{RequestID: requestID},
+				Success:      false,
+				ErrorMessage: fmt.Sprintf("[%s] %s", code, message),
+			}, nil
+		}
+	}
+
+	respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	logAPIResponseWithDetails("BindContexts", requestID, true, map[string]interface{}{
+		"context_count": len(contexts),
+	}, string(respJSON))
+
+	if waitForCompletion {
+		cm.pollForBindCompletion(contextIDs, 60, 2000)
+	}
+
+	return &ContextBindResult{
+		ApiResponse: models.ApiResponse{RequestID: requestID},
+		Success:     true,
+	}, nil
+}
+
+// ListBindings lists all context bindings for the current session.
+//
+// Example:
+//
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
+//	result, _ := client.Create(nil)
+//	session := result.Session
+//	bindingsResult, _ := session.Context.ListBindings()
+//	for _, b := range bindingsResult.Bindings {
+//	    fmt.Printf("Context %s at %s\n", b.ContextID, b.Path)
+//	}
+func (cm *ContextManager) ListBindings() (*ContextBindingsResult, error) {
+	request := &mcp.DescribeSessionContextsRequest{
+		Authorization: tea.String("Bearer " + cm.Session.GetAPIKey()),
+		SessionId:     tea.String(cm.Session.GetSessionId()),
+	}
+
+	logAPICall("DescribeSessionContexts", fmt.Sprintf("SessionId=%s", cm.Session.GetSessionId()))
+
+	response, err := cm.Session.GetClient().DescribeSessionContexts(request)
+	if err != nil {
+		logOperationError("DescribeSessionContexts", err.Error(), true)
+		return nil, fmt.Errorf("failed to list bindings: %w", err)
+	}
+
+	requestID := models.ExtractRequestID(response)
+
+	if response != nil && response.Body != nil {
+		if response.Body.Success != nil && !*response.Body.Success {
+			code := tea.StringValue(response.Body.Code)
+			message := tea.StringValue(response.Body.Message)
+			if message == "" {
+				message = "Unknown error"
+			}
+			respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+			logAPIResponseWithDetails("DescribeSessionContexts", requestID, false, nil, string(respJSON))
+			return &ContextBindingsResult{
+				ApiResponse:  models.ApiResponse{RequestID: requestID},
+				Success:      false,
+				ErrorMessage: fmt.Sprintf("[%s] %s", code, message),
+			}, nil
+		}
+	}
+
+	var bindings []ContextBinding
+	if response.Body != nil && response.Body.Data != nil {
+		for _, item := range response.Body.Data {
+			bindings = append(bindings, ContextBinding{
+				ContextID:   tea.StringValue(item.ContextId),
+				ContextName: tea.StringValue(item.ContextName),
+				Path:        tea.StringValue(item.Path),
+				Policy:      tea.StringValue(item.Policy),
+				BindTime:    tea.StringValue(item.BindTime),
+			})
+		}
+	}
+
+	respJSON, _ := json.MarshalIndent(response.Body, "", "  ")
+	logAPIResponseWithDetails("DescribeSessionContexts", requestID, true, map[string]interface{}{
+		"binding_count": len(bindings),
+	}, string(respJSON))
+
+	return &ContextBindingsResult{
+		ApiResponse: models.ApiResponse{RequestID: requestID},
+		Success:     true,
+		Bindings:    bindings,
+	}, nil
+}
+
+// pollForBindCompletion polls ListBindings until all expected contexts are bound.
+func (cm *ContextManager) pollForBindCompletion(expectedContextIDs []string, maxRetries, retryIntervalMs int) bool {
+	for i := 0; i < maxRetries; i++ {
+		result, err := cm.ListBindings()
+		if err == nil && result.Success {
+			boundIDs := make(map[string]bool)
+			for _, b := range result.Bindings {
+				boundIDs[b.ContextID] = true
+			}
+			allBound := true
+			for _, id := range expectedContextIDs {
+				if !boundIDs[id] {
+					allBound = false
+					break
+				}
+			}
+			if allBound {
+				return true
+			}
+		}
+		time.Sleep(time.Duration(retryIntervalMs) * time.Millisecond)
+	}
+	return false
 }
 
 // pollForCompletionSync is the synchronous version of polling for sync completion.
