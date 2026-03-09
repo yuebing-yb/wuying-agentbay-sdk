@@ -1199,7 +1199,7 @@ func (cs *ContextService) Clear(contextID string, timeoutSeconds int, pollInterv
 	}
 
 	// Log started clearing task
-	fmt.Printf("Started context clearing task for: %s\n", contextID)
+	LogInfo(fmt.Sprintf("Started context clearing task for: %s", contextID))
 
 	// 2. Poll task status until completion or timeout
 	maxAttempts := int(float64(timeoutSeconds) / pollIntervalSeconds)
@@ -1224,12 +1224,12 @@ func (cs *ContextService) Clear(contextID string, timeoutSeconds int, pollInterv
 			return statusResult, nil
 		}
 
-		fmt.Printf("Clear task status: %s (attempt %d/%d)\n", statusResult.Status, attempt, maxAttempts)
+		LogInfo(fmt.Sprintf("Clear task status: %s (attempt %d/%d)", statusResult.Status, attempt, maxAttempts))
 
 		// Check if completed
 		// When clearing is complete, the state changes from "clearing" to "available"
 		if statusResult.Status == "available" {
-			fmt.Printf("Context cleared successfully\n")
+			LogInfo("Context cleared successfully")
 			return &ContextClearResult{
 				ApiResponse: models.ApiResponse{
 					RequestID: startResult.RequestID,

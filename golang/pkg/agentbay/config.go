@@ -42,7 +42,7 @@ func findDotEnvFile(startPath string) string {
 	if startPath == "" {
 		workingDir, err := os.Getwd()
 		if err != nil {
-			fmt.Printf("Warning: Failed to get current working directory: %v\n", err)
+			LogWarn(fmt.Sprintf("Failed to get current working directory: %v", err))
 			return ""
 		}
 		startPath = workingDir
@@ -50,7 +50,7 @@ func findDotEnvFile(startPath string) string {
 
 	currentPath, err := filepath.Abs(startPath)
 	if err != nil {
-		fmt.Printf("Warning: Failed to resolve absolute path: %v\n", err)
+		LogWarn(fmt.Sprintf("Failed to resolve absolute path: %v", err))
 		return ""
 	}
 
@@ -58,14 +58,14 @@ func findDotEnvFile(startPath string) string {
 	for {
 		envFile := filepath.Join(currentPath, ".env")
 		if _, err := os.Stat(envFile); err == nil {
-			fmt.Printf("Found .env file at: %s\n", envFile)
+			LogDebug(fmt.Sprintf("Found .env file at: %s", envFile))
 			return envFile
 		}
 
 		// Check if this is a git repository root
 		gitDir := filepath.Join(currentPath, ".git")
 		if _, err := os.Stat(gitDir); err == nil {
-			fmt.Printf("Found git repository root at: %s\n", currentPath)
+			LogDebug(fmt.Sprintf("Found git repository root at: %s", currentPath))
 		}
 
 		parentPath := filepath.Dir(currentPath)
@@ -90,13 +90,13 @@ func loadDotEnvWithFallback(customEnvPath string) {
 		if _, err := os.Stat(customEnvPath); err == nil {
 			err = godotenv.Load(customEnvPath)
 			if err != nil {
-				fmt.Printf("Warning: Failed to load custom .env file %s: %v\n", customEnvPath, err)
+				LogWarn(fmt.Sprintf("Failed to load custom .env file %s: %v", customEnvPath, err))
 			} else {
-				fmt.Printf("Loaded custom .env file from: %s\n", customEnvPath)
+				LogDebug(fmt.Sprintf("Loaded custom .env file from: %s", customEnvPath))
 				return
 			}
 		} else {
-			fmt.Printf("Warning: Custom .env file not found: %s\n", customEnvPath)
+			LogWarn(fmt.Sprintf("Custom .env file not found: %s", customEnvPath))
 		}
 	}
 
@@ -105,12 +105,12 @@ func loadDotEnvWithFallback(customEnvPath string) {
 	if envFile != "" {
 		err := godotenv.Load(envFile)
 		if err != nil {
-			fmt.Printf("Warning: Failed to load .env file %s: %v\n", envFile, err)
+			LogWarn(fmt.Sprintf("Failed to load .env file %s: %v", envFile, err))
 		} else {
-			fmt.Printf("Loaded .env file from: %s\n", envFile)
+			LogDebug(fmt.Sprintf("Loaded .env file from: %s", envFile))
 		}
 	} else {
-		fmt.Printf("No .env file found in current directory or parent directories\n")
+		LogDebug("No .env file found in current directory or parent directories")
 	}
 }
 

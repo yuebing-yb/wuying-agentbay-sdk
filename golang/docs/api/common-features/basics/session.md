@@ -398,6 +398,38 @@ defer result.Session.Delete()
 toolsResult, _ := result.Session.ListMcpTools()
 ```
 
+### LogDebug
+
+```go
+func (s *Session) LogDebug(msg string)
+```
+
+LogDebug delegates to agentbay.LogDebug (implements agent.McpSessionLogger).
+
+### LogError
+
+```go
+func (s *Session) LogError(msg string)
+```
+
+LogError delegates to agentbay.LogError (implements agent.McpSessionLogger).
+
+### LogInfo
+
+```go
+func (s *Session) LogInfo(msg string)
+```
+
+LogInfo delegates to agentbay.LogInfo (implements agent.McpSessionLogger).
+
+### LogWarn
+
+```go
+func (s *Session) LogWarn(msg string)
+```
+
+LogWarn delegates to agentbay.LogWarn (implements agent.McpSessionLogger).
+
 ### SetLabels
 
 ```go

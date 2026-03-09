@@ -897,6 +897,7 @@ type FileTransfer struct {
 	session		FileTransferSession
 	contextSvc	FileTransferContextService
 	httpTimeout	time.Duration
+	logger		internal.Logger
 
 	// Lazy-loaded context information
 	contextID	string
@@ -1016,7 +1017,7 @@ if uploadResult.Success {
 ### NewFileTransfer
 
 ```go
-func NewFileTransfer(session FileTransferSession, contextSvc FileTransferContextService) *FileTransfer
+func NewFileTransfer(session FileTransferSession, contextSvc FileTransferContextService, logger internal.Logger) *FileTransfer
 ```
 
 NewFileTransfer creates a new FileTransfer instance.
@@ -1024,6 +1025,7 @@ NewFileTransfer creates a new FileTransfer instance.
 Parameters:
   - session: Session interface providing API key, client, and session ID
   - contextSvc: Context service interface for getting presigned URLs
+  - logger: Optional logger for debug/info output (nil for no logging)
 
 Returns:
   - *FileTransfer: A new FileTransfer instance ready for upload/download operations

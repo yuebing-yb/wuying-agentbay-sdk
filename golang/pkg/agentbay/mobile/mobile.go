@@ -11,6 +11,7 @@ import (
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
@@ -1138,7 +1139,9 @@ func (m *Mobile) executeTemplateCommand(commandTemplate, description string) err
 		return fmt.Errorf("command service not available")
 	}
 
-	fmt.Printf("Executing %s\n", description)
+	if logger, ok := m.Session.(internal.Logger); ok {
+		logger.LogInfo(fmt.Sprintf("Executing %s", description))
+	}
 
 	result, err := m.command.ExecuteCommand(commandTemplate)
 	if err != nil {
@@ -1146,7 +1149,9 @@ func (m *Mobile) executeTemplateCommand(commandTemplate, description string) err
 	}
 
 	if result != nil && result.Output != "" {
-		fmt.Printf("✅ %s completed successfully\n", description)
+		if logger, ok := m.Session.(internal.Logger); ok {
+			logger.LogInfo(fmt.Sprintf("%s completed successfully", description))
+		}
 	}
 
 	return nil
@@ -1187,15 +1192,19 @@ func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
 		Option:        tea.String(optionsStr),
 	}
 
-	// Log the API call (blue color)
-	fmt.Printf("\033[34m🔗 API Call: GetAdbLink\033[0m\n")
-	fmt.Printf("   └─ SessionId=%s, Options=provided\n", m.Session.GetSessionId())
+	// Log the API call
+	if logger, ok := m.Session.(internal.Logger); ok {
+		logger.LogDebug("API Call: GetAdbLink")
+		logger.LogDebug(fmt.Sprintf("SessionId=%s, Options=provided", m.Session.GetSessionId()))
+	}
 
 	response, err := m.Session.GetClient().GetAdbLink(getAdbLinkRequest)
 	if err != nil {
 		errorMsg := fmt.Sprintf("Failed to get ADB URL: %v", err)
-		fmt.Printf("\033[31m❌ API Response Failed: GetAdbLink\033[0m\n")
-		fmt.Printf("   └─ Error: %s\n", errorMsg)
+		if logger, ok := m.Session.(internal.Logger); ok {
+			logger.LogError("API Response Failed: GetAdbLink")
+			logger.LogError(errorMsg)
+		}
 		return &AdbUrlResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			URL:          "",
@@ -1216,7 +1225,9 @@ func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
 		if response.Body != nil && response.Body.Message != nil {
 			errorMsg = *response.Body.Message
 		}
-		fmt.Printf("\033[31m❌ Failed to get ADB URL: %s\033[0m\n", errorMsg)
+		if logger, ok := m.Session.(internal.Logger); ok {
+			logger.LogError(fmt.Sprintf("Failed to get ADB URL: %s", errorMsg))
+		}
 		return &AdbUrlResult{
 			ApiResponse:  models.ApiResponse{RequestID: requestID},
 			URL:          "",
@@ -1231,10 +1242,12 @@ func (m *Mobile) GetAdbUrl(adbkeyPub string) *AdbUrlResult {
 		url = tea.StringValue(response.Body.Data.Url)
 	}
 
-	// Log the successful response (green color, no masking for user convenience)
-	fmt.Printf("\033[32m✅ API Response: GetAdbLink, RequestId=%s\033[0m\n", requestID)
-	if url != "" {
-		fmt.Printf("\033[32m   └─ url=%s\033[0m\n", url)
+	// Log the successful response
+	if logger, ok := m.Session.(internal.Logger); ok {
+		logger.LogInfo(fmt.Sprintf("API Response: GetAdbLink, RequestId=%s", requestID))
+		if url != "" {
+			logger.LogDebug(fmt.Sprintf("url=%s", url))
+		}
 	}
 
 	return &AdbUrlResult{
