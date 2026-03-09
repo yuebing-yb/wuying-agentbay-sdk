@@ -212,7 +212,7 @@ class AsyncFileTransfer:
         upload_url = url_res.url
         req_id_upload = getattr(url_res, "request_id", None)
 
-        print(f"Uploading {local_path} to {upload_url}")
+        _logger.info(f"Uploading {local_path} to {upload_url}")
 
         # 2. PUT upload to pre-signed URL
         try:
@@ -225,7 +225,7 @@ class AsyncFileTransfer:
                 content_type,
                 progress_cb,
             )
-            print(f"Upload completed with HTTP {http_status}")
+            _logger.info(f"Upload completed with HTTP {http_status}")
             if http_status not in (200, 201, 204):
                 return UploadResult(
                     success=False,
@@ -252,7 +252,7 @@ class AsyncFileTransfer:
         # 3. Trigger sync to cloud disk (download mode),download from oss to cloud disk
         req_id_sync = None
         try:
-            print("Triggering sync to cloud disk")
+            _logger.info("Triggering sync to cloud disk")
             req_id_sync = await self._await_sync(
                 "download", remote_path, self._context_id
             )
@@ -268,7 +268,7 @@ class AsyncFileTransfer:
                 error_message=f"session.context.sync(upload) failed: {e}",
             )
 
-        print(f"Sync request ID: {req_id_sync}")
+        _logger.info(f"Sync request ID: {req_id_sync}")
         # 4. Optionally wait for task completion
         if wait:
             ok, err = await self._wait_for_task(
@@ -469,7 +469,7 @@ class AsyncFileTransfer:
         mode = mode.lower().strip()
 
         sync_fn = getattr(self._session.context, "sync")
-        print(
+        _logger.debug(
             f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})"
         )
         # Try as coroutine with mode, path, and context_id parameters
@@ -518,7 +518,7 @@ class AsyncFileTransfer:
                         out = await asyncio.to_thread(sync_fn)
         # Return request_id if available
         success = getattr(out, "success", False)
-        print(f"   Result: {success}")
+        _logger.debug(f"   Result: {success}")
         return getattr(out, "request_id", None)
 
     async def _wait_for_task(
@@ -1978,12 +1978,12 @@ class AsyncFileSystem(BaseService):
                             event = FileChangeEvent._from_dict(event_dict)
                             events.append(event)
                 else:
-                    print(f"Warning: Expected list but got {type(change_data)}")
+                    _logger.warning(f"Expected list but got {type(change_data)}")
             except json.JSONDecodeError as e:
-                print(f"Warning: Failed to parse JSON data: {e}")
-                print(f"Raw data: {raw_data}")
+                _logger.warning(f"Failed to parse JSON data: {e}")
+                _logger.debug(f"Raw data: {raw_data}")
             except Exception as e:
-                print(f"Warning: Unexpected error parsing file change data: {e}")
+                _logger.warning(f"Unexpected error parsing file change data: {e}")
 
             return events
 
@@ -1994,14 +1994,12 @@ class AsyncFileSystem(BaseService):
                 args,
             )
             try:
-                print("Response body:")
-                print(
-                    json.dumps(
-                        getattr(result, "body", result), ensure_ascii=False, indent=2
-                    )
+                response_body = json.dumps(
+                    getattr(result, "body", result), ensure_ascii=False, indent=2
                 )
+                _logger.debug(f"Response body: {response_body}")
             except Exception:
-                print(f"Response: {result}")
+                _logger.debug(f"Response: {result}")
 
             if result.success:
                 # Parse the file change events
@@ -2188,8 +2186,8 @@ class AsyncFileSystem(BaseService):
 
         def _monitor_directory_sync():
             """Synchronous monitor function that runs in a background thread."""
-            print(f"Starting directory monitoring for: {path}")
-            print(f"Polling interval: {interval} seconds")
+            _logger.info(f"Starting directory monitoring for: {path}")
+            _logger.info(f"Polling interval: {interval} seconds")
 
             while not stop_event.is_set():
                 try:
@@ -2197,7 +2195,7 @@ class AsyncFileSystem(BaseService):
                         hasattr(fs_self.session, "_is_expired")
                         and fs_self.session._is_expired()
                     ):
-                        print(
+                        _logger.warning(
                             f"Session expired, stopping directory monitoring for: {path}"
                         )
                         stop_event.set()
@@ -2209,14 +2207,14 @@ class AsyncFileSystem(BaseService):
                         current_events = result.events
 
                         if current_events:
-                            print(f"Detected {len(current_events)} file changes:")
+                            _logger.info(f"Detected {len(current_events)} file changes:")
                             for event in current_events:
-                                print(f"  - {event}")
+                                _logger.debug(f"  - {event}")
 
                             try:
                                 callback(current_events)
                             except Exception as e:
-                                print(f"Error in callback function: {e}")
+                                _logger.error(f"Error in callback function: {e}")
 
                     else:
                         error_msg = result.error_message or ""
@@ -2224,29 +2222,29 @@ class AsyncFileSystem(BaseService):
                             "expired" in error_msg.lower()
                             or "invalid" in error_msg.lower()
                         ):
-                            print(
+                            _logger.warning(
                                 f"Session expired, stopping directory monitoring for: {path}"
                             )
                             stop_event.set()
                             break
-                        print(f"Error monitoring directory: {result.error_message}")
+                        _logger.error(f"Error monitoring directory: {result.error_message}")
 
                     stop_event.wait(interval)
 
                 except Exception as e:
-                    print(f"Unexpected error in directory monitoring: {e}")
+                    _logger.error(f"Unexpected error in directory monitoring: {e}")
                     error_str = str(e).lower()
                     if "session" in error_str and (
                         "expired" in error_str or "invalid" in error_str
                     ):
-                        print(
+                        _logger.warning(
                             f"Session expired, stopping directory monitoring for: {path}"
                         )
                         stop_event.set()
                         break
                     stop_event.wait(interval)
 
-            print(f"Stopped monitoring directory: {path}")
+            _logger.info(f"Stopped monitoring directory: {path}")
 
         # Create stop event if not provided
         if stop_event is None:

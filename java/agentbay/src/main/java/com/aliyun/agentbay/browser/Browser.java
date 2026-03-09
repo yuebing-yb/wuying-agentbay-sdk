@@ -3,6 +3,9 @@ package com.aliyun.agentbay.browser;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.aliyun.agentbay.Config;
 import com.aliyun.agentbay.exception.BrowserException;
 import com.aliyun.agentbay.model.OperationResult;
@@ -18,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Browser provides browser-related operations for the session.
  */
 public class Browser extends BaseService {
+    private static final Logger logger = LoggerFactory.getLogger(Browser.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String SERVER_BROWSER_USE = "wuying_browseruse";
     private static final String SERVER_CDP = "wuying_cdp_mcp_server";
@@ -332,8 +336,8 @@ public class Browser extends BaseService {
         if (!agentDeprecationWarned) {
             synchronized (this) {
                 if (!agentDeprecationWarned) {
-                    System.err.println(
-                        "[⚠️ DeprecationWarning] browser.agent is deprecated and will be removed in a future version. "
+                    logger.warn(
+                        "[DeprecationWarning] browser.agent is deprecated and will be removed in a future version. "
                         + "Please use browser.operator instead."
                     );
                     agentDeprecationWarned = true;
@@ -397,7 +401,7 @@ public class Browser extends BaseService {
                             userCallback.onNotify(notifyMsg);
                         }
                     } catch (Exception e) {
-                        System.err.println("Error in internal ws_callback: " + e.getMessage());
+                        logger.error("Error in internal ws_callback: {}", e.getMessage());
                     }
                 };
                 
@@ -407,7 +411,7 @@ public class Browser extends BaseService {
             
             return true;
         } catch (Exception e) {
-            System.err.println("Failed to register callback: " + e.getMessage());
+            logger.error("Failed to register callback: {}", e.getMessage());
             return false;
         }
     }
@@ -438,7 +442,7 @@ public class Browser extends BaseService {
                 internalWsCallback = null;
             }
         } catch (Exception e) {
-            System.err.println("Failed to unregister callback: " + e.getMessage());
+            logger.error("Failed to unregister callback: {}", e.getMessage());
         }
     }
     
@@ -472,7 +476,7 @@ public class Browser extends BaseService {
             wsClient.sendMessage(SERVER_CDP, notifyMessage.toMap());
             return true;
         } catch (Exception e) {
-            System.err.println("Failed to send notify message: " + e.getMessage());
+            logger.error("Failed to send notify message: {}", e.getMessage());
             return false;
         }
     }
@@ -524,7 +528,7 @@ public class Browser extends BaseService {
             wsClient.sendMessage(SERVER_CDP, notifyMessage.toMap());
             return true;
         } catch (Exception e) {
-            System.err.println("Failed to send browser notify message: " + e.getMessage());
+            logger.error("Failed to send browser notify message: {}", e.getMessage());
             return false;
         }
     }

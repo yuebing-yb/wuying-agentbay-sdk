@@ -11,7 +11,7 @@ import {
 import { UploadResult, DownloadResult } from "./file-transfer";
 import { FileTransfer } from "./file-transfer";
 import { Session } from "../session";
-import { log, logWarn } from "../utils/logger";
+import { log, logWarn, logInfo, logError } from "../utils/logger";
 
 // Default chunk size for large file operations (60KB)
 const DEFAULT_CHUNK_SIZE = 60 * 1024;
@@ -1546,7 +1546,7 @@ export class FileSystem {
         }
       }
     } catch (error) {
-      console.warn(`Failed to parse JSON data: ${error}`);
+      logWarn(`Failed to parse JSON data: ${error}`);
     }
 
     return events;
@@ -1581,39 +1581,39 @@ export class FileSystem {
     interval = 500,
     signal?: AbortSignal
   ): Promise<void> {
-    console.log(`Starting directory monitoring for: ${path}`);
-    console.log(`Polling interval: ${interval} ms`);
+    logInfo(`Starting directory monitoring for: ${path}`);
+    logInfo(`Polling interval: ${interval} ms`);
 
     const monitor = async () => {
       while (!signal?.aborted) {
         try {
           // Check if session is still valid
           if ((this.session as any)._isExpired && (this.session as any)._isExpired()) {
-            console.log(`Session expired, stopping directory monitoring for: ${path}`);
+            logInfo(`Session expired, stopping directory monitoring for: ${path}`);
             break;
           }
 
           const result = await this.getFileChange(path);
 
           if (result.success && result.events.length > 0) {
-            console.log(`Detected ${result.events.length} file changes:`);
+            logInfo(`Detected ${result.events.length} file changes:`);
             for (const event of result.events) {
-              console.log(`  - ${FileChangeEventHelper.toString(event)}`);
+              logInfo(`  - ${FileChangeEventHelper.toString(event)}`);
             }
 
             try {
               callback(result.events);
             } catch (error) {
-              console.error(`Error in callback function: ${error}`);
+              logError(`Error in callback function: ${error}`);
             }
           } else if (!result.success) {
             // Check if error is due to session expiry
             const errorMsg = (result.errorMessage || "").toLowerCase();
             if (errorMsg.includes("session") && (errorMsg.includes("expired") || errorMsg.includes("invalid"))) {
-              console.log(`Session expired, stopping directory monitoring for: ${path}`);
+              logInfo(`Session expired, stopping directory monitoring for: ${path}`);
               break;
             }
-            console.error(`Error monitoring directory: ${result.errorMessage}`);
+            logError(`Error monitoring directory: ${result.errorMessage}`);
           }
 
           // Wait for next poll
@@ -1625,18 +1625,18 @@ export class FileSystem {
             });
           });
         } catch (error) {
-          console.error(`Unexpected error in directory monitoring: ${error}`);
+          logError(`Unexpected error in directory monitoring: ${error}`);
           // Check if exception indicates session expiry
           const errorStr = String(error).toLowerCase();
           if (errorStr.includes("session") && (errorStr.includes("expired") || errorStr.includes("invalid"))) {
-            console.log(`Session expired, stopping directory monitoring for: ${path}`);
+            logInfo(`Session expired, stopping directory monitoring for: ${path}`);
             break;
           }
           await new Promise((resolve) => setTimeout(resolve, interval));
         }
       }
 
-      console.log(`Stopped monitoring directory: ${path}`);
+      logInfo(`Stopped monitoring directory: ${path}`);
     };
 
     return monitor();
