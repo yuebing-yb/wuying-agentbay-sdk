@@ -1,130 +1,105 @@
-# OpenClaw Session Management Example
+# OpenClaw in AgentBay (Python)
 
-This example demonstrates how to create OpenClaw sessions on AgentBay and persist configuration via AgentBay Context.
+一键创建 OpenClaw 沙箱环境的示例工程，基于 Python FastAPI 后端 + React 前端。
 
-## Prerequisites
+## 功能
 
-You **only need** to set the following environment variable via `export`:
+- 通过 AgentBay SDK 创建沙箱会话，自动部署 OpenClaw
+- 支持 Context 持久化（基于用户名，ARCHIVE 压缩模式）
+- 通过 `getLink` 获取 OpenClaw UI 外部访问链接
+- 支持自定义模型 Base URL 和模型 ID
+- 前端静态文件与 FastAPI 同目录，单进程运行
 
-- `AGENTBAY_API_KEY` (required)
+## 快速开始
 
-```bash
-# Set API Key
-export AGENTBAY_API_KEY=your_api_key_here
+### 环境要求
 
-# Install dependencies
-pip install wuying-agentbay-sdk
-```
+- Python 3.10+
+- pip
 
----
-
-## 1. Basic Use
-
-Run the script directly without extra arguments:
+### 运行
 
 ```bash
+cd cookbook/openclaw/python
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动 Web 服务
 python main.py
 ```
 
-The script creates an OpenClaw session and starts the dashboard. After startup, you can access the OpenClaw WebUI via **resource_url (sandbox streaming interface)**:
+访问 `http://localhost:8080` 打开管理页面。
 
-- The console outputs `Desktop URL` (i.e., resource_url)
-- Open this URL in your browser to enter the AgentBay cloud desktop
-- Inside the cloud desktop, the OpenClaw dashboard runs in the background; access it at a local address (e.g., `http://127.0.0.1:port`)
+![OpenClaw in AgentBay - 一键创建沙箱环境](images/image_05.png)
 
-Press `Ctrl+C` to exit and release the session.
-
-![Basic Use - Access OpenClaw WebUI via Sandbox Streaming Interface](images/image_04.png)
-
----
-
-## 2. Advanced Use
-
-Run the script with the `--expose-web` argument to expose the OpenClaw WebUI outside the sandbox for direct access in your local browser:
+### 启动参数（可选）
 
 ```bash
-python main.py --expose-web
+# 指定地址和端口
+python main.py --host 0.0.0.0 --port 8080
+
+# 开发模式（代码更改自动重载）
+python main.py --reload
 ```
 
-### Requirements
+| 参数 | 说明 |
+|------|------|
+| `--host` | 绑定地址，默认 0.0.0.0 |
+| `--port` | 端口，默认 8080 |
+| `--reload` | 开发模式，代码更改自动重载 |
 
-- **AgentBay version**: AgentBay **Pro** or **Ultra** is required for `get_link` external URL support
-- **Port range**: For security, AgentBay `get_link` only supports ports **30100–30199**
-- **Gateway port**: The script automatically sets the OpenClaw gateway port to 30100 and configures `bind: lan`, `controlUi.allowedOrigins`, etc., for non-loopback access
-
-### Output
-
-After startup, the console outputs `External Dashboard URL`, an HTTPS address you can open directly in your local browser. Example format:
+## 项目结构
 
 ```
-https://gateway.xxx.com/request_ai/xxx/#token=xxx
+cookbook/openclaw/python/
+├── main.py              # Web 服务入口
+├── src/
+│   ├── __init__.py
+│   ├── app.py           # FastAPI 应用
+│   ├── config_builder.py # OpenClaw 配置生成
+│   ├── models.py        # Pydantic 数据模型
+│   └── session_manager.py # 会话管理核心
+├── static/              # 前端构建产物
+├── images/              # 文档图片
+├── requirements.txt
+├── README.md
+└── README_ZH.md
 ```
 
-![External Dashboard URL Example](images/image.png)
+## API
+
+| 方法   | 路径                    | 说明       |
+|--------|------------------------|-----------|
+| POST   | `/api/sessions`        | 创建会话   |
+| GET    | `/api/sessions/{id}`   | 查询会话   |
+| DELETE | `/api/sessions/{id}`   | 销毁会话   |
+| GET    | `/api/sessions`        | 列出所有会话 |
+
+API 文档：`http://localhost:8080/docs`
 
 ---
 
-## 3. Configure Channels and Models via WebUI
+## 会话功能说明
 
-After starting the OpenClaw WebUI, you can configure **channels** and **models** in the console without setting related environment variables in advance. Supported channels include:
+### Context 持久化
 
-- **Feishu**: Configure App ID, App Secret, etc.
-- **DingTalk**: Configure Client ID, Client Secret, etc.
+创建会话时填写**用户名称**，系统会为该用户启用 AgentBay Context 持久化：
 
-Model configuration (e.g., Tongyi Qianwen) can also be done in the WebUI under **Agents** → **Models**, without `DASHSCOPE_API_KEY` or similar environment variables.
+- **Context 路径**：`/home/wuying/.openclaw`
+- **Context 名称**：`openclaw-{用户名}`
+- **持久化内容**：OpenClaw 配置、Skills、插件、工作区数据
 
-**Agent and Model Configuration:**
+### 外部访问链接
 
-![OpenClaw Agent and Model Configuration](images/image_01.png)
+会话创建成功后，返回的 `openclawUrl` 为 OpenClaw UI 的外部 HTTPS 链接，可直接在本地浏览器访问。
 
-**Channel Configuration (Feishu / DingTalk):**
+**前置要求**：AgentBay Pro 或 Ultra 版本，`getLink` 支持端口 30100–30199。
 
-![OpenClaw Channel Configuration](images/image_02.png)
+### 频道与模型配置
 
----
+启动 OpenClaw WebUI 后，可在控制台中配置**飞书**、**钉钉**等频道，以及**通义千问**等模型，无需预先设置环境变量。
 
-## 4. AgentBay Context with OpenClaw Image
+![OpenClaw 代理与模型配置](images/image_02.png)
 
-The script enables **AgentBay Context** by default for data persistence. Used with the OpenClaw image, it keeps configuration and data across sessions.
-
-### Sync Path
-
-- **Context path**: `/home/wuying/.openclaw`
-- **Default context name**: `openclaw-files`
-
-### Persisted Data
-
-- OpenClaw config file (`openclaw.json`)
-- Skills, plugins, and other extensions
-- Workspace and session-related data
-
-### Workflow
-
-1. On first session creation, the context is created if it does not exist
-2. When the session starts, `/home/wuying/.openclaw` from the context is synced into the image
-3. While the session runs, changes to OpenClaw config are written back to the context
-4. After the session is destroyed, data in the context remains for use in the next session
-
----
-
-## Example Output
-
-```
-Initializing AgentBay client...
-Getting/creating context: openclaw-files
-Context ID: SdkCtx-xxx
-Creating session with context sync (path: /home/wuying/.openclaw)...
-Session created successfully, Session ID: s-xxx
-
-============================================================
-Session Information:
-============================================================
-  Session ID:    s-xxx
-  Context Name:  openclaw-files
-  Context ID:    SdkCtx-xxx
-  External Dashboard URL: https://gateway.xxx.com/request_ai/xxx/#token=xxx  # only with --expose-web
-  Desktop URL:   https://wy.aliyuncs.com/app/xxx
-============================================================
-
-Press Ctrl+C to exit and release the session.
-```
+![OpenClaw 频道配置](images/image_01.png)
