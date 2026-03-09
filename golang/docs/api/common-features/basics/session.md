@@ -257,7 +257,8 @@ GetLink gets the link for this session. GetLink retrieves an access link for the
 
 Parameters:
   - protocolType: Protocol type for the link (optional, reserved for future use)
-  - port: Specific port number to access (must be in range [30100, 30199])
+  - port: Specific port number to access (default open range: [30100, 30199]; other ports require
+    whitelist approval via agentbay_dev@alibabacloud.com)
   - options: Additional options (optional)
 
 Returns:
@@ -267,7 +268,8 @@ Returns:
 Behavior:
 
 - Without port: Returns the default session access URL - With port: Returns URL for accessing
-specific port-mapped service - Port must be in range [30100, 30199] for port forwarding
+specific port-mapped service - Default open port range: [30100, 30199]; other ports require
+whitelist approval
 
 **Example:**
 

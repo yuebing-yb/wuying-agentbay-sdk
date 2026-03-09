@@ -94,7 +94,7 @@ API 文档：`http://localhost:8080/docs`
 
 会话创建成功后，返回的 `openclawUrl` 为 OpenClaw UI 的外部 HTTPS 链接，可直接在本地浏览器访问。
 
-**前置要求**：AgentBay Pro 或 Ultra 版本，`getLink` 支持端口 30100–30199。
+**前置要求**：AgentBay Pro 或 Ultra 版本，`getLink` 默认支持端口 30100–30199。如需开放其他端口，可发邮件至 agentbay_dev@alibabacloud.com 申请加白名单。
 
 ### 频道与模型配置
 

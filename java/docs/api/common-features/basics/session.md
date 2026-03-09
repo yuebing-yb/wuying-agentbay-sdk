@@ -473,13 +473,13 @@ This method generates a connection URL that can be used to access the session vi
 
 **Parameters:**
 - `protocolType` (String): The protocol type to use for the link (e.g., "https")
-- `port` (Integer): The port number to use for the connection (must be in range [30100, 30199])
+- `port` (Integer): The port number to use for the connection (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com)
 
 **Returns:**
 - `OperationResult`: OperationResult containing the connection link URL
 
 **Throws:**
-- `AgentBayException`: if the request fails or port is invalid
+- `AgentBayException`: if the request fails
 
 ### delete
 

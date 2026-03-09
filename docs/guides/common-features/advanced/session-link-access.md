@@ -73,7 +73,7 @@ Examples below use the async session (via `AsyncAgentBay`). For synchronous sess
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `protocol_type` | `str` | No | Protocol type: `"https"` or `"wss"`. If not specified, defaults to WSS for browser CDP endpoint |
-| `port` | `int` | No | Port number in range [30100, 30199] for custom services |
+| `port` | `int` | No | Port number for custom services. Default open range: [30100, 30199]; other ports require whitelist approval |
 | `options` | `str` | No | Optional passthrough string for backend options |
 
 ### Return Value
@@ -128,7 +128,7 @@ if result.success:
 
 ### Parameter Constraints
 
-- **Port Range**: Must be in [30100, 30199]
+- **Port Range**: The default open range is [30100, 30199]. If you need to expose a port outside this range, contact agentbay_dev@alibabacloud.com to request a whitelist entry.
 - **Protocol Types**: Only `"https"` and `"wss"` are supported; omit to use the default WebSocket/CDP endpoint
 - **Browser CDP**: Requires Browser Use image (e.g., `browser_latest`)
 - **Options**: Optional string passed through to the backend unchanged
@@ -137,9 +137,9 @@ if result.success:
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| "Invalid port value: <port>. Port must be an integer in the range [30100, 30199]." | Port outside valid range or not an integer | Use a port in the valid range |
 | "http not supported" | Using `protocol_type="http"` | Use `"https"` instead |
 | "only BrowserUse image support cdp" | Non-browser image with no parameters | Use `browser_latest` image or specify a service port |
+| Port not accessible | Port outside [30100, 30199] and not whitelisted | Use a port in the default range, or email agentbay_dev@alibabacloud.com to request a whitelist entry |
 
 ---
 
@@ -189,18 +189,7 @@ if __name__ == "__main__":
 
 ### Best Practices
 
-#### 1. Parameter Validation
-
-```python
-def safe_get_link(session, protocol_type=None, port=None):
-    """Safely get session link with validation"""
-    if port is not None and not (30100 <= port <= 30199):
-        raise ValueError(f"Port {port} outside valid range [30100, 30199]")
-    
-    return session.get_link(protocol_type=protocol_type, port=port)
-```
-
-#### 2. Error Handling
+#### 1. Error Handling
 
 ```python
 def robust_get_link(session, protocol_type=None, port=None):

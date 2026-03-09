@@ -210,7 +210,7 @@ Question 3: This service is...
 | You Write | What Happens | Correct Way |
 |-----------|--------------|-------------|
 | `get_link("https")` | ❌ Error: "port is not valid" | `get_link("https", 30150)` |
-| `get_link(port=8080)` | ❌ Error: "Port must be in 30100-30199" | `get_link(port=30150)` |
+| `get_link(port=8080)` | ❌ Port not accessible (not in default range) | `get_link(port=30150)` or request whitelist |
 | `get_link("http", 30150)` | ❌ Error: "http not supported" | `get_link("https", 30150)` |
 | Non-Browser Use image + `get_link()` | ❌ Error: "only BrowserUse image support cdp" | Use Browser Use image (e.g., `browser_latest`) |
 

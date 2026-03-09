@@ -1093,7 +1093,7 @@ export class Session {
    * Retrieves an access link for the session.
    *
    * @param protocolType - Protocol type for the link (optional, reserved for future use)
-   * @param port - Specific port number to access (must be in range [30100, 30199]).
+   * @param port - Specific port number to access (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com).
    *               If not specified, returns the default session link.
    *
    * @returns Promise resolving to OperationResult containing:
@@ -1119,7 +1119,7 @@ export class Session {
    * **Behavior:**
    * - Without port: Returns the default session access URL
    * - With port: Returns URL for accessing specific port-mapped service
-   * - Port must be in range [30100, 30199] for port forwarding
+   * - Default open port range: [30100, 30199]; other ports require whitelist approval
    * - For ADB connections, use `session.mobile.getAdbUrl()` with appropriate ADB public key
    *
    * **Best Practices:**
@@ -1135,15 +1135,6 @@ export class Session {
     options?: string
   ): Promise<OperationResult> {
     try {
-      // Validate port range if port is provided
-      if (port) {
-        if (!Number.isInteger(port) || port < 30100 || port > 30199) {
-          throw new Error(
-            `Invalid port value: ${port}. Port must be an integer in the range [30100, 30199].`
-          );
-        }
-      }
-
       // Log API call
       let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${
         protocolType || "default"
@@ -1214,7 +1205,7 @@ export class Session {
    * Asynchronously get a link associated with the current session.
    *
    * @param protocolType - Optional protocol type to use for the link
-   * @param port - Optional port to use for the link (must be in range [30100, 30199])
+   * @param port - Optional port to use for the link (default open range: [30100, 30199]; other ports require whitelist approval)
    * @returns OperationResult containing the link as data and request ID
    * @throws Error if the operation fails (matching Python SessionError)
    *
@@ -1235,15 +1226,6 @@ export class Session {
     options?: string
   ): Promise<OperationResult> {
     try {
-      // Validate port range if port is provided
-      if (port !== undefined) {
-        if (!Number.isInteger(port) || port < 30100 || port > 30199) {
-          throw new Error(
-            `Invalid port value: ${port}. Port must be an integer in the range [30100, 30199].`
-          );
-        }
-      }
-
       // Log API call
       let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${
         protocolType || "default"

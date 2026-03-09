@@ -1277,20 +1277,12 @@ public class Session {
      * This method generates a connection URL that can be used to access the session via the specified protocol and port.
      * 
      * @param protocolType The protocol type to use for the link (e.g., "https")
-     * @param port The port number to use for the connection (must be in range [30100, 30199])
+     * @param port The port number to use for the connection (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com)
      * @return OperationResult containing the connection link URL
-     * @throws AgentBayException if the request fails or port is invalid
+     * @throws AgentBayException if the request fails
      */
     public OperationResult getLink(String protocolType, Integer port) throws AgentBayException {
         try {
-            // Validate port range if port is provided
-            if (port != null) {
-                if (port < 30100 || port > 30199) {
-                    throw new AgentBayException(
-                        "Invalid port value: " + port + ". Port must be in the range [30100, 30199].");
-                }
-            }
-
             GetLinkRequest request = new GetLinkRequest();
             request.setAuthorization("Bearer " + getApiKey());
             request.setSessionId(sessionId);

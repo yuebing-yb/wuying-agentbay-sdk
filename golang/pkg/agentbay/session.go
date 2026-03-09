@@ -910,7 +910,7 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 //
 // Parameters:
 //   - protocolType: Protocol type for the link (optional, reserved for future use)
-//   - port: Specific port number to access (must be in range [30100, 30199])
+//   - port: Specific port number to access (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com)
 //   - options: Additional options (optional)
 //
 // Returns:
@@ -921,7 +921,7 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 //
 // - Without port: Returns the default session access URL
 // - With port: Returns URL for accessing specific port-mapped service
-// - Port must be in range [30100, 30199] for port forwarding
+// - Default open port range: [30100, 30199]; other ports require whitelist approval
 //
 // Example:
 //
@@ -931,13 +931,6 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 //	port := int32(30100)
 //	linkResult, _ := result.Session.GetLink(nil, &port, nil)
 func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*LinkResult, error) {
-	// Validate port range if port is provided
-	if port != nil {
-		if *port < 30100 || *port > 30199 {
-			return nil, fmt.Errorf("invalid port value: %d. Port must be an integer in the range [30100, 30199]", *port)
-		}
-	}
-
 	getLinkRequest := &mcp.GetLinkRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
 		SessionId:     tea.String(s.SessionID),
