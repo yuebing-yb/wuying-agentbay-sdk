@@ -16,6 +16,13 @@
 AgentEventCallback = Optional[Callable[[AgentEvent], None]]
 ```
 
+#### AsyncAgentEventCallback
+
+```python
+AsyncAgentEventCallback = Optional[Callable[[AgentEvent], Union[Awaitable[str],
+                     ...
+```
+
 ## AsyncAgent
 
 ```python
@@ -141,7 +148,8 @@ async def execute_task_and_wait(
         on_reasoning: AgentEventCallback = None,
         on_content: AgentEventCallback = None,
         on_tool_call: AgentEventCallback = None,
-        on_tool_result: AgentEventCallback = None) -> ExecutionResult
+        on_tool_result: AgentEventCallback = None,
+        on_call_for_user: AsyncAgentEventCallback = None) -> ExecutionResult
 ```
 
 Execute a task described in human language on a browser synchronously.
@@ -166,6 +174,8 @@ HTTP polling.
     on_content: Callback for content events (LLM content output).
     on_tool_call: Callback for tool_call events.
     on_tool_result: Callback for tool_result events.
+    on_call_for_user: Async callback for call_for_user tool_call events.
+  Returns the user's response string.
   
 
 **Returns**:

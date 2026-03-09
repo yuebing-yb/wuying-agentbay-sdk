@@ -36,6 +36,7 @@ class AgentEvent:
         tool_name: str = "",
         args: Optional[dict] = None,
         result: Optional[dict] = None,
+        prompt: str = "",
         error: Optional[dict] = None,
     ):
         self.type = type
@@ -46,6 +47,7 @@ class AgentEvent:
         self.tool_name = tool_name
         self.args = args or {}
         self.result = result or {}
+        self.prompt = prompt
         self.error = error or {}
 
     def __repr__(self) -> str:

@@ -478,3 +478,299 @@ class TestAgentStreaming:
         assert agent._has_streaming_params(on_event=lambda e: None) is True
         assert agent._has_streaming_params(on_reasoning=lambda e: None) is True
         assert agent._has_streaming_params(on_content=lambda e: None) is True
+        assert agent._has_streaming_params(on_call_for_user=lambda e: "yes") is True
+
+    async def test_agent_event_prompt_field(self):
+        """AgentEvent has a prompt field for call_for_user tool_call."""
+        from agentbay import AgentEvent
+
+        event = AgentEvent(
+            type="tool_call", seq=5, round=2,
+            tool_call_id="call_003", tool_name="call_for_user",
+            args={"prompt": "Do you want to continue?"},
+            prompt="Do you want to continue?",
+        )
+        assert event.prompt == "Do you want to continue?"
+        assert event.tool_name == "call_for_user"
+
+        event_no_prompt = AgentEvent(type="reasoning", seq=1, round=1, content="thinking")
+        assert event_no_prompt.prompt == ""
+
+    async def test_call_for_user_callback_invoked(self):
+        """on_call_for_user is invoked when tool_call with toolName=call_for_user arrives."""
+        async def ws_handler(ws):
+            req_raw = await ws.recv()
+            req = json.loads(req_raw)
+            invocation_id = req["invocationId"]
+            target = req["target"]
+
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 1, "round": 1,
+                    "eventType": "reasoning", "content": "Need user input.",
+                },
+            }))
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 2, "round": 1,
+                    "eventType": "tool_call",
+                    "toolCallId": "call_003",
+                    "toolName": "call_for_user",
+                    "args": {"prompt": "Please enter verification code"},
+                },
+            }))
+
+            resume_raw = await asyncio.wait_for(ws.recv(), timeout=5)
+            resume_msg = json.loads(resume_raw)
+
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 3, "round": 1,
+                    "eventType": "tool_result",
+                    "toolCallId": "call_003",
+                    "toolName": "call_for_user",
+                    "result": {"isError": False, "mime": {"text/plain": "385216"}},
+                },
+            }))
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {"phase": "end", "status": "finished", "taskResult": "Done."},
+            }))
+
+        server, ws_url = await self._start_ws_server(ws_handler)
+        try:
+            session = await self._create_session_with_ws(ws_url)
+            ws_client = await session._get_ws_client()
+
+            call_for_user_events = []
+
+            async def handle_call(event):
+                call_for_user_events.append(event)
+                return "385216"
+
+            result = await session.agent.computer.execute_task_and_wait(
+                task="Test call_for_user",
+                timeout=10,
+                stream_beta=True,
+                on_call_for_user=handle_call,
+            )
+
+            assert result.success is True
+            assert len(call_for_user_events) == 1
+            assert call_for_user_events[0].tool_name == "call_for_user"
+            assert call_for_user_events[0].prompt == "Please enter verification code"
+
+            await ws_client.close()
+        finally:
+            server.close()
+            await server.wait_closed()
+
+    async def test_call_for_user_sends_resume_task(self):
+        """After on_call_for_user returns, SDK sends resume_task upstream."""
+        resume_messages: list[dict] = []
+
+        async def ws_handler(ws):
+            req_raw = await ws.recv()
+            req = json.loads(req_raw)
+            invocation_id = req["invocationId"]
+            target = req["target"]
+
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 1, "round": 1,
+                    "eventType": "tool_call",
+                    "toolCallId": "call_003",
+                    "toolName": "call_for_user",
+                    "args": {"prompt": "Continue?"},
+                },
+            }))
+
+            resume_raw = await asyncio.wait_for(ws.recv(), timeout=5)
+            resume_msg = json.loads(resume_raw)
+            resume_messages.append(resume_msg)
+
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 2, "round": 1,
+                    "eventType": "tool_result",
+                    "toolCallId": "call_003",
+                    "toolName": "call_for_user",
+                    "result": {"isError": False, "mime": {"text/plain": "yes"}},
+                },
+            }))
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {"phase": "end", "status": "finished", "taskResult": "Done."},
+            }))
+
+        server, ws_url = await self._start_ws_server(ws_handler)
+        try:
+            session = await self._create_session_with_ws(ws_url)
+            ws_client = await session._get_ws_client()
+
+            async def handle_call(event):
+                return "yes"
+
+            result = await session.agent.computer.execute_task_and_wait(
+                task="Test resume_task",
+                timeout=10,
+                stream_beta=True,
+                on_call_for_user=handle_call,
+            )
+
+            assert result.success is True
+            assert len(resume_messages) == 1
+            resume_data = resume_messages[0]["data"]
+            assert resume_data["method"] == "resume_task"
+            assert resume_data["params"]["toolCallId"] == "call_003"
+            assert resume_data["params"]["response"] == "yes"
+
+            await ws_client.close()
+        finally:
+            server.close()
+            await server.wait_closed()
+
+    async def test_call_for_user_also_triggers_on_event_and_on_tool_call(self):
+        """call_for_user tool_call also triggers on_event and on_tool_call callbacks."""
+        async def ws_handler(ws):
+            req_raw = await ws.recv()
+            req = json.loads(req_raw)
+            invocation_id = req["invocationId"]
+            target = req["target"]
+
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 1, "round": 1,
+                    "eventType": "tool_call",
+                    "toolCallId": "call_003",
+                    "toolName": "call_for_user",
+                    "args": {"prompt": "Input code"},
+                },
+            }))
+
+            await asyncio.wait_for(ws.recv(), timeout=5)
+
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 2, "round": 1,
+                    "eventType": "tool_result",
+                    "toolCallId": "call_003",
+                    "toolName": "call_for_user",
+                    "result": {"isError": False, "mime": {"text/plain": "123456"}},
+                },
+            }))
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {"phase": "end", "status": "finished", "taskResult": "Done."},
+            }))
+
+        server, ws_url = await self._start_ws_server(ws_handler)
+        try:
+            session = await self._create_session_with_ws(ws_url)
+            ws_client = await session._get_ws_client()
+
+            all_events = []
+            tool_call_events = []
+
+            async def handle_call(event):
+                return "123456"
+
+            result = await session.agent.computer.execute_task_and_wait(
+                task="Test callbacks",
+                timeout=10,
+                stream_beta=True,
+                on_event=lambda e: all_events.append(e),
+                on_tool_call=lambda e: tool_call_events.append(e),
+                on_call_for_user=handle_call,
+            )
+
+            assert result.success is True
+            assert any(e.tool_name == "call_for_user" for e in all_events)
+            assert any(e.tool_name == "call_for_user" for e in tool_call_events)
+
+            await ws_client.close()
+        finally:
+            server.close()
+            await server.wait_closed()
+
+    async def test_call_for_user_no_callback_sends_empty_response(self):
+        """Without on_call_for_user callback, SDK sends empty string response."""
+        resume_messages: list[dict] = []
+
+        async def ws_handler(ws):
+            req_raw = await ws.recv()
+            req = json.loads(req_raw)
+            invocation_id = req["invocationId"]
+            target = req["target"]
+
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 1, "round": 1,
+                    "eventType": "tool_call",
+                    "toolCallId": "call_003",
+                    "toolName": "call_for_user",
+                    "args": {"prompt": "Input something"},
+                },
+            }))
+
+            resume_raw = await asyncio.wait_for(ws.recv(), timeout=5)
+            resume_msg = json.loads(resume_raw)
+            resume_messages.append(resume_msg)
+
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {
+                    "phase": "event", "seq": 2, "round": 1,
+                    "eventType": "tool_result",
+                    "toolCallId": "call_003",
+                    "toolName": "call_for_user",
+                    "result": {"isError": False, "mime": {"text/plain": ""}},
+                },
+            }))
+            await ws.send(json.dumps({
+                "invocationId": invocation_id,
+                "target": target,
+                "data": {"phase": "end", "status": "finished", "taskResult": "Done."},
+            }))
+
+        server, ws_url = await self._start_ws_server(ws_handler)
+        try:
+            session = await self._create_session_with_ws(ws_url)
+            ws_client = await session._get_ws_client()
+
+            result = await session.agent.computer.execute_task_and_wait(
+                task="Test no callback",
+                timeout=10,
+                stream_beta=True,
+            )
+
+            assert result.success is True
+            assert len(resume_messages) == 1
+            resume_data = resume_messages[0]["data"]
+            assert resume_data["method"] == "resume_task"
+            assert resume_data["params"]["response"] == ""
+
+            await ws_client.close()
+        finally:
+            server.close()
+            await server.wait_closed()

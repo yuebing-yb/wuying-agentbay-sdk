@@ -5,7 +5,8 @@ import time
 import asyncio
 import json
 import sys
-from typing import TYPE_CHECKING, Any, Callable, Type, Optional
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING, Any, Callable, Type, Optional, Union
 
 from .._common.exceptions import AgentBayError, AgentError
 from .._common.logger import get_logger
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
 _logger = get_logger("agent")
 
 AgentEventCallback = Optional[Callable[[AgentEvent], None]]
+SyncAgentEventCallback = Optional[Callable[[AgentEvent], Union[Awaitable[str], str]]]
 
 
 class Agent(BaseService):
@@ -175,8 +177,9 @@ class Agent(BaseService):
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
             on_tool_result: AgentEventCallback = None,
+            on_call_for_user: SyncAgentEventCallback = None,
         ) -> bool:
-            return stream_beta or any([on_event, on_reasoning, on_content, on_tool_call, on_tool_result])
+            return stream_beta or any([on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_call_for_user])
 
         def _resolve_agent_target(self) -> str:
             """Resolve the WS target for this agent from MCP tools list."""
@@ -204,6 +207,7 @@ class Agent(BaseService):
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
             on_tool_result: AgentEventCallback = None,
+            on_call_for_user: SyncAgentEventCallback = None,
         ) -> ExecutionResult:
             """Execute a task via WS streaming channel."""
             target = self._resolve_agent_target()
@@ -211,6 +215,7 @@ class Agent(BaseService):
 
             final_content_parts: list[str] = []
             last_error: Optional[dict] = None
+            _ws_handle: Optional[Any] = None
 
             def _dispatch_event(event: AgentEvent) -> None:
                 try:
@@ -229,6 +234,32 @@ class Agent(BaseService):
                         cb(event)
                 except Exception as ex:
                     _logger.warning(f"on_{event.type} callback error: {ex}")
+
+            def _handle_call_for_user(event: AgentEvent) -> None:
+                response = ""
+                if on_call_for_user:
+                    try:
+                        result = on_call_for_user(event)
+                        if asyncio.iscoroutine(result) or asyncio.isfuture(result):
+                            response = result
+                        else:
+                            response = result
+                    except Exception as ex:
+                        _logger.warning(f"on_call_for_user callback error: {ex}")
+                        response = ""
+                else:
+                    _logger.warning("Received call_for_user but no on_call_for_user callback is set, sending empty response")
+                if _ws_handle is not None:
+                    try:
+                        _ws_handle.write({
+                            "method": "resume_task",
+                            "params": {
+                                "toolCallId": event.tool_call_id,
+                                "response": response or "",
+                            },
+                        })
+                    except Exception as ex:
+                        _logger.warning(f"Failed to send resume_task: {ex}")
 
             def _on_event(invocation_id: str, data: dict[str, Any]) -> None:
                 nonlocal last_error
@@ -251,13 +282,18 @@ class Agent(BaseService):
                     )
                     _dispatch_event(event)
                 elif event_type == "tool_call":
+                    args = data.get("args", {})
+                    tool_name = data.get("toolName", "")
                     event = AgentEvent(
                         type="tool_call", seq=seq, round=round_num,
                         tool_call_id=data.get("toolCallId", ""),
-                        tool_name=data.get("toolName", ""),
-                        args=data.get("args", {}),
+                        tool_name=tool_name,
+                        args=args,
+                        prompt=args.get("prompt", "") if tool_name == "call_for_user" else "",
                     )
                     _dispatch_event(event)
+                    if tool_name == "call_for_user":
+                        asyncio.create_task(_handle_call_for_user(event))
                 elif event_type == "tool_result":
                     event = AgentEvent(
                         type="tool_result", seq=seq, round=round_num,
@@ -290,6 +326,7 @@ class Agent(BaseService):
                 on_end=None,
                 on_error=_on_error,
             )
+            _ws_handle = handle
 
             try:
                 end_data = asyncio.wait_for(handle.wait_end(), timeout=timeout)
@@ -347,6 +384,7 @@ class Agent(BaseService):
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
             on_tool_result: AgentEventCallback = None,
+            on_call_for_user: SyncAgentEventCallback = None,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
@@ -367,6 +405,8 @@ class Agent(BaseService):
                 on_content: Callback for content events (LLM content output).
                 on_tool_call: Callback for tool_call events.
                 on_tool_result: Callback for tool_result events.
+                on_call_for_user: Async callback for call_for_user tool_call events.
+                    Returns the user's response string.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -382,7 +422,7 @@ class Agent(BaseService):
                 ```
             """
             if self._has_streaming_params(
-                stream_beta, on_event, on_reasoning, on_content, on_tool_call, on_tool_result
+                stream_beta, on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_call_for_user
             ):
                 return self._execute_task_stream_ws(
                     task_params={"task": task},
@@ -393,6 +433,7 @@ class Agent(BaseService):
                     on_content=on_content,
                     on_tool_call=on_tool_call,
                     on_tool_result=on_tool_result,
+                    on_call_for_user=on_call_for_user,
                 )
 
             poll_interval = 3
@@ -787,6 +828,7 @@ class Agent(BaseService):
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
             on_tool_result: AgentEventCallback = None,
+            on_call_for_user: SyncAgentEventCallback = None,
         ) -> ExecutionResult:
             """
             Execute a task described in human language on a browser synchronously.
@@ -810,6 +852,8 @@ class Agent(BaseService):
                 on_content: Callback for content events (LLM content output).
                 on_tool_call: Callback for tool_call events.
                 on_tool_result: Callback for tool_result events.
+                on_call_for_user: Async callback for call_for_user tool_call events.
+                    Returns the user's response string.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -840,7 +884,7 @@ class Agent(BaseService):
                     )
 
             if self._has_streaming_params(
-                stream_beta, on_event, on_reasoning, on_content, on_tool_call, on_tool_result
+                stream_beta, on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_call_for_user
             ):
                 task_params = {
                     "task": task,
@@ -858,6 +902,7 @@ class Agent(BaseService):
                     on_content=on_content,
                     on_tool_call=on_tool_call,
                     on_tool_result=on_tool_result,
+                    on_call_for_user=on_call_for_user,
                 )
 
             poll_interval = 3
