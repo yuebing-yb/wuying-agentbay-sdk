@@ -29,12 +29,16 @@
 
 ---
 
-## 🔥 OpenClaw (formerly Clawdbot) Quick Deployment
+## 🔥 OpenClaw Quick Deployment
 
-You can use AgentBay SDK to spin up a prebuilt OpenClaw cloud desktop in minutes, then open the OpenClaw console inside the desktop browser.
+Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes with a turnkey web management UI.
 
-- **Cookbook**: `cookbook/openclaw/`
-- **OpenClaw console**: open `http://127.0.0.1:30120` inside the cloud desktop
+| Implementation | Stack | Get Started |
+|---------------|-------|-------------|
+| [Python](cookbook/openclaw/python/) | FastAPI + React | `pip install -r requirements.txt && python main.py` |
+| [Java](cookbook/openclaw/java/) | Spring Boot + React | `mvn clean compile && mvn spring-boot:run` |
+
+Both include Context persistence, external HTTPS access via `getLink`, and custom model configuration. Visit `http://localhost:8080` after launch.
 
 ## 📦 Installation
 
