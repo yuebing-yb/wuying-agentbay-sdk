@@ -214,6 +214,18 @@ Question 3: This service is...
 | `get_link("http", 30150)` | ❌ Error: "http not supported" | `get_link("https", 30150)` |
 | Non-Browser Use image + `get_link()` | ❌ Error: "only BrowserUse image support cdp" | Use Browser Use image (e.g., `browser_latest`) |
 
+### SSE / Streaming Responses
+
+If your service uses Server-Sent Events (SSE) or any streaming HTTP response, you **must** add the `X-Accel-Buffering: no` header to the response. Without it, the proxy will buffer the entire response and deliver it all at once (or timeout).
+
+```python
+# Flask SSE example
+resp = Response(event_stream(), mimetype="text/event-stream")
+resp.headers["X-Accel-Buffering"] = "no"  # Required for SSE
+```
+
+See [Session Link Access - SSE Support](../advanced/session-link-access.md#server-sent-events-sse-support) for a complete example.
+
 ---
 
 ## Complete Code Examples

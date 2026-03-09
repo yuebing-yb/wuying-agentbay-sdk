@@ -187,6 +187,33 @@ if __name__ == "__main__":
     asyncio.run(get_multiple_links())
 ```
 
+### Server-Sent Events (SSE) Support
+
+The HTTPS links returned by `get_link` go through a reverse proxy that **buffers responses by default**. This works well for normal HTTP requests, but breaks SSE (Server-Sent Events) streaming because the proxy waits for the complete response before forwarding.
+
+**To enable SSE streaming**, your service must include the `X-Accel-Buffering: no` header in SSE responses. This tells the proxy to switch to streaming mode for that response.
+
+```python
+from flask import Flask, Response
+import json, time
+
+app = Flask(__name__)
+
+def event_stream():
+    for i in range(10):
+        yield f"data: {json.dumps({'counter': i})}\n\n"
+        time.sleep(1)
+
+@app.route("/sse")
+def sse():
+    resp = Response(event_stream(), mimetype="text/event-stream")
+    resp.headers["Cache-Control"] = "no-cache"
+    resp.headers["X-Accel-Buffering"] = "no"  # Required for SSE through the proxy
+    return resp
+```
+
+> **Important**: Without the `X-Accel-Buffering: no` header, SSE events will be buffered and delivered all at once when the connection closes (or trigger a timeout). This also applies to any streaming HTTP response that uses chunked transfer encoding.
+
 ### Best Practices
 
 #### 1. Error Handling
