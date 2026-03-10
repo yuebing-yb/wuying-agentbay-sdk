@@ -171,15 +171,15 @@ class Agent(BaseService):
 
         def _has_streaming_params(
             self,
-            stream_beta: bool = False,
             on_event: AgentEventCallback = None,
             on_reasoning: AgentEventCallback = None,
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
             on_tool_result: AgentEventCallback = None,
+            on_error: AgentEventCallback = None,
             on_call_for_user: SyncAgentEventCallback = None,
         ) -> bool:
-            return stream_beta or any([on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_call_for_user])
+            return any([on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_error, on_call_for_user])
 
         def _resolve_agent_target(self) -> str:
             """Resolve the WS target for this agent from MCP tools list."""
@@ -201,12 +201,12 @@ class Agent(BaseService):
             self,
             task_params: dict,
             timeout: int,
-            stream: bool,
             on_event: AgentEventCallback = None,
             on_reasoning: AgentEventCallback = None,
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
             on_tool_result: AgentEventCallback = None,
+            on_error: AgentEventCallback = None,
             on_call_for_user: SyncAgentEventCallback = None,
         ) -> ExecutionResult:
             """Execute a task via WS streaming channel."""
@@ -229,6 +229,7 @@ class Agent(BaseService):
                         "content": on_content,
                         "tool_call": on_tool_call,
                         "tool_result": on_tool_result,
+                        "error": on_error,
                     }.get(event.type)
                     if cb:
                         cb(event)
@@ -319,7 +320,6 @@ class Agent(BaseService):
                 target=target,
                 data={
                     "method": "exec_task",
-                    "stream": stream,
                     "params": task_params,
                 },
                 on_event=_on_event,
@@ -378,13 +378,6 @@ class Agent(BaseService):
             self,
             task: str,
             timeout: int,
-            stream_beta: bool = False,
-            on_event: AgentEventCallback = None,
-            on_reasoning: AgentEventCallback = None,
-            on_content: AgentEventCallback = None,
-            on_tool_call: AgentEventCallback = None,
-            on_tool_result: AgentEventCallback = None,
-            on_call_for_user: SyncAgentEventCallback = None,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
@@ -392,21 +385,9 @@ class Agent(BaseService):
             This is a synchronous interface that blocks until the task is completed or
             an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
-            When ``stream_beta`` or any ``on_*`` callback is provided, the method uses
-            the WebSocket streaming channel for real-time event delivery instead of
-            HTTP polling.
-
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
-                stream_beta: Enable token-level streaming via WebSocket.
-                on_event: Callback for all event types.
-                on_reasoning: Callback for reasoning events (LLM reasoning_content).
-                on_content: Callback for content events (LLM content output).
-                on_tool_call: Callback for tool_call events.
-                on_tool_result: Callback for tool_result events.
-                on_call_for_user: Async callback for call_for_user tool_call events.
-                    Returns the user's response string.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -421,21 +402,6 @@ class Agent(BaseService):
                 session.delete()
                 ```
             """
-            if self._has_streaming_params(
-                stream_beta, on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_call_for_user
-            ):
-                return self._execute_task_stream_ws(
-                    task_params={"task": task},
-                    timeout=timeout,
-                    stream=stream_beta,
-                    on_event=on_event,
-                    on_reasoning=on_reasoning,
-                    on_content=on_content,
-                    on_tool_call=on_tool_call,
-                    on_tool_result=on_tool_result,
-                    on_call_for_user=on_call_for_user,
-                )
-
             poll_interval = 3
             max_poll_attempts = timeout // poll_interval
 
@@ -822,13 +788,6 @@ class Agent(BaseService):
             use_vision: bool = False,
             output_schema: Type[Schema] = None,
             full_page_screenshot: Optional[bool] = False,
-            stream_beta: bool = False,
-            on_event: AgentEventCallback = None,
-            on_reasoning: AgentEventCallback = None,
-            on_content: AgentEventCallback = None,
-            on_tool_call: AgentEventCallback = None,
-            on_tool_result: AgentEventCallback = None,
-            on_call_for_user: SyncAgentEventCallback = None,
         ) -> ExecutionResult:
             """
             Execute a task described in human language on a browser synchronously.
@@ -836,24 +795,12 @@ class Agent(BaseService):
             This is a synchronous interface that blocks until the task is completed or
             an error occurs, or timeout happens. The default polling interval is 3 seconds.
 
-            When ``stream_beta`` or any ``on_*`` callback is provided, the method uses
-            the WebSocket streaming channel for real-time event delivery instead of
-            HTTP polling.
-
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
                 use_vision: Whether to use vision to perform the task.
                 output_schema: The schema of the structured output.
                 full_page_screenshot: Whether to take a full page screenshot.
-                stream_beta: Enable token-level streaming via WebSocket.
-                on_event: Callback for all event types.
-                on_reasoning: Callback for reasoning events (LLM reasoning_content).
-                on_content: Callback for content events (LLM content output).
-                on_tool_call: Callback for tool_call events.
-                on_tool_result: Callback for tool_result events.
-                on_call_for_user: Async callback for call_for_user tool_call events.
-                    Returns the user's response string.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -882,28 +829,6 @@ class Agent(BaseService):
                         task_status="failed",
                         task_id="",
                     )
-
-            if self._has_streaming_params(
-                stream_beta, on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_call_for_user
-            ):
-                task_params = {
-                    "task": task,
-                    "use_vision": use_vision,
-                    "full_page_screenshot": full_page_screenshot,
-                }
-                schema_cls = output_schema if output_schema else DefaultSchema
-                task_params["output_schema"] = json.dumps(schema_cls.model_json_schema())
-                return self._execute_task_stream_ws(
-                    task_params=task_params,
-                    timeout=timeout,
-                    stream=stream_beta,
-                    on_event=on_event,
-                    on_reasoning=on_reasoning,
-                    on_content=on_content,
-                    on_tool_call=on_tool_call,
-                    on_tool_result=on_tool_result,
-                    on_call_for_user=on_call_for_user,
-                )
 
             poll_interval = 3
             max_poll_attempts = timeout // poll_interval
@@ -1127,6 +1052,13 @@ class Agent(BaseService):
             task: str,
             timeout: int,
             max_steps: int = 50,
+            on_event: AgentEventCallback = None,
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
+            on_error: AgentEventCallback = None,
+            on_call_for_user: SyncAgentEventCallback = None,
         ) -> ExecutionResult:
             """
             Execute a specific task described in human language synchronously.
@@ -1135,6 +1067,9 @@ class Agent(BaseService):
             completed or an error occurs, or timeout happens. The default
             polling interval is 3 seconds.
 
+            When any ``on_*`` callback is provided, the method uses the WebSocket
+            streaming channel for real-time event delivery instead of HTTP polling.
+
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
@@ -1142,6 +1077,14 @@ class Agent(BaseService):
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
+                on_event: Callback for all event types.
+                on_reasoning: Callback for reasoning events (LLM reasoning_content).
+                on_content: Callback for content events (LLM content output).
+                on_tool_call: Callback for tool_call events.
+                on_tool_result: Callback for tool_result events.
+                on_error: Callback for error events.
+                on_call_for_user: Async callback for call_for_user tool_call events.
+                    Returns the user's response string.
 
             Returns:
                 ExecutionResult: Result object containing success status, task ID,
@@ -1160,6 +1103,25 @@ class Agent(BaseService):
                 session.delete()
                 ```
             """
+            if self._has_streaming_params(
+                on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_error, on_call_for_user
+            ):
+                task_params = {
+                    "task": task,
+                    "max_steps": max_steps,
+                }
+                return self._execute_task_stream_ws(
+                    task_params=task_params,
+                    timeout=timeout,
+                    on_event=on_event,
+                    on_reasoning=on_reasoning,
+                    on_content=on_content,
+                    on_tool_call=on_tool_call,
+                    on_tool_result=on_tool_result,
+                    on_error=on_error,
+                    on_call_for_user=on_call_for_user,
+                )
+
             args = {
                 "task": task,
                 "max_steps": max_steps,
@@ -1187,7 +1149,20 @@ class Agent(BaseService):
                         task_result="Task Failed",
                     )
 
-                content = json.loads(result.data)
+                try:
+                    content = json.loads(result.data)
+                except (json.JSONDecodeError, ValueError):
+                    # Mobile agent may execute the task synchronously and return
+                    # the result as plain text instead of JSON with taskId.
+                    return ExecutionResult(
+                        request_id=result.request_id,
+                        success=True,
+                        error_message="",
+                        task_status="completed",
+                        task_id="",
+                        task_result=result.data,
+                    )
+
                 task_id = content.get("taskId") or content.get("task_id", "")
 
                 if not task_id:

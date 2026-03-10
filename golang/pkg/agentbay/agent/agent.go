@@ -48,12 +48,12 @@ type AgentEventCallback func(event AgentEvent)
 
 // StreamOptions holds streaming callback options for ExecuteTaskAndWaitStream.
 type StreamOptions struct {
-	StreamBeta   bool
 	OnEvent      AgentEventCallback
 	OnReasoning  AgentEventCallback
 	OnContent    AgentEventCallback
 	OnToolCall   AgentEventCallback
 	OnToolResult AgentEventCallback
+	OnError      AgentEventCallback
 }
 
 // QueryResult represents the result of query operations
@@ -399,7 +399,6 @@ func (b *baseTaskAgent) executeTaskStreamWs(taskParams map[string]interface{}, t
 		target,
 		map[string]interface{}{
 			"method": "exec_task",
-			"stream": opts.StreamBeta,
 			"params": taskParams,
 		},
 		func(_ string, data map[string]interface{}) {
@@ -408,40 +407,25 @@ func (b *baseTaskAgent) executeTaskStreamWs(taskParams map[string]interface{}, t
 			round, _ := toIntAgent(data["round"])
 
 			evt := AgentEvent{Type: eventType, Seq: seq, Round: round}
-			if opts.OnEvent != nil {
-				opts.OnEvent(evt)
-			}
 
 			switch eventType {
 			case "reasoning":
 				evt.Content, _ = data["content"].(string)
-				if opts.OnReasoning != nil {
-					opts.OnReasoning(evt)
-				}
 			case "content":
 				contentText, _ := data["content"].(string)
 				contentParts = append(contentParts, contentText)
 				evt.Content = contentText
-				if opts.OnContent != nil {
-					opts.OnContent(evt)
-				}
 			case "tool_call":
 				evt.ToolCallID, _ = data["toolCallId"].(string)
 				evt.ToolName, _ = data["toolName"].(string)
 				if args, ok := data["args"].(map[string]interface{}); ok {
 					evt.Args = args
 				}
-				if opts.OnToolCall != nil {
-					opts.OnToolCall(evt)
-				}
 			case "tool_result":
 				evt.ToolCallID, _ = data["toolCallId"].(string)
 				evt.ToolName, _ = data["toolName"].(string)
 				if res, ok := data["result"].(map[string]interface{}); ok {
 					evt.Result = res
-				}
-				if opts.OnToolResult != nil {
-					opts.OnToolResult(evt)
 				}
 			case "error":
 				if e, ok := data["error"].(map[string]interface{}); ok {
@@ -450,9 +434,21 @@ func (b *baseTaskAgent) executeTaskStreamWs(taskParams map[string]interface{}, t
 					lastError = data
 				}
 				evt.Error = lastError
-				if opts.OnEvent != nil {
-					opts.OnEvent(evt)
-				}
+			}
+
+			if opts.OnEvent != nil {
+				opts.OnEvent(evt)
+			}
+
+			typedCb := map[string]AgentEventCallback{
+				"reasoning":   opts.OnReasoning,
+				"content":     opts.OnContent,
+				"tool_call":   opts.OnToolCall,
+				"tool_result": opts.OnToolResult,
+				"error":       opts.OnError,
+			}
+			if cb, ok := typedCb[eventType]; ok && cb != nil {
+				cb(evt)
 			}
 		},
 		func(_ string, _ map[string]interface{}) {},
@@ -833,12 +829,6 @@ func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, timeout int) *Executi
 	return a.baseTaskAgent.executeTaskAndWait(task, timeout)
 }
 
-// ExecuteTaskAndWaitStream executes a task via WebSocket streaming and waits for completion.
-// Use StreamOptions to enable streaming and register event callbacks.
-func (a *ComputerUseAgent) ExecuteTaskAndWaitStream(task string, timeout int, opts StreamOptions) *ExecutionResult {
-	return a.baseTaskAgent.executeTaskStreamWs(map[string]interface{}{"task": task}, timeout, opts)
-}
-
 // GetTaskStatus gets the status of the task with the given task ID
 //
 // Example:
@@ -1064,30 +1054,6 @@ result = await session.Agent.Browser.ExecuteTaskAndWait(task="Query the weather 
 fmt.Printf("Task status: %s\n", executionResult.TaskStatus)
 ```
 */
-func (a *BrowserUseAgent) ExecuteTaskAndWaitStream(task string, timeout int, useVision bool, outputSchema interface{}, fullPageScreenshot bool, opts StreamOptions) *ExecutionResult {
-	if !a.initialized {
-		fmt.Printf("Browser is not initialized yet, initializing now\n")
-		success, err := a.Initialize(&browser.BrowserOption{})
-		if err != nil || !success {
-			fmt.Printf("❌BrowserInitializationFailed: %v", err)
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: ""},
-				Success:      false,
-				ErrorMessage: "BrowserInitializationFailed",
-				TaskStatus:   "failed",
-				TaskID:       "",
-			}
-		}
-	}
-	taskParams := map[string]interface{}{
-		"task":                  task,
-		"use_vision":            useVision,
-		"full_page_screenshot":  fullPageScreenshot,
-		"output_schema":          generateJsonSchema(outputSchema),
-	}
-	return a.baseTaskAgent.executeTaskStreamWs(taskParams, timeout, opts)
-}
-
 func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_vision bool, output_schema interface{}) *ExecutionResult {
 	result := a.ExecuteTask(task, use_vision, output_schema)
 	if !result.Success {
@@ -1261,12 +1227,14 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
 
 	var content map[string]interface{}
 	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		// Mobile agent may execute the task synchronously and return
+		// the result as plain text instead of JSON with taskId.
 		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskStatus:   "failed",
-			TaskID:       "",
+			ApiResponse: models.ApiResponse{RequestID: result.RequestID},
+			Success:     true,
+			TaskStatus:  "completed",
+			TaskID:      "",
+			TaskResult:  result.Data,
 		}
 	}
 
@@ -1275,7 +1243,6 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
 		taskID, ok = content["task_id"].(string)
 	}
 	if !ok {
-		// 从后端返回的content中提取error信息
 		errorMessage := "Task ID not found in response"
 		if errorVal, exists := content["error"]; exists {
 			if errorStr, ok := errorVal.(string); ok {
@@ -1297,6 +1264,26 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
 		TaskID:      taskID,
 		TaskStatus:  "running",
 	}
+}
+
+// ExecuteTaskAndWaitStream executes a task on a mobile device via WebSocket streaming
+// and waits for completion. Use StreamOptions to register event callbacks for real-time
+// streaming output (reasoning, content, tool_call, tool_result events).
+//
+// When any callback in StreamOptions is set, the task execution uses WebSocket
+// streaming instead of HTTP polling. The streaming granularity is determined by
+// the backend.
+//
+// Example:
+//
+//	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWaitStream("Open Settings app", 50, 180, agent.StreamOptions{
+//	    OnEvent: func(event agent.AgentEvent) { fmt.Println(event.Type, event.Content) },
+//	})
+func (a *MobileUseAgent) ExecuteTaskAndWaitStream(task string, maxSteps int, timeout int, opts StreamOptions) *ExecutionResult {
+	return a.baseTaskAgent.executeTaskStreamWs(map[string]interface{}{
+		"task":      task,
+		"max_steps": maxSteps,
+	}, timeout, opts)
 }
 
 // ExecuteTaskAndWait executes a specific task described in human language
@@ -1343,13 +1330,14 @@ func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout i
 
 	var content map[string]interface{}
 	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		// Mobile agent may execute the task synchronously and return
+		// the result as plain text instead of JSON with taskId.
 		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskStatus:   "failed",
-			TaskID:       "",
-			TaskResult:   "Invalid execution response.",
+			ApiResponse: models.ApiResponse{RequestID: result.RequestID},
+			Success:     true,
+			TaskStatus:  "completed",
+			TaskID:      "",
+			TaskResult:  result.Data,
 		}
 	}
 

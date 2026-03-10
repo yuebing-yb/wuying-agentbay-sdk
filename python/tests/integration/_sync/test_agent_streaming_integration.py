@@ -61,7 +61,7 @@ def mobile_streaming_session(agent_bay):
 
 @pytest.mark.sync
 def test_mobile_streaming_with_on_event(mobile_streaming_session):
-    """Test mobile agent streaming with on_event callback (stream=False, step-level events)."""
+    """Test mobile agent streaming with on_event callback."""
     agent = mobile_streaming_session.agent
     events_received = []
 
@@ -75,19 +75,18 @@ def test_mobile_streaming_with_on_event(mobile_streaming_session):
         print()
 
     print(f"\n{'='*60}")
-    print("🚀 Testing mobile agent streaming with on_event (stream=False)")
+    print("Testing mobile agent streaming with on_event")
     print(f"{'='*60}")
 
     result = agent.mobile.execute_task_and_wait(
         task="Open Settings app",
         timeout=180,
         max_steps=10,
-        stream_beta=False,
         on_event=on_event,
     )
 
     print(f"\n{'='*60}")
-    print(f"📋 Result:")
+    print(f"Result:")
     print(f"  Success: {result.success}")
     print(f"  Status: {result.task_status}")
     print(f"  Error: {result.error_message}")
@@ -106,16 +105,20 @@ def test_mobile_streaming_with_on_event(mobile_streaming_session):
 
 @pytest.mark.sync
 def test_mobile_streaming_with_typed_callbacks(mobile_streaming_session):
-    """Test mobile agent streaming with typed callbacks (on_thought, on_tool_call, etc.)."""
+    """Test mobile agent streaming with typed callbacks (on_reasoning, on_tool_call, etc.)."""
     agent = mobile_streaming_session.agent
-    thoughts = []
+    reasoning_events = []
+    content_events = []
     tool_calls = []
     tool_results = []
-    responses = []
 
-    def on_thought(event: AgentEvent):
-        thoughts.append(event)
-        print(f"  [Thought] round={event.round}: {event.content[:100]}...")
+    def on_reasoning(event: AgentEvent):
+        reasoning_events.append(event)
+        print(f"  [Reasoning] round={event.round}: {event.content[:100]}...")
+
+    def on_content(event: AgentEvent):
+        content_events.append(event)
+        print(f"  [Content] round={event.round}: {event.content[:100]}...")
 
     def on_tool_call(event: AgentEvent):
         tool_calls.append(event)
@@ -126,33 +129,28 @@ def test_mobile_streaming_with_typed_callbacks(mobile_streaming_session):
         result_preview = str(event.result)[:100]
         print(f"  [ToolResult] round={event.round}: {event.tool_name} -> {result_preview}...")
 
-    def on_response(event: AgentEvent):
-        responses.append(event)
-        print(f"  [Response] round={event.round}: {event.content[:100]}...")
-
     print(f"\n{'='*60}")
-    print("🚀 Testing mobile agent streaming with typed callbacks (stream=False)")
+    print("Testing mobile agent streaming with typed callbacks")
     print(f"{'='*60}")
 
     result = agent.mobile.execute_task_and_wait(
         task="Open Settings app",
         timeout=180,
         max_steps=10,
-        stream_beta=False,
-        on_thought=on_thought,
+        on_reasoning=on_reasoning,
+        on_content=on_content,
         on_tool_call=on_tool_call,
         on_tool_result=on_tool_result,
-        on_response=on_response,
     )
 
     print(f"\n{'='*60}")
-    print(f"📋 Result:")
+    print(f"Result:")
     print(f"  Success: {result.success}")
     print(f"  Status: {result.task_status}")
-    print(f"  Thoughts: {len(thoughts)}")
+    print(f"  Reasoning events: {len(reasoning_events)}")
+    print(f"  Content events: {len(content_events)}")
     print(f"  Tool Calls: {len(tool_calls)}")
     print(f"  Tool Results: {len(tool_results)}")
-    print(f"  Responses: {len(responses)}")
     print(f"{'='*60}\n")
 
     assert isinstance(result.task_status, str), "task_status should be a string"
@@ -160,28 +158,28 @@ def test_mobile_streaming_with_typed_callbacks(mobile_streaming_session):
 
 @pytest.mark.sync
 def test_mobile_streaming_token_level(mobile_streaming_session):
-    """Test mobile agent streaming with stream=True (token-level streaming)."""
+    """Test mobile agent streaming with on_event + on_content for real-time output."""
     agent = mobile_streaming_session.agent
     all_events = []
-    thought_chunks = []
-    response_chunks = []
+    reasoning_chunks = []
+    content_chunks = []
 
     def on_event(event: AgentEvent):
         all_events.append(event)
 
-    def on_thought(event: AgentEvent):
-        thought_chunks.append(event.content)
+    def on_reasoning(event: AgentEvent):
+        reasoning_chunks.append(event.content)
         print(event.content, end="", flush=True)
 
-    def on_response(event: AgentEvent):
-        response_chunks.append(event.content)
+    def on_content(event: AgentEvent):
+        content_chunks.append(event.content)
         print(event.content, end="", flush=True)
 
     def on_tool_call(event: AgentEvent):
         print(f"\n  [ToolCall] {event.tool_name}({event.args})")
 
     print(f"\n{'='*60}")
-    print("🚀 Testing mobile agent streaming with stream=True (token-level)")
+    print("Testing mobile agent streaming with real-time output")
     print(f"{'='*60}")
     print("\nStreaming output:")
 
@@ -189,20 +187,19 @@ def test_mobile_streaming_token_level(mobile_streaming_session):
         task="Open Settings app",
         timeout=180,
         max_steps=10,
-        stream_beta=True,
         on_event=on_event,
-        on_thought=on_thought,
+        on_reasoning=on_reasoning,
+        on_content=on_content,
         on_tool_call=on_tool_call,
-        on_response=on_response,
     )
 
     print(f"\n\n{'='*60}")
-    print(f"📋 Result:")
+    print(f"Result:")
     print(f"  Success: {result.success}")
     print(f"  Status: {result.task_status}")
     print(f"  Total events: {len(all_events)}")
-    print(f"  Thought chunks: {len(thought_chunks)}")
-    print(f"  Response chunks: {len(response_chunks)}")
+    print(f"  Reasoning chunks: {len(reasoning_chunks)}")
+    print(f"  Content chunks: {len(content_chunks)}")
     if result.task_result:
         print(f"  Task Result: {result.task_result[:200]}")
     print(f"{'='*60}\n")
@@ -210,9 +207,9 @@ def test_mobile_streaming_token_level(mobile_streaming_session):
     assert isinstance(result.task_status, str), "task_status should be a string"
     assert len(all_events) > 0, "Should have received at least one event"
 
-    if thought_chunks:
-        full_thought = "".join(thought_chunks)
-        print(f"Reconstructed thought: {full_thought[:200]}...")
-    if response_chunks:
-        full_response = "".join(response_chunks)
-        print(f"Reconstructed response: {full_response[:200]}...")
+    if reasoning_chunks:
+        full_reasoning = "".join(reasoning_chunks)
+        print(f"Reconstructed reasoning: {full_reasoning[:200]}...")
+    if content_chunks:
+        full_content = "".join(content_chunks)
+        print(f"Reconstructed content: {full_content[:200]}...")

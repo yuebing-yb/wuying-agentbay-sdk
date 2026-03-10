@@ -79,12 +79,12 @@ export interface McpSession {
  * Options for executeTaskAndWait when using WebSocket streaming.
  */
 export interface AgentStreamingOptions {
-  streamBeta?: boolean;
   onEvent?: AgentEventCallback;
   onReasoning?: AgentEventCallback;
   onContent?: AgentEventCallback;
   onToolCall?: AgentEventCallback;
   onToolResult?: AgentEventCallback;
+  onError?: AgentEventCallback;
 }
 
 /**
@@ -123,12 +123,12 @@ abstract class BaseTaskAgent {
   protected hasStreamingParams(options?: AgentStreamingOptions): boolean {
     if (!options) return false;
     return !!(
-      options.streamBeta ||
       options.onEvent ||
       options.onReasoning ||
       options.onContent ||
       options.onToolCall ||
-      options.onToolResult
+      options.onToolResult ||
+      options.onError
     );
   }
 
@@ -160,10 +160,9 @@ abstract class BaseTaskAgent {
   protected async executeTaskStreamWs(params: {
     taskParams: Record<string, any>;
     timeout: number;
-    stream: boolean;
     options?: AgentStreamingOptions;
   }): Promise<ExecutionResult> {
-    const { taskParams, timeout, stream, options } = params;
+    const { taskParams, timeout, options } = params;
     const sessionWithWs = this.session as McpSession & {
       getWsClient?: () => Promise<{ callStream: (p: any) => Promise<{ waitEnd: () => Promise<any>; cancel: () => Promise<void>; invocationId: string }> }>;
     };
@@ -195,6 +194,7 @@ abstract class BaseTaskAgent {
         content: options?.onContent,
         tool_call: options?.onToolCall,
         tool_result: options?.onToolResult,
+        error: options?.onError,
       }[event.type];
       if (cb) {
         try {
@@ -211,7 +211,6 @@ abstract class BaseTaskAgent {
       target,
       data: {
         method: 'exec_task',
-        stream,
         params: taskParams,
       },
       onEvent: (_invocationId: string, data: any) => {
@@ -398,21 +397,11 @@ abstract class BaseTaskAgent {
    * Execute a specific task described in human language synchronously.
    * This is a synchronous interface that blocks until the task is completed or
    * an error occurs, or timeout happens. The default polling interval is 3 seconds.
-   * When streamBeta or any on* callback is provided, uses WebSocket streaming instead of HTTP polling.
    */
   async executeTaskAndWait(
     task: string,
     timeout: number,
-    options?: AgentStreamingOptions
   ): Promise<ExecutionResult> {
-    if (this.hasStreamingParams(options)) {
-      return this.executeTaskStreamWs({
-        taskParams: { task },
-        timeout,
-        stream: options!.streamBeta ?? false,
-        options,
-      });
-    }
     const result = await this.executeTask(task);
     if (!result.success) {
       return result;
@@ -698,8 +687,6 @@ export class BrowserUseAgent extends BaseTaskAgent {
      * @param task - Task description in human language.
        * @param use_vision - Whether to use vision in the task.
        * @param output_schema - Optional Zod schema for a structured task output if you need.
-       * @param options - Optional streaming options. When streamBeta or any on* callback is provided,
-       *     uses WebSocket streaming instead of HTTP polling.
        * @returns ExecutionResult containing success status, task ID, task status,
        *     and error message if any.
      *
@@ -821,7 +808,6 @@ export class BrowserUseAgent extends BaseTaskAgent {
        * @param timeout - Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion.
        * @param use_vision - Whether to use vision in the task.
        * @param output_schema - Optional Zod schema for a structured task output if you need.
-       * @param options - Optional streaming options. When streamBeta or any on* callback is provided, uses WebSocket streaming.
        * @returns ExecutionResult containing success status, task ID, task status,
        *     and error message if any.
        *
@@ -854,27 +840,10 @@ export class BrowserUseAgent extends BaseTaskAgent {
   async executeTaskAndWait<TSchema extends ZodTypeAny>(
     task: string,
     timeout: number,
-    use_vision_or_options?: boolean | AgentStreamingOptions,
+    use_vision?: boolean,
     output_schema?: TSchema,
-    options_param?: AgentStreamingOptions
   ): Promise<ExecutionResult> {
-    // Support both (task, timeout, options) from base and (task, timeout, use_vision, output_schema, options)
-    let use_vision: boolean;
-    let output_schema_resolved: TSchema | undefined;
-    let options: AgentStreamingOptions | undefined;
-    const isOptionsObject =
-      typeof use_vision_or_options === 'object' &&
-      use_vision_or_options !== null &&
-      ('streamBeta' in use_vision_or_options || 'onEvent' in use_vision_or_options);
-    if (isOptionsObject) {
-      options = use_vision_or_options as AgentStreamingOptions;
-      use_vision = true;
-      output_schema_resolved = undefined;
-    } else {
-      use_vision = use_vision_or_options === undefined ? true : (use_vision_or_options as boolean);
-      output_schema_resolved = output_schema;
-      options = options_param;
-    }
+    const use_vision_resolved = use_vision === undefined ? true : use_vision;
 
     if (!this.initialized) {
       logInfo('Browser is not initialized, initializing browser!');
@@ -892,24 +861,7 @@ export class BrowserUseAgent extends BaseTaskAgent {
       }
     }
 
-    if (this.hasStreamingParams(options)) {
-      const jsonSchema = output_schema !== undefined
-        ? zodToJsonSchema(output_schema, { $refStrategy: 'none' })
-        : zodToJsonSchema(DefaultSchema, { $refStrategy: 'none' });
-      const taskParams: Record<string, any> = {
-        task,
-        use_vision,
-        output_schema: JSON.stringify(jsonSchema),
-      };
-      return this.executeTaskStreamWs({
-        taskParams,
-        timeout,
-        stream: options!.streamBeta ?? false,
-        options,
-      });
-    }
-
-    const result = await this.executeTask(task, use_vision, output_schema);
+    const result = await this.executeTask(task, use_vision_resolved, output_schema);
     if (!result.success) {
       return result;
     }
@@ -1127,13 +1079,16 @@ export class MobileUseAgent extends BaseTaskAgent {
       timeout: number,
       maxSteps_or_options?: number | AgentStreamingOptions,
       options_param?: AgentStreamingOptions): Promise<ExecutionResult> {
-    // Support both (task, timeout, options) from base and (task, timeout, maxSteps, options)
     let maxSteps: number;
     let options: AgentStreamingOptions | undefined;
     const isOptionsObject =
       typeof maxSteps_or_options === 'object' &&
       maxSteps_or_options !== null &&
-      ('streamBeta' in maxSteps_or_options || 'onEvent' in maxSteps_or_options);
+      ('onEvent' in maxSteps_or_options ||
+       'onReasoning' in maxSteps_or_options ||
+       'onContent' in maxSteps_or_options ||
+       'onToolCall' in maxSteps_or_options ||
+       'onToolResult' in maxSteps_or_options);
     if (isOptionsObject) {
       options = maxSteps_or_options as AgentStreamingOptions;
       maxSteps = 50;
@@ -1146,7 +1101,6 @@ export class MobileUseAgent extends BaseTaskAgent {
       return this.executeTaskStreamWs({
         taskParams: { task, max_steps: maxSteps },
         timeout,
-        stream: options!.streamBeta ?? false,
         options,
       });
     }
@@ -1175,13 +1129,15 @@ export class MobileUseAgent extends BaseTaskAgent {
           try {
             content = JSON.parse(result.data);
           } catch (err) {
+            // Mobile agent may execute the task synchronously and return
+            // the result as plain text instead of JSON with taskId.
             return {
               requestId: result.requestId,
-              success: false,
-              errorMessage: `Failed to parse response: ${err}`,
-              taskStatus: 'failed',
+              success: true,
+              errorMessage: '',
+              taskStatus: 'completed',
               taskId: '',
-              taskResult: 'Invalid execution response.',
+              taskResult: result.data,
             };
           }
 

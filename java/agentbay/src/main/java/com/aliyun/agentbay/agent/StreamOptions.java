@@ -5,35 +5,24 @@ import java.util.function.Consumer;
 /**
  * Options for WebSocket streaming execution of agent tasks.
  *
- * <p>When {@link #isStreamBeta()} is true or any callback is set, the SDK uses
- * the WebSocket streaming channel for real-time event delivery instead of HTTP polling.</p>
+ * <p>When any callback is set, the SDK uses the WebSocket streaming channel
+ * for real-time event delivery instead of HTTP polling.</p>
  */
 public class StreamOptions {
-    private boolean streamBeta;
     private Consumer<AgentEvent> onEvent;
     private Consumer<AgentEvent> onReasoning;
     private Consumer<AgentEvent> onContent;
     private Consumer<AgentEvent> onToolCall;
     private Consumer<AgentEvent> onToolResult;
+    private Consumer<AgentEvent> onError;
 
     public StreamOptions() {
-        this.streamBeta = false;
         this.onEvent = null;
         this.onReasoning = null;
         this.onContent = null;
         this.onToolCall = null;
         this.onToolResult = null;
-    }
-
-    /**
-     * Returns whether token-level streaming via WebSocket is enabled.
-     */
-    public boolean isStreamBeta() {
-        return streamBeta;
-    }
-
-    public void setStreamBeta(boolean streamBeta) {
-        this.streamBeta = streamBeta;
+        this.onError = null;
     }
 
     /**
@@ -92,11 +81,23 @@ public class StreamOptions {
     }
 
     /**
-     * Returns true if streaming should be used (streamBeta or any callback is set).
+     * Returns the callback for error events.
+     */
+    public Consumer<AgentEvent> getOnError() {
+        return onError;
+    }
+
+    public void setOnError(Consumer<AgentEvent> onError) {
+        this.onError = onError;
+    }
+
+    /**
+     * Returns true if streaming should be used (any callback is set).
      */
     public boolean hasStreamingParams() {
-        return streamBeta || onEvent != null || onReasoning != null
-                || onContent != null || onToolCall != null || onToolResult != null;
+        return onEvent != null || onReasoning != null
+                || onContent != null || onToolCall != null
+                || onToolResult != null || onError != null;
     }
 
     /**
@@ -111,11 +112,6 @@ public class StreamOptions {
 
         Builder() {
             this.options = new StreamOptions();
-        }
-
-        public Builder streamBeta(boolean streamBeta) {
-            options.setStreamBeta(streamBeta);
-            return this;
         }
 
         public Builder onEvent(Consumer<AgentEvent> onEvent) {
@@ -140,6 +136,11 @@ public class StreamOptions {
 
         public Builder onToolResult(Consumer<AgentEvent> onToolResult) {
             options.setOnToolResult(onToolResult);
+            return this;
+        }
+
+        public Builder onError(Consumer<AgentEvent> onError) {
+            options.setOnError(onError);
             return this;
         }
 

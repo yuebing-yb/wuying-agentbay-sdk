@@ -181,11 +181,9 @@ public class Agent extends BaseService {
             final Map<String, Object>[] lastError = new Map[1];
 
             StreamOptions opts = options != null ? options : new StreamOptions();
-            boolean stream = opts.isStreamBeta();
 
             Map<String, Object> data = new HashMap<>();
             data.put("method", "exec_task");
-            data.put("stream", stream);
             data.put("params", taskParams);
 
             WsClient.StreamHandle handle = wsClient.callStream(
@@ -310,6 +308,7 @@ public class Agent extends BaseService {
                 case "content": cb = opts.getOnContent(); break;
                 case "tool_call": cb = opts.getOnToolCall(); break;
                 case "tool_result": cb = opts.getOnToolResult(); break;
+                case "error": cb = opts.getOnError(); break;
                 default: break;
             }
             if (cb != null) {
@@ -534,24 +533,6 @@ public class Agent extends BaseService {
                     "Task Failed"
                 );
             }
-        }
-
-        /**
-         * Execute a task synchronously with optional WebSocket streaming.
-         * When {@code options} is non-null and has streaming params, uses WS streaming for real-time events.
-         *
-         * @param task Task description in human language
-         * @param timeout Maximum time to wait for task completion in seconds
-         * @param options StreamOptions for streaming (null to use HTTP polling)
-         * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
-         */
-        public ExecutionResult executeTaskAndWait(String task, int timeout, StreamOptions options) {
-            if (options != null && options.hasStreamingParams()) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("task", task);
-                return executeTaskStreamWs(session, "flux_execute_task", SERVER_COMPUTER_AGENT, params, timeout, options);
-            }
-            return executeTaskAndWait(task, timeout);
         }
 
         /**
@@ -880,38 +861,8 @@ public class Agent extends BaseService {
          * @param useVision Whether to use vision in the task
          * @param outputSchema Optional schema for structured task output
          * @param fullPageScreenShot Whether to take a full page screenshot (when useVision is true)
-         * @param options StreamOptions for streaming (null to use HTTP polling)
          * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
          */
-        public ExecutionResult executeTaskAndWait(String task, int timeout,
-                boolean useVision,
-                Object outputSchema, boolean fullPageScreenShot,
-                StreamOptions options) {
-            if (!this.initialized) {
-                logger.info("Browser is not initialized. Initialize browser first.");
-                boolean success = initialize(new BrowserOption());
-                if (!success) {
-                    return new ExecutionResult("", false,
-                            "Browser initialization failed.",
-                            "", "failed");
-                }
-            }
-            if (options != null && options.hasStreamingParams()) {
-                String schemaJson = "";
-                if (outputSchema instanceof String) {
-                    schemaJson = (String) outputSchema;
-                } else if (outputSchema instanceof Class) {
-                    schemaJson = SchemaHelper.generateJsonSchema((Class<?>) outputSchema);
-                }
-                Map<String, Object> params = new HashMap<>();
-                params.put("task", task);
-                params.put("use_vision", useVision);
-                params.put("output_schema", schemaJson);
-                params.put("full_page_screenshot", fullPageScreenShot);
-                return executeTaskStreamWs(session, "browser_use_execute_task", SERVER_BROWSER_USE, params, timeout, options);
-            }
-            return executeTaskAndWait(task, timeout, useVision, outputSchema, fullPageScreenShot);
-        }
 
         /**
          * Get the status of the task with the given task ID.
@@ -1169,7 +1120,20 @@ public class Agent extends BaseService {
                     );
                 }
 
-                JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
+                JsonObject content;
+                try {
+                    content = gson.fromJson(result.getData(), JsonObject.class);
+                } catch (com.google.gson.JsonSyntaxException e) {
+                    // Mobile agent may execute the task synchronously and return
+                    // the result as plain text instead of JSON with taskId.
+                    return new ExecutionResult(
+                        result.getRequestId(), true, "", "", "completed", result.getData());
+                }
+
+                if (content == null) {
+                    return new ExecutionResult(
+                        result.getRequestId(), true, "", "", "completed", result.getData());
+                }
 
                 // Check for embedded error in JSON content
                 if (content.has("error")) {
@@ -1194,7 +1158,6 @@ public class Agent extends BaseService {
                 }
 
                 if (taskId == null || taskId.isEmpty()) {
-                    // 从后端返回的content中提取error信息
                     String errorMsg = "Failed to get task_id from response";
                     if (content.has("error")) {
                         errorMsg = content.get("error").getAsString();
