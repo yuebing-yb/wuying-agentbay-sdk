@@ -22,8 +22,25 @@ class AgentEvent:
     - "reasoning": from LLM reasoning_content (model's internal reasoning/thinking)
     - "content": from LLM content (model's text output, intermediate analysis or final answer)
     - "tool_call": from LLM tool_calls (tool invocation request)
-    - "tool_result": tool execution result (rich media)
+    - "tool_result": tool execution result
     - "error": execution error
+
+    Attributes:
+        type: Event type string.
+        seq: Sequence number within the stream.
+        round: Execution round number.
+        content: Text content for reasoning/content events.
+        tool_call_id: Identifier for the tool call (tool_call/tool_result events).
+        tool_name: Name of the tool (tool_call/tool_result events).
+        args: Tool call arguments dict (tool_call events).
+        result: Tool execution result dict (tool_result events). The internal
+            structure is agent-defined and not parsed by the SDK. Typical
+            fields include ``isError`` (bool), ``output`` (str), and
+            optionally ``screenshot`` (base64 str). The final task outcome
+            is delivered via the ``ExecutionResult`` return value of
+            ``execute_task_and_wait``.
+        prompt: Prompt text for call_for_user tool_call events.
+        error: Error information dict (error events).
     """
 
     def __init__(

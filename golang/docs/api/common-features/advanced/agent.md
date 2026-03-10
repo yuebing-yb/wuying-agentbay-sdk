@@ -45,8 +45,13 @@ type AgentEvent struct {
 }
 ```
 
-AgentEvent represents a streaming event from an Agent execution. Event types: "reasoning",
-"content", "tool_call", "tool_result", "error"
+AgentEvent represents a streaming event from an Agent execution.
+
+Event types: "reasoning", "content", "tool_call", "tool_result", "error".
+
+The Result field in tool_result events carries an agent-defined structure that the SDK passes
+through without parsing. The final task outcome is delivered via the ExecutionResult return value of
+ExecuteTaskAndWait.
 
 ## Type AgentEventCallback
 

@@ -271,7 +271,10 @@ streaming channel for real-time event delivery instead of HTTP polling.
     on_reasoning: Callback for reasoning events (LLM reasoning_content).
     on_content: Callback for content events (LLM content output).
     on_tool_call: Callback for tool_call events.
-    on_tool_result: Callback for tool_result events.
+    on_tool_result: Callback for tool_result events. The ``result``
+  field carries an agent-defined structure that the SDK does
+  not parse. The final task outcome is delivered via the
+  ``ExecutionResult`` return value.
     on_error: Callback for error events.
     on_call_for_user: Callback for call_for_user tool_call events.
   Returns the user's response string.

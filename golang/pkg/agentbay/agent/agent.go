@@ -30,7 +30,14 @@ type StreamItem struct {
 }
 
 // AgentEvent represents a streaming event from an Agent execution.
-// Event types: "reasoning", "content", "tool_call", "tool_result", "error"
+//
+// Event types: "reasoning", "content", "tool_call", "tool_result", "error".
+//
+// The Result field in tool_result events carries an agent-defined structure
+// that the SDK passes through without parsing. Typical fields include
+// "isError" (bool), "output" (string), and optionally "screenshot" (base64).
+// The final task outcome is delivered via the ExecutionResult return value
+// of ExecuteTaskAndWait.
 type AgentEvent struct {
 	Type       string                 `json:"type"`
 	Seq        int                    `json:"seq"`

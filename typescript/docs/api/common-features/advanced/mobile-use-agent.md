@@ -146,7 +146,6 @@ Execute a task via WebSocket streaming channel.
 | :------ | :------ |
 | `params` | `Object` |
 | `params.options?` | ``AgentStreamingOptions`` |
-| `params.stream` | `boolean` |
 | `params.taskParams` | `Record`\<`string`, `any`\> |
 | `params.timeout` | `number` |
 

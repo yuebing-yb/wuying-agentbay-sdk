@@ -98,7 +98,7 @@ ___
 
 ### executeTaskAndWait
 
-▸ **executeTaskAndWait**\<`TSchema`\>(`task`, `timeout`, `use_vision_or_options?`, `output_schema?`, `options_param?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTaskAndWait**\<`TSchema`\>(`task`, `timeout`, `use_vision?`, `output_schema?`): `Promise`\<``ExecutionResult``\>
 
 Execute a task described in human language on a browser synchronously.
 This is a synchronous interface that blocks until the task is completed or
@@ -116,9 +116,8 @@ an error occurs, or timeout happens. The default polling interval is 3 seconds.
 | :------ | :------ | :------ |
 | `task` | `string` | Task description in human language. |
 | `timeout` | `number` | Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion. |
-| `use_vision_or_options?` | `boolean` \| ``AgentStreamingOptions`` | - |
+| `use_vision?` | `boolean` | Whether to use vision in the task. |
 | `output_schema?` | `TSchema` | Optional Zod schema for a structured task output if you need. |
-| `options_param?` | ``AgentStreamingOptions`` | - |
 
 #### Returns
 
@@ -172,7 +171,6 @@ Execute a task via WebSocket streaming channel.
 | :------ | :------ |
 | `params` | `Object` |
 | `params.options?` | ``AgentStreamingOptions`` |
-| `params.stream` | `boolean` |
 | `params.taskParams` | `Record`\<`string`, `any`\> |
 | `params.timeout` | `number` |
 

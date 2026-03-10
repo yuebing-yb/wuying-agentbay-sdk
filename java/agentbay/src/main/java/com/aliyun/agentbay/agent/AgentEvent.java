@@ -10,9 +10,16 @@ import java.util.Map;
  *   <li>"reasoning": from LLM reasoning_content (model's internal reasoning/thinking)
  *   <li>"content": from LLM content (model's text output, intermediate analysis or final answer)
  *   <li>"tool_call": from LLM tool_calls (tool invocation request)
- *   <li>"tool_result": tool execution result (rich media)
+ *   <li>"tool_result": tool execution result
  *   <li>"error": execution error
  * </ul>
+ *
+ * <p>The {@code result} field in tool_result events carries an agent-defined structure
+ * that the SDK passes through without parsing. Typical fields include
+ * {@code isError} (boolean), {@code output} (string), and optionally
+ * {@code screenshot} (base64 string). The final task outcome is delivered via
+ * the {@link com.aliyun.agentbay.model.ExecutionResult} return value of
+ * {@code executeTaskAndWait}.
  */
 public class AgentEvent {
     private String type;

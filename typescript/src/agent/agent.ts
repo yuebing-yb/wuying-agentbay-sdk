@@ -35,8 +35,14 @@ export interface QueryResult extends ApiResponse {
  * - "reasoning": from LLM reasoning_content (model's internal reasoning/thinking)
  * - "content": from LLM content (model's text output, intermediate analysis or final answer)
  * - "tool_call": from LLM tool_calls (tool invocation request)
- * - "tool_result": tool execution result (rich media)
+ * - "tool_result": tool execution result
  * - "error": execution error
+ *
+ * The `result` field in tool_result events carries an agent-defined structure
+ * that the SDK passes through without parsing. Typical fields include
+ * `isError` (boolean), `output` (string), and optionally `screenshot`
+ * (base64 string). The final task outcome is delivered via the
+ * `ExecutionResult` return value of `executeTaskAndWait`.
  */
 export interface AgentEvent {
   type: string;
@@ -46,6 +52,7 @@ export interface AgentEvent {
   toolCallId?: string;
   toolName?: string;
   args?: Record<string, any>;
+  /** Agent-defined tool execution result (e.g. {isError, output, screenshot}). Not parsed by SDK. */
   result?: Record<string, any>;
   error?: Record<string, any>;
 }
@@ -82,6 +89,7 @@ export interface AgentStreamingOptions {
   onReasoning?: AgentEventCallback;
   onContent?: AgentEventCallback;
   onToolCall?: AgentEventCallback;
+  /** The `result` field is agent-defined; the SDK does not parse it. */
   onToolResult?: AgentEventCallback;
   onError?: AgentEventCallback;
 }
