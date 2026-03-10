@@ -49,15 +49,6 @@ func TestAgentEvent_Fields(t *testing.T) {
 	}
 }
 
-func TestStreamOptions_NoStreamBeta(t *testing.T) {
-	opts := agent.StreamOptions{
-		OnEvent: func(e agent.AgentEvent) {},
-	}
-	if opts.OnEvent == nil {
-		t.Error("expected OnEvent to be set")
-	}
-}
-
 func TestStreamOptions_OnError(t *testing.T) {
 	opts := agent.StreamOptions{
 		OnError: func(e agent.AgentEvent) {},

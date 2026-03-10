@@ -142,12 +142,6 @@ status = await session.Agent.Browser.GetTaskStatus(result.task_id) fmt.Printf(f"
 func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_vision bool, output_schema interface{}) *ExecutionResult
 ```
 
-### ExecuteTaskAndWaitStream
-
-```go
-func (a *BrowserUseAgent) ExecuteTaskAndWaitStream(task string, timeout int, useVision bool, outputSchema interface{}, fullPageScreenshot bool, opts StreamOptions) *ExecutionResult
-```
-
 Execute a task described in human language on a browser synchronously.
 
 This is a synchronous interface that blocks until the task is completed or an error occurs,
@@ -320,15 +314,6 @@ defer sessionResult.Session.Delete()
 result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 60)
 ```
 
-### ExecuteTaskAndWaitStream
-
-```go
-func (a *ComputerUseAgent) ExecuteTaskAndWaitStream(task string, timeout int, opts StreamOptions) *ExecutionResult
-```
-
-ExecuteTaskAndWaitStream executes a task via WebSocket streaming and waits for completion. Use
-StreamOptions to enable streaming and register event callbacks.
-
 ### GetTaskStatus
 
 ```go
@@ -458,6 +443,28 @@ happens. The default polling interval is 3 seconds.
 result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait("Open WeChat app", 100, 180)
 ```
 
+### ExecuteTaskAndWaitStream
+
+```go
+func (a *MobileUseAgent) ExecuteTaskAndWaitStream(task string, maxSteps int, timeout int, opts StreamOptions) *ExecutionResult
+```
+
+ExecuteTaskAndWaitStream executes a task on a mobile device via WebSocket streaming and waits for
+completion. Use StreamOptions to register event callbacks for real-time streaming output (reasoning,
+content, tool_call, tool_result events).
+
+When any callback in StreamOptions is set, the task execution uses WebSocket streaming instead of
+HTTP polling. The streaming granularity is determined by the backend.
+
+**Example:**
+
+```go
+result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWaitStream("Open Settings app", 50, 180, agent.StreamOptions{
+    OnReasoning: func(event agent.AgentEvent) { fmt.Println(event.Content) },
+    OnContent:   func(event agent.AgentEvent) { fmt.Print(event.Content) },
+})
+```
+
 ### GetTaskStatus
 
 ```go
@@ -528,12 +535,11 @@ StreamItem represents a single stream fragment
 
 ```go
 type StreamOptions struct {
-	StreamBeta	bool
-	OnEvent		AgentEventCallback
 	OnReasoning	AgentEventCallback
 	OnContent	AgentEventCallback
 	OnToolCall	AgentEventCallback
 	OnToolResult	AgentEventCallback
+	OnError		AgentEventCallback
 }
 ```
 

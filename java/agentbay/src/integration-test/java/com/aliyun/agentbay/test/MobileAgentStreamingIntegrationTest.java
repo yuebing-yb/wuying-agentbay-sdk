@@ -67,48 +67,6 @@ class MobileAgentStreamingIntegrationTest {
 
     @Test
     @Order(1)
-    void testMobileStreamingWithOnEvent() {
-        Assumptions.assumeTrue(session != null, "Session not created");
-
-        List<AgentEvent> eventsReceived = new ArrayList<>();
-
-        StreamOptions options = StreamOptions.builder()
-                .onEvent(event -> {
-                    eventsReceived.add(event);
-                    String msg = String.format("[Event] type=%s, seq=%d, round=%d",
-                            event.getType(), event.getSeq(), event.getRound());
-                    if (event.getContent() != null && !event.getContent().isEmpty()) {
-                        msg += String.format(", content=%s",
-                                event.getContent().length() > 80
-                                        ? event.getContent().substring(0, 80) + "..."
-                                        : event.getContent());
-                    }
-                    if (event.getToolName() != null && !event.getToolName().isEmpty()) {
-                        msg += String.format(", tool=%s", event.getToolName());
-                    }
-                    logger.info(msg);
-                })
-                .build();
-
-        logger.info("Testing mobile agent streaming with on_event");
-
-        ExecutionResult result = session.getAgent().getMobile()
-                .executeTaskAndWait("Open Settings app", 10, 180, options);
-
-        logger.info("Result: success={}, status={}", result.isSuccess(), result.getTaskStatus());
-        logger.info("Events received: {}", eventsReceived.size());
-        if (result.getTaskResult() != null && !result.getTaskResult().isEmpty()) {
-            logger.info("Task result: {}", result.getTaskResult().length() > 200
-                    ? result.getTaskResult().substring(0, 200) + "..."
-                    : result.getTaskResult());
-        }
-
-        assertNotNull(result.getTaskStatus());
-        assertFalse(eventsReceived.isEmpty(), "Should have received at least one event");
-    }
-
-    @Test
-    @Order(2)
     void testMobileStreamingWithTypedCallbacks() {
         Assumptions.assumeTrue(session != null, "Session not created");
 

@@ -63,15 +63,14 @@ class TestAgentStreaming:
         assert mobile_agent._resolve_agent_target() == "wuying_mobile_agent"
 
     def test_no_streaming_params_uses_http(self):
-        """Without stream_beta or callbacks, the method does NOT use WS channel."""
+        """Without callbacks, the method does NOT use WS channel."""
         from agentbay import AgentBay
         from agentbay._sync.session import Session
 
         agentbay = AgentBay(api_key="test_api_key")
         session = Session(agentbay, "sess_test")
-        agent = session.agent.computer
+        agent = session.agent.mobile
         assert agent._has_streaming_params() is False
-        assert agent._has_streaming_params(stream_beta=True) is True
-        assert agent._has_streaming_params(on_event=lambda e: None) is True
         assert agent._has_streaming_params(on_reasoning=lambda e: None) is True
         assert agent._has_streaming_params(on_content=lambda e: None) is True
+        assert agent._has_streaming_params(on_error=lambda e: None) is True

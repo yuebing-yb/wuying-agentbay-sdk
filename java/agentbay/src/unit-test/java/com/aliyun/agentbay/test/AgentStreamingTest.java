@@ -57,14 +57,6 @@ class AgentStreamingTest {
     }
 
     @Test
-    void testStreamOptionsWithOnEvent() {
-        StreamOptions opts = StreamOptions.builder()
-                .onEvent(e -> {})
-                .build();
-        assertTrue(opts.hasStreamingParams());
-    }
-
-    @Test
     void testStreamOptionsWithOnReasoning() {
         StreamOptions opts = StreamOptions.builder()
                 .onReasoning(e -> {})
@@ -107,7 +99,6 @@ class AgentStreamingTest {
     @Test
     void testStreamOptionsBuilderAllCallbacks() {
         StreamOptions opts = StreamOptions.builder()
-                .onEvent(e -> {})
                 .onReasoning(e -> {})
                 .onContent(e -> {})
                 .onToolCall(e -> {})
@@ -115,7 +106,6 @@ class AgentStreamingTest {
                 .onError(e -> {})
                 .build();
 
-        assertNotNull(opts.getOnEvent());
         assertNotNull(opts.getOnReasoning());
         assertNotNull(opts.getOnContent());
         assertNotNull(opts.getOnToolCall());

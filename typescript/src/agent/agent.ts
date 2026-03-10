@@ -79,7 +79,6 @@ export interface McpSession {
  * Options for executeTaskAndWait when using WebSocket streaming.
  */
 export interface AgentStreamingOptions {
-  onEvent?: AgentEventCallback;
   onReasoning?: AgentEventCallback;
   onContent?: AgentEventCallback;
   onToolCall?: AgentEventCallback;
@@ -123,7 +122,6 @@ abstract class BaseTaskAgent {
   protected hasStreamingParams(options?: AgentStreamingOptions): boolean {
     if (!options) return false;
     return !!(
-      options.onEvent ||
       options.onReasoning ||
       options.onContent ||
       options.onToolCall ||
@@ -184,11 +182,6 @@ abstract class BaseTaskAgent {
     let lastError: Record<string, any> | undefined;
 
     const dispatchEvent = (event: AgentEvent): void => {
-      try {
-        if (options?.onEvent) options.onEvent(event);
-      } catch (ex) {
-        logWarn(`onEvent callback error: ${ex}`);
-      }
       const cb = {
         reasoning: options?.onReasoning,
         content: options?.onContent,
@@ -1084,11 +1077,11 @@ export class MobileUseAgent extends BaseTaskAgent {
     const isOptionsObject =
       typeof maxSteps_or_options === 'object' &&
       maxSteps_or_options !== null &&
-      ('onEvent' in maxSteps_or_options ||
-       'onReasoning' in maxSteps_or_options ||
+      ('onReasoning' in maxSteps_or_options ||
        'onContent' in maxSteps_or_options ||
        'onToolCall' in maxSteps_or_options ||
-       'onToolResult' in maxSteps_or_options);
+       'onToolResult' in maxSteps_or_options ||
+       'onError' in maxSteps_or_options);
     if (isOptionsObject) {
       options = maxSteps_or_options as AgentStreamingOptions;
       maxSteps = 50;

@@ -48,7 +48,6 @@ type AgentEventCallback func(event AgentEvent)
 
 // StreamOptions holds streaming callback options for ExecuteTaskAndWaitStream.
 type StreamOptions struct {
-	OnEvent      AgentEventCallback
 	OnReasoning  AgentEventCallback
 	OnContent    AgentEventCallback
 	OnToolCall   AgentEventCallback
@@ -434,10 +433,6 @@ func (b *baseTaskAgent) executeTaskStreamWs(taskParams map[string]interface{}, t
 					lastError = data
 				}
 				evt.Error = lastError
-			}
-
-			if opts.OnEvent != nil {
-				opts.OnEvent(evt)
 			}
 
 			typedCb := map[string]AgentEventCallback{
@@ -1277,7 +1272,8 @@ func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
 // Example:
 //
 //	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWaitStream("Open Settings app", 50, 180, agent.StreamOptions{
-//	    OnEvent: func(event agent.AgentEvent) { fmt.Println(event.Type, event.Content) },
+//	    OnReasoning: func(event agent.AgentEvent) { fmt.Println(event.Content) },
+//	    OnContent:   func(event agent.AgentEvent) { fmt.Print(event.Content) },
 //	})
 func (a *MobileUseAgent) ExecuteTaskAndWaitStream(task string, maxSteps int, timeout int, opts StreamOptions) *ExecutionResult {
 	return a.baseTaskAgent.executeTaskStreamWs(map[string]interface{}{

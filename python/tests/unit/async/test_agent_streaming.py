@@ -85,7 +85,7 @@ class TestAgentStreaming:
             result = await session.agent.mobile.execute_task_and_wait(
                 task="Failing task",
                 timeout=10,
-                on_event=lambda e: error_events.append(e) if e.type == "error" else None,
+                on_error=lambda e: error_events.append(e),
             )
 
             assert result.success is False
@@ -123,7 +123,7 @@ class TestAgentStreaming:
             result = await session.agent.mobile.execute_task_and_wait(
                 task="Slow task",
                 timeout=2,
-                on_event=lambda e: None,
+                on_content=lambda e: None,
             )
 
             assert result.success is False
@@ -167,7 +167,7 @@ class TestAgentStreaming:
             result = await session.agent.mobile.execute_task_and_wait(
                 task="Test accumulation",
                 timeout=10,
-                on_event=lambda e: None,
+                on_content=lambda e: None,
             )
 
             assert result.success is True
@@ -217,7 +217,6 @@ class TestAgentStreaming:
         session = AsyncSession(agentbay, "sess_test")
         agent = session.agent.mobile
         assert agent._has_streaming_params() is False
-        assert agent._has_streaming_params(on_event=lambda e: None) is True
         assert agent._has_streaming_params(on_reasoning=lambda e: None) is True
         assert agent._has_streaming_params(on_content=lambda e: None) is True
         assert agent._has_streaming_params(on_error=lambda e: None) is True
@@ -383,8 +382,8 @@ class TestAgentStreaming:
             server.close()
             await server.wait_closed()
 
-    async def test_call_for_user_also_triggers_on_event_and_on_tool_call(self):
-        """call_for_user tool_call also triggers on_event and on_tool_call callbacks."""
+    async def test_call_for_user_also_triggers_on_tool_call(self):
+        """call_for_user tool_call triggers on_tool_call callback."""
         async def ws_handler(ws):
             req_raw = await ws.recv()
             req = json.loads(req_raw)
@@ -427,7 +426,6 @@ class TestAgentStreaming:
             session = await self._create_session_with_ws(ws_url)
             ws_client = await session._get_ws_client()
 
-            all_events = []
             tool_call_events = []
 
             async def handle_call(event):
@@ -436,13 +434,11 @@ class TestAgentStreaming:
             result = await session.agent.mobile.execute_task_and_wait(
                 task="Test callbacks",
                 timeout=10,
-                on_event=lambda e: all_events.append(e),
                 on_tool_call=lambda e: tool_call_events.append(e),
                 on_call_for_user=handle_call,
             )
 
             assert result.success is True
-            assert any(e.tool_name == "call_for_user" for e in all_events)
             assert any(e.tool_name == "call_for_user" for e in tool_call_events)
 
             await ws_client.close()
@@ -485,11 +481,11 @@ class TestAgentStreaming:
             session = await self._create_session_with_ws(ws_url)
             ws_client = await session._get_ws_client()
 
-            events = []
+            content_events = []
             result = await session.agent.mobile.execute_task_and_wait(
                 task="Take a screenshot",
                 timeout=10,
-                on_event=lambda e: events.append(e),
+                on_content=lambda e: content_events.append(e),
             )
 
             assert result.success is True
@@ -501,8 +497,8 @@ class TestAgentStreaming:
             assert req_data["method"] == "exec_task"
             assert req_data["params"]["task"] == "Take a screenshot"
 
-            assert len(events) == 1
-            assert events[0].type == "content"
+            assert len(content_events) == 1
+            assert content_events[0].type == "content"
 
             await ws_client.close()
         finally:
@@ -535,7 +531,7 @@ class TestAgentStreaming:
                 task="Open app",
                 timeout=10,
                 max_steps=100,
-                on_event=lambda e: None,
+                on_content=lambda e: None,
             )
 
             assert result.success is True
@@ -574,7 +570,7 @@ class TestAgentStreaming:
             result = await session.agent.mobile.execute_task_and_wait(
                 task="Open app",
                 timeout=10,
-                on_event=lambda e: None,
+                on_content=lambda e: None,
             )
 
             assert result.success is True
@@ -666,7 +662,7 @@ class TestAgentStreaming:
         session = AsyncSession(agentbay, "sess_test")
         mobile_agent = session.agent.mobile
         assert mobile_agent._has_streaming_params() is False
-        assert mobile_agent._has_streaming_params(on_event=lambda e: None) is True
+        assert mobile_agent._has_streaming_params(on_content=lambda e: None) is True
 
     async def test_call_for_user_no_callback_sends_empty_response(self):
         """Without on_call_for_user callback, SDK sends empty string response."""
@@ -719,7 +715,7 @@ class TestAgentStreaming:
             result = await session.agent.mobile.execute_task_and_wait(
                 task="Test no callback",
                 timeout=10,
-                on_event=lambda e: None,
+                on_content=lambda e: None,
             )
 
             assert result.success is True

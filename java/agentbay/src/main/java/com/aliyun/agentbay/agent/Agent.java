@@ -295,13 +295,6 @@ public class Agent extends BaseService {
 
     private static void dispatchEvent(StreamOptions opts, AgentEvent event, String type) {
         try {
-            if (opts.getOnEvent() != null) {
-                opts.getOnEvent().accept(event);
-            }
-        } catch (Exception ex) {
-            LoggerFactory.getLogger(Agent.class).warn("onEvent callback error: {}", ex.getMessage());
-        }
-        try {
             java.util.function.Consumer<AgentEvent> cb = null;
             switch (type) {
                 case "reasoning": cb = opts.getOnReasoning(); break;

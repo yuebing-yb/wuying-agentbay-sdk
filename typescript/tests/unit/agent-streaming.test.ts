@@ -61,7 +61,7 @@ describe('AgentEvent', () => {
 describe('AgentStreamingOptions', () => {
   test('should not have streamBeta field', () => {
     const options: AgentStreamingOptions = {
-      onEvent: (_e: AgentEvent) => {},
+      onReasoning: (_e: AgentEvent) => {},
     };
     expect('streamBeta' in options).toBe(false);
   });
@@ -69,17 +69,17 @@ describe('AgentStreamingOptions', () => {
   test('should accept all callback fields', () => {
     const cb: AgentEventCallback = (_e: AgentEvent) => {};
     const options: AgentStreamingOptions = {
-      onEvent: cb,
       onReasoning: cb,
       onContent: cb,
       onToolCall: cb,
       onToolResult: cb,
+      onError: cb,
     };
-    expect(options.onEvent).toBe(cb);
     expect(options.onReasoning).toBe(cb);
     expect(options.onContent).toBe(cb);
     expect(options.onToolCall).toBe(cb);
     expect(options.onToolResult).toBe(cb);
+    expect(options.onError).toBe(cb);
   });
 });
 
@@ -123,11 +123,6 @@ describe('hasStreamingParams', () => {
   test('returns false for empty options object', () => {
     const agent = new MobileUseAgent(mockSession);
     expect((agent as any).hasStreamingParams({})).toBe(false);
-  });
-
-  test('returns true when onEvent is provided', () => {
-    const agent = new MobileUseAgent(mockSession);
-    expect((agent as any).hasStreamingParams({ onEvent: () => {} })).toBe(true);
   });
 
   test('returns true when onReasoning is provided', () => {
@@ -181,7 +176,7 @@ describe('MobileUseAgent executeTaskAndWait routing', () => {
 
     const agent = new MobileUseAgent(mockSession);
     const result = await agent.executeTaskAndWait('Test task', 60, 10, {
-      onEvent: () => {},
+      onReasoning: () => {},
     });
 
     expect(wsStreamCalled).toBe(true);
@@ -208,7 +203,7 @@ describe('MobileUseAgent executeTaskAndWait routing', () => {
     };
 
     const agent = new MobileUseAgent(mockSession);
-    await agent.executeTaskAndWait('Test task', 60, { onEvent: () => {} });
+    await agent.executeTaskAndWait('Test task', 60, { onReasoning: () => {} });
 
     expect(wsStreamCalled).toBe(true);
   });
@@ -270,7 +265,7 @@ describe('WS stream does not send stream field', () => {
     };
 
     const agent = new MobileUseAgent(mockSession);
-    await agent.executeTaskAndWait('Test task', 60, { onEvent: () => {} });
+    await agent.executeTaskAndWait('Test task', 60, { onReasoning: () => {} });
 
     expect(capturedData).toBeDefined();
     expect(capturedData.method).toBe('exec_task');
@@ -281,7 +276,6 @@ describe('WS stream does not send stream field', () => {
 
 describe('Streaming event dispatch', () => {
   test('should dispatch events to typed callbacks', async () => {
-    const events: AgentEvent[] = [];
     const reasoningEvents: AgentEvent[] = [];
     const contentEvents: AgentEvent[] = [];
     const toolCallEvents: AgentEvent[] = [];
@@ -318,7 +312,6 @@ describe('Streaming event dispatch', () => {
 
     const agent = new MobileUseAgent(mockSession);
     const result = await agent.executeTaskAndWait('Test task', 60, {
-      onEvent: (e) => events.push(e),
       onReasoning: (e) => reasoningEvents.push(e),
       onContent: (e) => contentEvents.push(e),
       onToolCall: (e) => toolCallEvents.push(e),
@@ -326,7 +319,6 @@ describe('Streaming event dispatch', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(events.length).toBe(4);
     expect(reasoningEvents.length).toBe(1);
     expect(reasoningEvents[0].content).toBe('thinking');
     expect(contentEvents.length).toBe(1);
@@ -367,7 +359,7 @@ describe('Streaming event dispatch', () => {
 
     const agent = new MobileUseAgent(mockSession);
     const result = await agent.executeTaskAndWait('Test task', 60, {
-      onEvent: () => {},
+      onContent: () => {},
     });
 
     expect(result.success).toBe(true);

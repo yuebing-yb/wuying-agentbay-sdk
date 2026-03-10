@@ -71,7 +71,6 @@ class TestAgentStreaming:
         session = Session(agentbay, "sess_test")
         agent = session.agent.mobile
         assert agent._has_streaming_params() is False
-        assert agent._has_streaming_params(on_event=lambda e: None) is True
         assert agent._has_streaming_params(on_reasoning=lambda e: None) is True
         assert agent._has_streaming_params(on_content=lambda e: None) is True
         assert agent._has_streaming_params(on_error=lambda e: None) is True

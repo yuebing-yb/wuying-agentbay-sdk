@@ -167,7 +167,6 @@ class AsyncAgent(AsyncBaseService):
 
         def _has_streaming_params(
             self,
-            on_event: AgentEventCallback = None,
             on_reasoning: AgentEventCallback = None,
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
@@ -175,7 +174,7 @@ class AsyncAgent(AsyncBaseService):
             on_error: AgentEventCallback = None,
             on_call_for_user: AsyncAgentEventCallback = None,
         ) -> bool:
-            return any([on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_error, on_call_for_user])
+            return any([on_reasoning, on_content, on_tool_call, on_tool_result, on_error, on_call_for_user])
 
         def _resolve_agent_target(self) -> str:
             """Resolve the WS target for this agent from MCP tools list."""
@@ -197,7 +196,6 @@ class AsyncAgent(AsyncBaseService):
             self,
             task_params: dict,
             timeout: int,
-            on_event: AgentEventCallback = None,
             on_reasoning: AgentEventCallback = None,
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
@@ -214,11 +212,6 @@ class AsyncAgent(AsyncBaseService):
             _ws_handle: Optional[Any] = None
 
             def _dispatch_event(event: AgentEvent) -> None:
-                try:
-                    if on_event:
-                        on_event(event)
-                except Exception as ex:
-                    _logger.warning(f"on_event callback error: {ex}")
                 try:
                     cb = {
                         "reasoning": on_reasoning,
@@ -1048,7 +1041,6 @@ class AsyncAgent(AsyncBaseService):
             task: str,
             timeout: int,
             max_steps: int = 50,
-            on_event: AgentEventCallback = None,
             on_reasoning: AgentEventCallback = None,
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
@@ -1073,13 +1065,12 @@ class AsyncAgent(AsyncBaseService):
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
                     Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
-                on_event: Callback for all event types.
                 on_reasoning: Callback for reasoning events (LLM reasoning_content).
                 on_content: Callback for content events (LLM content output).
                 on_tool_call: Callback for tool_call events.
                 on_tool_result: Callback for tool_result events.
                 on_error: Callback for error events.
-                on_call_for_user: Async callback for call_for_user tool_call events.
+                on_call_for_user: Callback for call_for_user tool_call events.
                     Returns the user's response string.
 
             Returns:
@@ -1100,7 +1091,7 @@ class AsyncAgent(AsyncBaseService):
                 ```
             """
             if self._has_streaming_params(
-                on_event, on_reasoning, on_content, on_tool_call, on_tool_result, on_error, on_call_for_user
+                on_reasoning, on_content, on_tool_call, on_tool_result, on_error, on_call_for_user
             ):
                 task_params = {
                     "task": task,
@@ -1109,7 +1100,6 @@ class AsyncAgent(AsyncBaseService):
                 return await self._execute_task_stream_ws(
                     task_params=task_params,
                     timeout=timeout,
-                    on_event=on_event,
                     on_reasoning=on_reasoning,
                     on_content=on_content,
                     on_tool_call=on_tool_call,

@@ -9,7 +9,6 @@ import java.util.function.Consumer;
  * for real-time event delivery instead of HTTP polling.</p>
  */
 public class StreamOptions {
-    private Consumer<AgentEvent> onEvent;
     private Consumer<AgentEvent> onReasoning;
     private Consumer<AgentEvent> onContent;
     private Consumer<AgentEvent> onToolCall;
@@ -17,23 +16,11 @@ public class StreamOptions {
     private Consumer<AgentEvent> onError;
 
     public StreamOptions() {
-        this.onEvent = null;
         this.onReasoning = null;
         this.onContent = null;
         this.onToolCall = null;
         this.onToolResult = null;
         this.onError = null;
-    }
-
-    /**
-     * Returns the callback for all event types.
-     */
-    public Consumer<AgentEvent> getOnEvent() {
-        return onEvent;
-    }
-
-    public void setOnEvent(Consumer<AgentEvent> onEvent) {
-        this.onEvent = onEvent;
     }
 
     /**
@@ -95,7 +82,7 @@ public class StreamOptions {
      * Returns true if streaming should be used (any callback is set).
      */
     public boolean hasStreamingParams() {
-        return onEvent != null || onReasoning != null
+        return onReasoning != null
                 || onContent != null || onToolCall != null
                 || onToolResult != null || onError != null;
     }
@@ -112,11 +99,6 @@ public class StreamOptions {
 
         Builder() {
             this.options = new StreamOptions();
-        }
-
-        public Builder onEvent(Consumer<AgentEvent> onEvent) {
-            options.setOnEvent(onEvent);
-            return this;
         }
 
         public Builder onReasoning(Consumer<AgentEvent> onReasoning) {

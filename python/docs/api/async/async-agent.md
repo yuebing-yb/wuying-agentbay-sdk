@@ -142,24 +142,13 @@ async def execute_task_and_wait(
         timeout: int,
         use_vision: bool = False,
         output_schema: Type[Schema] = None,
-        full_page_screenshot: Optional[bool] = False,
-        stream_beta: bool = False,
-        on_event: AgentEventCallback = None,
-        on_reasoning: AgentEventCallback = None,
-        on_content: AgentEventCallback = None,
-        on_tool_call: AgentEventCallback = None,
-        on_tool_result: AgentEventCallback = None,
-        on_call_for_user: AsyncAgentEventCallback = None) -> ExecutionResult
+        full_page_screenshot: Optional[bool] = False) -> ExecutionResult
 ```
 
 Execute a task described in human language on a browser synchronously.
 
 This is a synchronous interface that blocks until the task is completed or
 an error occurs, or timeout happens. The default polling interval is 3 seconds.
-
-When ``stream_beta`` or any ``on_*`` callback is provided, the method uses
-the WebSocket streaming channel for real-time event delivery instead of
-HTTP polling.
 
 **Arguments**:
 
@@ -168,14 +157,6 @@ HTTP polling.
     use_vision: Whether to use vision to perform the task.
     output_schema: The schema of the structured output.
     full_page_screenshot: Whether to take a full page screenshot.
-    stream_beta: Enable token-level streaming via WebSocket.
-    on_event: Callback for all event types.
-    on_reasoning: Callback for reasoning events (LLM reasoning_content).
-    on_content: Callback for content events (LLM content output).
-    on_tool_call: Callback for tool_call events.
-    on_tool_result: Callback for tool_result events.
-    on_call_for_user: Async callback for call_for_user tool_call events.
-  Returns the user's response string.
   
 
 **Returns**:
@@ -258,9 +239,16 @@ await session.delete()
 ### execute_task_and_wait
 
 ```python
-async def execute_task_and_wait(task: str,
-                                timeout: int,
-                                max_steps: int = 50) -> ExecutionResult
+async def execute_task_and_wait(
+        task: str,
+        timeout: int,
+        max_steps: int = 50,
+        on_reasoning: AgentEventCallback = None,
+        on_content: AgentEventCallback = None,
+        on_tool_call: AgentEventCallback = None,
+        on_tool_result: AgentEventCallback = None,
+        on_error: AgentEventCallback = None,
+        on_call_for_user: AsyncAgentEventCallback = None) -> ExecutionResult
 ```
 
 Execute a specific task described in human language synchronously.
@@ -268,6 +256,9 @@ Execute a specific task described in human language synchronously.
 This is a synchronous interface that blocks until the task is
 completed or an error occurs, or timeout happens. The default
 polling interval is 3 seconds.
+
+When any ``on_*`` callback is provided, the method uses the WebSocket
+streaming channel for real-time event delivery instead of HTTP polling.
 
 **Arguments**:
 
@@ -277,6 +268,13 @@ polling interval is 3 seconds.
     max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
   Used to prevent infinite loops or excessive resource consumption.
   Default is 50.
+    on_reasoning: Callback for reasoning events (LLM reasoning_content).
+    on_content: Callback for content events (LLM content output).
+    on_tool_call: Callback for tool_call events.
+    on_tool_result: Callback for tool_result events.
+    on_error: Callback for error events.
+    on_call_for_user: Callback for call_for_user tool_call events.
+  Returns the user's response string.
   
 
 **Returns**:

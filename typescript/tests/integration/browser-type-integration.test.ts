@@ -174,6 +174,8 @@ describe("Browser Type - Integration Tests", () => {
         undefined,  // fingerprintFormat
         false,  // fingerprintPersistent
         false,  // solveCaptchas
+        false,  // autoLogin
+        false,  // callForUser
         undefined,  // proxies
         [],         // cmdArgs
         undefined,  // defaultNavigateUrl

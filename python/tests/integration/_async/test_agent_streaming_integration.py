@@ -56,50 +56,6 @@ async def mobile_streaming_session(agent_bay):
 
 
 @pytest.mark.asyncio
-async def test_mobile_streaming_with_on_event(mobile_streaming_session):
-    """Test mobile agent streaming with on_event callback."""
-    agent = mobile_streaming_session.agent
-    events_received = []
-
-    def on_event(event: AgentEvent):
-        events_received.append(event)
-        print(f"  [Event] type={event.type}, seq={event.seq}, round={event.round}", end="")
-        if event.content:
-            print(f", content={event.content[:80]}...", end="")
-        if event.tool_name:
-            print(f", tool={event.tool_name}", end="")
-        print()
-
-    print(f"\n{'='*60}")
-    print("Testing mobile agent streaming with on_event")
-    print(f"{'='*60}")
-
-    result = await agent.mobile.execute_task_and_wait(
-        task="Open Settings app",
-        timeout=180,
-        max_steps=10,
-        on_event=on_event,
-    )
-
-    print(f"\n{'='*60}")
-    print(f"Result:")
-    print(f"  Success: {result.success}")
-    print(f"  Status: {result.task_status}")
-    print(f"  Error: {result.error_message}")
-    if result.task_result:
-        print(f"  Task Result: {result.task_result[:200]}")
-    print(f"  Events received: {len(events_received)}")
-    print(f"{'='*60}\n")
-
-    assert isinstance(result.task_status, str), "task_status should be a string"
-    assert len(events_received) > 0, "Should have received at least one event"
-
-    event_types = [e.type for e in events_received]
-    print(f"Event types received: {event_types}")
-    logger.info(f"Event types: {event_types}")
-
-
-@pytest.mark.asyncio
 async def test_mobile_streaming_with_typed_callbacks(mobile_streaming_session):
     """Test mobile agent streaming with typed callbacks (on_reasoning, on_tool_call, etc.)."""
     agent = mobile_streaming_session.agent
@@ -154,14 +110,10 @@ async def test_mobile_streaming_with_typed_callbacks(mobile_streaming_session):
 
 @pytest.mark.asyncio
 async def test_mobile_streaming_token_level(mobile_streaming_session):
-    """Test mobile agent streaming with on_event + on_content for real-time output."""
+    """Test mobile agent streaming with typed callbacks for real-time output."""
     agent = mobile_streaming_session.agent
-    all_events = []
     reasoning_chunks = []
     content_chunks = []
-
-    def on_event(event: AgentEvent):
-        all_events.append(event)
 
     def on_reasoning(event: AgentEvent):
         reasoning_chunks.append(event.content)
@@ -183,7 +135,6 @@ async def test_mobile_streaming_token_level(mobile_streaming_session):
         task="Open Settings app",
         timeout=180,
         max_steps=10,
-        on_event=on_event,
         on_reasoning=on_reasoning,
         on_content=on_content,
         on_tool_call=on_tool_call,
@@ -193,7 +144,6 @@ async def test_mobile_streaming_token_level(mobile_streaming_session):
     print(f"Result:")
     print(f"  Success: {result.success}")
     print(f"  Status: {result.task_status}")
-    print(f"  Total events: {len(all_events)}")
     print(f"  Reasoning chunks: {len(reasoning_chunks)}")
     print(f"  Content chunks: {len(content_chunks)}")
     if result.task_result:
@@ -201,7 +151,7 @@ async def test_mobile_streaming_token_level(mobile_streaming_session):
     print(f"{'='*60}\n")
 
     assert isinstance(result.task_status, str), "task_status should be a string"
-    assert len(all_events) > 0, "Should have received at least one event"
+    assert len(reasoning_chunks) > 0 or len(content_chunks) > 0, "Should have received at least one event"
 
     if reasoning_chunks:
         full_reasoning = "".join(reasoning_chunks)

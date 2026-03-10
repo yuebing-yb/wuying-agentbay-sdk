@@ -7,7 +7,6 @@ Mobile Agent Streaming Example
 This example demonstrates:
 1. Mobile Agent task execution with real-time streaming output
 2. Using typed callbacks (on_reasoning, on_content, on_tool_call, on_tool_result)
-3. Using unified on_event callback for all event types
 """
 
 import os
@@ -82,71 +81,10 @@ def example_typed_callbacks():
             print("Session cleaned up")
 
 
-def example_unified_event_callback():
-    """Demonstrate Mobile Agent streaming with unified on_event callback."""
-    print("\n" + "=" * 60)
-    print("Example 2: Mobile Agent Streaming with Unified on_event")
-    print("=" * 60)
-
-    client = AgentBay()
-    session = None
-
-    try:
-        session_result = client.create(
-            CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp")
-        )
-        session = session_result.session
-        logger.info(f"Session created: {session.session_id}")
-
-        agent = session.agent
-        events = []
-
-        def on_event(event: AgentEvent):
-            events.append(event)
-            if event.type == "reasoning":
-                print(f"[R] {event.content}", end="", flush=True)
-            elif event.type == "content":
-                print(f"[C] {event.content}", end="", flush=True)
-            elif event.type == "tool_call":
-                print(f"\n[TC] {event.tool_name}({event.args})")
-            elif event.type == "tool_result":
-                print(f"[TR] {event.tool_name} -> {str(event.result)[:100]}")
-            elif event.type == "error":
-                print(f"\n[ERR] {event.content}")
-
-        result = agent.mobile.execute_task_and_wait(
-            task="Open Settings app",
-            timeout=180,
-            max_steps=10,
-            on_event=on_event,
-        )
-
-        print(f"\n\nTask completed:")
-        print(f"  Success: {result.success}")
-        print(f"  Status: {result.task_status}")
-        print(f"  Total events: {len(events)}")
-        if result.task_result:
-            print(f"  Result: {result.task_result[:200]}")
-
-        event_types = {}
-        for e in events:
-            event_types[e.type] = event_types.get(e.type, 0) + 1
-        print(f"  Event breakdown: {event_types}")
-
-    except Exception as e:
-        print(f"\nError: {e}")
-        raise
-    finally:
-        if session:
-            client.delete(session)
-            print("Session cleaned up")
-
-
 def main():
     print("Mobile Agent Streaming Output Examples\n")
 
     example_typed_callbacks()
-    example_unified_event_callback()
 
     print("\nAll examples completed!")
 
