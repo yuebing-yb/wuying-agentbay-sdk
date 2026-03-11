@@ -1,5 +1,38 @@
 import { useState } from 'react'
 
+const STORAGE_KEY = 'openclaw_session_form'
+
+const DEFAULT_VALUES = {
+  username: '',
+  agentbayApiKey: '',
+  bailianApiKey: '',
+  modelBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  modelId: 'qwen3-max-2026-01-23',
+  dingtalkClientId: '',
+  dingtalkClientSecret: '',
+  feishuAppId: '',
+  feishuAppSecret: '',
+} as const
+
+function loadFromStorage(): Record<string, string> {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (!raw) return { ...DEFAULT_VALUES }
+    const parsed = JSON.parse(raw) as Record<string, string>
+    return { ...DEFAULT_VALUES, ...parsed }
+  } catch {
+    return { ...DEFAULT_VALUES }
+  }
+}
+
+function saveToStorage(data: Record<string, string>) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch {
+    // ignore quota / privacy errors
+  }
+}
+
 interface SessionFormProps {
   onSubmit: (data: Record<string, string>) => void
   loading: boolean
@@ -7,6 +40,15 @@ interface SessionFormProps {
 
 function SessionForm({ onSubmit, loading }: SessionFormProps) {
   const [showOptional, setShowOptional] = useState(false)
+  const [values, setValues] = useState<Record<string, string>>(loadFromStorage)
+
+  const updateField = (name: string, value: string) => {
+    setValues((prev) => {
+      const next = { ...prev, [name]: value }
+      saveToStorage(next)
+      return next
+    })
+  }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -16,6 +58,7 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
       const val = v.toString().trim()
       if (val) data[k] = val
     })
+    saveToStorage({ ...values, ...data })
     onSubmit(data)
   }
 
@@ -32,6 +75,8 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
           type="text"
           required
           placeholder="输入您的名称"
+          value={values.username}
+          onChange={(e) => updateField('username', e.target.value)}
           disabled={loading}
         />
       </div>
@@ -47,6 +92,8 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
           type="password"
           required
           placeholder="输入 AgentBay API Key"
+          value={values.agentbayApiKey}
+          onChange={(e) => updateField('agentbayApiKey', e.target.value)}
           disabled={loading}
         />
       </div>
@@ -62,6 +109,8 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
           type="password"
           required
           placeholder="输入百炼 (DashScope) API Key"
+          value={values.bailianApiKey}
+          onChange={(e) => updateField('bailianApiKey', e.target.value)}
           disabled={loading}
         />
       </div>
@@ -72,8 +121,9 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
           id="modelBaseUrl"
           name="modelBaseUrl"
           type="text"
-          defaultValue="https://dashscope.aliyuncs.com/compatible-mode/v1"
           placeholder="模型服务 Base URL"
+          value={values.modelBaseUrl}
+          onChange={(e) => updateField('modelBaseUrl', e.target.value)}
           disabled={loading}
         />
       </div>
@@ -84,8 +134,9 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
           id="modelId"
           name="modelId"
           type="text"
-          defaultValue="qwen3-max-2026-01-23"
           placeholder="模型名称，如 qwen3-max-2026-01-23"
+          value={values.modelId}
+          onChange={(e) => updateField('modelId', e.target.value)}
           disabled={loading}
         />
       </div>
@@ -111,6 +162,8 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
                   name="dingtalkClientId"
                   type="text"
                   placeholder="钉钉 Client ID"
+                  value={values.dingtalkClientId}
+                  onChange={(e) => updateField('dingtalkClientId', e.target.value)}
                   disabled={loading}
                 />
               </div>
@@ -121,6 +174,8 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
                   name="dingtalkClientSecret"
                   type="password"
                   placeholder="钉钉 Client Secret"
+                  value={values.dingtalkClientSecret}
+                  onChange={(e) => updateField('dingtalkClientSecret', e.target.value)}
                   disabled={loading}
                 />
               </div>
@@ -135,6 +190,8 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
                   name="feishuAppId"
                   type="text"
                   placeholder="飞书 App ID"
+                  value={values.feishuAppId}
+                  onChange={(e) => updateField('feishuAppId', e.target.value)}
                   disabled={loading}
                 />
               </div>
@@ -145,6 +202,8 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
                   name="feishuAppSecret"
                   type="password"
                   placeholder="飞书 App Secret"
+                  value={values.feishuAppSecret}
+                  onChange={(e) => updateField('feishuAppSecret', e.target.value)}
                   disabled={loading}
                 />
               </div>

@@ -23,6 +23,195 @@ body {
   padding: 40px 20px;
 }
 
+.app.session-active {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app.session-active .app-header {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  padding: 12px 20px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.app.session-active .app-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Session Layout (Left sidebar + Right desktop) ── */
+.session-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.session-sidebar {
+  flex-shrink: 0;
+  width: 420px;
+  min-width: 360px;
+  padding: 20px;
+  overflow-y: auto;
+  background: #f5f6f8;
+  border-right: 1px solid #e8e8e8;
+}
+
+.desktop-panel {
+  flex: 1;
+  min-width: 0;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.desktop-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.desktop-placeholder {
+  color: #999;
+  text-align: center;
+  padding: 40px;
+}
+
+.desktop-placeholder p {
+  margin: 8px 0;
+}
+
+.placeholder-hint {
+  font-size: 13px;
+  color: #888;
+}
+
+/* ── DingTalk Setup Panel ───────────────────── */
+.dingtalk-setup-panel {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.dingtalk-setup-panel h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.setup-step {
+  margin-bottom: 12px;
+}
+
+.setup-hint {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.setup-tip {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+.setup-done .form-group {
+  margin-bottom: 12px;
+}
+
+.setup-done .form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.setup-done .form-group input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.secret-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.secret-input-wrapper input {
+  padding-right: 40px;
+}
+
+.secret-toggle-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.secret-toggle-btn:hover {
+  color: #4096ff;
+}
+
+.setup-error-msg {
+  color: #cf1322;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.setup-error-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dingtalk-setup-panel .btn {
+  margin-top: 8px;
+}
+
+.setup-buttons-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.setup-buttons-row .btn {
+  margin-top: 0;
+}
+
+.backend-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+}
+
 .app-header {
   text-align: center;
   margin-bottom: 32px;

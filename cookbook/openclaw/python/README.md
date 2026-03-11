@@ -60,6 +60,10 @@ cookbook/openclaw/python/
 │   ├── config_builder.py # OpenClaw 配置生成
 │   ├── models.py        # Pydantic 数据模型
 │   └── session_manager.py # 会话管理核心
+├── frontend/            # React 前端源码
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.ts
 ├── static/              # 前端构建产物
 ├── images/              # 文档图片
 ├── requirements.txt
@@ -79,14 +83,26 @@ cookbook/openclaw/python/
 
 > 两种实现可对比效果：Browser Operator 为分步 act/extract；BrowserUseAgent 为自然语言任务。默认 `operator`，可通过环境变量 `DINGTALK_SETUP_BACKEND=agent` 修改。
 
-### 修改前端（可选）
+### 前端开发
 
-前端源码位于 `../java/frontend/`，修改后需重新构建并复制到 `static/`：
+前端源码位于 `frontend/` 目录，使用 React + Vite + TypeScript。
 
 ```bash
-cd ../java/frontend
-npm install && npm run build
-cp -r dist/* ../../python/static/
+# 安装依赖
+cd frontend
+npm install
+
+# 开发模式（热重载，API 代理到 localhost:8080）
+npm run dev
+
+# 构建生产版本
+npm run build
+```
+
+构建后需将 `frontend/dist/` 目录内容复制到 `static/`：
+
+```bash
+cp -r frontend/dist/* static/
 ```
 
 ## API
