@@ -4,6 +4,8 @@ import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.context.*;
 import com.aliyun.agentbay.model.CommandResult;
 import com.aliyun.agentbay.model.OperationResult;
+import com.aliyun.agentbay.model.SessionInfoResult;
+import com.aliyun.agentbay.model.SessionStatusResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
