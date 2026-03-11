@@ -67,6 +67,28 @@ cookbook/openclaw/python/
 └── README_ZH.md
 ```
 
+### 一键配置钉钉机器人
+
+会话创建成功后，可点击「一键配置钉钉机器人」：
+
+1. **选择实现方式**：Browser Operator (page_use_*) 或 BrowserUseAgent (自然语言)
+2. **开始配置**：打开钉钉开放平台并展示二维码
+3. **扫码登录**：使用钉钉 APP 扫描右侧云机中的二维码
+4. **我已登录**：登录成功后点击，系统自动创建应用并提取 Client ID、Client Secret
+5. **提交并更新配置**：将凭证写入 OpenClaw 配置并重启 Gateway
+
+> 两种实现可对比效果：Browser Operator 为分步 act/extract；BrowserUseAgent 为自然语言任务。默认 `operator`，可通过环境变量 `DINGTALK_SETUP_BACKEND=agent` 修改。
+
+### 修改前端（可选）
+
+前端源码位于 `../java/frontend/`，修改后需重新构建并复制到 `static/`：
+
+```bash
+cd ../java/frontend
+npm install && npm run build
+cp -r dist/* ../../python/static/
+```
+
 ## API
 
 | 方法   | 路径                    | 说明       |

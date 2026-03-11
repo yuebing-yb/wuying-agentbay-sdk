@@ -7,14 +7,19 @@ Serves the frontend static files.
 
 import logging
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from .models import CreateSessionRequest, SessionResponse
+from .dingtalk_setup import (
+    apply_dingtalk_credentials,
+    continue_dingtalk_setup,
+    start_dingtalk_setup,
+)
+from .models import CreateSessionRequest, DingtalkSetupStatus, SessionResponse
 from .session_manager import session_manager
 
 # Configure logging
@@ -92,6 +97,101 @@ async def delete_session(session_id: str):
 async def list_sessions():
     """List all active sessions."""
     return session_manager.list_sessions()
+
+
+# ── DingTalk One-Click Setup ────────────────────────────────────────
+
+
+@app.post("/api/sessions/{session_id}/dingtalk-setup/start")
+async def dingtalk_setup_start(session_id: str, backend: str = "playwright"):
+    """
+    Start DingTalk setup: open browser to open.dingtalk.com for QR login.
+
+    backend: "playwright" (default), "operator", or "agent"
+    """
+    info = session_manager.get_session_info(session_id)
+    if not info:
+        raise HTTPException(status_code=404, detail="Session not found")
+    success, err = await start_dingtalk_setup(info, backend=backend)
+    if not success:
+        raise HTTPException(status_code=500, detail=err)
+    session_manager.set_dingtalk_setup_state(session_id, step="login", backend=backend)
+    return {
+        "message": "已打开钉钉开放平台，请使用钉钉 APP 扫码登录",
+        "step": "login",
+        "backend": backend,
+    }
+
+
+@app.post("/api/sessions/{session_id}/dingtalk-setup/continue")
+async def dingtalk_setup_continue(session_id: str, backend: Optional[str] = None):
+    """
+    Continue after user logged in: create app and extract credentials.
+
+    backend: "operator" or "agent". Uses stored backend from start if not provided.
+    """
+    info = session_manager.get_session_info(session_id)
+    if not info:
+        raise HTTPException(status_code=404, detail="Session not found")
+    state = session_manager.get_dingtalk_setup_state(session_id)
+    backend = backend or (state.get("backend") if state else None) or "playwright"
+    session_manager.set_dingtalk_setup_state(session_id, step="creating")
+    success, client_id, client_secret, err = await continue_dingtalk_setup(
+        info, backend=backend
+    )
+    if not success:
+        session_manager.set_dingtalk_setup_state(
+            session_id, step="error", error=err
+        )
+        raise HTTPException(status_code=500, detail=err)
+    session_manager.set_dingtalk_setup_state(
+        session_id,
+        step="done",
+        client_id=client_id or "",
+        client_secret=client_secret or "",
+    )
+    return {
+        "message": "已获取钉钉应用凭证",
+        "step": "done",
+        "clientId": client_id,
+        "clientSecret": client_secret,
+    }
+
+
+@app.get("/api/sessions/{session_id}/dingtalk-setup/status", response_model=DingtalkSetupStatus)
+async def dingtalk_setup_status(session_id: str):
+    """Get DingTalk setup status."""
+    if not session_manager.get_session_info(session_id):
+        raise HTTPException(status_code=404, detail="Session not found")
+    state = session_manager.get_dingtalk_setup_state(session_id)
+    if not state:
+        return DingtalkSetupStatus(step="idle")
+    return DingtalkSetupStatus(
+        step=state.get("step", "idle"),
+        clientId=state.get("client_id"),
+        clientSecret=state.get("client_secret"),
+        error=state.get("error"),
+        backend=state.get("backend"),
+    )
+
+
+@app.post("/api/sessions/{session_id}/dingtalk-setup/apply")
+async def dingtalk_setup_apply(
+    session_id: str,
+    body: dict,
+):
+    """Apply extracted credentials to OpenClaw config and restart gateway."""
+    info = session_manager.get_session_info(session_id)
+    if not info:
+        raise HTTPException(status_code=404, detail="Session not found")
+    client_id = body.get("clientId") or body.get("client_id", "")
+    client_secret = body.get("clientSecret") or body.get("client_secret", "")
+    if not client_id or not client_secret:
+        raise HTTPException(status_code=400, detail="clientId and clientSecret required")
+    success, err = apply_dingtalk_credentials(info, client_id, client_secret)
+    if not success:
+        raise HTTPException(status_code=500, detail=err)
+    return {"message": "配置已更新，Gateway 已重启"}
 
 
 # ── Static Files ───────────────────────────────────────────────────

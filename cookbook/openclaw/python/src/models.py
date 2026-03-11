@@ -42,6 +42,18 @@ class SessionResponse(BaseModel):
     }
 
 
+class DingtalkSetupStatus(BaseModel):
+    """Status of one-click DingTalk setup flow."""
+
+    step: str = Field(..., description="login | creating | done | error")
+    client_id: Optional[str] = Field(None, alias="clientId")
+    client_secret: Optional[str] = Field(None, alias="clientSecret")
+    error: Optional[str] = Field(None, description="Error message if step=error")
+    backend: Optional[str] = Field(None, description="operator | agent")
+
+    model_config = {"populate_by_name": True, "by_alias": True}
+
+
 class SessionInfo(BaseModel):
     """Internal session information storage."""
 
@@ -53,6 +65,9 @@ class SessionInfo(BaseModel):
     status: str
     agent_bay: object = Field(exclude=True)  # Exclude from serialization
     session: object = Field(exclude=True)  # Exclude from serialization
+    create_request: Optional[CreateSessionRequest] = Field(
+        default=None, exclude=True
+    )  # For config rebuild
 
     model_config = {
         "arbitrary_types_allowed": True,
