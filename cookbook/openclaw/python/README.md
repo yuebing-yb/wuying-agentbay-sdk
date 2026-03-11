@@ -59,29 +59,34 @@ cookbook/openclaw/python/
 │   ├── app.py           # FastAPI 应用
 │   ├── config_builder.py # OpenClaw 配置生成
 │   ├── models.py        # Pydantic 数据模型
-│   └── session_manager.py # 会话管理核心
+│   ├── session_manager.py # 会话管理核心
+│   ├── dingtalk_setup.py # 钉钉一键配置入口（三种后端统一调度）
+│   ├── dingtalk_setup_common.py # 共享类型和工具函数
+│   ├── dingtalk_setup_playwright.py # Playwright 实现（默认）
+│   ├── dingtalk_setup_browser_operator.py # Browser Operator 实现
+│   └── dingtalk_setup_browser_agent.py # BrowserUseAgent 实现
 ├── frontend/            # React 前端源码
 │   ├── src/
+│   │   ├── App.tsx      # 主应用组件
+│   │   └── components/
+│   │       ├── SessionForm.tsx      # 创建会话表单
+│   │       └── DingtalkSetupPanel.tsx # 钉钉一键配置面板
 │   ├── package.json
 │   └── vite.config.ts
 ├── static/              # 前端构建产物
 ├── images/              # 文档图片
 ├── requirements.txt
-├── README.md
-└── README_ZH.md
+└── README.md
 ```
 
 ### 一键配置钉钉机器人
 
 会话创建成功后，可点击「一键配置钉钉机器人」：
 
-1. **选择实现方式**：Browser Operator (page_use_*) 或 BrowserUseAgent (自然语言)
-2. **开始配置**：打开钉钉开放平台并展示二维码
-3. **扫码登录**：使用钉钉 APP 扫描右侧云机中的二维码
-4. **我已登录**：登录成功后点击，系统自动创建应用并提取 Client ID、Client Secret
-5. **提交并更新配置**：将凭证写入 OpenClaw 配置并重启 Gateway
-
-> 两种实现可对比效果：Browser Operator 为分步 act/extract；BrowserUseAgent 为自然语言任务。默认 `operator`，可通过环境变量 `DINGTALK_SETUP_BACKEND=agent` 修改。
+1. **开始配置**：打开钉钉开放平台并展示二维码
+2. **扫码登录**：使用钉钉 APP 扫描右侧云机中的二维码
+3. **我已登录**：登录成功后点击，系统自动创建应用并提取 Client ID、Client Secret
+4. **提交并更新配置**：将凭证写入 OpenClaw 配置并重启 Gateway
 
 ### 前端开发
 
@@ -107,12 +112,23 @@ cp -r frontend/dist/* static/
 
 ## API
 
+### 会话管理
+
 | 方法   | 路径                    | 说明       |
 |--------|------------------------|-----------|
 | POST   | `/api/sessions`        | 创建会话   |
 | GET    | `/api/sessions/{id}`   | 查询会话   |
 | DELETE | `/api/sessions/{id}`   | 销毁会话   |
 | GET    | `/api/sessions`        | 列出所有会话 |
+
+### 钉钉一键配置
+
+| 方法   | 路径                                         | 说明                     |
+|--------|---------------------------------------------|-------------------------|
+| POST   | `/api/sessions/{id}/dingtalk-setup/start`   | 启动配置（打开登录页）     |
+| POST   | `/api/sessions/{id}/dingtalk-setup/continue`| 继续配置（登录后创建应用） |
+| GET    | `/api/sessions/{id}/dingtalk-setup/status`  | 获取配置状态             |
+| POST   | `/api/sessions/{id}/dingtalk-setup/apply`   | 应用凭证到 OpenClaw 配置  |
 
 API 文档：`http://localhost:8080/docs`
 
