@@ -7,7 +7,6 @@ WS streaming output via `stream_beta=True`.
 
 Prerequisites:
 - export AGENTBAY_API_KEY=your_api_key_here
-- (optional) export AGENTBAY_WS_IMAGE_ID=your_ws_enabled_image_id
 """
 
 import asyncio
@@ -23,10 +22,9 @@ async def main() -> None:
     if not api_key:
         raise RuntimeError("Missing AGENTBAY_API_KEY environment variable")
 
-    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5taki2khozz0p8"
     agentbay = AsyncAgentBay(api_key=api_key)
 
-    created = await agentbay.create(CreateSessionParams(image_id=image_id))
+    created = await agentbay.create(CreateSessionParams())
     if not created.success:
         raise RuntimeError(f"Failed to create session: {created.error_message}")
 

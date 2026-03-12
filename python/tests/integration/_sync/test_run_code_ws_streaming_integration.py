@@ -15,10 +15,9 @@ def test_run_code_ws_streaming_e2e():
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
 
-    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5taki2khozz0p8"
     agentbay = AgentBay(api_key=api_key)
 
-    result = agentbay.create(CreateSessionParams(image_id=image_id))
+    result = agentbay.create(CreateSessionParams())
     assert result.success is True, result.error_message
     session = result.session
     try:

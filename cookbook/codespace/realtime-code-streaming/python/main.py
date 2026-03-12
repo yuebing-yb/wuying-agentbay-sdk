@@ -24,9 +24,6 @@ import time
 from agentbay import AsyncAgentBay, CreateSessionParams
 
 
-IMAGE_ID = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5taki2khozz0p8"
-
-
 async def demo_progress_monitoring(session):
     """Demonstrate real-time progress monitoring."""
     print("=" * 60)
@@ -206,8 +203,8 @@ async def main():
     session = None
 
     try:
-        print(f"Creating session (image: {IMAGE_ID})...")
-        result = await agent_bay.create(CreateSessionParams(image_id=IMAGE_ID))
+        print("Creating session...")
+        result = await agent_bay.create(CreateSessionParams())
         if not result.success:
             print(f"Failed: {result.error_message}")
             return

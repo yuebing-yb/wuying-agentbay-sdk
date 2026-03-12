@@ -28,13 +28,7 @@ public class RunCodeWsStreamingBetaIntegrationTest {
 
         agentBay = new AgentBay(apiKey);
 
-        String imageId = System.getenv("AGENTBAY_WS_IMAGE_ID");
-        if (imageId == null || imageId.isEmpty()) {
-            imageId = "imgc-0ab5taki2khozz0p8";
-        }
-
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId(imageId);
         SessionResult created = agentBay.create(params);
         assertTrue("Failed to create session: " + created.getErrorMessage(), created.isSuccess());
         session = created.getSession();

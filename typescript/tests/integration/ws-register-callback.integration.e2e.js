@@ -13,9 +13,8 @@ async function main() {
   // eslint-disable-next-line import/no-dynamic-require, global-require
   const { AgentBay } = require(sdkPath);
 
-  const imageId = process.env.AGENTBAY_WS_IMAGE_ID || "imgc-0ab5ta4kuo0x3pa70";
   const agentBay = new AgentBay({ apiKey });
-  const created = await agentBay.create({ imageId });
+  const created = await agentBay.create();
   if (!created.success || !created.session) {
     throw new Error(`Failed to create session: ${created.errorMessage}`);
   }

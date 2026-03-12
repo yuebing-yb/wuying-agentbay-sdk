@@ -12,7 +12,6 @@ It will:
 ## Prerequisites
 
 - Set environment variable `AGENTBAY_API_KEY`
-- Optional: set `AGENTBAY_WS_IMAGE_ID` (defaults to a browser image)
 
 ## Run
 
