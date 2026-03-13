@@ -16,17 +16,12 @@ func TestWsRegisterCallback_ShouldReceiveCaptchaPush(t *testing.T) {
 		t.Skip("AGENTBAY_API_KEY environment variable not set")
 	}
 
-	imageID := os.Getenv("AGENTBAY_WS_IMAGE_ID")
-	if imageID == "" {
-		imageID = "imgc-0ab5ta4kuo0x3pa70"
-	}
-
 	client, err := agentbay.NewAgentBay(apiKey, nil)
 	if err != nil {
 		t.Fatalf("new agentbay: %v", err)
 	}
 
-	created, err := client.Create(agentbay.NewCreateSessionParams().WithImageId(imageID))
+	created, err := client.Create(agentbay.NewCreateSessionParams())
 	if err != nil {
 		t.Fatalf("create session: %v", err)
 	}

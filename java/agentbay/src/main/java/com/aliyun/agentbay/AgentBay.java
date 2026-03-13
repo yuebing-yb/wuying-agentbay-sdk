@@ -165,7 +165,7 @@ public class AgentBay {
                     responseData.getLinkUrl(),
                     responseData.getWsUrl(),
                     body.getCode() != null ? body.getCode() : "",
-                    responseData.getToolList(),
+                    toolListToString(responseData.getToolList()),
                     success,
                     responseData.getStatus() != null ? responseData.getStatus() : ""
                 );
@@ -1060,6 +1060,20 @@ public class AgentBay {
      */
     public SessionResumeResult betaResume(Session session) throws AgentBayException {
         return betaResume(session, 600, 2.0);
+    }
+
+    private static String toolListToString(Object toolList) {
+        if (toolList == null) {
+            return null;
+        }
+        if (toolList instanceof String) {
+            return (String) toolList;
+        }
+        try {
+            return new ObjectMapper().writeValueAsString(toolList);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 }

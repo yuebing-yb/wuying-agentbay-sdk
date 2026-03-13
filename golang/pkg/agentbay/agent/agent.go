@@ -351,20 +351,20 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 			}
 		}
 
-		fmt.Printf("⏳ Task %s running 🚀: %s.\n", taskID, query.TaskAction)
+		b.logInfo(fmt.Sprintf("⏳ Task %s running 🚀: %s.", taskID, query.TaskAction))
 		time.Sleep(3 * time.Second)
 		triedTime++
 	}
 
-	fmt.Println("⚠️ task execution timeout!")
+	b.logWarn("task execution timeout!")
 	terminateResult := b.terminateTask(taskID)
 	if terminateResult.Success {
-		fmt.Printf("✅ Terminate request sent for task %s after timeout\n", taskID)
+		b.logInfo(fmt.Sprintf("✅ Terminate request sent for task %s after timeout", taskID))
 	} else {
-		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
+		b.logWarn(fmt.Sprintf("Failed to terminate task %s after timeout: %s", taskID, terminateResult.ErrorMessage))
 	}
 
-	fmt.Printf("⏳ Waiting for task %s to be fully terminated...\n", taskID)
+	b.logInfo(fmt.Sprintf("⏳ Waiting for task %s to be fully terminated...", taskID))
 	terminatePollInterval := 1
 	maxTerminatePollAttempts := 30
 	terminateTriedTime := 0
@@ -375,7 +375,7 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 		if !statusQuery.Success {
 			errorMsg := statusQuery.ErrorMessage
 			if errorMsg != "" && strings.HasPrefix(errorMsg, "Task not found or already finished") {
-				fmt.Printf("✅ Task %s confirmed terminated (not found or finished)\n", taskID)
+				b.logInfo(fmt.Sprintf("✅ Task %s confirmed terminated (not found or finished)", taskID))
 				taskTerminatedConfirmed = true
 				break
 			}
@@ -385,7 +385,7 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 	}
 
 	if !taskTerminatedConfirmed {
-		fmt.Printf("⚠️ Timeout waiting for task %s to be fully terminated\n", taskID)
+		b.logWarn(fmt.Sprintf("Timeout waiting for task %s to be fully terminated", taskID))
 	}
 
 	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
@@ -858,7 +858,7 @@ func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
 
 // terminateTask terminates a task with a specified task ID
 func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
-	fmt.Println("Terminating task")
+	b.logInfo("Terminating task")
 
 	args := map[string]interface{}{
 		"task_id": taskID,
@@ -971,6 +971,39 @@ type McpSession interface {
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetBrowser() *browser.Browser
 	GetWsClient() (interface{}, error)
+}
+
+// McpSessionLogger is an optional interface for logging. If McpSession implements it,
+// the agent will use it for logging instead of fmt.Print.
+type McpSessionLogger interface {
+	LogDebug(msg string)
+	LogInfo(msg string)
+	LogWarn(msg string)
+	LogError(msg string)
+}
+
+func (b *baseTaskAgent) logDebug(msg string) {
+	if logger, ok := b.Session.(McpSessionLogger); ok {
+		logger.LogDebug(msg)
+	}
+}
+
+func (b *baseTaskAgent) logInfo(msg string) {
+	if logger, ok := b.Session.(McpSessionLogger); ok {
+		logger.LogInfo(msg)
+	}
+}
+
+func (b *baseTaskAgent) logWarn(msg string) {
+	if logger, ok := b.Session.(McpSessionLogger); ok {
+		logger.LogWarn(msg)
+	}
+}
+
+func (b *baseTaskAgent) logError(msg string) {
+	if logger, ok := b.Session.(McpSessionLogger); ok {
+		logger.LogError(msg)
+	}
 }
 
 func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {
@@ -1148,10 +1181,10 @@ await session.delete()
 */
 func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schema interface{}) *ExecutionResult {
 	if a.initialized == false {
-		fmt.Printf("Browser is not initialized yet, initializing now\n")
+		a.logInfo("Browser is not initialized yet, initializing now")
 		success, err := a.Initialize(&browser.BrowserOption{})
 		if err != nil || !success {
-			fmt.Printf("❌BrowserInitializationFailed: %v", err)
+			a.logError(fmt.Sprintf("BrowserInitializationFailed: %v", err))
 			return &ExecutionResult{
 				ApiResponse:  models.ApiResponse{RequestID: ""},
 				Success:      false,
@@ -1166,7 +1199,7 @@ func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schem
 		"use_vision":    use_vision,
 		"output_schema": generateJsonSchema(output_schema),
 	}
-	fmt.Println(args)
+	a.logDebug(fmt.Sprintf("%v", args))
 	result, err := a.Session.CallMcpTool(a.getToolName("execute"), args)
 	if err != nil {
 		return &ExecutionResult{
@@ -1351,18 +1384,18 @@ func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_visio
 			}
 		}
 
-		fmt.Printf("⏳ Task %s running 🚀: %s.\n", taskID, query.TaskAction)
+		a.logInfo(fmt.Sprintf("⏳ Task %s running 🚀: %s.", taskID, query.TaskAction))
 		time.Sleep(3 * time.Second)
 		triedTime++
 	}
 
-	fmt.Println("⚠️ task execution timeout!")
+	a.logWarn("task execution timeout!")
 	// Automatically terminate the task on timeout
 	terminateResult := a.terminateTask(taskID)
 	if terminateResult.Success {
-		fmt.Printf("✅ Task %s terminated successfully after timeout\n", taskID)
+		a.logInfo(fmt.Sprintf("✅ Task %s terminated successfully after timeout", taskID))
 	} else {
-		fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
+		a.logWarn(fmt.Sprintf("Failed to terminate task %s after timeout: %s", taskID, terminateResult.ErrorMessage))
 	}
 	timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
 	return &ExecutionResult{
@@ -1589,8 +1622,9 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 			switch taskStatus {
 			case "completed":
 				return &ExecutionResult{
-					ApiResponse: models.ApiResponse{RequestID: query.RequestID},
+					ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
 					Success:     true,
+					ErrorMessage: "",
 					TaskID:      taskID,
 					TaskStatus:  taskStatus,
 					TaskResult:  query.TaskProduct,
@@ -1605,10 +1639,10 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 				}
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
-					Success:      false,
+					Success:     false,
 					ErrorMessage: errorMsg,
-					TaskID:       taskID,
-					TaskStatus:   taskStatus,
+					TaskID:      taskID,
+					TaskStatus:  taskStatus,
 				}
 			case "cancelled":
 				errorMsg := query.Error
@@ -1620,10 +1654,10 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 				}
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
-					Success:      false,
+					Success:     false,
 					ErrorMessage: errorMsg,
-					TaskID:       taskID,
-					TaskStatus:   taskStatus,
+					TaskID:      taskID,
+					TaskStatus:  taskStatus,
 				}
 			case "unsupported":
 				errorMsg := query.Error
@@ -1635,27 +1669,27 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 				}
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
-					Success:      false,
+					Success:     false,
 					ErrorMessage: errorMsg,
-					TaskID:       taskID,
-					TaskStatus:   taskStatus,
+					TaskID:      taskID,
+					TaskStatus:  taskStatus,
 				}
 			}
 
-			fmt.Printf("⏳ Task %s running 🚀: %s.\n", taskID, query.TaskAction)
+			a.logInfo(fmt.Sprintf("⏳ Task %s running 🚀: %s.", taskID, query.TaskAction))
 			time.Sleep(3 * time.Second)
 			triedTime++
 		}
 
-		fmt.Println("⚠️ task execution timeout!")
+		a.logWarn("task execution timeout!")
 		terminateResult := a.TerminateTask(taskID)
 		if terminateResult.Success {
-			fmt.Printf("✅ Terminate request sent for task %s after timeout\n", taskID)
+			a.logInfo(fmt.Sprintf("✅ Terminate request sent for task %s after timeout", taskID))
 		} else {
-			fmt.Printf("⚠️ Failed to terminate task %s after timeout: %s\n", taskID, terminateResult.ErrorMessage)
+			a.logWarn(fmt.Sprintf("Failed to terminate task %s after timeout: %s", taskID, terminateResult.ErrorMessage))
 		}
 
-		fmt.Printf("⏳ Waiting for task %s to be fully terminated...\n", taskID)
+		a.logInfo(fmt.Sprintf("⏳ Waiting for task %s to be fully terminated...", taskID))
 		terminatePollInterval := 1
 		maxTerminatePollAttempts := 30
 		terminateTriedTime := 0
@@ -1666,7 +1700,7 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 			if !statusQuery.Success {
 				errorMsg := statusQuery.ErrorMessage
 				if errorMsg != "" && strings.HasPrefix(errorMsg, "Task not found or already finished") {
-					fmt.Printf("✅ Task %s confirmed terminated (not found or finished)\n", taskID)
+					a.logInfo(fmt.Sprintf("✅ Task %s confirmed terminated (not found or finished)", taskID))
 					taskTerminatedConfirmed = true
 					break
 				}
@@ -1676,7 +1710,7 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 		}
 
 		if !taskTerminatedConfirmed {
-			fmt.Printf("⚠️ Timeout waiting for task %s to be fully terminated\n", taskID)
+			a.logWarn(fmt.Sprintf("Timeout waiting for task %s to be fully terminated", taskID))
 		}
 
 		timeoutErrorMsg := fmt.Sprintf("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskID, triedTime, maxPollAttempts)
@@ -1863,7 +1897,7 @@ func (a *MobileUseAgent) GetTaskStatus(taskID string) *QueryResult {
 //
 //	terminateResult := sessionResult.Session.Agent.Mobile.TerminateTask(execResult.TaskID)
 func (a *MobileUseAgent) TerminateTask(taskID string) *ExecutionResult {
-	fmt.Println("Terminating task")
+	a.logInfo("Terminating task")
 	args := map[string]interface{}{
 		"task_id": taskID,
 	}

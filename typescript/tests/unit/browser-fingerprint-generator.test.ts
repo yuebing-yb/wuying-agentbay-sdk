@@ -4,6 +4,7 @@ import {
 } from "../../src/browser/fingerprint";
 import * as fs from "fs";
 import * as path from "path";
+import * as logger from "../../src/utils/logger";
 
 // Mock Playwright
 jest.mock("playwright", () => ({
@@ -16,6 +17,14 @@ jest.mock("playwright", () => ({
 jest.mock("fs", () => ({
   writeFileSync: jest.fn(),
   readFileSync: jest.fn(),
+}));
+
+// Mock logger module
+jest.mock("../../src/utils/logger", () => ({
+  logInfo: jest.fn(),
+  logWarn: jest.fn(),
+  logError: jest.fn(),
+  logDebug: jest.fn(),
 }));
 
 describe("BrowserFingerprintGenerator Unit Tests", () => {
@@ -116,30 +125,26 @@ describe("BrowserFingerprintGenerator Unit Tests", () => {
       chromium.launch.mockRejectedValue(new Error("Browser launch failed"));
 
       const generator = new BrowserFingerprintGenerator();
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      (logger.logError as jest.Mock).mockClear();
 
       const result = await generator.generateFingerprint();
 
       expect(result).toBeNull();
-      expect(consoleSpy).toHaveBeenCalled();
-      const errorMessage = consoleSpy.mock.calls[0][0];
+      expect(logger.logError).toHaveBeenCalled();
+      const errorMessage = (logger.logError as jest.Mock).mock.calls[0][0];
       expect(errorMessage).toContain("Error generating fingerprint");
-
-      consoleSpy.mockRestore();
     });
 
     test("should handle page evaluation error", async () => {
       mockPage.evaluate.mockRejectedValue(new Error("Evaluation failed"));
 
       const generator = new BrowserFingerprintGenerator();
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      (logger.logError as jest.Mock).mockClear();
 
       const result = await generator.generateFingerprint();
 
       expect(result).toBeNull();
-      expect(consoleSpy).toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
+      expect(logger.logError).toHaveBeenCalled();
     });
   });
 
@@ -197,16 +202,14 @@ describe("BrowserFingerprintGenerator Unit Tests", () => {
 
     test("should handle fingerprint generation failure", async () => {
       jest.spyOn(generator, "generateFingerprint").mockResolvedValue(null);
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      (logger.logError as jest.Mock).mockClear();
 
       const result = await generator.generateFingerprintToFile("test.json");
 
       expect(result).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(logger.logError).toHaveBeenCalledWith(
         "Failed to generate fingerprint data"
       );
-
-      consoleSpy.mockRestore();
     });
 
     test("should handle file save error", async () => {
@@ -215,23 +218,19 @@ describe("BrowserFingerprintGenerator Unit Tests", () => {
         throw new Error("File write failed");
       });
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      (logger.logError as jest.Mock).mockClear();
 
       const result = await generator.generateFingerprintToFile("test.json");
 
       expect(result).toBe(false);
-      expect(consoleSpy).toHaveBeenCalled();
-      const errorMessage = consoleSpy.mock.calls[0][0];
+      expect(logger.logError).toHaveBeenCalled();
+      const errorMessage = (logger.logError as jest.Mock).mock.calls[0][0];
       expect(errorMessage).toContain("Failed to save fingerprint data");
-
-      consoleSpy.mockRestore();
     });
 
     test("should handle browser environment (no fs)", async () => {
-      // Create a new generator to avoid interference from previous mocks
       const browserGenerator = new BrowserFingerprintGenerator();
 
-      // Mock generateFingerprint to return a valid fingerprint
       const mockFingerprintFormat = {
         toJson: jest.fn().mockReturnValue('{"test": "data"}'),
       } as any;
@@ -239,25 +238,21 @@ describe("BrowserFingerprintGenerator Unit Tests", () => {
         .spyOn(browserGenerator, "generateFingerprint")
         .mockResolvedValue(mockFingerprintFormat);
 
-      // Mock the private saveToFile method to simulate browser environment
-      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
-      (browserGenerator as any).saveToFile = jest
-        .fn()
-        .mockImplementation(() => {
-          console.warn("File saving not supported in browser environment");
-          return Promise.resolve(false);
-        });
+      (logger.logWarn as jest.Mock).mockClear();
+      (browserGenerator as any).saveToFile = jest.fn().mockImplementation(() => {
+        (logger.logWarn as jest.Mock)(
+          "File saving not supported in browser environment"
+        );
+        return Promise.resolve(false);
+      });
 
-      const result = await browserGenerator.generateFingerprintToFile(
-        "test.json"
-      );
+      const result =
+        await browserGenerator.generateFingerprintToFile("test.json");
 
       expect(result).toBe(false);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(logger.logWarn).toHaveBeenCalledWith(
         "File saving not supported in browser environment"
       );
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -265,26 +260,22 @@ describe("BrowserFingerprintGenerator Unit Tests", () => {
     test("should handle unexpected errors gracefully", async () => {
       const generator = new BrowserFingerprintGenerator();
 
-      // Mock an unexpected error in generateFingerprint
       jest.spyOn(generator, "generateFingerprint").mockImplementation(() => {
         throw new Error("Unexpected error");
       });
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      (logger.logError as jest.Mock).mockClear();
 
       const result = await generator.generateFingerprintToFile();
 
       expect(result).toBe(false);
-      expect(consoleSpy).toHaveBeenCalled();
-
-      consoleSpy.mockRestore();
+      expect(logger.logError).toHaveBeenCalled();
     });
 
-    test("should handle console logging", async () => {
+    test("should handle logging", async () => {
       const generator = new BrowserFingerprintGenerator();
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+      (logger.logInfo as jest.Mock).mockClear();
 
-      // Mock successful generation
       const mockFingerprintFormat = {
         toJson: jest.fn().mockReturnValue('{"test": "data"}'),
       } as any;
@@ -298,20 +289,20 @@ describe("BrowserFingerprintGenerator Unit Tests", () => {
 
       await generator.generateFingerprintToFile("test.json");
 
-      expect(consoleSpy).toHaveBeenCalled();
-      const logMessages = consoleSpy.mock.calls.map((call) => call[0]);
+      expect(logger.logInfo).toHaveBeenCalled();
+      const logMessages = (logger.logInfo as jest.Mock).mock.calls.map(
+        (call: any[]) => call[0]
+      );
       expect(
-        logMessages.some((msg) =>
+        logMessages.some((msg: string) =>
           msg.includes("Starting fingerprint generation")
         )
       ).toBe(true);
       expect(
-        logMessages.some((msg) =>
+        logMessages.some((msg: string) =>
           msg.includes("Fingerprint generation completed successfully")
         )
       ).toBe(true);
-
-      consoleSpy.mockRestore();
     });
   });
 });

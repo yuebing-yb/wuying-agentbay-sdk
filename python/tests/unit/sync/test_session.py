@@ -472,10 +472,10 @@ class TestAsyncSession(unittest.TestCase):
     @patch("agentbay._sync.session.GetLinkRequest")
     @pytest.mark.sync
 
-    def test_get_link_with_valid_port(
+    def test_get_link_with_port(
         self, MockGetLinkRequest, mock_extract_request_id
     ):
-        """Test get_link with valid port values in range [30100, 30199]"""
+        """Test get_link with port parameter"""
         mock_request = MagicMock()
         mock_response = MagicMock()
         MockGetLinkRequest.return_value = mock_request
@@ -487,10 +487,10 @@ class TestAsyncSession(unittest.TestCase):
             "body": {"Data": {"Url": "http://example.com:30150"}, "Success": True}
         }
 
-        # Test with valid ports in range [30100, 30199]
-        valid_ports = [30100, 30150, 30199]
+        # Test with various port values
+        test_ports = [30100, 30150, 30199]
 
-        for port in valid_ports:
+        for port in test_ports:
             with self.subTest(port=port):
                 MockGetLinkRequest.reset_mock()
                 self.agent_bay.client.get_link.reset_mock()
@@ -512,74 +512,6 @@ class TestAsyncSession(unittest.TestCase):
                     mock_request
                 )
 
-    @pytest.mark.sync
-
-
-    def test_get_link_with_invalid_port_below_range(self):
-        """Test get_link with port below valid range raises SessionError"""
-        from agentbay import SessionError
-
-        invalid_port = 30099
-
-        with self.assertRaises(SessionError) as context:
-            self.session.get_link(port=invalid_port)
-
-        error_message = str(context.exception)
-        expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
-        self.assertEqual(error_message, expected_message)
-
-    @pytest.mark.sync
-
-
-    def test_get_link_with_invalid_port_above_range(self):
-        """Test get_link with port above valid range raises SessionError"""
-        from agentbay import SessionError
-
-        invalid_port = 30200
-
-        with self.assertRaises(SessionError) as context:
-            self.session.get_link(port=invalid_port)
-
-        error_message = str(context.exception)
-        expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
-        self.assertEqual(error_message, expected_message)
-
-    @pytest.mark.sync
-
-
-    def test_get_link_with_invalid_port_non_integer(self):
-        """Test get_link with non-integer port raises SessionError"""
-        from agentbay import SessionError
-
-        invalid_ports = [30150.5, "30150"]
-
-        for invalid_port in invalid_ports:
-            with self.subTest(port=invalid_port):
-                with self.assertRaises(SessionError) as context:
-                    self.session.get_link(port=invalid_port)
-
-                error_message = str(context.exception)
-                expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
-                self.assertEqual(error_message, expected_message)
-
-    @pytest.mark.sync
-
-
-    def test_get_link_with_invalid_port_boundary_values(self):
-        """Test get_link with boundary values outside valid range"""
-        from agentbay import SessionError
-
-        # Test boundary values just outside the valid range
-        invalid_ports = [30099, 30200, 0, -1, 65536]
-
-        for invalid_port in invalid_ports:
-            with self.subTest(port=invalid_port):
-                with self.assertRaises(SessionError) as context:
-                    self.session.get_link(port=invalid_port)
-
-                error_message = str(context.exception)
-                expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
-                self.assertEqual(error_message, expected_message)
 
     @pytest.mark.sync
 

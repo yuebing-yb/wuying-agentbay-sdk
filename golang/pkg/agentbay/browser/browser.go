@@ -11,6 +11,20 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
+// logDebug logs a debug message if the session implements internal.Logger.
+func (b *Browser) logDebug(msg string) {
+	if logger, ok := b.session.(internal.Logger); ok {
+		logger.LogDebug(msg)
+	}
+}
+
+// logInfo logs an info message if the session implements internal.Logger.
+func (b *Browser) logInfo(msg string) {
+	if logger, ok := b.session.(internal.Logger); ok {
+		logger.LogInfo(msg)
+	}
+}
+
 // BrowserProxy represents browser proxy configuration.
 // Supports three types of proxy: custom proxy, wuying proxy, and managed proxy.
 // - Custom proxy: User-provided proxy servers
@@ -684,14 +698,15 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	}
 
 	// Log API request
-	fmt.Printf("🔗 API Call: InitBrowser\n")
-	fmt.Printf("   Request: SessionId=%s", *request.SessionId)
+	b.logDebug("API Call: InitBrowser")
+	reqMsg := "Request: SessionId=" + *request.SessionId
 	if request.PersistentPath != nil {
-		fmt.Printf(", PersistentPath=%s\n", *request.PersistentPath)
+		reqMsg += ", PersistentPath=" + *request.PersistentPath
 	}
 	if request.BrowserOption != nil {
-		fmt.Printf("BrowserOption: %+v\n", request.BrowserOption)
+		reqMsg += fmt.Sprintf(", BrowserOption: %+v", request.BrowserOption)
 	}
+	b.logDebug(reqMsg)
 
 	// Call the client's InitBrowser method
 	response, err := b.session.GetClient().InitBrowser(request)
@@ -700,9 +715,9 @@ func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
 	}
 
 	// Log API response
-	fmt.Printf("📥 API Response: InitBrowser\n")
+	b.logDebug("API Response: InitBrowser")
 	if response.Body != nil {
-		fmt.Printf("Full Response: %+v\n", response.Body)
+		b.logDebug(fmt.Sprintf("Full Response: %+v", response.Body))
 	}
 
 	// Check the response
@@ -895,7 +910,7 @@ func (b *Browser) Screenshot(page playwright.Page, options *ScreenshotOptions) (
 			return nil, err
 		}
 
-		fmt.Println("Screenshot captured successfully.")
+		b.logInfo("Screenshot captured successfully.")
 		return screenshotBytes, nil
 	}
 

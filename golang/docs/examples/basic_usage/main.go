@@ -89,7 +89,7 @@ func main() {
 			linkResult.Link, linkResult.RequestID)
 	}
 
-	// Test GetLink with valid port in range [30100, 30199]
+	// Test GetLink with port
 	fmt.Println("\nTesting GetLink with valid port 30150...")
 	var validPort int32 = 30150
 	linkResultValidPort, err := session.GetLink(nil, &validPort, nil)

@@ -18,9 +18,7 @@ class TestWsLongConnectionIntegration:
         return AsyncAgentBay(api_key=api_key)
 
     async def test_ws_connect_and_basic_call_stream(self, agentbay):
-        image_id = "imgc-0a9mg1h4f7nsd55aw"
-        params = CreateSessionParams(image_id=image_id)
-        result = await agentbay.create(params)
+        result = await agentbay.create(CreateSessionParams())
         assert result.success is True, result.error_message
         assert result.session is not None
         session = result.session

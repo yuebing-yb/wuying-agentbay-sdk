@@ -730,11 +730,11 @@ public class Agent extends BaseService {
             try {
                 String schemaJson = "";
                 if (outputSchema instanceof String) {
-                    System.out.println("-------String schemaJson: " + outputSchema);
+                    logger.debug("-------String schemaJson: {}", outputSchema);
                     schemaJson = (String) outputSchema;
                 } else if (outputSchema instanceof Class) {
                     schemaJson = SchemaHelper.generateJsonSchema((Class<?>) outputSchema);
-                    System.out.println("-------Class schemaJson: " + schemaJson);
+                    logger.debug("-------Class schemaJson: {}", schemaJson);
                 }
                 logger.info("Output schema: {}", schemaJson);
 

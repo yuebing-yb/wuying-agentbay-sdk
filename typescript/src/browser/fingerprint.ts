@@ -1,4 +1,5 @@
 import { chromium, Page } from "playwright";
+import { logInfo, logWarn, logError } from "../utils/logger";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -363,7 +364,7 @@ export class BrowserFingerprintGenerator {
    */
   async generateFingerprint(): Promise<FingerprintFormat | null> {
     try {
-      console.log("Starting fingerprint generation");
+      logInfo("Starting fingerprint generation");
 
       const launchOptions: any = {
         headless: this.headless,
@@ -381,7 +382,7 @@ export class BrowserFingerprintGenerator {
       // Navigate to a test page to ensure proper loading
       await page.goto("about:blank");
 
-      console.log("Extracting comprehensive browser fingerprint...");
+      logInfo("Extracting comprehensive browser fingerprint...");
 
       // Extract comprehensive fingerprint data
       const fingerprintData = await this.extractFingerprintData(page);
@@ -397,10 +398,10 @@ export class BrowserFingerprintGenerator {
         headers: headersData,
       });
 
-      console.log("Fingerprint generation completed successfully!");
+      logInfo("Fingerprint generation completed successfully!");
       return fingerprintFormat;
     } catch (error) {
-      console.error(`Error generating fingerprint: ${error}`);
+      logError(`Error generating fingerprint: ${error}`);
       return null;
     }
   }
@@ -412,15 +413,13 @@ export class BrowserFingerprintGenerator {
     outputFilename = "fingerprint_output.json"
   ): Promise<boolean> {
     try {
-      console.log(
-        `Starting fingerprint generation, output file: ${outputFilename}`
-      );
+      logInfo(`Starting fingerprint generation, output file: ${outputFilename}`);
 
       // Generate fingerprint data (FingerprintFormat object)
       const fingerprintFormat = await this.generateFingerprint();
 
       if (fingerprintFormat === null) {
-        console.error("Failed to generate fingerprint data");
+        logError("Failed to generate fingerprint data");
         return false;
       }
 
@@ -429,16 +428,14 @@ export class BrowserFingerprintGenerator {
       const success = await this.saveToFile(fingerprintJson, outputFilename);
 
       if (success) {
-        console.log(
-          `Fingerprint generation completed successfully! Saved to ${outputFilename}`
-        );
+        logInfo(`Fingerprint generation completed successfully! Saved to ${outputFilename}`);
         return true;
       } else {
-        console.error("Failed to save fingerprint data");
+        logError("Failed to save fingerprint data");
         return false;
       }
     } catch (error) {
-      console.error(`Error generating fingerprint to file: ${error}`);
+      logError(`Error generating fingerprint to file: ${error}`);
       return false;
     }
   }
@@ -721,7 +718,7 @@ export class BrowserFingerprintGenerator {
     page: Page
   ): Promise<Record<string, string>> {
     try {
-      console.log("Getting request headers...");
+      logInfo("Getting request headers...");
       await page.goto("https://httpbin.org/headers", {
         waitUntil: "networkidle",
       });
@@ -773,7 +770,7 @@ export class BrowserFingerprintGenerator {
 
       return headersData;
     } catch (error) {
-      console.warn(`Failed to extract headers: ${error}`);
+      logWarn(`Failed to extract headers: ${error}`);
       return {};
     }
   }
@@ -791,15 +788,15 @@ export class BrowserFingerprintGenerator {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const fs = require("fs");
         fs.writeFileSync(filename, jsonData, "utf8");
-        console.log(`Fingerprint data saved to ${filename}`);
+        logInfo(`Fingerprint data saved to ${filename}`);
         return true;
       } else {
         // In browser environment, we can't save files directly
-        console.warn("File saving not supported in browser environment");
+        logWarn("File saving not supported in browser environment");
         return false;
       }
     } catch (error) {
-      console.error(`Failed to save fingerprint data: ${error}`);
+      logError(`Failed to save fingerprint data: ${error}`);
       return false;
     }
   }

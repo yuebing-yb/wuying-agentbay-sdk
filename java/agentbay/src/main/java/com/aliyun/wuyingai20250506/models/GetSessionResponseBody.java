@@ -140,7 +140,7 @@ public class GetSessionResponseBody extends TeaModel {
         public String wsUrlLower;
 
         @NameInMap("ToolList")
-        public String toolList;
+        public Object toolList;
 
         @NameInMap("VpcResource")
         public Boolean vpcResource;
@@ -236,11 +236,11 @@ public class GetSessionResponseBody extends TeaModel {
             return this.wsUrlLower;
         }
 
-        public GetSessionResponseBodyData setToolList(String toolList) {
+        public GetSessionResponseBodyData setToolList(Object toolList) {
             this.toolList = toolList;
             return this;
         }
-        public String getToolList() {
+        public Object getToolList() {
             return this.toolList;
         }
 

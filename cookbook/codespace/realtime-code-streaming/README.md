@@ -22,8 +22,6 @@ pip install wuying-agentbay-sdk
 export AGENTBAY_API_KEY=your_api_key_here
 ```
 
-> **Note**: Streaming requires a session image that provides a `ws_url`. Set `AGENTBAY_WS_IMAGE_ID` to specify your image, or the default `imgc-0ab5taki2khozz0p8` will be used.
-
 ## Quick Start
 
 ```bash

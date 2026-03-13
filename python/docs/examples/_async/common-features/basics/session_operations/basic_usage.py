@@ -51,7 +51,7 @@ async def main():
         print(f"Link request ID: {link_result.request_id}")
         print(f"Link: {link_result.data}")
 
-        # Test get_link with valid port in range [30100, 30199]
+        # Test get_link with port
         print("\nTesting get_link with valid port 30150...")
         try:
             link_result_port_30150 = await session.get_link(None, 30150)

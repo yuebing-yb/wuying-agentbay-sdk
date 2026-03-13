@@ -435,6 +435,26 @@ func (s *Session) GetBrowser() *browser.Browser {
 	return s.Browser
 }
 
+// LogDebug delegates to agentbay.LogDebug (implements agent.McpSessionLogger).
+func (s *Session) LogDebug(msg string) {
+	LogDebug(msg)
+}
+
+// LogInfo delegates to agentbay.LogInfo (implements agent.McpSessionLogger).
+func (s *Session) LogInfo(msg string) {
+	LogInfo(msg)
+}
+
+// LogWarn delegates to agentbay.LogWarn (implements agent.McpSessionLogger).
+func (s *Session) LogWarn(msg string) {
+	LogWarn(msg)
+}
+
+// LogError delegates to agentbay.LogError (implements agent.McpSessionLogger).
+func (s *Session) LogError(msg string) {
+	LogError(msg)
+}
+
 // GetImageID returns the image ID for this session.
 func (s *Session) GetImageID() string {
 	return s.ImageId
@@ -890,7 +910,7 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 //
 // Parameters:
 //   - protocolType: Protocol type for the link (optional, reserved for future use)
-//   - port: Specific port number to access (must be in range [30100, 30199])
+//   - port: Specific port number to access (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com)
 //   - options: Additional options (optional)
 //
 // Returns:
@@ -901,7 +921,7 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 //
 // - Without port: Returns the default session access URL
 // - With port: Returns URL for accessing specific port-mapped service
-// - Port must be in range [30100, 30199] for port forwarding
+// - Default open port range: [30100, 30199]; other ports require whitelist approval
 //
 // Example:
 //
@@ -911,13 +931,6 @@ func (s *Session) GetLabels() (*LabelResult, error) {
 //	port := int32(30100)
 //	linkResult, _ := result.Session.GetLink(nil, &port, nil)
 func (s *Session) GetLink(protocolType *string, port *int32, options *string) (*LinkResult, error) {
-	// Validate port range if port is provided
-	if port != nil {
-		if *port < 30100 || *port > 30199 {
-			return nil, fmt.Errorf("invalid port value: %d. Port must be an integer in the range [30100, 30199]", *port)
-		}
-	}
-
 	getLinkRequest := &mcp.GetLinkRequest{
 		Authorization: tea.String("Bearer " + s.GetAPIKey()),
 		SessionId:     tea.String(s.SessionID),
@@ -1809,7 +1822,7 @@ func (s *Session) BetaPause(timeout int, pollInterval float64) (*models.SessionP
 	}
 
 	// Pause initiated successfully
-	fmt.Printf("PauseSessionAsync: Session %s pause initiated successfully\n", s.SessionID)
+	LogInfo(fmt.Sprintf("PauseSessionAsync: Session %s pause initiated successfully", s.SessionID))
 
 	// Poll for session status until PAUSED or timeout
 	startTime := time.Now()
@@ -1838,12 +1851,12 @@ func (s *Session) BetaPause(timeout int, pollInterval float64) (*models.SessionP
 			if status == "" {
 				status = "UNKNOWN"
 			}
-			fmt.Printf("Session status: %s (attempt %d/%d)\n", status, attempt+1, maxAttempts)
+			LogInfo(fmt.Sprintf("Session status: %s (attempt %d/%d)", status, attempt+1, maxAttempts))
 
 			// Check if session is paused
 			if status == "PAUSED" {
 				elapsed := time.Since(startTime)
-				fmt.Printf("Session paused successfully in %v\n", elapsed)
+				LogInfo(fmt.Sprintf("Session paused successfully in %v", elapsed))
 				return &models.SessionPauseResult{
 					ApiResponse: models.WithRequestID(getSessionResult.GetRequestID()),
 					Success:     true,
@@ -1855,7 +1868,7 @@ func (s *Session) BetaPause(timeout int, pollInterval float64) (*models.SessionP
 				// Any other status is unexpected - pause API succeeded but session is not pausing/paused
 				elapsed := time.Since(startTime)
 				errorMessage := fmt.Sprintf("Session pause failed: unexpected state '%s' after %v", status, elapsed)
-				fmt.Printf("%s\n", errorMessage)
+				LogWarn(errorMessage)
 				return &models.SessionPauseResult{
 					ApiResponse:  models.WithRequestID(getSessionResult.GetRequestID()),
 					Success:      false,
@@ -1875,7 +1888,7 @@ func (s *Session) BetaPause(timeout int, pollInterval float64) (*models.SessionP
 	// Timeout
 	elapsed := time.Since(startTime)
 	errorMessage := fmt.Sprintf("Session pause timed out after %v", elapsed)
-	fmt.Printf("ERROR: %s\n", errorMessage)
+	LogError(errorMessage)
 	return &models.SessionPauseResult{
 		ApiResponse:  models.WithRequestID(""),
 		Success:      false,
@@ -1967,7 +1980,7 @@ func (s *Session) BetaResume(timeout int, pollInterval float64) (*models.Session
 	}
 
 	// Resume initiated successfully
-	fmt.Printf("ResumeSessionAsync: Session %s resume initiated successfully\n", s.SessionID)
+	LogInfo(fmt.Sprintf("ResumeSessionAsync: Session %s resume initiated successfully", s.SessionID))
 
 	// Poll for session status until RUNNING or timeout
 	startTime := time.Now()
@@ -1996,12 +2009,12 @@ func (s *Session) BetaResume(timeout int, pollInterval float64) (*models.Session
 			if status == "" {
 				status = "UNKNOWN"
 			}
-			fmt.Printf("Session status: %s (attempt %d/%d)\n", status, attempt+1, maxAttempts)
+			LogInfo(fmt.Sprintf("Session status: %s (attempt %d/%d)", status, attempt+1, maxAttempts))
 
 			// Check if session is running
 			if status == "RUNNING" {
 				elapsed := time.Since(startTime)
-				fmt.Printf("Session resumed successfully in %v\n", elapsed)
+				LogInfo(fmt.Sprintf("Session resumed successfully in %v", elapsed))
 				return &models.SessionResumeResult{
 					ApiResponse: models.WithRequestID(getSessionResult.GetRequestID()),
 					Success:     true,
@@ -2013,7 +2026,7 @@ func (s *Session) BetaResume(timeout int, pollInterval float64) (*models.Session
 				// Any other status is unexpected - resume API succeeded but session is not resuming/running
 				elapsed := time.Since(startTime)
 				errorMessage := fmt.Sprintf("Session resume failed: unexpected state '%s' after %v", status, elapsed)
-				fmt.Printf("%s\n", errorMessage)
+				LogWarn(errorMessage)
 				return &models.SessionResumeResult{
 					ApiResponse:  models.WithRequestID(getSessionResult.GetRequestID()),
 					Success:      false,
@@ -2033,7 +2046,7 @@ func (s *Session) BetaResume(timeout int, pollInterval float64) (*models.Session
 	// Timeout
 	elapsed := time.Since(startTime)
 	errorMessage := fmt.Sprintf("Session resume timed out after %v", elapsed)
-	fmt.Printf("ERROR: %s\n", errorMessage)
+	LogError(errorMessage)
 	return &models.SessionResumeResult{
 		ApiResponse:  models.WithRequestID(""),
 		Success:      false,

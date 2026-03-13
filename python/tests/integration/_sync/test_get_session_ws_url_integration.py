@@ -20,8 +20,7 @@ class TestGetSessionWsUrlIntegration:
         return AgentBay(api_key=api_key)
 
     def test_get_restored_session_should_include_ws_url(self, agentbay):
-        image_id = "imgc-0a9mg1h4et0z42hv5"
-        create_result = agentbay.create(CreateSessionParams(image_id=image_id))
+        create_result = agentbay.create(CreateSessionParams())
         assert create_result.success is True, create_result.error_message
         assert create_result.session is not None
 

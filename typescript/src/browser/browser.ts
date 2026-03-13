@@ -689,7 +689,7 @@ export class Browser {
 
       return success;
     } catch (error) {
-      console.error("Failed to initialize browser instance:", error);
+      logError("Failed to initialize browser instance:", error);
       this._initialized = false;
       this._endpointUrl = null;
       this._option = null;

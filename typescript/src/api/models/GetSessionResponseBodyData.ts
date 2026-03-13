@@ -77,7 +77,7 @@ export class GetSessionResponseBodyData extends $dara.Model {
       contexts: { 'type': 'array', 'itemType': GetSessionResponseBodyDataContexts },
       resourceUrl: 'string',
       status: 'string',
-      toolList: 'string',
+      toolList: 'any',
     };
   }
 

@@ -109,7 +109,7 @@ type CreateMcpSessionResponseBodyData struct {
 	SessionId          *string `json:"SessionId,omitempty" xml:"SessionId,omitempty"`
 	Success            *bool   `json:"Success,omitempty" xml:"Success,omitempty"`
 	Token              *string `json:"Token,omitempty" xml:"Token,omitempty"`
-	ToolList           *string `json:"ToolList,omitempty" xml:"ToolList,omitempty"`
+	ToolList           interface{} `json:"ToolList,omitempty" xml:"ToolList,omitempty"`
 	WsUrl              *string `json:"WsUrl,omitempty" xml:"WsUrl,omitempty"`
 	VpcResource        *bool   `json:"VpcResource,omitempty" xml:"VpcResource,omitempty"`
 }
@@ -162,7 +162,7 @@ func (s *CreateMcpSessionResponseBodyData) GetToken() *string {
 	return s.Token
 }
 
-func (s *CreateMcpSessionResponseBodyData) GetToolList() *string {
+func (s *CreateMcpSessionResponseBodyData) GetToolList() interface{} {
 	return s.ToolList
 }
 
@@ -224,8 +224,8 @@ func (s *CreateMcpSessionResponseBodyData) SetToken(v string) *CreateMcpSessionR
 	return s
 }
 
-func (s *CreateMcpSessionResponseBodyData) SetToolList(v string) *CreateMcpSessionResponseBodyData {
-	s.ToolList = &v
+func (s *CreateMcpSessionResponseBodyData) SetToolList(v interface{}) *CreateMcpSessionResponseBodyData {
+	s.ToolList = v
 	return s
 }
 

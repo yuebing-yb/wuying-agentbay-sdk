@@ -53,6 +53,9 @@ coverage/
 tsconfig.json
 .typedoc-output/
 
+# Java
+target/
+
 # Golang
 *.exe
 *.exe~

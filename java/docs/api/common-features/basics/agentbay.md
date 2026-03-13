@@ -257,6 +257,8 @@ This is a convenience method that delegates to the session's betaResume method.
 
 ## Config
 
+Configuration class for AgentBay SDK
+
 ### Constructor
 
 ```java

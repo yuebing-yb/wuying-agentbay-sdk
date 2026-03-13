@@ -12,6 +12,7 @@ import (
 
 	"github.com/alibabacloud-go/tea/tea"
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
@@ -137,6 +138,7 @@ type FileTransfer struct {
 	session     FileTransferSession
 	contextSvc  FileTransferContextService
 	httpTimeout time.Duration
+	logger      internal.Logger
 
 	// Lazy-loaded context information
 	contextID   string
@@ -243,14 +245,16 @@ type ContextStatusData struct {
 // Parameters:
 //   - session: Session interface providing API key, client, and session ID
 //   - contextSvc: Context service interface for getting presigned URLs
+//   - logger: Optional logger for debug/info output (nil for no logging)
 //
 // Returns:
 //   - *FileTransfer: A new FileTransfer instance ready for upload/download operations
-func NewFileTransfer(session FileTransferSession, contextSvc FileTransferContextService) *FileTransfer {
+func NewFileTransfer(session FileTransferSession, contextSvc FileTransferContextService, logger internal.Logger) *FileTransfer {
 	return &FileTransfer{
 		session:     session,
 		contextSvc:  contextSvc,
 		httpTimeout: 60 * time.Second,
+		logger:      logger,
 		finishedStates: map[string]bool{
 			"success":    true,
 			"successful": true,
@@ -275,8 +279,10 @@ func (ft *FileTransfer) ensureContextID() (bool, string) {
 		ContextTypes:  []*string{tea.String("file_transfer")},
 	}
 
-	fmt.Printf("🔗 API Call: GetAndLoadInternalContext\n")
-	fmt.Printf("  └─ SessionId=%s, ContextTypes=file_transfer\n", ft.session.GetSessionId())
+	if ft.logger != nil {
+		ft.logger.LogDebug("API Call: GetAndLoadInternalContext")
+		ft.logger.LogDebug(fmt.Sprintf("SessionId=%s, ContextTypes=file_transfer", ft.session.GetSessionId()))
+	}
 
 	response, err := ft.session.GetClient().GetAndLoadInternalContext(request)
 	if err != nil {
@@ -305,7 +311,9 @@ func (ft *FileTransfer) ensureContextID() (bool, string) {
 				if contextID != "" && contextPath != "" {
 					ft.contextID = contextID
 					ft.contextPath = contextPath
-					fmt.Printf("✅ Got file transfer context: ID=%s, Path=%s\n", contextID, contextPath)
+					if ft.logger != nil {
+						ft.logger.LogInfo(fmt.Sprintf("Got file transfer context: ID=%s, Path=%s", contextID, contextPath))
+					}
 					return true, ""
 				}
 			}
@@ -402,7 +410,9 @@ func (ft *FileTransfer) Upload(localPath, remotePath string, opts *FileTransferO
 	uploadURL := urlRes.Url
 	reqIDUpload := urlRes.RequestID
 
-	fmt.Printf("Uploading %s to %s\n", localPath, uploadURL)
+	if ft.logger != nil {
+		ft.logger.LogInfo(fmt.Sprintf("Uploading %s to %s", localPath, uploadURL))
+	}
 
 	// 2. PUT upload to pre-signed URL
 	httpStatus, etag, bytesSent, err := ft.putFile(uploadURL, localPath, opts.ContentType, opts.ProgressCB)
@@ -415,7 +425,9 @@ func (ft *FileTransfer) Upload(localPath, remotePath string, opts *FileTransferO
 		}
 	}
 
-	fmt.Printf("Upload completed with HTTP %d\n", httpStatus)
+	if ft.logger != nil {
+		ft.logger.LogInfo(fmt.Sprintf("Upload completed with HTTP %d", httpStatus))
+	}
 
 	if httpStatus != 200 && httpStatus != 201 && httpStatus != 204 {
 		return &UploadResult{
@@ -431,7 +443,9 @@ func (ft *FileTransfer) Upload(localPath, remotePath string, opts *FileTransferO
 
 	// 3. Trigger sync to cloud disk (download mode), download from OSS to cloud disk
 	var reqIDSync string
-	fmt.Println("Triggering sync to cloud disk")
+	if ft.logger != nil {
+		ft.logger.LogInfo("Triggering sync to cloud disk")
+	}
 	syncResult, err := ft.awaitSync("download", remotePath, ft.contextID)
 	if err != nil {
 		return &UploadResult{
@@ -449,7 +463,9 @@ func (ft *FileTransfer) Upload(localPath, remotePath string, opts *FileTransferO
 		reqIDSync = syncResult.RequestID
 	}
 
-	fmt.Printf("Sync request ID: %s\n", reqIDSync)
+	if ft.logger != nil {
+		ft.logger.LogDebug(fmt.Sprintf("Sync request ID: %s", reqIDSync))
+	}
 
 	// 4. Optionally wait for task completion
 	if opts.Wait {
@@ -661,7 +677,9 @@ func (ft *FileTransfer) awaitSync(mode, remotePath, contextID string) (*ContextS
 		request.Path = tea.String(remotePath)
 	}
 
-	fmt.Printf("session.context.sync(mode=%s, path=%s, context_id=%s)\n", mode, remotePath, contextID)
+	if ft.logger != nil {
+		ft.logger.LogDebug(fmt.Sprintf("session.context.sync(mode=%s, path=%s, context_id=%s)", mode, remotePath, contextID))
+	}
 
 	response, err := ft.session.GetClient().SyncContext(request)
 	if err != nil {
@@ -686,7 +704,9 @@ func (ft *FileTransfer) awaitSync(mode, remotePath, contextID string) (*ContextS
 		success = *response.Body.Success
 	}
 
-	fmt.Printf("   Result: %v\n", success)
+	if ft.logger != nil {
+		ft.logger.LogDebug(fmt.Sprintf("Result: %v", success))
+	}
 
 	return &ContextSyncResult{
 		ApiResponse: models.ApiResponse{
