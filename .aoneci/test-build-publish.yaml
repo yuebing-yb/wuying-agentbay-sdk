@@ -397,15 +397,30 @@ jobs:
           
           # Remove the central-publishing-maven-plugin from pom.xml
           # This plugin is only needed for external-release profile, not for internal release
-          # Using awk for safer multi-line deletion
+          # Using awk: detect <plugin> block containing org.sonatype.central and skip the entire block
           awk '
-          BEGIN { in_central_plugin = 0 }
-          /<groupId>org.sonatype.central<\/groupId>/ { in_central_plugin = 1; next }
-          /<\/plugin>/ && in_central_plugin { in_central_plugin = 0; next }
-          !in_central_plugin { print }
+          BEGIN { in_plugin = 0; plugin_buf = "" }
+          /<plugin>/ {
+            in_plugin = 1
+            plugin_buf = $0 "\n"
+            next
+          }
+          in_plugin {
+            plugin_buf = plugin_buf $0 "\n"
+            if (/<\/plugin>/) {
+              if (plugin_buf !~ /org\.sonatype\.central/) {
+                printf "%s", plugin_buf
+              }
+              in_plugin = 0
+              plugin_buf = ""
+            }
+            next
+          }
+          { print }
           ' pom.xml > pom.xml.tmp && mv pom.xml.tmp pom.xml
           
-          echo "✅ Central publishing plugin removed"
+          echo "=== Verification: checking plugin is removed ==="
+          grep -c "org.sonatype.central" pom.xml && echo "❌ Plugin still exists!" || echo "✅ Central publishing plugin removed successfully"
       
       - id: java-build
         run: |
