@@ -1,11 +1,11 @@
-import { Code } from '../../src/code/code';
+import { Code } from "../../src/code/code";
 
 class MockSession {
   public callMcpTool = jest.fn();
-  public sessionId = 'mock-session-id';
+  public sessionId = "mock-session-id";
 }
 
-describe('Code aliases', () => {
+describe("Code aliases", () => {
   let code: Code;
   let mockSession: MockSession;
 
@@ -14,41 +14,47 @@ describe('Code aliases', () => {
     code = new Code(mockSession as any);
   });
 
-  it('run() should call runCode()', async () => {
+  it("run() should call runCode()", async () => {
     const mockResult = {
-      requestId: 'request-123',
+      requestId: "request-123",
       success: true,
-      data: { content: [{ text: 'OK\n' }] },
+      data: { content: [{ text: "OK\n" }] },
       errorMessage: undefined,
     };
     mockSession.callMcpTool.mockResolvedValue(mockResult);
 
-    await (code as any).run("print('OK')", 'python', 10);
+    await (code as any).run("print('OK')", "python", 10);
 
-    expect(mockSession.callMcpTool).toHaveBeenCalledWith('run_code', {
-      code: "print('OK')",
-      language: 'python',
-      timeout_s: 10,
-    }, false);
+    expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+      "run_code",
+      {
+        code: "print('OK')",
+        language: "python",
+        timeout_s: 10,
+      },
+      false
+    );
   });
 
-  it('execute() should call runCode()', async () => {
+  it("execute() should call runCode()", async () => {
     const mockResult = {
-      requestId: 'request-123',
+      requestId: "request-123",
       success: true,
-      data: { content: [{ text: 'OK\n' }] },
+      data: { content: [{ text: "OK\n" }] },
       errorMessage: undefined,
     };
     mockSession.callMcpTool.mockResolvedValue(mockResult);
 
-    await (code as any).execute("print('OK')", 'python');
+    await (code as any).execute("print('OK')", "python");
 
-    expect(mockSession.callMcpTool).toHaveBeenCalledWith('run_code', {
-      code: "print('OK')",
-      language: 'python',
-      timeout_s: 60,
-    }, false);
+    expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+      "run_code",
+      {
+        code: "print('OK')",
+        language: "python",
+        timeout_s: 60,
+      },
+      false
+    );
   });
 });
-
-

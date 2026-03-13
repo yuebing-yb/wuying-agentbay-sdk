@@ -10,12 +10,15 @@ describe("GetSession wsUrl Integration Test", () => {
   beforeAll(async () => {
     const apiKey = process.env.AGENTBAY_API_KEY;
     if (!apiKey) {
-      log("AGENTBAY_API_KEY is not set; skipping GetSession wsUrl integration test");
+      log(
+        "AGENTBAY_API_KEY is not set; skipping GetSession wsUrl integration test"
+      );
       return;
     }
 
     agentBay = new AgentBay({ apiKey });
-    const imageId = process.env.AGENTBAY_GET_SESSION_IMAGE_ID || "imgc-0a9mg1h4et0z42hv5";
+    const imageId =
+      process.env.AGENTBAY_GET_SESSION_IMAGE_ID || "imgc-0a9mg1h4et0z42hv5";
     const created = await agentBay.create({ imageId });
     if (!created.success || !created.session) {
       throw new Error(`Failed to create session: ${created.errorMessage}`);
@@ -43,4 +46,3 @@ describe("GetSession wsUrl Integration Test", () => {
     expect(String(r.session?.wsUrl)).toMatch(/^wss?:\/\//);
   });
 });
-

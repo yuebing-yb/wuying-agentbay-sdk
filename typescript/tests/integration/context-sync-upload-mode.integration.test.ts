@@ -1,5 +1,11 @@
 import { AgentBay, CreateSessionParams, Session } from "../../src";
-import { ContextSync, newContextSync, newUploadPolicy, newSyncPolicy, UploadMode } from "../../src/context-sync";
+import {
+  ContextSync,
+  newContextSync,
+  newUploadPolicy,
+  newSyncPolicy,
+  UploadMode,
+} from "../../src/context-sync";
 import { FileSystem } from "../../src/filesystem/filesystem";
 import { log } from "../../src/utils/logger";
 
@@ -41,31 +47,31 @@ describe("Context Sync Upload Mode Integration Tests", () => {
     log("Cleaning up: Deleting all test sessions...");
     for (const session of testSessions) {
       try {
-        const result = await agentBay.delete(session,true);
+        const result = await agentBay.delete(session, true);
         log(
           `Session ${session.sessionId} deleted. Success: ${result.success}, Request ID: ${result.requestId}`
         );
       } catch (error) {
-        log(
-          `Warning: Error deleting session ${session.sessionId}: ${error}`
-        );
+        log(`Warning: Error deleting session ${session.sessionId}: ${error}`);
       }
     }
   });
 
   describe("Basic Functionality Tests", () => {
     test("should create session with default File upload mode", async () => {
-      log("\n=== Testing basic functionality with default File upload mode ===");
+      log(
+        "\n=== Testing basic functionality with default File upload mode ==="
+      );
 
       // Step 1: Use context.get method to generate contextId
       const contextName = `test-context-${uniqueId}`;
       log(`Creating context with name: ${contextName}`);
-      
+
       const contextResult = await agentBay.context.get(contextName, true);
       expect(contextResult.success).toBe(true);
       expect(contextResult.contextId).toBeDefined();
       expect(contextResult.contextId).not.toBe("");
-      
+
       log(`Generated contextId: ${contextResult.contextId}`);
       log(`Context get request ID: ${contextResult.requestId}`);
 
@@ -81,9 +87,9 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       const sessionParams = {
         labels: {
           test: `upload-mode-${uniqueId}`,
-          type: "basic-functionality"
+          type: "basic-functionality",
         },
-        contextSync: [contextSync]
+        contextSync: [contextSync],
       };
 
       log("Creating session with default File upload mode...");
@@ -116,11 +122,13 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
   describe("Upload Mode Validation Tests", () => {
     test("should work with contextId and path using Archive mode and write file", async () => {
-      log("\n=== Testing contextId and path usage with Archive mode and code execution ===");
+      log(
+        "\n=== Testing contextId and path usage with Archive mode and code execution ==="
+      );
 
       const contextName = `archive-mode-context-${uniqueId}`;
       const contextResult = await agentBay.context.get(contextName, true);
-      
+
       expect(contextResult.success).toBe(true);
       expect(contextResult.contextId).toBeDefined();
       expect(contextResult.contextId).not.toBe("");
@@ -139,17 +147,21 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       expect(contextSync.contextId).toBe(contextResult.contextId);
       expect(contextSync.path).toBe("/tmp/archive-mode-test");
-      expect(contextSync.policy?.uploadPolicy?.uploadMode).toBe(UploadMode.Archive);
+      expect(contextSync.policy?.uploadPolicy?.uploadMode).toBe(
+        UploadMode.Archive
+      );
 
-      log("✅ newContextSync works correctly with contextId and path using Archive mode");
+      log(
+        "✅ newContextSync works correctly with contextId and path using Archive mode"
+      );
 
       // Create session with the contextSync
       const sessionParams = {
         labels: {
           test: `archive-mode-${uniqueId}`,
-          type: "contextId-path-validation"
+          type: "contextId-path-validation",
         },
-        contextSync: [contextSync]
+        contextSync: [contextSync],
       };
 
       log("Creating session with Archive mode contextSync...");
@@ -173,22 +185,29 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       // Write a 5KB file using FileSystem
       log("Writing 5KB file using FileSystem...");
-      
+
       const fileSystem = new FileSystem(session);
-      
+
       // Generate 5KB content (approximately 5120 bytes)
       const contentSize = 5 * 1024; // 5KB
-      const baseContent = "Archive mode test successful! This is a test file created in the session path. ";
-      const repeatedContent = baseContent.repeat(Math.ceil(contentSize / baseContent.length));
+      const baseContent =
+        "Archive mode test successful! This is a test file created in the session path. ";
+      const repeatedContent = baseContent.repeat(
+        Math.ceil(contentSize / baseContent.length)
+      );
       const fileContent = repeatedContent.substring(0, contentSize);
-      
+
       // Create file path in the session path directory
       const filePath = "/tmp/archive-mode-test/test-file-5kb.txt";
-      
+
       log(`Creating file: ${filePath}`);
       log(`File content size: ${fileContent.length} bytes`);
 
-      const writeResult = await fileSystem.writeFile(filePath, fileContent, "overwrite");
+      const writeResult = await fileSystem.writeFile(
+        filePath,
+        fileContent,
+        "overwrite"
+      );
 
       // Verify file write success
       expect(writeResult.success).toBe(true);
@@ -203,41 +222,48 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       // Call context sync before getting info
       log("Calling context sync before getting info...");
       const syncResult = await session.context.sync();
-      
+
       expect(syncResult.success).toBe(true);
       expect(syncResult.requestId).toBeDefined();
-      
+
       log(`✅ Context sync successful!`);
       log(`Sync request ID: ${syncResult.requestId}`);
 
       // Now call context info after sync
       log("Calling context info after sync...");
       const infoResult = await session.context.info();
-      
+
       expect(infoResult.success).toBe(true);
       expect(infoResult.requestId).toBeDefined();
       expect(infoResult.contextStatusData).toBeDefined();
-      
+
       log(`✅ Context info successful!`);
       log(`Info request ID: ${infoResult.requestId}`);
       log(`Context status data count: ${infoResult.contextStatusData.length}`);
-      
+
       // Log context status details
       if (infoResult.contextStatusData.length > 0) {
         log("Context status details:");
-        infoResult.contextStatusData.forEach((status:any, index:number) => {
-          log(`  [${index}] ContextId: ${status.contextId}, Path: ${status.path}, Status: ${status.status}, TaskType: ${status.taskType}`);
+        infoResult.contextStatusData.forEach((status: any, index: number) => {
+          log(
+            `  [${index}] ContextId: ${status.contextId}, Path: ${status.path}, Status: ${status.status}, TaskType: ${status.taskType}`
+          );
         });
       }
 
       // List files in context sync directory
       log("Listing files in context sync directory...");
-      
+
       // Use the sync directory path
       const syncDirPath = "/tmp/archive-mode-test";
-      
-      const listResult = await agentBay.context.listFiles(contextResult.contextId, syncDirPath, 1, 10);
-      
+
+      const listResult = await agentBay.context.listFiles(
+        contextResult.contextId,
+        syncDirPath,
+        1,
+        10
+      );
+
       // Verify ListFiles success
       expect(listResult.success).toBe(true);
       expect(listResult.requestId).toBeDefined();
@@ -259,7 +285,9 @@ describe("Context Sync Upload Mode Integration Tests", () => {
         log("No files found in context sync directory");
       }
 
-      log("✅ Archive mode contextSync with contextId and path works correctly, and file operations completed successfully");
+      log(
+        "✅ Archive mode contextSync with contextId and path works correctly, and file operations completed successfully"
+      );
     });
   });
   describe("Upload Mode Validation Tests", () => {
@@ -279,12 +307,10 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       // Test with newContextSync - should throw error during validation
       expect(() => {
-        newContextSync(
-          contextResult.contextId,
-          "/tmp/test",
-          invalidSyncPolicy
-        );
-      }).toThrow(`Invalid uploadMode value: InvalidMode. Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`);
+        newContextSync(contextResult.contextId, "/tmp/test", invalidSyncPolicy);
+      }).toThrow(
+        `Invalid uploadMode value: InvalidMode. Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`
+      );
 
       log("✅ newContextSync correctly threw error for invalid uploadMode");
     });
@@ -297,10 +323,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       expect(contextResult.success).toBe(true);
 
       // Create a valid context sync first
-      const contextSync = new ContextSync(
-        contextResult.contextId,
-        "/tmp/test"
-      );
+      const contextSync = new ContextSync(contextResult.contextId, "/tmp/test");
 
       // Create invalid upload policy
       const invalidUploadPolicy = newUploadPolicy();
@@ -312,7 +335,9 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       // Test with withPolicy - should throw error during validation
       expect(() => {
         contextSync.withPolicy(invalidSyncPolicy);
-      }).toThrow(`Invalid uploadMode value: WrongValue. Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`);
+      }).toThrow(
+        `Invalid uploadMode value: WrongValue. Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`
+      );
 
       log("✅ withPolicy correctly threw error for invalid uploadMode");
     });
@@ -327,7 +352,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       // Test "File" mode
       const fileUploadPolicy = newUploadPolicy();
       fileUploadPolicy.uploadMode = UploadMode.File;
-      
+
       const fileSyncPolicy = newSyncPolicy();
       fileSyncPolicy.uploadPolicy = fileUploadPolicy;
 
@@ -344,7 +369,7 @@ describe("Context Sync Upload Mode Integration Tests", () => {
       // Test "Archive" mode
       const archiveUploadPolicy = newUploadPolicy();
       archiveUploadPolicy.uploadMode = UploadMode.Archive;
-      
+
       const archiveSyncPolicy = newSyncPolicy();
       archiveSyncPolicy.uploadPolicy = archiveUploadPolicy;
 
@@ -358,9 +383,5 @@ describe("Context Sync Upload Mode Integration Tests", () => {
 
       log("✅ 'Archive' uploadMode accepted successfully");
     });
-
-    
   });
 });
-
-  

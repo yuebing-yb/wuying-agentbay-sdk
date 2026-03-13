@@ -8,19 +8,19 @@
  * to avoid rate limiting and resource exhaustion.
  */
 
-import { AgentBay } from '../../src/agent-bay';
-import { AgentEvent, AgentStreamingOptions } from '../../src/agent/agent';
-import { Session } from '../../src/session';
-import { log } from '../../src/utils/logger';
+import { AgentBay } from "../../src/agent-bay";
+import { AgentEvent, AgentStreamingOptions } from "../../src/agent/agent";
+import { Session } from "../../src/session";
+import { log } from "../../src/utils/logger";
 
-describe('Mobile Agent Streaming Integration Tests', () => {
+describe("Mobile Agent Streaming Integration Tests", () => {
   let agentBay: AgentBay;
   let session: Session;
   const apiKey = process.env.AGENTBAY_API_KEY;
 
   beforeAll(async () => {
     if (!apiKey) {
-      console.warn('Warning: AGENTBAY_API_KEY not set. Tests will be skipped.');
+      console.warn("Warning: AGENTBAY_API_KEY not set. Tests will be skipped.");
       return;
     }
 
@@ -28,7 +28,7 @@ describe('Mobile Agent Streaming Integration Tests', () => {
     await new Promise((r) => setTimeout(r, 3000));
 
     const sessionResult = await agentBay.create({
-      imageId: 'imgc-0ab5takhnmlvhx9gp',
+      imageId: "imgc-0ab5takhnmlvhx9gp",
     });
 
     if (!sessionResult.success || !sessionResult.session) {
@@ -52,9 +52,9 @@ describe('Mobile Agent Streaming Integration Tests', () => {
     }
   });
 
-  test('should stream events with typed callbacks', async () => {
+  test("should stream events with typed callbacks", async () => {
     if (!session) {
-      log('Skipping: session not created');
+      log("Skipping: session not created");
       return;
     }
 
@@ -66,34 +66,53 @@ describe('Mobile Agent Streaming Integration Tests', () => {
     const options: AgentStreamingOptions = {
       onReasoning: (event) => {
         reasoningEvents.push(event);
-        log(`[Reasoning] round=${event.round}: ${(event.content || '').substring(0, 100)}...`);
+        log(
+          `[Reasoning] round=${event.round}: ${(event.content || "").substring(
+            0,
+            100
+          )}...`
+        );
       },
       onContent: (event) => {
         contentEvents.push(event);
-        log(`[Content] round=${event.round}: ${(event.content || '').substring(0, 100)}...`);
+        log(
+          `[Content] round=${event.round}: ${(event.content || "").substring(
+            0,
+            100
+          )}...`
+        );
       },
       onToolCall: (event) => {
         toolCalls.push(event);
-        log(`[ToolCall] round=${event.round}: ${event.toolName}(${JSON.stringify(event.args)})`);
+        log(
+          `[ToolCall] round=${event.round}: ${event.toolName}(${JSON.stringify(
+            event.args
+          )})`
+        );
       },
       onToolResult: (event) => {
         toolResults.push(event);
-        log(`[ToolResult] round=${event.round}: ${event.toolName} -> ${JSON.stringify(event.result).substring(0, 100)}...`);
+        log(
+          `[ToolResult] round=${event.round}: ${
+            event.toolName
+          } -> ${JSON.stringify(event.result).substring(0, 100)}...`
+        );
       },
     };
 
-    log('Testing mobile agent streaming with typed callbacks');
+    log("Testing mobile agent streaming with typed callbacks");
 
     const result = await session.agent.mobile.executeTaskAndWait(
-      'Open Settings app',
+      "Open Settings app",
       180,
-      10,
-      options,
+      { maxSteps: 10, ...options }
     );
 
     log(`Result: success=${result.success}, status=${result.taskStatus}`);
-    log(`Reasoning: ${reasoningEvents.length}, Content: ${contentEvents.length}, ToolCalls: ${toolCalls.length}, ToolResults: ${toolResults.length}`);
+    log(
+      `Reasoning: ${reasoningEvents.length}, Content: ${contentEvents.length}, ToolCalls: ${toolCalls.length}, ToolResults: ${toolResults.length}`
+    );
 
-    expect(typeof result.taskStatus).toBe('string');
+    expect(typeof result.taskStatus).toBe("string");
   }, 300000);
 });

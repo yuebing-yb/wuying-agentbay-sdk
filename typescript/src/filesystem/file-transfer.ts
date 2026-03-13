@@ -72,7 +72,15 @@ export class FileTransfer {
   private contextPath: string | null = null;
 
   // Task completion states (for compatibility)
-  private finishedStates = new Set(["success", "successful", "ok", "finished", "done", "completed", "complete"]);
+  private finishedStates = new Set([
+    "success",
+    "successful",
+    "ok",
+    "finished",
+    "done",
+    "completed",
+    "complete",
+  ]);
 
   /**
    * Initialize FileTransfer with AgentBay client and session.
@@ -122,17 +130,17 @@ export class FileTransfer {
       let response: any;
 
       // Check if getAndLoadInternalContext method exists
-    try {
+      try {
         const req: any = new GetAndLoadInternalContextRequest({
-        authorization: `Bearer ${this.agentBay.getAPIKey()}`,
-        sessionId: sid,
-        contextTypes: ["file_transfer"],
-        })
+          authorization: `Bearer ${this.agentBay.getAPIKey()}`,
+          sessionId: sid,
+          contextTypes: ["file_transfer"],
+        });
         response = await client.getAndLoadInternalContext(req);
-    } catch (e: any) {
+      } catch (e: any) {
         logError(`getAndLoadInternalContext error:${e}`);
         return [false, e?.message || String(e)];
-    }
+      }
 
       const body = response && response.body ? response.body : {};
 
@@ -188,7 +196,7 @@ export class FileTransfer {
       wait = true,
       waitTimeout = 30.0,
       pollInterval = 1.5,
-      progressCb = undefined
+      progressCb = undefined,
     } = options || {};
 
     try {
@@ -198,7 +206,7 @@ export class FileTransfer {
           success: false,
           bytesSent: 0,
           path: remotePath,
-          error: `Local file not found: ${localPath}`
+          error: `Local file not found: ${localPath}`,
         };
       }
 
@@ -210,20 +218,23 @@ export class FileTransfer {
             success: false,
             bytesSent: 0,
             path: remotePath,
-            error: errorMsg || "No context ID"
+            error: errorMsg || "No context ID",
           };
         }
       }
 
       // 1. Get pre-signed upload URL
-      const urlRes = await this.contextSvc.getFileUploadUrl(this.contextId, remotePath);
+      const urlRes = await this.contextSvc.getFileUploadUrl(
+        this.contextId,
+        remotePath
+      );
       if (!urlRes.success || !urlRes.url) {
         return {
           success: false,
           requestIdUploadUrl: urlRes.requestId,
           bytesSent: 0,
           path: remotePath,
-          error: `getFileUploadUrl failed: ${urlRes.url || "unknown error"}`
+          error: `getFileUploadUrl failed: ${urlRes.url || "unknown error"}`,
         };
       }
 
@@ -250,7 +261,7 @@ export class FileTransfer {
             etag,
             bytesSent,
             path: remotePath,
-            error: `Upload failed with HTTP ${httpStatus}`
+            error: `Upload failed with HTTP ${httpStatus}`,
           };
         }
       } catch (e: any) {
@@ -259,7 +270,7 @@ export class FileTransfer {
           requestIdUploadUrl: reqIdUpload,
           bytesSent: 0,
           path: remotePath,
-          error: `Upload exception: ${e.message || e}`
+          error: `Upload exception: ${e.message || e}`,
         };
       }
 
@@ -267,7 +278,11 @@ export class FileTransfer {
       let reqIdSync: string | undefined;
       try {
         logDebug("Triggering sync to cloud disk");
-        reqIdSync = await this.awaitSync("download", remotePath, this.contextId);
+        reqIdSync = await this.awaitSync(
+          "download",
+          remotePath,
+          this.contextId
+        );
       } catch (e: any) {
         return {
           success: false,
@@ -277,7 +292,7 @@ export class FileTransfer {
           etag: "", // Assuming previous step succeeded
           bytesSent: fs.statSync(localPath).size, // Assuming previous step succeeded
           path: remotePath,
-          error: `session.context.sync(upload) failed: ${e.message || e}`
+          error: `session.context.sync(upload) failed: ${e.message || e}`,
         };
       }
 
@@ -290,7 +305,7 @@ export class FileTransfer {
           remotePath,
           taskType: "download",
           timeout: waitTimeout,
-          interval: pollInterval
+          interval: pollInterval,
         });
 
         if (!success) {
@@ -302,7 +317,7 @@ export class FileTransfer {
             etag: "", // Assuming previous step succeeded
             bytesSent: fs.statSync(localPath).size, // Assuming previous step succeeded
             path: remotePath,
-            error: `Upload sync not finished: ${error || "timeout or unknown"}`
+            error: `Upload sync not finished: ${error || "timeout or unknown"}`,
           };
         }
       }
@@ -314,14 +329,14 @@ export class FileTransfer {
         httpStatus: 200,
         etag: "",
         bytesSent: fs.statSync(localPath).size,
-        path: remotePath
+        path: remotePath,
       };
     } catch (e: any) {
       return {
         success: false,
         bytesSent: 0,
         path: remotePath,
-        error: `Upload failed: ${e.message || e}`
+        error: `Upload failed: ${e.message || e}`,
       };
     }
   }
@@ -352,7 +367,7 @@ export class FileTransfer {
       wait = true,
       waitTimeout = 30.0,
       pollInterval = 1.5,
-      progressCb = undefined
+      progressCb = undefined,
     } = options || {};
 
     try {
@@ -365,7 +380,7 @@ export class FileTransfer {
             bytesReceived: 0,
             path: remotePath,
             localPath,
-            error: errorMsg || "No context ID"
+            error: errorMsg || "No context ID",
           };
         }
       }
@@ -381,7 +396,7 @@ export class FileTransfer {
           bytesReceived: 0,
           path: remotePath,
           localPath,
-          error: `session.context.sync(download) failed: ${e.message || e}`
+          error: `session.context.sync(download) failed: ${e.message || e}`,
         };
       }
 
@@ -392,7 +407,7 @@ export class FileTransfer {
           remotePath,
           taskType: "upload",
           timeout: waitTimeout,
-          interval: pollInterval
+          interval: pollInterval,
         });
 
         if (!success) {
@@ -402,13 +417,18 @@ export class FileTransfer {
             bytesReceived: 0,
             path: remotePath,
             localPath,
-            error: `Download sync not finished: ${error || "timeout or unknown"}`
+            error: `Download sync not finished: ${
+              error || "timeout or unknown"
+            }`,
           };
         }
       }
 
       // 2. Get pre-signed download URL
-      const urlRes = await this.contextSvc.getFileDownloadUrl(this.contextId, remotePath);
+      const urlRes = await this.contextSvc.getFileDownloadUrl(
+        this.contextId,
+        remotePath
+      );
       if (!urlRes.success || !urlRes.url) {
         return {
           success: false,
@@ -417,7 +437,7 @@ export class FileTransfer {
           bytesReceived: 0,
           path: remotePath,
           localPath,
-          error: `getFileDownloadUrl failed: ${urlRes.url || "unknown error"}`
+          error: `getFileDownloadUrl failed: ${urlRes.url || "unknown error"}`,
         };
       }
 
@@ -440,7 +460,7 @@ export class FileTransfer {
             bytesReceived: 0,
             path: remotePath,
             localPath,
-            error: `Destination exists and overwrite=false: ${localPath}`
+            error: `Destination exists and overwrite=false: ${localPath}`,
           };
         }
 
@@ -458,7 +478,7 @@ export class FileTransfer {
             httpStatus: 200,
             bytesReceived: fs.statSync(localPath).size,
             path: remotePath,
-            localPath
+            localPath,
           };
         } else {
           return {
@@ -468,7 +488,7 @@ export class FileTransfer {
             bytesReceived,
             path: remotePath,
             localPath,
-            error: "Download completed but file not found"
+            error: "Download completed but file not found",
           };
         }
       } catch (e: any) {
@@ -479,7 +499,7 @@ export class FileTransfer {
           bytesReceived: 0,
           path: remotePath,
           localPath,
-          error: `Download exception: ${e.message || e}`
+          error: `Download exception: ${e.message || e}`,
         };
       }
     } catch (e: any) {
@@ -488,7 +508,7 @@ export class FileTransfer {
         bytesReceived: 0,
         path: remotePath,
         localPath,
-        error: `Download failed: ${e.message || e}`
+        error: `Download failed: ${e.message || e}`,
       };
     }
   }
@@ -501,7 +521,11 @@ export class FileTransfer {
    * - Fall back to sync call
    * Returns request_id if available
    */
-  private async awaitSync(mode: string, remotePath = "", contextId = ""): Promise<string | undefined> {
+  private async awaitSync(
+    mode: string,
+    remotePath = "",
+    contextId = ""
+  ): Promise<string | undefined> {
     mode = mode.toLowerCase().trim();
 
     // Check if session has context property
@@ -510,11 +534,17 @@ export class FileTransfer {
     }
 
     const syncFn = this.session.context.sync.bind(this.session.context);
-    logDebug(`session.context.sync(mode=${mode}, path=${remotePath}, contextId=${contextId})`);
+    logDebug(
+      `session.context.sync(mode=${mode}, path=${remotePath}, contextId=${contextId})`
+    );
 
     // Try calling with all parameters
     try {
-      const result = await syncFn(contextId || undefined, remotePath || undefined, mode);
+      const result = await syncFn(
+        contextId || undefined,
+        remotePath || undefined,
+        mode
+      );
       logDebug(`   Result: ${result.success}`);
       return result.requestId;
     } catch (e1) {
@@ -561,7 +591,9 @@ export class FileTransfer {
           throw new Error("Session does not have context property");
         }
 
-        const infoFn = this.session.context.infoWithParams.bind(this.session.context);
+        const infoFn = this.session.context.infoWithParams.bind(
+          this.session.context
+        );
         // Try calling with filter parameters
         let res;
         try {
@@ -584,7 +616,11 @@ export class FileTransfer {
           const status = item.status;
           const err = item.errorMessage;
 
-          if (cid === contextId && path === remotePath && (taskType === undefined || ttype === taskType)) {
+          if (
+            cid === contextId &&
+            path === remotePath &&
+            (taskType === undefined || ttype === taskType)
+          ) {
             if (err) {
               return { success: false, error: `Task error: ${err}` };
             }
@@ -600,7 +636,7 @@ export class FileTransfer {
       }
 
       // Wait before next poll
-      await new Promise(resolve => setTimeout(resolve, interval * 1000));
+      await new Promise((resolve) => setTimeout(resolve, interval * 1000));
     }
 
     return { success: false, error: lastErr || "timeout" };
@@ -625,7 +661,7 @@ export class FileTransfer {
     const response = await fetch(url, {
       method: "PUT",
       body: fileBuffer,
-      headers
+      headers,
     });
 
     const status = response.status;

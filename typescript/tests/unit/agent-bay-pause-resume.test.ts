@@ -1,6 +1,9 @@
 import { AgentBay, Session } from "../../src";
 import * as sinon from "sinon";
-import { SessionPauseResult, SessionResumeResult } from "../../src/types/api-response";
+import {
+  SessionPauseResult,
+  SessionResumeResult,
+} from "../../src/types/api-response";
 
 // Mock data for tests
 const mockSessionData = {
@@ -59,8 +62,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session pause initiated successfully",
             requestId: "pause-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session to return PAUSED immediately
@@ -70,9 +73,9 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           data: {
             sessionId: mockSessionData.sessionId,
             status: "PAUSED",
-          }
+          },
         },
-        requestId: "get-session-request-id"
+        requestId: "get-session-request-id",
       };
 
       pauseSessionAsyncStub.resolves(mockPauseResponse);
@@ -111,8 +114,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session not found",
             requestId: "test-request-id",
             httpStatusCode: 404,
-          }
-        })
+          },
+        }),
       };
 
       pauseSessionAsyncStub.resolves(mockPauseResponse);
@@ -160,8 +163,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session pause initiated successfully",
             requestId: "test-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session to always return PAUSING (never PAUSED)
@@ -171,15 +174,19 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           data: {
             sessionId: mockSessionData.sessionId,
             status: "PAUSING",
-          }
-        }
+          },
+        },
       };
 
       pauseSessionAsyncStub.resolves(mockPauseResponse);
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method with short timeout
-      const result: SessionPauseResult = await agentBay.betaPauseAsync(session, 0.1, 0.05);
+      const result: SessionPauseResult = await agentBay.betaPauseAsync(
+        session,
+        0.1,
+        0.05
+      );
 
       // Verify the result
       expect(result).toBeDefined();
@@ -204,8 +211,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session pause initiated successfully",
             requestId: "test-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session failure
@@ -215,7 +222,7 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           code: "GetSessionError",
           message: "Failed to get session status",
           requestId: "test-request-id",
-        }
+        },
       };
 
       pauseSessionAsyncStub.resolves(mockPauseResponse);
@@ -247,8 +254,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session pause initiated successfully",
             requestId: "test-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session to return unexpected state (RUNNING)
@@ -258,9 +265,9 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           data: {
             sessionId: mockSessionData.sessionId,
             status: "RUNNING",
-          }
+          },
         },
-        requestId: "test-request-id"
+        requestId: "test-request-id",
       };
 
       pauseSessionAsyncStub.resolves(mockPauseResponse);
@@ -294,8 +301,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session pause initiated successfully",
             requestId: "test-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session to return unexpected state (OTHER)
@@ -305,9 +312,9 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           data: {
             sessionId: mockSessionData.sessionId,
             status: "OTHER",
-          }
+          },
         },
-        requestId: "test-request-id"
+        requestId: "test-request-id",
       };
 
       pauseSessionAsyncStub.resolves(mockPauseResponse);
@@ -343,8 +350,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session resume initiated successfully",
             requestId: "resume-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session to return RUNNING immediately
@@ -354,16 +361,18 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           data: {
             sessionId: mockSessionData.sessionId,
             status: "RUNNING",
-          }
+          },
         },
-        requestId: "get-session-request-id"
+        requestId: "get-session-request-id",
       };
 
       resumeSessionAsyncStub.resolves(mockResumeResponse);
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(
+        session
+      );
 
       // Verify the result
       expect(result).toBeDefined();
@@ -395,14 +404,16 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session not found",
             requestId: "test-request-id",
             httpStatusCode: 404,
-          }
-        })
+          },
+        }),
       };
 
       resumeSessionAsyncStub.resolves(mockResumeResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(
+        session
+      );
 
       // Verify the result
       expect(result).toBeDefined();
@@ -419,7 +430,9 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
       resumeSessionAsyncStub.rejects(new Error("Network error"));
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(
+        session
+      );
 
       // Verify the result
       expect(result).toBeDefined();
@@ -444,8 +457,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session resume initiated successfully",
             requestId: "test-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session to always return RESUMING (never RUNNING)
@@ -455,15 +468,19 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           data: {
             sessionId: mockSessionData.sessionId,
             status: "RESUMING",
-          }
-        }
+          },
+        },
       };
 
       resumeSessionAsyncStub.resolves(mockResumeResponse);
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method with short timeout
-      const result: SessionResumeResult = await agentBay.betaResumeAsync(session, 0.1, 0.05);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(
+        session,
+        0.1,
+        0.05
+      );
 
       // Verify the result
       expect(result).toBeDefined();
@@ -488,8 +505,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session resume initiated successfully",
             requestId: "test-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session failure
@@ -499,14 +516,16 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           code: "GetSessionError",
           message: "Failed to get session status",
           requestId: "test-request-id",
-        }
+        },
       };
 
       resumeSessionAsyncStub.resolves(mockResumeResponse);
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(
+        session
+      );
 
       // Verify the result
       expect(result).toBeDefined();
@@ -531,8 +550,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session resume initiated successfully",
             requestId: "test-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session to return unexpected state (PAUSED)
@@ -542,16 +561,18 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           data: {
             sessionId: mockSessionData.sessionId,
             status: "PAUSED",
-          }
+          },
         },
-        requestId: "test-request-id"
+        requestId: "test-request-id",
       };
 
       resumeSessionAsyncStub.resolves(mockResumeResponse);
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(
+        session
+      );
 
       // Verify the result
       expect(result).toBeDefined();
@@ -578,8 +599,8 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
             message: "Session resume initiated successfully",
             requestId: "test-request-id",
             httpStatusCode: 200,
-          }
-        })
+          },
+        }),
       };
 
       // Mock get_session to return unexpected state (UNKNOWN)
@@ -589,16 +610,18 @@ describe("AgentBay Beta Pause and Beta Resume", () => {
           data: {
             sessionId: mockSessionData.sessionId,
             status: "UNKNOWN",
-          }
+          },
         },
-        requestId: "test-request-id"
+        requestId: "test-request-id",
       };
 
       resumeSessionAsyncStub.resolves(mockResumeResponse);
       getSessionStub.resolves(mockGetSessionResponse);
 
       // Call the method
-      const result: SessionResumeResult = await agentBay.betaResumeAsync(session);
+      const result: SessionResumeResult = await agentBay.betaResumeAsync(
+        session
+      );
 
       // Verify the result
       expect(result).toBeDefined();

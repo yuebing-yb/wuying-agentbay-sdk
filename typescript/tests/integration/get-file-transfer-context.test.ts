@@ -34,7 +34,9 @@ describe("Get Method File Transfer Context", () => {
         log(`Cleaning up session: ${testSession.sessionId}`);
         await agentBay.delete(testSession);
       } catch (error) {
-        log(`Warning: Failed to cleanup session ${testSession.sessionId}: ${error}`);
+        log(
+          `Warning: Failed to cleanup session ${testSession.sessionId}: ${error}`
+        );
       }
     }
   });
@@ -52,7 +54,7 @@ describe("Get Method File Transfer Context", () => {
     const sessionId = testSession.sessionId;
 
     // Wait a bit for session to be fully ready
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Use get method to recover the session
     const getResult = await agentBay.get(sessionId);
@@ -100,7 +102,7 @@ describe("Get Method File Transfer Context", () => {
     const sessionId = testSession.sessionId;
 
     // Wait a bit for session to be fully ready
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Test 1: Original session can write files
     const testContent1 = `Original session test at ${Date.now()}`;

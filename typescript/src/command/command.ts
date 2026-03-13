@@ -1,8 +1,5 @@
 import { Session } from "../session";
-import {
-  CommandResult,
-} from "../types/api-response";
-
+import { CommandResult } from "../types/api-response";
 
 /**
  * Handles command execution operations in the AgentBay cloud environment.
@@ -104,11 +101,11 @@ export class Command {
           invalidVars.push(`value for key '${key}' (type: ${typeof value})`);
         }
       }
-      
+
       if (invalidVars.length > 0) {
         throw new Error(
           `Invalid environment variables: all keys and values must be strings. ` +
-          `Found invalid entries: ${invalidVars.join(", ")}`
+            `Found invalid entries: ${invalidVars.join(", ")}`
         );
       }
     }
@@ -126,11 +123,7 @@ export class Command {
         args.envs = envs;
       }
 
-      const result = await this.session.callMcpTool(
-        "shell",
-        args,
-        false
-      );
+      const result = await this.session.callMcpTool("shell", args, false);
 
       if (result.success) {
         // Try to parse the new JSON format response
@@ -170,17 +163,21 @@ export class Command {
           return {
             requestId: result.requestId,
             success: true,
-            output: typeof result.data === "string" ? result.data : String(result.data),
+            output:
+              typeof result.data === "string"
+                ? result.data
+                : String(result.data),
             errorMessage: result.errorMessage,
           };
         }
       } else {
         // Try to parse error message as JSON (in case backend returns JSON in error)
         try {
-          const errorData = typeof result.errorMessage === "string" 
-            ? JSON.parse(result.errorMessage) 
-            : result.errorMessage;
-          
+          const errorData =
+            typeof result.errorMessage === "string"
+              ? JSON.parse(result.errorMessage)
+              : result.errorMessage;
+
           if (errorData && typeof errorData === "object") {
             const stdout = errorData.stdout || "";
             const stderr = errorData.stderr || "";

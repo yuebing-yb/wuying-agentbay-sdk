@@ -6,7 +6,12 @@ import {
   ListSessionParams,
   CreateSessionParams,
 } from "../../src";
-import { ContextSync, SyncPolicy, newSyncPolicy, Lifecycle } from "../../src/context-sync";
+import {
+  ContextSync,
+  SyncPolicy,
+  newSyncPolicy,
+  Lifecycle,
+} from "../../src/context-sync";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
 // Define Node.js process if it's not available
@@ -77,7 +82,7 @@ describe("AgentBay", () => {
       // Create a session
       log("Creating a new session...");
       const params: CreateSessionParams = {
-        imageId: "linux_latest"
+        imageId: "linux_latest",
       };
       const createResponse = await agentBay.create(params);
 
@@ -107,7 +112,9 @@ describe("AgentBay", () => {
       expect(listResult.sessionIds.length).toBeGreaterThanOrEqual(1);
 
       // Check if our created session is in the list
-      const found = listResult.sessionIds.some((sid) => sid.sessionId === session.sessionId);
+      const found = listResult.sessionIds.some(
+        (sid) => sid.sessionId === session.sessionId
+      );
       expect(found).toBe(true);
 
       // Delete the session
@@ -335,7 +342,9 @@ describe("AgentBay", () => {
             2,
             5
           );
-          log(`Next page sessions count: ${nextPageResponse.sessionIds.length}`);
+          log(
+            `Next page sessions count: ${nextPageResponse.sessionIds.length}`
+          );
           log(`Next page RequestId: ${nextPageResponse.requestId}`);
 
           // Verify next page result structure
@@ -414,8 +423,8 @@ describe("AgentBay", () => {
         ...newSyncPolicy(),
         recyclePolicy: {
           lifecycle: Lifecycle.Lifecycle_1Day,
-          paths: [""] // Using default path value
-        }
+          paths: [""], // Using default path value
+        },
       };
 
       // Create ContextSync with custom policy
@@ -426,13 +435,19 @@ describe("AgentBay", () => {
       );
 
       log("Creating session with custom recyclePolicy...");
-      log(`RecyclePolicy lifecycle: ${customSyncPolicy.recyclePolicy?.lifecycle}`);
-      log(`RecyclePolicy paths: ${JSON.stringify(customSyncPolicy.recyclePolicy?.paths)}`);
+      log(
+        `RecyclePolicy lifecycle: ${customSyncPolicy.recyclePolicy?.lifecycle}`
+      );
+      log(
+        `RecyclePolicy paths: ${JSON.stringify(
+          customSyncPolicy.recyclePolicy?.paths
+        )}`
+      );
 
       // Create session with custom recyclePolicy
       const createResponse = await agentBay.create({
         labels: { test: "recyclePolicy", lifecycle: "1day" },
-        contextSync: [contextSync]
+        contextSync: [contextSync],
       });
 
       // Verify SessionResult structure
@@ -445,13 +460,17 @@ describe("AgentBay", () => {
 
       session = createResponse.session!;
       log(`Session created successfully with ID: ${session.sessionId}`);
-      log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);
+      log(
+        `Create Session RequestId: ${createResponse.requestId || "undefined"}`
+      );
 
       // Verify session properties
       expect(session.sessionId).toBeDefined();
       expect(session.sessionId.length).toBeGreaterThan(0);
 
-      log("Session with custom recyclePolicy created and verified successfully");
+      log(
+        "Session with custom recyclePolicy created and verified successfully"
+      );
     });
 
     it("should throw error when creating ContextSync with invalid recyclePolicy path", () => {
@@ -460,8 +479,8 @@ describe("AgentBay", () => {
         ...newSyncPolicy(),
         recyclePolicy: {
           lifecycle: Lifecycle.Lifecycle_1Day,
-          paths: ["/invalid/path/*"] // Invalid path with wildcard
-        }
+          paths: ["/invalid/path/*"], // Invalid path with wildcard
+        },
       };
 
       log("Testing ContextSync creation with invalid recyclePolicy path...");
@@ -474,7 +493,9 @@ describe("AgentBay", () => {
           "/test/path",
           invalidSyncPolicy
         );
-      }).toThrow("Wildcard patterns are not supported in path. Got: /invalid/path/*. Please use exact directory paths instead.");
+      }).toThrow(
+        "Wildcard patterns are not supported in path. Got: /invalid/path/*. Please use exact directory paths instead."
+      );
 
       log("ContextSync correctly threw error for invalid recyclePolicy path");
     });
@@ -487,8 +508,8 @@ describe("AgentBay", () => {
         ...newSyncPolicy(),
         recyclePolicy: {
           lifecycle: "invalid_lifecycle" as any, // Invalid lifecycle
-          paths: [""]
-        }
+          paths: [""],
+        },
       };
 
       log(`Invalid lifecycle: ${invalidSyncPolicy.recyclePolicy?.lifecycle}`);
@@ -500,24 +521,30 @@ describe("AgentBay", () => {
           "/test/path",
           invalidSyncPolicy
         );
-      }).toThrow(/Invalid lifecycle value: invalid_lifecycle\. Valid values are:/);
+      }).toThrow(
+        /Invalid lifecycle value: invalid_lifecycle\. Valid values are:/
+      );
 
       log("ContextSync correctly threw error for invalid lifecycle");
     });
 
     it("should throw error when creating ContextSync with combined invalid configuration", () => {
-      log("Testing ContextSync creation with combined invalid lifecycle and invalid paths...");
+      log(
+        "Testing ContextSync creation with combined invalid lifecycle and invalid paths..."
+      );
 
       // Create custom recyclePolicy with both invalid lifecycle and invalid path
       const combinedInvalidSyncPolicy: SyncPolicy = {
         ...newSyncPolicy(),
         recyclePolicy: {
           lifecycle: "invalid_lifecycle" as any, // Invalid lifecycle
-          paths: ["/invalid/path/*"] // Invalid path with wildcard
-        }
+          paths: ["/invalid/path/*"], // Invalid path with wildcard
+        },
       };
 
-      log(`Invalid lifecycle: ${combinedInvalidSyncPolicy.recyclePolicy?.lifecycle}`);
+      log(
+        `Invalid lifecycle: ${combinedInvalidSyncPolicy.recyclePolicy?.lifecycle}`
+      );
       log(`Invalid path: ${combinedInvalidSyncPolicy.recyclePolicy?.paths[0]}`);
 
       // Test that ContextSync constructor throws an error (should fail on lifecycle validation first)
@@ -527,9 +554,13 @@ describe("AgentBay", () => {
           "/test/path",
           combinedInvalidSyncPolicy
         );
-      }).toThrow(/Invalid lifecycle value: invalid_lifecycle\. Valid values are:/);
+      }).toThrow(
+        /Invalid lifecycle value: invalid_lifecycle\. Valid values are:/
+      );
 
-      log("ContextSync correctly threw error for combined invalid configuration");
+      log(
+        "ContextSync correctly threw error for combined invalid configuration"
+      );
     });
   });
 });

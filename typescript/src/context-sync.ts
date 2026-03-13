@@ -17,7 +17,7 @@ export enum UploadMode {
 // Lifecycle defines the lifecycle options for recycle policy
 export enum Lifecycle {
   Lifecycle_1Day = "Lifecycle_1Day",
-  Lifecycle_3Days = "Lifecycle_3Days", 
+  Lifecycle_3Days = "Lifecycle_3Days",
   Lifecycle_5Days = "Lifecycle_5Days",
   Lifecycle_10Days = "Lifecycle_10Days",
   Lifecycle_15Days = "Lifecycle_15Days",
@@ -65,7 +65,11 @@ export class ExtractPolicyClass implements ExtractPolicy {
   deleteSrcFile = true;
   extractToCurrentFolder = false;
 
-  constructor(extract = true, deleteSrcFile = true, extractToCurrentFolder = false) {
+  constructor(
+    extract = true,
+    deleteSrcFile = true,
+    extractToCurrentFolder = false
+  ) {
     this.extract = extract;
     this.deleteSrcFile = deleteSrcFile;
     this.extractToCurrentFolder = extractToCurrentFolder;
@@ -85,7 +89,7 @@ export class ExtractPolicyClass implements ExtractPolicy {
     return {
       extract: this.extract,
       deleteSrcFile: this.deleteSrcFile,
-      extractToCurrentFolder: this.extractToCurrentFolder
+      extractToCurrentFolder: this.extractToCurrentFolder,
     };
   }
 }
@@ -105,7 +109,7 @@ export class WhiteListValidator {
     if (this.containsWildcard(whitelist.path)) {
       throw new Error(
         `Wildcard patterns are not supported in path. Got: ${whitelist.path}. ` +
-        "Please use exact directory paths instead."
+          "Please use exact directory paths instead."
       );
     }
 
@@ -114,7 +118,7 @@ export class WhiteListValidator {
         if (this.containsWildcard(excludePath)) {
           throw new Error(
             `Wildcard patterns are not supported in exclude_paths. Got: ${excludePath}. ` +
-            "Please use exact directory paths instead."
+              "Please use exact directory paths instead."
           );
         }
       }
@@ -144,24 +148,24 @@ export interface SyncPolicy {
 }
 
 const ALLOWED_POLICY_KEYS = new Set([
-  'uploadPolicy',
-  'downloadPolicy',
-  'deletePolicy',
-  'extractPolicy',
-  'recyclePolicy',
-  'bwList',
-  'mappingPolicy'
+  "uploadPolicy",
+  "downloadPolicy",
+  "deletePolicy",
+  "extractPolicy",
+  "recyclePolicy",
+  "bwList",
+  "mappingPolicy",
 ]);
 
 // Helper to validate object keys
 function validatePolicyKeys(policy: any): void {
-  if (!policy || typeof policy !== 'object') return;
-  
+  if (!policy || typeof policy !== "object") return;
+
   for (const key of Object.keys(policy)) {
     if (!ALLOWED_POLICY_KEYS.has(key)) {
       throw new Error(
         `Unknown property in SyncPolicy: '${key}'. ` +
-        `Valid properties are: ${Array.from(ALLOWED_POLICY_KEYS).join(', ')}`
+          `Valid properties are: ${Array.from(ALLOWED_POLICY_KEYS).join(", ")}`
       );
     }
   }
@@ -265,7 +269,12 @@ export class ContextSync {
    * }
    * ```
    */
-  constructor(contextId: string, path: string, policy?: SyncPolicy, betaWaitForCompletion?: boolean) {
+  constructor(
+    contextId: string,
+    path: string,
+    policy?: SyncPolicy,
+    betaWaitForCompletion?: boolean
+  ) {
     if (policy) {
       validateSyncPolicy(policy);
     }
@@ -385,7 +394,7 @@ export function validateSyncPolicy(policy?: SyncPolicy): void {
     if (!isValidUploadMode(policy.uploadPolicy.uploadMode)) {
       throw new Error(
         `Invalid uploadMode value: ${policy.uploadPolicy.uploadMode}. ` +
-        `Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`
+          `Valid values are: ${UploadMode.File}, ${UploadMode.Archive}`
       );
     }
   }
@@ -393,10 +402,10 @@ export function validateSyncPolicy(policy?: SyncPolicy): void {
   if (policy?.recyclePolicy) {
     // Validate lifecycle value
     if (!isValidLifecycle(policy.recyclePolicy.lifecycle)) {
-      const validValues = Object.values(Lifecycle).join(', ');
+      const validValues = Object.values(Lifecycle).join(", ");
       throw new Error(
         `Invalid lifecycle value: ${policy.recyclePolicy.lifecycle}. ` +
-        `Valid values are: ${validValues}`
+          `Valid values are: ${validValues}`
       );
     }
 
@@ -414,12 +423,18 @@ export function validateSyncPolicy(policy?: SyncPolicy): void {
 }
 
 // NewSyncPolicyWithDefaults creates a new sync policy with partial parameters and fills defaults
-export function newSyncPolicyWithDefaults(policy?: Partial<SyncPolicy>): SyncPolicy {
+export function newSyncPolicyWithDefaults(
+  policy?: Partial<SyncPolicy>
+): SyncPolicy {
   return new SyncPolicyImpl(policy).toJSON();
 }
 
 // NewContextSync creates a new context sync configuration
-export function newContextSync(contextId: string, path: string, policy?: SyncPolicy): ContextSync {
+export function newContextSync(
+  contextId: string,
+  path: string,
+  policy?: SyncPolicy
+): ContextSync {
   if (policy) {
     validateSyncPolicy(policy);
   }

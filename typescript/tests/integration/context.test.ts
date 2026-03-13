@@ -8,7 +8,7 @@ describe("Context", () => {
       "test-id",
       "test-context",
       "2025-05-29T12:00:00Z",
-      "2025-05-29T12:30:00Z",
+      "2025-05-29T12:30:00Z"
     );
 
     expect(context.id).toBe("test-id");
@@ -137,7 +137,7 @@ describe("ContextService", () => {
     it.only("should return null if context not found", async () => {
       try {
         const nonExistentName = `non-existent-context-${Date.now()}`;
-        const getResponse = await contextService.get(nonExistentName,true);
+        const getResponse = await contextService.get(nonExistentName, true);
         log(
           `Get Non-existent Context RequestId: ${
             getResponse.requestId || "undefined"

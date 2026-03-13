@@ -23,6 +23,7 @@ An Agent to perform tasks on mobile devices.
 - [executeTaskStreamWs](#executetaskstreamws)
 - [hasStreamingParams](#hasstreamingparams)
 - [resolveAgentTarget](#resolveagenttarget)
+- [startTaskStreamWs](#starttaskstreamws)
 - [terminateTask](#terminatetask)
 
 ## Properties
@@ -39,7 +40,7 @@ ___
 
 ### toolPrefix
 
-• `Protected` **toolPrefix**: `string` = `''`
+• `Protected` **toolPrefix**: `string` = `""`
 
 #### Overrides
 
@@ -49,39 +50,23 @@ BaseTaskAgent.toolPrefix
 
 ### executeTask
 
-▸ **executeTask**(`task`, `maxSteps?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTask**(`task`, `options?`): `Promise`\<``TaskExecution``\>
 
 Execute a task in human language without waiting for completion
-(non-blocking). This is a fire-and-return interface that immediately
-provides a task ID. Call getTaskStatus to check the task status.
+(non-blocking). Returns TaskExecution; call wait() to block until done.
 
 #### Parameters
 
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `task` | `string` | `undefined` | Task description in human language. |
-| `maxSteps` | `number` | `50` | Maximum number of steps (clicks/swipes/etc.) allowed. Used to prevent infinite loops or excessive resource consumption. Default is 50. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `task` | `string` | Task description in human language. |
+| `options?` | ``MobileTaskOptions`` | Optional MobileTaskOptions (maxSteps, streaming callbacks). |
 
 #### Returns
 
-`Promise`\<``ExecutionResult``\>
+`Promise`\<``TaskExecution``\>
 
-ExecutionResult containing success status, task ID, task status,
-    and error message if any.
-
-**`Example`**
-
-```typescript
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const result = await agentBay.create({ imageId: 'mobile_latest' });
-if (result.success) {
-  const execResult = await result.session.agent.mobile.executeTask(
-    'Open WeChat app', 100
-  );
-  console.log(`Task ID: ${execResult.taskId}`);
-  await result.session.delete();
-}
-```
+TaskExecution with taskId and wait() method.
 
 #### Overrides
 
@@ -91,42 +76,24 @@ ___
 
 ### executeTaskAndWait
 
-▸ **executeTaskAndWait**(`task`, `timeout`, `maxSteps_or_options?`, `options_param?`): `Promise`\<``ExecutionResult``\>
+▸ **executeTaskAndWait**(`task`, `timeout`, `options?`): `Promise`\<``ExecutionResult``\>
 
-Execute a specific task described in human language synchronously.
-This is a synchronous interface that blocks until the task is completed or
-an error occurs, or timeout happens. The default polling interval is
-3 seconds.
+Execute a task described in human language synchronously.
+Blocks until the task is completed, an error occurs, or timeout.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `task` | `string` | Task description in human language. |
-| `timeout` | `number` | Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion. |
-| `maxSteps_or_options?` | `number` \| ``AgentStreamingOptions`` | - |
-| `options_param?` | ``AgentStreamingOptions`` | - |
+| `timeout` | `number` | Maximum time to wait for task completion (in seconds). |
+| `options?` | ``MobileTaskOptions`` | Optional MobileTaskOptions (maxSteps, streaming callbacks). |
 
 #### Returns
 
 `Promise`\<``ExecutionResult``\>
 
-ExecutionResult containing success status, task ID, task status,
-    and error message if any.
-
-**`Example`**
-
-```typescript
-const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-const result = await agentBay.create({ imageId: 'mobile_latest' });
-if (result.success) {
-  const execResult = await result.session.agent.mobile.executeTaskAndWait(
-    'Open WeChat app', 180, 100
-  );
-  console.log(`Task result: ${execResult.taskResult}`);
-  await result.session.delete();
-}
-```
+ExecutionResult containing success status, task ID, task status.
 
 #### Overrides
 
@@ -145,7 +112,7 @@ Execute a task via WebSocket streaming channel.
 | Name | Type |
 | :------ | :------ |
 | `params` | `Object` |
-| `params.options?` | ``AgentStreamingOptions`` |
+| `params.options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
 | `params.taskParams` | `Record`\<`string`, `any`\> |
 | `params.timeout` | `number` |
 
@@ -167,7 +134,7 @@ Check if any streaming option is provided.
 
 | Name | Type |
 | :------ | :------ |
-| `options?` | ``AgentStreamingOptions`` |
+| `options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
 
 #### Returns
 
@@ -192,6 +159,31 @@ Resolve the WS target for this agent from MCP tools list.
 #### Inherited from
 
 BaseTaskAgent.resolveAgentTarget
+
+___
+
+### startTaskStreamWs
+
+▸ **startTaskStreamWs**(`params`): `Promise`\<\{ `context`: \{ `errors`: `Error`[] ; `finalContentParts`: `string`[] ; `lastError`: `undefined` \| `Record`\<`string`, `any`\>  } ; `handle`: \{ `cancel`: () => `Promise`\<`void`\> ; `invocationId`: `string` ; `waitEnd`: () => `Promise`\<`any`\> ; `write`: (`data`: `Record`\<`string`, `any`\>) => `Promise`\<`void`\>  }  }\>
+
+Start a task via WebSocket streaming channel. Returns handle and context
+immediately without blocking. Use handle.waitEnd() to await completion.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | `Object` |
+| `params.options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
+| `params.taskParams` | `Record`\<`string`, `any`\> |
+
+#### Returns
+
+`Promise`\<\{ `context`: \{ `errors`: `Error`[] ; `finalContentParts`: `string`[] ; `lastError`: `undefined` \| `Record`\<`string`, `any`\>  } ; `handle`: \{ `cancel`: () => `Promise`\<`void`\> ; `invocationId`: `string` ; `waitEnd`: () => `Promise`\<`any`\> ; `write`: (`data`: `Record`\<`string`, `any`\>) => `Promise`\<`void`\>  }  }\>
+
+#### Inherited from
+
+BaseTaskAgent.startTaskStreamWs
 
 ___
 

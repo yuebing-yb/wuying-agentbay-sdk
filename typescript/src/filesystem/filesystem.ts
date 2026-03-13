@@ -22,7 +22,7 @@ const DEFAULT_CHUNK_SIZE = 60 * 1024;
 export interface FileChangeEvent {
   eventType: string; // "create", "modify", "delete"
   path: string;
-  pathType: string;  // "file", "directory"
+  pathType: string; // "file", "directory"
 }
 
 /**
@@ -68,20 +68,26 @@ export class FileChangeResultHelper {
 
   static getModifiedFiles(result: FileChangeResult): string[] {
     return result.events
-      .filter(event => event.eventType === "modify" && event.pathType === "file")
-      .map(event => event.path);
+      .filter(
+        (event) => event.eventType === "modify" && event.pathType === "file"
+      )
+      .map((event) => event.path);
   }
 
   static getCreatedFiles(result: FileChangeResult): string[] {
     return result.events
-      .filter(event => event.eventType === "create" && event.pathType === "file")
-      .map(event => event.path);
+      .filter(
+        (event) => event.eventType === "create" && event.pathType === "file"
+      )
+      .map((event) => event.path);
   }
 
   static getDeletedFiles(result: FileChangeResult): string[] {
     return result.events
-      .filter(event => event.eventType === "delete" && event.pathType === "file")
-      .map(event => event.path);
+      .filter(
+        (event) => event.eventType === "delete" && event.pathType === "file"
+      )
+      .map((event) => event.path);
   }
 }
 
@@ -329,11 +335,7 @@ export class FileSystem {
   async deleteFile(path: string): Promise<BoolResult> {
     try {
       const args = { path };
-      const result = await this.session.callMcpTool(
-        "delete_file",
-        args,
-        false
-      );
+      const result = await this.session.callMcpTool("delete_file", args, false);
 
       if (!result.success) {
         return {
@@ -367,7 +369,11 @@ export class FileSystem {
   /**
    * Alias of writeFile().
    */
-  async write(path: string, content: string, mode = "overwrite"): Promise<BoolResult> {
+  async write(
+    path: string,
+    content: string,
+    mode = "overwrite"
+  ): Promise<BoolResult> {
     return await this.writeFile(path, content, mode);
   }
 
@@ -440,11 +446,7 @@ export class FileSystem {
         dryRun,
       };
 
-      const result = await this.session.callMcpTool(
-        "edit_file",
-        args,
-        false
-      );
+      const result = await this.session.callMcpTool("edit_file", args, false);
 
       if (!result.success) {
         return {
@@ -595,9 +597,7 @@ export class FileSystem {
       }
 
       // Parse the text content into directory entries
-      const entries = result.data
-        ? parseDirectoryListing(result.data)
-        : [];
+      const entries = result.data ? parseDirectoryListing(result.data) : [];
 
       return {
         requestId: result.requestId,
@@ -641,11 +641,7 @@ export class FileSystem {
         destination,
       };
 
-      const result = await this.session.callMcpTool(
-        "move_file",
-        args,
-        false
-      );
+      const result = await this.session.callMcpTool("move_file", args, false);
 
       if (!result.success) {
         return {
@@ -702,11 +698,7 @@ export class FileSystem {
         args.format = "binary";
       }
 
-      const result = await this.session.callMcpTool(
-        "read_file",
-        args,
-        false
-      );
+      const result = await this.session.callMcpTool("read_file", args, false);
 
       if (!result.success) {
         if (formatType === "binary") {
@@ -1020,11 +1012,7 @@ export class FileSystem {
         mode,
       };
 
-      const result = await this.session.callMcpTool(
-        "write_file",
-        args,
-        false
-      );
+      const result = await this.session.callMcpTool("write_file", args, false);
 
       if (!result.success) {
         return {
@@ -1103,7 +1091,10 @@ export class FileSystem {
    * const fileResult = await session.fileSystem.readFile('/tmp/test.txt', { format: 'text' });
    * ```
    */
-  async readFile(path: string, opts: { format: "text" }): Promise<FileContentResult>;
+  async readFile(
+    path: string,
+    opts: { format: "text" }
+  ): Promise<FileContentResult>;
   /**
    * Reads the entire content of a file in binary format.
    *
@@ -1145,7 +1136,10 @@ export class FileSystem {
    * - Fails if path is a directory or doesn't exist
    * - Content is returned as Uint8Array (backend uses base64 encoding internally)
    */
-  async readFile(path: string, opts: { format: "bytes" }): Promise<BinaryFileContentResult>;
+  async readFile(
+    path: string,
+    opts: { format: "bytes" }
+  ): Promise<BinaryFileContentResult>;
   async readFile(
     path: string,
     opts?: { format?: "text" | "bytes" }
@@ -1241,7 +1235,10 @@ export class FileSystem {
             }
 
             // chunkResult is BinaryFileContentResult for binary format
-            if ("content" in chunkResult && chunkResult.content instanceof Uint8Array) {
+            if (
+              "content" in chunkResult &&
+              chunkResult.content instanceof Uint8Array
+            ) {
               contentChunks.push(chunkResult.content);
             } else {
               return {
@@ -1266,7 +1263,10 @@ export class FileSystem {
         }
 
         // Combine all binary chunks
-        const totalLength = contentChunks.reduce((sum, chunk) => sum + chunk.length, 0);
+        const totalLength = contentChunks.reduce(
+          (sum, chunk) => sum + chunk.length,
+          0
+        );
         const finalContent = new Uint8Array(totalLength);
         let position = 0;
         for (const chunk of contentChunks) {
@@ -1307,7 +1307,10 @@ export class FileSystem {
             }
 
             // Extract the actual content from the response
-            if ("content" in chunkResult && typeof chunkResult.content === "string") {
+            if (
+              "content" in chunkResult &&
+              typeof chunkResult.content === "string"
+            ) {
               result += chunkResult.content;
             } else {
               return {
@@ -1588,8 +1591,13 @@ export class FileSystem {
       while (!signal?.aborted) {
         try {
           // Check if session is still valid
-          if ((this.session as any)._isExpired && (this.session as any)._isExpired()) {
-            console.log(`Session expired, stopping directory monitoring for: ${path}`);
+          if (
+            (this.session as any)._isExpired &&
+            (this.session as any)._isExpired()
+          ) {
+            console.log(
+              `Session expired, stopping directory monitoring for: ${path}`
+            );
             break;
           }
 
@@ -1609,8 +1617,13 @@ export class FileSystem {
           } else if (!result.success) {
             // Check if error is due to session expiry
             const errorMsg = (result.errorMessage || "").toLowerCase();
-            if (errorMsg.includes("session") && (errorMsg.includes("expired") || errorMsg.includes("invalid"))) {
-              console.log(`Session expired, stopping directory monitoring for: ${path}`);
+            if (
+              errorMsg.includes("session") &&
+              (errorMsg.includes("expired") || errorMsg.includes("invalid"))
+            ) {
+              console.log(
+                `Session expired, stopping directory monitoring for: ${path}`
+              );
               break;
             }
             console.error(`Error monitoring directory: ${result.errorMessage}`);
@@ -1628,8 +1641,13 @@ export class FileSystem {
           console.error(`Unexpected error in directory monitoring: ${error}`);
           // Check if exception indicates session expiry
           const errorStr = String(error).toLowerCase();
-          if (errorStr.includes("session") && (errorStr.includes("expired") || errorStr.includes("invalid"))) {
-            console.log(`Session expired, stopping directory monitoring for: ${path}`);
+          if (
+            errorStr.includes("session") &&
+            (errorStr.includes("expired") || errorStr.includes("invalid"))
+          ) {
+            console.log(
+              `Session expired, stopping directory monitoring for: ${path}`
+            );
             break;
           }
           await new Promise((resolve) => setTimeout(resolve, interval));
@@ -1686,12 +1704,18 @@ export class FileSystem {
         if (contextId) {
           try {
             // Delete the uploaded file from OSS
-            const deleteResult = await (this.session as any).agentBay.context.deleteFile(contextId, remotePath);
+            const deleteResult = await (
+              this.session as any
+            ).agentBay.context.deleteFile(contextId, remotePath);
             if (!deleteResult.success) {
-              logWarn(`Warning: Failed to delete uploaded file from OSS: ${deleteResult}`);
+              logWarn(
+                `Warning: Failed to delete uploaded file from OSS: ${deleteResult}`
+              );
             }
           } catch (deleteError: any) {
-            logWarn(`Warning: Error deleting uploaded file from OSS: ${deleteError}`);
+            logWarn(
+              `Warning: Error deleting uploaded file from OSS: ${deleteError}`
+            );
           }
         }
       }
@@ -1744,19 +1768,29 @@ export class FileSystem {
       const fileTransfer = this._ensureFileTransfer();
 
       // Perform download
-      const result = await fileTransfer.download(remotePath, localPath, options);
+      const result = await fileTransfer.download(
+        remotePath,
+        localPath,
+        options
+      );
       // If download was successful, delete the file from OSS
       if (result.success) {
         const contextId = (fileTransfer as any).contextId;
         if (contextId) {
           try {
             // Delete the downloaded file from OSS
-            const deleteResult = await (this.session as any).agentBay.context.deleteFile(contextId, remotePath);
+            const deleteResult = await (
+              this.session as any
+            ).agentBay.context.deleteFile(contextId, remotePath);
             if (!deleteResult.success) {
-              logWarn(`Warning: Failed to delete downloaded file from OSS: ${deleteResult}`);
+              logWarn(
+                `Warning: Failed to delete downloaded file from OSS: ${deleteResult}`
+              );
             }
           } catch (deleteError: any) {
-            logWarn(`Warning: Error deleting downloaded file from OSS: ${deleteError}`);
+            logWarn(
+              `Warning: Error deleting downloaded file from OSS: ${deleteError}`
+            );
           }
         }
       }

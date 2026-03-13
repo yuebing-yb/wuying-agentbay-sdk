@@ -23,6 +23,7 @@ An Agent to perform tasks on the computer.
 - [executeTaskStreamWs](#executetaskstreamws)
 - [hasStreamingParams](#hasstreamingparams)
 - [resolveAgentTarget](#resolveagenttarget)
+- [startTaskStreamWs](#starttaskstreamws)
 - [terminateTask](#terminatetask)
 
 ## Properties
@@ -39,7 +40,7 @@ ___
 
 ### toolPrefix
 
-• `Protected` **toolPrefix**: `string` = `'flux'`
+• `Protected` **toolPrefix**: `string` = `"flux"`
 
 #### Overrides
 
@@ -52,6 +53,7 @@ BaseTaskAgent.toolPrefix
 ▸ **executeTask**(`task`): `Promise`\<``ExecutionResult``\>
 
 Execute a specific task described in human language.
+Note: MobileUseAgent overrides this to return TaskExecution instead.
 
 #### Parameters
 
@@ -105,7 +107,7 @@ Execute a task via WebSocket streaming channel.
 | Name | Type |
 | :------ | :------ |
 | `params` | `Object` |
-| `params.options?` | ``AgentStreamingOptions`` |
+| `params.options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
 | `params.taskParams` | `Record`\<`string`, `any`\> |
 | `params.timeout` | `number` |
 
@@ -127,7 +129,7 @@ Check if any streaming option is provided.
 
 | Name | Type |
 | :------ | :------ |
-| `options?` | ``AgentStreamingOptions`` |
+| `options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
 
 #### Returns
 
@@ -152,6 +154,31 @@ Resolve the WS target for this agent from MCP tools list.
 #### Inherited from
 
 BaseTaskAgent.resolveAgentTarget
+
+___
+
+### startTaskStreamWs
+
+▸ **startTaskStreamWs**(`params`): `Promise`\<\{ `context`: \{ `errors`: `Error`[] ; `finalContentParts`: `string`[] ; `lastError`: `undefined` \| `Record`\<`string`, `any`\>  } ; `handle`: \{ `cancel`: () => `Promise`\<`void`\> ; `invocationId`: `string` ; `waitEnd`: () => `Promise`\<`any`\> ; `write`: (`data`: `Record`\<`string`, `any`\>) => `Promise`\<`void`\>  }  }\>
+
+Start a task via WebSocket streaming channel. Returns handle and context
+immediately without blocking. Use handle.waitEnd() to await completion.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | `Object` |
+| `params.options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
+| `params.taskParams` | `Record`\<`string`, `any`\> |
+
+#### Returns
+
+`Promise`\<\{ `context`: \{ `errors`: `Error`[] ; `finalContentParts`: `string`[] ; `lastError`: `undefined` \| `Record`\<`string`, `any`\>  } ; `handle`: \{ `cancel`: () => `Promise`\<`void`\> ; `invocationId`: `string` ; `waitEnd`: () => `Promise`\<`any`\> ; `write`: (`data`: `Record`\<`string`, `any`\>) => `Promise`\<`void`\>  }  }\>
+
+#### Inherited from
+
+BaseTaskAgent.startTaskStreamWs
 
 ___
 

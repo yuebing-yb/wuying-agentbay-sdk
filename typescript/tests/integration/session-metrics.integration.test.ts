@@ -41,5 +41,3 @@ describe("Session.getMetrics Integration Test", () => {
     }
   });
 });
-
-

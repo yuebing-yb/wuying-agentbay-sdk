@@ -40,7 +40,9 @@ describe("FileSystem Watch Directory Tests", () => {
 
       const result = await mockFileSystem.getFileChange("/tmp/test_dir");
 
-      expect(callMcpToolStub.calledWith("get_file_change", { path: "/tmp/test_dir" })).toBe(true);
+      expect(
+        callMcpToolStub.calledWith("get_file_change", { path: "/tmp/test_dir" })
+      ).toBe(true);
       expect(result.success).toBe(true);
       expect(result.requestId).toBe("test-123");
       expect(result.events).toHaveLength(2);
@@ -88,8 +90,16 @@ describe("FileSystem Watch Directory Tests", () => {
           success: true,
           requestId: "test-1",
           data: JSON.stringify([
-            { eventType: "create", path: "/tmp/test_dir/test1.txt", pathType: "file" },
-            { eventType: "modify", path: "/tmp/test_dir/test1.txt", pathType: "file" },
+            {
+              eventType: "create",
+              path: "/tmp/test_dir/test1.txt",
+              pathType: "file",
+            },
+            {
+              eventType: "modify",
+              path: "/tmp/test_dir/test1.txt",
+              pathType: "file",
+            },
           ]),
           errorMessage: "",
         },
@@ -98,7 +108,11 @@ describe("FileSystem Watch Directory Tests", () => {
           success: true,
           requestId: "test-2",
           data: JSON.stringify([
-            { eventType: "modify", path: "/tmp/test_dir/test1.txt", pathType: "file" },
+            {
+              eventType: "modify",
+              path: "/tmp/test_dir/test1.txt",
+              pathType: "file",
+            },
           ]),
           errorMessage: "",
         },
@@ -107,8 +121,16 @@ describe("FileSystem Watch Directory Tests", () => {
           success: true,
           requestId: "test-3",
           data: JSON.stringify([
-            { eventType: "create", path: "/tmp/test_dir/test2.txt", pathType: "file" },
-            { eventType: "modify", path: "/tmp/test_dir/test2.txt", pathType: "file" },
+            {
+              eventType: "create",
+              path: "/tmp/test_dir/test2.txt",
+              pathType: "file",
+            },
+            {
+              eventType: "modify",
+              path: "/tmp/test_dir/test2.txt",
+              pathType: "file",
+            },
           ]),
           errorMessage: "",
         },
@@ -166,8 +188,12 @@ describe("FileSystem Watch Directory Tests", () => {
       expect(callbackEvents.length).toBe(expectedEvents);
 
       // Verify event types and counts
-      const createEvents = callbackEvents.filter(event => event.eventType === "create").length;
-      const modifyEvents = callbackEvents.filter(event => event.eventType === "modify").length;
+      const createEvents = callbackEvents.filter(
+        (event) => event.eventType === "create"
+      ).length;
+      const modifyEvents = callbackEvents.filter(
+        (event) => event.eventType === "modify"
+      ).length;
 
       const expectedCreateEvents = 2;
       const expectedModifyEvents = 3;
@@ -188,4 +214,4 @@ describe("FileSystem Watch Directory Tests", () => {
       expect(callbackEvents[4].path).toBe("/tmp/test_dir/test2.txt");
     });
   });
-}); 
+});

@@ -6,7 +6,10 @@
 import { OperationResult } from "../types/api-response";
 import { MobileExtraConfig } from "../types/extra-configs";
 import { log, logError } from "../utils/logger";
-import { getMobileCommandTemplate, replaceTemplatePlaceholders } from "../command/command-templates";
+import {
+  getMobileCommandTemplate,
+  replaceTemplatePlaceholders,
+} from "../command/command-templates";
 
 export interface BoolResult extends OperationResult {
   data?: boolean;
@@ -22,13 +25,13 @@ export interface UIBounds {
 export interface UIElement {
   text: string;
   className: string;
-  bounds: UIBounds | string;  // Can be either object or string format "left,top,right,bottom"
+  bounds: UIBounds | string; // Can be either object or string format "left,top,right,bottom"
 }
 
 export interface UIElementsResult extends OperationResult {
   elements: UIElement[];
   raw: string;
-  format: 'json' | 'xml';
+  format: "json" | "xml";
 }
 
 export interface InstalledApp {
@@ -86,12 +89,12 @@ interface MobileSession {
  * Parse bounds string format "left,top,right,bottom" to UIBounds object
  */
 function parseBoundsString(boundsStr: string): UIBounds | null {
-  const parts = boundsStr.split(',');
+  const parts = boundsStr.split(",");
   if (parts.length !== 4) {
     return null;
   }
 
-  const [left, top, right, bottom] = parts.map(p => parseInt(p.trim(), 10));
+  const [left, top, right, bottom] = parts.map((p) => parseInt(p.trim(), 10));
   if (isNaN(left) || isNaN(top) || isNaN(right) || isNaN(bottom)) {
     return null;
   }
@@ -103,7 +106,7 @@ function parseBoundsString(boundsStr: string): UIBounds | null {
  * Normalize UIElement bounds field from string to object format if needed
  */
 function normalizeUIElement(element: any): UIElement {
-  if (element.bounds && typeof element.bounds === 'string') {
+  if (element.bounds && typeof element.bounds === "string") {
     const parsedBounds = parseBoundsString(element.bounds);
     if (parsedBounds) {
       element.bounds = parsedBounds;
@@ -118,11 +121,15 @@ function normalizeUIElement(element: any): UIElement {
   return element;
 }
 
-const PNG_MAGIC = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const PNG_MAGIC = new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+]);
 const JPEG_MAGIC = new Uint8Array([0xff, 0xd8, 0xff]);
 
 function normalizeImageFormat(format: string, defaultValue: string): string {
-  const f = String(format || "").trim().toLowerCase();
+  const f = String(format || "")
+    .trim()
+    .toLowerCase();
   if (!f) {
     return defaultValue;
   }
@@ -194,7 +201,14 @@ function detectImageFormat(bytes: Uint8Array): string {
 function decodeBase64Image(
   input: string,
   expectedFormat: string
-): { bytes: Uint8Array; format: string; width?: number; height?: number; type: string; mimeType: string } {
+): {
+  bytes: Uint8Array;
+  format: string;
+  width?: number;
+  height?: number;
+  type: string;
+  mimeType: string;
+} {
   const s = String(input || "").trim();
   if (!s) {
     throw new Error("Empty image data");
@@ -207,7 +221,9 @@ function decodeBase64Image(
   try {
     obj = JSON.parse(s);
   } catch (e) {
-    throw new Error(`Invalid screenshot JSON: ${e instanceof Error ? e.message : String(e)}`);
+    throw new Error(
+      `Invalid screenshot JSON: ${e instanceof Error ? e.message : String(e)}`
+    );
   }
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
     throw new Error("Invalid screenshot JSON: expected object");
@@ -216,10 +232,14 @@ function decodeBase64Image(
   const mimeType = (obj as any).mime_type;
   const b64 = (obj as any).data;
   if (typeof shotType !== "string" || !shotType.trim()) {
-    throw new Error("Invalid screenshot JSON: expected non-empty string 'type'");
+    throw new Error(
+      "Invalid screenshot JSON: expected non-empty string 'type'"
+    );
   }
   if (typeof mimeType !== "string" || !mimeType.trim()) {
-    throw new Error("Invalid screenshot JSON: expected non-empty string 'mime_type'");
+    throw new Error(
+      "Invalid screenshot JSON: expected non-empty string 'mime_type'"
+    );
   }
   if (typeof b64 !== "string" || !b64.trim()) {
     throw new Error("Screenshot JSON missing base64 field");
@@ -242,16 +262,26 @@ function decodeBase64Image(
   if (fmt === "jpeg" && detected !== "jpeg") {
     throw new Error("Screenshot data does not match expected format 'jpeg'");
   }
-  const expectedMimeType = fmt === "png" ? "image/png" : fmt === "jpeg" ? "image/jpeg" : "";
+  const expectedMimeType =
+    fmt === "png" ? "image/png" : fmt === "jpeg" ? "image/jpeg" : "";
   if (!expectedMimeType) {
     throw new Error(`Unsupported format: ${JSON.stringify(expectedFormat)}`);
   }
   if (String(mimeType).trim().toLowerCase() !== expectedMimeType) {
     throw new Error(
-      `Screenshot JSON mime_type does not match expected format: expected ${JSON.stringify(expectedMimeType)}, got ${JSON.stringify(mimeType)}`
+      `Screenshot JSON mime_type does not match expected format: expected ${JSON.stringify(
+        expectedMimeType
+      )}, got ${JSON.stringify(mimeType)}`
     );
   }
-  return { bytes, format: detected || fmt, width, height, type: String(shotType).trim(), mimeType: String(mimeType).trim() };
+  return {
+    bytes,
+    format: detected || fmt,
+    width,
+    height,
+    type: String(shotType).trim(),
+    mimeType: String(mimeType).trim(),
+  };
 }
 
 export class Mobile {
@@ -260,7 +290,6 @@ export class Mobile {
   constructor(session: MobileSession) {
     this.session = session;
   }
-
 
   /**
    * Tap at specified coordinates on the mobile screen.
@@ -283,19 +312,21 @@ export class Mobile {
   async tap(x: number, y: number): Promise<BoolResult> {
     const args = { x, y };
     try {
-      const result = await this.session.callMcpTool('tap', args, false);
+      const result = await this.session.callMcpTool("tap", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to tap: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to tap: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -321,22 +352,36 @@ export class Mobile {
    * }
    * ```
    */
-  async swipe(startX: number, startY: number, endX: number, endY: number, durationMs = 300): Promise<BoolResult> {
-    const args = { start_x: startX, start_y: startY, end_x: endX, end_y: endY, duration_ms: durationMs };
+  async swipe(
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number,
+    durationMs = 300
+  ): Promise<BoolResult> {
+    const args = {
+      start_x: startX,
+      start_y: startY,
+      end_x: endX,
+      end_y: endY,
+      duration_ms: durationMs,
+    };
     try {
-      const result = await this.session.callMcpTool('swipe', args, false);
+      const result = await this.session.callMcpTool("swipe", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to swipe: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to swipe: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -361,19 +406,21 @@ export class Mobile {
   async inputText(text: string): Promise<BoolResult> {
     const args = { text };
     try {
-      const result = await this.session.callMcpTool('input_text', args, false);
+      const result = await this.session.callMcpTool("input_text", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to input text: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to input text: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -398,19 +445,21 @@ export class Mobile {
   async sendKey(key: number): Promise<BoolResult> {
     const args = { key };
     try {
-      const result = await this.session.callMcpTool('send_key', args, false);
+      const result = await this.session.callMcpTool("send_key", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to send key: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to send key: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -421,27 +470,32 @@ export class Mobile {
   async getClickableUIElements(timeoutMs = 5000): Promise<UIElementsResult> {
     const args = { timeout_ms: timeoutMs };
     try {
-      const result = await this.session.callMcpTool('get_clickable_ui_elements', args, false);
+      const result = await this.session.callMcpTool(
+        "get_clickable_ui_elements",
+        args,
+        false
+      );
 
       if (!result.success) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to get clickable UI elements',
+          requestId: result.requestId || "",
+          errorMessage:
+            result.errorMessage || "Failed to get clickable UI elements",
           elements: [],
-          raw: result.data || '',
-          format: 'json'
+          raw: result.data || "",
+          format: "json",
         };
       }
 
       if (!result.data) {
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
+          requestId: result.requestId || "",
+          errorMessage: "",
           elements: [],
-          raw: '',
-          format: 'json'
+          raw: "",
+          format: "json",
         };
       }
 
@@ -451,30 +505,32 @@ export class Mobile {
         const normalizedElements = (elements || []).map(normalizeUIElement);
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
+          requestId: result.requestId || "",
+          errorMessage: "",
           elements: normalizedElements,
-          raw: result.data || '',
-          format: 'json'
+          raw: result.data || "",
+          format: "json",
         };
       } catch (parseError) {
         return {
           success: false,
-          requestId: result.requestId || '',
+          requestId: result.requestId || "",
           errorMessage: `Failed to parse UI elements: ${parseError}`,
           elements: [],
-          raw: result.data || '',
-          format: 'json'
+          raw: result.data || "",
+          format: "json",
         };
       }
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to get clickable UI elements: ${error instanceof Error ? error.message : String(error)}`,
+        requestId: "",
+        errorMessage: `Failed to get clickable UI elements: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         elements: [],
-        raw: '',
-        format: 'json'
+        raw: "",
+        format: "json",
       };
     }
   }
@@ -482,53 +538,63 @@ export class Mobile {
   /**
    * Get all UI elements.
    */
-  async getAllUIElements(timeoutMs = 3000, format: 'json' | 'xml' = 'json'): Promise<UIElementsResult> {
-    const formatNorm = ((format || 'json') as string).trim().toLowerCase() || 'json';
+  async getAllUIElements(
+    timeoutMs = 3000,
+    format: "json" | "xml" = "json"
+  ): Promise<UIElementsResult> {
+    const formatNorm =
+      ((format || "json") as string).trim().toLowerCase() || "json";
     const args = { timeout_ms: timeoutMs, format: formatNorm };
     try {
-      const result = await this.session.callMcpTool('get_all_ui_elements', args, false);
+      const result = await this.session.callMcpTool(
+        "get_all_ui_elements",
+        args,
+        false
+      );
 
       if (!result.success) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to get all UI elements',
+          requestId: result.requestId || "",
+          errorMessage: result.errorMessage || "Failed to get all UI elements",
           elements: [],
-          raw: result.data || '',
-          format: (formatNorm === 'xml' ? 'xml' : 'json')
+          raw: result.data || "",
+          format: formatNorm === "xml" ? "xml" : "json",
         };
       }
 
       if (!result.data) {
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
+          requestId: result.requestId || "",
+          errorMessage: "",
           elements: [],
-          raw: '',
-          format: (formatNorm === 'xml' ? 'xml' : 'json')
+          raw: "",
+          format: formatNorm === "xml" ? "xml" : "json",
         };
       }
 
-      if (formatNorm === 'xml') {
+      if (formatNorm === "xml") {
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
+          requestId: result.requestId || "",
+          errorMessage: "",
           elements: [],
-          raw: result.data || '',
-          format: 'xml'
+          raw: result.data || "",
+          format: "xml",
         };
       }
 
-      if (formatNorm !== 'json') {
+      if (formatNorm !== "json") {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: `Unsupported UI elements format: ${JSON.stringify(format)}. Supported values: "json", "xml".`,
+          requestId: result.requestId || "",
+          errorMessage: `Unsupported UI elements format: ${JSON.stringify(
+            format
+          )}. Supported values: "json", "xml".`,
           elements: [],
-          raw: result.data || '',
-          format: 'json'
+          raw: result.data || "",
+          format: "json",
         };
       }
 
@@ -538,30 +604,32 @@ export class Mobile {
         const normalizedElements = (elements || []).map(normalizeUIElement);
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
+          requestId: result.requestId || "",
+          errorMessage: "",
           elements: normalizedElements,
-          raw: result.data || '',
-          format: 'json'
+          raw: result.data || "",
+          format: "json",
         };
       } catch (parseError) {
         return {
           success: false,
-          requestId: result.requestId || '',
+          requestId: result.requestId || "",
           errorMessage: `Failed to parse UI elements: ${parseError}`,
           elements: [],
-          raw: result.data || '',
-          format: 'json'
+          raw: result.data || "",
+          format: "json",
         };
       }
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to get all UI elements: ${error instanceof Error ? error.message : String(error)}`,
+        requestId: "",
+        errorMessage: `Failed to get all UI elements: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         elements: [],
-        raw: '',
-        format: (formatNorm === 'xml' ? 'xml' : 'json')
+        raw: "",
+        format: formatNorm === "xml" ? "xml" : "json",
       };
     }
   }
@@ -569,26 +637,38 @@ export class Mobile {
   /**
    * Get installed apps.
    */
-  async getInstalledApps(startMenu = false, desktop = true, ignoreSystemApps = true): Promise<InstalledAppsResult> {
-    const args = { start_menu: startMenu, desktop, ignore_system_app: ignoreSystemApps };
+  async getInstalledApps(
+    startMenu = false,
+    desktop = true,
+    ignoreSystemApps = true
+  ): Promise<InstalledAppsResult> {
+    const args = {
+      start_menu: startMenu,
+      desktop,
+      ignore_system_app: ignoreSystemApps,
+    };
     try {
-      const result = await this.session.callMcpTool('get_installed_apps', args, false);
-      
+      const result = await this.session.callMcpTool(
+        "get_installed_apps",
+        args,
+        false
+      );
+
       if (!result.success) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to get installed apps',
-          apps: []
+          requestId: result.requestId || "",
+          errorMessage: result.errorMessage || "Failed to get installed apps",
+          apps: [],
         };
       }
 
       if (!result.data) {
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
-          apps: []
+          requestId: result.requestId || "",
+          errorMessage: "",
+          apps: [],
         };
       }
 
@@ -596,24 +676,26 @@ export class Mobile {
         const apps = JSON.parse(result.data);
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
-          apps: apps || []
+          requestId: result.requestId || "",
+          errorMessage: "",
+          apps: apps || [],
         };
       } catch (parseError) {
         return {
           success: false,
-          requestId: result.requestId || '',
+          requestId: result.requestId || "",
           errorMessage: `Failed to parse installed apps: ${parseError}`,
-          apps: []
+          apps: [],
         };
       }
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to get installed apps: ${error instanceof Error ? error.message : String(error)}`,
-        apps: []
+        requestId: "",
+        errorMessage: `Failed to get installed apps: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        apps: [],
       };
     }
   }
@@ -637,26 +719,34 @@ export class Mobile {
    * }
    * ```
    */
-  async startApp(startCmd: string, workDirectory = '', activity = ''): Promise<ProcessResult> {
-    const args = { start_cmd: startCmd, work_directory: workDirectory, activity };
+  async startApp(
+    startCmd: string,
+    workDirectory = "",
+    activity = ""
+  ): Promise<ProcessResult> {
+    const args = {
+      start_cmd: startCmd,
+      work_directory: workDirectory,
+      activity,
+    };
     try {
-      const result = await this.session.callMcpTool('start_app', args, false);
-      
+      const result = await this.session.callMcpTool("start_app", args, false);
+
       if (!result.success) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to start app',
-          processes: []
+          requestId: result.requestId || "",
+          errorMessage: result.errorMessage || "Failed to start app",
+          processes: [],
         };
       }
 
       if (!result.data) {
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
-          processes: []
+          requestId: result.requestId || "",
+          errorMessage: "",
+          processes: [],
         };
       }
 
@@ -664,24 +754,26 @@ export class Mobile {
         const processes = JSON.parse(result.data);
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
-          processes: processes || []
+          requestId: result.requestId || "",
+          errorMessage: "",
+          processes: processes || [],
         };
       } catch (parseError) {
         return {
           success: false,
-          requestId: result.requestId || '',
+          requestId: result.requestId || "",
           errorMessage: `Failed to parse process result: ${parseError}`,
-          processes: []
+          processes: [],
         };
       }
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to start app: ${error instanceof Error ? error.message : String(error)}`,
-        processes: []
+        requestId: "",
+        errorMessage: `Failed to start app: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        processes: [],
       };
     }
   }
@@ -707,19 +799,25 @@ export class Mobile {
   async stopAppByCmd(stopCmd: string): Promise<BoolResult> {
     const args = { stop_cmd: stopCmd };
     try {
-      const result = await this.session.callMcpTool('stop_app_by_cmd', args, false);
+      const result = await this.session.callMcpTool(
+        "stop_app_by_cmd",
+        args,
+        false
+      );
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to stop app: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to stop app: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -751,29 +849,35 @@ export class Mobile {
       };
     }
     try {
-      const result = await this.session.callMcpTool('system_screenshot', {}, false);
-      
+      const result = await this.session.callMcpTool(
+        "system_screenshot",
+        {},
+        false
+      );
+
       if (!result.success) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to take screenshot',
-          data: ''
+          requestId: result.requestId || "",
+          errorMessage: result.errorMessage || "Failed to take screenshot",
+          data: "",
         };
       }
 
       return {
         success: true,
-        requestId: result.requestId || '',
-        errorMessage: '',
-        data: result.data || ''
+        requestId: result.requestId || "",
+        errorMessage: "",
+        data: result.data || "",
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
-        data: ''
+        requestId: "",
+        errorMessage: `Failed to take screenshot: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: "",
       };
     }
   }
@@ -801,14 +905,20 @@ export class Mobile {
       return {
         success: false,
         requestId: "",
-        errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
+        errorMessage: `Unsupported format: ${JSON.stringify(
+          format
+        )}. Supported values: "png", "jpeg".`,
         data: new Uint8Array(),
         type: "",
         mimeType: "",
       };
     }
     try {
-      const result = await this.session.callMcpTool("screenshot", { format: formatNorm }, false);
+      const result = await this.session.callMcpTool(
+        "screenshot",
+        { format: formatNorm },
+        false
+      );
       const requestId = result.requestId || "";
       if (!result.success) {
         return {
@@ -835,7 +945,9 @@ export class Mobile {
       return {
         success: false,
         requestId: "",
-        errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
+        errorMessage: `Failed to take screenshot: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         data: new Uint8Array(),
         type: "",
         mimeType: "",
@@ -860,7 +972,8 @@ export class Mobile {
       return {
         success: false,
         requestId: "",
-        errorMessage: "Invalid maxScreens: must be an integer in the range [2, 10]",
+        errorMessage:
+          "Invalid maxScreens: must be an integer in the range [2, 10]",
         data: new Uint8Array(),
         type: "",
         mimeType: "",
@@ -870,7 +983,9 @@ export class Mobile {
       return {
         success: false,
         requestId: "",
-        errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
+        errorMessage: `Unsupported format: ${JSON.stringify(
+          format
+        )}. Supported values: "png", "jpeg".`,
         data: new Uint8Array(),
         type: "",
         mimeType: "",
@@ -881,7 +996,8 @@ export class Mobile {
         return {
           success: false,
           requestId: "",
-          errorMessage: "Invalid quality: must be an integer in the range [1, 100]",
+          errorMessage:
+            "Invalid quality: must be an integer in the range [1, 100]",
           data: new Uint8Array(),
           type: "",
           mimeType: "",
@@ -898,7 +1014,11 @@ export class Mobile {
         args.quality = quality;
       }
 
-      const result = await this.session.callMcpTool("long_screenshot", args, false);
+      const result = await this.session.callMcpTool(
+        "long_screenshot",
+        args,
+        false
+      );
       const requestId = result.requestId || "";
       if (!result.success) {
         return {
@@ -926,7 +1046,9 @@ export class Mobile {
       return {
         success: false,
         requestId: "",
-        errorMessage: `Failed to take long screenshot: ${error instanceof Error ? error.message : String(error)}`,
+        errorMessage: `Failed to take long screenshot: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         data: new Uint8Array(),
         type: "",
         mimeType: "",
@@ -939,7 +1061,7 @@ export class Mobile {
    * This method is only supported in mobile environments (mobile_latest image).
    * It uses the provided ADB public key to establish the connection and returns
    * the ADB connect URL.
-   * 
+   *
    * @param adbkeyPub - ADB public key for authentication
    * @returns AdbUrlResult containing the ADB connection URL
    */
@@ -949,48 +1071,53 @@ export class Mobile {
       const optionsJson = JSON.stringify({ adbkey_pub: adbkeyPub });
 
       // Call get_adb_link API
-      const { GetAdbLinkRequest } = await import('../api/models/model');
+      const { GetAdbLinkRequest } = await import("../api/models/model");
       const request = new GetAdbLinkRequest({
         authorization: `Bearer ${this.session.getAPIKey()}`,
         sessionId: this.session.sessionId,
-        option: optionsJson
+        option: optionsJson,
       });
 
-      const response = await this.session.getAgentBay().getClient().getAdbLink(request);
+      const response = await this.session
+        .getAgentBay()
+        .getClient()
+        .getAdbLink(request);
 
       // Check response
       if (response.body && response.body.success && response.body.data) {
         const adbUrl = response.body.data.url;
-        const requestId = response.body.requestId || '';
+        const requestId = response.body.requestId || "";
         log(`✅ get_adb_url completed successfully. RequestID: ${requestId}`);
         return {
           success: true,
           requestId: requestId,
-          errorMessage: '',
+          errorMessage: "",
           data: adbUrl,
-          url: adbUrl
+          url: adbUrl,
         };
       } else {
-        const errorMsg = response.body?.message || 'Unknown error';
-        const requestId = response.body?.requestId || '';
+        const errorMsg = response.body?.message || "Unknown error";
+        const requestId = response.body?.requestId || "";
         logError(`❌ Failed to get ADB URL: ${errorMsg}`);
         return {
           success: false,
           requestId: requestId,
           errorMessage: errorMsg,
           data: undefined,
-          url: undefined
+          url: undefined,
         };
       }
     } catch (error) {
-      const errorMsg = `Failed to get ADB URL: ${error instanceof Error ? error.message : String(error)}`;
+      const errorMsg = `Failed to get ADB URL: ${
+        error instanceof Error ? error.message : String(error)
+      }`;
       logError(`❌ ${errorMsg}`);
       return {
         success: false,
-        requestId: '',
+        requestId: "",
         errorMessage: errorMsg,
         data: undefined,
-        url: undefined
+        url: undefined,
       };
     }
   }
@@ -999,7 +1126,7 @@ export class Mobile {
    * Configure mobile device settings based on MobileExtraConfig.
    * This method applies various mobile configuration settings including
    * resolution lock and app access management.
-   * 
+   *
    * @param config - The mobile configuration to apply
    * @returns OperationResult indicating success or failure
    */
@@ -1008,18 +1135,20 @@ export class Mobile {
       if (!config) {
         return {
           success: false,
-          requestId: '',
-          errorMessage: 'No mobile configuration provided'
+          requestId: "",
+          errorMessage: "No mobile configuration provided",
         };
       }
 
       // Configure resolution lock
-      const resolutionResult = await this.setResolutionLock(config.lockResolution);
+      const resolutionResult = await this.setResolutionLock(
+        config.lockResolution
+      );
       if (!resolutionResult.success) {
         return {
           success: false,
           requestId: resolutionResult.requestId,
-          errorMessage: `Failed to set resolution lock: ${resolutionResult.errorMessage}`
+          errorMessage: `Failed to set resolution lock: ${resolutionResult.errorMessage}`,
         };
       }
 
@@ -1028,9 +1157,11 @@ export class Mobile {
         const appRule = config.appManagerRule;
         const packageNames = appRule.appPackageNameList;
 
-        if (packageNames && packageNames.length > 0 && 
-            (appRule.ruleType === "White" || appRule.ruleType === "Black")) {
-          
+        if (
+          packageNames &&
+          packageNames.length > 0 &&
+          (appRule.ruleType === "White" || appRule.ruleType === "Black")
+        ) {
           let appResult: OperationResult;
           if (appRule.ruleType === "White") {
             appResult = await this.setAppWhitelist(packageNames);
@@ -1042,38 +1173,44 @@ export class Mobile {
             return {
               success: false,
               requestId: appResult.requestId,
-              errorMessage: `Failed to set app ${appRule.ruleType.toLowerCase()}list: ${appResult.errorMessage}`
+              errorMessage: `Failed to set app ${appRule.ruleType.toLowerCase()}list: ${
+                appResult.errorMessage
+              }`,
             };
           }
         } else if (packageNames && packageNames.length === 0) {
           return {
             success: false,
-            requestId: '',
-            errorMessage: `No package names provided for ${appRule.ruleType} list`
+            requestId: "",
+            errorMessage: `No package names provided for ${appRule.ruleType} list`,
           };
         }
       }
 
       // Configure navigation bar visibility
       if (config.hideNavigationBar !== undefined) {
-        const navResult = await this.setNavigationBarVisibility(config.hideNavigationBar);
+        const navResult = await this.setNavigationBarVisibility(
+          config.hideNavigationBar
+        );
         if (!navResult.success) {
           return {
             success: false,
             requestId: navResult.requestId,
-            errorMessage: `Failed to set navigation bar visibility: ${navResult.errorMessage}`
+            errorMessage: `Failed to set navigation bar visibility: ${navResult.errorMessage}`,
           };
         }
       }
 
       // Configure uninstall blacklist
       if (config.uninstallBlacklist && config.uninstallBlacklist.length > 0) {
-        const uninstallResult = await this.setUninstallBlacklist(config.uninstallBlacklist);
+        const uninstallResult = await this.setUninstallBlacklist(
+          config.uninstallBlacklist
+        );
         if (!uninstallResult.success) {
           return {
             success: false,
             requestId: uninstallResult.requestId,
-            errorMessage: `Failed to set uninstall blacklist: ${uninstallResult.errorMessage}`
+            errorMessage: `Failed to set uninstall blacklist: ${uninstallResult.errorMessage}`,
           };
         }
       }
@@ -1081,53 +1218,59 @@ export class Mobile {
       log("Mobile configuration applied successfully");
       return {
         success: true,
-        requestId: '',
-        errorMessage: ''
+        requestId: "",
+        errorMessage: "",
       };
     } catch (error) {
-      const errorMsg = `Failed to configure mobile: ${error instanceof Error ? error.message : String(error)}`;
+      const errorMsg = `Failed to configure mobile: ${
+        error instanceof Error ? error.message : String(error)
+      }`;
       logError(errorMsg);
       return {
         success: false,
-        requestId: '',
-        errorMessage: errorMsg
+        requestId: "",
+        errorMessage: errorMsg,
       };
     }
   }
 
   /**
    * Set display resolution lock for mobile devices.
-   * 
+   *
    * @param enable - Whether to enable resolution lock
    * @returns OperationResult indicating success or failure
    */
   async setResolutionLock(enable: boolean): Promise<OperationResult> {
     try {
-      const templateName = enable ? "resolution_lock_enable" : "resolution_lock_disable";
+      const templateName = enable
+        ? "resolution_lock_enable"
+        : "resolution_lock_disable";
       const template = getMobileCommandTemplate(templateName);
-      
+
       if (!template) {
         return {
           success: false,
-          requestId: '',
-          errorMessage: `Resolution lock template not found: ${templateName}`
+          requestId: "",
+          errorMessage: `Resolution lock template not found: ${templateName}`,
         };
       }
 
-      const description = `Resolution lock ${enable ? 'enable' : 'disable'}`;
+      const description = `Resolution lock ${enable ? "enable" : "disable"}`;
       return await this.executeCommand(template, description);
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to set resolution lock: ${error instanceof Error ? error.message : String(error)}`
+        requestId: "",
+        errorMessage: `Failed to set resolution lock: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       };
     }
   }
 
   /**
    * Set app whitelist configuration.
-   * 
+   *
    * @param packageNames - List of package names to whitelist
    * @returns OperationResult indicating success or failure
    */
@@ -1137,29 +1280,33 @@ export class Mobile {
       if (!template) {
         return {
           success: false,
-          requestId: '',
-          errorMessage: "App whitelist template not found"
+          requestId: "",
+          errorMessage: "App whitelist template not found",
         };
       }
 
       // Replace placeholder with actual package names (newline-separated for file content)
-      const packageList = packageNames.join('\n');
-      const command = replaceTemplatePlaceholders(template, { package_list: packageList });
-      
+      const packageList = packageNames.join("\n");
+      const command = replaceTemplatePlaceholders(template, {
+        package_list: packageList,
+      });
+
       const description = `App whitelist configuration (${packageNames.length} packages)`;
       return await this.executeCommand(command, description);
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to set app whitelist: ${error instanceof Error ? error.message : String(error)}`
+        requestId: "",
+        errorMessage: `Failed to set app whitelist: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       };
     }
   }
 
   /**
    * Set app blacklist configuration.
-   * 
+   *
    * @param packageNames - List of package names to blacklist
    * @returns OperationResult indicating success or failure
    */
@@ -1169,29 +1316,33 @@ export class Mobile {
       if (!template) {
         return {
           success: false,
-          requestId: '',
-          errorMessage: "App blacklist template not found"
+          requestId: "",
+          errorMessage: "App blacklist template not found",
         };
       }
 
       // Replace placeholder with actual package names (newline-separated for file content)
-      const packageList = packageNames.join('\n');
-      const command = replaceTemplatePlaceholders(template, { package_list: packageList });
-      
+      const packageList = packageNames.join("\n");
+      const command = replaceTemplatePlaceholders(template, {
+        package_list: packageList,
+      });
+
       const description = `App blacklist configuration (${packageNames.length} packages)`;
       return await this.executeCommand(command, description);
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to set app blacklist: ${error instanceof Error ? error.message : String(error)}`
+        requestId: "",
+        errorMessage: `Failed to set app blacklist: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       };
     }
   }
 
   /**
    * Set navigation bar visibility for mobile devices.
-   * 
+   *
    * @param hide - True to hide navigation bar, false to show navigation bar
    * @returns OperationResult indicating success or failure
    */
@@ -1199,12 +1350,12 @@ export class Mobile {
     try {
       const templateName = hide ? "hide_navigation_bar" : "show_navigation_bar";
       const template = getMobileCommandTemplate(templateName);
-      
+
       if (!template) {
         return {
           success: false,
-          requestId: '',
-          errorMessage: `Navigation bar template not found: ${templateName}`
+          requestId: "",
+          errorMessage: `Navigation bar template not found: ${templateName}`,
         };
       }
 
@@ -1213,62 +1364,74 @@ export class Mobile {
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to set navigation bar visibility: ${error instanceof Error ? error.message : String(error)}`
+        requestId: "",
+        errorMessage: `Failed to set navigation bar visibility: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       };
     }
   }
 
   /**
    * Set uninstall protection blacklist for mobile devices.
-   * 
+   *
    * @param packageNames - List of Android package names to protect from uninstallation
    * @returns OperationResult indicating success or failure
    */
-  async setUninstallBlacklist(packageNames: string[]): Promise<OperationResult> {
+  async setUninstallBlacklist(
+    packageNames: string[]
+  ): Promise<OperationResult> {
     try {
       const template = getMobileCommandTemplate("uninstall_blacklist");
       if (!template) {
         return {
           success: false,
-          requestId: '',
-          errorMessage: "Uninstall blacklist template not found"
+          requestId: "",
+          errorMessage: "Uninstall blacklist template not found",
         };
       }
 
       // Use newline-separated format for uninstall blacklist file content
-      const packageList = packageNames.join('\n');
+      const packageList = packageNames.join("\n");
       const timestamp = Math.floor(Date.now() / 1000).toString();
-      const command = replaceTemplatePlaceholders(template, { 
+      const command = replaceTemplatePlaceholders(template, {
         package_list: packageList,
-        timestamp: timestamp
+        timestamp: timestamp,
       });
-      
+
       const description = `Uninstall blacklist configuration (${packageNames.length} packages)`;
       return await this.executeCommand(command, description);
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to set uninstall blacklist: ${error instanceof Error ? error.message : String(error)}`
+        requestId: "",
+        errorMessage: `Failed to set uninstall blacklist: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
       };
     }
   }
 
   /**
    * Execute a command template for mobile configuration.
-   * 
+   *
    * @param command - The command to execute
    * @param description - Description of the operation
    * @returns OperationResult indicating success or failure
    */
-  private async executeCommand(command: string, description: string): Promise<OperationResult> {
+  private async executeCommand(
+    command: string,
+    description: string
+  ): Promise<OperationResult> {
     try {
       log(`Executing ${description}`);
-      
+
       // Use the session's command module to execute the command with longer timeout for mobile operations
-      const result = await (this.session as any).command.executeCommand(command, 10000);
-      
+      const result = await (this.session as any).command.executeCommand(
+        command,
+        10000
+      );
+
       if (result && result.success) {
         log(`✅ ${description} completed successfully`);
         if (result.output) {
@@ -1276,26 +1439,29 @@ export class Mobile {
         }
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: ''
+          requestId: result.requestId || "",
+          errorMessage: "",
         };
       } else {
-        const errorMessage = result?.errorMessage || `Failed to execute ${description}`;
+        const errorMessage =
+          result?.errorMessage || `Failed to execute ${description}`;
         logError(`Failed to execute ${description}: ${errorMessage}`);
         return {
           success: false,
-          requestId: result?.requestId || '',
-          errorMessage: errorMessage
+          requestId: result?.requestId || "",
+          errorMessage: errorMessage,
         };
       }
     } catch (error) {
-      const errorMsg = `Failed to execute ${description}: ${error instanceof Error ? error.message : String(error)}`;
+      const errorMsg = `Failed to execute ${description}: ${
+        error instanceof Error ? error.message : String(error)
+      }`;
       logError(errorMsg);
       return {
         success: false,
-        requestId: '',
-        errorMessage: errorMsg
+        requestId: "",
+        errorMessage: errorMsg,
       };
     }
   }
-} 
+}

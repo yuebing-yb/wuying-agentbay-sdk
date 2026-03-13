@@ -22,6 +22,7 @@
 - [hasStreamingParams](#hasstreamingparams)
 - [initialize](#initialize)
 - [resolveAgentTarget](#resolveagenttarget)
+- [startTaskStreamWs](#starttaskstreamws)
 - [terminateTask](#terminatetask)
 
 ## Properties
@@ -38,7 +39,7 @@ ___
 
 ### toolPrefix
 
-• `Protected` **toolPrefix**: `string` = `'browser_use'`
+• `Protected` **toolPrefix**: `string` = `"browser_use"`
 
 #### Overrides
 
@@ -64,16 +65,16 @@ provides a task ID. Call getTaskStatus to check the task status.
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `task` | `string` | `undefined` | Task description in human language. * |
-| `use_vision` | `boolean` | `true` | Whether to use vision in the task. * |
-| `output_schema?` | `TSchema` | `undefined` | Optional Zod schema for a structured task output if you need. * |
+| `task` | `string` | `undefined` | Task description in human language. |
+| `use_vision` | `boolean` | `true` | Whether to use vision in the task. |
+| `output_schema?` | `TSchema` | `undefined` | Optional Zod schema for a structured task output if you need. |
 
 #### Returns
 
 `Promise`\<``ExecutionResult``\>
 
 ExecutionResult containing success status, task ID, task status,
-  *     and error message if any.
+    and error message if any.
 
 **`Example`**
 
@@ -170,7 +171,7 @@ Execute a task via WebSocket streaming channel.
 | Name | Type |
 | :------ | :------ |
 | `params` | `Object` |
-| `params.options?` | ``AgentStreamingOptions`` |
+| `params.options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
 | `params.taskParams` | `Record`\<`string`, `any`\> |
 | `params.timeout` | `number` |
 
@@ -192,7 +193,7 @@ Check if any streaming option is provided.
 
 | Name | Type |
 | :------ | :------ |
-| `options?` | ``AgentStreamingOptions`` |
+| `options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
 
 #### Returns
 
@@ -251,6 +252,31 @@ Resolve the WS target for this agent from MCP tools list.
 #### Inherited from
 
 BaseTaskAgent.resolveAgentTarget
+
+___
+
+### startTaskStreamWs
+
+▸ **startTaskStreamWs**(`params`): `Promise`\<\{ `context`: \{ `errors`: `Error`[] ; `finalContentParts`: `string`[] ; `lastError`: `undefined` \| `Record`\<`string`, `any`\>  } ; `handle`: \{ `cancel`: () => `Promise`\<`void`\> ; `invocationId`: `string` ; `waitEnd`: () => `Promise`\<`any`\> ; `write`: (`data`: `Record`\<`string`, `any`\>) => `Promise`\<`void`\>  }  }\>
+
+Start a task via WebSocket streaming channel. Returns handle and context
+immediately without blocking. Use handle.waitEnd() to await completion.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `params` | `Object` |
+| `params.options?` | ``AgentStreamingOptions`` \| ``MobileTaskOptions`` |
+| `params.taskParams` | `Record`\<`string`, `any`\> |
+
+#### Returns
+
+`Promise`\<\{ `context`: \{ `errors`: `Error`[] ; `finalContentParts`: `string`[] ; `lastError`: `undefined` \| `Record`\<`string`, `any`\>  } ; `handle`: \{ `cancel`: () => `Promise`\<`void`\> ; `invocationId`: `string` ; `waitEnd`: () => `Promise`\<`any`\> ; `write`: (`data`: `Record`\<`string`, `any`\>) => `Promise`\<`void`\>  }  }\>
+
+#### Inherited from
+
+BaseTaskAgent.startTaskStreamWs
 
 ___
 

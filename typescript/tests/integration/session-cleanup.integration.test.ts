@@ -45,7 +45,11 @@ describe("Session Cleanup Integration Test", () => {
 
       for (let i = 0; i < sessionIds.length; i++) {
         const sessionId = sessionIds[i];
-        log(`\n--- Processing session ${i + 1}/${sessionIds.length}: ${sessionId} ---`);
+        log(
+          `\n--- Processing session ${i + 1}/${
+            sessionIds.length
+          }: ${sessionId} ---`
+        );
 
         try {
           // Step 2a: Recover session via get() with enhanced error handling
@@ -53,7 +57,9 @@ describe("Session Cleanup Integration Test", () => {
           const getResult = await agentBay.get(sessionId.sessionId);
 
           if (!getResult.success) {
-            log(`❌ Failed to recover session ${sessionId}: ${getResult.errorMessage}`);
+            log(
+              `❌ Failed to recover session ${sessionId}: ${getResult.errorMessage}`
+            );
             log(`Request ID: ${getResult.requestId || "N/A"}`);
             recoveryFailures++;
             deleteResults.push({
@@ -66,7 +72,7 @@ describe("Session Cleanup Integration Test", () => {
             continue;
           }
 
-          const recoveredSession:Session  = getResult.session!;
+          const recoveredSession: Session = getResult.session!;
           log(`✅ Successfully recovered session ${sessionId.sessionId}`);
           log(`Session details - sessionId: ${recoveredSession.sessionId}`);
           log(`Recovery Request ID: ${getResult.requestId}`);
@@ -74,13 +80,17 @@ describe("Session Cleanup Integration Test", () => {
           // Step 2b: Check session status before deletion
           log(`📊 Checking status of session ${sessionId} before deletion...`);
           const sessionStatusResult = await recoveredSession.getStatus();
-          
+
           if (sessionStatusResult.success) {
             const status = sessionStatusResult.status?.toLowerCase();
-            log(`📋 Session ${sessionId} status: ${sessionStatusResult.status}`);
-            
+            log(
+              `📋 Session ${sessionId} status: ${sessionStatusResult.status}`
+            );
+
             if (status === "deleting" || status === "deleted") {
-              log(`⏭️  Session ${sessionId} is already ${sessionStatusResult.status}, skipping deletion`);
+              log(
+                `⏭️  Session ${sessionId} is already ${sessionStatusResult.status}, skipping deletion`
+              );
               deleteResults.push({
                 sessionId,
                 recovered: true,
@@ -92,7 +102,9 @@ describe("Session Cleanup Integration Test", () => {
               continue;
             }
           } else {
-            log(`⚠️  Failed to get status for session ${sessionId}: ${sessionStatusResult.errorMessage}, proceeding with deletion`);
+            log(
+              `⚠️  Failed to get status for session ${sessionId}: ${sessionStatusResult.errorMessage}, proceeding with deletion`
+            );
           }
 
           // Step 2c: Delete the recovered session with enhanced logging
@@ -100,7 +112,9 @@ describe("Session Cleanup Integration Test", () => {
           const deleteResult = await agentBay.delete(recoveredSession);
 
           if (!deleteResult.success) {
-            log(`❌ Failed to delete session ${sessionId}: ${deleteResult.errorMessage}`);
+            log(
+              `❌ Failed to delete session ${sessionId}: ${deleteResult.errorMessage}`
+            );
             log(`Delete Request ID: ${deleteResult.requestId || "N/A"}`);
             failedDeletes++;
             deleteResults.push({
@@ -121,9 +135,10 @@ describe("Session Cleanup Integration Test", () => {
               requestId: deleteResult.requestId,
             });
           }
-
         } catch (sessionError) {
-          log(`❌ Unexpected error processing session ${sessionId}: ${sessionError}`);
+          log(
+            `❌ Unexpected error processing session ${sessionId}: ${sessionError}`
+          );
           failedDeletes++;
           deleteResults.push({
             sessionId,
@@ -143,21 +158,38 @@ describe("Session Cleanup Integration Test", () => {
 
       if (failedDeletes > 0) {
         log("\n❌ Failed deletions details:");
-        deleteResults.filter(r => !r.deleted).forEach(r => {
-          log(`  - Session ${r.sessionId}: ${r.error} (RequestID: ${r.requestId || "N/A"})`);
-        });
+        deleteResults
+          .filter((r) => !r.deleted)
+          .forEach((r) => {
+            log(
+              `  - Session ${r.sessionId}: ${r.error} (RequestID: ${
+                r.requestId || "N/A"
+              })`
+            );
+          });
       }
 
       if (recoveryFailures > 0) {
         log("\n🔄 Recovery failures details:");
-        deleteResults.filter(r => !r.recovered).forEach(r => {
-          log(`  - Session ${r.sessionId}: ${r.error} (RequestID: ${r.requestId || "N/A"})`);
-        });
+        deleteResults
+          .filter((r) => !r.recovered)
+          .forEach((r) => {
+            log(
+              `  - Session ${r.sessionId}: ${r.error} (RequestID: ${
+                r.requestId || "N/A"
+              })`
+            );
+          });
       }
 
       // Enhanced verification: Ensure all sessions were processed successfully
       const totalFailures = failedDeletes + recoveryFailures;
-      log(`\n📈 Overall success rate: ${((sessionIds.length - totalFailures) / sessionIds.length * 100).toFixed(1)}%`);
+      log(
+        `\n📈 Overall success rate: ${(
+          ((sessionIds.length - totalFailures) / sessionIds.length) *
+          100
+        ).toFixed(1)}%`
+      );
 
       // Verify all sessions were deleted (strict requirement)
       expect(failedDeletes).toBe(0);
@@ -173,42 +205,54 @@ describe("Session Cleanup Integration Test", () => {
         if (retryCount > 0) {
           log(`🔄 Retry ${retryCount}/${maxRetries} for final verification...`);
           // Wait a bit before retry (eventual consistency)
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
 
         finalListResult = await agentBay.list();
-        
+
         if (finalListResult.success) {
           const remainingSessionIds = finalListResult.sessionIds || [];
           log(`📋 Remaining sessions: ${remainingSessionIds.length}`);
-          
+
           if (remainingSessionIds.length === 0) {
             log("✅ All sessions successfully cleaned up!");
             break;
           } else {
-            log(`⚠️  Still found ${remainingSessionIds.length} remaining sessions`);
-            log(`Remaining session IDs: ${JSON.stringify(remainingSessionIds)}`);
-            
+            log(
+              `⚠️  Still found ${remainingSessionIds.length} remaining sessions`
+            );
+            log(
+              `Remaining session IDs: ${JSON.stringify(remainingSessionIds)}`
+            );
+
             if (retryCount === maxRetries - 1) {
               // Last retry, proceed with detailed verification
               break;
             }
           }
         } else {
-          log(`❌ Failed to verify final list (attempt ${retryCount + 1}): ${finalListResult.errorMessage}`);
+          log(
+            `❌ Failed to verify final list (attempt ${retryCount + 1}): ${
+              finalListResult.errorMessage
+            }`
+          );
           if (retryCount === maxRetries - 1) {
-            throw new Error(`Failed to verify final session list after ${maxRetries} attempts: ${finalListResult.errorMessage}`);
+            throw new Error(
+              `Failed to verify final session list after ${maxRetries} attempts: ${finalListResult.errorMessage}`
+            );
           }
         }
-        
+
         retryCount++;
       }
 
       // Detailed verification of deleted sessions
       if (finalListResult && finalListResult.success) {
         const remainingSessionIds = finalListResult.sessionIds || [];
-        
-        log(`\n--- Verifying ${deletedSessionIds.length} deleted sessions are gone ---`);
+
+        log(
+          `\n--- Verifying ${deletedSessionIds.length} deleted sessions are gone ---`
+        );
         let allDeletedSessionsGone = true;
         const stillExistingSessions = [];
 
@@ -219,13 +263,19 @@ describe("Session Cleanup Integration Test", () => {
             stillExistingSessions.push(deletedSessionId);
             allDeletedSessionsGone = false;
           } else {
-            log(`✅ Deleted session ${deletedSessionId} confirmed removed from list`);
+            log(
+              `✅ Deleted session ${deletedSessionId} confirmed removed from list`
+            );
           }
         }
 
         // Enhanced assertion with detailed error message
         if (!allDeletedSessionsGone) {
-          const errorMessage = `${stillExistingSessions.length} deleted sessions still exist: ${JSON.stringify(stillExistingSessions)}`;
+          const errorMessage = `${
+            stillExistingSessions.length
+          } deleted sessions still exist: ${JSON.stringify(
+            stillExistingSessions
+          )}`;
           log(`❌ ${errorMessage}`);
           throw new Error(errorMessage);
         }
@@ -235,10 +285,13 @@ describe("Session Cleanup Integration Test", () => {
       }
 
       log("🎉 === Session Cleanup Test Completed Successfully ===\n");
-      
     } catch (error) {
       log(`💥 Test error: ${error}`);
-      log(`Error stack: ${error instanceof Error ? error.stack : "No stack trace available"}`);
+      log(
+        `Error stack: ${
+          error instanceof Error ? error.stack : "No stack trace available"
+        }`
+      );
       throw error;
     }
   });

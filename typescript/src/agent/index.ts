@@ -6,6 +6,8 @@ export {
   AgentEvent,
   AgentEventCallback,
   AgentStreamingOptions,
+  MobileTaskOptions,
+  TaskExecution,
   ExecutionResult,
   QueryResult,
   McpToolResult,

@@ -5,7 +5,11 @@ export { type Config } from "./config";
 export { VERSION, IS_RELEASE } from "./version";
 
 // Export all public classes and interfaces
-export { AgentBay, CreateSessionParams, CreateSessionParamsClass} from "./agent-bay";
+export {
+  AgentBay,
+  CreateSessionParams,
+  CreateSessionParamsClass,
+} from "./agent-bay";
 export * from "./agent";
 export * from "./api";
 export * from "./browser";
@@ -19,7 +23,10 @@ export * from "./extension";
 export * from "./filesystem";
 export * from "./oss";
 export { Mobile } from "./mobile";
-export { MobileSimulateService, type MobileSimulateUploadResult } from "./mobile-simulate";
+export {
+  MobileSimulateService,
+  type MobileSimulateUploadResult,
+} from "./mobile-simulate";
 export { Session } from "./session";
 export { type ListSessionParams } from "./types";
 export * from "./types";
@@ -38,5 +45,5 @@ export {
   getLogLevel,
   setupLogger,
   type LogLevel,
-  type LoggerConfig
+  type LoggerConfig,
 } from "./utils/logger";

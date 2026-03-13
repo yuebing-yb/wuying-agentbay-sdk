@@ -5,7 +5,6 @@ import {
   OSSDownloadResult,
 } from "../types/api-response";
 
-
 /**
  * Handles OSS operations in the AgentBay cloud environment.
  */
@@ -79,12 +78,15 @@ export class Oss {
         args,
         false
       );
-      
+
       if (result.success) {
         if (result.data) {
           const clientConfigRaw = result.data;
           // Check if data contains "failed" field
-          if (typeof clientConfigRaw === 'string' && clientConfigRaw.toLowerCase().includes('failed')) {
+          if (
+            typeof clientConfigRaw === "string" &&
+            clientConfigRaw.toLowerCase().includes("failed")
+          ) {
             return {
               requestId: result.requestId,
               success: false,
@@ -111,7 +113,8 @@ export class Oss {
           requestId: result.requestId,
           success: false,
           clientConfig: "",
-          errorMessage: result.errorMessage || "Failed to initialize OSS environment",
+          errorMessage:
+            result.errorMessage || "Failed to initialize OSS environment",
         };
       }
     } catch (error) {
@@ -157,11 +160,7 @@ export class Oss {
         object,
         path,
       };
-      const result = await this.session.callMcpTool(
-        "oss_upload",
-        args,
-        false
-      );
+      const result = await this.session.callMcpTool("oss_upload", args, false);
 
       return {
         requestId: result.requestId,

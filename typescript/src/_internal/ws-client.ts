@@ -9,7 +9,11 @@ const WebSocketImpl: typeof WsType = require("ws");
 type OnEvent = (invocationId: string, data: Record<string, any>) => void;
 type OnEnd = (invocationId: string, data: Record<string, any>) => void;
 type OnError = (invocationId: string, err: Error) => void;
-type PushCallback = (payload: { requestId: string; target: string; data: Record<string, any> }) => void | Promise<void>;
+type PushCallback = (payload: {
+  requestId: string;
+  target: string;
+  data: Record<string, any>;
+}) => void | Promise<void>;
 
 function newInvocationId(): string {
   return crypto.randomBytes(16).toString("hex");
@@ -140,7 +144,7 @@ export class WsClient {
   /**
    * Send a message to the target without expecting a response.
    * Used for one-way notifications like browser callback messages.
-   * 
+   *
    * @param target - The target service identifier
    * @param data - The message data to send
    */
@@ -173,6 +177,7 @@ export class WsClient {
     invocationId: string;
     waitEnd: () => Promise<Record<string, any>>;
     cancel: () => Promise<void>;
+    write: (data: Record<string, any>) => Promise<void>;
   }> {
     await this.connect();
     const ws = this.ws;
@@ -201,11 +206,24 @@ export class WsClient {
     this.logFrame(">>", payload);
     ws.send(safeStringify(payload));
 
+    const target = params.target;
     return {
       invocationId,
       waitEnd: async () => await endPromise,
       cancel: async () => {
         this.cancelPending(invocationId);
+      },
+      write: async (data: Record<string, any>) => {
+        const ws = this.ws;
+        if (!ws) throw new Error("WS not connected");
+        const writePayload = {
+          invocationId,
+          source: "SDK",
+          target,
+          data,
+        };
+        this.logFrame(">>", writePayload);
+        ws.send(safeStringify(writePayload));
       },
     };
   }
@@ -213,11 +231,12 @@ export class WsClient {
   private cancelPending(invocationId: string): void {
     const pending = this.pendingById.get(invocationId);
     if (!pending) return;
-    const err = new WsCancelledError(`Stream ${invocationId} was cancelled by caller`);
+    const err = new WsCancelledError(
+      `Stream ${invocationId} was cancelled by caller`
+    );
     try {
       if (pending.onError) pending.onError(invocationId, err);
-    } catch (_e) {
-    }
+    } catch (_e) {}
     pending.rejectEnd(err);
     this.pendingById.delete(invocationId);
   }
@@ -248,7 +267,9 @@ export class WsClient {
       try {
         const parsed = JSON.parse(dataAny);
         if (parsed && typeof parsed === "object") {
-          logWarn("WS protocol violation: backend sent data as string; decoded to object");
+          logWarn(
+            "WS protocol violation: backend sent data as string; decoded to object"
+          );
           data = parsed;
         }
       } catch (_e) {
@@ -258,12 +279,17 @@ export class WsClient {
 
     if (!pending) {
       const routeTarget =
-        target === "SDK" && typeof source === "string" && source && source !== "SDK"
+        target === "SDK" &&
+        typeof source === "string" &&
+        source &&
+        source !== "SDK"
           ? source
           : target;
       if (!routeTarget || typeof routeTarget !== "string") return;
       if (!data) return;
-      const callbacks = Array.from(this.callbacksByTarget.get(routeTarget) ?? []);
+      const callbacks = Array.from(
+        this.callbacksByTarget.get(routeTarget) ?? []
+      );
       if (callbacks.length === 0) return;
       const payload = { requestId: invocationId, target: routeTarget, data };
       for (const cb of callbacks) {
@@ -283,7 +309,9 @@ export class WsClient {
       this.logFrame("<<", { invocationId, source, data });
       const errMsg =
         (typeof msg.error === "string" && msg.error) ||
-        (data && typeof data === "object" && typeof data.error === "string" ? data.error : "");
+        (data && typeof data === "object" && typeof data.error === "string"
+          ? data.error
+          : "");
       if (errMsg) {
         const err = new Error(errMsg);
         if (pending.onError) pending.onError(invocationId, err);
@@ -336,4 +364,3 @@ export class WsClient {
     this.pendingById.clear();
   }
 }
-

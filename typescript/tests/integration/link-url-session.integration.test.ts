@@ -57,10 +57,11 @@ describe("LinkUrl session integration", () => {
         "wuying_shell"
       );
       expect(restoredDirect.success).toBe(true);
-      expect(restoredDirect.data).toContain("restored-direct-link-url-route-ok");
+      expect(restoredDirect.data).toContain(
+        "restored-direct-link-url-route-ok"
+      );
     } finally {
       await session.delete();
     }
   });
 });
-

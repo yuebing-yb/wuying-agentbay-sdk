@@ -209,7 +209,6 @@ export interface ProcessListResult extends OperationResult {
 //   errorMessage?: string;
 // }
 
-
 export interface InstalledApp {
   name: string;
   startCmd: string;
@@ -346,7 +345,7 @@ export interface CodeExecutionResult extends ApiResponse {
   result: string;
   /** Optional error message if the operation failed */
   errorMessage?: string;
-  
+
   /** Enhanced fields */
   logs?: CodeExecutionLogs;
   results?: CodeExecutionResultItem[];
@@ -573,7 +572,6 @@ export interface WindowInfoResult extends ApiResponse {
   errorMessage?: string;
 }
 
-
 /**
  * Interface for context operation responses
  * Corresponds to Python's ContextResult type
@@ -774,7 +772,7 @@ export interface SessionResumeResult extends ApiResponse {
 
 /**
  * Represents the screen dimensions and DPI scaling information.
- * 
+ *
  * @interface ScreenSize
  * @extends OperationResult
  */
@@ -789,7 +787,7 @@ export interface ScreenSize extends OperationResult {
 
 /**
  * Represents the current cursor position on screen.
- * 
+ *
  * @interface CursorPosition
  * @extends OperationResult
  */

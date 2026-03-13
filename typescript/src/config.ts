@@ -145,7 +145,10 @@ if (!dotEnvLoaded) {
  * @param customEnvPath Custom path to .env file (optional)
  * @returns Configuration object
  */
-function loadConfig(customConfig?: ConfigOptions, customEnvPath?: string): Config {
+function loadConfig(
+  customConfig?: ConfigOptions,
+  customEnvPath?: string
+): Config {
   // If custom config is provided, do NOT load env/.env.
   // Fill missing/empty fields with defaults, but preserve explicit values.
   if (customConfig) {

@@ -82,7 +82,9 @@ describe("AgentBay.list() Integration Tests", () => {
 
     // Verify all sessions were created
     if (testSessions.length !== 3) {
-      throw new Error(`Failed to create all 3 test sessions. Only created ${testSessions.length} sessions.`);
+      throw new Error(
+        `Failed to create all 3 test sessions. Only created ${testSessions.length} sessions.`
+      );
     }
 
     // Wait longer for sessions to be fully created and labels to propagate
@@ -99,9 +101,7 @@ describe("AgentBay.list() Integration Tests", () => {
           `Session ${session.sessionId} deleted. Success: ${result.success}, Request ID: ${result.requestId}`
         );
       } catch (error) {
-        log(
-          `Warning: Error deleting session ${session.sessionId}: ${error}`
-        );
+        log(`Warning: Error deleting session ${session.sessionId}: ${error}`);
       }
     }
   });
@@ -164,8 +164,8 @@ describe("AgentBay.list() Integration Tests", () => {
 
     // Verify the dev session is in the results
     const devSessionId = testSessions[0].sessionId;
-    const fileterSessionIds = result.sessionIds.filter((sid) =>
-      sid.sessionId == devSessionId
+    const fileterSessionIds = result.sessionIds.filter(
+      (sid) => sid.sessionId == devSessionId
     );
     const found = fileterSessionIds.length > 0;
 
@@ -323,7 +323,8 @@ describe("AgentBay.list() Integration Tests", () => {
   test("should traverse all pages and verify pagination completeness", async () => {
     log("\\n=== Testing list() pagination completeness ===");
 
-    const allSessionIds: Array<{sessionId: string; sessionStatus: string}> = [];
+    const allSessionIds: Array<{ sessionId: string; sessionStatus: string }> =
+      [];
     let page = 1;
     const limit = 2;
     let totalCountFromApi = 0;
@@ -347,8 +348,8 @@ describe("AgentBay.list() Integration Tests", () => {
 
       log(
         `Page ${page}: Found ${result.sessionIds.length} sessions, ` +
-        `NextToken: ${result.nextToken ? "Yes" : "No"}, ` +
-        `Total count: ${result.totalCount}`
+          `NextToken: ${result.nextToken ? "Yes" : "No"}, ` +
+          `Total count: ${result.totalCount}`
       );
 
       // Verify page size constraint
@@ -364,7 +365,9 @@ describe("AgentBay.list() Integration Tests", () => {
 
       // Safety check to prevent infinite loop
       if (page > 100) {
-        throw new Error("Pagination exceeded 100 pages, possible infinite loop");
+        throw new Error(
+          "Pagination exceeded 100 pages, possible infinite loop"
+        );
       }
     }
 
@@ -414,12 +417,17 @@ describe("AgentBay.list() Integration Tests", () => {
     );
 
     expect(result1.totalCount).toBe(result2.totalCount);
-    log(`✓ total_count consistent: ${result1.totalCount} == ${result2.totalCount}`);
+    log(
+      `✓ total_count consistent: ${result1.totalCount} == ${result2.totalCount}`
+    );
 
     // Test 3: Verify total_count matches actual sessions when collecting all pages
-    log("\\nTest 3: total_count should match actual session count across all pages");
+    log(
+      "\\nTest 3: total_count should match actual session count across all pages"
+    );
 
-    const allSessionIds: Array<{sessionId: string; sessionStatus: string}> = [];
+    const allSessionIds: Array<{ sessionId: string; sessionStatus: string }> =
+      [];
     let page = 1;
     const limit = 2;
     let expectedTotalCount = 0;
@@ -455,7 +463,7 @@ describe("AgentBay.list() Integration Tests", () => {
 
     log(
       `✓ total_count matches actual count: ` +
-      `${expectedTotalCount} == ${uniqueSessionIds.size}`
+        `${expectedTotalCount} == ${uniqueSessionIds.size}`
     );
 
     // Test 4: Verify session_ids count <= total_count for each page
@@ -466,11 +474,12 @@ describe("AgentBay.list() Integration Tests", () => {
       2
     );
 
-    expect(result.sessionIds.length).toBeLessThanOrEqual(result.totalCount || 0);
+    expect(result.sessionIds.length).toBeLessThanOrEqual(
+      result.totalCount || 0
+    );
     log(
       `✓ session_ids count (${result.sessionIds.length}) <= ` +
-      `total_count (${result.totalCount})`
+        `total_count (${result.totalCount})`
     );
   });
 });
-

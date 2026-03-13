@@ -29,27 +29,39 @@ export function defaultFunctionalTestConfig(): FunctionalTestConfig {
   };
 }
 
-export function createFunctionalTestResult(testName: string): FunctionalTestResult {
+export function createFunctionalTestResult(
+  testName: string
+): FunctionalTestResult {
   return {
     testName,
     success: false,
-    message: '',
+    message: "",
     details: {},
     duration: 0,
   };
 }
 
-export function setTestSuccess(result: FunctionalTestResult, message: string): void {
+export function setTestSuccess(
+  result: FunctionalTestResult,
+  message: string
+): void {
   result.success = true;
   result.message = message;
 }
 
-export function setTestFailure(result: FunctionalTestResult, message: string): void {
+export function setTestFailure(
+  result: FunctionalTestResult,
+  message: string
+): void {
   result.success = false;
   result.message = message;
 }
 
-export function addTestDetail(result: FunctionalTestResult, key: string, value: any): void {
+export function addTestDetail(
+  result: FunctionalTestResult,
+  key: string,
+  value: any
+): void {
   result.details[key] = value;
 }
 
@@ -74,7 +86,12 @@ export function validateCursorPosition(
   const screenHeight = screenResult.height;
 
   // Check if cursor is within screen bounds
-  if (cursorX < 0 || cursorY < 0 || cursorX >= screenWidth || cursorY >= screenHeight) {
+  if (
+    cursorX < 0 ||
+    cursorY < 0 ||
+    cursorX >= screenWidth ||
+    cursorY >= screenHeight
+  ) {
     return false;
   }
 
@@ -126,13 +143,15 @@ export interface SimplifiedUIElement {
   };
 }
 
-export function convertMobileUIElements(elements: any[]): SimplifiedUIElement[] {
+export function convertMobileUIElements(
+  elements: any[]
+): SimplifiedUIElement[] {
   const result: SimplifiedUIElement[] = [];
   for (const elem of elements) {
     if (elem) {
       const simplified: SimplifiedUIElement = {
-        text: elem.text || '',
-        className: elem.className || '',
+        text: elem.text || "",
+        className: elem.className || "",
         bounds: {
           left: elem.bounds?.left || 0,
           top: elem.bounds?.top || 0,
@@ -168,12 +187,20 @@ export function validateUIElementsChanged(
   }
 
   // Check for text content changes
-  const beforeTexts = new Set(before.map(elem => elem.text).filter(text => text));
-  const afterTexts = new Set(after.map(elem => elem.text).filter(text => text));
+  const beforeTexts = new Set(
+    before.map((elem) => elem.text).filter((text) => text)
+  );
+  const afterTexts = new Set(
+    after.map((elem) => elem.text).filter((text) => text)
+  );
 
   // Count text differences
-  const beforeOnlyTexts = new Set([...beforeTexts].filter(text => !afterTexts.has(text)));
-  const afterOnlyTexts = new Set([...afterTexts].filter(text => !beforeTexts.has(text)));
+  const beforeOnlyTexts = new Set(
+    [...beforeTexts].filter((text) => !afterTexts.has(text))
+  );
+  const afterOnlyTexts = new Set(
+    [...afterTexts].filter((text) => !beforeTexts.has(text))
+  );
   const differentCount = beforeOnlyTexts.size + afterOnlyTexts.size;
 
   const changeRatio = differentCount / totalElements;
@@ -188,13 +215,15 @@ export function validateAppLaunched(
   return validateUIElementsChanged(beforeUI, afterUI, 0.5);
 }
 
-export function findTextInputElement(elements: SimplifiedUIElement[]): SimplifiedUIElement | null {
+export function findTextInputElement(
+  elements: SimplifiedUIElement[]
+): SimplifiedUIElement | null {
   for (const elem of elements) {
     const className = elem.className.toLowerCase();
     if (
-      className.includes('edittext') ||
-      className.includes('textfield') ||
-      className.includes('input')
+      className.includes("edittext") ||
+      className.includes("textfield") ||
+      className.includes("input")
     ) {
       return elem;
     }
@@ -202,7 +231,9 @@ export function findTextInputElement(elements: SimplifiedUIElement[]): Simplifie
   return null;
 }
 
-export function calculateElementCenter(elem: SimplifiedUIElement): [number, number] {
+export function calculateElementCenter(
+  elem: SimplifiedUIElement
+): [number, number] {
   if (!elem) {
     return [0, 0];
   }
@@ -239,12 +270,12 @@ export async function safeScreenshot(
 ): Promise<[string | null, Error | null]> {
   try {
     if (!computerOrMobile) {
-      return [null, new Error('computerOrMobile is null or undefined')];
+      return [null, new Error("computerOrMobile is null or undefined")];
     }
 
     const result = await computerOrMobile.screenshot();
     if (!result) {
-      return [null, new Error('Screenshot method returned null or undefined')];
+      return [null, new Error("Screenshot method returned null or undefined")];
     }
 
     if (result.errorMessage) {
@@ -254,25 +285,35 @@ export async function safeScreenshot(
     // Check for data in different possible fields
     // The callMcpTool method extracts content[0].text into result.data field
     let screenshotData = null;
-    
-    if (result.data && result.data.trim() !== '') {
+
+    if (result.data && result.data.trim() !== "") {
       screenshotData = result.data;
     } else if (result.url) {
       screenshotData = result.url;
-    } else if (result.content && Array.isArray(result.content) && result.content[0]?.text) {
+    } else if (
+      result.content &&
+      Array.isArray(result.content) &&
+      result.content[0]?.text
+    ) {
       screenshotData = result.content[0].text;
-    } else if (typeof result === 'string') {
+    } else if (typeof result === "string") {
       screenshotData = result;
     } else {
-      console.log(`[${testName}] safeScreenshot: No screenshot data found in any expected field`);
-      console.log(`[${testName}] safeScreenshot: result.data type: ${typeof result.data}, value: "${result.data}"`);
+      console.log(
+        `[${testName}] safeScreenshot: No screenshot data found in any expected field`
+      );
+      console.log(
+        `[${testName}] safeScreenshot: result.data type: ${typeof result.data}, value: "${
+          result.data
+        }"`
+      );
     }
 
     if (screenshotData) {
       return [screenshotData, null];
     }
 
-    return [null, new Error('No screenshot data found in result')];
+    return [null, new Error("No screenshot data found in result")];
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     return [null, error instanceof Error ? error : new Error(String(error))];
@@ -288,11 +329,11 @@ export async function waitWithTimeout(
     if (conditionFunc()) {
       return true;
     }
-    await new Promise(resolve => setTimeout(resolve, checkInterval));
+    await new Promise((resolve) => setTimeout(resolve, checkInterval));
   }
   return false;
 }
 
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-} 
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

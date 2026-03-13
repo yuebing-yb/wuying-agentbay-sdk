@@ -1,4 +1,3 @@
-
 import { AgentBay } from "../../src";
 import { getTestApiKey } from "../utils/test-helpers";
 
@@ -14,11 +13,11 @@ describe("Region ID Integration Tests", () => {
       const config = {
         endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
         timeout_ms: 60000,
-        region_id: "cn-hangzhou"
+        region_id: "cn-hangzhou",
       };
       const client = new AgentBay({
         apiKey,
-        config: config
+        config: config,
       });
 
       expect(client.getRegionId()).toBe("cn-hangzhou");
@@ -27,11 +26,11 @@ describe("Region ID Integration Tests", () => {
       const config = {
         endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
         timeout_ms: 60000,
-        region_id: ""
+        region_id: "",
       };
       const client = new AgentBay({
         apiKey,
-        config: config
+        config: config,
       });
 
       expect(client.getRegionId()).toBe("");
@@ -43,14 +42,14 @@ describe("Region ID Integration Tests", () => {
       const config = {
         endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
         timeout_ms: 60000,
-        region_id: "cn-hangzhou"
+        region_id: "cn-hangzhou",
       };
       const client = new AgentBay({
         apiKey,
-        config: config
+        config: config,
       });
 
-      const sessionResult = await client.create({imageId: "linux_latest"});
+      const sessionResult = await client.create({ imageId: "linux_latest" });
 
       expect(sessionResult.success).toBe(true);
       expect(sessionResult.session).toBeDefined();
@@ -65,7 +64,7 @@ describe("Region ID Integration Tests", () => {
     test("should create session successfully without region_id", async () => {
       const client = new AgentBay({ apiKey });
 
-      const sessionResult = await client.create({imageId: "linux_latest"});
+      const sessionResult = await client.create({ imageId: "linux_latest" });
 
       expect(sessionResult.success).toBe(true);
       expect(sessionResult.session).toBeDefined();
@@ -83,11 +82,11 @@ describe("Region ID Integration Tests", () => {
       const config = {
         endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
         timeout_ms: 60000,
-        region_id: "cn-hangzhou"
+        region_id: "cn-hangzhou",
       };
       const client = new AgentBay({
         apiKey,
-        config: config
+        config: config,
       });
 
       const contextName = `test-context-typescript-region-id-${Date.now()}`;
@@ -108,11 +107,11 @@ describe("Region ID Integration Tests", () => {
       const config = {
         endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
         timeout_ms: 60000,
-        region_id: "cn-hangzhou"
+        region_id: "cn-hangzhou",
       };
       const client = new AgentBay({
         apiKey,
-        config: config
+        config: config,
       });
 
       // Try to get non-existent context without create
@@ -146,11 +145,11 @@ describe("Region ID Integration Tests", () => {
       const config = {
         endpoint: "wuyingai.cn-shanghai.aliyuncs.com",
         timeout_ms: 60000,
-        region_id: "cn-hangzhou"
+        region_id: "cn-hangzhou",
       };
       const client = new AgentBay({
         apiKey,
-        config: config
+        config: config,
       });
 
       // 1. Create context
@@ -159,15 +158,17 @@ describe("Region ID Integration Tests", () => {
       expect(contextResult.success).toBe(true);
 
       // 2. Create session
-      const sessionResult = await client.create({imageId: "linux_latest"});
+      const sessionResult = await client.create({ imageId: "linux_latest" });
       expect(sessionResult.success).toBe(true);
       expect(sessionResult.session).toBeDefined();
 
       // 3. Get session info
       const sessionInfo = await sessionResult.session.info();
-      const resultSessionInfo = sessionInfo.data
+      const resultSessionInfo = sessionInfo.data;
       expect(sessionInfo.success).toBe(true);
-      expect(resultSessionInfo.sessionId).toBe(sessionResult.session!.sessionId);
+      expect(resultSessionInfo.sessionId).toBe(
+        sessionResult.session!.sessionId
+      );
 
       // 4. Clean up
       if (contextResult.context) {

@@ -27,8 +27,8 @@ async function exampleTypedCallbacks() {
     const result = await session.agent.mobile.executeTaskAndWait(
       'Open Settings app',
       180,
-      10,
       {
+        maxSteps: 10,
         onReasoning: (event: AgentEvent) => {
           process.stdout.write(`[Reasoning] ${event.content || ''}`);
         },

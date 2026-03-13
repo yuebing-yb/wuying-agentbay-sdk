@@ -1,4 +1,4 @@
-import { chromium, Page } from 'playwright';
+import { chromium, Page } from "playwright";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -139,7 +139,7 @@ export class FingerprintFormat {
    * ```
    */
   static load(data: string | Record<string, any>): FingerprintFormat {
-    if (typeof data === 'string') {
+    if (typeof data === "string") {
       return this.fromJson(data);
     }
     return this.fromDict(data);
@@ -152,7 +152,7 @@ export class FingerprintFormat {
   toDict(): Record<string, any> {
     return {
       fingerprint: this.fingerprint,
-      headers: this.headers
+      headers: this.headers,
     };
   }
 
@@ -169,8 +169,8 @@ export class FingerprintFormat {
    * Note: Used internally by SDK modules.
    */
   static fromDict(data: Record<string, any>): FingerprintFormat {
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid data: expected an object');
+    if (!data || typeof data !== "object") {
+      throw new Error("Invalid data: expected an object");
     }
 
     const fingerprintDict = data.fingerprint || {};
@@ -197,7 +197,7 @@ export class FingerprintFormat {
       screenX: screenDict.screenX || 0,
       clientWidth: screenDict.clientWidth || 0,
       clientHeight: screenDict.clientHeight || 0,
-      hasHDR: screenDict.hasHDR || false
+      hasHDR: screenDict.hasHDR || false,
     };
 
     // Handle UserAgentData - safely get navigator data
@@ -209,10 +209,10 @@ export class FingerprintFormat {
     const brands: Brand[] = [];
     if (Array.isArray(brandsData)) {
       for (const brandData of brandsData) {
-        if (typeof brandData === 'object' && brandData !== null) {
+        if (typeof brandData === "object" && brandData !== null) {
           brands.push({
-            brand: brandData.brand || '',
-            version: brandData.version || ''
+            brand: brandData.brand || "",
+            version: brandData.version || "",
           });
         }
       }
@@ -222,10 +222,10 @@ export class FingerprintFormat {
     const fullVersionList: Brand[] = [];
     if (Array.isArray(fullVersionListData)) {
       for (const brandData of fullVersionListData) {
-        if (typeof brandData === 'object' && brandData !== null) {
+        if (typeof brandData === "object" && brandData !== null) {
           fullVersionList.push({
-            brand: brandData.brand || '',
-            version: brandData.version || ''
+            brand: brandData.brand || "",
+            version: brandData.version || "",
           });
         }
       }
@@ -234,13 +234,13 @@ export class FingerprintFormat {
     const userAgentData: UserAgentData = {
       brands: brands,
       mobile: userAgentDataDict.mobile || false,
-      platform: userAgentDataDict.platform || '',
-      architecture: userAgentDataDict.architecture || '',
-      bitness: userAgentDataDict.bitness || '',
+      platform: userAgentDataDict.platform || "",
+      architecture: userAgentDataDict.architecture || "",
+      bitness: userAgentDataDict.bitness || "",
       fullVersionList: fullVersionList,
-      model: userAgentDataDict.model || '',
-      platformVersion: userAgentDataDict.platformVersion || '',
-      uaFullVersion: userAgentDataDict.uaFullVersion || ''
+      model: userAgentDataDict.model || "",
+      platformVersion: userAgentDataDict.platformVersion || "",
+      uaFullVersion: userAgentDataDict.uaFullVersion || "",
     };
 
     // Handle ExtraProperties
@@ -250,37 +250,37 @@ export class FingerprintFormat {
       isBluetoothSupported: extraPropsDict.isBluetoothSupported || false,
       globalPrivacyControl: extraPropsDict.globalPrivacyControl,
       pdfViewerEnabled: extraPropsDict.pdfViewerEnabled !== false,
-      installedApps: extraPropsDict.installedApps || []
+      installedApps: extraPropsDict.installedApps || [],
     };
 
     // Create NavigatorFingerprint
     const navigator: NavigatorFingerprint = {
-      userAgent: navDict.userAgent || '',
+      userAgent: navDict.userAgent || "",
       userAgentData: userAgentData,
-      doNotTrack: navDict.doNotTrack || '',
-      appCodeName: navDict.appCodeName || '',
-      appName: navDict.appName || '',
-      appVersion: navDict.appVersion || '',
-      oscpu: navDict.oscpu || '',
-      webdriver: navDict.webdriver || '',
-      language: navDict.language || '',
+      doNotTrack: navDict.doNotTrack || "",
+      appCodeName: navDict.appCodeName || "",
+      appName: navDict.appName || "",
+      appVersion: navDict.appVersion || "",
+      oscpu: navDict.oscpu || "",
+      webdriver: navDict.webdriver || "",
+      language: navDict.language || "",
       languages: navDict.languages || [],
-      platform: navDict.platform || '',
+      platform: navDict.platform || "",
       deviceMemory: navDict.deviceMemory,
       hardwareConcurrency: navDict.hardwareConcurrency || 8,
-      product: navDict.product || '',
-      productSub: navDict.productSub || '',
-      vendor: navDict.vendor || '',
-      vendorSub: navDict.vendorSub || '',
+      product: navDict.product || "",
+      productSub: navDict.productSub || "",
+      vendor: navDict.vendor || "",
+      vendorSub: navDict.vendorSub || "",
       maxTouchPoints: navDict.maxTouchPoints,
-      extraProperties: extraProps
+      extraProperties: extraProps,
     };
 
     // Create VideoCard
     const videoCardDict = fingerprintDict.videoCard || {};
     const videoCard: VideoCard = {
-      renderer: videoCardDict.renderer || 'Unknown',
-      vendor: videoCardDict.vendor || 'Unknown'
+      renderer: videoCardDict.renderer || "Unknown",
+      vendor: videoCardDict.vendor || "Unknown",
     };
 
     // Create main Fingerprint
@@ -295,7 +295,7 @@ export class FingerprintFormat {
       multimediaDevices: fingerprintDict.multimediaDevices || [],
       fonts: fingerprintDict.fonts || [],
       mockWebRTC: fingerprintDict.mockWebRTC || false,
-      slim: fingerprintDict.slim
+      slim: fingerprintDict.slim,
     };
 
     return new FingerprintFormat(fingerprint, headersDict);
@@ -337,7 +337,7 @@ export class FingerprintFormat {
       multimediaDevices: multimediaDevices || [],
       fonts: fonts || [],
       mockWebRTC: mockWebRTC,
-      slim: slim
+      slim: slim,
     };
 
     return new FingerprintFormat(fingerprint, headers);
@@ -351,7 +351,9 @@ export class BrowserFingerprintGenerator {
   private headless: boolean;
   private useChromeChannel: boolean;
 
-  constructor(options: { headless?: boolean; useChromeChannel?: boolean } = {}) {
+  constructor(
+    options: { headless?: boolean; useChromeChannel?: boolean } = {}
+  ) {
     this.headless = options.headless ?? false;
     this.useChromeChannel = options.useChromeChannel ?? true;
   }
@@ -361,15 +363,15 @@ export class BrowserFingerprintGenerator {
    */
   async generateFingerprint(): Promise<FingerprintFormat | null> {
     try {
-      console.log('Starting fingerprint generation');
+      console.log("Starting fingerprint generation");
 
       const launchOptions: any = {
         headless: this.headless,
-        args: ['--start-maximized']
+        args: ["--start-maximized"],
       };
 
       if (this.useChromeChannel) {
-        launchOptions.channel = 'chrome';
+        launchOptions.channel = "chrome";
       }
 
       const browser = await chromium.launch(launchOptions);
@@ -377,9 +379,9 @@ export class BrowserFingerprintGenerator {
       const page = await context.newPage();
 
       // Navigate to a test page to ensure proper loading
-      await page.goto('about:blank');
+      await page.goto("about:blank");
 
-      console.log('Extracting comprehensive browser fingerprint...');
+      console.log("Extracting comprehensive browser fingerprint...");
 
       // Extract comprehensive fingerprint data
       const fingerprintData = await this.extractFingerprintData(page);
@@ -392,12 +394,11 @@ export class BrowserFingerprintGenerator {
       // Combine fingerprint and headers using FingerprintFormat
       const fingerprintFormat = FingerprintFormat.fromDict({
         fingerprint: fingerprintData,
-        headers: headersData
+        headers: headersData,
       });
 
-      console.log('Fingerprint generation completed successfully!');
+      console.log("Fingerprint generation completed successfully!");
       return fingerprintFormat;
-
     } catch (error) {
       console.error(`Error generating fingerprint: ${error}`);
       return null;
@@ -407,15 +408,19 @@ export class BrowserFingerprintGenerator {
   /**
    * Extract comprehensive browser fingerprint and save to file.
    */
-  async generateFingerprintToFile(outputFilename = 'fingerprint_output.json'): Promise<boolean> {
+  async generateFingerprintToFile(
+    outputFilename = "fingerprint_output.json"
+  ): Promise<boolean> {
     try {
-      console.log(`Starting fingerprint generation, output file: ${outputFilename}`);
+      console.log(
+        `Starting fingerprint generation, output file: ${outputFilename}`
+      );
 
       // Generate fingerprint data (FingerprintFormat object)
       const fingerprintFormat = await this.generateFingerprint();
 
       if (fingerprintFormat === null) {
-        console.error('Failed to generate fingerprint data');
+        console.error("Failed to generate fingerprint data");
         return false;
       }
 
@@ -424,13 +429,14 @@ export class BrowserFingerprintGenerator {
       const success = await this.saveToFile(fingerprintJson, outputFilename);
 
       if (success) {
-        console.log(`Fingerprint generation completed successfully! Saved to ${outputFilename}`);
+        console.log(
+          `Fingerprint generation completed successfully! Saved to ${outputFilename}`
+        );
         return true;
       } else {
-        console.error('Failed to save fingerprint data');
+        console.error("Failed to save fingerprint data");
         return false;
       }
-
     } catch (error) {
       console.error(`Error generating fingerprint to file: ${error}`);
       return false;
@@ -711,40 +717,44 @@ export class BrowserFingerprintGenerator {
   /**
    * Extract headers data from httpbin.
    */
-  private async extractHeadersData(page: Page): Promise<Record<string, string>> {
+  private async extractHeadersData(
+    page: Page
+  ): Promise<Record<string, string>> {
     try {
-      console.log('Getting request headers...');
-      await page.goto('https://httpbin.org/headers', { waitUntil: 'networkidle' });
+      console.log("Getting request headers...");
+      await page.goto("https://httpbin.org/headers", {
+        waitUntil: "networkidle",
+      });
 
       // Extract headers from the response
       const allHeaders = await page.evaluate(() => {
         try {
           // @ts-expect-error - document is available in browser context
-          const preElement = document.querySelector('pre');
+          const preElement = document.querySelector("pre");
           if (preElement) {
-            const data = JSON.parse(preElement.textContent || '{}');
+            const data = JSON.parse(preElement.textContent || "{}");
             return data.headers || {};
           }
         } catch (e) {
-          console.log('Failed to parse headers:', e);
+          console.log("Failed to parse headers:", e);
         }
         return {};
       });
 
       // Filter only the key headers from the example
       const keyHeaders = [
-        'sec-ch-ua',
-        'sec-ch-ua-mobile',
-        'sec-ch-ua-platform',
-        'upgrade-insecure-requests',
-        'user-agent',
-        'accept',
-        'sec-fetch-site',
-        'sec-fetch-mode',
-        'sec-fetch-user',
-        'sec-fetch-dest',
-        'accept-encoding',
-        'accept-language'
+        "sec-ch-ua",
+        "sec-ch-ua-mobile",
+        "sec-ch-ua-platform",
+        "upgrade-insecure-requests",
+        "user-agent",
+        "accept",
+        "sec-fetch-site",
+        "sec-fetch-mode",
+        "sec-fetch-user",
+        "sec-fetch-dest",
+        "accept-encoding",
+        "accept-language",
       ];
 
       const headersData: Record<string, string> = {};
@@ -762,7 +772,6 @@ export class BrowserFingerprintGenerator {
       }
 
       return headersData;
-
     } catch (error) {
       console.warn(`Failed to extract headers: ${error}`);
       return {};
@@ -772,18 +781,21 @@ export class BrowserFingerprintGenerator {
   /**
    * Save JSON string data to a file.
    */
-  private async saveToFile(jsonData: string, filename: string): Promise<boolean> {
+  private async saveToFile(
+    jsonData: string,
+    filename: string
+  ): Promise<boolean> {
     try {
       // In Node.js environment
-      if (typeof require !== 'undefined') {
+      if (typeof require !== "undefined") {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const fs = require('fs');
-        fs.writeFileSync(filename, jsonData, 'utf8');
+        const fs = require("fs");
+        fs.writeFileSync(filename, jsonData, "utf8");
         console.log(`Fingerprint data saved to ${filename}`);
         return true;
       } else {
         // In browser environment, we can't save files directly
-        console.warn('File saving not supported in browser environment');
+        console.warn("File saving not supported in browser environment");
         return false;
       }
     } catch (error) {

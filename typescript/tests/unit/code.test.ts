@@ -17,7 +17,7 @@ describe("Code", () => {
     };
 
     code = new Code(mockSession);
-    
+
     // Get reference to the callMcpTool stub
     callMcpToolStub = mockSession.callMcpTool;
   });
@@ -53,15 +53,17 @@ print(x)
       expect(result.errorMessage).to.be.undefined;
 
       // Verify method was called correctly
-      expect(callMcpToolStub.calledOnceWith(
-        "run_code",
-        {
-          code: pythonCode,
-          language: "python",
-          timeout_s: 60,
-        },
-        false
-      )).to.be.true;
+      expect(
+        callMcpToolStub.calledOnceWith(
+          "run_code",
+          {
+            code: pythonCode,
+            language: "python",
+            timeout_s: 60,
+          },
+          false
+        )
+      ).to.be.true;
     });
 
     it("should execute JavaScript code with custom timeout", async () => {
@@ -91,15 +93,17 @@ console.log(x);
       expect(result.errorMessage).to.be.undefined;
 
       // Verify method was called with custom timeout
-      expect(callMcpToolStub.calledOnceWith(
-        "run_code",
-        {
-          code: jsCode,
-          language: "javascript",
-          timeout_s: customTimeout,
-        },
-        false
-      )).to.be.true;
+      expect(
+        callMcpToolStub.calledOnceWith(
+          "run_code",
+          {
+            code: jsCode,
+            language: "javascript",
+            timeout_s: customTimeout,
+          },
+          false
+        )
+      ).to.be.true;
     });
 
     it("should handle unsupported language", async () => {
@@ -190,4 +194,4 @@ console.log(x);
       expect(result.errorMessage).to.be.undefined;
     });
   });
-}); 
+});

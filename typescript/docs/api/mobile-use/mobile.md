@@ -297,8 +297,8 @@ Start an app.
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `startCmd` | `string` | `undefined` | Start command using "monkey -p" format (e.g., 'monkey -p com.android.settings') |
-| `workDirectory` | `string` | `''` | Optional working directory for the app |
-| `activity` | `string` | `''` | Optional activity name to launch |
+| `workDirectory` | `string` | `""` | Optional working directory for the app |
+| `activity` | `string` | `""` | Optional activity name to launch |
 
 #### Returns
 

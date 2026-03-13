@@ -8,8 +8,8 @@ import { Session } from "../../src/session";
 
 // Skip in CI if no API key, Jest will still collect but we handle at runtime
 const apiKey = process.env.AGENTBAY_API_KEY || "";
-log(`API Key: ${apiKey ? 'Present' : 'Missing'}`);
-log(`CI Environment: ${process.env.CI ? 'Yes' : 'No'}`);
+log(`API Key: ${apiKey ? "Present" : "Missing"}`);
+log(`CI Environment: ${process.env.CI ? "Yes" : "No"}`);
 
 describe("File Transfer Integration", () => {
   let agentBay: AgentBay;
@@ -29,10 +29,10 @@ describe("File Transfer Integration", () => {
     agentBay = new AgentBay({ apiKey });
 
     // Create session; backend will manage file-transfer context automatically
-    const params :CreateSessionParams = {
-      imageId:'linux_latest',
-      enableBrowserReplay:true,
-    } 
+    const params: CreateSessionParams = {
+      imageId: "linux_latest",
+      enableBrowserReplay: true,
+    };
 
     log("Creating session...");
     const sessionResult = await agentBay.create(params);
@@ -49,28 +49,27 @@ describe("File Transfer Integration", () => {
 
     // Get file transfer context path with retry mechanism
     log("Getting file transfer context path...");
-    
+
     // Wait for session to be fully initialized
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     // Try to get file transfer context path with retry mechanism
-    
-    
-      try {
-        contextPath = await session.fileSystem.getFileTransferContextPath();
-        log(`contextPath = ${contextPath}`);
-        
-        if (contextPath) {
-          log(`✅ Successfully obtained file transfer context path: ${contextPath}`);
-          
-        } else {
-          log(`⚠️ contextPath is null, retrying...`);
-        }
-      } catch (error) {
-        log(`❌ Error getting file transfer context path : ${error}`);
-       
+
+    try {
+      contextPath = await session.fileSystem.getFileTransferContextPath();
+      log(`contextPath = ${contextPath}`);
+
+      if (contextPath) {
+        log(
+          `✅ Successfully obtained file transfer context path: ${contextPath}`
+        );
+      } else {
+        log(`⚠️ contextPath is null, retrying...`);
       }
-    
+    } catch (error) {
+      log(`❌ Error getting file transfer context path : ${error}`);
+    }
+
     if (!contextPath) {
       log("❌ Failed to obtain file transfer context path after all retries");
       log("Possible causes:");
@@ -78,7 +77,7 @@ describe("File Transfer Integration", () => {
       log("  2. File transfer feature not enabled for this session");
       log("  3. API key lacks file transfer permissions");
       log("  4. Backend configuration issue");
-      
+
       // Try to get more diagnostic information
       try {
         const sessionId = session.getSessionId();
@@ -86,10 +85,12 @@ describe("File Transfer Integration", () => {
       } catch (infoError) {
         log(`Failed to get session info: ${infoError}`);
       }
-      
-      throw new Error("File transfer context path is null - cannot proceed with file transfer tests");
+
+      throw new Error(
+        "File transfer context path is null - cannot proceed with file transfer tests"
+      );
     }
-    
+
     log("beforeAll completed successfully");
   });
 
@@ -109,9 +110,9 @@ describe("File Transfer Integration", () => {
     // Clean up session
     if (session) {
       try {
-        log('\nDeleting the session...');
+        log("\nDeleting the session...");
         const deleteResponse = await agentBay.delete(session);
-        log('Session deleted successfully');
+        log("Session deleted successfully");
         log(`Delete Session RequestId: ${deleteResponse.requestId}`);
       } catch (error) {
         log(`Warning: Error deleting session: ${error}`);
@@ -129,14 +130,17 @@ describe("File Transfer Integration", () => {
     }
 
     // Create test content
-    testContent = "This is a test file for AgentBay FileTransfer upload integration test.\n".repeat(10);
+    testContent =
+      "This is a test file for AgentBay FileTransfer upload integration test.\n".repeat(
+        10
+      );
     const tempFilePath = path.join(tempDir, "upload_test.txt");
     fs.writeFileSync(tempFilePath, testContent);
     log(`Created test file at: ${tempFilePath}`);
 
     const remotePath = `${contextPath}/uploaded-file.txt`;
     log(`\nUploading file from ${tempFilePath} to ${remotePath}`);
-    
+
     // Upload the file with progress callback
     log("Calling uploadFile...");
     const uploadResult = await session.fileSystem.uploadFile(
@@ -145,7 +149,7 @@ describe("File Transfer Integration", () => {
       {
         progressCb: (bytesTransferred: number) => {
           log(`Upload progress: ${bytesTransferred} bytes transferred`);
-        }
+        },
       }
     );
     log(`Upload result: ${JSON.stringify(uploadResult, null, 2)}`);
@@ -167,7 +171,9 @@ describe("File Transfer Integration", () => {
     expect(listResult.entries).toBeDefined();
 
     // Check if our uploaded file is in the directory listing
-    const fileFound = listResult.entries.some((entry: any) => entry.name === 'uploaded-file.txt');
+    const fileFound = listResult.entries.some(
+      (entry: any) => entry.name === "uploaded-file.txt"
+    );
     expect(fileFound).toBe(true);
 
     log("File found in remote directory!");
@@ -189,12 +195,18 @@ describe("File Transfer Integration", () => {
 
     // Create a file in the remote location for download
     const remoteDownloadPath = `${contextPath!}/download-test.txt`;
-    const downloadContent = "This is a test file for AgentBay FileTransfer download integration test.\n".repeat(15);
+    const downloadContent =
+      "This is a test file for AgentBay FileTransfer download integration test.\n".repeat(
+        15
+      );
 
     log(`\nCreating remote file for download: ${remoteDownloadPath}`);
-    const writeResult = await session.fileSystem.writeFile(remoteDownloadPath, downloadContent);
+    const writeResult = await session.fileSystem.writeFile(
+      remoteDownloadPath,
+      downloadContent
+    );
     if (writeResult.success) {
-      log('Remote file created successfully');
+      log("Remote file created successfully");
     } else {
       log(`Failed to create remote file: ${writeResult.errorMessage}`);
     }
@@ -212,7 +224,7 @@ describe("File Transfer Integration", () => {
       {
         progressCb: (bytesReceived: number) => {
           log(`Download progress: ${bytesReceived} bytes received`);
-        }
+        },
       }
     );
     log(`Download result: ${JSON.stringify(downloadResult, null, 2)}`);
@@ -230,12 +242,12 @@ describe("File Transfer Integration", () => {
     log(`Request ID (sync): ${downloadResult.requestIdSync}`);
 
     // Verify downloaded file content
-    const downloadedContent = fs.readFileSync(tempFilePath, 'utf-8');
+    const downloadedContent = fs.readFileSync(tempFilePath, "utf-8");
     log(`Downloaded file content length: ${downloadedContent.length} bytes`);
     if (downloadedContent === downloadContent) {
-      log('Downloaded file content verified successfully');
+      log("Downloaded file content verified successfully");
     } else {
-      log('Warning: Downloaded file content does not match');
+      log("Warning: Downloaded file content does not match");
     }
     expect(downloadedContent).toBe(downloadContent);
 

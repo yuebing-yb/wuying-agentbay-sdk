@@ -13,7 +13,7 @@ import {
   Lifecycle,
   MappingPolicy,
   newMappingPolicy,
-  SyncPolicyImpl
+  SyncPolicyImpl,
 } from "../../src/context-sync";
 import { log } from "../../src/utils/logger";
 
@@ -22,7 +22,6 @@ describe("ContextSync Unit Tests", () => {
     it("should create default SyncPolicy with correct values", () => {
       const policy = newSyncPolicy();
 
-
       // Verify the policy is not null
       expect(policy).toBeDefined();
 
@@ -30,14 +29,18 @@ describe("ContextSync Unit Tests", () => {
       expect(policy.uploadPolicy).toBeDefined();
       if (policy.uploadPolicy) {
         expect(policy.uploadPolicy.autoUpload).toBe(true);
-        expect(policy.uploadPolicy.uploadStrategy).toBe(UploadStrategy.UploadBeforeResourceRelease);
+        expect(policy.uploadPolicy.uploadStrategy).toBe(
+          UploadStrategy.UploadBeforeResourceRelease
+        );
       }
 
       // Verify downloadPolicy
       expect(policy.downloadPolicy).toBeDefined();
       if (policy.downloadPolicy) {
         expect(policy.downloadPolicy.autoDownload).toBe(true);
-        expect(policy.downloadPolicy.downloadStrategy).toBe(DownloadStrategy.DownloadAsync);
+        expect(policy.downloadPolicy.downloadStrategy).toBe(
+          DownloadStrategy.DownloadAsync
+        );
       }
 
       // Verify deletePolicy
@@ -49,7 +52,9 @@ describe("ContextSync Unit Tests", () => {
       // Verify recyclePolicy
       expect(policy.recyclePolicy).toBeDefined();
       if (policy.recyclePolicy) {
-        expect(policy.recyclePolicy.lifecycle).toBe(Lifecycle.Lifecycle_Forever);
+        expect(policy.recyclePolicy.lifecycle).toBe(
+          Lifecycle.Lifecycle_Forever
+        );
         expect(policy.recyclePolicy.paths).toBeDefined();
         expect(policy.recyclePolicy.paths).toHaveLength(1);
         expect(policy.recyclePolicy.paths[0]).toBe("");
@@ -60,7 +65,7 @@ describe("ContextSync Unit Tests", () => {
       if (policy.bwList && policy.bwList.whiteLists) {
         expect(policy.bwList.whiteLists).toBeDefined();
         expect(policy.bwList.whiteLists).toHaveLength(1);
-        
+
         const firstWhiteList = policy.bwList.whiteLists[0];
         expect(firstWhiteList.path).toBe("");
         expect(firstWhiteList.excludePaths).toBeDefined();
@@ -68,7 +73,6 @@ describe("ContextSync Unit Tests", () => {
           expect(firstWhiteList.excludePaths).toHaveLength(0);
         }
       }
-      
     });
 
     it("should create default SyncPolicy that matches JSON requirements", () => {
@@ -81,7 +85,9 @@ describe("ContextSync Unit Tests", () => {
       // Verify uploadPolicy in JSON
       expect(jsonObject.uploadPolicy).toBeDefined();
       expect(jsonObject.uploadPolicy.autoUpload).toBe(true);
-      expect(jsonObject.uploadPolicy.uploadStrategy).toBe("UploadBeforeResourceRelease");
+      expect(jsonObject.uploadPolicy.uploadStrategy).toBe(
+        "UploadBeforeResourceRelease"
+      );
 
       // Verify downloadPolicy in JSON
       expect(jsonObject.downloadPolicy).toBeDefined();
@@ -119,12 +125,16 @@ describe("ContextSync Unit Tests", () => {
       // Test UploadPolicy defaults
       const uploadPolicy = newUploadPolicy();
       expect(uploadPolicy.autoUpload).toBe(true);
-      expect(uploadPolicy.uploadStrategy).toBe(UploadStrategy.UploadBeforeResourceRelease);
+      expect(uploadPolicy.uploadStrategy).toBe(
+        UploadStrategy.UploadBeforeResourceRelease
+      );
 
       // Test DownloadPolicy defaults
       const downloadPolicy = newDownloadPolicy();
       expect(downloadPolicy.autoDownload).toBe(true);
-      expect(downloadPolicy.downloadStrategy).toBe(DownloadStrategy.DownloadAsync);
+      expect(downloadPolicy.downloadStrategy).toBe(
+        DownloadStrategy.DownloadAsync
+      );
 
       // Test DeletePolicy defaults
       const deletePolicy = newDeletePolicy();
@@ -157,7 +167,7 @@ describe("ContextSync Unit Tests", () => {
       // Create a custom recycle policy with Lifecycle_1Day
       const customRecyclePolicy: RecyclePolicy = {
         lifecycle: Lifecycle.Lifecycle_1Day,
-        paths: ["/custom/path"]
+        paths: ["/custom/path"],
       };
 
       // Create a sync policy with the custom recycle policy
@@ -180,7 +190,9 @@ describe("ContextSync Unit Tests", () => {
       // Verify the recycle policy
       expect(syncPolicy.recyclePolicy).toBeDefined();
       if (syncPolicy.recyclePolicy) {
-        expect(syncPolicy.recyclePolicy.lifecycle).toBe(Lifecycle.Lifecycle_1Day);
+        expect(syncPolicy.recyclePolicy.lifecycle).toBe(
+          Lifecycle.Lifecycle_1Day
+        );
         expect(syncPolicy.recyclePolicy.paths).toBeDefined();
         expect(syncPolicy.recyclePolicy.paths).toHaveLength(1);
         expect(syncPolicy.recyclePolicy.paths[0]).toBe("/custom/path");
@@ -189,19 +201,18 @@ describe("ContextSync Unit Tests", () => {
       // Test JSON serialization
       const jsonString = JSON.stringify(syncPolicy);
       const jsonObject = JSON.parse(jsonString);
-      
+
       expect(jsonObject.recyclePolicy).toBeDefined();
       expect(jsonObject.recyclePolicy.lifecycle).toBe("Lifecycle_1Day");
       expect(jsonObject.recyclePolicy.paths).toHaveLength(1);
       expect(jsonObject.recyclePolicy.paths[0]).toBe("/custom/path");
-      
     });
 
     it("should throw error when recyclePolicy path contains wildcard patterns", () => {
       // Create a recycle policy with invalid wildcard path
       const invalidRecyclePolicy: RecyclePolicy = {
         lifecycle: Lifecycle.Lifecycle_1Day,
-        paths: ["/path/with/*"]
+        paths: ["/path/with/*"],
       };
 
       const syncPolicyWithInvalidPath: SyncPolicy = {
@@ -222,20 +233,26 @@ describe("ContextSync Unit Tests", () => {
 
       // Test that ContextSync constructor throws an error for invalid path
       expect(() => {
-        new ContextSync("test-context", "/test/path", syncPolicyWithInvalidPath);
-      }).toThrow("Wildcard patterns are not supported in path. Got: /path/with/*. Please use exact directory paths instead.");
+        new ContextSync(
+          "test-context",
+          "/test/path",
+          syncPolicyWithInvalidPath
+        );
+      }).toThrow(
+        "Wildcard patterns are not supported in path. Got: /path/with/*. Please use exact directory paths instead."
+      );
     });
 
     it("should throw error when SyncPolicy contains unknown properties (e.g. bwlist typo)", () => {
       expect(() => {
         new SyncPolicyImpl({
-          bwlist: { whiteLists: [] }
+          bwlist: { whiteLists: [] },
         } as any);
       }).toThrow("Unknown property in SyncPolicy: 'bwlist'.");
 
       expect(() => {
         new ContextSync("test-context", "/test/path", {
-          bwlist: { whiteLists: [] }
+          bwlist: { whiteLists: [] },
         } as any);
       }).toThrow("Unknown property in SyncPolicy: 'bwlist'.");
     });
@@ -252,7 +269,7 @@ describe("ContextSync Unit Tests", () => {
     it("should create MappingPolicy with Windows path", () => {
       const windowsPath = "c:\\Users\\Administrator\\Downloads";
       const mappingPolicy: MappingPolicy = {
-        path: windowsPath
+        path: windowsPath,
       };
 
       expect(mappingPolicy).toBeDefined();
@@ -262,7 +279,7 @@ describe("ContextSync Unit Tests", () => {
     it("should serialize MappingPolicy correctly", () => {
       const windowsPath = "c:\\Users\\Administrator\\Downloads";
       const mappingPolicy: MappingPolicy = {
-        path: windowsPath
+        path: windowsPath,
       };
 
       const jsonString = JSON.stringify(mappingPolicy);
@@ -276,7 +293,7 @@ describe("ContextSync Unit Tests", () => {
     it("should create SyncPolicy with MappingPolicy", () => {
       const windowsPath = "c:\\Users\\Administrator\\Downloads";
       const mappingPolicy: MappingPolicy = {
-        path: windowsPath
+        path: windowsPath,
       };
 
       const syncPolicy: SyncPolicy = {
@@ -284,7 +301,7 @@ describe("ContextSync Unit Tests", () => {
         downloadPolicy: newDownloadPolicy(),
         deletePolicy: newDeletePolicy(),
         extractPolicy: newExtractPolicy(),
-        mappingPolicy: mappingPolicy
+        mappingPolicy: mappingPolicy,
       };
 
       expect(syncPolicy).toBeDefined();
@@ -295,12 +312,12 @@ describe("ContextSync Unit Tests", () => {
     it("should serialize SyncPolicy with MappingPolicy correctly", () => {
       const windowsPath = "c:\\Users\\Administrator\\Downloads";
       const mappingPolicy: MappingPolicy = {
-        path: windowsPath
+        path: windowsPath,
       };
 
       const syncPolicy: SyncPolicy = {
         uploadPolicy: newUploadPolicy(),
-        mappingPolicy: mappingPolicy
+        mappingPolicy: mappingPolicy,
       };
 
       const jsonString = JSON.stringify(syncPolicy);
@@ -318,7 +335,7 @@ describe("ContextSync Unit Tests", () => {
       const windowsPath = "c:\\Users\\Administrator\\Downloads";
 
       const mappingPolicy: MappingPolicy = {
-        path: windowsPath
+        path: windowsPath,
       };
 
       const syncPolicy: SyncPolicy = {
@@ -326,7 +343,7 @@ describe("ContextSync Unit Tests", () => {
         downloadPolicy: newDownloadPolicy(),
         deletePolicy: newDeletePolicy(),
         extractPolicy: newExtractPolicy(),
-        mappingPolicy: mappingPolicy
+        mappingPolicy: mappingPolicy,
       };
 
       const contextSync = new ContextSync(contextId, linuxPath, syncPolicy);

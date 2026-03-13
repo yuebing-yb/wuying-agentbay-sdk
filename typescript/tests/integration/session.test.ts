@@ -14,7 +14,7 @@ describe("Session", () => {
 
       // Create a session
       log("Creating a new session for session testing...");
-      const createResponse = await agentBay.create({ imageId: "linux_latest"});
+      const createResponse = await agentBay.create({ imageId: "linux_latest" });
       session = createResponse.session;
       log(`Session created with ID: ${session.sessionId}`);
       log(
@@ -116,7 +116,7 @@ describe("Session", () => {
     it.only("should delete the session", async () => {
       // Create a new session specifically for this test
       log("Creating a new session for delete testing...");
-      const createResponse = await agentBay.create({ imageId: "linux_latest"});
+      const createResponse = await agentBay.create({ imageId: "linux_latest" });
       const testSession = createResponse.session;
       log(`Session created with ID: ${testSession.sessionId}`);
       log(
@@ -171,7 +171,7 @@ describe("Session", () => {
 
       // Create a session
       log("Creating a new session for session testing...");
-      const createResponse = await agentBay.create({ imageId: "linux_latest"});
+      const createResponse = await agentBay.create({ imageId: "linux_latest" });
       session = createResponse.session;
       log(`Session created with ID: ${session.sessionId}`);
       log(

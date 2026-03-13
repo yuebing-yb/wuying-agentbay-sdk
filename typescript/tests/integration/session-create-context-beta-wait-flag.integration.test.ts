@@ -9,7 +9,10 @@ import * as path from "path";
 const apiKey = process.env.AGENTBAY_API_KEY || "";
 
 function createTempFileWithZeros(sizeMB: number): string {
-  const filePath = path.join(os.tmpdir(), `agentbay-beta-wait-${Date.now()}-${Math.random()}.bin`);
+  const filePath = path.join(
+    os.tmpdir(),
+    `agentbay-beta-wait-${Date.now()}-${Math.random()}.bin`
+  );
   const fd = fs.openSync(filePath, "w");
   try {
     const chunk = Buffer.alloc(1024 * 1024, 0);
@@ -22,7 +25,11 @@ function createTempFileWithZeros(sizeMB: number): string {
   return filePath;
 }
 
-async function uploadFileWithRetries(uploadUrl: string, localPath: string, maxAttempts = 5): Promise<void> {
+async function uploadFileWithRetries(
+  uploadUrl: string,
+  localPath: string,
+  maxAttempts = 5
+): Promise<void> {
   const stat = fs.statSync(localPath);
   let lastError: any = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -47,13 +54,27 @@ async function uploadFileWithRetries(uploadUrl: string, localPath: string, maxAt
       await new Promise((r) => setTimeout(r, waitMs));
     }
   }
-  throw new Error(`Upload failed after ${maxAttempts} attempts: ${String(lastError?.message || lastError)}`);
+  throw new Error(
+    `Upload failed after ${maxAttempts} attempts: ${String(
+      lastError?.message || lastError
+    )}`
+  );
 }
 
-async function assertDownloadTerminalSuccess(session: any, contextId: string, label: string): Promise<void> {
-  const info = await session.context.infoWithParams(contextId, undefined, "download");
+async function assertDownloadTerminalSuccess(
+  session: any,
+  contextId: string,
+  label: string
+): Promise<void> {
+  const info = await session.context.infoWithParams(
+    contextId,
+    undefined,
+    "download"
+  );
   if (!info.success) {
-    throw new Error(`${label}: context info failed: ${info.errorMessage || "unknown"}`);
+    throw new Error(
+      `${label}: context info failed: ${info.errorMessage || "unknown"}`
+    );
   }
   const statuses = (info.contextStatusData || [])
     .filter((it: any) => it.contextId === contextId)
@@ -71,13 +92,23 @@ async function assertDownloadTerminalSuccess(session: any, contextId: string, la
   }
 }
 
-async function waitDownloadTerminalSuccess(session: any, contextId: string, timeoutMs: number): Promise<void> {
+async function waitDownloadTerminalSuccess(
+  session: any,
+  contextId: string,
+  timeoutMs: number
+): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   let lastStatuses: string[] = [];
   while (Date.now() < deadline) {
-    const info = await session.context.infoWithParams(contextId, undefined, "download");
+    const info = await session.context.infoWithParams(
+      contextId,
+      undefined,
+      "download"
+    );
     if (!info.success) {
-      throw new Error(`Polling: context info failed: ${info.errorMessage || "unknown"}`);
+      throw new Error(
+        `Polling: context info failed: ${info.errorMessage || "unknown"}`
+      );
     }
     const statuses = (info.contextStatusData || [])
       .filter((it: any) => it.contextId === contextId)
@@ -85,15 +116,24 @@ async function waitDownloadTerminalSuccess(session: any, contextId: string, time
     if (statuses.length) {
       lastStatuses = statuses;
     }
-    if (statuses.length && statuses.every((s: string) => s === "Success" || s === "Failed")) {
+    if (
+      statuses.length &&
+      statuses.every((s: string) => s === "Success" || s === "Failed")
+    ) {
       if (statuses.includes("Failed")) {
-        throw new Error(`Download failed: statuses=${JSON.stringify(statuses)}`);
+        throw new Error(
+          `Download failed: statuses=${JSON.stringify(statuses)}`
+        );
       }
       return;
     }
     await new Promise((r) => setTimeout(r, 2000));
   }
-  throw new Error(`Download did not complete within timeout. lastStatuses=${JSON.stringify(lastStatuses)}`);
+  throw new Error(
+    `Download did not complete within timeout. lastStatuses=${JSON.stringify(
+      lastStatuses
+    )}`
+  );
 }
 
 describe("Session create betaWaitForCompletion (integration)", () => {
@@ -111,7 +151,12 @@ describe("Session create betaWaitForCompletion (integration)", () => {
     const ctx2Name = `test-beta-wait-flag-2-${unique}`;
     const ctx1Res = await agentBay.context.get(ctx1Name, true);
     const ctx2Res = await agentBay.context.get(ctx2Name, true);
-    if (!ctx1Res.success || !ctx1Res.context || !ctx2Res.success || !ctx2Res.context) {
+    if (
+      !ctx1Res.success ||
+      !ctx1Res.context ||
+      !ctx2Res.success ||
+      !ctx2Res.context
+    ) {
       throw new Error("Failed to create contexts");
     }
     const ctx1Id = (ctx1Res.context as any).id;
@@ -123,15 +168,25 @@ describe("Session create betaWaitForCompletion (integration)", () => {
 
     const tmpFile = createTempFileWithZeros(sizeMB);
     try {
-      const up1 = await agentBay.context.getFileUploadUrl(ctx1Id, `${mount1}/large.bin`);
+      const up1 = await agentBay.context.getFileUploadUrl(
+        ctx1Id,
+        `${mount1}/large.bin`
+      );
       if (!up1.success || !up1.url) {
-        throw new Error(`Failed to get upload URL for ctx1: ${up1.errorMessage || "unknown"}`);
+        throw new Error(
+          `Failed to get upload URL for ctx1: ${up1.errorMessage || "unknown"}`
+        );
       }
       await uploadFileWithRetries(up1.url, tmpFile, 5);
 
-      const up2 = await agentBay.context.getFileUploadUrl(ctx2Id, `${mount2}/large.bin`);
+      const up2 = await agentBay.context.getFileUploadUrl(
+        ctx2Id,
+        `${mount2}/large.bin`
+      );
       if (!up2.success || !up2.url) {
-        throw new Error(`Failed to get upload URL for ctx2: ${up2.errorMessage || "unknown"}`);
+        throw new Error(
+          `Failed to get upload URL for ctx2: ${up2.errorMessage || "unknown"}`
+        );
       }
       await uploadFileWithRetries(up2.url, tmpFile, 5);
 
@@ -149,7 +204,9 @@ describe("Session create betaWaitForCompletion (integration)", () => {
       });
       const tWaitBoth = Date.now() - t0;
       if (!waitBothRes.success || !waitBothRes.session) {
-        throw new Error(`Create wait-both failed: ${waitBothRes.errorMessage || "unknown"}`);
+        throw new Error(
+          `Create wait-both failed: ${waitBothRes.errorMessage || "unknown"}`
+        );
       }
       const sWaitBoth = waitBothRes.session;
       await assertDownloadTerminalSuccess(sWaitBoth, ctx1Id, "wait-both ctx1");
@@ -157,7 +214,11 @@ describe("Session create betaWaitForCompletion (integration)", () => {
 
       const waitOneSyncs = [
         new ContextSync(ctx1Id, mount1, newSyncPolicy()),
-        new ContextSync(ctx2Id, mount2, newSyncPolicy()).withBetaWaitForCompletion(false),
+        new ContextSync(
+          ctx2Id,
+          mount2,
+          newSyncPolicy()
+        ).withBetaWaitForCompletion(false),
       ];
       const t1 = Date.now();
       const waitOneRes = await agentBay.create({
@@ -167,15 +228,25 @@ describe("Session create betaWaitForCompletion (integration)", () => {
       });
       const tWaitOne = Date.now() - t1;
       if (!waitOneRes.success || !waitOneRes.session) {
-        throw new Error(`Create wait-one failed: ${waitOneRes.errorMessage || "unknown"}`);
+        throw new Error(
+          `Create wait-one failed: ${waitOneRes.errorMessage || "unknown"}`
+        );
       }
       const sWaitOne = waitOneRes.session;
       await assertDownloadTerminalSuccess(sWaitOne, ctx1Id, "wait-one ctx1");
       await waitDownloadTerminalSuccess(sWaitOne, ctx2Id, 4 * 60 * 1000);
 
       const waitNoneSyncs = [
-        new ContextSync(ctx1Id, mount1, newSyncPolicy()).withBetaWaitForCompletion(false),
-        new ContextSync(ctx2Id, mount2, newSyncPolicy()).withBetaWaitForCompletion(false),
+        new ContextSync(
+          ctx1Id,
+          mount1,
+          newSyncPolicy()
+        ).withBetaWaitForCompletion(false),
+        new ContextSync(
+          ctx2Id,
+          mount2,
+          newSyncPolicy()
+        ).withBetaWaitForCompletion(false),
       ];
       const t2 = Date.now();
       const waitNoneRes = await agentBay.create({
@@ -185,13 +256,17 @@ describe("Session create betaWaitForCompletion (integration)", () => {
       });
       const tWaitNone = Date.now() - t2;
       if (!waitNoneRes.success || !waitNoneRes.session) {
-        throw new Error(`Create wait-none failed: ${waitNoneRes.errorMessage || "unknown"}`);
+        throw new Error(
+          `Create wait-none failed: ${waitNoneRes.errorMessage || "unknown"}`
+        );
       }
       const sWaitNone = waitNoneRes.session;
       await waitDownloadTerminalSuccess(sWaitNone, ctx1Id, 4 * 60 * 1000);
       await waitDownloadTerminalSuccess(sWaitNone, ctx2Id, 4 * 60 * 1000);
 
-      log(`Create durations (ms): wait-both=${tWaitBoth} wait-one=${tWaitOne} wait-none=${tWaitNone}`);
+      log(
+        `Create durations (ms): wait-both=${tWaitBoth} wait-one=${tWaitOne} wait-none=${tWaitNone}`
+      );
 
       await agentBay.delete(sWaitBoth);
       await agentBay.delete(sWaitOne);
@@ -215,4 +290,3 @@ describe("Session create betaWaitForCompletion (integration)", () => {
     }
   });
 });
-

@@ -122,7 +122,8 @@ export class ContextService {
   async list(params?: ContextListParams): Promise<ContextListResult> {
     try {
       // Set default maxResults if not specified
-      const maxResults = params?.maxResults !== undefined ? params.maxResults : 10;
+      const maxResults =
+        params?.maxResults !== undefined ? params.maxResults : 10;
 
       const request = new $_client.ListContextsRequest({
         authorization: `Bearer ${this.agentBay.getAPIKey()}`,
@@ -133,7 +134,10 @@ export class ContextService {
 
       // Log API request
       logAPICall("ListContexts");
-      logDebug(`Request: MaxResults=${maxResults}`, params?.nextToken ? `, NextToken=${params.nextToken}` : "");
+      logDebug(
+        `Request: MaxResults=${maxResults}`,
+        params?.nextToken ? `, NextToken=${params.nextToken}` : ""
+      );
 
       const response = await this.agentBay.getClient().listContexts(request);
 
@@ -142,9 +146,19 @@ export class ContextService {
 
       // Check for API-level errors
       if (response.body?.success === false && response.body?.code) {
-        const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
-        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-        logAPIResponseWithDetails("ListContexts", requestId, false, undefined, fullResponse);
+        const errorMessage = `[${response.body.code}] ${
+          response.body.message || "Unknown error"
+        }`;
+        const fullResponse = response.body
+          ? JSON.stringify(response.body, null, 2)
+          : "";
+        logAPIResponseWithDetails(
+          "ListContexts",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -175,8 +189,16 @@ export class ContextService {
       if (response.body?.totalCount !== undefined) {
         keyFields.total_count = response.body.totalCount;
       }
-      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-      logAPIResponseWithDetails("ListContexts", requestId, true, keyFields, fullResponse);
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "ListContexts",
+        requestId,
+        true,
+        keyFields,
+        fullResponse
+      );
 
       return {
         requestId,
@@ -241,9 +263,19 @@ export class ContextService {
 
       // Check for API-level errors
       if (response.body?.success === false && response.body?.code) {
-        const errorMessage = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
-        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-        logAPIResponseWithDetails("GetContext", requestId, false, undefined, fullResponse);
+        const errorMessage = `[${response.body.code}] ${
+          response.body.message || "Unknown error"
+        }`;
+        const fullResponse = response.body
+          ? JSON.stringify(response.body, null, 2)
+          : "";
+        logAPIResponseWithDetails(
+          "GetContext",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -255,7 +287,13 @@ export class ContextService {
 
       const contextId = response.body?.data?.id || "";
       if (!contextId) {
-        logAPIResponseWithDetails("GetContext", requestId, false, undefined, "Context ID not found in response");
+        logAPIResponseWithDetails(
+          "GetContext",
+          requestId,
+          false,
+          undefined,
+          "Context ID not found in response"
+        );
         return {
           requestId,
           success: false,
@@ -275,8 +313,16 @@ export class ContextService {
               context_id: contextId,
               context_name: context.name,
             };
-            const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-            logAPIResponseWithDetails("GetContext", requestId, true, keyFields, fullResponse);
+            const fullResponse = response.body
+              ? JSON.stringify(response.body, null, 2)
+              : "";
+            logAPIResponseWithDetails(
+              "GetContext",
+              requestId,
+              true,
+              keyFields,
+              fullResponse
+            );
             return {
               requestId,
               success: true,
@@ -286,7 +332,9 @@ export class ContextService {
           }
         }
       } catch (listError) {
-        logDebug(`Warning: Failed to get full context details from list: ${listError}`);
+        logDebug(
+          `Warning: Failed to get full context details from list: ${listError}`
+        );
       }
 
       // If we couldn't find the context in the list, create a basic one
@@ -295,8 +343,16 @@ export class ContextService {
         context_id: contextId,
         context_name: name,
       };
-      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-      logAPIResponseWithDetails("GetContext", requestId, true, keyFields, fullResponse);
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "GetContext",
+        requestId,
+        true,
+        keyFields,
+        fullResponse
+      );
       return {
         requestId,
         success: true,
@@ -377,15 +433,25 @@ export class ContextService {
       const success = response.body?.success !== false;
       const errorMessage = success
         ? ""
-        : `[${response.body?.code || 'Unknown'}] ${response.body?.message || 'Unknown error'}`;
+        : `[${response.body?.code || "Unknown"}] ${
+            response.body?.message || "Unknown error"
+          }`;
 
       // Log API response with key fields
       const keyFields: Record<string, any> = {
         context_id: context.id,
         context_name: context.name,
       };
-      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-      logAPIResponseWithDetails("ModifyContext", requestId, success, keyFields, fullResponse);
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "ModifyContext",
+        requestId,
+        success,
+        keyFields,
+        fullResponse
+      );
 
       return {
         requestId,
@@ -440,14 +506,24 @@ export class ContextService {
       const success = response.body?.success !== false;
       const errorMessage = success
         ? ""
-        : `[${response.body?.code || 'Unknown'}] ${response.body?.message || 'Unknown error'}`;
+        : `[${response.body?.code || "Unknown"}] ${
+            response.body?.message || "Unknown error"
+          }`;
 
       // Log API response with key fields
       const keyFields: Record<string, any> = {
         context_id: context.id,
       };
-      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-      logAPIResponseWithDetails("DeleteContext", requestId, success, keyFields, fullResponse);
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "DeleteContext",
+        requestId,
+        success,
+        keyFields,
+        fullResponse
+      );
 
       return {
         requestId,
@@ -485,7 +561,10 @@ export class ContextService {
    * }
    * ```
    */
-  async getFileUploadUrl(contextId: string, filePath: string): Promise<FileUrlResult> {
+  async getFileUploadUrl(
+    contextId: string,
+    filePath: string
+  ): Promise<FileUrlResult> {
     logAPICall("GetContextFileUploadUrl");
     logDebug(`Request: ContextId=${contextId}, FilePath=${filePath}`);
     const req = new $_client.GetContextFileUploadUrlRequest({
@@ -499,9 +578,15 @@ export class ContextService {
 
     // Check for API-level errors
     if (body?.success === false && body.code) {
-      const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+      const errorMessage = `[${body.code}] ${body.message || "Unknown error"}`;
       const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-      logAPIResponseWithDetails("GetContextFileUploadUrl", requestId, false, undefined, fullResponse);
+      logAPIResponseWithDetails(
+        "GetContextFileUploadUrl",
+        requestId,
+        false,
+        undefined,
+        fullResponse
+      );
       return {
         requestId,
         success: false,
@@ -523,7 +608,13 @@ export class ContextService {
       keyFields.expire_time = data.expireTime;
     }
     const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-    logAPIResponseWithDetails("GetContextFileUploadUrl", requestId, success, keyFields, fullResponse);
+    logAPIResponseWithDetails(
+      "GetContextFileUploadUrl",
+      requestId,
+      success,
+      keyFields,
+      fullResponse
+    );
 
     return {
       requestId,
@@ -554,7 +645,10 @@ export class ContextService {
    * }
    * ```
    */
-  async getFileDownloadUrl(contextId: string, filePath: string): Promise<FileUrlResult> {
+  async getFileDownloadUrl(
+    contextId: string,
+    filePath: string
+  ): Promise<FileUrlResult> {
     logAPICall("GetContextFileDownloadUrl");
     logDebug(`Request: ContextId=${contextId}, FilePath=${filePath}`);
     const req = new $_client.GetContextFileDownloadUrlRequest({
@@ -568,9 +662,15 @@ export class ContextService {
 
     // Check for API-level errors
     if (body?.success === false && body.code) {
-      const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+      const errorMessage = `[${body.code}] ${body.message || "Unknown error"}`;
       const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-      logAPIResponseWithDetails("GetContextFileDownloadUrl", requestId, false, undefined, fullResponse);
+      logAPIResponseWithDetails(
+        "GetContextFileDownloadUrl",
+        requestId,
+        false,
+        undefined,
+        fullResponse
+      );
       return {
         requestId,
         success: false,
@@ -592,7 +692,13 @@ export class ContextService {
       keyFields.expire_time = data.expireTime;
     }
     const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-    logAPIResponseWithDetails("GetContextFileDownloadUrl", requestId, success, keyFields, fullResponse);
+    logAPIResponseWithDetails(
+      "GetContextFileDownloadUrl",
+      requestId,
+      success,
+      keyFields,
+      fullResponse
+    );
 
     return {
       requestId,
@@ -620,7 +726,10 @@ export class ContextService {
    * }
    * ```
    */
-  async deleteFile(contextId: string, filePath: string): Promise<OperationResult> {
+  async deleteFile(
+    contextId: string,
+    filePath: string
+  ): Promise<OperationResult> {
     logAPICall("DeleteContextFile");
     logDebug(`Request: ContextId=${contextId}, FilePath=${filePath}`);
     const req = new $_client.DeleteContextFileRequest({
@@ -636,7 +745,9 @@ export class ContextService {
     // Check for API-level errors
     const errorMessage = success
       ? ""
-      : `[${body?.code || 'Unknown'}] ${body?.message || 'Failed to delete file'}`;
+      : `[${body?.code || "Unknown"}] ${
+          body?.message || "Failed to delete file"
+        }`;
 
     // Log API response with key fields
     const keyFields: Record<string, any> = {
@@ -644,7 +755,13 @@ export class ContextService {
       file_path: filePath,
     };
     const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-    logAPIResponseWithDetails("DeleteContextFile", requestId, success, keyFields, fullResponse);
+    logAPIResponseWithDetails(
+      "DeleteContextFile",
+      requestId,
+      success,
+      keyFields,
+      fullResponse
+    );
 
     return {
       requestId,
@@ -697,9 +814,15 @@ export class ContextService {
 
     // Check for API-level errors
     if (body?.success === false && body.code) {
-      const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+      const errorMessage = `[${body.code}] ${body.message || "Unknown error"}`;
       const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-      logAPIResponseWithDetails("DescribeContextFiles", requestId, false, undefined, fullResponse);
+      logAPIResponseWithDetails(
+        "DescribeContextFiles",
+        requestId,
+        false,
+        undefined,
+        fullResponse
+      );
       return {
         requestId,
         success: false,
@@ -735,7 +858,13 @@ export class ContextService {
       keyFields.count = body.count;
     }
     const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-    logAPIResponseWithDetails("DescribeContextFiles", requestId, success, keyFields, fullResponse);
+    logAPIResponseWithDetails(
+      "DescribeContextFiles",
+      requestId,
+      success,
+      keyFields,
+      fullResponse
+    );
 
     return {
       requestId,
@@ -787,7 +916,13 @@ export class ContextService {
       // Directly access response body object
       if (!response.body) {
         const fullResponse = "Empty response body";
-        logAPIResponseWithDetails("ClearContext", requestId, false, undefined, fullResponse);
+        logAPIResponseWithDetails(
+          "ClearContext",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -799,9 +934,17 @@ export class ContextService {
 
       // Check for API-level errors
       if (!body.success && body.code) {
-        const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+        const errorMessage = `[${body.code}] ${
+          body.message || "Unknown error"
+        }`;
         const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-        logAPIResponseWithDetails("ClearContext", requestId, false, undefined, fullResponse);
+        logAPIResponseWithDetails(
+          "ClearContext",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -816,7 +959,13 @@ export class ContextService {
         status: "clearing",
       };
       const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-      logAPIResponseWithDetails("ClearContext", requestId, true, keyFields, fullResponse);
+      logAPIResponseWithDetails(
+        "ClearContext",
+        requestId,
+        true,
+        keyFields,
+        fullResponse
+      );
 
       return {
         requestId,
@@ -827,7 +976,9 @@ export class ContextService {
       };
     } catch (error) {
       logError("Error calling ClearContext:", error);
-      throw new APIError(`Failed to start context clearing for ${contextId}: ${error}`);
+      throw new APIError(
+        `Failed to start context clearing for ${contextId}: ${error}`
+      );
     }
   }
 
@@ -869,7 +1020,13 @@ export class ContextService {
       // Directly access response body object
       if (!response.body) {
         const fullResponse = "Empty response body";
-        logAPIResponseWithDetails("GetContext (for clear status)", requestId, false, undefined, fullResponse);
+        logAPIResponseWithDetails(
+          "GetContext (for clear status)",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -881,9 +1038,17 @@ export class ContextService {
 
       // Check for API-level errors
       if (!body.success && body.code) {
-        const errorMessage = `[${body.code}] ${body.message || 'Unknown error'}`;
+        const errorMessage = `[${body.code}] ${
+          body.message || "Unknown error"
+        }`;
         const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-        logAPIResponseWithDetails("GetContext (for clear status)", requestId, false, undefined, fullResponse);
+        logAPIResponseWithDetails(
+          "GetContext (for clear status)",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -894,7 +1059,13 @@ export class ContextService {
       // Check if data exists
       if (!body.data) {
         const fullResponse = "No data in response";
-        logAPIResponseWithDetails("GetContext (for clear status)", requestId, false, undefined, fullResponse);
+        logAPIResponseWithDetails(
+          "GetContext (for clear status)",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -919,7 +1090,13 @@ export class ContextService {
         state: state,
       };
       const fullResponse = body ? JSON.stringify(body, null, 2) : "";
-      logAPIResponseWithDetails("GetContext (for clear status)", requestId, true, keyFields, fullResponse);
+      logAPIResponseWithDetails(
+        "GetContext (for clear status)",
+        requestId,
+        true,
+        keyFields,
+        fullResponse
+      );
 
       return {
         requestId,
@@ -966,7 +1143,11 @@ export class ContextService {
    * }
    * ```
    */
-  async clear(contextId: string, timeout = 60, pollInterval = 2.0): Promise<ClearContextResult> {
+  async clear(
+    contextId: string,
+    timeout = 60,
+    pollInterval = 2.0
+  ): Promise<ClearContextResult> {
     // 1. Asynchronously start the clearing task
     const startResult = await this.clearAsync(contextId);
     if (!startResult.success) {
@@ -982,7 +1163,7 @@ export class ContextService {
 
     while (attempt < maxAttempts) {
       // Wait before querying
-      await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
+      await new Promise((resolve) => setTimeout(resolve, pollInterval * 1000));
       attempt++;
 
       // Query task status (using GetContext API with context ID)
@@ -994,13 +1175,17 @@ export class ContextService {
       }
 
       const status = statusResult.status;
-      logInfo(`Clear task status: ${status} (attempt ${attempt}/${maxAttempts})`);
+      logInfo(
+        `Clear task status: ${status} (attempt ${attempt}/${maxAttempts})`
+      );
 
       // Check if completed
       // When clearing is complete, the state changes from "clearing" to "available"
       if (status === "available") {
         const elapsed = (Date.now() - startTime) / 1000;
-        logInfo(`Context cleared successfully in ${elapsed.toFixed(2)} seconds`);
+        logInfo(
+          `Context cleared successfully in ${elapsed.toFixed(2)} seconds`
+        );
         return {
           requestId: startResult.requestId,
           success: true,
@@ -1012,14 +1197,20 @@ export class ContextService {
         // If status is not "clearing" or "pre-available", and not "available",
         // treat it as a potential error or unexpected state
         const elapsed = (Date.now() - startTime) / 1000;
-        logError(`Context in unexpected state after ${elapsed.toFixed(2)} seconds: ${status}`);
+        logError(
+          `Context in unexpected state after ${elapsed.toFixed(
+            2
+          )} seconds: ${status}`
+        );
         // Continue polling as the state might transition to "available"
       }
     }
 
     // Timeout
     const elapsed = (Date.now() - startTime) / 1000;
-    const errorMsg = `Context clearing timed out after ${elapsed.toFixed(2)} seconds`;
+    const errorMsg = `Context clearing timed out after ${elapsed.toFixed(
+      2
+    )} seconds`;
     logError(errorMsg);
     throw new APIError(errorMsg);
   }

@@ -6,21 +6,21 @@ import { AgentBay } from "../../src/agent-bay";
 import { Session } from "../../src/session";
 import { log } from "../../src/utils/logger";
 
-describe('GetSession API Integration Test', () => {
+describe("GetSession API Integration Test", () => {
   let agentBay: AgentBay;
   const apiKey = process.env.AGENTBAY_API_KEY;
 
   beforeAll(() => {
     if (!apiKey) {
-      throw new Error('AGENTBAY_API_KEY environment variable is not set');
+      throw new Error("AGENTBAY_API_KEY environment variable is not set");
     }
     agentBay = new AgentBay({ apiKey });
   });
 
-  it('should retrieve session information using _getSession API', async () => {
+  it("should retrieve session information using _getSession API", async () => {
     // Create a session first
-    log('Creating a new session for _getSession testing...');
-    const createResult = await agentBay.create({ imageId: "linux_latest"});
+    log("Creating a new session for _getSession testing...");
+    const createResult = await agentBay.create({ imageId: "linux_latest" });
     expect(createResult.success).toBe(true);
     expect(createResult.session).toBeDefined();
 
@@ -30,14 +30,14 @@ describe('GetSession API Integration Test', () => {
 
     try {
       // Test _getSession API (internal)
-      log('Testing _getSession API...');
+      log("Testing _getSession API...");
       const getSessionResult = await agentBay._getSession(sessionId);
       // Validate response
       expect(getSessionResult.requestId).toBeTruthy();
       log(`GetSession RequestID: ${getSessionResult.requestId}`);
 
       expect(getSessionResult.httpStatusCode).toBe(200);
-      expect(getSessionResult.code).toBe('ok');
+      expect(getSessionResult.code).toBe("ok");
       expect(getSessionResult.success).toBe(true);
 
       // Validate Data field
@@ -49,10 +49,10 @@ describe('GetSession API Integration Test', () => {
       log(`AppInstanceID: ${getSessionResult.data!.appInstanceId}`);
       expect(getSessionResult.data!.resourceId).toBeTruthy();
       log(`ResourceID: ${getSessionResult.data!.resourceId}`);
-      log('_getSession API test passed successfully');
+      log("_getSession API test passed successfully");
     } finally {
       // Clean up: Delete the session
-      log('Cleaning up: Deleting the session...');
+      log("Cleaning up: Deleting the session...");
       const deleteResult = await session.delete();
       if (deleteResult.success) {
         log(`Session ${sessionId} deleted successfully`);
@@ -62,4 +62,3 @@ describe('GetSession API Integration Test', () => {
     }
   });
 });
-
