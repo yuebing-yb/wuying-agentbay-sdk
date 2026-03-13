@@ -373,72 +373,79 @@ public class GenerateApiDocs {
         
         if (classDecl.isPresent()) {
             ClassOrInterfaceDeclaration cls = classDecl.get();
-            String simpleClassName = cls.getNameAsString();
-            
-            // Add class header
-            markdown.append("## ").append(simpleClassName).append("\n\n");
-            
-            // Add class description from Javadoc
-            if (cls.getJavadocComment().isPresent()) {
-                JavadocComment javadocComment = cls.getJavadocComment().get();
-                Javadoc javadoc = javadocComment.parse();
-                String description = extractJavadocDescription(javadoc);
-                if (!description.isEmpty()) {
-                    markdown.append(description).append("\n\n");
-                }
-            }
-            
-            // Extract constructors
-            List<ConstructorDeclaration> constructors = cls.getConstructors().stream()
-                .filter(constructor -> shouldIncludeConstructor(constructor, config))
+            markdown.append(generateMarkdownForSingleClass(cls, config));
+
+            // Also process inner classes (e.g., Agent.Computer, Agent.Browser, Agent.Mobile)
+            List<ClassOrInterfaceDeclaration> innerClasses = cls.getMembers().stream()
+                .filter(m -> m instanceof ClassOrInterfaceDeclaration)
+                .map(m -> (ClassOrInterfaceDeclaration) m)
+                .filter(ClassOrInterfaceDeclaration::isPublic)
                 .collect(Collectors.toList());
-            
-            if (!constructors.isEmpty()) {
-                markdown.append("### Constructor\n\n");
-                for (ConstructorDeclaration constructor : constructors) {
-                    markdown.append(generateConstructorMarkdown(constructor));
-                }
-            }
-            
-            // Extract and organize public methods
-            
-            List<MethodDeclaration> allMethods = cls.getMethods();
-            
-            List<MethodDeclaration> publicMethods = allMethods.stream()
-                .filter(method -> {
-                    boolean isPublic = method.isPublic();
-                    return isPublic;
-                })
-                .collect(Collectors.toList());
-            
-            List<MethodDeclaration> methods = publicMethods.stream()
-                .filter(method -> {
-                    boolean shouldSkip = shouldSkipMethod(method.getNameAsString(), config);
-                    return !shouldSkip;
-                })
-                .collect(Collectors.toList());
-            
-            if (!methods.isEmpty()) {
-                // Group methods by category for better organization
-                Map<String, List<MethodDeclaration>> methodGroups = groupMethods(methods);
-                
-                for (Map.Entry<String, List<MethodDeclaration>> group : methodGroups.entrySet()) {
-                    markdown.append("### ").append(group.getKey()).append("\n\n");
-                    
-                    // Group methods by name to handle overloads together
-                    Map<String, List<MethodDeclaration>> methodsByName = group.getValue().stream()
-                        .collect(Collectors.groupingBy(MethodDeclaration::getNameAsString, LinkedHashMap::new, Collectors.toList()));
-                    
-                    for (Map.Entry<String, List<MethodDeclaration>> methodGroup : methodsByName.entrySet()) {
-                        markdown.append(generateMethodGroupMarkdown(methodGroup.getValue()));
-                    }
-                }
+
+            for (ClassOrInterfaceDeclaration inner : innerClasses) {
+                markdown.append(generateMarkdownForSingleClass(inner, config));
             }
         }
         
         return markdown.toString();
     }
     
+    /**
+     * Generate Markdown documentation for a single class declaration (top-level or inner).
+     */
+    private String generateMarkdownForSingleClass(ClassOrInterfaceDeclaration cls, ModuleConfig config) {
+        StringBuilder markdown = new StringBuilder();
+        String simpleClassName = cls.getNameAsString();
+
+        markdown.append("## ").append(simpleClassName).append("\n\n");
+
+        if (cls.getJavadocComment().isPresent()) {
+            JavadocComment javadocComment = cls.getJavadocComment().get();
+            Javadoc javadoc = javadocComment.parse();
+            String description = extractJavadocDescription(javadoc);
+            if (!description.isEmpty()) {
+                markdown.append(description).append("\n\n");
+            }
+        }
+
+        List<ConstructorDeclaration> constructors = cls.getConstructors().stream()
+            .filter(constructor -> shouldIncludeConstructor(constructor, config))
+            .collect(Collectors.toList());
+
+        if (!constructors.isEmpty()) {
+            markdown.append("### Constructor\n\n");
+            for (ConstructorDeclaration constructor : constructors) {
+                markdown.append(generateConstructorMarkdown(constructor));
+            }
+        }
+
+        List<MethodDeclaration> allMethods = cls.getMethods();
+        List<MethodDeclaration> publicMethods = allMethods.stream()
+            .filter(MethodDeclaration::isPublic)
+            .collect(Collectors.toList());
+
+        List<MethodDeclaration> methods = publicMethods.stream()
+            .filter(method -> !shouldSkipMethod(method.getNameAsString(), config))
+            .collect(Collectors.toList());
+
+        if (!methods.isEmpty()) {
+            Map<String, List<MethodDeclaration>> methodGroups = groupMethods(methods);
+
+            for (Map.Entry<String, List<MethodDeclaration>> group : methodGroups.entrySet()) {
+                markdown.append("### ").append(group.getKey()).append("\n\n");
+
+                Map<String, List<MethodDeclaration>> methodsByName = group.getValue().stream()
+                    .collect(Collectors.groupingBy(MethodDeclaration::getNameAsString, LinkedHashMap::new, Collectors.toList()));
+
+                for (Map.Entry<String, List<MethodDeclaration>> methodGroup : methodsByName.entrySet()) {
+                    markdown.append(generateMethodGroupMarkdown(methodGroup.getValue()));
+                }
+            }
+        }
+
+        return markdown.toString();
+    }
+
     /**
      * Generate default overview for a module when no overview is provided in config
      */
@@ -705,23 +712,19 @@ public class GenerateApiDocs {
         // Java-specific exclusions from global YAML configuration
         if (metadata.global != null && metadata.global.javaConfig != null) {
             JavaConfig javaConfig = metadata.global.javaConfig;
-            
-            // Skip Object methods
+
             if (javaConfig.excludeObjectMethods != null && javaConfig.excludeObjectMethods.contains(methodName)) {
                 return true;
             }
-            
-            // Skip bean methods
+
             if (javaConfig.excludeBeanMethods != null && javaConfig.excludeBeanMethods.contains(methodName)) {
                 return true;
             }
-            
-            // Skip serialization methods
+
             if (javaConfig.excludeSerializationMethods != null && javaConfig.excludeSerializationMethods.contains(methodName)) {
                 return true;
             }
-            
-            // Skip utility methods
+
             if (javaConfig.excludeUtilityMethods != null && javaConfig.excludeUtilityMethods.contains(methodName)) {
                 return true;
             }
@@ -788,7 +791,7 @@ public class GenerateApiDocs {
         // Rule 5: Object methods that are typically not useful in documentation
         String[] objectMethods = {
             "equals", "hashCode", "toString", "clone", "finalize",
-            "wait", "notify", "notifyAll", "getClass"
+            "notify", "notifyAll", "getClass"
         };
         for (String method : objectMethods) {
             if (methodName.equals(method)) {
@@ -1289,7 +1292,11 @@ public class GenerateApiDocs {
             "com.aliyun.agentbay.mobile.MobileSimulate"
         ));
         moduleToClasses.put("agent", Arrays.asList(
-            "com.aliyun.agentbay.agent.Agent"
+            "com.aliyun.agentbay.agent.Agent",
+            "com.aliyun.agentbay.agent.AgentEvent",
+            "com.aliyun.agentbay.agent.StreamOptions",
+            "com.aliyun.agentbay.agent.MobileTaskOptions",
+            "com.aliyun.agentbay.agent.TaskExecution"
         ));
         moduleToClasses.put("network", Arrays.asList(
             "com.aliyun.agentbay.network.BetaNetworkService"
