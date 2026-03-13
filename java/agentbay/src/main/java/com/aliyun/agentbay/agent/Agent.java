@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,7 +174,8 @@ public class Agent extends BaseService {
             String defaultTarget,
             Map<String, Object> taskParams,
             int timeout,
-            StreamOptions options) {
+            StreamOptions options,
+            AtomicReference<WsClient.StreamHandle> streamHandleRef) {
         Logger streamLogger = LoggerFactory.getLogger(Agent.class);
         try {
             String target = resolveAgentTarget(session, executeToolName, defaultTarget);
@@ -186,6 +190,8 @@ public class Agent extends BaseService {
             data.put("method", "exec_task");
             data.put("params", taskParams);
 
+            final WsClient.StreamHandle[] handleRef = new WsClient.StreamHandle[1];
+            final CountDownLatch handleReady = new CountDownLatch(1);
             WsClient.StreamHandle handle = wsClient.callStream(
                     target,
                     data,
@@ -213,7 +219,39 @@ public class Agent extends BaseService {
                             event.setToolName(String.valueOf(eventData.getOrDefault("toolName", "")));
                             Object argsObj = eventData.get("args");
                             event.setArgs(argsObj instanceof Map ? (Map<String, Object>) argsObj : new HashMap<>());
+                            if ("call_for_user".equals(event.getToolName())) {
+                                Object promptObj = event.getArgs().get("prompt");
+                                event.setContent(promptObj != null ? promptObj.toString() : "");
+                            }
                             dispatchEvent(opts, event, "tool_call");
+                            if ("call_for_user".equals(event.getToolName()) && opts instanceof MobileTaskOptions) {
+                                MobileTaskOptions mobileOpts = (MobileTaskOptions) opts;
+                                String response = "";
+                                if (mobileOpts.getOnCallForUser() != null) {
+                                    response = mobileOpts.getOnCallForUser().apply(event);
+                                } else {
+                                    streamLogger.warn("Received call_for_user but no onCallForUser callback is set, sending empty response");
+                                }
+                                if (response == null) {
+                                    response = "";
+                                }
+                                try {
+                                    handleReady.await(5, TimeUnit.SECONDS);
+                                } catch (InterruptedException ie) {
+                                    Thread.currentThread().interrupt();
+                                }
+                                if (handleRef[0] != null) {
+                                    Map<String, Object> params = new HashMap<>();
+                                    params.put("toolCallId", event.getToolCallId());
+                                    params.put("response", response);
+                                    Map<String, Object> resumeMsg = new HashMap<>();
+                                    resumeMsg.put("method", "resume_task");
+                                    resumeMsg.put("params", params);
+                                    handleRef[0].write(resumeMsg);
+                                } else {
+                                    streamLogger.warn("StreamHandle not available for resume_task after waiting");
+                                }
+                            }
                         } else if ("tool_result".equals(eventType)) {
                             event.setToolCallId(String.valueOf(eventData.getOrDefault("toolCallId", "")));
                             event.setToolName(String.valueOf(eventData.getOrDefault("toolName", "")));
@@ -234,6 +272,11 @@ public class Agent extends BaseService {
                     (_invocationId, endData) -> { /* onEnd - data captured in waitEnd */ },
                     (_invocationId, err) -> streamLogger.warn("WS stream error: {}", err.getMessage())
             ).join();
+            handleRef[0] = handle;
+            handleReady.countDown();
+            if (streamHandleRef != null) {
+                streamHandleRef.set(handle);
+            }
 
             Map<String, Object> endData;
             try {
@@ -982,190 +1025,103 @@ public class Agent extends BaseService {
         /**
          * Execute a mobile task in human language without waiting for completion (non-blocking).
          *
-         * This is a fire-and-return interface that immediately provides a task ID.
-         * Call getTaskStatus to check the task status. You can control the timeout
-         * of the task execution in your own code by setting the frequency of calling
-         * getTaskStatus.
+         * This is a fire-and-return interface that immediately provides a TaskExecution.
+         * Call execution.wait(timeout) to block until the task completes.
          *
          * @param task Task description in human language
-         * @param maxSteps Maximum number of steps (clicks/swipes/etc.) allowed
-         * @return ExecutionResult containing success status, task ID, task status, and error message if any
-         *
+         * @return TaskExecution handle for the running task
          */
-        public ExecutionResult executeTask(String task, int maxSteps) {
-            try {
-                Map<String, Object> args = new HashMap<>();
-                args.put("task", task);
-                args.put("max_steps", maxSteps);
-
-                OperationResult result = callMcpTool(getToolName("execute"), args);
-
-                if (result.isSuccess()) {
-                    try {
-                        JsonObject content = gson.fromJson(result.getData(), JsonObject.class);
-
-                        // Check for embedded error in JSON content
-                        if (content.has("error")) {
-                            String errorMsg = content.get("error").getAsString();
-                            logger.error("Task execution failed with embedded error: {}", errorMsg);
-                            return new ExecutionResult(
-                                result.getRequestId(),
-                                false,
-                                errorMsg,
-                                "",
-                                "failed"
-                            );
-                        }
-
-                        // Support both taskId (camelCase) and task_id (snake_case)
-                        String taskId = "";
-                        if (content.has("taskId")) {
-                            taskId = content.get("taskId").getAsString();
-                        } else if (content.has("task_id")) {
-                            taskId = content.get("task_id").getAsString();
-                        }
-
-                        // Check if taskId is empty
-                        if (taskId == null || taskId.isEmpty()) {
-                            // 从后端返回的content中提取error信息
-                            String errorMsg = "Failed to get task_id from response";
-                            if (content.has("error")) {
-                                errorMsg = content.get("error").getAsString();
-                            }
-                            logger.error("Failed to get task_id from response: {}", errorMsg);
-                            return new ExecutionResult(
-                                result.getRequestId(),
-                                false,
-                                errorMsg,
-                                "",
-                                "failed"
-                            );
-                        }
-
-                        return new ExecutionResult(
-                            result.getRequestId(),
-                            true,
-                            "",
-                            taskId,
-                            "running"
-                        );
-                    } catch (Exception e) {
-                        logger.error("Failed to parse response", e);
-                        return new ExecutionResult(
-                            result.getRequestId(),
-                            false,
-                            "Failed to parse response: " + e.getMessage(),
-                            "",
-                            "failed"
-                        );
-                    }
-                } else {
-                    logger.error("Task execute failed");
-                    return new ExecutionResult(
-                        result.getRequestId(),
-                        false,
-                        result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to execute task",
-                        "",
-                        "failed"
-                    );
-                }
-            } catch (Exception e) {
-                logger.error("Failed to execute task", e);
-                return new ExecutionResult(
-                    "",
-                    false,
-                    "Failed to execute: " + e.getMessage(),
-                    "",
-                    "failed"
-                );
-            }
+        public TaskExecution executeTask(String task) {
+            return executeTask(task, null);
         }
 
         /**
-         * Execute a specific mobile task described in human language synchronously.
+         * Execute a mobile task in human language without waiting for completion (non-blocking).
          *
-         * This is a synchronous interface that blocks until the task is completed or
-         * an error occurs, or timeout happens. The default polling interval is 3 seconds.
+         * When options has streaming callbacks, uses WebSocket streaming for real-time events.
+         * Otherwise uses MCP call and polling.
          *
          * @param task Task description in human language
-         * @param maxSteps Maximum number of steps (clicks/swipes/etc.) allowed
-         * @param timeout Maximum time to wait for task completion in seconds
-         * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
-         *
+         * @param options Optional MobileTaskOptions (maxSteps, streaming callbacks)
+         * @return TaskExecution handle for the running task
          */
-        public ExecutionResult executeTaskAndWait(String task, int maxSteps, int timeout) {
+        public TaskExecution executeTask(String task, MobileTaskOptions options) {
+            int maxSteps = (options != null) ? options.getMaxSteps() : 50;
+            Map<String, Object> params = new HashMap<>();
+            params.put("task", task);
+            params.put("max_steps", maxSteps);
+
+            if (options != null && options.hasStreamingParams()) {
+                final AtomicReference<WsClient.StreamHandle> streamHandleRef = new AtomicReference<>();
+                CompletableFuture<ExecutionResult> future = CompletableFuture.supplyAsync(() ->
+                        executeTaskStreamWs(session, getToolName("execute"), SERVER_MOBILE_AGENT, params, 86400, options, streamHandleRef));
+                return new TaskExecution("", future, () -> {
+                    WsClient.StreamHandle h = streamHandleRef.get();
+                    if (h != null) {
+                        h.cancel();
+                    }
+                });
+            }
+
             try {
-                Map<String, Object> args = new HashMap<>();
-                args.put("task", task);
-                args.put("max_steps", maxSteps);
-
-                OperationResult result = callMcpTool(getToolName("execute"), args);
-
+                OperationResult result = callMcpTool(getToolName("execute"), params);
                 if (!result.isSuccess()) {
-                    logger.error("❌ Task execution failed");
-                    return new ExecutionResult(
-                        result.getRequestId(),
-                        false,
-                        result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to execute task",
-                        "",
-                        "failed",
-                        "Task Failed"
-                    );
+                    return new TaskExecution("", CompletableFuture.completedFuture(new ExecutionResult(
+                            result.getRequestId(),
+                            false,
+                            result.getErrorMessage() != null ? result.getErrorMessage() : "Failed to execute task",
+                            "",
+                            "failed",
+                            "Task Failed"
+                    )));
                 }
 
                 JsonObject content;
                 try {
                     content = gson.fromJson(result.getData(), JsonObject.class);
                 } catch (com.google.gson.JsonSyntaxException e) {
-                    // Mobile agent may execute the task synchronously and return
-                    // the result as plain text instead of JSON with taskId.
-                    return new ExecutionResult(
-                        result.getRequestId(), true, "", "", "completed", result.getData());
+                    return new TaskExecution("", CompletableFuture.completedFuture(new ExecutionResult(
+                            result.getRequestId(), true, "", "", "completed", result.getData())));
                 }
 
                 if (content == null) {
-                    return new ExecutionResult(
-                        result.getRequestId(), true, "", "", "completed", result.getData());
+                    return new TaskExecution("", CompletableFuture.completedFuture(new ExecutionResult(
+                            result.getRequestId(), true, "", "", "completed", result.getData())));
                 }
 
-                // Check for embedded error in JSON content
                 if (content.has("error")) {
                     String errorMsg = content.get("error").getAsString();
-                    logger.error("Task execution failed with embedded error: {}", errorMsg);
-                    return new ExecutionResult(
-                        result.getRequestId(),
-                        false,
-                        errorMsg,
-                        "",
-                        "failed",
-                        "Task Failed"
-                    );
+                    return new TaskExecution("", CompletableFuture.completedFuture(new ExecutionResult(
+                            result.getRequestId(), false, errorMsg, "", "failed", "Task Failed")));
                 }
 
-                // Support both taskId (camelCase) and task_id (snake_case)
-                String taskId = "";
+                final String taskIdStr;
                 if (content.has("taskId")) {
-                    taskId = content.get("taskId").getAsString();
+                    taskIdStr = content.get("taskId").getAsString();
                 } else if (content.has("task_id")) {
-                    taskId = content.get("task_id").getAsString();
+                    taskIdStr = content.get("task_id").getAsString();
+                } else {
+                    taskIdStr = "";
                 }
 
-                if (taskId == null || taskId.isEmpty()) {
-                    String errorMsg = "Failed to get task_id from response";
-                    if (content.has("error")) {
-                        errorMsg = content.get("error").getAsString();
-                    }
-                    logger.error("Failed to get task_id from response: {}", errorMsg);
-                    return new ExecutionResult(
-                        result.getRequestId(),
-                        false,
-                        errorMsg,
-                        "",
-                        "failed",
-                        "Task Failed"
-                    );
+                if (taskIdStr == null || taskIdStr.isEmpty()) {
+                    String errorMsg = content.has("error") ? content.get("error").getAsString() : "Failed to get task_id from response";
+                    return new TaskExecution("", CompletableFuture.completedFuture(new ExecutionResult(
+                            result.getRequestId(), false, errorMsg, "", "failed", "Task Failed")));
                 }
 
+                final String requestId = result.getRequestId();
+                CompletableFuture<ExecutionResult> future = CompletableFuture.supplyAsync(() ->
+                        pollTaskUntilComplete(taskIdStr, requestId, 86400));
+                return new TaskExecution(taskIdStr, future);
+            } catch (Exception e) {
+                return new TaskExecution("", CompletableFuture.completedFuture(new ExecutionResult(
+                        "", false, "Failed to execute: " + e.getMessage(), "", "failed", "Task Failed")));
+            }
+        }
+
+        private ExecutionResult pollTaskUntilComplete(String taskId, String requestId, int timeout) {
+            try {
                 int pollInterval = 3;
                 int maxPollAttempts = timeout / pollInterval;
                 int triedTime = 0;
@@ -1222,7 +1178,7 @@ public class Agent extends BaseService {
                     String taskStatus = query.getTaskStatus();
                     if ("completed".equals(taskStatus)) {
                         return new ExecutionResult(
-                            result.getRequestId(),
+                            requestId,
                             true,
                             "",
                             taskId,
@@ -1238,7 +1194,7 @@ public class Agent extends BaseService {
                             errorMsg = "Failed to execute task.";
                         }
                         return new ExecutionResult(
-                            result.getRequestId(),
+                            requestId,
                             false,
                             errorMsg,
                             taskId,
@@ -1253,7 +1209,7 @@ public class Agent extends BaseService {
                             errorMsg = "Task was cancelled.";
                         }
                         return new ExecutionResult(
-                            result.getRequestId(),
+                            requestId,
                             false,
                             errorMsg,
                             taskId,
@@ -1268,7 +1224,7 @@ public class Agent extends BaseService {
                             errorMsg = "Unsupported task.";
                         }
                         return new ExecutionResult(
-                            result.getRequestId(),
+                            requestId,
                             false,
                             errorMsg,
                             taskId,
@@ -1329,11 +1285,9 @@ public class Agent extends BaseService {
                 }
 
                 String timeoutErrorMsg = String.format("Task execution timed out after %d seconds. Task ID: %s. Polled %d times (max: %d).", timeout, taskId, triedTime, maxPollAttempts);
-                
-                // Build task_result with last query status information
                 java.util.List<String> taskResultParts = new java.util.ArrayList<>();
                 taskResultParts.add(String.format("Task execution timed out after %d seconds.", timeout));
-                
+
                 if (lastQuery != null) {
                     // Concatenate stream content from last query
                     if (lastQuery.getStream() != null && !lastQuery.getStream().isEmpty()) {
@@ -1372,9 +1326,9 @@ public class Agent extends BaseService {
                 }
                 
                 String taskResult = String.join(" | ", taskResultParts);
-                
+
                 return new ExecutionResult(
-                    result.getRequestId(),
+                    requestId,
                     false,
                     timeoutErrorMsg,
                     taskId,
@@ -1405,23 +1359,28 @@ public class Agent extends BaseService {
         }
 
         /**
-         * Execute a task synchronously with optional WebSocket streaming.
-         * When {@code options} is non-null and has streaming params, uses WS streaming for real-time events.
+         * Execute a task synchronously. Blocks until the task completes, an error occurs, or timeout.
          *
          * @param task Task description in human language
-         * @param maxSteps Maximum number of steps (clicks/swipes/etc.) allowed
          * @param timeout Maximum time to wait for task completion in seconds
-         * @param options StreamOptions for streaming (null to use HTTP polling)
          * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
          */
-        public ExecutionResult executeTaskAndWait(String task, int maxSteps, int timeout, StreamOptions options) {
-            if (options != null && options.hasStreamingParams()) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("task", task);
-                params.put("max_steps", maxSteps);
-                return executeTaskStreamWs(session, getToolName("execute"), SERVER_MOBILE_AGENT, params, timeout, options);
-            }
-            return executeTaskAndWait(task, maxSteps, timeout);
+        public ExecutionResult executeTaskAndWait(String task, int timeout) {
+            return executeTaskAndWait(task, timeout, null);
+        }
+
+        /**
+         * Execute a task synchronously with optional WebSocket streaming.
+         * When {@code options} has streaming params, uses WS streaming for real-time events.
+         *
+         * @param task Task description in human language
+         * @param timeout Maximum time to wait for task completion in seconds
+         * @param options Optional MobileTaskOptions (maxSteps, streaming callbacks)
+         * @return ExecutionResult containing success status, task ID, task status, task result, and error message if any
+         */
+        public ExecutionResult executeTaskAndWait(String task, int timeout, MobileTaskOptions options) {
+            TaskExecution execution = executeTask(task, options);
+            return execution.wait(timeout);
         }
 
         /**

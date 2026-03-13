@@ -1,11 +1,15 @@
 package com.aliyun.agentbay.test;
 
 import com.aliyun.agentbay.agent.AgentEvent;
+import com.aliyun.agentbay.agent.MobileTaskOptions;
 import com.aliyun.agentbay.agent.StreamOptions;
+import com.aliyun.agentbay.agent.TaskExecution;
+import com.aliyun.agentbay.model.ExecutionResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -112,5 +116,53 @@ class AgentStreamingTest {
         assertNotNull(opts.getOnToolResult());
         assertNotNull(opts.getOnError());
         assertTrue(opts.hasStreamingParams());
+    }
+
+    @Test
+    void testMobileTaskOptionsNoStreaming() {
+        MobileTaskOptions opts = new MobileTaskOptions();
+        assertFalse(opts.hasStreamingParams());
+        assertEquals(50, opts.getMaxSteps());
+    }
+
+    @Test
+    void testMobileTaskOptionsWithOnCallForUser() {
+        MobileTaskOptions opts = MobileTaskOptions.mobileBuilder()
+                .onCallForUser(e -> "user response")
+                .build();
+        assertTrue(opts.hasStreamingParams());
+        assertNotNull(opts.getOnCallForUser());
+        assertEquals("user response", opts.getOnCallForUser().apply(new AgentEvent("call_for_user", 1, 1)));
+    }
+
+    @Test
+    void testMobileTaskOptionsWithMaxSteps() {
+        MobileTaskOptions opts = MobileTaskOptions.mobileBuilder()
+                .maxSteps(100)
+                .build();
+        assertEquals(100, opts.getMaxSteps());
+    }
+
+    @Test
+    void testTaskExecutionWait() {
+        ExecutionResult expected = new ExecutionResult("req1", true, "", "task1", "completed", "done");
+        TaskExecution execution = new TaskExecution("task1", CompletableFuture.completedFuture(expected));
+        assertEquals("task1", execution.getTaskId());
+        ExecutionResult result = execution.wait(10);
+        assertTrue(result.isSuccess());
+        assertEquals("task1", result.getTaskId());
+        assertEquals("completed", result.getTaskStatus());
+        assertEquals("done", result.getTaskResult());
+    }
+
+    @Test
+    void testTaskExecutionWaitTimeout() {
+        CompletableFuture<ExecutionResult> neverComplete = new CompletableFuture<>();
+        TaskExecution execution = new TaskExecution("task1", neverComplete);
+        ExecutionResult result = execution.wait(1);
+        assertFalse(result.isSuccess());
+        assertEquals("task1", result.getTaskId());
+        assertEquals("failed", result.getTaskStatus());
+        assertTrue(result.getErrorMessage().contains("timed out"));
     }
 }

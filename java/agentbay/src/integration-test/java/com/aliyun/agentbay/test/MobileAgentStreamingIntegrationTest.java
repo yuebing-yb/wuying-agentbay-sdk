@@ -6,7 +6,7 @@ import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.agent.AgentEvent;
 import com.aliyun.agentbay.model.ExecutionResult;
-import com.aliyun.agentbay.agent.StreamOptions;
+import com.aliyun.agentbay.agent.MobileTaskOptions;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,8 @@ class MobileAgentStreamingIntegrationTest {
         List<AgentEvent> toolCalls = new ArrayList<>();
         List<AgentEvent> toolResults = new ArrayList<>();
 
-        StreamOptions options = StreamOptions.builder()
+        MobileTaskOptions options = MobileTaskOptions.mobileBuilder()
+                .maxSteps(10)
                 .onReasoning(event -> {
                     reasoningEvents.add(event);
                     logger.info("[Reasoning] round={}: {}", event.getRound(),
@@ -103,7 +104,7 @@ class MobileAgentStreamingIntegrationTest {
         logger.info("Testing mobile agent streaming with typed callbacks");
 
         ExecutionResult result = session.getAgent().getMobile()
-                .executeTaskAndWait("Open Settings app", 10, 180, options);
+                .executeTaskAndWait("Open Settings app", 180, options);
 
         logger.info("Result: success={}, status={}", result.isSuccess(), result.getTaskStatus());
         logger.info("Reasoning: {}, Content: {}, ToolCalls: {}, ToolResults: {}",

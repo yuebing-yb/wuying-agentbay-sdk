@@ -4,7 +4,7 @@ import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.model.SessionResult;
-import com.aliyun.agentbay.agent.StreamOptions;
+import com.aliyun.agentbay.agent.MobileTaskOptions;
 import com.aliyun.agentbay.model.ExecutionResult;
 
 import java.util.Collections;
@@ -31,7 +31,8 @@ public class MobileAgentStreamingExample {
         try {
             System.out.println("Session created: " + session.getSessionId());
 
-            StreamOptions options = StreamOptions.builder()
+            MobileTaskOptions options = MobileTaskOptions.mobileBuilder()
+                    .maxSteps(10)
                     .onReasoning(event ->
                             System.out.print("[Reasoning] " + event.getContent()))
                     .onContent(event ->
@@ -43,7 +44,7 @@ public class MobileAgentStreamingExample {
                     .build();
 
             ExecutionResult result = session.getAgent().getMobile()
-                    .executeTaskAndWait("Open Settings app", 10, 180, options);
+                    .executeTaskAndWait("Open Settings app", 180, options);
 
             System.out.println("\n\nTask completed:");
             System.out.println("  Success: " + result.isSuccess());
