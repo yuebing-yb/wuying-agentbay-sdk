@@ -61,11 +61,13 @@ class TaskExecution:
         _ws_handle: Optional[Any] = None,
         _context: Optional[_StreamContext] = None,
         _agent: Optional[Any] = None,
+        _result: Optional[ExecutionResult] = None,
     ):
         self.task_id = task_id
         self._ws_handle = _ws_handle
         self._context = _context
         self._agent = _agent
+        self._result = _result
 
     def wait(self, timeout: int = 300) -> ExecutionResult:
         """Block until the task completes and return the final result.
@@ -76,6 +78,8 @@ class TaskExecution:
         Returns:
             ExecutionResult with the task outcome.
         """
+        if self._result is not None:
+            return self._result
         if self._ws_handle is not None:
             return self._wait_ws(timeout)
         elif self._agent is not None:
@@ -1223,8 +1227,31 @@ class Agent(BaseService):
                     tool_name, task_params,
                 )
                 if result.success:
-                    content = json.loads(result.data)
+                    try:
+                        content = json.loads(result.data)
+                    except (json.JSONDecodeError, TypeError, ValueError):
+                        # Backend executed the task synchronously and returned
+                        # the result as plain text instead of JSON with taskId.
+                        return TaskExecution(
+                            task_id="",
+                            _result=ExecutionResult(
+                                request_id=result.request_id,
+                                success=True,
+                                task_status="completed",
+                                task_result=result.data or "",
+                            ),
+                        )
                     task_id = content.get("taskId") or content.get("task_id", "")
+                    if not task_id:
+                        return TaskExecution(
+                            task_id="",
+                            _result=ExecutionResult(
+                                request_id=result.request_id,
+                                success=True,
+                                task_status="completed",
+                                task_result=result.data or "",
+                            ),
+                        )
                     return TaskExecution(task_id=task_id, _agent=self)
                 else:
                     error_message = result.error_message or "Failed to execute task"

@@ -1105,9 +1105,10 @@ public class Agent extends BaseService {
                 }
 
                 if (taskIdStr == null || taskIdStr.isEmpty()) {
-                    String errorMsg = content.has("error") ? content.get("error").getAsString() : "Failed to get task_id from response";
+                    // No taskId means the backend completed the task synchronously.
                     return new TaskExecution("", CompletableFuture.completedFuture(new ExecutionResult(
-                            result.getRequestId(), false, errorMsg, "", "failed", "Task Failed")));
+                            result.getRequestId(), true, "", "", "completed",
+                            result.getData() != null ? result.getData() : "")));
                 }
 
                 final String requestId = result.getRequestId();

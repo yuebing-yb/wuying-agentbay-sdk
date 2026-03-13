@@ -1502,16 +1502,18 @@ func (a *MobileUseAgent) ExecuteTask(task string, opts ...MobileTaskOptions) *Ta
 
 	var content map[string]interface{}
 	if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
+		// Backend executed the task synchronously and returned
+		// the result as plain text instead of JSON with taskId.
 		reqID := result.RequestID
+		data := result.Data
 		return &TaskExecution{
 			TaskID: "",
 			waitFn: func(_ int) *ExecutionResult {
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: reqID},
-					Success:      false,
-					ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-					TaskStatus:   "failed",
-					TaskResult:   "Task Failed",
+					Success:      true,
+					TaskStatus:   "completed",
+					TaskResult:   data,
 				}
 			},
 		}
@@ -1522,22 +1524,17 @@ func (a *MobileUseAgent) ExecuteTask(task string, opts ...MobileTaskOptions) *Ta
 		taskID, ok = content["task_id"].(string)
 	}
 	if !ok {
-		errorMessage := "Task ID not found in response"
-		if errorVal, exists := content["error"]; exists {
-			if errorStr, ok := errorVal.(string); ok {
-				errorMessage = errorStr
-			}
-		}
+		// No taskId means the backend completed the task synchronously.
 		reqID := result.RequestID
+		data := result.Data
 		return &TaskExecution{
 			TaskID: "",
 			waitFn: func(_ int) *ExecutionResult {
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: reqID},
-					Success:      false,
-					ErrorMessage: errorMessage,
-					TaskStatus:   "failed",
-					TaskResult:   "Invalid task ID.",
+					Success:      true,
+					TaskStatus:   "completed",
+					TaskResult:   data,
 				}
 			},
 		}

@@ -1486,32 +1486,34 @@ export class MobileUseAgent extends BaseTaskAgent {
       let content: Record<string, any>;
       try {
         content = JSON.parse(result.data);
-      } catch (err) {
+      } catch {
+        // Backend executed the task synchronously and returned
+        // the result as plain text instead of JSON with taskId.
         return new TaskExecution(
           "",
           Promise.resolve({
             requestId: result.requestId,
-            success: false,
-            errorMessage: `Failed to parse response: ${err}`,
-            taskStatus: "failed",
+            success: true,
+            errorMessage: "",
+            taskStatus: "completed",
             taskId: "",
-            taskResult: "Invalid execution response.",
+            taskResult: result.data || "",
           })
         );
       }
 
       const taskId = content.taskId || content.task_id;
       if (!taskId) {
-        const errorMessage = content.error || "Task ID not found in response";
+        // No taskId means the backend completed the task synchronously.
         return new TaskExecution(
           "",
           Promise.resolve({
             requestId: result.requestId,
-            success: false,
-            errorMessage: errorMessage,
-            taskStatus: "failed",
+            success: true,
+            errorMessage: "",
+            taskStatus: "completed",
             taskId: "",
-            taskResult: "Invalid task ID.",
+            taskResult: result.data || "",
           })
         );
       }
