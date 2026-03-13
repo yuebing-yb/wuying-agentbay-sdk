@@ -92,7 +92,7 @@ func NewContextListParams() *ContextListParams {
 	return &ContextListParams{
 		MaxResults: 10, // Default page size
 		NextToken:  "",
-	SessionId:  "",
+		SessionId:  "",
 	}
 }
 

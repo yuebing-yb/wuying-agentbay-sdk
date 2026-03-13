@@ -28,22 +28,24 @@ func exampleTypedCallbacks(client *agentbay.AgentBay) {
 	defer sessionResult.Session.Delete()
 	fmt.Printf("Session created: %s\n", sessionResult.Session.SessionID)
 
-	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWaitStream(
+	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait(
 		"Open Settings app",
-		10,
 		180,
-		agent.StreamOptions{
-			OnReasoning: func(evt agent.AgentEvent) {
-				fmt.Printf("[Reasoning] %s", evt.Content)
-			},
-			OnContent: func(evt agent.AgentEvent) {
-				fmt.Printf("[Content] %s", evt.Content)
-			},
-			OnToolCall: func(evt agent.AgentEvent) {
-				fmt.Printf("\n[ToolCall] %s(%v)\n", evt.ToolName, evt.Args)
-			},
-			OnToolResult: func(evt agent.AgentEvent) {
-				fmt.Printf("[ToolResult] %s -> %v\n", evt.ToolName, evt.Result)
+		agent.MobileTaskOptions{
+			MaxSteps: 10,
+			StreamOptions: agent.StreamOptions{
+				OnReasoning: func(evt agent.AgentEvent) {
+					fmt.Printf("[Reasoning] %s", evt.Content)
+				},
+				OnContent: func(evt agent.AgentEvent) {
+					fmt.Printf("[Content] %s", evt.Content)
+				},
+				OnToolCall: func(evt agent.AgentEvent) {
+					fmt.Printf("\n[ToolCall] %s(%v)\n", evt.ToolName, evt.Args)
+				},
+				OnToolResult: func(evt agent.AgentEvent) {
+					fmt.Printf("[ToolResult] %s -> %v\n", evt.ToolName, evt.Result)
+				},
 			},
 		},
 	)

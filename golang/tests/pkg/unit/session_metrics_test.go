@@ -11,7 +11,7 @@ func TestParseSessionMetrics_Success(t *testing.T) {
 	toolResult := &models.McpToolResult{
 		Success:   true,
 		RequestID: "req-1",
-		Data:     `{"cpu_count":4,"cpu_used_pct":1.0,"disk_total":105286258688,"disk_used":30269431808,"mem_total":7918718976,"mem_used":2139729920,"rx_rate_kbyte_per_s":0.22,"tx_rate_kbyte_per_s":0.38,"rx_used_kbyte":1247.27,"tx_used_kbyte":120.13,"timestamp":"2025-12-24T10:54:23+08:00"}`,
+		Data:      `{"cpu_count":4,"cpu_used_pct":1.0,"disk_total":105286258688,"disk_used":30269431808,"mem_total":7918718976,"mem_used":2139729920,"rx_rate_kbyte_per_s":0.22,"tx_rate_kbyte_per_s":0.38,"rx_used_kbyte":1247.27,"tx_used_kbyte":120.13,"timestamp":"2025-12-24T10:54:23+08:00"}`,
 	}
 
 	result := models.ParseSessionMetrics(toolResult)
@@ -31,7 +31,7 @@ func TestParseSessionMetrics_InvalidJSON(t *testing.T) {
 	toolResult := &models.McpToolResult{
 		Success:   true,
 		RequestID: "req-2",
-		Data:     "{not-json}",
+		Data:      "{not-json}",
 	}
 
 	result := models.ParseSessionMetrics(toolResult)
@@ -40,5 +40,3 @@ func TestParseSessionMetrics_InvalidJSON(t *testing.T) {
 	assert.Nil(t, result.Metrics)
 	assert.Contains(t, result.ErrorMessage, "Failed to parse get_metrics response")
 }
-
-

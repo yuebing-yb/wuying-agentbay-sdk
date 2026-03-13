@@ -38,26 +38,28 @@ func TestMobileAgentStreaming_TypedCallbacks(t *testing.T) {
 
 	var reasoningCount, contentCount, toolCallCount, toolResultCount int
 
-	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWaitStream(
+	result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait(
 		"Open Settings app",
-		10,
 		180,
-		agent.StreamOptions{
-			OnReasoning: func(evt agent.AgentEvent) {
-				reasoningCount++
-				t.Logf("[Reasoning] round=%d: %s", evt.Round, truncate(evt.Content, 100))
-			},
-			OnContent: func(evt agent.AgentEvent) {
-				contentCount++
-				t.Logf("[Content] round=%d: %s", evt.Round, truncate(evt.Content, 100))
-			},
-			OnToolCall: func(evt agent.AgentEvent) {
-				toolCallCount++
-				t.Logf("[ToolCall] round=%d: %s", evt.Round, evt.ToolName)
-			},
-			OnToolResult: func(evt agent.AgentEvent) {
-				toolResultCount++
-				t.Logf("[ToolResult] round=%d: %s", evt.Round, evt.ToolName)
+		agent.MobileTaskOptions{
+			MaxSteps: 10,
+			StreamOptions: agent.StreamOptions{
+				OnReasoning: func(evt agent.AgentEvent) {
+					reasoningCount++
+					t.Logf("[Reasoning] round=%d: %s", evt.Round, truncate(evt.Content, 100))
+				},
+				OnContent: func(evt agent.AgentEvent) {
+					contentCount++
+					t.Logf("[Content] round=%d: %s", evt.Round, truncate(evt.Content, 100))
+				},
+				OnToolCall: func(evt agent.AgentEvent) {
+					toolCallCount++
+					t.Logf("[ToolCall] round=%d: %s", evt.Round, evt.ToolName)
+				},
+				OnToolResult: func(evt agent.AgentEvent) {
+					toolResultCount++
+					t.Logf("[ToolResult] round=%d: %s", evt.Round, evt.ToolName)
+				},
 			},
 		},
 	)

@@ -232,7 +232,7 @@ func TestFileSystem_ReadBinaryFileError(t *testing.T) {
 	fmt.Println("\n1. Reading non-existent binary file...")
 	nonExistentFile := "/path/to/non/existent/binary/file.bin"
 	binaryResult, err := session.FileSystem.ReadFileBinary(nonExistentFile)
-	
+
 	// Should return error or failed result
 	if err != nil {
 		fmt.Printf("✅ Error returned as expected: %v\n", err)
@@ -330,4 +330,3 @@ func TestFileSystem_ReadTextFileStillWorks(t *testing.T) {
 
 	fmt.Println("\n✅ Text file reading still works correctly")
 }
-

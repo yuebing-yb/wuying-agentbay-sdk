@@ -44,5 +44,3 @@ func main() {
 	out, _ := json.MarshalIndent(metricsResult.Raw, "", "  ")
 	fmt.Println(string(out))
 }
-
-

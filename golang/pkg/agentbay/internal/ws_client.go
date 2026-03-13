@@ -28,6 +28,15 @@ type WsCancelledError struct {
 	InvocationID string
 }
 
+// WsTimeoutError is returned when WaitEndWithTimeout exceeds the caller's deadline.
+type WsTimeoutError struct {
+	Timeout time.Duration
+}
+
+func (e *WsTimeoutError) Error() string {
+	return fmt.Sprintf("timeout waiting for WS end event after %v", e.Timeout)
+}
+
 func (e *WsCancelledError) Error() string {
 	return fmt.Sprintf("stream %s was cancelled by caller", e.InvocationID)
 }
@@ -54,7 +63,11 @@ type pendingStream struct {
 
 type WsStreamHandle struct {
 	InvocationID string
+	client       *WsClient
+	target       string
 	waitEnd      func() (map[string]interface{}, error)
+	waitEndCh    <-chan endResult
+	closedCh     <-chan struct{}
 	cancel       func() error
 }
 
@@ -62,11 +75,55 @@ func (h *WsStreamHandle) WaitEnd() (map[string]interface{}, error) {
 	return h.waitEnd()
 }
 
+// WaitEndWithTimeout waits for the stream to end with a caller-specified timeout.
+// Returns WsTimeoutError when the timeout expires.
+func (h *WsStreamHandle) WaitEndWithTimeout(timeout time.Duration) (map[string]interface{}, error) {
+	select {
+	case <-h.closedCh:
+		return nil, fmt.Errorf("WS connection closed")
+	case r := <-h.waitEndCh:
+		if r.err != nil {
+			return nil, r.err
+		}
+		return r.data, nil
+	case <-time.After(timeout):
+		return nil, &WsTimeoutError{Timeout: timeout}
+	}
+}
+
 func (h *WsStreamHandle) Cancel() error {
 	if h.cancel == nil {
 		return nil
 	}
 	return h.cancel()
+}
+
+func (h *WsStreamHandle) Write(data map[string]interface{}) error {
+	return h.client.sendStreamMessage(h.InvocationID, h.target, data)
+}
+
+func (c *WsClient) sendStreamMessage(invocationID string, target string, data map[string]interface{}) error {
+	c.mu.Lock()
+	conn := c.conn
+	c.mu.Unlock()
+	if conn == nil {
+		return fmt.Errorf("WS is not connected")
+	}
+	payload := map[string]interface{}{
+		"invocationId": invocationID,
+		"source":       "SDK",
+		"target":       target,
+		"data":         data,
+	}
+	c.logFrame(">>", payload)
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+	if err := websocket.Message.Send(conn, string(payloadBytes)); err != nil {
+		return fmt.Errorf("failed to send message: %w", err)
+	}
+	return nil
 }
 
 func NewWsClient(wsURL string, token string, logger DebugLogger) *WsClient {
@@ -178,7 +235,7 @@ func (c *WsClient) SendMessage(target string, data map[string]interface{}) error
 	}
 
 	invocationID := newInvocationID()
-	
+
 	c.mu.Lock()
 	conn := c.conn
 	c.mu.Unlock()
@@ -195,7 +252,7 @@ func (c *WsClient) SendMessage(target string, data map[string]interface{}) error
 	}
 
 	c.logFrame(">>", payload)
-	
+
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)
@@ -250,6 +307,10 @@ func (c *WsClient) CallStream(target string, data map[string]interface{}, onEven
 
 	return &WsStreamHandle{
 		InvocationID: invocationID,
+		client:       c,
+		target:       target,
+		waitEndCh:    endCh,
+		closedCh:     c.closedCh,
 		waitEnd: func() (map[string]interface{}, error) {
 			select {
 			case <-c.closedCh:

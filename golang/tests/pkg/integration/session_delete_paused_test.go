@@ -101,7 +101,7 @@ func TestDeletePausedSession(t *testing.T) {
 		t.Fatalf("Expected session status PAUSED or PAUSING, got %s", getResult.Status)
 	}
 	t.Logf("✓ Session status after pause: %s", getResult.Status)
-	
+
 	// Resume the session first to test delete on running session
 	fmt.Println("Step 4: Resuming session before delete test...")
 	resumeResult, err := client.BetaResume(createdSession, 120, 2.0)

@@ -563,8 +563,8 @@ func (suite *ComputerTestSuite) TestGetInstalledApps_Success() {
 	}
 
 	suite.mockSession.On("CallMcpTool", "get_installed_apps", map[string]interface{}{
-		"start_menu":         true,
-		"desktop":            false,
+		"start_menu":        true,
+		"desktop":           false,
 		"ignore_system_app": true,
 	}).Return(expectedResult, nil)
 
@@ -589,8 +589,8 @@ func (suite *ComputerTestSuite) TestGetInstalledApps_Error() {
 	}
 
 	suite.mockSession.On("CallMcpTool", "get_installed_apps", map[string]interface{}{
-		"start_menu":         true,
-		"desktop":            true,
+		"start_menu":        true,
+		"desktop":           true,
 		"ignore_system_app": true,
 	}).Return(expectedResult, nil)
 

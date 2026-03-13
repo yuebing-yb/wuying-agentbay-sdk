@@ -139,11 +139,11 @@ func ParseSessionMetrics(toolResult *McpToolResult) *SessionMetricsResult {
 
 	if !toolResult.Success {
 		return &SessionMetricsResult{
-			ApiResponse:   WithRequestID(toolResult.RequestID),
-			Success:       false,
-			Metrics:       nil,
-			Raw:           nil,
-			ErrorMessage:  toolResult.ErrorMessage,
+			ApiResponse:  WithRequestID(toolResult.RequestID),
+			Success:      false,
+			Metrics:      nil,
+			Raw:          nil,
+			ErrorMessage: toolResult.ErrorMessage,
 		}
 	}
 
@@ -167,5 +167,3 @@ func ParseSessionMetrics(toolResult *McpToolResult) *SessionMetricsResult {
 		Raw:         raw,
 	}
 }
-
-

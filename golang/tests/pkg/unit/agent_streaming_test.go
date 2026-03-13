@@ -58,14 +58,56 @@ func TestStreamOptions_OnError(t *testing.T) {
 	}
 }
 
+func TestMobileTaskOptions_Defaults(t *testing.T) {
+	opts := agent.MobileTaskOptions{}
+	if opts.MaxSteps != 0 {
+		t.Errorf("expected default MaxSteps 0, got %d", opts.MaxSteps)
+	}
+	if opts.OnReasoning != nil {
+		t.Error("expected OnReasoning to be nil by default")
+	}
+	if opts.OnCallForUser != nil {
+		t.Error("expected OnCallForUser to be nil by default")
+	}
+}
+
+func TestMobileTaskOptions_WithCallbacks(t *testing.T) {
+	called := false
+	opts := agent.MobileTaskOptions{
+		MaxSteps: 50,
+		StreamOptions: agent.StreamOptions{
+			OnReasoning: func(e agent.AgentEvent) { called = true },
+			OnContent:   func(e agent.AgentEvent) {},
+		},
+		OnCallForUser: func(e agent.AgentEvent) string { return "user reply" },
+	}
+	if opts.MaxSteps != 50 {
+		t.Errorf("expected MaxSteps 50, got %d", opts.MaxSteps)
+	}
+	opts.OnReasoning(agent.AgentEvent{})
+	if !called {
+		t.Error("expected OnReasoning callback to be invoked")
+	}
+	reply := opts.OnCallForUser(agent.AgentEvent{})
+	if reply != "user reply" {
+		t.Errorf("expected OnCallForUser to return 'user reply', got '%s'", reply)
+	}
+}
+
+func TestTaskExecution_WaitWithError(t *testing.T) {
+	execution := &agent.TaskExecution{
+		TaskID: "test-123",
+	}
+	if execution.TaskID != "test-123" {
+		t.Errorf("expected TaskID 'test-123', got '%s'", execution.TaskID)
+	}
+}
+
 func TestWsTarget_Resolution(t *testing.T) {
-	// Use NewXxxAgent constructors (they are exported) and check getWsTarget via reflection or public method
-	// Since getWsTarget is unexported, we test via the public factory functions that set ToolPrefix
 	mobileAgent := agent.NewMobileUseAgent(nil)
 	computerAgent := agent.NewComputerUseAgent(nil)
 	browserAgent := agent.NewBrowserUseAgent(nil)
 
-	// We can't directly call getWsTarget, but we verify agents are created correctly
 	_ = mobileAgent
 	_ = computerAgent
 	_ = browserAgent
