@@ -422,7 +422,7 @@ jobs:
           echo ""
           
           echo "=== Starting Maven Deploy ==="
-          mvn clean deploy -Dmaven.test.skip=true -P internal-release
+          mvn deploy -DskipTests
           
           # Get version information for output
           JAVA_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q "-DforceStdout")
