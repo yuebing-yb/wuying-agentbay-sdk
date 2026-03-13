@@ -26,6 +26,214 @@ AgentEventCallback = Optional[Callable[[AgentEvent], None]]
 AsyncAgentEventCallback = Optional[Callable[[AgentEvent], Union[Awaitable[str], str]]]
 
 
+class _StreamContext:
+    """Mutable state shared between WS event callbacks and TaskExecution.wait()."""
+    __slots__ = ("final_content_parts", "last_error", "errors")
+
+    def __init__(self):
+        self.final_content_parts: list[str] = []
+        self.last_error: Optional[dict] = None
+        self.errors: list[Exception] = []
+
+
+class TaskExecution:
+    """Handle for a running task, returned by ``execute_task()``.
+
+    If streaming callbacks were registered, events are dispatched in the
+    background as soon as the WebSocket connection delivers them.  Call
+    ``wait()`` to block until the task completes and retrieve the final
+    ``ExecutionResult``.
+
+    Attributes:
+        task_id: The identifier of the running task (empty when using
+            the WebSocket streaming path, since the task is managed
+            by the server stream).
+    """
+
+    def __init__(
+        self,
+        task_id: str = "",
+        *,
+        _ws_handle: Optional[Any] = None,
+        _context: Optional[_StreamContext] = None,
+        _agent: Optional[Any] = None,
+    ):
+        self.task_id = task_id
+        self._ws_handle = _ws_handle
+        self._context = _context
+        self._agent = _agent
+
+    async def wait(self, timeout: int = 300) -> ExecutionResult:
+        """Block until the task completes and return the final result.
+
+        Args:
+            timeout: Maximum seconds to wait. Default 300.
+
+        Returns:
+            ExecutionResult with the task outcome.
+        """
+        if self._ws_handle is not None:
+            return await self._wait_ws(timeout)
+        elif self._agent is not None:
+            return await self._wait_polling(timeout)
+        else:
+            raise RuntimeError("TaskExecution is not properly initialized")
+
+    async def _wait_ws(self, timeout: int) -> ExecutionResult:
+        ctx = self._context
+        try:
+            end_data = await self._ws_handle.wait_end_with_timeout(timeout)
+        except TimeoutError:
+            try:
+                await self._ws_handle.cancel()
+            except Exception:
+                pass
+            return ExecutionResult(
+                success=False,
+                error_message=f"Task execution timed out after {timeout} seconds.",
+                task_status="failed",
+                task_result="".join(ctx.final_content_parts) or "Task execution timed out.",
+            )
+
+        if ctx.errors:
+            return ExecutionResult(
+                success=False,
+                error_message=str(ctx.errors[0]),
+                task_status="failed",
+                task_result="".join(ctx.final_content_parts),
+            )
+
+        if ctx.last_error:
+            return ExecutionResult(
+                success=False,
+                error_message=str(ctx.last_error),
+                task_status="failed",
+                task_result="".join(ctx.final_content_parts),
+            )
+
+        status = end_data.get("status", "finished") if end_data else "finished"
+        task_result = end_data.get("taskResult", "") if end_data else ""
+        if not task_result:
+            task_result = "".join(ctx.final_content_parts)
+
+        return ExecutionResult(
+            success=(status == "finished"),
+            error_message="" if status == "finished" else f"Task ended with status: {status}",
+            task_status=status,
+            task_result=task_result,
+        )
+
+    async def _wait_polling(self, timeout: int) -> ExecutionResult:
+        agent = self._agent
+        task_id = self.task_id
+        poll_interval = 3
+        max_poll_attempts = timeout // poll_interval
+
+        last_request_id = ""
+        tried_time = 0
+        processed_timestamps: set = set()
+        last_query = None
+
+        while tried_time < max_poll_attempts:
+            query = await agent.get_task_status(task_id)
+            if query.stream:
+                last_query = query
+
+            if query.stream:
+                for stream_item in query.stream:
+                    if isinstance(stream_item, dict):
+                        timestamp = stream_item.get("timestamp_ms")
+                        if timestamp is not None and timestamp not in processed_timestamps:
+                            processed_timestamps.add(timestamp)
+                            content = stream_item.get("content", "")
+                            reasoning = stream_item.get("reasoning", "")
+                            if content:
+                                sys.stdout.write(content)
+                                sys.stdout.flush()
+                            if reasoning:
+                                _logger.debug(f"💭 {reasoning}")
+
+            if query.error:
+                _logger.warning(f"⚠️ Task error: {query.error}")
+
+            if query.task_status == "completed":
+                return ExecutionResult(
+                    request_id=last_request_id,
+                    success=True,
+                    task_id=task_id,
+                    task_status=query.task_status,
+                    task_result=query.task_product,
+                )
+            elif query.task_status in ("failed", "cancelled", "unsupported"):
+                error_msg = query.error or query.error_message or f"Task {query.task_status}."
+                return ExecutionResult(
+                    request_id=query.request_id,
+                    success=False,
+                    error_message=error_msg,
+                    task_id=task_id,
+                    task_status=query.task_status,
+                )
+
+            _logger.info(f"⏳ Task {task_id} running 🚀: {query.task_action}.")
+            await asyncio.sleep(poll_interval)
+            tried_time += 1
+
+        _logger.warning("⚠️ task execution timeout!")
+        try:
+            terminate_result = await agent.terminate_task(task_id)
+            if terminate_result.success:
+                _logger.info(f"✅ Terminate request sent for task {task_id} after timeout")
+            else:
+                _logger.warning(f"⚠️ Failed to terminate task {task_id}: {terminate_result.error_message}")
+        except Exception as e:
+            _logger.warning(f"⚠️ Exception while terminating task {task_id}: {e}")
+
+        _logger.info(f"⏳ Waiting for task {task_id} to be fully terminated...")
+        terminate_tried = 0
+        while terminate_tried < 30:
+            try:
+                status_query = await agent.get_task_status(task_id)
+                if not status_query.success:
+                    error_msg = status_query.error_message or ""
+                    if error_msg.startswith("Task not found or already finished"):
+                        _logger.info(f"✅ Task {task_id} confirmed terminated")
+                        break
+                await asyncio.sleep(1)
+                terminate_tried += 1
+            except Exception:
+                await asyncio.sleep(1)
+                terminate_tried += 1
+
+        task_result_parts = [f"Task execution timed out after {timeout} seconds."]
+        if last_query:
+            if last_query.stream:
+                stream_parts = []
+                for item in last_query.stream:
+                    if isinstance(item, dict):
+                        c = item.get("content", "")
+                        if c:
+                            stream_parts.append(c)
+                if stream_parts:
+                    task_result_parts.append(f"Last task status output: {''.join(stream_parts)}")
+            if last_query.task_action:
+                task_result_parts.append(f"Last action: {last_query.task_action}")
+            if last_query.task_product:
+                task_result_parts.append(f"Last result: {last_query.task_product}")
+            if last_query.error:
+                task_result_parts.append(f"Last error: {last_query.error}")
+            if last_query.task_status:
+                task_result_parts.append(f"Last status: {last_query.task_status}")
+
+        return ExecutionResult(
+            request_id=last_request_id,
+            success=False,
+            error_message=f"Task execution timed out after {timeout} seconds. Task ID: {task_id}.",
+            task_id=task_id,
+            task_status="failed",
+            task_result=" | ".join(task_result_parts),
+        )
+
+
 class AsyncAgent(AsyncBaseService):
     """
     An Agent to manipulate applications to complete specific tasks.
@@ -192,24 +400,27 @@ class AsyncAgent(AsyncBaseService):
             else:
                 return "wuying_mobile_agent"
 
-        async def _execute_task_stream_ws(
+        async def _start_task_stream_ws(
             self,
             task_params: dict,
-            timeout: int,
             on_reasoning: AgentEventCallback = None,
             on_content: AgentEventCallback = None,
             on_tool_call: AgentEventCallback = None,
             on_tool_result: AgentEventCallback = None,
             on_error: AgentEventCallback = None,
             on_call_for_user: AsyncAgentEventCallback = None,
-        ) -> ExecutionResult:
-            """Execute a task via WS streaming channel."""
+        ) -> tuple[Any, _StreamContext]:
+            """Set up WS streaming for a task (non-blocking).
+
+            Returns (ws_handle, stream_context). Events are dispatched
+            to the provided callbacks in the background. Use the returned
+            handle with ``TaskExecution`` to wait for the final result.
+            """
             target = self._resolve_agent_target()
             ws_client = await self.session._get_ws_client()
 
-            final_content_parts: list[str] = []
-            last_error: Optional[dict] = None
-            _ws_handle: Optional[Any] = None
+            ctx = _StreamContext()
+            _ws_handle_ref: list[Any] = [None]
 
             def _dispatch_event(event: AgentEvent) -> None:
                 try:
@@ -239,9 +450,9 @@ class AsyncAgent(AsyncBaseService):
                         response = ""
                 else:
                     _logger.warning("Received call_for_user but no on_call_for_user callback is set, sending empty response")
-                if _ws_handle is not None:
+                if _ws_handle_ref[0] is not None:
                     try:
-                        await _ws_handle.write({
+                        await _ws_handle_ref[0].write({
                             "method": "resume_task",
                             "params": {
                                 "toolCallId": event.tool_call_id,
@@ -252,7 +463,6 @@ class AsyncAgent(AsyncBaseService):
                         _logger.warning(f"Failed to send resume_task: {ex}")
 
             def _on_event(invocation_id: str, data: dict[str, Any]) -> None:
-                nonlocal last_error
                 event_type = data.get("eventType", "")
                 seq = data.get("seq", 0)
                 round_num = data.get("round", 0)
@@ -265,7 +475,7 @@ class AsyncAgent(AsyncBaseService):
                     _dispatch_event(event)
                 elif event_type == "content":
                     content_text = data.get("content", "")
-                    final_content_parts.append(content_text)
+                    ctx.final_content_parts.append(content_text)
                     event = AgentEvent(
                         type="content", seq=seq, round=round_num,
                         content=content_text,
@@ -293,17 +503,15 @@ class AsyncAgent(AsyncBaseService):
                     )
                     _dispatch_event(event)
                 elif event_type == "error":
-                    last_error = data.get("error", data)
+                    ctx.last_error = data.get("error", data)
                     event = AgentEvent(
                         type="error", seq=seq, round=round_num,
-                        error=last_error,
+                        error=ctx.last_error,
                     )
                     _dispatch_event(event)
 
-            errors: list[Exception] = []
-
-            def _on_error(invocation_id: str, err: Exception) -> None:
-                errors.append(err)
+            def _on_error_ws(invocation_id: str, err: Exception) -> None:
+                ctx.errors.append(err)
 
             handle = await ws_client.call_stream(
                 target=target,
@@ -313,55 +521,37 @@ class AsyncAgent(AsyncBaseService):
                 },
                 on_event=_on_event,
                 on_end=None,
-                on_error=_on_error,
+                on_error=_on_error_ws,
             )
-            _ws_handle = handle
+            _ws_handle_ref[0] = handle
 
-            try:
-                end_data = await asyncio.wait_for(handle.wait_end(), timeout=timeout)
-            except asyncio.TimeoutError:
-                try:
-                    await handle.cancel()
-                except Exception:
-                    pass
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Task execution timed out after {timeout} seconds.",
-                    task_status="failed",
-                    task_result="".join(final_content_parts) or "Task execution timed out.",
-                )
+            return handle, ctx
 
-            if errors:
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=str(errors[0]),
-                    task_status="failed",
-                    task_result="".join(final_content_parts),
-                )
-
-            if last_error:
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=str(last_error),
-                    task_status="failed",
-                    task_result="".join(final_content_parts),
-                )
-
-            status = end_data.get("status", "finished") if end_data else "finished"
-            task_result = end_data.get("taskResult", "") if end_data else ""
-            if not task_result:
-                task_result = "".join(final_content_parts)
-
-            return ExecutionResult(
-                request_id="",
-                success=(status == "finished"),
-                error_message="" if status == "finished" else f"Task ended with status: {status}",
-                task_status=status,
-                task_result=task_result,
+        async def _execute_task_stream_ws(
+            self,
+            task_params: dict,
+            timeout: int,
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
+            on_error: AgentEventCallback = None,
+            on_call_for_user: AsyncAgentEventCallback = None,
+        ) -> ExecutionResult:
+            """Execute a task via WS streaming channel (blocking convenience wrapper)."""
+            ws_handle, ctx = await self._start_task_stream_ws(
+                task_params=task_params,
+                on_reasoning=on_reasoning,
+                on_content=on_content,
+                on_tool_call=on_tool_call,
+                on_tool_result=on_tool_result,
+                on_error=on_error,
+                on_call_for_user=on_call_for_user,
             )
+            execution = TaskExecution(
+                task_id="", _ws_handle=ws_handle, _context=ctx,
+            )
+            return await execution.wait(timeout=timeout)
 
         async def execute_task_and_wait(
             self,
@@ -592,7 +782,7 @@ class AsyncAgent(AsyncBaseService):
                         success=True,
                         error_message="",
                         task_id=task_id,
-                        task_status=content.get("status", "finised"),
+                        task_status=content.get("status", "finished"),
                     )
                 else:
                     content = json.loads(result.data) if result.data else {}
@@ -950,91 +1140,92 @@ class AsyncAgent(AsyncBaseService):
             self,
             task: str,
             max_steps: int = 50,
-        ) -> ExecutionResult:
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
+            on_error: AgentEventCallback = None,
+            on_call_for_user: AsyncAgentEventCallback = None,
+        ) -> TaskExecution:
             """
-            Execute a task in human language without waiting for completion
-            (non-blocking).
+            Execute a task in human language (non-blocking).
 
-            This is a fire-and-return interface that immediately provides a task ID.
-            Call get_task_status to check the task status. You can control the timeout
-            of the task execution in your own code by setting the frequency of calling
-            get_task_status.
+            Returns a ``TaskExecution`` handle immediately. Call
+            ``execution.wait(timeout)`` to block until the task completes.
+
+            When any ``on_*`` callback is provided, a WebSocket connection is
+            established and streaming events are dispatched in the background.
 
             Args:
                 task: Task description in human language.
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
-                    Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
+                on_reasoning: Callback for reasoning events (LLM reasoning_content).
+                on_content: Callback for content events (LLM content output).
+                on_tool_call: Callback for tool_call events.
+                on_tool_result: Callback for tool_result events.
+                on_error: Callback for error events.
+                on_call_for_user: Callback for call_for_user events.
+                    Returns the user's response string.
 
             Returns:
-                ExecutionResult: Result object containing success status, task ID,
-                    task status, and error message if any.
+                TaskExecution: Handle for the running task.
 
             Example:
                 ```python
                 session_result = await agent_bay.create()
                 session = session_result.session
-                result = await session.agent.mobile.execute_task(
-                    "Open WeChat app", max_steps=100
+
+                # Non-blocking with streaming callbacks
+                execution = await session.agent.mobile.execute_task(
+                    "Open WeChat app",
+                    max_steps=100,
+                    on_reasoning=lambda e: print(e.content, end="", flush=True),
                 )
-                print(f"Task ID: {result.task_id}, Status: {result.task_status}")
-                status = await session.agent.mobile.get_task_status(result.task_id)
-                print(f"Task status: {status.task_status}")
+                result = await execution.wait(timeout=180)
+                print(f"Task result: {result.task_result}")
+
+                # Non-blocking without streaming (poll with wait)
+                execution = await session.agent.mobile.execute_task("Open Settings")
+                result = await execution.wait(timeout=60)
+
                 await session.delete()
                 ```
             """
-            args = {
+            task_params = {
                 "task": task,
                 "max_steps": max_steps,
             }
 
-            try:
+            if self._has_streaming_params(
+                on_reasoning, on_content, on_tool_call,
+                on_tool_result, on_error, on_call_for_user,
+            ):
+                ws_handle, ctx = await self._start_task_stream_ws(
+                    task_params=task_params,
+                    on_reasoning=on_reasoning,
+                    on_content=on_content,
+                    on_tool_call=on_tool_call,
+                    on_tool_result=on_tool_result,
+                    on_error=on_error,
+                    on_call_for_user=on_call_for_user,
+                )
+                return TaskExecution(
+                    task_id="", _ws_handle=ws_handle, _context=ctx,
+                )
+            else:
                 tool_name = self._get_tool_name("execute")
                 result = await self.session.call_mcp_tool(
-                    tool_name,
-                    args,
+                    tool_name, task_params,
                 )
-
                 if result.success:
                     content = json.loads(result.data)
                     task_id = content.get("taskId") or content.get("task_id", "")
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=True,
-                        error_message="",
-                        task_id=task_id,
-                        task_status="running",
-                    )
+                    return TaskExecution(task_id=task_id, _agent=self)
                 else:
                     error_message = result.error_message or "Failed to execute task"
                     _logger.error(f"Task execution failed: {error_message}")
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message=error_message,
-                        task_status="failed",
-                        task_id="",
-                    )
-            except AgentError as e:
-                handled_error = self._handle_error(e)
-                _logger.error(f"Task execution failed: {handled_error}")
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=str(handled_error),
-                    task_status="failed",
-                    task_id="",
-                )
-            except Exception as e:
-                handled_error = self._handle_error(AgentBayError(str(e)))
-                _logger.error(f"Task execution failed: {handled_error}")
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Failed to execute: {handled_error}",
-                    task_status="failed",
-                    task_id="",
-                )
+                    raise AgentError(error_message)
 
         async def execute_task_and_wait(
             self,
@@ -1049,11 +1240,9 @@ class AsyncAgent(AsyncBaseService):
             on_call_for_user: AsyncAgentEventCallback = None,
         ) -> ExecutionResult:
             """
-            Execute a specific task described in human language synchronously.
+            Execute a task and wait for completion (blocking convenience wrapper).
 
-            This is a synchronous interface that blocks until the task is
-            completed or an error occurs, or timeout happens. The default
-            polling interval is 3 seconds.
+            Equivalent to ``execute_task(...) + execution.wait(timeout)``.
 
             When any ``on_*`` callback is provided, the method uses the WebSocket
             streaming channel for real-time event delivery instead of HTTP polling.
@@ -1061,19 +1250,14 @@ class AsyncAgent(AsyncBaseService):
             Args:
                 task: Task description in human language.
                 timeout: Maximum time to wait for task completion in seconds.
-                    Used to control how long to wait for task completion.
                 max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
-                    Used to prevent infinite loops or excessive resource consumption.
                     Default is 50.
                 on_reasoning: Callback for reasoning events (LLM reasoning_content).
                 on_content: Callback for content events (LLM content output).
                 on_tool_call: Callback for tool_call events.
-                on_tool_result: Callback for tool_result events. The ``result``
-                    field carries an agent-defined structure that the SDK does
-                    not parse. The final task outcome is delivered via the
-                    ``ExecutionResult`` return value.
+                on_tool_result: Callback for tool_result events.
                 on_error: Callback for error events.
-                on_call_for_user: Callback for call_for_user tool_call events.
+                on_call_for_user: Callback for call_for_user events.
                     Returns the user's response string.
 
             Returns:
@@ -1087,22 +1271,17 @@ class AsyncAgent(AsyncBaseService):
                 result = await session.agent.mobile.execute_task_and_wait(
                     "Open WeChat app and send a message",
                     timeout=180,
-                    max_steps=100
+                    max_steps=100,
+                    on_reasoning=lambda e: print(e.content, end="", flush=True),
                 )
                 print(f"Task result: {result.task_result}")
                 await session.delete()
                 ```
             """
-            if self._has_streaming_params(
-                on_reasoning, on_content, on_tool_call, on_tool_result, on_error, on_call_for_user
-            ):
-                task_params = {
-                    "task": task,
-                    "max_steps": max_steps,
-                }
-                return await self._execute_task_stream_ws(
-                    task_params=task_params,
-                    timeout=timeout,
+            try:
+                execution = await self.execute_task(
+                    task,
+                    max_steps=max_steps,
                     on_reasoning=on_reasoning,
                     on_content=on_content,
                     on_tool_call=on_tool_call,
@@ -1110,233 +1289,22 @@ class AsyncAgent(AsyncBaseService):
                     on_error=on_error,
                     on_call_for_user=on_call_for_user,
                 )
-
-            args = {
-                "task": task,
-                "max_steps": max_steps,
-            }
-
-            poll_interval = 3
-            max_poll_attempts = timeout // poll_interval
-
-            try:
-                tool_name = self._get_tool_name("execute")
-                result = await self.session.call_mcp_tool(
-                    tool_name,
-                    args,
-                )
-
-                if not result.success:
-                    error_message = result.error_message or "Failed to execute task"
-                    _logger.error(f"Task execution failed: {error_message}")
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message=error_message,
-                        task_status="failed",
-                        task_id="",
-                        task_result="Task Failed",
-                    )
-
-                try:
-                    content = json.loads(result.data)
-                except (json.JSONDecodeError, ValueError):
-                    # Mobile agent may execute the task synchronously and return
-                    # the result as plain text instead of JSON with taskId.
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=True,
-                        error_message="",
-                        task_status="completed",
-                        task_id="",
-                        task_result=result.data,
-                    )
-
-                task_id = content.get("taskId") or content.get("task_id", "")
-
-                if not task_id:
-                    error_message = content.get("error") or "Failed to get task_id from response"
-                    _logger.error(f"Failed to get task_id from response: {error_message}")
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message=error_message,
-                        task_status="failed",
-                        task_id="",
-                        task_result="Task Failed",
-                    )
-            except AgentError as e:
-                handled_error = self._handle_error(e)
-                _logger.error(f"Task execution failed: {handled_error}")
+            except (AgentError, AgentBayError) as e:
                 return ExecutionResult(
-                    request_id="",
                     success=False,
-                    error_message=str(handled_error),
+                    error_message=str(e),
                     task_status="failed",
-                    task_id="",
                     task_result="Task Failed",
                 )
             except Exception as e:
-                handled_error = self._handle_error(AgentBayError(str(e)))
-                _logger.error(f"Task execution failed: {handled_error}")
                 return ExecutionResult(
-                    request_id="",
                     success=False,
-                    error_message=f"Failed to execute: {handled_error}",
+                    error_message=f"Failed to execute: {e}",
                     task_status="failed",
-                    task_id="",
                     task_result="Task Failed",
                 )
 
-            last_request_id = result.request_id
-            tried_time: int = 0
-            processed_timestamps = set()  # Track processed stream fragments by timestamp_ms
-            last_query = None  # Save last query status for timeout result
-            while tried_time < max_poll_attempts:
-                query = await self.get_task_status(task_id)
-                # Only update last_query if stream is not empty
-                if query.stream:
-                    last_query = query
-
-                # Process new stream fragments for real-time output
-                if query.stream:
-                    for stream_item in query.stream:
-                        if isinstance(stream_item, dict):
-                            timestamp = stream_item.get("timestamp_ms")
-                            # Use timestamp_ms to identify new fragments (handles backend returning snapshots)
-                            if timestamp is not None and timestamp not in processed_timestamps:
-                                processed_timestamps.add(timestamp)  # Mark as processed immediately
-
-                                # Output immediately for true streaming effect
-                                content = stream_item.get("content", "")
-                                reasoning = stream_item.get("reasoning", "")
-                                if content:
-                                    # Use sys.stdout.write for streaming output without automatic newlines
-                                    sys.stdout.write(content)
-                                    sys.stdout.flush()  # Flush immediately for real-time display
-                                if reasoning:
-                                    _logger.debug(f"💭 {reasoning}")
-
-                # Check for error field
-                if query.error:
-                    _logger.warning(f"⚠️ Task error: {query.error}")
-
-                if query.task_status == "completed":
-                    return ExecutionResult(
-                        request_id=last_request_id,
-                        success=True,
-                        error_message="",
-                        task_id=task_id,
-                        task_status=query.task_status,
-                        task_result=query.task_product,
-                    )
-                elif query.task_status == "failed":
-                    error_msg = query.error or query.error_message or "Failed to execute task."
-                    return ExecutionResult(
-                        request_id=query.request_id,
-                        success=False,
-                        error_message=error_msg,
-                        task_id=task_id,
-                        task_status=query.task_status,
-                    )
-                elif query.task_status == "cancelled":
-                    error_msg = query.error or query.error_message or "Task was cancelled."
-                    return ExecutionResult(
-                        request_id=query.request_id,
-                        success=False,
-                        error_message=error_msg,
-                        task_id=task_id,
-                        task_status=query.task_status,
-                    )
-                elif query.task_status == "unsupported":
-                    error_msg = query.error or query.error_message or "Unsupported task."
-                    return ExecutionResult(
-                        request_id=query.request_id,
-                        success=False,
-                        error_message=error_msg,
-                        task_id=task_id,
-                        task_status=query.task_status,
-                    )
-                _logger.info(
-                    f"⏳ Task {task_id} running 🚀: {query.task_action}."
-                )
-                await asyncio.sleep(poll_interval)
-                tried_time += 1
-
-            _logger.warning("⚠️ task execution timeout!")
-            try:
-                terminate_result = await self.terminate_task(task_id)
-                if terminate_result.success:
-                    _logger.info(f"✅ Terminate request sent for task {task_id} after timeout")
-                else:
-                    _logger.warning(f"⚠️ Failed to terminate task {task_id} after timeout: {terminate_result.error_message}")
-            except Exception as e:
-                _logger.warning(f"⚠️ Exception while terminating task {task_id} after timeout: {e}")
-
-            _logger.info(f"⏳ Waiting for task {task_id} to be fully terminated...")
-            terminate_poll_interval = 1
-            max_terminate_poll_attempts = 30
-            terminate_tried_time = 0
-            task_terminated_confirmed = False
-
-            while terminate_tried_time < max_terminate_poll_attempts:
-                try:
-                    status_query = await self.get_task_status(task_id)
-                    if not status_query.success:
-                        error_msg = status_query.error_message or ""
-                        if error_msg.startswith("Task not found or already finished"):
-                            _logger.info(f"✅ Task {task_id} confirmed terminated (not found or finished)")
-                            task_terminated_confirmed = True
-                            break
-                    await asyncio.sleep(terminate_poll_interval)
-                    terminate_tried_time += 1
-                except Exception as e:
-                    _logger.warning(f"⚠️ Exception while polling task status during termination: {e}")
-                    await asyncio.sleep(terminate_poll_interval)
-                    terminate_tried_time += 1
-
-            if not task_terminated_confirmed:
-                _logger.warning(f"⚠️ Timeout waiting for task {task_id} to be fully terminated")
-
-            timeout_error_msg = f"Task execution timed out after {timeout} seconds. Task ID: {task_id}. Polled {tried_time} times (max: {max_poll_attempts})."
-
-            # Build task_result with last query status information
-            task_result_parts = [f"Task execution timed out after {timeout} seconds."]
-
-            if last_query:
-                # Concatenate stream content from last query
-                if last_query.stream:
-                    stream_content_parts = []
-                    for stream_item in last_query.stream:
-                        if isinstance(stream_item, dict):
-                            content = stream_item.get("content", "")
-                            if content:
-                                stream_content_parts.append(content)
-
-                    if stream_content_parts:
-                        stream_content = "".join(stream_content_parts)
-                        task_result_parts.append(f"Last task status output: {stream_content}")
-
-                # Also add other status information if available
-                if last_query.task_action:
-                    task_result_parts.append(f"Last action: {last_query.task_action}")
-                if last_query.task_product:
-                    task_result_parts.append(f"Last result: {last_query.task_product}")
-                if last_query.error:
-                    task_result_parts.append(f"Last error: {last_query.error}")
-                if last_query.task_status:
-                    task_result_parts.append(f"Last status: {last_query.task_status}")
-
-            task_result = " | ".join(task_result_parts)
-
-            return ExecutionResult(
-                request_id=last_request_id,
-                success=False,
-                error_message=timeout_error_msg,
-                task_id=task_id,
-                task_status="failed",
-                task_result=task_result,
-            )
+            return await execution.wait(timeout=timeout)
 
         async def get_task_status(self, task_id: str) -> QueryResult:
             try:

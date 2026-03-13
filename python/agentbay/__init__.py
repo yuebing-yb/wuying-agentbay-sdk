@@ -105,6 +105,7 @@ from ._common.models.mobile import KeyCode, UIElementListResult
 from ._sync.mobile_simulate import MobileSimulateService
 from ._sync.agent import Agent
 from ._common.models.agent import AgentEvent, ExecutionResult
+from ._sync.agent import TaskExecution
 from ._sync.command import Command, CommandResult
 from ._sync.filesystem import (
     FileSystem,
@@ -297,6 +298,7 @@ __all__ = [
     "extract_request_id",
     "AgentEvent",
     "ExecutionResult",
+    "TaskExecution",
     "CommandResult",
     "CodeExecutionResult",
     "EnhancedCodeExecutionResult",

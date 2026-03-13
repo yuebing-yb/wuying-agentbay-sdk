@@ -91,6 +91,11 @@ class WsStreamHandle:
     async def wait_end(self) -> dict[str, Any]:
         return await asyncio.shield(self._pending.end_future)
 
+    async def wait_end_with_timeout(self, timeout: int) -> dict[str, Any]:
+        return await asyncio.wait_for(
+            asyncio.shield(self._pending.end_future), timeout=timeout
+        )
+
 
 class WsClient:
     """

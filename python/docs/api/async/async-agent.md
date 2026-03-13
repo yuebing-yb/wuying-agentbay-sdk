@@ -23,6 +23,52 @@ AsyncAgentEventCallback = Optional[Callable[[AgentEvent], Union[Awaitable[str],
                      ...
 ```
 
+## TaskExecution
+
+```python
+class TaskExecution()
+```
+
+Handle for a running task, returned by ``execute_task()``.
+
+If streaming callbacks were registered, events are dispatched in the
+background as soon as the WebSocket connection delivers them.  Call
+``wait()`` to block until the task completes and retrieve the final
+``ExecutionResult``.
+
+**Attributes**:
+
+    task_id: The identifier of the running task (empty when using
+  the WebSocket streaming path, since the task is managed
+  by the server stream).
+
+### __init__
+
+```python
+def __init__(self, task_id: str = "",
+             *,
+             _ws_handle: Optional[Any] = None,
+             _context: Optional[_StreamContext] = None,
+             _agent: Optional[Any] = None)
+```
+
+### wait
+
+```python
+async def wait(timeout: int = 300) -> ExecutionResult
+```
+
+Block until the task completes and return the final result.
+
+**Arguments**:
+
+    timeout: Maximum seconds to wait. Default 300.
+  
+
+**Returns**:
+
+  ExecutionResult with the task outcome.
+
 ## AsyncAgent
 
 ```python
@@ -197,29 +243,42 @@ def __init__(self, session: "AsyncSession")
 ### execute_task
 
 ```python
-async def execute_task(task: str, max_steps: int = 50) -> ExecutionResult
+async def execute_task(
+        task: str,
+        max_steps: int = 50,
+        on_reasoning: AgentEventCallback = None,
+        on_content: AgentEventCallback = None,
+        on_tool_call: AgentEventCallback = None,
+        on_tool_result: AgentEventCallback = None,
+        on_error: AgentEventCallback = None,
+        on_call_for_user: AsyncAgentEventCallback = None) -> TaskExecution
 ```
 
-Execute a task in human language without waiting for completion
-(non-blocking).
+Execute a task in human language (non-blocking).
 
-This is a fire-and-return interface that immediately provides a task ID.
-Call get_task_status to check the task status. You can control the timeout
-of the task execution in your own code by setting the frequency of calling
-get_task_status.
+Returns a ``TaskExecution`` handle immediately. Call
+``execution.wait(timeout)`` to block until the task completes.
+
+When any ``on_*`` callback is provided, a WebSocket connection is
+established and streaming events are dispatched in the background.
 
 **Arguments**:
 
     task: Task description in human language.
     max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
-  Used to prevent infinite loops or excessive resource consumption.
   Default is 50.
+    on_reasoning: Callback for reasoning events (LLM reasoning_content).
+    on_content: Callback for content events (LLM content output).
+    on_tool_call: Callback for tool_call events.
+    on_tool_result: Callback for tool_result events.
+    on_error: Callback for error events.
+    on_call_for_user: Callback for call_for_user events.
+  Returns the user's response string.
   
 
 **Returns**:
 
-    ExecutionResult: Result object containing success status, task ID,
-  task status, and error message if any.
+    TaskExecution: Handle for the running task.
   
 
 **Example**:
@@ -227,12 +286,20 @@ get_task_status.
 ```python
 session_result = await agent_bay.create()
 session = session_result.session
-result = await session.agent.mobile.execute_task(
-  "Open WeChat app", max_steps=100
+
+# Non-blocking with streaming callbacks
+execution = await session.agent.mobile.execute_task(
+  "Open WeChat app",
+  max_steps=100,
+  on_reasoning=lambda e: print(e.content, end="", flush=True),
 )
-print(f"Task ID: {result.task_id}, Status: {result.task_status}")
-status = await session.agent.mobile.get_task_status(result.task_id)
-print(f"Task status: {status.task_status}")
+result = await execution.wait(timeout=180)
+print(f"Task result: {result.task_result}")
+
+# Non-blocking without streaming (poll with wait)
+execution = await session.agent.mobile.execute_task("Open Settings")
+result = await execution.wait(timeout=60)
+
 await session.delete()
 ```
 
@@ -251,11 +318,9 @@ async def execute_task_and_wait(
         on_call_for_user: AsyncAgentEventCallback = None) -> ExecutionResult
 ```
 
-Execute a specific task described in human language synchronously.
+Execute a task and wait for completion (blocking convenience wrapper).
 
-This is a synchronous interface that blocks until the task is
-completed or an error occurs, or timeout happens. The default
-polling interval is 3 seconds.
+Equivalent to ``execute_task(...) + execution.wait(timeout)``.
 
 When any ``on_*`` callback is provided, the method uses the WebSocket
 streaming channel for real-time event delivery instead of HTTP polling.
@@ -264,19 +329,14 @@ streaming channel for real-time event delivery instead of HTTP polling.
 
     task: Task description in human language.
     timeout: Maximum time to wait for task completion in seconds.
-  Used to control how long to wait for task completion.
     max_steps: Maximum number of steps (clicks/swipes/etc.) allowed.
-  Used to prevent infinite loops or excessive resource consumption.
   Default is 50.
     on_reasoning: Callback for reasoning events (LLM reasoning_content).
     on_content: Callback for content events (LLM content output).
     on_tool_call: Callback for tool_call events.
-    on_tool_result: Callback for tool_result events. The ``result``
-  field carries an agent-defined structure that the SDK does
-  not parse. The final task outcome is delivered via the
-  ``ExecutionResult`` return value.
+    on_tool_result: Callback for tool_result events.
     on_error: Callback for error events.
-    on_call_for_user: Callback for call_for_user tool_call events.
+    on_call_for_user: Callback for call_for_user events.
   Returns the user's response string.
   
 
@@ -294,7 +354,8 @@ session = session_result.session
 result = await session.agent.mobile.execute_task_and_wait(
   "Open WeChat app and send a message",
   timeout=180,
-  max_steps=100
+  max_steps=100,
+  on_reasoning=lambda e: print(e.content, end="", flush=True),
 )
 print(f"Task result: {result.task_result}")
 await session.delete()

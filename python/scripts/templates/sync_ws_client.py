@@ -46,6 +46,10 @@ class WsStreamHandle:
         fut = asyncio.run_coroutine_threadsafe(self._handle.wait_end(), self._loop)
         return fut.result()
 
+    def wait_end_with_timeout(self, timeout: int) -> dict[str, Any]:
+        fut = asyncio.run_coroutine_threadsafe(self._handle.wait_end(), self._loop)
+        return fut.result(timeout=timeout)
+
 
 class WsClient:
     def __init__(

@@ -7,7 +7,6 @@ import time
 Tests the WS-based streaming execution path with real backend services.
 Uses debug image imgc-0ab5takhnmlvhx9gp for Mobile Agent.
 """
-import asyncio
 import os
 
 import pytest
@@ -51,10 +50,8 @@ def mobile_streaming_session(agent_bay):
 
     try:
         print(f"🧹 Cleaning up session: {session.session_id}")
-        asyncio.wait_for(session.delete(), timeout=10.0)
+        session.delete()
         print(f"✅ Session deleted: {session.session_id}")
-    except asyncio.TimeoutError:
-        logger.warning(f"Session deletion timed out: {session.session_id}")
     except Exception as e:
         logger.warning(f"Error deleting session: {e}")
 
@@ -112,10 +109,32 @@ def test_mobile_streaming_with_typed_callbacks(mobile_streaming_session):
     assert isinstance(result.task_status, str), "task_status should be a string"
 
 
+@pytest.fixture(scope="function")
+def mobile_streaming_session_2(agent_bay):
+    """Create a separate session for the second streaming test."""
+    time.sleep(3)
+    params = CreateSessionParams(
+        image_id="imgc-0ab5takhnmlvhx9gp",
+    )
+    session_result = agent_bay.create(params)
+    if not session_result.success or not session_result.session:
+        pytest.skip("Failed to create session")
+
+    session = session_result.session
+    print(f"\n✅ Session created (test 2): {session.session_id}")
+    yield session
+
+    try:
+        session.delete()
+        print(f"✅ Session deleted: {session.session_id}")
+    except Exception as e:
+        logger.warning(f"Error deleting session: {e}")
+
+
 @pytest.mark.sync
-def test_mobile_streaming_token_level(mobile_streaming_session):
+def test_mobile_streaming_token_level(mobile_streaming_session_2):
     """Test mobile agent streaming with typed callbacks for real-time output."""
-    agent = mobile_streaming_session.agent
+    agent = mobile_streaming_session_2.agent
     reasoning_chunks = []
     content_chunks = []
 
