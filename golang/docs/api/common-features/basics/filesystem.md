@@ -804,13 +804,8 @@ Parameters:
 Returns:
   - *sync.WaitGroup: WaitGroup that can be used to wait for monitoring to stop
   - <-chan struct{}: readyCh that is closed once the filesystem baseline has been established.
-    Wait on this channel before performing any file operations to avoid a race condition where
-    early changes are absorbed into the baseline.
-
-Behavior:
-
-- Continuously monitors directory for file changes at specified interval - Calls callback function
-asynchronously when changes detected - Stops monitoring when stopCh is closed
+    Wait on this channel before performing any file operations to avoid a race condition where early
+    changes are absorbed into the baseline.
 
 **Example:**
 
@@ -836,9 +831,7 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 ) (*sync.WaitGroup, <-chan struct{})
 ```
 
-WatchDirectoryWithDefaults watches a directory for file changes with default 500ms polling
-interval. Returns (*sync.WaitGroup, <-chan struct{}) - callers should wait on readyCh before
-performing file operations.
+WatchDirectoryWithDefaults watches a directory for file changes with default 500ms polling interval
 
 ### Write
 

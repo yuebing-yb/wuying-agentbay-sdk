@@ -14,12 +14,12 @@ describe("AgentBay List Status Integration Tests", () => {
 
     const endpoint = process.env.AGENTBAY_ENDPOINT;
     if (endpoint) {
-      agentBay = new AgentBay({ 
+      agentBay = new AgentBay({
         apiKey,
-        config: { 
+        config: {
           endpoint,
-          timeout_ms: 60000 
-        }
+          timeout_ms: 60000,
+        },
       });
       log(`Using endpoint: ${endpoint}`);
     } else {
@@ -40,7 +40,12 @@ describe("AgentBay List Status Integration Tests", () => {
               await session.betaResumeAsync();
               log(`  ✓ Resumed session: ${session.sessionId}`);
             }
-            if (result.status && !["DELETING", "DELETED", "RESUMING", "PAUSING"].includes(result.status)) {
+            if (
+              result.status &&
+              !["DELETING", "DELETED", "RESUMING", "PAUSING"].includes(
+                result.status
+              )
+            ) {
               const deleteResult = await agentBay.delete(session);
               if (deleteResult.success) {
                 log(`  ✓ Deleted session: ${session.sessionId}`);
@@ -50,7 +55,9 @@ describe("AgentBay List Status Integration Tests", () => {
             }
           }
         } catch (resumeError) {
-          log(`  ⚠ Could not resume session ${session.sessionId}: ${resumeError}`);
+          log(
+            `  ⚠ Could not resume session ${session.sessionId}: ${resumeError}`
+          );
         }
       } catch (e) {
         log(`  ✗ Error deleting session ${session.sessionId}: ${e}`);
@@ -61,14 +68,16 @@ describe("AgentBay List Status Integration Tests", () => {
   });
 
   const createTestSession = async (): Promise<Session> => {
-    const sessionName = `test-pause-resume-${Math.random().toString(36).substring(2, 10)}`;
+    const sessionName = `test-pause-resume-${Math.random()
+      .toString(36)
+      .substring(2, 10)}`;
     log(`\nCreating test session: ${sessionName}`);
 
     // Create session
     const params: CreateSessionParams = {
       labels: { project: "piaoyun-demo", environment: "testing" },
     };
-    
+
     const result = await agentBay.create(params);
     expect(result.success).toBe(true);
     expect(result.session).toBeDefined();
@@ -81,17 +90,17 @@ describe("AgentBay List Status Integration Tests", () => {
   };
 
   const verifySessionStatusAndList = async (
-    session: Session, 
-    expectedStatuses: string[], 
+    session: Session,
+    expectedStatuses: string[],
     operationName = "operation"
   ): Promise<string> => {
     log(`\nVerifying session status after ${operationName}...`);
-    
+
     // First call getStatus to check the current status
     const statusResult = await session.getStatus();
     expect(statusResult.success).toBe(true);
     expect(statusResult.status).toBeDefined();
-    
+
     const initialStatus = statusResult.status || "UNKNOWN";
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(expectedStatuses).toContain(initialStatus);
@@ -102,19 +111,22 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // GetSession is internal in SDK; use getStatus only.
     const currentStatus = initialStatus;
-    
+
     // Test list with current status
     const listResult = await agentBay.list({}, 1, 10, currentStatus);
     expect(listResult.success).toBe(true);
-    
+
     // Verify session is in the list and check array structure
     let sessionFound = false;
     for (const sessionData of listResult.sessionIds) {
-      if (typeof sessionData === 'object' && sessionData !== null) {
-        if ('sessionId' in sessionData && sessionData.sessionId === session.sessionId) {
+      if (typeof sessionData === "object" && sessionData !== null) {
+        if (
+          "sessionId" in sessionData &&
+          sessionData.sessionId === session.sessionId
+        ) {
           sessionFound = true;
-          expect(sessionData).toHaveProperty('sessionStatus');
-          expect(sessionData).toHaveProperty('sessionId');
+          expect(sessionData).toHaveProperty("sessionStatus");
+          expect(sessionData).toHaveProperty("sessionId");
           expect((sessionData as any).sessionStatus).toBe(currentStatus);
           break;
         }
@@ -123,11 +135,11 @@ describe("AgentBay List Status Integration Tests", () => {
         break;
       }
     }
-    
+
     expect(sessionFound).toBe(true);
     log(`  ✓ Session found in list with status ${currentStatus}`);
     log(`  ✓ Session status verification completed for ${operationName}`);
-    
+
     return currentStatus;
   };
 
@@ -143,7 +155,7 @@ describe("AgentBay List Status Integration Tests", () => {
     const statusResult = await session.getStatus();
     expect(statusResult.success).toBe(true);
     expect(statusResult.status).toBeDefined();
-    
+
     const initialStatus = statusResult.status || "UNKNOWN";
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(initialStatus).toBe("RUNNING");
@@ -159,7 +171,7 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // Wait a bit for pause to complete
     log(`\nStep 3: Waiting for session to pause...`);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Verify session status after pause
     await verifySessionStatusAndList(session, ["PAUSED", "PAUSING"], "pause");
@@ -181,13 +193,13 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // Wait for pause to complete
     log(`\nStep 2: Waiting for session to pause...`);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Session should be PAUSED or PAUSING after pause operation
     const statusResult = await session.getStatus();
     expect(statusResult.success).toBe(true);
     expect(statusResult.status).toBeDefined();
-    
+
     const initialStatus = statusResult.status || "UNKNOWN";
     log(`  ✓ Session status from getStatus: ${initialStatus}`);
     expect(["PAUSED", "PAUSING"]).toContain(initialStatus);
@@ -202,21 +214,25 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // Wait a bit for resume to complete
     log(`\nStep 4: Waiting for session to resume...`);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Verify session status after resume
-    await verifySessionStatusAndList(session, ["RUNNING", "RESUMING"], "resume");
+    await verifySessionStatusAndList(
+      session,
+      ["RUNNING", "RESUMING"],
+      "resume"
+    );
   }, 120000);
 
   test("should pause and delete session successfully", async () => {
     log("\n" + "=".repeat(60));
     log("TEST: Pause and Delete Session Success");
     log("=".repeat(60));
-    
+
     log(`\nStep 1: Creating test session...`);
     // Create a test session
     const session = await createTestSession();
-    
+
     // Pause the session
     log(`\nStep 2: Pausing session...`);
     const pauseResult = await session.betaPauseAsync();
@@ -228,14 +244,14 @@ describe("AgentBay List Status Integration Tests", () => {
 
     // Wait a bit for pause to complete
     log(`\nStep 3: Waiting for session to pause...`);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     log(`  ✓ Checking session status before resuming`);
     await session.betaResumeAsync();
     log(`  ✓ Session resumed`);
 
     log(`  ✓ Session status after pause checked`);
-    
+
     // Delete the session
     log(`\nStep 4: Deleting session...`);
     const deleteResult = await agentBay.delete(session);
@@ -244,7 +260,11 @@ describe("AgentBay List Status Integration Tests", () => {
     }
 
     // Verify session status after delete
-    await verifySessionStatusAndList(session, ["DELETING", "DELETED", "FINISH"], "delete");
+    await verifySessionStatusAndList(
+      session,
+      ["DELETING", "DELETED", "FINISH"],
+      "delete"
+    );
   }, 120000);
 
   test("should list sessions with status filter", async () => {
@@ -259,14 +279,20 @@ describe("AgentBay List Status Integration Tests", () => {
     log(`\nTesting list with RUNNING status filter...`);
     const runningListResult = await agentBay.list({}, 1, 10, "RUNNING");
     expect(runningListResult.success).toBe(true);
-    
+
     // Verify our session is in the RUNNING list
-    const runningSessionFound = runningListResult.sessionIds.some(sessionData => {
-      if (typeof sessionData === 'object' && sessionData !== null && 'sessionId' in sessionData) {
-        return (sessionData as any).sessionId === session.sessionId;
+    const runningSessionFound = runningListResult.sessionIds.some(
+      (sessionData) => {
+        if (
+          typeof sessionData === "object" &&
+          sessionData !== null &&
+          "sessionId" in sessionData
+        ) {
+          return (sessionData as any).sessionId === session.sessionId;
+        }
+        return false;
       }
-      return false;
-    });
+    );
     expect(runningSessionFound).toBe(true);
     log(`  ✓ Session found in RUNNING status list`);
 
@@ -282,7 +308,9 @@ describe("AgentBay List Status Integration Tests", () => {
     const allListResult = await agentBay.list();
     expect(allListResult.success).toBe(true);
     expect(allListResult.sessionIds.length).toBeGreaterThan(0);
-    log(`  ✓ List without filter returned ${allListResult.sessionIds.length} sessions`);
+    log(
+      `  ✓ List without filter returned ${allListResult.sessionIds.length} sessions`
+    );
   }, 60000);
 
   test("should handle pagination correctly", async () => {
@@ -298,7 +326,9 @@ describe("AgentBay List Status Integration Tests", () => {
     // Test invalid page number
     const invalidPageResult = await agentBay.list({}, 0, 5);
     expect(invalidPageResult.success).toBe(false);
-    expect(invalidPageResult.errorMessage).toContain("Page number must be >= 1");
+    expect(invalidPageResult.errorMessage).toContain(
+      "Page number must be >= 1"
+    );
     log(`  ✓ Invalid page number correctly rejected`);
   }, 30000);
 });

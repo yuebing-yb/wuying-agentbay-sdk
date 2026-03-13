@@ -63,12 +63,16 @@ FILE: README.md
 
 ---
 
-## 🔥 OpenClaw (formerly Clawdbot) Quick Deployment
+## 🔥 OpenClaw Quick Deployment
 
-You can use AgentBay SDK to spin up a prebuilt OpenClaw cloud desktop in minutes, then open the OpenClaw console inside the desktop browser.
+Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes with a turnkey web management UI.
 
-- **Cookbook**: `cookbook/openclaw/`
-- **OpenClaw console**: open `http://127.0.0.1:30120` inside the cloud desktop
+| Implementation | Stack | Get Started |
+|---------------|-------|-------------|
+| [Python](cookbook/openclaw/python/) | FastAPI + React | `pip install -r requirements.txt && python main.py` |
+| [Java](cookbook/openclaw/java/) | Spring Boot + React | `mvn clean compile && mvn spring-boot:run` |
+
+Both include Context persistence, external HTTPS access via `getLink`, and custom model configuration. Visit `http://localhost:8080` after launch.
 
 ## 📦 Installation
 
@@ -159,20 +163,8 @@ if (result.isSuccess()) {
 }
 
 // Clean up
-agentBay.delete(session, false);
-```
 
-
-
-## 🎯 Use Cases
-
-<table>
-<tr>
-<td width="50%" align="center" valign="top">
-  <img src="./assets/Browser Use@2x.png" width="460px" alt="Browser Use"/>
-  <h3>🌐 Browser Use</h3>
-
-... [truncated, 5,302 chars remaining] ...
+... [truncated, 5,516 chars remaining] ...
 
 ================================================
 FILE: docs/README.md
@@ -1230,7 +1222,7 @@ FILE: python/pyproject.toml
 ================================================
 [tool.poetry]
 name = "wuying-agentbay-sdk"
-version = "0.16.1"
+version = "0.17.0"
 description = "Python SDK for interacting with the Wuying AgentBay cloud runtime environment"
 readme = ["README.md", "CHANGELOG.md"]
 packages = [{include = "agentbay"}]
@@ -1425,7 +1417,7 @@ FILE: typescript/package.json
 ================================================
 {
     "name": "wuying-agentbay-sdk",
-    "version": "0.16.0",
+    "version": "0.17.0",
     "description": "TypeScript SDK for interacting with the Wuying AgentBay cloud runtime environment",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",

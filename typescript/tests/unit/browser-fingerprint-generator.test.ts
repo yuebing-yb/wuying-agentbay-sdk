@@ -1,57 +1,60 @@
-import { BrowserFingerprintGenerator, FingerprintFormat } from '../../src/browser/fingerprint';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as logger from '../../src/utils/logger';
+import {
+  BrowserFingerprintGenerator,
+  FingerprintFormat,
+} from "../../src/browser/fingerprint";
+import * as fs from "fs";
+import * as path from "path";
+import * as logger from "../../src/utils/logger";
 
 // Mock Playwright
-jest.mock('playwright', () => ({
+jest.mock("playwright", () => ({
   chromium: {
-    launch: jest.fn()
-  }
+    launch: jest.fn(),
+  },
 }));
 
 // Mock fs module
-jest.mock('fs', () => ({
+jest.mock("fs", () => ({
   writeFileSync: jest.fn(),
-  readFileSync: jest.fn()
+  readFileSync: jest.fn(),
 }));
 
 // Mock logger module
-jest.mock('../../src/utils/logger', () => ({
+jest.mock("../../src/utils/logger", () => ({
   logInfo: jest.fn(),
   logWarn: jest.fn(),
   logError: jest.fn(),
   logDebug: jest.fn(),
 }));
 
-describe('BrowserFingerprintGenerator Unit Tests', () => {
-  describe('Constructor', () => {
-  test('should create generator with default options', () => {
-    const generator = new BrowserFingerprintGenerator();
-      
-    expect(generator).toBeInstanceOf(BrowserFingerprintGenerator);
-    expect(generator).toBeDefined();
+describe("BrowserFingerprintGenerator Unit Tests", () => {
+  describe("Constructor", () => {
+    test("should create generator with default options", () => {
+      const generator = new BrowserFingerprintGenerator();
+
+      expect(generator).toBeInstanceOf(BrowserFingerprintGenerator);
+      expect(generator).toBeDefined();
     });
 
-  test('should create generator with custom options', () => {
-    const generator = new BrowserFingerprintGenerator({
+    test("should create generator with custom options", () => {
+      const generator = new BrowserFingerprintGenerator({
         headless: true,
-        useChromeChannel: false
+        useChromeChannel: false,
       });
-      
-    expect(generator).toBeInstanceOf(BrowserFingerprintGenerator);
+
+      expect(generator).toBeInstanceOf(BrowserFingerprintGenerator);
     });
 
-  test('should create generator with partial options', () => {
-    const generator = new BrowserFingerprintGenerator({
-        headless: true
+    test("should create generator with partial options", () => {
+      const generator = new BrowserFingerprintGenerator({
+        headless: true,
       });
-      
-    expect(generator).toBeInstanceOf(BrowserFingerprintGenerator);
+
+      expect(generator).toBeInstanceOf(BrowserFingerprintGenerator);
     });
   });
 
-  describe('generateFingerprint', () => {
+  describe("generateFingerprint", () => {
     let mockBrowser: any;
     let mockContext: any;
     let mockPage: any;
@@ -65,219 +68,249 @@ describe('BrowserFingerprintGenerator Unit Tests', () => {
         goto: jest.fn().mockResolvedValue(undefined),
         evaluate: jest.fn().mockResolvedValue({
           screen: { width: 1920, height: 1080 },
-          navigator: { userAgent: 'test-agent' },
-          videoCard: { renderer: 'test-renderer', vendor: 'test-vendor' }
-        })
+          navigator: { userAgent: "test-agent" },
+          videoCard: { renderer: "test-renderer", vendor: "test-vendor" },
+        }),
       };
 
       mockContext = {
-        newPage: jest.fn().mockResolvedValue(mockPage)
+        newPage: jest.fn().mockResolvedValue(mockPage),
       };
 
       mockBrowser = {
         newContext: jest.fn().mockResolvedValue(mockContext),
-        close: jest.fn().mockResolvedValue(undefined)
+        close: jest.fn().mockResolvedValue(undefined),
       };
 
-    const { chromium } = require('playwright');
+      const { chromium } = require("playwright");
       chromium.launch.mockResolvedValue(mockBrowser);
     });
 
-  test('should generate fingerprint successfully', async () => {
-    const generator = new BrowserFingerprintGenerator();
-      
-    const result = await generator.generateFingerprint();
-      
-    expect(result).toBeInstanceOf(FingerprintFormat);
-    expect(mockBrowser.close).toHaveBeenCalled();
+    test("should generate fingerprint successfully", async () => {
+      const generator = new BrowserFingerprintGenerator();
+
+      const result = await generator.generateFingerprint();
+
+      expect(result).toBeInstanceOf(FingerprintFormat);
+      expect(mockBrowser.close).toHaveBeenCalled();
     });
 
-  test('should generate fingerprint with headless mode', async () => {
-    const generator = new BrowserFingerprintGenerator({ headless: true });
-      
-    const result = await generator.generateFingerprint();
-      
-    expect(result).toBeInstanceOf(FingerprintFormat);
-    const { chromium } = require('playwright');
-    expect(chromium.launch).toHaveBeenCalled();
-    const callArgs = chromium.launch.mock.calls[0][0];
-    expect(callArgs.headless).toBe(true);
+    test("should generate fingerprint with headless mode", async () => {
+      const generator = new BrowserFingerprintGenerator({ headless: true });
+
+      const result = await generator.generateFingerprint();
+
+      expect(result).toBeInstanceOf(FingerprintFormat);
+      const { chromium } = require("playwright");
+      expect(chromium.launch).toHaveBeenCalled();
+      const callArgs = chromium.launch.mock.calls[0][0];
+      expect(callArgs.headless).toBe(true);
     });
 
-  test('should generate fingerprint without chrome channel', async () => {
-    const generator = new BrowserFingerprintGenerator({ useChromeChannel: false });
-      
-    const result = await generator.generateFingerprint();
-      
-    expect(result).toBeInstanceOf(FingerprintFormat);
-    const { chromium } = require('playwright');
-    const callArgs = chromium.launch.mock.calls[0][0];
-    expect(callArgs.channel).toBeUndefined();
+    test("should generate fingerprint without chrome channel", async () => {
+      const generator = new BrowserFingerprintGenerator({
+        useChromeChannel: false,
+      });
+
+      const result = await generator.generateFingerprint();
+
+      expect(result).toBeInstanceOf(FingerprintFormat);
+      const { chromium } = require("playwright");
+      const callArgs = chromium.launch.mock.calls[0][0];
+      expect(callArgs.channel).toBeUndefined();
     });
 
-  test('should handle browser launch error', async () => {
-    const { chromium } = require('playwright');
-      chromium.launch.mockRejectedValue(new Error('Browser launch failed'));
+    test("should handle browser launch error", async () => {
+      const { chromium } = require("playwright");
+      chromium.launch.mockRejectedValue(new Error("Browser launch failed"));
 
-    const generator = new BrowserFingerprintGenerator();
-    (logger.logError as jest.Mock).mockClear();
+      const generator = new BrowserFingerprintGenerator();
+      (logger.logError as jest.Mock).mockClear();
 
-    const result = await generator.generateFingerprint();
+      const result = await generator.generateFingerprint();
 
-    expect(result).toBeNull();
-    expect(logger.logError).toHaveBeenCalled();
-    const errorMessage = (logger.logError as jest.Mock).mock.calls[0][0];
-    expect(errorMessage).toContain('Error generating fingerprint');
+      expect(result).toBeNull();
+      expect(logger.logError).toHaveBeenCalled();
+      const errorMessage = (logger.logError as jest.Mock).mock.calls[0][0];
+      expect(errorMessage).toContain("Error generating fingerprint");
     });
 
-  test('should handle page evaluation error', async () => {
-      mockPage.evaluate.mockRejectedValue(new Error('Evaluation failed'));
+    test("should handle page evaluation error", async () => {
+      mockPage.evaluate.mockRejectedValue(new Error("Evaluation failed"));
 
-    const generator = new BrowserFingerprintGenerator();
-    (logger.logError as jest.Mock).mockClear();
+      const generator = new BrowserFingerprintGenerator();
+      (logger.logError as jest.Mock).mockClear();
 
-    const result = await generator.generateFingerprint();
+      const result = await generator.generateFingerprint();
 
-    expect(result).toBeNull();
-    expect(logger.logError).toHaveBeenCalled();
+      expect(result).toBeNull();
+      expect(logger.logError).toHaveBeenCalled();
     });
   });
 
-  describe('generateFingerprintToFile', () => {
+  describe("generateFingerprintToFile", () => {
     let generator: BrowserFingerprintGenerator;
     let mockFingerprintFormat: FingerprintFormat;
 
     beforeEach(() => {
       generator = new BrowserFingerprintGenerator();
-      
+
       // Mock FingerprintFormat
       mockFingerprintFormat = {
-        toJson: jest.fn().mockReturnValue('{"test": "data"}')
+        toJson: jest.fn().mockReturnValue('{"test": "data"}'),
       } as any;
 
       // Mock generateFingerprint method
-      jest.spyOn(generator, 'generateFingerprint').mockResolvedValue(mockFingerprintFormat);
-      
+      jest
+        .spyOn(generator, "generateFingerprint")
+        .mockResolvedValue(mockFingerprintFormat);
+
       // Mock fs
-    const fs = require('fs');
+      const fs = require("fs");
       fs.writeFileSync.mockImplementation(() => {});
     });
 
-  test('should generate fingerprint to file successfully', async () => {
-    const result = await generator.generateFingerprintToFile('test-output.json');
-      
-    expect(result).toBe(true);
-    expect(generator.generateFingerprint).toHaveBeenCalled();
-    expect(mockFingerprintFormat.toJson).toHaveBeenCalledWith(2);
-      
-    const fs = require('fs');
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-        'test-output.json',
+    test("should generate fingerprint to file successfully", async () => {
+      const result = await generator.generateFingerprintToFile(
+        "test-output.json"
+      );
+
+      expect(result).toBe(true);
+      expect(generator.generateFingerprint).toHaveBeenCalled();
+      expect(mockFingerprintFormat.toJson).toHaveBeenCalledWith(2);
+
+      const fs = require("fs");
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        "test-output.json",
         '{"test": "data"}',
-        'utf8'
+        "utf8"
       );
     });
 
-  test('should use default filename when not provided', async () => {
-    const result = await generator.generateFingerprintToFile();
-      
-    expect(result).toBe(true);
-      
-    const fs = require('fs');
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-        'fingerprint_output.json',
+    test("should use default filename when not provided", async () => {
+      const result = await generator.generateFingerprintToFile();
+
+      expect(result).toBe(true);
+
+      const fs = require("fs");
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        "fingerprint_output.json",
         '{"test": "data"}',
-        'utf8'
+        "utf8"
       );
     });
 
-  test('should handle fingerprint generation failure', async () => {
-      jest.spyOn(generator, 'generateFingerprint').mockResolvedValue(null);
-    (logger.logError as jest.Mock).mockClear();
+    test("should handle fingerprint generation failure", async () => {
+      jest.spyOn(generator, "generateFingerprint").mockResolvedValue(null);
+      (logger.logError as jest.Mock).mockClear();
 
-    const result = await generator.generateFingerprintToFile('test.json');
+      const result = await generator.generateFingerprintToFile("test.json");
 
-    expect(result).toBe(false);
-    expect(logger.logError).toHaveBeenCalledWith('Failed to generate fingerprint data');
+      expect(result).toBe(false);
+      expect(logger.logError).toHaveBeenCalledWith(
+        "Failed to generate fingerprint data"
+      );
     });
 
-  test('should handle file save error', async () => {
-    const fs = require('fs');
+    test("should handle file save error", async () => {
+      const fs = require("fs");
       fs.writeFileSync.mockImplementation(() => {
-        throw new Error('File write failed');
+        throw new Error("File write failed");
       });
 
-    (logger.logError as jest.Mock).mockClear();
+      (logger.logError as jest.Mock).mockClear();
 
-    const result = await generator.generateFingerprintToFile('test.json');
+      const result = await generator.generateFingerprintToFile("test.json");
 
-    expect(result).toBe(false);
-    expect(logger.logError).toHaveBeenCalled();
-    const errorMessage = (logger.logError as jest.Mock).mock.calls[0][0];
-    expect(errorMessage).toContain('Failed to save fingerprint data');
+      expect(result).toBe(false);
+      expect(logger.logError).toHaveBeenCalled();
+      const errorMessage = (logger.logError as jest.Mock).mock.calls[0][0];
+      expect(errorMessage).toContain("Failed to save fingerprint data");
     });
 
-  test('should handle browser environment (no fs)', async () => {
-    const browserGenerator = new BrowserFingerprintGenerator();
+    test("should handle browser environment (no fs)", async () => {
+      const browserGenerator = new BrowserFingerprintGenerator();
 
-    const mockFingerprintFormat = {
-        toJson: jest.fn().mockReturnValue('{"test": "data"}')
+      const mockFingerprintFormat = {
+        toJson: jest.fn().mockReturnValue('{"test": "data"}'),
       } as any;
-      jest.spyOn(browserGenerator, 'generateFingerprint').mockResolvedValue(mockFingerprintFormat);
+      jest
+        .spyOn(browserGenerator, "generateFingerprint")
+        .mockResolvedValue(mockFingerprintFormat);
 
-    (logger.logWarn as jest.Mock).mockClear();
-      (browserGenerator as any).saveToFile = jest.fn().mockImplementation(() => {
-        (logger.logWarn as jest.Mock)('File saving not supported in browser environment');
-        return Promise.resolve(false);
-      });
+      (logger.logWarn as jest.Mock).mockClear();
+      (browserGenerator as any).saveToFile = jest
+        .fn()
+        .mockImplementation(() => {
+          (logger.logWarn as jest.Mock)(
+            "File saving not supported in browser environment"
+          );
+          return Promise.resolve(false);
+        });
 
-    const result = await browserGenerator.generateFingerprintToFile('test.json');
+      const result = await browserGenerator.generateFingerprintToFile(
+        "test.json"
+      );
 
-    expect(result).toBe(false);
-    expect(logger.logWarn).toHaveBeenCalledWith('File saving not supported in browser environment');
+      expect(result).toBe(false);
+      expect(logger.logWarn).toHaveBeenCalledWith(
+        "File saving not supported in browser environment"
+      );
     });
   });
 
-  describe('Error Handling', () => {
-  test('should handle unexpected errors gracefully', async () => {
-    const generator = new BrowserFingerprintGenerator();
+  describe("Error Handling", () => {
+    test("should handle unexpected errors gracefully", async () => {
+      const generator = new BrowserFingerprintGenerator();
 
-      jest.spyOn(generator, 'generateFingerprint').mockImplementation(() => {
-        throw new Error('Unexpected error');
+      jest.spyOn(generator, "generateFingerprint").mockImplementation(() => {
+        throw new Error("Unexpected error");
       });
 
-    (logger.logError as jest.Mock).mockClear();
+      (logger.logError as jest.Mock).mockClear();
 
-    const result = await generator.generateFingerprintToFile();
+      const result = await generator.generateFingerprintToFile();
 
-    expect(result).toBe(false);
-    expect(logger.logError).toHaveBeenCalled();
+      expect(result).toBe(false);
+      expect(logger.logError).toHaveBeenCalled();
     });
 
-  test('should handle logging', async () => {
-    const generator = new BrowserFingerprintGenerator();
-    (logger.logInfo as jest.Mock).mockClear();
+    test("should handle logging", async () => {
+      const generator = new BrowserFingerprintGenerator();
+      (logger.logInfo as jest.Mock).mockClear();
 
-    const mockFingerprintFormat = {
-        toJson: jest.fn().mockReturnValue('{"test": "data"}')
+      const mockFingerprintFormat = {
+        toJson: jest.fn().mockReturnValue('{"test": "data"}'),
       } as any;
 
-      jest.spyOn(generator, 'generateFingerprint').mockResolvedValue(mockFingerprintFormat);
+      jest
+        .spyOn(generator, "generateFingerprint")
+        .mockResolvedValue(mockFingerprintFormat);
 
-    const fs = require('fs');
+      const fs = require("fs");
       fs.writeFileSync.mockImplementation(() => {});
 
-      await generator.generateFingerprintToFile('test.json');
+      await generator.generateFingerprintToFile("test.json");
 
-    expect(logger.logInfo).toHaveBeenCalled();
-    const logMessages = (logger.logInfo as jest.Mock).mock.calls.map((call: any[]) => call[0]);
-    expect(logMessages.some((msg: string) => msg.includes('Starting fingerprint generation'))).toBe(true);
-    expect(logMessages.some((msg: string) => msg.includes('Fingerprint generation completed successfully'))).toBe(true);
+      expect(logger.logInfo).toHaveBeenCalled();
+      const logMessages = (logger.logInfo as jest.Mock).mock.calls.map(
+        (call: any[]) => call[0]
+      );
+      expect(
+        logMessages.some((msg: string) =>
+          msg.includes("Starting fingerprint generation")
+        )
+      ).toBe(true);
+      expect(
+        logMessages.some((msg: string) =>
+          msg.includes("Fingerprint generation completed successfully")
+        )
+      ).toBe(true);
     });
   });
 });
 
-describe('FingerprintFormat Unit Tests', () => {
+describe("FingerprintFormat Unit Tests", () => {
   const sampleFingerprintData = {
     fingerprint: {
       screen: {
@@ -299,10 +332,11 @@ describe('FingerprintFormat Unit Tests', () => {
         outerHeight: 1345,
         colorDepth: 24,
         pixelDepth: 24,
-        devicePixelRatio: 2
+        devicePixelRatio: 2,
       },
       navigator: {
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+        userAgent:
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
         userAgentData: null,
         language: "zh-CN",
         languages: ["zh-CN"],
@@ -317,223 +351,237 @@ describe('FingerprintFormat Unit Tests', () => {
         doNotTrack: null,
         appCodeName: "Mozilla",
         appName: "Netscape",
-        appVersion: "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+        appVersion:
+          "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
         oscpu: null,
         extraProperties: {
           vendorFlavors: ["chrome"],
           isBluetoothSupported: true,
           globalPrivacyControl: null,
           pdfViewerEnabled: true,
-          installedApps: []
+          installedApps: [],
         },
-        webdriver: false
+        webdriver: false,
       },
       audioCodecs: {
         ogg: "probably",
         mp3: "probably",
         wav: "probably",
         m4a: "maybe",
-        aac: "probably"
+        aac: "probably",
       },
       videoCodecs: {
         ogg: "",
         h264: "probably",
-        webm: "probably"
+        webm: "probably",
       },
       pluginsData: {
         plugins: [],
-        mimeTypes: []
+        mimeTypes: [],
       },
       battery: {
         charging: true,
         chargingTime: 0,
         dischargingTime: null,
-        level: 1
+        level: 1,
       },
       videoCard: {
-        renderer: "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
-        vendor: "Google Inc. (Apple)"
+        renderer:
+          "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
+        vendor: "Google Inc. (Apple)",
       },
       multimediaDevices: {
         speakers: [],
         micros: [],
-        webcams: []
+        webcams: [],
       },
       fonts: ["Arial", "Helvetica", "Times New Roman"],
       mockWebRTC: false,
-      slim: false
+      slim: false,
     },
     headers: {
-      "sec-ch-ua": "\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"",
+      "sec-ch-ua":
+        '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
       "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": "\"macOS\"",
-      "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
-      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
-    }
+      "sec-ch-ua-platform": '"macOS"',
+      "user-agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    },
   };
 
-  test('should create FingerprintFormat from dictionary', () => {
+  test("should create FingerprintFormat from dictionary", () => {
     const fingerprintFormat = FingerprintFormat.fromDict(sampleFingerprintData);
-    
+
     expect(fingerprintFormat).toBeInstanceOf(FingerprintFormat);
     expect(fingerprintFormat.fingerprint).toBeDefined();
     expect(fingerprintFormat.headers).toBeDefined();
     expect(fingerprintFormat.fingerprint.screen.width).toBe(2560);
-    expect(fingerprintFormat.fingerprint.navigator.userAgent).toContain('Chrome/142.0.0.0');
-    expect(fingerprintFormat.headers['sec-ch-ua-platform']).toBe('"macOS"');
+    expect(fingerprintFormat.fingerprint.navigator.userAgent).toContain(
+      "Chrome/142.0.0.0"
+    );
+    expect(fingerprintFormat.headers["sec-ch-ua-platform"]).toBe('"macOS"');
   });
 
-  test('should create FingerprintFormat from JSON string', () => {
+  test("should create FingerprintFormat from JSON string", () => {
     const jsonString = JSON.stringify(sampleFingerprintData);
     const fingerprintFormat = FingerprintFormat.fromJson(jsonString);
-      
+
     expect(fingerprintFormat).toBeInstanceOf(FingerprintFormat);
     expect(fingerprintFormat.fingerprint.screen.height).toBe(1440);
-    expect(fingerprintFormat.fingerprint.navigator.platform).toBe('MacIntel');
-    });
+    expect(fingerprintFormat.fingerprint.navigator.platform).toBe("MacIntel");
+  });
 
-  test('should convert FingerprintFormat to JSON string', () => {
+  test("should convert FingerprintFormat to JSON string", () => {
     const fingerprintFormat = FingerprintFormat.fromDict(sampleFingerprintData);
     const jsonString = fingerprintFormat.toJson();
-      
-    expect(typeof jsonString).toBe('string');
+
+    expect(typeof jsonString).toBe("string");
     const parsedData = JSON.parse(jsonString);
     expect(parsedData.fingerprint).toBeDefined();
     expect(parsedData.headers).toBeDefined();
     expect(parsedData.fingerprint.screen.width).toBe(2560);
-    });
+  });
 
-  test('should convert FingerprintFormat to JSON string with custom indent', () => {
+  test("should convert FingerprintFormat to JSON string with custom indent", () => {
     const fingerprintFormat = FingerprintFormat.fromDict(sampleFingerprintData);
     const jsonString = fingerprintFormat.toJson(4);
-      
-    expect(typeof jsonString).toBe('string');
-    expect(jsonString).toContain('    '); // Should contain 4-space indentation
-    });
 
-  test('should load fingerprint from example file', () => {
-      // Mock the file system to return the example fingerprint data
+    expect(typeof jsonString).toBe("string");
+    expect(jsonString).toContain("    "); // Should contain 4-space indentation
+  });
+
+  test("should load fingerprint from example file", () => {
+    // Mock the file system to return the example fingerprint data
     const mockFs = fs as jest.Mocked<typeof fs>;
-    const examplePath = path.join(__dirname, '../../../resource/fingerprint.example.json');
-      mockFs.readFileSync.mockReturnValue(JSON.stringify(sampleFingerprintData));
-      
-      // Simulate loading from file
-    const fileContent = mockFs.readFileSync(examplePath, 'utf8');
+    const examplePath = path.join(
+      __dirname,
+      "../../../resource/fingerprint.example.json"
+    );
+    mockFs.readFileSync.mockReturnValue(JSON.stringify(sampleFingerprintData));
+
+    // Simulate loading from file
+    const fileContent = mockFs.readFileSync(examplePath, "utf8");
     const fingerprintFormat = FingerprintFormat.fromJson(fileContent);
-      
+
     expect(fingerprintFormat).toBeInstanceOf(FingerprintFormat);
     expect(fingerprintFormat.fingerprint.screen.width).toBe(2560);
     expect(fingerprintFormat.fingerprint.navigator.deviceMemory).toBe(8);
-    expect(fingerprintFormat.headers['sec-ch-ua-mobile']).toBe('?0');
-      
-      // Verify the file was read from the correct path
-    expect(mockFs.readFileSync).toHaveBeenCalledWith(examplePath, 'utf8');
-    });
+    expect(fingerprintFormat.headers["sec-ch-ua-mobile"]).toBe("?0");
 
-  test('should handle malformed JSON gracefully', () => {
+    // Verify the file was read from the correct path
+    expect(mockFs.readFileSync).toHaveBeenCalledWith(examplePath, "utf8");
+  });
+
+  test("should handle malformed JSON gracefully", () => {
     const malformedJson = '{"fingerprint": {"screen": invalid json}';
-      
-    expect(() => {
-        FingerprintFormat.fromJson(malformedJson);
-      }).toThrow();
-    });
 
-  test('should handle missing fingerprint data', () => {
+    expect(() => {
+      FingerprintFormat.fromJson(malformedJson);
+    }).toThrow();
+  });
+
+  test("should handle missing fingerprint data", () => {
     const incompleteData = {
-        headers: {
-          "user-agent": "test-agent"
-        }
-      };
-      
+      headers: {
+        "user-agent": "test-agent",
+      },
+    };
+
     const fingerprintFormat = FingerprintFormat.fromDict(incompleteData);
-      
+
     expect(fingerprintFormat).toBeInstanceOf(FingerprintFormat);
     expect(fingerprintFormat.headers).toBeDefined();
-    expect(fingerprintFormat.headers['user-agent']).toBe('test-agent');
-    });
+    expect(fingerprintFormat.headers["user-agent"]).toBe("test-agent");
+  });
 
-  test('should create FingerprintFormat using static create method', () => {
+  test("should create FingerprintFormat using static create method", () => {
     const screen = {
-        availTop: 0,
-        availLeft: 0,
-        pageXOffset: 0,
-        pageYOffset: 0,
-        screenX: 0,
-        hasHDR: false,
-        width: 1920,
-        height: 1080,
-        availWidth: 1920,
-        availHeight: 1080,
-        clientWidth: 1920,
-        clientHeight: 1080,
-        innerWidth: 1920,
-        innerHeight: 1080,
-        outerWidth: 1920,
-        outerHeight: 1080,
-        colorDepth: 24,
-        pixelDepth: 24,
-        devicePixelRatio: 1
-      };
+      availTop: 0,
+      availLeft: 0,
+      pageXOffset: 0,
+      pageYOffset: 0,
+      screenX: 0,
+      hasHDR: false,
+      width: 1920,
+      height: 1080,
+      availWidth: 1920,
+      availHeight: 1080,
+      clientWidth: 1920,
+      clientHeight: 1080,
+      innerWidth: 1920,
+      innerHeight: 1080,
+      outerWidth: 1920,
+      outerHeight: 1080,
+      colorDepth: 24,
+      pixelDepth: 24,
+      devicePixelRatio: 1,
+    };
 
     const navigator = {
-        userAgent: "Test User Agent",
-        userAgentData: {
-          brands: [{ brand: "Test Browser", version: "1.0" }],
-          mobile: false,
-          platform: "Win32",
-          architecture: "x86",
-          bitness: "64",
-          fullVersionList: [{ brand: "Test Browser", version: "1.0.0" }],
-          model: "",
-          platformVersion: "10.0",
-          uaFullVersion: "1.0.0"
-        },
-        language: "en-US",
-        languages: ["en-US"],
+      userAgent: "Test User Agent",
+      userAgentData: {
+        brands: [{ brand: "Test Browser", version: "1.0" }],
+        mobile: false,
         platform: "Win32",
-        deviceMemory: 4,
-        hardwareConcurrency: 4,
-        maxTouchPoints: 0,
-        product: "Gecko",
-        productSub: "20030107",
-        vendor: "Test Vendor",
-        vendorSub: "",
-        doNotTrack: "",
-        appCodeName: "Mozilla",
-        appName: "Netscape",
-        appVersion: "5.0 Test",
-        oscpu: "",
-        extraProperties: {
-          vendorFlavors: [],
-          isBluetoothSupported: false,
-          globalPrivacyControl: null,
-          pdfViewerEnabled: false,
-          installedApps: []
-        },
-        webdriver: ""
-      };
+        architecture: "x86",
+        bitness: "64",
+        fullVersionList: [{ brand: "Test Browser", version: "1.0.0" }],
+        model: "",
+        platformVersion: "10.0",
+        uaFullVersion: "1.0.0",
+      },
+      language: "en-US",
+      languages: ["en-US"],
+      platform: "Win32",
+      deviceMemory: 4,
+      hardwareConcurrency: 4,
+      maxTouchPoints: 0,
+      product: "Gecko",
+      productSub: "20030107",
+      vendor: "Test Vendor",
+      vendorSub: "",
+      doNotTrack: "",
+      appCodeName: "Mozilla",
+      appName: "Netscape",
+      appVersion: "5.0 Test",
+      oscpu: "",
+      extraProperties: {
+        vendorFlavors: [],
+        isBluetoothSupported: false,
+        globalPrivacyControl: null,
+        pdfViewerEnabled: false,
+        installedApps: [],
+      },
+      webdriver: "",
+    };
 
     const videoCard = {
-        renderer: "Test Renderer",
-        vendor: "Test Vendor"
-      };
+      renderer: "Test Renderer",
+      vendor: "Test Vendor",
+    };
 
     const headers = {
-        "user-agent": "Test User Agent",
-        "accept": "text/html"
-      };
+      "user-agent": "Test User Agent",
+      accept: "text/html",
+    };
 
     const fingerprintFormat = FingerprintFormat.create(
-        screen,
-        navigator,
-        videoCard,
-        headers
-      );
+      screen,
+      navigator,
+      videoCard,
+      headers
+    );
 
     expect(fingerprintFormat).toBeInstanceOf(FingerprintFormat);
     expect(fingerprintFormat.fingerprint.screen.width).toBe(1920);
-    expect(fingerprintFormat.fingerprint.navigator.userAgent).toBe("Test User Agent");
-    expect(fingerprintFormat.fingerprint.videoCard.renderer).toBe("Test Renderer");
-    expect(fingerprintFormat.headers['user-agent']).toBe("Test User Agent");
+    expect(fingerprintFormat.fingerprint.navigator.userAgent).toBe(
+      "Test User Agent"
+    );
+    expect(fingerprintFormat.fingerprint.videoCard.renderer).toBe(
+      "Test Renderer"
+    );
+    expect(fingerprintFormat.headers["user-agent"]).toBe("Test User Agent");
   });
 });

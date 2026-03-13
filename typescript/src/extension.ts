@@ -5,7 +5,11 @@ import fetch from "node-fetch";
 import { AgentBay } from "./agent-bay";
 import { ContextService, Context } from "./context";
 import { AgentBayError } from "./exceptions";
-import { OperationResult, ContextFileListResult, FileUrlResult } from "./types/api-response";
+import {
+  OperationResult,
+  ContextFileListResult,
+  FileUrlResult,
+} from "./types/api-response";
 import { log, logError, logInfo, logDebug } from "./utils/logger";
 
 // ==============================================================================
@@ -54,7 +58,7 @@ export class Extension {
 
 /**
  * Configuration options for browser extension integration.
- * 
+ *
  * This class encapsulates the necessary parameters for setting up
  * browser extension synchronization and context management.
  */
@@ -71,12 +75,12 @@ export class ExtensionOption {
 
   /**
    * Initialize ExtensionOption with context and extension configuration.
-   * 
+   *
    * @param contextId - ID of the extension context for browser extensions.
    *                   This should match the context where extensions are stored.
    * @param extensionIds - List of extension IDs to be loaded in the browser session.
    *                      Each ID should correspond to a valid extension in the context.
-   * 
+   *
    * @throws {Error} If contextId is empty or extensionIds is empty.
    */
   constructor(contextId: string, extensionIds: string[]) {
@@ -96,7 +100,9 @@ export class ExtensionOption {
    * String representation of ExtensionOption.
    */
   toString(): string {
-    return `ExtensionOption(contextId='${this.contextId}', extensionIds=${JSON.stringify(this.extensionIds)})`;
+    return `ExtensionOption(contextId='${
+      this.contextId
+    }', extensionIds=${JSON.stringify(this.extensionIds)})`;
   }
 
   /**
@@ -108,7 +114,7 @@ export class ExtensionOption {
 
   /**
    * Validate the extension option configuration.
-   * 
+   *
    * @returns True if configuration is valid, false otherwise.
    */
   validate(): boolean {
@@ -125,7 +131,7 @@ export class ExtensionOption {
 
       // Check that all extension IDs are non-empty strings
       for (const extId of this.extensionIds) {
-        if (typeof extId !== 'string' || !extId.trim()) {
+        if (typeof extId !== "string" || !extId.trim()) {
           return false;
         }
       }
@@ -144,29 +150,29 @@ export class ExtensionOption {
 /**
  * Provides methods to manage user browser extensions.
  * This service integrates with the existing context functionality for file operations.
- * 
+ *
  * **Usage** (Simplified - Auto-detection):
  * ```typescript
  * // Service automatically detects if context exists and creates if needed
  * const extensionsService = new ExtensionsService(agentBay, "browser_extensions");
- * 
+ *
  * // Or use with empty contextId to auto-generate context name
  * const extensionsService = new ExtensionsService(agentBay);  // Uses default generated name
- * 
+ *
  * // Use the service immediately - initialization happens automatically
  * const extension = await extensionsService.create("/path/to/plugin.zip");
  * ```
- * 
+ *
  * **Integration with ExtensionOption (Simplified)**:
  * ```typescript
  * // Create extensions and configure for browser sessions
  * const extensionsService = new ExtensionsService(agentBay, "my_extensions");
  * const ext1 = await extensionsService.create("/path/to/ext1.zip");
  * const ext2 = await extensionsService.create("/path/to/ext2.zip");
- * 
+ *
  * // Create extension option for browser integration (no contextId needed!)
  * const extOption = extensionsService.createExtensionOption([ext1.id, ext2.id]);
- * 
+ *
  * // Use with BrowserContext for session creation
  * const browserContext = new BrowserContext({
  *   contextId: "browser_session",
@@ -174,7 +180,7 @@ export class ExtensionOption {
  *   extensionOption: extOption  // All extension config encapsulated
  * });
  * ```
- * 
+ *
  * **Context Management**:
  * - If contextId provided and exists: Uses the existing context
  * - If contextId provided but doesn't exist: Creates context with provided name
@@ -198,7 +204,7 @@ export class ExtensionsService {
    * @param contextId - The context ID or name. If empty or not provided,
    *                   a default context name will be generated automatically.
    *                   If the context doesn't exist, it will be automatically created.
-   *                   
+   *
    * Note:
    *   The service automatically detects if the context exists. If not,
    *   it creates a new context with the provided name or a generated default name.
@@ -211,7 +217,7 @@ export class ExtensionsService {
     if (!agentBay.context) {
       throw new AgentBayError("AgentBay instance must have a context service");
     }
-    
+
     this.agentBay = agentBay;
     this.contextService = agentBay.context;
     this.autoCreated = true;
@@ -223,7 +229,7 @@ export class ExtensionsService {
     }
 
     this.contextName = contextId;
-    
+
     // Initialize context lazily - will be set on first method call
     this._initializationPromise = this._initializeContext();
   }
@@ -235,15 +241,24 @@ export class ExtensionsService {
   private async _initializeContext(): Promise<void> {
     try {
       // Context doesn't exist, create it
-      const contextResult = await this.contextService.get(this.contextName, true);
+      const contextResult = await this.contextService.get(
+        this.contextName,
+        true
+      );
       if (!contextResult.success || !contextResult.context) {
-        throw new AgentBayError(`Failed to create extension repository context: ${this.contextName}`);
+        throw new AgentBayError(
+          `Failed to create extension repository context: ${this.contextName}`
+        );
       }
 
       this.extensionContext = contextResult.context;
       this.contextId = this.extensionContext.id;
     } catch (error) {
-      throw new AgentBayError(`Failed to initialize ExtensionsService: ${error instanceof Error ? error.message : String(error)}`);
+      throw new AgentBayError(
+        `Failed to initialize ExtensionsService: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -263,15 +278,23 @@ export class ExtensionsService {
    *
    * @param localPath - The path to the local file.
    * @param remotePath - The path of the file in context storage.
-   * 
+   *
    * @throws {AgentBayError} If getting the credential or uploading fails.
    */
-  private async _uploadToCloud(localPath: string, remotePath: string): Promise<void> {
+  private async _uploadToCloud(
+    localPath: string,
+    remotePath: string
+  ): Promise<void> {
     try {
       // 1. Get upload URL using context service
-      const urlResult = await this.contextService.getFileUploadUrl(this.contextId, remotePath);
+      const urlResult = await this.contextService.getFileUploadUrl(
+        this.contextId,
+        remotePath
+      );
       if (!urlResult.success || !urlResult.url) {
-        throw new AgentBayError(`Failed to get upload URL: ${urlResult.url || 'No URL returned'}`);
+        throw new AgentBayError(
+          `Failed to get upload URL: ${urlResult.url || "No URL returned"}`
+        );
       }
 
       const preSignedUrl = urlResult.url;
@@ -279,41 +302,51 @@ export class ExtensionsService {
       // 2. Use the presigned URL to upload the file directly
       // Using async file reading for better performance with large files
       const fileBuffer = await fs.promises.readFile(localPath);
-      
+
       const response = await fetch(preSignedUrl, {
-        method: 'PUT',
+        method: "PUT",
         body: fileBuffer,
       });
 
       // Check response status and handle errors appropriately
       if (!response.ok) {
-        throw new AgentBayError(`HTTP error uploading file: ${response.status} ${response.statusText}`);
+        throw new AgentBayError(
+          `HTTP error uploading file: ${response.status} ${response.statusText}`
+        );
       }
     } catch (error) {
       // Provide more specific error handling based on error types
       if (error instanceof AgentBayError) {
         throw error;
       }
-      
+
       // Handle filesystem errors specifically
-     if (error instanceof Error && 'code' in error) {
+      if (error instanceof Error && "code" in error) {
         const errorCode = (error as FileSystemError).code;
-        if (errorCode === 'ENOENT') {
+        if (errorCode === "ENOENT") {
           throw new AgentBayError(`File not found: ${localPath}`);
-        } else if (errorCode === 'EACCES') {
-          throw new AgentBayError(`Permission denied accessing file: ${localPath}`);
+        } else if (errorCode === "EACCES") {
+          throw new AgentBayError(
+            `Permission denied accessing file: ${localPath}`
+          );
         } else {
           throw new AgentBayError(`File system error: ${error.message}`);
         }
       }
-      
+
       // Handle network/HTTP errors
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new AgentBayError(`Network error during file upload: ${error.message}`);
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        throw new AgentBayError(
+          `Network error during file upload: ${error.message}`
+        );
       }
-      
+
       // Generic error handler
-      throw new AgentBayError(`An error occurred while uploading the file: ${error instanceof Error ? error.message : String(error)}`);
+      throw new AgentBayError(
+        `An error occurred while uploading the file: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -336,7 +369,7 @@ export class ExtensionsService {
    */
   async list(): Promise<Extension[]> {
     await this._ensureInitialized();
-    
+
     try {
       // Use context service to list files in the extensions directory
       const fileListResult = await this.contextService.listFiles(
@@ -347,25 +380,33 @@ export class ExtensionsService {
       );
 
       if (!fileListResult.success) {
-        throw new AgentBayError("Failed to list extensions: Context file listing failed.");
+        throw new AgentBayError(
+          "Failed to list extensions: Context file listing failed."
+        );
       }
 
       const extensions: Extension[] = [];
       for (const fileEntry of fileListResult.entries) {
         // Extract the extension ID from the file name
         const extensionId = fileEntry.fileName || fileEntry.filePath;
-        extensions.push(new Extension(
-          extensionId,
-          fileEntry.fileName || extensionId,
-          fileEntry.gmtCreate
-        ));
+        extensions.push(
+          new Extension(
+            extensionId,
+            fileEntry.fileName || extensionId,
+            fileEntry.gmtCreate
+          )
+        );
       }
       return extensions;
     } catch (error) {
       if (error instanceof AgentBayError) {
         throw error;
       }
-      throw new AgentBayError(`An error occurred while listing browser extensions: ${error instanceof Error ? error.message : String(error)}`);
+      throw new AgentBayError(
+        `An error occurred while listing browser extensions: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -389,7 +430,7 @@ export class ExtensionsService {
    */
   async create(localPath: string): Promise<Extension> {
     await this._ensureInitialized();
-    
+
     if (!fs.existsSync(localPath)) {
       throw new Error(`The specified local file was not found: ${localPath}`);
     }
@@ -397,11 +438,15 @@ export class ExtensionsService {
     // Determine the ID and cloud path before uploading
     // Validate file type - only ZIP format is supported
     const fileExtension = path.extname(localPath).toLowerCase();
-    if (fileExtension !== '.zip') {
-      throw new Error(`Unsupported plugin format '${fileExtension}'. Only ZIP format (.zip) is supported.`);
+    if (fileExtension !== ".zip") {
+      throw new Error(
+        `Unsupported plugin format '${fileExtension}'. Only ZIP format (.zip) is supported.`
+      );
     }
 
-    const extensionId = `ext_${crypto.randomBytes(16).toString('hex')}${fileExtension}`;
+    const extensionId = `ext_${crypto
+      .randomBytes(16)
+      .toString("hex")}${fileExtension}`;
     const extensionName = path.basename(localPath);
     const remotePath = `${EXTENSIONS_BASE_PATH}/${extensionId}`;
 
@@ -434,17 +479,23 @@ export class ExtensionsService {
    */
   async update(extensionId: string, newLocalPath: string): Promise<Extension> {
     await this._ensureInitialized();
-    
+
     if (!fs.existsSync(newLocalPath)) {
-      throw new Error(`The specified new local file was not found: ${newLocalPath}`);
+      throw new Error(
+        `The specified new local file was not found: ${newLocalPath}`
+      );
     }
 
     // Validate that the extension exists by checking the file list
     const existingExtensions = await this.list();
-    const extensionExists = existingExtensions.some(ext => ext.id === extensionId);
-    
+    const extensionExists = existingExtensions.some(
+      (ext) => ext.id === extensionId
+    );
+
     if (!extensionExists) {
-      throw new Error(`Browser extension with ID '${extensionId}' not found in the context. Cannot update.`);
+      throw new Error(
+        `Browser extension with ID '${extensionId}' not found in the context. Cannot update.`
+      );
     }
 
     const remotePath = `${EXTENSIONS_BASE_PATH}/${extensionId}`;
@@ -457,18 +508,23 @@ export class ExtensionsService {
 
   /**
    * Gets detailed information about a specific browser extension.
-   * 
+   *
    * @param extensionId - The ID of the extension to get info for.
    * @returns Promise that resolves to an Extension object if found, undefined otherwise.
    */
-  private async _getExtensionInfo(extensionId: string): Promise<Extension | undefined> {
+  private async _getExtensionInfo(
+    extensionId: string
+  ): Promise<Extension | undefined> {
     await this._ensureInitialized();
-    
+
     try {
       const extensions = await this.list();
-      return extensions.find(ext => ext.id === extensionId);
+      return extensions.find((ext) => ext.id === extensionId);
     } catch (error) {
-      logError(`An error occurred while getting extension info for '${extensionId}':`, error);
+      logError(
+        `An error occurred while getting extension info for '${extensionId}':`,
+        error
+      );
       return undefined;
     }
   }
@@ -493,19 +549,26 @@ export class ExtensionsService {
    */
   async cleanup(): Promise<boolean> {
     await this._ensureInitialized();
-    
+
     if (!this.autoCreated) {
       // Context was not auto-created by this service, no cleanup needed
       return true;
     }
 
     try {
-      const deleteResult = await this.contextService.delete(this.extensionContext);
+      const deleteResult = await this.contextService.delete(
+        this.extensionContext
+      );
       if (deleteResult) {
-        logInfo(`Extension context deleted: ${this.contextName} (ID: ${this.contextId})`);
+        logInfo(
+          `Extension context deleted: ${this.contextName} (ID: ${this.contextId})`
+        );
         return true;
       } else {
-        logError(`Warning: Failed to delete extension context: ${this.contextName}`, new Error('Delete operation returned false'));
+        logError(
+          `Warning: Failed to delete extension context: ${this.contextName}`,
+          new Error("Delete operation returned false")
+        );
         return false;
       }
     } catch (error) {
@@ -532,40 +595,46 @@ export class ExtensionsService {
    */
   async delete(extensionId: string): Promise<boolean> {
     await this._ensureInitialized();
-    
+
     const remotePath = `${EXTENSIONS_BASE_PATH}/${extensionId}`;
     try {
       // Use context service to delete the file
-      const deleteResult = await this.contextService.deleteFile(this.contextId, remotePath);
+      const deleteResult = await this.contextService.deleteFile(
+        this.contextId,
+        remotePath
+      );
 
       return deleteResult.success;
     } catch (error) {
-      logError(`An error occurred while deleting browser extension '${extensionId}':`, error);
+      logError(
+        `An error occurred while deleting browser extension '${extensionId}':`,
+        error
+      );
       return false;
     }
   }
 
   /**
    * Create an ExtensionOption for the current context with specified extension IDs.
-   * 
+   *
    * This is a convenience method that creates an ExtensionOption using the current
    * service's contextId and the provided extension IDs. This option can then be
    * used with BrowserContext for browser session creation.
-   * 
+   *
    * @param extensionIds - List of extension IDs to include in the option.
    *                      These should be extensions that exist in the current context.
    * @returns ExtensionOption configuration object for browser extension integration.
    * @throws {Error} If extensionIds is empty or invalid.
-   * 
+   *
    * @example
    * ```typescript
    * // Create extensions
    * const ext1 = await extensionsService.create("/path/to/ext1.zip");
    * const ext2 = await extensionsService.create("/path/to/ext2.zip");
-   * 
+   *
    * // Create extension option for browser integration
    * const extOption = extensionsService.createExtensionOption([ext1.id, ext2.id]);
-   * 
+   *
    * // Use with BrowserContext
    * const browserContext = new BrowserContext({
    *   contextId: "browser_session",
@@ -579,12 +648,11 @@ export class ExtensionsService {
     // Note: This method is synchronous like in Python, but contextId might not be available yet
     // In practice, this should be called after the service has been used at least once
     if (!this.contextId) {
-      throw new Error("Service not initialized. Please call an async method first or ensure context is created.");
+      throw new Error(
+        "Service not initialized. Please call an async method first or ensure context is created."
+      );
     }
-    
-    return new ExtensionOption(
-      this.contextId,
-      extensionIds
-    );
+
+    return new ExtensionOption(this.contextId, extensionIds);
   }
 }

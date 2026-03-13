@@ -12,7 +12,9 @@ describe("runCode WS streaming (beta) Integration Test", () => {
   beforeAll(async () => {
     const apiKey = process.env.AGENTBAY_API_KEY;
     if (!apiKey) {
-      log("AGENTBAY_API_KEY is not set; skipping WS streaming integration test");
+      log(
+        "AGENTBAY_API_KEY is not set; skipping WS streaming integration test"
+      );
       return;
     }
 
@@ -91,4 +93,3 @@ describe("runCode WS streaming (beta) Integration Test", () => {
     expect((twoT as number) - (helloT as number)).toBeGreaterThanOrEqual(800);
   }, 60000);
 });
-

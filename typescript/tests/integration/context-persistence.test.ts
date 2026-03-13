@@ -1,4 +1,10 @@
-import { AgentBay, Session, Context, newContextSync, CreateSessionParams } from "../../src";
+import {
+  AgentBay,
+  Session,
+  Context,
+  newContextSync,
+  CreateSessionParams,
+} from "../../src";
 import { getTestApiKey, randomString } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
 
@@ -30,36 +36,43 @@ async function retryFileVerification(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       log(`File verification attempt ${attempt}/${maxRetries}`);
-      
+
       // First check if file exists
       const checkCmd = `ls -la ${filePath} 2>&1 || echo 'File does not exist'`;
       const checkResponse = await session.command?.executeCommand(checkCmd);
-      log(`File existence check (attempt ${attempt}): ${checkResponse?.output}`);
-      
+      log(
+        `File existence check (attempt ${attempt}): ${checkResponse?.output}`
+      );
+
       // Try to read the file
       const readCmd = `cat ${filePath} 2>&1 || echo 'File read failed'`;
       const readResponse = await session.command?.executeCommand(readCmd);
       log(`File content (attempt ${attempt}): ${readResponse?.output}`);
-      
-      if (readResponse?.output && readResponse.output.includes(expectedContent)) {
+
+      if (
+        readResponse?.output &&
+        readResponse.output.includes(expectedContent)
+      ) {
         return { success: true, output: readResponse.output };
       }
-      
+
       // If not the last attempt, wait before retrying
       if (attempt < maxRetries) {
         const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
-        log(`File not found or content mismatch. Waiting ${delayMs}ms before retry...`);
+        log(
+          `File not found or content mismatch. Waiting ${delayMs}ms before retry...`
+        );
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     } catch (error) {
       log(`File verification attempt ${attempt} failed: ${error}`);
       if (attempt === maxRetries) {
-        return { success: false, output: '', error: String(error) };
+        return { success: false, output: "", error: String(error) };
       }
     }
   }
-  
-  return { success: false, output: '', error: 'Max retries exceeded' };
+
+  return { success: false, output: "", error: "Max retries exceeded" };
 }
 
 describe("Context Persistence Integration", () => {
@@ -157,7 +170,7 @@ describe("Context Persistence Integration", () => {
       const contextSync = newContextSync(testContextId, "/home/wuying");
       const params: CreateSessionParams = {
         imageId: "linux_latest",
-        contextSync: [contextSync]
+        contextSync: [contextSync],
       };
 
       const createSession1Response = await agentBay.create(params);
@@ -253,7 +266,7 @@ describe("Context Persistence Integration", () => {
       const contextSync = newContextSync(testContextId, "/home/wuying");
       const params: CreateSessionParams = {
         imageId: "linux_latest",
-        contextSync: [contextSync]
+        contextSync: [contextSync],
       };
       const createSession2Response = await agentBay.create(params);
       if (!createSession2Response.session) {
@@ -271,7 +284,7 @@ describe("Context Persistence Integration", () => {
       if (!session2) {
         throw new Error("Session2 is not initialized");
       }
-      
+
       const verificationResult = await retryFileVerification(
         session2,
         testFilePath,
@@ -282,7 +295,11 @@ describe("Context Persistence Integration", () => {
 
       if (!verificationResult.success) {
         throw new Error(
-          `File persistence test failed after retries: ${verificationResult.error || 'File not found or content mismatch'}. Expected content: '${testFileContent}', got: '${verificationResult.output}'`
+          `File persistence test failed after retries: ${
+            verificationResult.error || "File not found or content mismatch"
+          }. Expected content: '${testFileContent}', got: '${
+            verificationResult.output
+          }'`
         );
       }
 
@@ -290,18 +307,20 @@ describe("Context Persistence Integration", () => {
     } catch (error) {
       // If the test fails, try to provide more debugging information
       log(`Test failed with error: ${error}`);
-      
+
       // Try to get more context information
       if (session2) {
         try {
           const contextInfoCmd = `pwd && whoami && ls -la ~/`;
-          const contextInfoResponse = await session2.command?.executeCommand(contextInfoCmd);
+          const contextInfoResponse = await session2.command?.executeCommand(
+            contextInfoCmd
+          );
           log(`Context info (Session 2): ${contextInfoResponse?.output}`);
         } catch (debugError) {
           log(`Failed to get debug info: ${debugError}`);
         }
       }
-      
+
       throw error;
     } finally {
       if (session2) {
@@ -349,7 +368,7 @@ describe("Context Persistence Integration", () => {
         const contextSync = newContextSync(testContextId, "/home/wuying");
         const params: CreateSessionParams = {
           imageId: "linux_latest",
-          contextSync: [contextSync]
+          contextSync: [contextSync],
         };
         const createSession1Response = await agentBay.create(params);
         session1 = createSession1Response.session!;
@@ -405,7 +424,7 @@ describe("Context Persistence Integration", () => {
         const contextSync = newContextSync(secondContext.id, "/home/wuying");
         const params: CreateSessionParams = {
           imageId: "linux_latest",
-          contextSync: [contextSync]
+          contextSync: [contextSync],
         };
         const createSession3Response = await agentBay.create(params);
         session3 = createSession3Response.session!;

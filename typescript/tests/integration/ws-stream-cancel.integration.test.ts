@@ -10,7 +10,9 @@ describe("WS stream cancel Integration Test", () => {
   beforeAll(async () => {
     const apiKey = process.env.AGENTBAY_API_KEY;
     if (!apiKey) {
-      log("AGENTBAY_API_KEY is not set; skipping WS stream cancel integration test");
+      log(
+        "AGENTBAY_API_KEY is not set; skipping WS stream cancel integration test"
+      );
       return;
     }
 
@@ -94,4 +96,3 @@ describe("WS stream cancel Integration Test", () => {
     expect(events.length).toBeGreaterThanOrEqual(0);
   });
 });
-

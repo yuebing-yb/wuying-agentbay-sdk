@@ -15,7 +15,9 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
 
   beforeAll(() => {
     if (!apiKey || process.env.CI) {
-      console.log("Skipping integration test: No API key available or running in CI");
+      console.log(
+        "Skipping integration test: No API key available or running in CI"
+      );
       return;
     }
     agentBay = new AgentBay({ apiKey });
@@ -40,10 +42,13 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
       const windowsPath = "c:\\Users\\Administrator\\Downloads";
       const linuxPath = "/home/wuying/下载";
       const testFileName = "cross-platform-test.txt";
-      const testContent = "This file was created in Windows session and should be accessible in Linux session";
+      const testContent =
+        "This file was created in Windows session and should be accessible in Linux session";
 
       // ========== Phase 1: Create Windows session and persist data ==========
-      console.log("========== Phase 1: Windows Session - Create and Persist Data ==========");
+      console.log(
+        "========== Phase 1: Windows Session - Create and Persist Data =========="
+      );
 
       // Create sync policy for Windows session (no mapping policy needed for first session)
       const windowsSyncPolicy: SyncPolicy = {
@@ -54,11 +59,15 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
       };
 
       // Create Windows session with context sync
-      const windowsContextSync = new ContextSync(context.id, windowsPath, windowsSyncPolicy);
+      const windowsContextSync = new ContextSync(
+        context.id,
+        windowsPath,
+        windowsSyncPolicy
+      );
       const windowsSessionParams: CreateSessionParams = {
         contextSync: [windowsContextSync],
         imageId: "windows_latest",
-        labels: { test: "mapping-policy-windows" }
+        labels: { test: "mapping-policy-windows" },
       };
 
       // Create Windows session
@@ -74,20 +83,26 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
 
       // Create directory in Windows session
       console.log(`Creating directory in Windows: ${windowsPath}`);
-      const windowsDirResult = await windowsSession.fileSystem.createDirectory(windowsPath);
+      const windowsDirResult = await windowsSession.fileSystem.createDirectory(
+        windowsPath
+      );
       expect(windowsDirResult.requestId).toBeDefined();
 
       // Create test file in Windows session
       const testFilePath = `${windowsPath}\\${testFileName}`;
       console.log(`Creating test file in Windows: ${testFilePath}`);
       const createFileCmd = `echo ${testContent} > "${testFilePath}"`;
-      const windowsCmdResult = await windowsSession.command.executeCommand(createFileCmd);
+      const windowsCmdResult = await windowsSession.command.executeCommand(
+        createFileCmd
+      );
       expect(windowsCmdResult.output).toBeDefined();
       console.log(`Windows file creation result: ${windowsCmdResult}`);
 
       // Verify file exists in Windows session
       const verifyFileCmd = `type "${testFilePath}"`;
-      const verifyResult = await windowsSession.command.executeCommand(verifyFileCmd);
+      const verifyResult = await windowsSession.command.executeCommand(
+        verifyFileCmd
+      );
       expect(verifyResult.output).toBeDefined();
       console.log(`Windows file content: ${verifyResult.output}`);
       expect(verifyResult.output).toContain(testContent);
@@ -96,7 +111,9 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
       console.log("Syncing Windows session to upload data...");
       const windowsSyncResult = await windowsSession.context.sync();
       expect(windowsSyncResult.success).toBe(true);
-      console.log(`Windows context sync successful (RequestID: ${windowsSyncResult.requestId})`);
+      console.log(
+        `Windows context sync successful (RequestID: ${windowsSyncResult.requestId})`
+      );
 
       // Wait for upload to complete
       console.log("Waiting for upload to complete...");
@@ -110,7 +127,9 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
       );
 
       // ========== Phase 2: Create Linux session with MappingPolicy and verify data ==========
-      console.log("========== Phase 2: Linux Session - Access Data via MappingPolicy ==========");
+      console.log(
+        "========== Phase 2: Linux Session - Access Data via MappingPolicy =========="
+      );
 
       // Create mapping policy with Windows path
       const mappingPolicy: MappingPolicy = {
@@ -127,11 +146,15 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
       };
 
       // Create Linux session with context sync and mapping policy
-      const linuxContextSync = new ContextSync(context.id, linuxPath, linuxSyncPolicy);
+      const linuxContextSync = new ContextSync(
+        context.id,
+        linuxPath,
+        linuxSyncPolicy
+      );
       const linuxSessionParams: CreateSessionParams = {
         contextSync: [linuxContextSync],
         imageId: "linux_latest",
-        labels: { test: "mapping-policy-linux" }
+        labels: { test: "mapping-policy-linux" },
       };
 
       // Create Linux session
@@ -145,7 +168,9 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
 
       try {
         // Wait for Linux session to be ready and data to be downloaded
-        console.log("Waiting for Linux session to be ready and data to be downloaded...");
+        console.log(
+          "Waiting for Linux session to be ready and data to be downloaded..."
+        );
         await new Promise((resolve) => setTimeout(resolve, 15000));
 
         // Verify file exists in Linux session at the mapped path
@@ -154,7 +179,9 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
 
         // Check if file exists
         const checkFileCmd = `test -f "${linuxTestFilePath}" && echo "FILE_EXISTS" || echo "FILE_NOT_FOUND"`;
-        const checkResult = await linuxSession.command.executeCommand(checkFileCmd);
+        const checkResult = await linuxSession.command.executeCommand(
+          checkFileCmd
+        );
         expect(checkResult).toBeDefined();
         console.log(`Linux file check result: ${checkResult.output}`);
 
@@ -163,20 +190,26 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
 
         // Read file content in Linux session
         const readFileCmd = `cat "${linuxTestFilePath}"`;
-        const readResult = await linuxSession.command.executeCommand(readFileCmd);
+        const readResult = await linuxSession.command.executeCommand(
+          readFileCmd
+        );
         expect(readResult).toBeDefined();
         console.log(`Linux file content: ${readResult.output}`);
 
         // Verify file content matches
         expect(
-          readResult.output.includes(testContent) || readResult.output.includes(testContent.trim())
+          readResult.output.includes(testContent) ||
+            readResult.output.includes(testContent.trim())
         ).toBe(true);
 
         // Verify context info
         const contextInfo = await linuxSession.context.info();
         expect(contextInfo.requestId).toBeDefined();
 
-        if (contextInfo.contextStatusData && contextInfo.contextStatusData.length > 0) {
+        if (
+          contextInfo.contextStatusData &&
+          contextInfo.contextStatusData.length > 0
+        ) {
           console.log("Context status data in Linux session:");
           contextInfo.contextStatusData.forEach((data: any, i: number) => {
             console.log(`Context Status Data [${i}]:`);
@@ -195,8 +228,12 @@ describe("Context Sync with MappingPolicy Integration Tests", () => {
           }
         }
 
-        console.log("========== Cross-platform mapping policy test completed successfully ==========");
-        console.log("✓ Data created in Windows session was successfully accessed in Linux session via MappingPolicy");
+        console.log(
+          "========== Cross-platform mapping policy test completed successfully =========="
+        );
+        console.log(
+          "✓ Data created in Windows session was successfully accessed in Linux session via MappingPolicy"
+        );
       } finally {
         // Ensure Linux session is deleted
         const deleteResult = await agentBay.delete(linuxSession, true);

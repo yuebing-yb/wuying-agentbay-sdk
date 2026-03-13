@@ -131,7 +131,7 @@ describe("TestContextPagination", () => {
       // Create custom params
       const params: ContextListParams = {
         maxResults: 5,
-        nextToken: "page-token"
+        nextToken: "page-token",
       };
 
       // Call the method with custom params
@@ -185,7 +185,7 @@ describe("TestContextPagination", () => {
 
       // Create partial params (only maxResults)
       const params: ContextListParams = {
-        maxResults: 20
+        maxResults: 20,
       };
 
       // Call the method with partial params

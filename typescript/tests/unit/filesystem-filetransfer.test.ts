@@ -1,4 +1,8 @@
-import { FileTransfer, UploadResult, DownloadResult } from "../../src/filesystem/file-transfer";
+import {
+  FileTransfer,
+  UploadResult,
+  DownloadResult,
+} from "../../src/filesystem/file-transfer";
 import { AgentBay } from "../../src/agent-bay";
 import { Session } from "../../src/session";
 import * as fs from "fs";
@@ -14,7 +18,7 @@ describe("FileTransferResultClasses", () => {
         httpStatus: 200,
         etag: "etag_789",
         bytesSent: 1024,
-        path: "/remote/file.txt"
+        path: "/remote/file.txt",
       };
 
       expect(result.success).toBe(true);
@@ -32,7 +36,7 @@ describe("FileTransferResultClasses", () => {
         success: false,
         bytesSent: 0,
         path: "/remote/file.txt",
-        error: "Test error message"
+        error: "Test error message",
       };
 
       expect(result.success).toBe(false);
@@ -49,7 +53,7 @@ describe("FileTransferResultClasses", () => {
         httpStatus: 200,
         bytesReceived: 2048,
         path: "/remote/file.txt",
-        localPath: "/local/file.txt"
+        localPath: "/local/file.txt",
       };
 
       expect(result.success).toBe(true);
@@ -68,7 +72,7 @@ describe("FileTransferResultClasses", () => {
         bytesReceived: 0,
         path: "/remote/file.txt",
         localPath: "/local/file.txt",
-        error: "Test error message"
+        error: "Test error message",
       };
 
       expect(result.success).toBe(false);
@@ -89,17 +93,17 @@ describe("FileTransfer", () => {
 
     mockContextService = {
       getFileUploadUrl: sandbox.stub(),
-      getFileDownloadUrl: sandbox.stub()
+      getFileDownloadUrl: sandbox.stub(),
     };
 
     mockAgentBay = {
-      context: mockContextService
+      context: mockContextService,
     };
 
     mockSession = {
       context: {
         sync: sandbox.stub(),
-        info: sandbox.stub()
+        info: sandbox.stub(),
       },
     };
 
@@ -118,7 +122,12 @@ describe("FileTransfer", () => {
     });
 
     it("should initialize with custom parameters", () => {
-      const customFileTransfer = new FileTransfer(mockAgentBay, mockSession, 120.0, false);
+      const customFileTransfer = new FileTransfer(
+        mockAgentBay,
+        mockSession,
+        120.0,
+        false
+      );
       expect((customFileTransfer as any).httpTimeout).toBe(120.0);
       expect((customFileTransfer as any).followRedirects).toBe(false);
     });
@@ -132,7 +141,10 @@ describe("FileTransfer", () => {
       });
 
       // Use a non-existent path so the method short-circuits before needing a contextId
-      const result = await fileTransferWithoutContext.upload("/probably/nonexistent/file.txt", "/remote/file.txt");
+      const result = await fileTransferWithoutContext.upload(
+        "/probably/nonexistent/file.txt",
+        "/remote/file.txt"
+      );
 
       // The result will be "Local file not found" because that check happens first
       expect(result.success).toBe(false);
@@ -152,7 +164,10 @@ describe("FileTransfer", () => {
         .stub(fileTransferWithoutContext as any, "ensureContextId")
         .resolves([false, "No context ID"]);
 
-      const result = await fileTransferWithoutContext.download("/remote/file.txt", "/local/file.txt");
+      const result = await fileTransferWithoutContext.download(
+        "/remote/file.txt",
+        "/local/file.txt"
+      );
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("No context ID");
@@ -176,8 +191,8 @@ describe("FileSystemFileTransfer", () => {
       getSessionId: sandbox.stub().returns("dummy_session"),
       callMcpTool: sandbox.stub(),
       agentBay: {
-        context: {}
-      }
+        context: {},
+      },
     };
 
     // Dynamically import FileSystem since it's not exported directly

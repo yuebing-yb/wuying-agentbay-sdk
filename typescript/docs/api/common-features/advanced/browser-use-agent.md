@@ -35,7 +35,7 @@ ___
 
 ### toolPrefix
 
-• `Protected` **toolPrefix**: `string` = `'browser_use'`
+• `Protected` **toolPrefix**: `string` = `"browser_use"`
 
 #### Overrides
 

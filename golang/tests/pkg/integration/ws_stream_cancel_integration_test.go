@@ -107,4 +107,3 @@ func TestWsStreamCancelE2E(t *testing.T) {
 		t.Fatalf("expected onError WsCancelledError, got %T: %v", errors[0], errors[0])
 	}
 }
-

@@ -16,7 +16,7 @@ describe("MCP Tool AutoGenSession Integration", () => {
     beforeAll(async () => {
       // Create a session
       log("Creating session for MCP tool call test...");
-      const result = await agentBay.create({imageId: "linux_latest"});
+      const result = await agentBay.create({ imageId: "linux_latest" });
       expect(result.success).toBe(true);
       expect(result.session).toBeDefined();
       session = result.session;
@@ -57,7 +57,7 @@ describe("MCP Tool AutoGenSession Integration", () => {
     beforeAll(async () => {
       // Create a session
       log("Creating session for deletion test...");
-      const result = await agentBay.create({imageId: "linux_latest"});
+      const result = await agentBay.create({ imageId: "linux_latest" });
       expect(result.success).toBe(true);
       expect(result.session).toBeDefined();
       session = result.session;
@@ -68,10 +68,12 @@ describe("MCP Tool AutoGenSession Integration", () => {
       log("Deleting session...");
       const deleteResult = await session.delete();
       expect(deleteResult.success).toBe(true);
-      log(`Session deleted successfully (RequestID: ${deleteResult.requestId})`);
+      log(
+        `Session deleted successfully (RequestID: ${deleteResult.requestId})`
+      );
 
       // Wait for deletion to complete
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify session is deleted
       const listResult = await agentBay.list();
@@ -102,7 +104,7 @@ describe("MCP Tool AutoGenSession Integration", () => {
     beforeAll(async () => {
       // Create a session
       log("Creating session for auto-gen test...");
-      const result = await agentBay.create({imageId: "linux_latest"});
+      const result = await agentBay.create({ imageId: "linux_latest" });
       expect(result.success).toBe(true);
       expect(result.session).toBeDefined();
       session = result.session;
@@ -113,10 +115,12 @@ describe("MCP Tool AutoGenSession Integration", () => {
       log("Deleting session...");
       const deleteResult = await session.delete();
       expect(deleteResult.success).toBe(true);
-      log(`Session deleted successfully (RequestID: ${deleteResult.requestId})`);
+      log(
+        `Session deleted successfully (RequestID: ${deleteResult.requestId})`
+      );
 
       // Wait for deletion to complete
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Verify session is deleted
       const listResult = await agentBay.list();
@@ -135,11 +139,12 @@ describe("MCP Tool AutoGenSession Integration", () => {
       // The behavior depends on the server implementation
       // If auto_gen_session is supported, it may succeed by creating a new session
       // If not supported, it should fail
-      log(`MCP tool call result: success=${toolResult.success}, error=${toolResult.errorMessage}`);
+      log(
+        `MCP tool call result: success=${toolResult.success}, error=${toolResult.errorMessage}`
+      );
       // We don't assert success/failure here as it depends on server support
       // Just verify we got a response
       expect(toolResult).toBeDefined();
     });
   });
 });
-

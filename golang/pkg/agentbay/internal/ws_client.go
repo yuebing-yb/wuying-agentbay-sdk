@@ -178,7 +178,7 @@ func (c *WsClient) SendMessage(target string, data map[string]interface{}) error
 	}
 
 	invocationID := newInvocationID()
-	
+
 	c.mu.Lock()
 	conn := c.conn
 	c.mu.Unlock()
@@ -195,7 +195,7 @@ func (c *WsClient) SendMessage(target string, data map[string]interface{}) error
 	}
 
 	c.logFrame(">>", payload)
-	
+
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)

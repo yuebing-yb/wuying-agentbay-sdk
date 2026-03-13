@@ -172,4 +172,3 @@ describe("GetCdpLink and GetAdbLink API", () => {
     });
   });
 });
-

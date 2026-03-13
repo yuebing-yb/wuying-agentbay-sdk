@@ -56,5 +56,3 @@ func TestSessionGetMetrics(t *testing.T) {
 		t.Fatalf("unexpected timestamp: empty")
 	}
 }
-
-

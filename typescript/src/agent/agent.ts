@@ -1,6 +1,6 @@
-import { BrowserOption } from 'src/browser';
-import { ApiResponse } from '../types/api-response';
-import { logWarn, logDebug, logInfo } from '../utils/logger';
+import { BrowserOption } from "src/browser";
+import { ApiResponse } from "../types/api-response";
+import { logWarn, logDebug, logInfo } from "../utils/logger";
 import { z, ZodTypeAny } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
@@ -22,10 +22,13 @@ export interface QueryResult extends ApiResponse {
   taskStatus: string;
   taskAction: string;
   taskProduct: string;
-  stream?: Array<{content?: string; reasoning?: string; timestamp_ms?: number}>;
+  stream?: Array<{
+    content?: string;
+    reasoning?: string;
+    timestamp_ms?: number;
+  }>;
   error?: string;
 }
-
 
 /**
  * Result of an MCP tool call.
@@ -69,9 +72,9 @@ abstract class BaseTaskAgent {
    */
   protected getToolName(action: string): string {
     const toolMap: Record<string, string> = {
-      execute: 'execute_task',
-      get_status: 'get_task_status',
-      terminate: 'terminate_task',
+      execute: "execute_task",
+      get_status: "get_task_status",
+      terminate: "terminate_task",
     };
     const baseName = toolMap[action] || action;
     if (this.toolPrefix) {
@@ -83,21 +86,23 @@ abstract class BaseTaskAgent {
   /**
    * Execute a specific task described in human language.
    */
-  async executeTask(task: string):
-      Promise<ExecutionResult> {
+  async executeTask(task: string): Promise<ExecutionResult> {
     try {
-      const args = {task};
+      const args = { task };
       const result = await this.session.callMcpTool(
-          this.getToolName('execute'), args, false);
+        this.getToolName("execute"),
+        args,
+        false
+      );
 
       if (!result.success) {
         return {
           requestId: result.requestId,
           success: false,
           errorMessage: result.errorMessage,
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Task Failed',
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Task Failed",
         };
       }
 
@@ -110,42 +115,42 @@ abstract class BaseTaskAgent {
           requestId: result.requestId,
           success: false,
           errorMessage: `Failed to parse response: ${err}`,
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Invalid execution response.',
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Invalid execution response.",
         };
       }
 
-      const taskId = content.task_id || '';
+      const taskId = content.task_id || "";
       if (!taskId) {
         // 从后端返回的content中提取error信息
-        const errorMessage = content.error || 'Task ID not found in response';
+        const errorMessage = content.error || "Task ID not found in response";
         return {
           requestId: result.requestId,
           success: false,
           errorMessage: errorMessage,
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Invalid task ID.',
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Invalid task ID.",
         };
       }
 
       return {
         requestId: result.requestId,
         success: true,
-        errorMessage: '',
+        errorMessage: "",
         taskId: taskId,
-        taskStatus: 'running',
-        taskResult: '',
+        taskStatus: "running",
+        taskResult: "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to execute: ${error}`,
-        taskStatus: 'failed',
-        taskId: '',
-        taskResult: 'Task Failed',
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "Task Failed",
       };
     }
   }
@@ -155,8 +160,10 @@ abstract class BaseTaskAgent {
    * This is a synchronous interface that blocks until the task is completed or
    * an error occurs, or timeout happens. The default polling interval is 3 seconds.
    */
-  async executeTaskAndWait(task: string, timeout: number):
-      Promise<ExecutionResult> {
+  async executeTaskAndWait(
+    task: string,
+    timeout: number
+  ): Promise<ExecutionResult> {
     const result = await this.executeTask(task);
     if (!result.success) {
       return result;
@@ -165,106 +172,118 @@ abstract class BaseTaskAgent {
     const taskId = result.taskId;
     const pollInterval = 3;
     const maxPollAttempts = Math.floor(timeout / pollInterval);
-      let triedTime = 0;
+    let triedTime = 0;
 
     while (triedTime < maxPollAttempts) {
-        const query = await this.getTaskStatus(taskId);
-        if (!query.success) {
+      const query = await this.getTaskStatus(taskId);
+      if (!query.success) {
+        return {
+          requestId: query.requestId,
+          success: false,
+          errorMessage: query.errorMessage,
+          taskStatus: "failed",
+          taskId: taskId,
+          taskResult: "",
+        };
+      }
+
+      switch (query.taskStatus) {
+        case "finished":
+          return {
+            requestId: query.requestId,
+            success: true,
+            errorMessage: "",
+            taskId: taskId,
+            taskStatus: "finished",
+            taskResult: query.taskProduct,
+          };
+        case "failed":
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.errorMessage,
-            taskStatus: 'failed',
+            errorMessage: query.errorMessage || "Failed to execute task.",
             taskId: taskId,
-            taskResult: '',
+            taskStatus: "failed",
+            taskResult: "",
           };
-        }
+        case "unsupported":
+          return {
+            requestId: query.requestId,
+            success: false,
+            errorMessage: query.errorMessage || "Unsupported task.",
+            taskId: taskId,
+            taskStatus: "unsupported",
+            taskResult: "",
+          };
+      }
 
-        switch (query.taskStatus) {
-          case 'finished':
-            return {
-              requestId: query.requestId,
-              success: true,
-              errorMessage: '',
-              taskId: taskId,
-              taskStatus: 'finished',
-              taskResult: query.taskProduct,
-            };
-          case 'failed':
-            return {
-              requestId: query.requestId,
-              success: false,
-              errorMessage: query.errorMessage || 'Failed to execute task.',
-              taskId: taskId,
-              taskStatus: 'failed',
-              taskResult: '',
-            };
-          case 'unsupported':
-            return {
-              requestId: query.requestId,
-              success: false,
-              errorMessage: query.errorMessage || 'Unsupported task.',
-              taskId: taskId,
-              taskStatus: 'unsupported',
-              taskResult: '',
-            };
-        }
-
-        logDebug(`Task ${taskId} is still running, please wait for a while.`);
+      logDebug(`Task ${taskId} is still running, please wait for a while.`);
       await new Promise((resolve) => setTimeout(resolve, pollInterval * 1000));
-        triedTime++;
-      }
+      triedTime++;
+    }
 
+    try {
+      const terminateResult = await this.terminateTask(taskId);
+      if (terminateResult.success) {
+        logDebug(`✅ Terminate request sent for task ${taskId} after timeout`);
+      } else {
+        logDebug(
+          `⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`
+        );
+      }
+    } catch (e) {
+      logDebug(
+        `⚠️ Exception while terminating task ${taskId} after timeout: ${e}`
+      );
+    }
+
+    logDebug(`⏳ Waiting for task ${taskId} to be fully terminated...`);
+    const terminatePollInterval = 1;
+    const maxTerminatePollAttempts = 30;
+    let terminateTriedTime = 0;
+    let taskTerminatedConfirmed = false;
+
+    while (terminateTriedTime < maxTerminatePollAttempts) {
       try {
-        const terminateResult = await this.terminateTask(taskId);
-        if (terminateResult.success) {
-          logDebug(`✅ Terminate request sent for task ${taskId} after timeout`);
-        } else {
-          logDebug(`⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`);
-        }
-      } catch (e) {
-        logDebug(`⚠️ Exception while terminating task ${taskId} after timeout: ${e}`);
-      }
-      
-      logDebug(`⏳ Waiting for task ${taskId} to be fully terminated...`);
-      const terminatePollInterval = 1;
-      const maxTerminatePollAttempts = 30;
-      let terminateTriedTime = 0;
-      let taskTerminatedConfirmed = false;
-      
-      while (terminateTriedTime < maxTerminatePollAttempts) {
-        try {
-          const statusQuery = await this.getTaskStatus(taskId);
-          if (!statusQuery.success) {
-            const errorMsg = statusQuery.errorMessage || '';
-            if (errorMsg.startsWith('Task not found or already finished')) {
-              logDebug(`✅ Task ${taskId} confirmed terminated (not found or finished)`);
-              taskTerminatedConfirmed = true;
-              break;
-            }
+        const statusQuery = await this.getTaskStatus(taskId);
+        if (!statusQuery.success) {
+          const errorMsg = statusQuery.errorMessage || "";
+          if (errorMsg.startsWith("Task not found or already finished")) {
+            logDebug(
+              `✅ Task ${taskId} confirmed terminated (not found or finished)`
+            );
+            taskTerminatedConfirmed = true;
+            break;
           }
-          await new Promise((resolve) => setTimeout(resolve, terminatePollInterval * 1000));
-          terminateTriedTime++;
-        } catch (e) {
-          logDebug(`⚠️ Exception while polling task status during termination: ${e}`);
-          await new Promise((resolve) => setTimeout(resolve, terminatePollInterval * 1000));
-          terminateTriedTime++;
         }
+        await new Promise((resolve) =>
+          setTimeout(resolve, terminatePollInterval * 1000)
+        );
+        terminateTriedTime++;
+      } catch (e) {
+        logDebug(
+          `⚠️ Exception while polling task status during termination: ${e}`
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, terminatePollInterval * 1000)
+        );
+        terminateTriedTime++;
       }
-      
-      if (!taskTerminatedConfirmed) {
-        logDebug(`⚠️ Timeout waiting for task ${taskId} to be fully terminated`);
-      }
+    }
 
-      const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
-      return {
-        requestId: result.requestId,
-        success: false,
-        errorMessage: timeoutErrorMsg,
-        taskStatus: 'timeout',
-        taskId: taskId,
-        taskResult: `Task execution timed out after ${timeout} seconds.`,
-      };
+    if (!taskTerminatedConfirmed) {
+      logDebug(`⚠️ Timeout waiting for task ${taskId} to be fully terminated`);
+    }
+
+    const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
+    return {
+      requestId: result.requestId,
+      success: false,
+      errorMessage: timeoutErrorMsg,
+      taskStatus: "timeout",
+      taskId: taskId,
+      taskResult: `Task execution timed out after ${timeout} seconds.`,
+    };
   }
 
   /**
@@ -272,9 +291,12 @@ abstract class BaseTaskAgent {
    */
   async getTaskStatus(taskId: string): Promise<QueryResult> {
     try {
-      const args = {task_id: taskId};
+      const args = { task_id: taskId };
       const result = await this.session.callMcpTool(
-          this.getToolName('get_status'), args, false);
+        this.getToolName("get_status"),
+        args,
+        false
+      );
 
       if (!result.success) {
         return {
@@ -282,9 +304,9 @@ abstract class BaseTaskAgent {
           success: false,
           errorMessage: result.errorMessage,
           taskId: taskId,
-          taskAction: '',
-          taskProduct: '',
-          taskStatus: 'failed',
+          taskAction: "",
+          taskProduct: "",
+          taskStatus: "failed",
         };
       }
       let queryResult: Record<string, any>;
@@ -293,11 +315,11 @@ abstract class BaseTaskAgent {
         return {
           requestId: result.requestId,
           success: true,
-          errorMessage: '',
+          errorMessage: "",
           taskId: queryResult.task_id || taskId,
-          taskAction: queryResult.action || '',
-          taskProduct: queryResult.product || '',
-          taskStatus: queryResult.status || 'finised',
+          taskAction: queryResult.action || "",
+          taskProduct: queryResult.product || "",
+          taskStatus: queryResult.status || "finised",
         };
       } catch (error) {
         return {
@@ -305,20 +327,20 @@ abstract class BaseTaskAgent {
           success: false,
           errorMessage: `Failed to get task status: ${error}`,
           taskId: taskId,
-          taskAction: '',
-          taskProduct: '',
-          taskStatus: 'failed',
+          taskAction: "",
+          taskProduct: "",
+          taskStatus: "failed",
         };
       }
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to get task status: ${error}`,
         taskId: taskId,
-        taskAction: '',
-        taskProduct: '',
-        taskStatus: 'failed',
+        taskAction: "",
+        taskProduct: "",
+        taskStatus: "failed",
       };
     }
   }
@@ -327,12 +349,15 @@ abstract class BaseTaskAgent {
    * Terminate a task with a specified task ID.
    */
   async terminateTask(taskId: string): Promise<ExecutionResult> {
-    logDebug('Terminating task');
+    logDebug("Terminating task");
 
     try {
-      const args = {task_id: taskId};
+      const args = { task_id: taskId };
       const result = await this.session.callMcpTool(
-          this.getToolName('terminate'), args, false);
+        this.getToolName("terminate"),
+        args,
+        false
+      );
 
       let content: Record<string, any>;
       try {
@@ -343,22 +368,22 @@ abstract class BaseTaskAgent {
           success: false,
           errorMessage: `Failed to parse response: ${err}`,
           taskId,
-          taskStatus: 'failed',
-          taskResult: '',
+          taskStatus: "failed",
+          taskResult: "",
         };
       }
 
       const terminatedTaskId = content.task_id || taskId;
-      const status = content.status || 'finised';
+      const status = content.status || "finised";
 
       if (result.success) {
         return {
           requestId: result.requestId,
           success: true,
-          errorMessage: '',
+          errorMessage: "",
           taskId: terminatedTaskId,
           taskStatus: status,
-          taskResult: '',
+          taskResult: "",
         };
       }
 
@@ -368,16 +393,16 @@ abstract class BaseTaskAgent {
         errorMessage: result.errorMessage,
         taskId: terminatedTaskId,
         taskStatus: status,
-        taskResult: '',
+        taskResult: "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to terminate: ${error}`,
         taskId,
-        taskStatus: 'failed',
-        taskResult: '',
+        taskStatus: "failed",
+        taskResult: "",
       };
     }
   }
@@ -387,22 +412,21 @@ abstract class BaseTaskAgent {
  * An Agent to perform tasks on the computer.
  */
 export class ComputerUseAgent extends BaseTaskAgent {
-  protected toolPrefix = 'flux';
+  protected toolPrefix = "flux";
 }
 
-
 export class BrowserUseAgent extends BaseTaskAgent {
-  protected toolPrefix = 'browser_use';
+  protected toolPrefix = "browser_use";
   private initialized = false;
 
   /**
    * Initialize the browser on which the agent performs tasks.
    * You are supposed to call this API before executeTask is called, but it's optional.
    * If you want to perform a hybrid usage of browser, you must call this API before executeTask is called.
-   * 
+   *
    * @param option - Browser configuration options. If not provided, default options will be used.
    * @returns Promise<boolean> - True if the browser is successfully initialized, False otherwise.
-   * 
+   *
    * @example
    * ```typescript
    * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
@@ -425,54 +449,59 @@ export class BrowserUseAgent extends BaseTaskAgent {
 
     try {
       // Access browser through session - assuming session has a browser property
-      const success = await (this.session as any).browser.initializeAsync(option);
+      const success = await (this.session as any).browser.initializeAsync(
+        option
+      );
       this.initialized = success;
       return success;
     } catch (error) {
       logWarn(`Failed to initialize browser: ${error}`);
-      return false
+      return false;
     }
   }
 
   /**
-     * Execute a task described in human language on a browser without waiting for completion
-     * (non-blocking). This is a fire-and-return interface that immediately
-     * provides a task ID. Call getTaskStatus to check the task status.
-     *
-     * @param task - Task description in human language.
-     * @param use_vision - Whether to use vision in the task.
-     * @param output_schema - Optional Zod schema for a structured task output if you need.
-     * @returns ExecutionResult containing success status, task ID, task status,
-     *     and error message if any.
-     *
-     * @example
-     * ```typescript
-     * const WeatherSchema = z.object({city: z.string(), weather:z.string()});
-     * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-     * const result = await agentBay.create({ imageId: 'linux_latest' });
-     * if (result.success) {
-     *   const execResult = await result.session.agent.browser.executeTask(
-     *     'Query the weather in Shanghai', false, WeatherSchema
-     *   );
-     *   console.log(`Task ID: ${execResult.taskId}`);
-     *   await result.session.delete();
-     * }
-     * ```
-     */
-  async executeTask<TSchema extends ZodTypeAny>(task: string, use_vision = true, output_schema?: TSchema):
-    Promise<ExecutionResult> {
+   * Execute a task described in human language on a browser without waiting for completion
+   * (non-blocking). This is a fire-and-return interface that immediately
+   * provides a task ID. Call getTaskStatus to check the task status.
+   *
+   * @param task - Task description in human language.
+   * @param use_vision - Whether to use vision in the task.
+   * @param output_schema - Optional Zod schema for a structured task output if you need.
+   * @returns ExecutionResult containing success status, task ID, task status,
+   *     and error message if any.
+   *
+   * @example
+   * ```typescript
+   * const WeatherSchema = z.object({city: z.string(), weather:z.string()});
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create({ imageId: 'linux_latest' });
+   * if (result.success) {
+   *   const execResult = await result.session.agent.browser.executeTask(
+   *     'Query the weather in Shanghai', false, WeatherSchema
+   *   );
+   *   console.log(`Task ID: ${execResult.taskId}`);
+   *   await result.session.delete();
+   * }
+   * ```
+   */
+  async executeTask<TSchema extends ZodTypeAny>(
+    task: string,
+    use_vision = true,
+    output_schema?: TSchema
+  ): Promise<ExecutionResult> {
     if (!this.initialized) {
-      logInfo('Browser is not initialized, initializing browser!');
+      logInfo("Browser is not initialized, initializing browser!");
       const success = await this.initialize();
       if (!success) {
-        logWarn('Browser initialization failed!');
+        logWarn("Browser initialization failed!");
         return {
-          requestId: '',
+          requestId: "",
           success: false,
-          errorMessage: 'Browser initialization failed',
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Browser initialization failed',
+          errorMessage: "Browser initialization failed",
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Browser initialization failed",
         };
       }
     }
@@ -480,30 +509,32 @@ export class BrowserUseAgent extends BaseTaskAgent {
       let json_schema = null;
       if (output_schema !== undefined) {
         json_schema = zodToJsonSchema(output_schema, {
-          $refStrategy: "none"
+          $refStrategy: "none",
         });
       } else {
         json_schema = zodToJsonSchema(DefaultSchema, {
-          $refStrategy: "none"
+          $refStrategy: "none",
         });
       }
 
       const args: any = {
         task,
         use_vision: use_vision,
-        output_schema: JSON.stringify(json_schema)
+        output_schema: JSON.stringify(json_schema),
       };
       const result = await this.session.callMcpTool(
-        this.getToolName('execute'), args);
+        this.getToolName("execute"),
+        args
+      );
 
       if (!result.success) {
         return {
           requestId: result.requestId,
           success: false,
           errorMessage: result.errorMessage,
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Task Failed',
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Task Failed",
         };
       }
 
@@ -516,84 +547,88 @@ export class BrowserUseAgent extends BaseTaskAgent {
           requestId: result.requestId,
           success: false,
           errorMessage: `Failed to parse response: ${err}`,
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Invalid execution response.',
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Invalid execution response.",
         };
       }
 
-      const taskId = content.task_id || '';
+      const taskId = content.task_id || "";
       if (!taskId) {
         return {
           requestId: result.requestId,
           success: false,
-          errorMessage: 'Task ID not found in response',
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Invalid task ID.',
+          errorMessage: "Task ID not found in response",
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Invalid task ID.",
         };
       }
 
       return {
         requestId: result.requestId,
         success: true,
-        errorMessage: '',
+        errorMessage: "",
         taskId: taskId,
-        taskStatus: 'running',
-        taskResult: '',
+        taskStatus: "running",
+        taskResult: "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to execute: ${error}`,
-        taskStatus: 'failed',
-        taskId: '',
-        taskResult: 'Task Failed',
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "Task Failed",
       };
     }
   }
 
   /**
-       * Execute a task described in human language on a browser synchronously.
-       * This is a synchronous interface that blocks until the task is completed or
-       * an error occurs, or timeout happens. The default polling interval is 3 seconds.
-       *
-       * @param task - Task description in human language.
-       * @param timeout - Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion.
-       * @param use_vision - Whether to use vision in the task.
-       * @param output_schema - Optional Zod schema for a structured task output if you need.
-       * @returns ExecutionResult containing success status, task ID, task status,
-       *     and error message if any.
-       *
-       * @example
-       * ```typescript
-       * const WeatherSchema = z.object({city: z.string(), weather:z.string()});
-       * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-       * const result = await agentBay.create({ imageId: 'linux_latest' });
-       * if (result.success) {
-       *   const execResult = await result.session.agent.browser.executeTask(
-       *     'Query the weather in Shanghai', false, WeatherSchema
-       *   );
-       *   console.log(`Task ID: ${execResult.taskId}`);
-       *   const pollInterval = 3;
-       *   const timeout = 180;
-       *   const maxPollAttempts = Math.floor(timeout / pollInterval);
-       *   let triedTime = 0;
-       *   while(triedTime < maxPollAttempts) {
-       *     const queryResult = await result.session.agent.browser.getTaskStatus(execResult.taskId);
-       *     if (queryResult.taskStatus === 'finished') {
-       *       console.log(`Task ${execResult.taskId} finished with result: ${queryResult.taskResult}`);
-       *       break;
-       *     }
-       *     triedTime++;
-       *   }
-       *   await result.session.delete();
-       * }
-       * ```
-       */
-  async executeTaskAndWait<TSchema extends ZodTypeAny>(task: string, timeout: number, use_vision = true, output_schema?: TSchema):
-    Promise<ExecutionResult> {
+   * Execute a task described in human language on a browser synchronously.
+   * This is a synchronous interface that blocks until the task is completed or
+   * an error occurs, or timeout happens. The default polling interval is 3 seconds.
+   *
+   * @param task - Task description in human language.
+   * @param timeout - Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion.
+   * @param use_vision - Whether to use vision in the task.
+   * @param output_schema - Optional Zod schema for a structured task output if you need.
+   * @returns ExecutionResult containing success status, task ID, task status,
+   *     and error message if any.
+   *
+   * @example
+   * ```typescript
+   * const WeatherSchema = z.object({city: z.string(), weather:z.string()});
+   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+   * const result = await agentBay.create({ imageId: 'linux_latest' });
+   * if (result.success) {
+   *   const execResult = await result.session.agent.browser.executeTask(
+   *     'Query the weather in Shanghai', false, WeatherSchema
+   *   );
+   *   console.log(`Task ID: ${execResult.taskId}`);
+   *   const pollInterval = 3;
+   *   const timeout = 180;
+   *   const maxPollAttempts = Math.floor(timeout / pollInterval);
+   *   let triedTime = 0;
+   *   while(triedTime < maxPollAttempts) {
+   *     const queryResult = await result.session.agent.browser.getTaskStatus(execResult.taskId);
+   *     if (queryResult.taskStatus === 'finished') {
+   *       console.log(`Task ${execResult.taskId} finished with result: ${queryResult.taskResult}`);
+   *       break;
+   *     }
+   *     triedTime++;
+   *   }
+   *   await result.session.delete();
+   * }
+   * ```
+   */
+  async executeTaskAndWait<TSchema extends ZodTypeAny>(
+    task: string,
+    timeout: number,
+    use_vision = true,
+    output_schema?: TSchema
+  ): Promise<ExecutionResult> {
     const result = await this.executeTask(task, use_vision, output_schema);
     if (!result.success) {
       return result;
@@ -611,39 +646,39 @@ export class BrowserUseAgent extends BaseTaskAgent {
           requestId: query.requestId,
           success: false,
           errorMessage: query.errorMessage,
-          taskStatus: 'failed',
+          taskStatus: "failed",
           taskId: taskId,
-          taskResult: '',
+          taskResult: "",
         };
       }
 
       switch (query.taskStatus) {
-        case 'finished':
+        case "finished":
           return {
             requestId: query.requestId,
             success: true,
-            errorMessage: '',
+            errorMessage: "",
             taskId: taskId,
-            taskStatus: 'finished',
+            taskStatus: "finished",
             taskResult: query.taskProduct,
           };
-        case 'failed':
+        case "failed":
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.errorMessage || 'Failed to execute task.',
+            errorMessage: query.errorMessage || "Failed to execute task.",
             taskId: taskId,
-            taskStatus: 'failed',
-            taskResult: '',
+            taskStatus: "failed",
+            taskResult: "",
           };
-        case 'unsupported':
+        case "unsupported":
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.errorMessage || 'Unsupported task.',
+            errorMessage: query.errorMessage || "Unsupported task.",
             taskId: taskId,
-            taskStatus: 'unsupported',
-            taskResult: '',
+            taskStatus: "unsupported",
+            taskResult: "",
           };
       }
 
@@ -658,10 +693,14 @@ export class BrowserUseAgent extends BaseTaskAgent {
       if (terminateResult.success) {
         logDebug(`✅ Task ${taskId} terminated successfully after timeout`);
       } else {
-        logDebug(`⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`);
+        logDebug(
+          `⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`
+        );
       }
     } catch (e) {
-      logDebug(`⚠️ Exception while terminating task ${taskId} after timeout: ${e}`);
+      logDebug(
+        `⚠️ Exception while terminating task ${taskId} after timeout: ${e}`
+      );
     }
 
     const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
@@ -669,7 +708,7 @@ export class BrowserUseAgent extends BaseTaskAgent {
       requestId: result.requestId,
       success: false,
       errorMessage: timeoutErrorMsg,
-      taskStatus: 'timeout',
+      taskStatus: "timeout",
       taskId: taskId,
       taskResult: `Task execution timed out after ${timeout} seconds.`,
     };
@@ -680,7 +719,7 @@ export class BrowserUseAgent extends BaseTaskAgent {
  * An Agent to perform tasks on mobile devices.
  */
 export class MobileUseAgent extends BaseTaskAgent {
-  protected toolPrefix = '';
+  protected toolPrefix = "";
 
   /**
    * Execute a task in human language without waiting for completion
@@ -707,76 +746,76 @@ export class MobileUseAgent extends BaseTaskAgent {
    * }
    * ```
    */
-  async executeTask(
-      task: string,
-      maxSteps = 50): Promise<ExecutionResult> {
+  async executeTask(task: string, maxSteps = 50): Promise<ExecutionResult> {
     const args = {
       task,
       max_steps: maxSteps,
     };
 
-      try {
-        const result = await this.session.callMcpTool(
-            this.getToolName('execute'), args);
+    try {
+      const result = await this.session.callMcpTool(
+        this.getToolName("execute"),
+        args
+      );
 
       if (!result.success) {
-        const errorMessage = result.errorMessage || 'Failed to execute task';
+        const errorMessage = result.errorMessage || "Failed to execute task";
         return {
           requestId: result.requestId,
           success: false,
           errorMessage: errorMessage,
-          taskStatus: 'failed',
-          taskId: '',
-          taskResult: 'Task Failed',
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Task Failed",
         };
       }
 
-          let content: Record<string, any>;
-          try {
-            content = JSON.parse(result.data);
-          } catch (err) {
-            return {
-              requestId: result.requestId,
-              success: false,
-              errorMessage: `Failed to parse response: ${err}`,
-              taskStatus: 'failed',
-              taskId: '',
-              taskResult: 'Invalid execution response.',
-            };
-          }
+      let content: Record<string, any>;
+      try {
+        content = JSON.parse(result.data);
+      } catch (err) {
+        return {
+          requestId: result.requestId,
+          success: false,
+          errorMessage: `Failed to parse response: ${err}`,
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Invalid execution response.",
+        };
+      }
 
       const taskId = content.taskId || content.task_id;
-          if (!taskId) {
-            // 从后端返回的content中提取error信息
-            const errorMessage = content.error || 'Task ID not found in response';
-            return {
-              requestId: result.requestId,
-              success: false,
-              errorMessage: errorMessage,
-              taskStatus: 'failed',
-              taskId: '',
-              taskResult: 'Invalid task ID.',
-            };
-          }
+      if (!taskId) {
+        // 从后端返回的content中提取error信息
+        const errorMessage = content.error || "Task ID not found in response";
+        return {
+          requestId: result.requestId,
+          success: false,
+          errorMessage: errorMessage,
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Invalid task ID.",
+        };
+      }
 
-          return {
-            requestId: result.requestId,
-            success: true,
-            errorMessage: '',
-            taskId: taskId,
-            taskStatus: 'running',
-            taskResult: '',
-          };
-      } catch (error) {
-          return {
-        requestId: '',
-            success: false,
+      return {
+        requestId: result.requestId,
+        success: true,
+        errorMessage: "",
+        taskId: taskId,
+        taskStatus: "running",
+        taskResult: "",
+      };
+    } catch (error) {
+      return {
+        requestId: "",
+        success: false,
         errorMessage: `Failed to execute: ${error}`,
-            taskStatus: 'failed',
-            taskId: '',
-            taskResult: 'Task Failed',
-          };
-        }
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "Task Failed",
+      };
+    }
   }
 
   /**
@@ -808,56 +847,59 @@ export class MobileUseAgent extends BaseTaskAgent {
    * ```
    */
   async executeTaskAndWait(
-      task: string,
-      timeout: number,
-      maxSteps = 50): Promise<ExecutionResult> {
+    task: string,
+    timeout: number,
+    maxSteps = 50
+  ): Promise<ExecutionResult> {
     const args = {
       task,
       max_steps: maxSteps,
     };
 
-        const result = await this.session.callMcpTool(
-            this.getToolName('execute'), args);
+    const result = await this.session.callMcpTool(
+      this.getToolName("execute"),
+      args
+    );
 
     if (!result.success) {
-      const errorMessage = result.errorMessage || 'Failed to execute task';
+      const errorMessage = result.errorMessage || "Failed to execute task";
       return {
         requestId: result.requestId,
         success: false,
         errorMessage: errorMessage,
-        taskStatus: 'failed',
-        taskId: '',
-        taskResult: 'Task Failed',
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "Task Failed",
       };
     }
 
-          let content: Record<string, any>;
-          try {
-            content = JSON.parse(result.data);
-          } catch (err) {
-            return {
-              requestId: result.requestId,
-              success: false,
-              errorMessage: `Failed to parse response: ${err}`,
-              taskStatus: 'failed',
-              taskId: '',
-              taskResult: 'Invalid execution response.',
-            };
-          }
+    let content: Record<string, any>;
+    try {
+      content = JSON.parse(result.data);
+    } catch (err) {
+      return {
+        requestId: result.requestId,
+        success: false,
+        errorMessage: `Failed to parse response: ${err}`,
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "Invalid execution response.",
+      };
+    }
 
     const taskId = content.taskId || content.task_id;
-          if (!taskId) {
-            // 从后端返回的content中提取error信息
-            const errorMessage = content.error || 'Task ID not found in response';
-            return {
-              requestId: result.requestId,
-              success: false,
-              errorMessage: errorMessage,
-              taskStatus: 'failed',
-              taskId: '',
-              taskResult: 'Invalid task ID.',
-            };
-          }
+    if (!taskId) {
+      // 从后端返回的content中提取error信息
+      const errorMessage = content.error || "Task ID not found in response";
+      return {
+        requestId: result.requestId,
+        success: false,
+        errorMessage: errorMessage,
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "Invalid task ID.",
+      };
+    }
 
     const pollInterval = 3;
     const maxPollAttempts = Math.floor(timeout / pollInterval);
@@ -871,9 +913,9 @@ export class MobileUseAgent extends BaseTaskAgent {
           requestId: query.requestId,
           success: false,
           errorMessage: query.errorMessage,
-          taskStatus: 'failed',
+          taskStatus: "failed",
           taskId: taskId,
-          taskResult: '',
+          taskResult: "",
         };
       }
 
@@ -889,10 +931,10 @@ export class MobileUseAgent extends BaseTaskAgent {
           // Use timestamp_ms to identify new fragments (handles backend returning snapshots)
           if (timestamp !== undefined && !processedTimestamps.has(timestamp)) {
             processedTimestamps.add(timestamp); // Mark as processed immediately
-            
+
             // Output immediately for true streaming effect
-            const content = streamItem.content || '';
-            const reasoning = streamItem.reasoning || '';
+            const content = streamItem.content || "";
+            const reasoning = streamItem.reasoning || "";
             if (content) {
               // Use process.stdout.write for streaming output without automatic newlines
               process.stdout.write(content);
@@ -912,41 +954,44 @@ export class MobileUseAgent extends BaseTaskAgent {
       }
 
       switch (query.taskStatus) {
-        case 'completed':
+        case "completed":
           return {
             requestId: query.requestId,
             success: true,
-            errorMessage: '',
+            errorMessage: "",
             taskId: taskId,
-            taskStatus: 'completed',
+            taskStatus: "completed",
             taskResult: query.taskProduct,
           };
-        case 'failed':
+        case "failed":
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.error || query.errorMessage || 'Failed to execute task.',
+            errorMessage:
+              query.error || query.errorMessage || "Failed to execute task.",
             taskId: taskId,
-            taskStatus: 'failed',
-            taskResult: '',
+            taskStatus: "failed",
+            taskResult: "",
           };
-        case 'cancelled':
+        case "cancelled":
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.error || query.errorMessage || 'Task was cancelled.',
+            errorMessage:
+              query.error || query.errorMessage || "Task was cancelled.",
             taskId: taskId,
-            taskStatus: 'cancelled',
-            taskResult: '',
+            taskStatus: "cancelled",
+            taskResult: "",
           };
-        case 'unsupported':
+        case "unsupported":
           return {
             requestId: query.requestId,
             success: false,
-            errorMessage: query.error || query.errorMessage || 'Unsupported task.',
+            errorMessage:
+              query.error || query.errorMessage || "Unsupported task.",
             taskId: taskId,
-            taskStatus: 'unsupported',
-            taskResult: '',
+            taskStatus: "unsupported",
+            taskResult: "",
           };
       }
 
@@ -955,53 +1000,67 @@ export class MobileUseAgent extends BaseTaskAgent {
       triedTime++;
     }
 
-    logDebug('⚠️ task execution timeout!');
+    logDebug("⚠️ task execution timeout!");
     try {
       const terminateResult = await this.terminateTask(taskId);
       if (terminateResult.success) {
         logDebug(`✅ Terminate request sent for task ${taskId} after timeout`);
       } else {
-        logDebug(`⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`);
+        logDebug(
+          `⚠️ Failed to terminate task ${taskId} after timeout: ${terminateResult.errorMessage}`
+        );
       }
     } catch (e) {
-      logDebug(`⚠️ Exception while terminating task ${taskId} after timeout: ${e}`);
+      logDebug(
+        `⚠️ Exception while terminating task ${taskId} after timeout: ${e}`
+      );
     }
-    
+
     logDebug(`⏳ Waiting for task ${taskId} to be fully terminated...`);
     const terminatePollInterval = 1;
     const maxTerminatePollAttempts = 30;
     let terminateTriedTime = 0;
     let taskTerminatedConfirmed = false;
-    
+
     while (terminateTriedTime < maxTerminatePollAttempts) {
       try {
         const statusQuery = await this.getTaskStatus(taskId);
         if (!statusQuery.success) {
-          const errorMsg = statusQuery.errorMessage || '';
-          if (errorMsg.startsWith('Task not found or already finished')) {
-            logDebug(`✅ Task ${taskId} confirmed terminated (not found or finished)`);
+          const errorMsg = statusQuery.errorMessage || "";
+          if (errorMsg.startsWith("Task not found or already finished")) {
+            logDebug(
+              `✅ Task ${taskId} confirmed terminated (not found or finished)`
+            );
             taskTerminatedConfirmed = true;
             break;
           }
         }
-        await new Promise((resolve) => setTimeout(resolve, terminatePollInterval * 1000));
+        await new Promise((resolve) =>
+          setTimeout(resolve, terminatePollInterval * 1000)
+        );
         terminateTriedTime++;
       } catch (e) {
-        logDebug(`⚠️ Exception while polling task status during termination: ${e}`);
-        await new Promise((resolve) => setTimeout(resolve, terminatePollInterval * 1000));
+        logDebug(
+          `⚠️ Exception while polling task status during termination: ${e}`
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, terminatePollInterval * 1000)
+        );
         terminateTriedTime++;
       }
     }
-    
+
     if (!taskTerminatedConfirmed) {
       logDebug(`⚠️ Timeout waiting for task ${taskId} to be fully terminated`);
     }
-    
+
     const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
-    
+
     // Build task_result with last query status information
-    const taskResultParts: string[] = [`Task execution timed out after ${timeout} seconds.`];
-    
+    const taskResultParts: string[] = [
+      `Task execution timed out after ${timeout} seconds.`,
+    ];
+
     if (lastQuery) {
       // Concatenate stream content from last query
       if (lastQuery.stream && lastQuery.stream.length > 0) {
@@ -1011,13 +1070,13 @@ export class MobileUseAgent extends BaseTaskAgent {
             streamContentParts.push(streamItem.content);
           }
         }
-        
+
         if (streamContentParts.length > 0) {
-          const streamContent = streamContentParts.join('');
+          const streamContent = streamContentParts.join("");
           taskResultParts.push(`Last task status output: ${streamContent}`);
         }
       }
-      
+
       // Also add other status information if available
       if (lastQuery.taskAction) {
         taskResultParts.push(`Last action: ${lastQuery.taskAction}`);
@@ -1032,14 +1091,14 @@ export class MobileUseAgent extends BaseTaskAgent {
         taskResultParts.push(`Last status: ${lastQuery.taskStatus}`);
       }
     }
-    
-    const taskResult = taskResultParts.join(' | ');
-    
+
+    const taskResult = taskResultParts.join(" | ");
+
     return {
       requestId: result.requestId,
       success: false,
       errorMessage: timeoutErrorMsg,
-      taskStatus: 'failed',
+      taskStatus: "failed",
       taskId: taskId,
       taskResult: taskResult,
     };
@@ -1050,9 +1109,11 @@ export class MobileUseAgent extends BaseTaskAgent {
    */
   async getTaskStatus(taskId: string): Promise<QueryResult> {
     try {
-      const args = {task_id: taskId};
+      const args = { task_id: taskId };
       const result = await this.session.callMcpTool(
-          this.getToolName('get_status'), args);
+        this.getToolName("get_status"),
+        args
+      );
 
       if (!result.success) {
         return {
@@ -1060,26 +1121,29 @@ export class MobileUseAgent extends BaseTaskAgent {
           success: false,
           errorMessage: result.errorMessage,
           taskId: taskId,
-          taskAction: '',
-          taskProduct: '',
-          taskStatus: 'failed',
+          taskAction: "",
+          taskProduct: "",
+          taskStatus: "failed",
         };
       }
       let queryResult: Record<string, any>;
       try {
         queryResult = JSON.parse(result.data);
-        const contentTaskId = queryResult.taskId || queryResult.task_id || taskId;
-        const taskProduct = queryResult.result || queryResult.product || '';
-        const stream = Array.isArray(queryResult.stream) ? queryResult.stream : undefined;
+        const contentTaskId =
+          queryResult.taskId || queryResult.task_id || taskId;
+        const taskProduct = queryResult.result || queryResult.product || "";
+        const stream = Array.isArray(queryResult.stream)
+          ? queryResult.stream
+          : undefined;
         const error = queryResult.error || undefined;
         return {
           requestId: result.requestId,
           success: true,
-          errorMessage: '',
+          errorMessage: "",
           taskId: contentTaskId,
-          taskAction: queryResult.action || '',
+          taskAction: queryResult.action || "",
           taskProduct: taskProduct,
-          taskStatus: queryResult.status || 'completed',
+          taskStatus: queryResult.status || "completed",
           stream: stream,
           error: error,
         };
@@ -1089,20 +1153,20 @@ export class MobileUseAgent extends BaseTaskAgent {
           success: false,
           errorMessage: `Failed to get task status: ${error}`,
           taskId: taskId,
-          taskAction: '',
-          taskProduct: '',
-          taskStatus: 'failed',
+          taskAction: "",
+          taskProduct: "",
+          taskStatus: "failed",
         };
       }
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to get task status: ${error}`,
         taskId: taskId,
-        taskAction: '',
-        taskProduct: '',
-        taskStatus: 'failed',
+        taskAction: "",
+        taskProduct: "",
+        taskStatus: "failed",
       };
     }
   }
@@ -1111,12 +1175,14 @@ export class MobileUseAgent extends BaseTaskAgent {
    * Terminate a task with a specified task ID.
    */
   async terminateTask(taskId: string): Promise<ExecutionResult> {
-    logDebug('Terminating task');
+    logDebug("Terminating task");
 
     try {
-      const args = {task_id: taskId};
+      const args = { task_id: taskId };
       const result = await this.session.callMcpTool(
-          this.getToolName('terminate'), args);
+        this.getToolName("terminate"),
+        args
+      );
 
       let content: Record<string, any>;
       try {
@@ -1127,22 +1193,22 @@ export class MobileUseAgent extends BaseTaskAgent {
           success: false,
           errorMessage: `Failed to parse response: ${err}`,
           taskId,
-          taskStatus: 'failed',
-          taskResult: '',
+          taskStatus: "failed",
+          taskResult: "",
         };
       }
 
       const terminatedTaskId = content.taskId || content.task_id || taskId;
-      const status = content.status || 'cancelling';
+      const status = content.status || "cancelling";
 
       if (result.success) {
         return {
           requestId: result.requestId,
           success: true,
-          errorMessage: '',
+          errorMessage: "",
           taskId: terminatedTaskId,
           taskStatus: status,
-          taskResult: '',
+          taskResult: "",
         };
       }
 
@@ -1152,16 +1218,16 @@ export class MobileUseAgent extends BaseTaskAgent {
         errorMessage: result.errorMessage,
         taskId: terminatedTaskId,
         taskStatus: status,
-        taskResult: '',
+        taskResult: "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to terminate: ${error}`,
         taskId,
-        taskStatus: 'failed',
-        taskResult: '',
+        taskStatus: "failed",
+        taskResult: "",
       };
     }
   }

@@ -55,4 +55,3 @@ func main() {
 		fmt.Printf("Error: %s\n", keepAliveResult.ErrorMessage)
 	}
 }
-

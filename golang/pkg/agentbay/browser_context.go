@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 	"github.com/alibabacloud-go/tea/tea"
+	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
 )
 
 const (
@@ -136,5 +136,3 @@ func buildBrowserContextPersistenceDataListItem(bc *BrowserContext) (*mcp.Create
 		Policy:    tea.String(string(policyJSON)),
 	}, nil
 }
-
-

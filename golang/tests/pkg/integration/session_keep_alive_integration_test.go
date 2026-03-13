@@ -107,7 +107,7 @@ func TestSessionKeepAliveIntegration(t *testing.T) {
 		if e2 != nil {
 			t.Fatalf("Refreshed GetStatus failed: %v", e2)
 		}
-		
+
 		if isReleasedStatusResult(controlStatus) {
 			if isReleasedStatusResult(refreshedStatus) {
 				t.Fatalf("Refreshed session was not kept alive longer than control session; keep-alive did not extend idle timer")
@@ -124,6 +124,5 @@ func TestSessionKeepAliveIntegration(t *testing.T) {
 
 		time.Sleep(pollInterval)
 
-	
 	}
 }

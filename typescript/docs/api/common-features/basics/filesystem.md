@@ -608,13 +608,9 @@ ___
 
 ### watchDirectory
 
-▸ **watchDirectory**(`path`, `callback`, `interval?`, `signal?`): `{ monitoring: Promise<void>; ready: Promise<void> }`
+▸ **watchDirectory**(`path`, `callback`, `interval?`, `signal?`): `Object`
 
-Watch a directory for file changes and call the callback function when changes occur.
-
-Returns an object with:
-- `monitoring`: Promise that resolves when monitoring stops
-- `ready`: Promise that resolves once the filesystem baseline is established. Callers should `await ready` before performing file operations.
+Watch a directory for file changes and call the callback function when changes occur
 
 #### Parameters
 
@@ -627,9 +623,14 @@ Returns an object with:
 
 #### Returns
 
-`{ monitoring: Promise<void>; ready: Promise<void> }`
+`Object`
 
-Object with `monitoring` promise (resolves when monitoring stops) and `ready` promise (resolves when baseline is established).
+Promise that resolves when monitoring stops
+
+| Name | Type |
+| :------ | :------ |
+| `monitoring` | `Promise`\<`void`\> |
+| `ready` | `Promise`\<`void`\> |
 
 **`Example`**
 
@@ -641,11 +642,9 @@ if (result.success) {
   await result.session.fileSystem.createDirectory(testDir);
   const controller = new AbortController();
   const callback = (events) => console.log(`Detected ${events.length} changes`);
-  const { monitoring, ready } = result.session.fileSystem.watchDirectory(testDir, callback, 1000, controller.signal);
+  const { ready } = result.session.fileSystem.watchDirectory(testDir, callback, 1000, controller.signal);
   await ready; // wait for baseline to be established
   await result.session.fileSystem.writeFile(`${testDir}/test.txt`, 'hello');
-  controller.abort();
-  await monitoring;
   await result.session.delete();
 }
 ```

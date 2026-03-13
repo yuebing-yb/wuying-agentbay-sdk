@@ -72,6 +72,8 @@ golang/.cache/
 # Golang compiled binaries
 start_app
 */start_app
+golang/mobile_agent_streaming
+golang/ws_push_callback_captcha_tongcheng
 
 # IDE
 .idea/

@@ -1,5 +1,3 @@
-
-
 import { AgentBay, Session } from "../../src";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
@@ -95,8 +93,14 @@ describe("Session GetLink", () => {
         log("Testing getLink with valid port 30150...");
         try {
           const validPort = 30150;
-          const linkWithPortResponse = await session.getLink(undefined, validPort);
-          log(`Session link with port ${validPort}:`, linkWithPortResponse.data);
+          const linkWithPortResponse = await session.getLink(
+            undefined,
+            validPort
+          );
+          log(
+            `Session link with port ${validPort}:`,
+            linkWithPortResponse.data
+          );
           log(
             `Get Link with Valid Port RequestId: ${
               linkWithPortResponse.requestId || "undefined"
@@ -122,7 +126,10 @@ describe("Session GetLink", () => {
         try {
           const validPort = 30100;
           const linkWithPortResponse = await session.getLink("wss", validPort);
-          log(`Session link with port ${validPort}:`, linkWithPortResponse.data);
+          log(
+            `Session link with port ${validPort}:`,
+            linkWithPortResponse.data
+          );
           log(
             `Get Link with Lower Boundary Port RequestId: ${
               linkWithPortResponse.requestId || "undefined"
@@ -135,7 +142,9 @@ describe("Session GetLink", () => {
           expect(linkWithPortResponse.data).toBeDefined();
           expect(typeof linkWithPortResponse.data).toBe("string");
         } catch (error) {
-          log(`Note: Session link retrieval with lower boundary port failed: ${error}`);
+          log(
+            `Note: Session link retrieval with lower boundary port failed: ${error}`
+          );
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -147,8 +156,14 @@ describe("Session GetLink", () => {
         log("Testing getLink with valid port at upper boundary 30199...");
         try {
           const validPort = 30199;
-          const linkWithPortResponse = await session.getLink("https", validPort);
-          log(`Session link with port ${validPort}:`, linkWithPortResponse.data);
+          const linkWithPortResponse = await session.getLink(
+            "https",
+            validPort
+          );
+          log(
+            `Session link with port ${validPort}:`,
+            linkWithPortResponse.data
+          );
           log(
             `Get Link with Upper Boundary Port RequestId: ${
               linkWithPortResponse.requestId || "undefined"
@@ -161,7 +176,9 @@ describe("Session GetLink", () => {
           expect(linkWithPortResponse.data).toBeDefined();
           expect(typeof linkWithPortResponse.data).toBe("string");
         } catch (error) {
-          log(`Note: Session link retrieval with upper boundary port failed: ${error}`);
+          log(
+            `Note: Session link retrieval with upper boundary port failed: ${error}`
+          );
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -185,7 +202,9 @@ describe("Session GetLink", () => {
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
           expect(errorMessage).toContain(`Invalid port value: ${invalidPort}`);
-          expect(errorMessage).toContain("Port must be an integer in the range [30100, 30199]");
+          expect(errorMessage).toContain(
+            "Port must be an integer in the range [30100, 30199]"
+          );
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -208,7 +227,9 @@ describe("Session GetLink", () => {
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
           expect(errorMessage).toContain(`Invalid port value: ${invalidPort}`);
-          expect(errorMessage).toContain("Port must be an integer in the range [30100, 30199]");
+          expect(errorMessage).toContain(
+            "Port must be an integer in the range [30100, 30199]"
+          );
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -231,7 +252,9 @@ describe("Session GetLink", () => {
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
           expect(errorMessage).toContain(`Invalid port value: ${invalidPort}`);
-          expect(errorMessage).toContain("Port must be an integer in the range [30100, 30199]");
+          expect(errorMessage).toContain(
+            "Port must be an integer in the range [30100, 30199]"
+          );
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -251,8 +274,12 @@ describe("Session GetLink", () => {
           log(`Expected error for invalid port ${invalidPort8080}: ${error}`);
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
-          expect(errorMessage).toContain(`Invalid port value: ${invalidPort8080}`);
-          expect(errorMessage).toContain("Port must be an integer in the range [30100, 30199]");
+          expect(errorMessage).toContain(
+            `Invalid port value: ${invalidPort8080}`
+          );
+          expect(errorMessage).toContain(
+            "Port must be an integer in the range [30100, 30199]"
+          );
         }
 
         // Test port 443 (HTTPS default but outside valid range)
@@ -264,8 +291,12 @@ describe("Session GetLink", () => {
           log(`Expected error for invalid port ${invalidPort443}: ${error}`);
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
-          expect(errorMessage).toContain(`Invalid port value: ${invalidPort443}`);
-          expect(errorMessage).toContain("Port must be an integer in the range [30100, 30199]");
+          expect(errorMessage).toContain(
+            `Invalid port value: ${invalidPort443}`
+          );
+          expect(errorMessage).toContain(
+            "Port must be an integer in the range [30100, 30199]"
+          );
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -294,7 +325,9 @@ describe("Session GetLink", () => {
           log(`Note: Session link async retrieval failed: ${error}`);
         }
       } else {
-        log("Note: Session getLinkAsync method is not available, skipping test");
+        log(
+          "Note: Session getLinkAsync method is not available, skipping test"
+        );
       }
     });
 
@@ -308,16 +341,22 @@ describe("Session GetLink", () => {
           // If we reach here, the test should fail
           expect(true).toBe(false); // Force test failure
         } catch (error) {
-          log(`Expected error for invalid port ${invalidPort} in getLinkAsync: ${error}`);
+          log(
+            `Expected error for invalid port ${invalidPort} in getLinkAsync: ${error}`
+          );
 
           // Verify the error message matches session.ts logic
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
           expect(errorMessage).toContain(`Invalid port value: ${invalidPort}`);
-          expect(errorMessage).toContain("Port must be an integer in the range [30100, 30199]");
+          expect(errorMessage).toContain(
+            "Port must be an integer in the range [30100, 30199]"
+          );
         }
       } else {
-        log("Note: Session getLinkAsync method is not available, skipping test");
+        log(
+          "Note: Session getLinkAsync method is not available, skipping test"
+        );
       }
     });
 
@@ -331,10 +370,12 @@ describe("Session GetLink", () => {
           const linkResponse = await session.getLinkAsync("https", validPort);
 
           // If successful, verify the response
-          log(`Backend accepted port ${validPort} in getLinkAsync, response:`, linkResponse.data);
+          log(
+            `Backend accepted port ${validPort} in getLinkAsync, response:`,
+            linkResponse.data
+          );
           expect(linkResponse.requestId).toBeDefined();
           expect(linkResponse.data).toBeDefined();
-
         } catch (error) {
           log(`Backend rejected port ${validPort} in getLinkAsync: ${error}`);
 
@@ -352,7 +393,9 @@ describe("Session GetLink", () => {
           }
         }
       } else {
-        log("Note: Session getLinkAsync method is not available, skipping test");
+        log(
+          "Note: Session getLinkAsync method is not available, skipping test"
+        );
       }
     });
   });

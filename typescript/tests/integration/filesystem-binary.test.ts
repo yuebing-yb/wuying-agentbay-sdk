@@ -1,8 +1,5 @@
 import { AgentBay, Session } from "../../src";
-import {
-  getTestApiKey,
-  containsToolNotFound,
-} from "../utils/test-helpers";
+import { getTestApiKey, containsToolNotFound } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
 import { BinaryFileContentResult } from "../../src/types/api-response";
 
@@ -20,11 +17,15 @@ describe("fileSystem Binary File Operations", () => {
     // Create a session with linux_latest image
     log("Creating a new session for binary fileSystem testing...");
     const createResponse = await agentBay.create({ imageId: "linux_latest" });
-    
+
     if (!createResponse.success || !createResponse.session) {
-      throw new Error(`Failed to create session: ${createResponse.errorMessage || "Unknown error"}`);
+      throw new Error(
+        `Failed to create session: ${
+          createResponse.errorMessage || "Unknown error"
+        }`
+      );
     }
-    
+
     session = createResponse.session;
     log(`Session created with ID: ${session.sessionId}`);
     log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);
@@ -54,18 +55,29 @@ describe("fileSystem Binary File Operations", () => {
           const createResult = await session.command.executeCommand(
             "python3 -c \"with open('/tmp/binary_pattern_test', 'wb') as f: f.write(bytes(range(256)) * 4)\""
           );
-          
+
           if (!createResult.success) {
-            log(`Note: Failed to create binary file: ${createResult.errorMessage}`);
+            log(
+              `Note: Failed to create binary file: ${createResult.errorMessage}`
+            );
             return;
           }
 
           // Read binary file using format='bytes'
           log("Reading binary file...");
-          const readResponse = await session.fileSystem.readFile("/tmp/binary_pattern_test", { format: "bytes" });
-          
-          log(`ReadFile binary result: content length=${readResponse.content.length} bytes`);
-          log(`Read Binary File RequestId: ${readResponse.requestId || "undefined"}`);
+          const readResponse = await session.fileSystem.readFile(
+            "/tmp/binary_pattern_test",
+            { format: "bytes" }
+          );
+
+          log(
+            `ReadFile binary result: content length=${readResponse.content.length} bytes`
+          );
+          log(
+            `Read Binary File RequestId: ${
+              readResponse.requestId || "undefined"
+            }`
+          );
 
           // Verify that the response contains requestId
           expect(readResponse.requestId).toBeDefined();
@@ -79,19 +91,23 @@ describe("fileSystem Binary File Operations", () => {
           // Verify content pattern (0-255 repeating 4 times = 1024 bytes)
           const expectedLength = 256 * 4; // 1024 bytes
           expect(readResponse.content.length).toBe(expectedLength);
-          
+
           // Verify pattern: first 256 bytes should be 0x00, 0x01, ..., 0xFF
           for (let i = 0; i < 256; i++) {
             expect(readResponse.content[i]).toBe(i);
           }
 
-          log(`Successfully read binary file with pattern: ${readResponse.content.length} bytes`);
+          log(
+            `Successfully read binary file with pattern: ${readResponse.content.length} bytes`
+          );
         } catch (error) {
           log(`Note: Binary file operation failed: ${error}`);
           // Don't fail the test if fileSystem operations are not supported
         }
       } else {
-        log("Note: fileSystem or command interface is nil, skipping binary file test");
+        log(
+          "Note: fileSystem or command interface is nil, skipping binary file test"
+        );
       }
     });
 
@@ -103,18 +119,29 @@ describe("fileSystem Binary File Operations", () => {
           const createResult = await session.command.executeCommand(
             "touch /tmp/empty_binary_test"
           );
-          
+
           if (!createResult.success) {
-            log(`Note: Failed to create empty binary file: ${createResult.errorMessage}`);
+            log(
+              `Note: Failed to create empty binary file: ${createResult.errorMessage}`
+            );
             return;
           }
 
           // Read binary file using format='bytes'
           log("Reading empty binary file...");
-          const readResponse = await session.fileSystem.readFile("/tmp/empty_binary_test", { format: "bytes" });
-          
-          log(`ReadFile binary result: content length=${readResponse.content.length} bytes`);
-          log(`Read Empty Binary File RequestId: ${readResponse.requestId || "undefined"}`);
+          const readResponse = await session.fileSystem.readFile(
+            "/tmp/empty_binary_test",
+            { format: "bytes" }
+          );
+
+          log(
+            `ReadFile binary result: content length=${readResponse.content.length} bytes`
+          );
+          log(
+            `Read Empty Binary File RequestId: ${
+              readResponse.requestId || "undefined"
+            }`
+          );
 
           // Verify that the response contains requestId
           expect(readResponse.requestId).toBeDefined();
@@ -133,7 +160,9 @@ describe("fileSystem Binary File Operations", () => {
           // Don't fail the test if fileSystem operations are not supported
         }
       } else {
-        log("Note: fileSystem or command interface is nil, skipping empty binary file test");
+        log(
+          "Note: fileSystem or command interface is nil, skipping empty binary file test"
+        );
       }
     });
 
@@ -142,10 +171,19 @@ describe("fileSystem Binary File Operations", () => {
         log("Reading non-existent binary file...");
         try {
           const nonExistentFile = "/path/to/non/existent/binary/file.bin";
-          const readResponse = await session.fileSystem.readFile(nonExistentFile, { format: "bytes" });
-          
-          log(`ReadFile binary result for non-existent file: content length=${readResponse.content.length}`);
-          log(`Read Non-existent Binary File RequestId: ${readResponse.requestId || "undefined"}`);
+          const readResponse = await session.fileSystem.readFile(
+            nonExistentFile,
+            { format: "bytes" }
+          );
+
+          log(
+            `ReadFile binary result for non-existent file: content length=${readResponse.content.length}`
+          );
+          log(
+            `Read Non-existent Binary File RequestId: ${
+              readResponse.requestId || "undefined"
+            }`
+          );
 
           // Verify that the response contains requestId
           expect(readResponse.requestId).toBeDefined();
@@ -163,7 +201,9 @@ describe("fileSystem Binary File Operations", () => {
           // Don't fail the test if fileSystem operations are not supported
         }
       } else {
-        log("Note: fileSystem interface is nil, skipping binary file error test");
+        log(
+          "Note: fileSystem interface is nil, skipping binary file error test"
+        );
       }
     });
   });
@@ -173,11 +213,16 @@ describe("fileSystem Binary File Operations", () => {
       if (session.fileSystem) {
         log("Testing text file reading compatibility...");
         try {
-          const testContent = "This is a test text file for binary read feature.";
+          const testContent =
+            "This is a test text file for binary read feature.";
           const testFilePath = `${TestPathPrefix}/test_text_for_binary_feature.txt`;
 
           // Write text file
-          const writeResult = await session.fileSystem.writeFile(testFilePath, testContent, "overwrite");
+          const writeResult = await session.fileSystem.writeFile(
+            testFilePath,
+            testContent,
+            "overwrite"
+          );
           if (!writeResult.success) {
             log(`Note: Failed to write text file: ${writeResult.errorMessage}`);
             return;
@@ -190,7 +235,10 @@ describe("fileSystem Binary File Operations", () => {
           expect(readResponse.content).toBe(testContent);
 
           // Explicitly read as text format
-          const readResponseExplicit = await session.fileSystem.readFile(testFilePath, { format: "text" });
+          const readResponseExplicit = await session.fileSystem.readFile(
+            testFilePath,
+            { format: "text" }
+          );
           expect(readResponseExplicit.success).toBe(true);
           expect(typeof readResponseExplicit.content).toBe("string");
           expect(readResponseExplicit.content).toBe(testContent);
@@ -201,9 +249,10 @@ describe("fileSystem Binary File Operations", () => {
           // Don't fail the test if fileSystem operations are not supported
         }
       } else {
-        log("Note: fileSystem interface is nil, skipping text file compatibility test");
+        log(
+          "Note: fileSystem interface is nil, skipping text file compatibility test"
+        );
       }
     });
   });
 });
-

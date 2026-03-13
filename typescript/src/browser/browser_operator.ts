@@ -398,7 +398,9 @@ export class BrowserOperator {
 
       const elapsed = (Date.now() - startTS) / 1000;
       logDebug(
-        `Task ${task_id}: No observe result yet (elapsed=${elapsed.toFixed(0)}s)`
+        `Task ${task_id}: No observe result yet (elapsed=${elapsed.toFixed(
+          0
+        )}s)`
       );
       if (elapsed >= timeoutS) {
         throw new BrowserError(
@@ -505,7 +507,9 @@ export class BrowserOperator {
 
       const elapsed = (Date.now() - startTS) / 1000;
       logDebug(
-        `Task ${task_id}: No extract result yet (elapsed=${elapsed.toFixed(0)}s)`
+        `Task ${task_id}: No extract result yet (elapsed=${elapsed.toFixed(
+          0
+        )}s)`
       );
       if (elapsed >= timeoutS) {
         throw new BrowserError(

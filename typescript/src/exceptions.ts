@@ -102,7 +102,10 @@ export class BrowserError extends AgentBayError {
  * Raised when a WS stream is cancelled by the caller.
  */
 export class WsCancelledError extends AgentBayError {
-  constructor(message = "WS stream was cancelled by caller", extra: Record<string, any> = {}) {
+  constructor(
+    message = "WS stream was cancelled by caller",
+    extra: Record<string, any> = {}
+  ) {
     super(message, extra);
     this.name = "WsCancelledError";
     Object.setPrototypeOf(this, WsCancelledError.prototype);

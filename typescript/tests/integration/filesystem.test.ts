@@ -20,11 +20,15 @@ describe("fileSystem", () => {
     // Create a session with linux_latest image
     log("Creating a new session for fileSystem testing...");
     const createResponse = await agentBay.create({ imageId: "linux_latest" });
-    
+
     if (!createResponse.success || !createResponse.session) {
-      throw new Error(`Failed to create session: ${createResponse.errorMessage || "Unknown error"}`);
+      throw new Error(
+        `Failed to create session: ${
+          createResponse.errorMessage || "Unknown error"
+        }`
+      );
     }
-    
+
     session = createResponse.session;
     log(`Session created with ID: ${session.sessionId}`);
     log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);
@@ -115,7 +119,7 @@ describe("fileSystem", () => {
   });
 
   describe("writeFile", () => {
-    const writeTestFilePath = '/tmp/test_write.txt';
+    const writeTestFilePath = "/tmp/test_write.txt";
     it.only("should write to a file", async () => {
       // Check if fileSystem exists and has a writeFile method
       if (
@@ -177,9 +181,13 @@ describe("fileSystem", () => {
       }
     });
     it.only("File Writing Tests", async () => {
-      const testContent = 'Hello, World!';
+      const testContent = "Hello, World!";
       // Test overwrite mode
-      const writeResult = await session.fileSystem.writeFile(writeTestFilePath, testContent, 'overwrite');
+      const writeResult = await session.fileSystem.writeFile(
+        writeTestFilePath,
+        testContent,
+        "overwrite"
+      );
       expect(writeResult.success).toBe(true);
       expect(writeResult.requestId).toBeDefined();
       expect(writeResult.data).toBe(true);
@@ -190,19 +198,27 @@ describe("fileSystem", () => {
       expect(readResult.content).toBe(testContent);
 
       // Test append mode
-      const appendResult = await session.fileSystem.writeFile(writeTestFilePath, '\nAppended content', 'append');
+      const appendResult = await session.fileSystem.writeFile(
+        writeTestFilePath,
+        "\nAppended content",
+        "append"
+      );
       expect(appendResult.success).toBe(true);
 
       const readResult2 = await session.fileSystem.readFile(writeTestFilePath);
       expect(readResult2.content).toContain(testContent);
-      expect(readResult2.content).toContain('Appended content');
-    })
-    it.only("should validate write mode parameter",async()=>{
-      const result = await session.fileSystem.writeFile(writeTestFilePath, 'content', 'invalid_mode' as any);
+      expect(readResult2.content).toContain("Appended content");
+    });
+    it.only("should validate write mode parameter", async () => {
+      const result = await session.fileSystem.writeFile(
+        writeTestFilePath,
+        "content",
+        "invalid_mode" as any
+      );
       log(`Write result: ${JSON.stringify(result)}`);
       expect(result.success).toBe(false);
-      expect(result.errorMessage).toContain('Invalid mode');
-    })
+      expect(result.errorMessage).toContain("Invalid mode");
+    });
   });
 
   describe("createDirectory", () => {
@@ -696,16 +712,23 @@ describe("fileSystem", () => {
     });
   });
 
-  describe('Parameterized File Reading Tests', () => {
-    const multiLineFilePath = '/tmp/test_multiline.txt';
+  describe("Parameterized File Reading Tests", () => {
+    const multiLineFilePath = "/tmp/test_multiline.txt";
     beforeEach(async () => {
       // Create multi-line test file
 
-      const multiLineContent = Array.from({ length: 10 }, (_, i) => `Line ${i + 1}: This is test content`).join('\n');
-      await session.fileSystem.writeFile(multiLineFilePath, multiLineContent, 'overwrite');
+      const multiLineContent = Array.from(
+        { length: 10 },
+        (_, i) => `Line ${i + 1}: This is test content`
+      ).join("\n");
+      await session.fileSystem.writeFile(
+        multiLineFilePath,
+        multiLineContent,
+        "overwrite"
+      );
     });
 
-    test('should read specific bytes with offset and length parameters', async () => {
+    test("should read specific bytes with offset and length parameters", async () => {
       // Read 3 bytes starting from the 3rd byte (offset=2, length=3)
       const result = await session.fileSystem.readFile(multiLineFilePath);
 
@@ -720,7 +743,7 @@ describe("fileSystem", () => {
       expect(result.content).toBe(expectedContent);
     });
 
-    test('should read from offset to end of file', async () => {
+    test("should read from offset to end of file", async () => {
       // Read from the 6th byte to end of file (offset=5, length=0)
       const result = await session.fileSystem.readFile(multiLineFilePath);
 
@@ -734,7 +757,7 @@ describe("fileSystem", () => {
       expect(result.content).toBe(expectedContent);
     });
 
-    test('should handle large offset values correctly', async () => {
+    test("should handle large offset values correctly", async () => {
       // Test offset value larger than file size
       const result = await session.fileSystem.readFile(multiLineFilePath);
 
@@ -743,7 +766,7 @@ describe("fileSystem", () => {
       // Should return empty content as offset exceeds file size
     });
 
-    test('should handle zero length parameter correctly', async () => {
+    test("should handle zero length parameter correctly", async () => {
       // Test that length=0 should read from offset to end of file
       const result = await session.fileSystem.readFile(multiLineFilePath);
 

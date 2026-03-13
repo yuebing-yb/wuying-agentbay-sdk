@@ -3,7 +3,7 @@
  * Following TDD principles - tests first, then implementation.
  */
 
-import { Mobile } from '../../src/mobile/mobile';
+import { Mobile } from "../../src/mobile/mobile";
 
 // Mock Session interface
 interface MockSession {
@@ -13,27 +13,27 @@ interface MockSession {
   sessionId: string;
 }
 
-describe('Mobile', () => {
+describe("Mobile", () => {
   let mockSession: MockSession;
   let mobile: Mobile;
 
   beforeEach(() => {
     mockSession = {
       callMcpTool: jest.fn(),
-      getAPIKey: () => 'test-api-key',
-      getLinkUrl: jest.fn(() => ''),
-      sessionId: 'test-session-id'
+      getAPIKey: () => "test-api-key",
+      getLinkUrl: jest.fn(() => ""),
+      sessionId: "test-session-id",
     };
     mobile = new Mobile(mockSession as any);
   });
 
-  describe('Touch Operations', () => {
-    test('tap should call MCP tool with correct parameters', async () => {
+  describe("Touch Operations", () => {
+    test("tap should call MCP tool with correct parameters", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123',
-        errorMessage: ''
+        requestId: "test-123",
+        errorMessage: "",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -41,19 +41,23 @@ describe('Mobile', () => {
       const result = await mobile.tap(100, 200);
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('tap', {
-        x: 100,
-        y: 200
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "tap",
+        {
+          x: 100,
+          y: 200,
+        },
+        false
+      );
       expect(result.success).toBe(true);
-      expect(result.requestId).toBe('test-123');
+      expect(result.requestId).toBe("test-123");
     });
 
-    test('swipe should call MCP tool with correct parameters', async () => {
+    test("swipe should call MCP tool with correct parameters", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123'
+        requestId: "test-123",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -61,21 +65,25 @@ describe('Mobile', () => {
       const result = await mobile.swipe(100, 100, 200, 200, 500);
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('swipe', {
-        start_x: 100,
-        start_y: 100,
-        end_x: 200,
-        end_y: 200,
-        duration_ms: 500
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "swipe",
+        {
+          start_x: 100,
+          start_y: 100,
+          end_x: 200,
+          end_y: 200,
+          duration_ms: 500,
+        },
+        false
+      );
       expect(result.success).toBe(true);
     });
 
-    test('swipe should use default duration when not provided', async () => {
+    test("swipe should use default duration when not provided", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123'
+        requestId: "test-123",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -83,40 +91,48 @@ describe('Mobile', () => {
       const result = await mobile.swipe(100, 100, 200, 200);
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('swipe', {
-        start_x: 100,
-        start_y: 100,
-        end_x: 200,
-        end_y: 200,
-        duration_ms: 300
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "swipe",
+        {
+          start_x: 100,
+          start_y: 100,
+          end_x: 200,
+          end_y: 200,
+          duration_ms: 300,
+        },
+        false
+      );
     });
   });
 
-  describe('Input Operations', () => {
-    test('inputText should call MCP tool with correct parameters', async () => {
+  describe("Input Operations", () => {
+    test("inputText should call MCP tool with correct parameters", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123'
+        requestId: "test-123",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
       // Act
-      const result = await mobile.inputText('Hello Mobile');
+      const result = await mobile.inputText("Hello Mobile");
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('input_text', {
-        text: 'Hello Mobile'
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "input_text",
+        {
+          text: "Hello Mobile",
+        },
+        false
+      );
       expect(result.success).toBe(true);
     });
 
-    test('sendKey should call MCP tool with correct parameters', async () => {
+    test("sendKey should call MCP tool with correct parameters", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123'
+        requestId: "test-123",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -124,26 +140,30 @@ describe('Mobile', () => {
       const result = await mobile.sendKey(4); // BACK key
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('send_key', {
-        key: 4
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "send_key",
+        {
+          key: 4,
+        },
+        false
+      );
       expect(result.success).toBe(true);
     });
   });
 
-  describe('UI Element Operations', () => {
-    test('getClickableUIElements should call MCP tool and return elements', async () => {
+  describe("UI Element Operations", () => {
+    test("getClickableUIElements should call MCP tool and return elements", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123',
+        requestId: "test-123",
         data: JSON.stringify([
           {
-            text: 'Button 1',
-            className: 'android.widget.Button',
-            bounds: { left: 0, top: 0, right: 100, bottom: 50 }
-          }
-        ])
+            text: "Button 1",
+            className: "android.widget.Button",
+            bounds: { left: 0, top: 0, right: 100, bottom: 50 },
+          },
+        ]),
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -151,25 +171,29 @@ describe('Mobile', () => {
       const result = await mobile.getClickableUIElements(5000);
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_clickable_ui_elements', {
-        timeout_ms: 5000
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "get_clickable_ui_elements",
+        {
+          timeout_ms: 5000,
+        },
+        false
+      );
       expect(result.elements).toHaveLength(1);
-      expect(result.elements[0].text).toBe('Button 1');
+      expect(result.elements[0].text).toBe("Button 1");
     });
 
-    test('getAllUIElements should call MCP tool and return all elements', async () => {
+    test("getAllUIElements should call MCP tool and return all elements", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123',
+        requestId: "test-123",
         data: JSON.stringify([
           {
-            text: 'Text View',
-            className: 'android.widget.TextView',
-            bounds: { left: 0, top: 0, right: 200, bottom: 30 }
-          }
-        ])
+            text: "Text View",
+            className: "android.widget.TextView",
+            bounds: { left: 0, top: 0, right: 200, bottom: 30 },
+          },
+        ]),
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -177,55 +201,64 @@ describe('Mobile', () => {
       const result = await mobile.getAllUIElements(3000);
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_all_ui_elements', {
-        timeout_ms: 3000,
-        format: 'json'
-      }, false);
-      expect(result.format).toBe('json');
-      expect(typeof result.raw).toBe('string');
-      expect(result.raw).toContain('android.widget.TextView');
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "get_all_ui_elements",
+        {
+          timeout_ms: 3000,
+          format: "json",
+        },
+        false
+      );
+      expect(result.format).toBe("json");
+      expect(typeof result.raw).toBe("string");
+      expect(result.raw).toContain("android.widget.TextView");
       expect(result.elements).toHaveLength(1);
-      expect(result.elements[0].className).toBe('android.widget.TextView');
+      expect(result.elements[0].className).toBe("android.widget.TextView");
     });
 
-    test('getAllUIElements should support XML format and return raw', async () => {
+    test("getAllUIElements should support XML format and return raw", async () => {
       // Arrange
-      const xml = "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation=\"0\"></hierarchy>";
+      const xml =
+        "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><hierarchy rotation=\"0\"></hierarchy>";
       const mockResult = {
         success: true,
-        requestId: 'test-xml-123',
-        data: xml
+        requestId: "test-xml-123",
+        data: xml,
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
       // Act
-      const result = await mobile.getAllUIElements(3000, 'xml');
+      const result = await mobile.getAllUIElements(3000, "xml");
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_all_ui_elements', {
-        timeout_ms: 3000,
-        format: 'xml'
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "get_all_ui_elements",
+        {
+          timeout_ms: 3000,
+          format: "xml",
+        },
+        false
+      );
       expect(result.success).toBe(true);
-      expect(result.format).toBe('xml');
-      expect(result.raw.startsWith('<?xml')).toBe(true);
+      expect(result.format).toBe("xml");
+      expect(result.raw.startsWith("<?xml")).toBe(true);
       expect(result.elements).toEqual([]);
     });
   });
 
-  describe('App Management Operations', () => {
-    test('getInstalledApps should call MCP tool and return apps', async () => {
+  describe("App Management Operations", () => {
+    test("getInstalledApps should call MCP tool and return apps", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123',
+        requestId: "test-123",
         data: JSON.stringify([
           {
-            name: 'Calculator',
-            startCmd: 'com.android.calculator2',
-            workDirectory: ''
-          }
-        ])
+            name: "Calculator",
+            startCmd: "com.android.calculator2",
+            workDirectory: "",
+          },
+        ]),
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -233,68 +266,82 @@ describe('Mobile', () => {
       const result = await mobile.getInstalledApps(false, true, true);
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('get_installed_apps', {
-        start_menu: false,
-        desktop: true,
-        ignore_system_app: true
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "get_installed_apps",
+        {
+          start_menu: false,
+          desktop: true,
+          ignore_system_app: true,
+        },
+        false
+      );
       expect(result.apps).toHaveLength(1);
-      expect(result.apps[0].name).toBe('Calculator');
+      expect(result.apps[0].name).toBe("Calculator");
     });
 
-    test('startApp should call MCP tool with correct parameters', async () => {
+    test("startApp should call MCP tool with correct parameters", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123',
+        requestId: "test-123",
         data: JSON.stringify([
           {
             pid: 1234,
-            pname: 'com.android.calculator2'
-          }
-        ])
+            pname: "com.android.calculator2",
+          },
+        ]),
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
       // Act
-      const result = await mobile.startApp('com.android.calculator2', '', '');
+      const result = await mobile.startApp("com.android.calculator2", "", "");
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('start_app', {
-        start_cmd: 'com.android.calculator2',
-        work_directory: '',
-        activity: ''
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "start_app",
+        {
+          start_cmd: "com.android.calculator2",
+          work_directory: "",
+          activity: "",
+        },
+        false
+      );
       expect(result.processes).toHaveLength(1);
       expect(result.processes[0].pid).toBe(1234);
     });
 
-    test('stopAppByCmd should call MCP tool with correct parameters', async () => {
+    test("stopAppByCmd should call MCP tool with correct parameters", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123'
+        requestId: "test-123",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
       // Act
-      const result = await mobile.stopAppByCmd('am force-stop com.android.calculator2');
+      const result = await mobile.stopAppByCmd(
+        "am force-stop com.android.calculator2"
+      );
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('stop_app_by_cmd', {
-        stop_cmd: 'am force-stop com.android.calculator2'
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "stop_app_by_cmd",
+        {
+          stop_cmd: "am force-stop com.android.calculator2",
+        },
+        false
+      );
       expect(result.success).toBe(true);
     });
   });
 
-  describe('Screen Operations', () => {
-    test('screenshot should call MCP tool and return URL', async () => {
+  describe("Screen Operations", () => {
+    test("screenshot should call MCP tool and return URL", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123',
-        data: 'https://example.com/mobile-screenshot.png'
+        requestId: "test-123",
+        data: "https://example.com/mobile-screenshot.png",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -302,18 +349,26 @@ describe('Mobile', () => {
       const result = await mobile.screenshot();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('system_screenshot', {}, false);
-      expect(result.data).toBe('https://example.com/mobile-screenshot.png');
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "system_screenshot",
+        {},
+        false
+      );
+      expect(result.data).toBe("https://example.com/mobile-screenshot.png");
     });
 
-    test('betaTakeScreenshot should call MCP tool and return PNG bytes', async () => {
+    test("betaTakeScreenshot should call MCP tool and return PNG bytes", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
-      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
+      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      const pngHeader = Buffer.from([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      ]);
+      const payload = Buffer.concat([pngHeader, Buffer.from("test")]).toString(
+        "base64"
+      );
       const mockResult = {
         success: true,
-        requestId: 'test-beta-123',
+        requestId: "test-beta-123",
         data: JSON.stringify({
           type: "image",
           mime_type: "image/png",
@@ -321,7 +376,7 @@ describe('Mobile', () => {
           height: 1280,
           data: payload,
         }),
-        errorMessage: '',
+        errorMessage: "",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -329,24 +384,30 @@ describe('Mobile', () => {
       const result = await mobile.betaTakeScreenshot();
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'png' }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "screenshot",
+        { format: "png" },
+        false
+      );
       expect(result.success).toBe(true);
-      expect(result.requestId).toBe('test-beta-123');
-      expect(result.type).toBe('image');
-      expect(result.mimeType).toBe('image/png');
+      expect(result.requestId).toBe("test-beta-123");
+      expect(result.type).toBe("image");
+      expect(result.mimeType).toBe("image/png");
       expect(result.width).toBe(720);
       expect(result.height).toBe(1280);
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
     });
 
-    test('betaTakeScreenshot should support jpeg format', async () => {
+    test("betaTakeScreenshot should support jpeg format", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
+      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
       const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
-      const payload = Buffer.concat([jpgHeader, Buffer.from('test')]).toString('base64');
+      const payload = Buffer.concat([jpgHeader, Buffer.from("test")]).toString(
+        "base64"
+      );
       const mockResult = {
         success: true,
-        requestId: 'test-beta-jpeg-123',
+        requestId: "test-beta-jpeg-123",
         data: JSON.stringify({
           type: "image",
           mime_type: "image/jpeg",
@@ -354,29 +415,37 @@ describe('Mobile', () => {
           height: 1280,
           data: payload,
         }),
-        errorMessage: '',
+        errorMessage: "",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
       // Act
-      const result = await (mobile as any).betaTakeScreenshot('jpeg');
+      const result = await (mobile as any).betaTakeScreenshot("jpeg");
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('screenshot', { format: 'jpeg' }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "screenshot",
+        { format: "jpeg" },
+        false
+      );
       expect(result.success).toBe(true);
-      expect(result.requestId).toBe('test-beta-jpeg-123');
-      expect(result.type).toBe('image');
-      expect(result.mimeType).toBe('image/jpeg');
+      expect(result.requestId).toBe("test-beta-jpeg-123");
+      expect(result.type).toBe("image");
+      expect(result.mimeType).toBe("image/jpeg");
       expect(result.width).toBe(720);
       expect(result.height).toBe(1280);
       expect(Buffer.from(result.data).slice(0, 3).equals(jpgHeader)).toBe(true);
     });
 
-    test('betaTakeScreenshot should accept JSON payloads', async () => {
+    test("betaTakeScreenshot should accept JSON payloads", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
-      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
+      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      const pngHeader = Buffer.from([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      ]);
+      const payload = Buffer.concat([pngHeader, Buffer.from("test")]).toString(
+        "base64"
+      );
       const jsonPayload = JSON.stringify({
         type: "image",
         mime_type: "image/png",
@@ -386,9 +455,9 @@ describe('Mobile', () => {
       });
       const mockResult = {
         success: true,
-        requestId: 'test-beta-json-123',
+        requestId: "test-beta-json-123",
         data: jsonPayload,
-        errorMessage: '',
+        errorMessage: "",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -397,22 +466,26 @@ describe('Mobile', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.requestId).toBe('test-beta-json-123');
-      expect(result.type).toBe('image');
-      expect(result.mimeType).toBe('image/png');
+      expect(result.requestId).toBe("test-beta-json-123");
+      expect(result.type).toBe("image");
+      expect(result.mimeType).toBe("image/png");
       expect(Buffer.from(result.data).slice(0, 8).equals(pngHeader)).toBe(true);
     });
 
-    test('betaTakeScreenshot should reject non-JSON payloads', async () => {
+    test("betaTakeScreenshot should reject non-JSON payloads", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue('https://dummy-link-url');
-      const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      const payload = Buffer.concat([pngHeader, Buffer.from('test')]).toString('base64');
+      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      const pngHeader = Buffer.from([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      ]);
+      const payload = Buffer.concat([pngHeader, Buffer.from("test")]).toString(
+        "base64"
+      );
       const mockResult = {
         success: true,
-        requestId: 'test-beta-non-json-123',
+        requestId: "test-beta-non-json-123",
         data: payload,
-        errorMessage: '',
+        errorMessage: "",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -421,29 +494,31 @@ describe('Mobile', () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.errorMessage).toContain('non-JSON');
+      expect(result.errorMessage).toContain("non-JSON");
       expect(result.data.length).toBe(0);
     });
 
-    test('betaTakeLongScreenshot should validate maxScreens and format', async () => {
+    test("betaTakeLongScreenshot should validate maxScreens and format", async () => {
       // Act
-      const invalidMax = await mobile.betaTakeLongScreenshot(1, 'png');
-      const invalidFmt = await mobile.betaTakeLongScreenshot(2, 'gif' as any);
+      const invalidMax = await mobile.betaTakeLongScreenshot(1, "png");
+      const invalidFmt = await mobile.betaTakeLongScreenshot(2, "gif" as any);
 
       // Assert
       expect(invalidMax.success).toBe(false);
-      expect(invalidMax.errorMessage).toContain('maxScreens');
+      expect(invalidMax.errorMessage).toContain("maxScreens");
       expect(invalidFmt.success).toBe(false);
-      expect(invalidFmt.errorMessage).toContain('Unsupported format');
+      expect(invalidFmt.errorMessage).toContain("Unsupported format");
     });
 
-    test('betaTakeLongScreenshot should call MCP tool and normalize jpg to jpeg', async () => {
+    test("betaTakeLongScreenshot should call MCP tool and normalize jpg to jpeg", async () => {
       // Arrange
       const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
-      const payload = Buffer.concat([jpgHeader, Buffer.from('long')]).toString('base64');
+      const payload = Buffer.concat([jpgHeader, Buffer.from("long")]).toString(
+        "base64"
+      );
       const mockResult = {
         success: true,
-        requestId: 'test-long-123',
+        requestId: "test-long-123",
         data: JSON.stringify({
           type: "image",
           mime_type: "image/jpeg",
@@ -451,33 +526,37 @@ describe('Mobile', () => {
           height: 1280,
           data: payload,
         }),
-        errorMessage: '',
+        errorMessage: "",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
       // Act
-      const result = await mobile.betaTakeLongScreenshot(2, 'jpg', 80);
+      const result = await mobile.betaTakeLongScreenshot(2, "jpg", 80);
 
       // Assert
-      expect(mockSession.callMcpTool).toHaveBeenCalledWith('long_screenshot', {
-        max_screens: 2,
-        format: 'jpeg',
-        quality: 80,
-      }, false);
+      expect(mockSession.callMcpTool).toHaveBeenCalledWith(
+        "long_screenshot",
+        {
+          max_screens: 2,
+          format: "jpeg",
+          quality: 80,
+        },
+        false
+      );
       expect(result.success).toBe(true);
-      expect(result.requestId).toBe('test-long-123');
-      expect(result.type).toBe('image');
-      expect(result.mimeType).toBe('image/jpeg');
+      expect(result.requestId).toBe("test-long-123");
+      expect(result.type).toBe("image");
+      expect(result.mimeType).toBe("image/jpeg");
       expect(result.width).toBe(720);
       expect(result.height).toBe(1280);
       expect(Buffer.from(result.data).slice(0, 3).equals(jpgHeader)).toBe(true);
     });
   });
 
-  describe('Error Handling', () => {
-    test('should handle MCP tool errors gracefully', async () => {
+  describe("Error Handling", () => {
+    test("should handle MCP tool errors gracefully", async () => {
       // Arrange
-      const mockError = new Error('MCP tool failed');
+      const mockError = new Error("MCP tool failed");
       mockSession.callMcpTool.mockRejectedValue(mockError);
 
       // Act
@@ -485,15 +564,15 @@ describe('Mobile', () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.errorMessage).toContain('MCP tool failed');
+      expect(result.errorMessage).toContain("MCP tool failed");
     });
 
-    test('should handle invalid JSON response for UI elements', async () => {
+    test("should handle invalid JSON response for UI elements", async () => {
       // Arrange
       const mockResult = {
         success: true,
-        requestId: 'test-123',
-        data: 'invalid json'
+        requestId: "test-123",
+        data: "invalid json",
       };
       mockSession.callMcpTool.mockResolvedValue(mockResult);
 
@@ -502,12 +581,12 @@ describe('Mobile', () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.errorMessage).toContain('Failed to parse');
+      expect(result.errorMessage).toContain("Failed to parse");
     });
   });
 
-  describe('ADB Connection', () => {
-    test.skip('getAdbUrl should fail on non-mobile environment', async () => {
+  describe("ADB Connection", () => {
+    test.skip("getAdbUrl should fail on non-mobile environment", async () => {
       // Note: This test is skipped because getAdbUrl no longer validates image ID
       // on the client side. It directly calls the getLink API which handles
       // environment validation server-side.
@@ -515,29 +594,29 @@ describe('Mobile', () => {
       // Full getAdbUrl functionality is covered by integration tests.
     });
 
-    test('getAdbUrl should succeed on mobile environment', async () => {
+    test("getAdbUrl should succeed on mobile environment", async () => {
       // Arrange
-      const expectedUrl = 'adb connect xx.xx.xx.xx:xxxxx';
+      const expectedUrl = "adb connect xx.xx.xx.xx:xxxxx";
       const mockGetAdbLink = jest.fn().mockResolvedValue({
         body: {
           success: true,
-          requestId: 'test-adb-123',
-          data: { url: expectedUrl }
-        }
+          requestId: "test-adb-123",
+          data: { url: expectedUrl },
+        },
       });
       const mockClient = { getAdbLink: mockGetAdbLink };
       const mockAgentBay = {
-        getClient: jest.fn().mockReturnValue(mockClient)
+        getClient: jest.fn().mockReturnValue(mockClient),
       };
       const mockSessionWithImage = {
         ...mockSession,
-        sessionId: 'test-session-123',
-        imageId: 'mobile_latest',
-        getAPIKey: jest.fn().mockReturnValue('test-api-key'),
-        getAgentBay: jest.fn().mockReturnValue(mockAgentBay)
+        sessionId: "test-session-123",
+        imageId: "mobile_latest",
+        getAPIKey: jest.fn().mockReturnValue("test-api-key"),
+        getAgentBay: jest.fn().mockReturnValue(mockAgentBay),
       };
       const mobileWithImage = new Mobile(mockSessionWithImage as any);
-      const adbkeyPub = 'QAAAAM0muSn7yQCY...test_key...EAAQAA=';
+      const adbkeyPub = "QAAAAM0muSn7yQCY...test_key...EAAQAA=";
 
       // Act
       const result = await mobileWithImage.getAdbUrl(adbkeyPub);
@@ -545,38 +624,40 @@ describe('Mobile', () => {
       // Assert
       expect(mockGetAdbLink).toHaveBeenCalledTimes(1);
       const callArgs = mockGetAdbLink.mock.calls[0][0];
-      expect(callArgs.authorization).toBe('Bearer test-api-key');
-      expect(callArgs.sessionId).toBe('test-session-123');
-      expect(callArgs.option).toContain('adbkey_pub');
+      expect(callArgs.authorization).toBe("Bearer test-api-key");
+      expect(callArgs.sessionId).toBe("test-session-123");
+      expect(callArgs.option).toContain("adbkey_pub");
       expect(result.success).toBe(true);
       expect(result.data).toBe(expectedUrl);
       expect(result.url).toBe(expectedUrl);
-      expect(result.requestId).toBe('test-adb-123');
+      expect(result.requestId).toBe("test-adb-123");
     });
 
-    test('getAdbUrl should handle getLink errors', async () => {
+    test("getAdbUrl should handle getLink errors", async () => {
       // Arrange
-      const mockGetAdbLink = jest.fn().mockRejectedValue(new Error('Network error'));
+      const mockGetAdbLink = jest
+        .fn()
+        .mockRejectedValue(new Error("Network error"));
       const mockClient = { getAdbLink: mockGetAdbLink };
-      const mockAgentBay = { 
-        getClient: jest.fn().mockReturnValue(mockClient)
+      const mockAgentBay = {
+        getClient: jest.fn().mockReturnValue(mockClient),
       };
       const mockSessionWithImage = {
         ...mockSession,
-        imageId: 'mobile_latest',
-        getAPIKey: jest.fn().mockReturnValue('test-api-key'),
-        getAgentBay: jest.fn().mockReturnValue(mockAgentBay)
+        imageId: "mobile_latest",
+        getAPIKey: jest.fn().mockReturnValue("test-api-key"),
+        getAgentBay: jest.fn().mockReturnValue(mockAgentBay),
       };
       const mobileWithImage = new Mobile(mockSessionWithImage as any);
-      const adbkeyPub = 'test_key_456';
+      const adbkeyPub = "test_key_456";
 
       // Act
       const result = await mobileWithImage.getAdbUrl(adbkeyPub);
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.errorMessage).toContain('Failed to get ADB URL');
-      expect(result.errorMessage).toContain('Network error');
+      expect(result.errorMessage).toContain("Failed to get ADB URL");
+      expect(result.errorMessage).toContain("Network error");
     });
   });
-}); 
+});

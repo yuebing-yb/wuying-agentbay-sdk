@@ -12,7 +12,7 @@ describe("Code Integration Test", () => {
       agentBay = new AgentBay({ apiKey });
 
       log("Creating a new session for code testing...");
-      
+
       // Create session with code_latest image for code execution tests
       const createResponse = await agentBay.create({ imageId: "code_latest" });
       session = createResponse.session!;
@@ -227,14 +227,20 @@ print("Completed after 2 seconds")
 
       log("Executing Python code with timeout...");
 
-      const runCodeResponse = await session.code.runCode(pythonCode, "python", 10);
+      const runCodeResponse = await session.code.runCode(
+        pythonCode,
+        "python",
+        10
+      );
 
       log(`Python code with timeout execution output:`, runCodeResponse.result);
 
       expect(runCodeResponse.success).toBe(true);
       expect(runCodeResponse.result).toBeDefined();
       expect(runCodeResponse.result.includes("Starting...")).toBe(true);
-      expect(runCodeResponse.result.includes("Completed after 2 seconds")).toBe(true);
+      expect(runCodeResponse.result.includes("Completed after 2 seconds")).toBe(
+        true
+      );
     }, 60000);
 
     test("should execute JavaScript code with custom timeout", async () => {
@@ -253,9 +259,16 @@ console.log("Immediate output");
 
       log("Executing JavaScript code with timeout...");
 
-      const runCodeResponse = await session.code.runCode(jsCode, "javascript", 10);
+      const runCodeResponse = await session.code.runCode(
+        jsCode,
+        "javascript",
+        10
+      );
 
-      log(`JavaScript code with timeout execution output:`, runCodeResponse.result);
+      log(
+        `JavaScript code with timeout execution output:`,
+        runCodeResponse.result
+      );
 
       expect(runCodeResponse.success).toBe(true);
       expect(runCodeResponse.result).toBeDefined();
@@ -293,8 +306,16 @@ print("File operations completed successfully")
 
       expect(runCodeResponse.success).toBe(true);
       expect(runCodeResponse.result).toBeDefined();
-      expect(runCodeResponse.result.includes("Test content from Python code execution")).toBe(true);
-      expect(runCodeResponse.result.includes("File operations completed successfully")).toBe(true);
+      expect(
+        runCodeResponse.result.includes(
+          "Test content from Python code execution"
+        )
+      ).toBe(true);
+      expect(
+        runCodeResponse.result.includes(
+          "File operations completed successfully"
+        )
+      ).toBe(true);
     }, 60000);
 
     test("should handle Python code with error handling", async () => {
@@ -320,7 +341,9 @@ except ZeroDivisionError as e:
       expect(runCodeResponse.success).toBe(true);
       expect(runCodeResponse.result).toBeDefined();
       expect(runCodeResponse.result.includes("Caught error")).toBe(true);
-      expect(runCodeResponse.result.includes("Error handled successfully")).toBe(true);
+      expect(
+        runCodeResponse.result.includes("Error handled successfully")
+      ).toBe(true);
     }, 60000);
 
     test("should execute Python code with imports", async () => {
@@ -378,10 +401,12 @@ print("Python wrote data to file")
       log("Step 1: Creating file with Python...");
       let runCodeResponse = await session.code.runCode(pythonCode, "python");
       expect(runCodeResponse.success).toBe(true);
-      expect(runCodeResponse.result.includes("Python wrote data to file")).toBe(true);
+      expect(runCodeResponse.result.includes("Python wrote data to file")).toBe(
+        true
+      );
 
       // Wait a bit
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Step 2: Read and modify with JavaScript
       const jsCode = `
@@ -397,11 +422,15 @@ console.log('JavaScript updated data in file');
       log("Step 2: Modifying file with JavaScript...");
       runCodeResponse = await session.code.runCode(jsCode, "javascript");
       expect(runCodeResponse.success).toBe(true);
-      expect(runCodeResponse.result.includes("JavaScript read data")).toBe(true);
-      expect(runCodeResponse.result.includes("JavaScript updated data in file")).toBe(true);
+      expect(runCodeResponse.result.includes("JavaScript read data")).toBe(
+        true
+      );
+      expect(
+        runCodeResponse.result.includes("JavaScript updated data in file")
+      ).toBe(true);
 
       // Wait a bit
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Step 3: Verify with Python
       const pythonVerifyCode = `
@@ -424,4 +453,4 @@ print("Cleanup completed")
       expect(runCodeResponse.result.includes("Cleanup completed")).toBe(true);
     }, 120000);
   });
-}); 
+});

@@ -99,4 +99,3 @@ func (s *Session) GetStreamingWsClient() (WsStreamingClient, error) {
 	}
 	return &wsStreamingClientAdapter{inner: s.wsClient}, nil
 }
-

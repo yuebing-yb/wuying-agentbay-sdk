@@ -63,5 +63,3 @@ System.out.println("JAVA_CONTEXT_SETUP_DONE");`
 	}
 	fmt.Println(javaUseRes.Result)
 }
-
-

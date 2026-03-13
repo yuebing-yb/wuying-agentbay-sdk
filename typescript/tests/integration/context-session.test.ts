@@ -45,9 +45,7 @@ describe("Context Session Integration", () => {
         // Step 2: Create a session with the context ID (expect success)
         log("Step 2: Creating first session with context ID...");
         const createSessionResponse = await agentBay.create({
-          contextSync: [
-            new ContextSync(context.id, "/home/wuying")
-          ],
+          contextSync: [new ContextSync(context.id, "/home/wuying")],
         });
         const session1 = createSessionResponse.session!;
         log(`Session created successfully with ID: ${session1.sessionId}`);
@@ -57,19 +55,16 @@ describe("Context Session Integration", () => {
           }`
         );
 
-        
         // Step 4: Try to create another session with the same context_id (may succeed now)
         log(
           "Step 4: Attempting to create a second session with the same context ID..."
         );
-        
+
         // Note: With the new context sync approach, it may now be possible to create multiple
         // sessions with the same context ID, as the context state management has changed.
         // This is expected behavior with the new implementation.
         const createSession2Response = await agentBay.create({
-          contextSync: [
-            new ContextSync(context.id, "/home/wuying")
-          ],
+          contextSync: [new ContextSync(context.id, "/home/wuying")],
         });
         const session2 = createSession2Response.session!;
 
@@ -81,7 +76,7 @@ describe("Context Session Integration", () => {
             createSession2Response.requestId || "undefined"
           }`
         );
-        
+
         // Clean up the second session
         const deleteSession2Response = await session2.delete();
         log(
@@ -107,9 +102,7 @@ describe("Context Session Integration", () => {
         // Step 4: Create another session with the same context_id (expect success)
         log("Step 4: Creating a new session with the same context ID...");
         const createSession3Response = await agentBay.create({
-          contextSync: [
-            new ContextSync(context.id, "/home/wuying")
-          ],
+          contextSync: [new ContextSync(context.id, "/home/wuying")],
         });
         const session3 = createSession3Response.session!;
         log(`New session created successfully with ID: ${session3.sessionId}`);
@@ -234,9 +227,7 @@ describe("Context Session Integration", () => {
         // Step 4: Create a session with the context
         log("Step 4: Creating a session with the context...");
         const createSessionResponse = await agentBay.create({
-          contextSync: [
-            new ContextSync(context.id, "/home/wuying")
-          ],
+          contextSync: [new ContextSync(context.id, "/home/wuying")],
           labels: {
             username: "test-user",
             project: "test-project",

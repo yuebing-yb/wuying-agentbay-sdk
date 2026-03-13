@@ -106,12 +106,12 @@ type MockSessionForCompliance struct {
 	client    *client.Client
 }
 
-func (m *MockSessionForCompliance) GetAPIKey() string                        { return m.apiKey }
-func (m *MockSessionForCompliance) GetSessionId() string                     { return m.sessionID }
-func (m *MockSessionForCompliance) GetClient() *client.Client                { return m.client }
-func (m *MockSessionForCompliance) IsVpc() bool                              { return false }
-func (m *MockSessionForCompliance) NetworkInterfaceIp() string               { return "" }
-func (m *MockSessionForCompliance) HttpPort() string                         { return "" }
+func (m *MockSessionForCompliance) GetAPIKey() string          { return m.apiKey }
+func (m *MockSessionForCompliance) GetSessionId() string       { return m.sessionID }
+func (m *MockSessionForCompliance) GetClient() *client.Client  { return m.client }
+func (m *MockSessionForCompliance) IsVpc() bool                { return false }
+func (m *MockSessionForCompliance) NetworkInterfaceIp() string { return "" }
+func (m *MockSessionForCompliance) HttpPort() string           { return "" }
 func (m *MockSessionForCompliance) Delete(syncContext ...bool) (*agentbay.DeleteResult, error) {
 	return nil, nil
 }

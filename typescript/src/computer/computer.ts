@@ -3,10 +3,23 @@
  * Provides mouse, keyboard, and screen operations for desktop environments.
  */
 
-import { OperationResult, WindowListResult, WindowInfoResult, BoolResult as WindowBoolResult, InstalledAppListResult, ProcessListResult, ScreenSize, CursorPosition } from "../types/api-response";
+import {
+  OperationResult,
+  WindowListResult,
+  WindowInfoResult,
+  BoolResult as WindowBoolResult,
+  InstalledAppListResult,
+  ProcessListResult,
+  ScreenSize,
+  CursorPosition,
+} from "../types/api-response";
 import { convertObjectKeys, convertWindowData } from "../utils/field-converter";
 
-export type { BoolResult, CursorPosition, ScreenSize } from "../types/api-response";
+export type {
+  BoolResult,
+  CursorPosition,
+  ScreenSize,
+} from "../types/api-response";
 
 export interface ScreenshotResult extends OperationResult {
   data: string; // Screenshot URL
@@ -21,17 +34,17 @@ export interface BetaScreenshotResult extends OperationResult {
 }
 
 export enum MouseButton {
-  LEFT = 'left',
-  RIGHT = 'right',
-  MIDDLE = 'middle',
-  DOUBLE_LEFT = 'double_left'
+  LEFT = "left",
+  RIGHT = "right",
+  MIDDLE = "middle",
+  DOUBLE_LEFT = "double_left",
 }
 
 export enum ScrollDirection {
-  UP = 'up',
-  DOWN = 'down',
-  LEFT = 'left',
-  RIGHT = 'right'
+  UP = "up",
+  DOWN = "down",
+  LEFT = "left",
+  RIGHT = "right",
 }
 
 // Session interface for Computer module
@@ -56,8 +69,13 @@ export class Computer {
     this.session = session;
   }
 
-  private static normalizeImageFormat(format: string, defaultValue: string): string {
-    const f = String(format || "").trim().toLowerCase();
+  private static normalizeImageFormat(
+    format: string,
+    defaultValue: string
+  ): string {
+    const f = String(format || "")
+      .trim()
+      .toLowerCase();
     if (!f) {
       return defaultValue;
     }
@@ -88,7 +106,13 @@ export class Computer {
   private static decodeScreenshotJsonStrict(
     jsonText: string,
     expectedFormat: string
-  ): { bytes: Uint8Array; width?: number; height?: number; type: string; mimeType: string } {
+  ): {
+    bytes: Uint8Array;
+    width?: number;
+    height?: number;
+    type: string;
+    mimeType: string;
+  } {
     const s = String(jsonText || "").trim();
     if (!s) {
       throw new Error("Empty image data");
@@ -101,7 +125,9 @@ export class Computer {
     try {
       obj = JSON.parse(s);
     } catch (e) {
-      throw new Error(`Invalid screenshot JSON: ${e instanceof Error ? e.message : String(e)}`);
+      throw new Error(
+        `Invalid screenshot JSON: ${e instanceof Error ? e.message : String(e)}`
+      );
     }
     if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
       throw new Error("Invalid screenshot JSON: expected object");
@@ -111,10 +137,14 @@ export class Computer {
     const mimeType = obj.mime_type;
     const b64 = obj.data;
     if (typeof shotType !== "string" || !shotType.trim()) {
-      throw new Error("Invalid screenshot JSON: expected non-empty string 'type'");
+      throw new Error(
+        "Invalid screenshot JSON: expected non-empty string 'type'"
+      );
     }
     if (typeof mimeType !== "string" || !mimeType.trim()) {
-      throw new Error("Invalid screenshot JSON: expected non-empty string 'mime_type'");
+      throw new Error(
+        "Invalid screenshot JSON: expected non-empty string 'mime_type'"
+      );
     }
     if (typeof b64 !== "string" || !b64.trim()) {
       throw new Error("Screenshot JSON missing base64 field");
@@ -143,32 +173,54 @@ export class Computer {
 
     const fmt = Computer.normalizeImageFormat(expectedFormat, "png");
     if (fmt === "png") {
-      const pngMagic = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      const pngMagic = new Uint8Array([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      ]);
       for (let i = 0; i < pngMagic.length; i++) {
         if (bytes[i] !== pngMagic[i]) {
-          throw new Error("Screenshot data does not match expected format 'png'");
+          throw new Error(
+            "Screenshot data does not match expected format 'png'"
+          );
         }
       }
       if (String(mimeType).trim().toLowerCase() !== "image/png") {
         throw new Error(
-          `Screenshot JSON mime_type does not match expected format: expected "image/png", got ${JSON.stringify(mimeType)}`
+          `Screenshot JSON mime_type does not match expected format: expected "image/png", got ${JSON.stringify(
+            mimeType
+          )}`
         );
       }
-      return { bytes, width, height, type: String(shotType).trim(), mimeType: String(mimeType).trim() };
+      return {
+        bytes,
+        width,
+        height,
+        type: String(shotType).trim(),
+        mimeType: String(mimeType).trim(),
+      };
     }
     if (fmt === "jpeg") {
       const jpgMagic = new Uint8Array([0xff, 0xd8, 0xff]);
       for (let i = 0; i < jpgMagic.length; i++) {
         if (bytes[i] !== jpgMagic[i]) {
-          throw new Error("Screenshot data does not match expected format 'jpeg'");
+          throw new Error(
+            "Screenshot data does not match expected format 'jpeg'"
+          );
         }
       }
       if (String(mimeType).trim().toLowerCase() !== "image/jpeg") {
         throw new Error(
-          `Screenshot JSON mime_type does not match expected format: expected "image/jpeg", got ${JSON.stringify(mimeType)}`
+          `Screenshot JSON mime_type does not match expected format: expected "image/jpeg", got ${JSON.stringify(
+            mimeType
+          )}`
         );
       }
-      return { bytes, width, height, type: String(shotType).trim(), mimeType: String(mimeType).trim() };
+      return {
+        bytes,
+        width,
+        height,
+        type: String(shotType).trim(),
+        mimeType: String(mimeType).trim(),
+      };
     }
     throw new Error(`Unsupported format: ${JSON.stringify(expectedFormat)}`);
   }
@@ -192,28 +244,38 @@ export class Computer {
    * }
    * ```
    */
-  async clickMouse(x: number, y: number, button: MouseButton | string = MouseButton.LEFT): Promise<OperationResult> {
-    const buttonStr = typeof button === 'string' ? button : button;
+  async clickMouse(
+    x: number,
+    y: number,
+    button: MouseButton | string = MouseButton.LEFT
+  ): Promise<OperationResult> {
+    const buttonStr = typeof button === "string" ? button : button;
     const validButtons = Object.values(MouseButton);
     if (!validButtons.includes(buttonStr as MouseButton)) {
-      throw new Error(`Invalid button '${buttonStr}'. Must be one of ${validButtons.join(', ')}`);
+      throw new Error(
+        `Invalid button '${buttonStr}'. Must be one of ${validButtons.join(
+          ", "
+        )}`
+      );
     }
 
     const args = { x, y, button: buttonStr };
     try {
-      const result = await this.session.callMcpTool('click_mouse', args, false);
+      const result = await this.session.callMcpTool("click_mouse", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to click mouse: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to click mouse: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -240,19 +302,21 @@ export class Computer {
   async moveMouse(x: number, y: number): Promise<OperationResult> {
     const args = { x, y };
     try {
-      const result = await this.session.callMcpTool('move_mouse', args, false);
+      const result = await this.session.callMcpTool("move_mouse", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to move mouse: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to move mouse: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -278,28 +342,50 @@ export class Computer {
    * }
    * ```
    */
-  async dragMouse(fromX: number, fromY: number, toX: number, toY: number, button: MouseButton | string = MouseButton.LEFT): Promise<OperationResult> {
-    const buttonStr = typeof button === 'string' ? button : button;
-    const validButtons = [MouseButton.LEFT, MouseButton.RIGHT, MouseButton.MIDDLE];
+  async dragMouse(
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    button: MouseButton | string = MouseButton.LEFT
+  ): Promise<OperationResult> {
+    const buttonStr = typeof button === "string" ? button : button;
+    const validButtons = [
+      MouseButton.LEFT,
+      MouseButton.RIGHT,
+      MouseButton.MIDDLE,
+    ];
     if (!validButtons.includes(buttonStr as MouseButton)) {
-      throw new Error(`Invalid button '${buttonStr}'. Must be one of ${validButtons.join(', ')}`);
+      throw new Error(
+        `Invalid button '${buttonStr}'. Must be one of ${validButtons.join(
+          ", "
+        )}`
+      );
     }
 
-    const args = { from_x: fromX, from_y: fromY, to_x: toX, to_y: toY, button: buttonStr };
+    const args = {
+      from_x: fromX,
+      from_y: fromY,
+      to_x: toX,
+      to_y: toY,
+      button: buttonStr,
+    };
     try {
-      const result = await this.session.callMcpTool('drag_mouse', args, false);
+      const result = await this.session.callMcpTool("drag_mouse", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to drag mouse: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to drag mouse: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -323,28 +409,39 @@ export class Computer {
    * }
    * ```
    */
-  async scroll(x: number, y: number, direction: ScrollDirection | string = ScrollDirection.UP, amount = 1): Promise<OperationResult> {
-    const directionStr = typeof direction === 'string' ? direction : direction;
+  async scroll(
+    x: number,
+    y: number,
+    direction: ScrollDirection | string = ScrollDirection.UP,
+    amount = 1
+  ): Promise<OperationResult> {
+    const directionStr = typeof direction === "string" ? direction : direction;
     const validDirections = Object.values(ScrollDirection);
     if (!validDirections.includes(directionStr as ScrollDirection)) {
-      throw new Error(`Invalid direction '${directionStr}'. Must be one of ${validDirections.join(', ')}`);
+      throw new Error(
+        `Invalid direction '${directionStr}'. Must be one of ${validDirections.join(
+          ", "
+        )}`
+      );
     }
 
     const args = { x, y, direction: directionStr, amount };
     try {
-      const result = await this.session.callMcpTool('scroll', args, false);
+      const result = await this.session.callMcpTool("scroll", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to scroll: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to scroll: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -368,19 +465,21 @@ export class Computer {
   async inputText(text: string): Promise<OperationResult> {
     const args = { text };
     try {
-      const result = await this.session.callMcpTool('input_text', args, false);
+      const result = await this.session.callMcpTool("input_text", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to input text: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to input text: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -406,19 +505,21 @@ export class Computer {
   async pressKeys(keys: string[], hold = false): Promise<OperationResult> {
     const args = { keys, hold };
     try {
-      const result = await this.session.callMcpTool('press_keys', args, false);
+      const result = await this.session.callMcpTool("press_keys", args, false);
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to press keys: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to press keys: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -443,19 +544,25 @@ export class Computer {
   async releaseKeys(keys: string[]): Promise<OperationResult> {
     const args = { keys };
     try {
-      const result = await this.session.callMcpTool('release_keys', args, false);
+      const result = await this.session.callMcpTool(
+        "release_keys",
+        args,
+        false
+      );
       return {
         success: result.success || false,
-        requestId: result.requestId || '',
-        errorMessage: result.errorMessage || '',
-        data: result.success || false
+        requestId: result.requestId || "",
+        errorMessage: result.errorMessage || "",
+        data: result.success || false,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to release keys: ${error instanceof Error ? error.message : String(error)}`,
-        data: false
+        requestId: "",
+        errorMessage: `Failed to release keys: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: false,
       };
     }
   }
@@ -478,15 +585,19 @@ export class Computer {
    */
   async getCursorPosition(): Promise<CursorPosition> {
     try {
-      const result = await this.session.callMcpTool('get_cursor_position', {}, false);
-      
+      const result = await this.session.callMcpTool(
+        "get_cursor_position",
+        {},
+        false
+      );
+
       if (!result.success) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to get cursor position',
+          requestId: result.requestId || "",
+          errorMessage: result.errorMessage || "Failed to get cursor position",
           x: 0,
-          y: 0
+          y: 0,
         };
       }
 
@@ -495,10 +606,10 @@ export class Computer {
       if (!content) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: 'No content in response',
+          requestId: result.requestId || "",
+          errorMessage: "No content in response",
           x: 0,
-          y: 0
+          y: 0,
         };
       }
 
@@ -506,27 +617,29 @@ export class Computer {
         const position = JSON.parse(content);
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
+          requestId: result.requestId || "",
+          errorMessage: "",
           x: position.x || 0,
-          y: position.y || 0
+          y: position.y || 0,
         };
       } catch (parseError) {
         return {
           success: false,
-          requestId: result.requestId || '',
+          requestId: result.requestId || "",
           errorMessage: `Failed to parse cursor position: ${parseError}`,
           x: 0,
-          y: 0
+          y: 0,
         };
       }
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to get cursor position: ${error instanceof Error ? error.message : String(error)}`,
+        requestId: "",
+        errorMessage: `Failed to get cursor position: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         x: 0,
-        y: 0
+        y: 0,
       };
     }
   }
@@ -549,16 +662,20 @@ export class Computer {
    */
   async getScreenSize(): Promise<ScreenSize> {
     try {
-      const result = await this.session.callMcpTool('get_screen_size', {}, false);
-      
+      const result = await this.session.callMcpTool(
+        "get_screen_size",
+        {},
+        false
+      );
+
       if (!result.success) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to get screen size',
+          requestId: result.requestId || "",
+          errorMessage: result.errorMessage || "Failed to get screen size",
           width: 0,
           height: 0,
-          dpiScalingFactor: 1.0
+          dpiScalingFactor: 1.0,
         };
       }
 
@@ -567,11 +684,11 @@ export class Computer {
       if (!content) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: 'No content in response',
+          requestId: result.requestId || "",
+          errorMessage: "No content in response",
           width: 0,
           height: 0,
-          dpiScalingFactor: 1.0
+          dpiScalingFactor: 1.0,
         };
       }
 
@@ -579,30 +696,32 @@ export class Computer {
         const screenInfo = JSON.parse(content);
         return {
           success: true,
-          requestId: result.requestId || '',
-          errorMessage: '',
+          requestId: result.requestId || "",
+          errorMessage: "",
           width: screenInfo.width || 0,
           height: screenInfo.height || 0,
-          dpiScalingFactor: screenInfo.dpiScalingFactor || 1.0
+          dpiScalingFactor: screenInfo.dpiScalingFactor || 1.0,
         };
       } catch (parseError) {
         return {
           success: false,
-          requestId: result.requestId || '',
+          requestId: result.requestId || "",
           errorMessage: `Failed to parse screen size: ${parseError}`,
           width: 0,
           height: 0,
-          dpiScalingFactor: 1.0
+          dpiScalingFactor: 1.0,
         };
       }
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to get screen size: ${error instanceof Error ? error.message : String(error)}`,
+        requestId: "",
+        errorMessage: `Failed to get screen size: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         width: 0,
         height: 0,
-        dpiScalingFactor: 1.0
+        dpiScalingFactor: 1.0,
       };
     }
   }
@@ -634,36 +753,42 @@ export class Computer {
       };
     }
     try {
-      const result = await this.session.callMcpTool('system_screenshot', {}, false);
+      const result = await this.session.callMcpTool(
+        "system_screenshot",
+        {},
+        false
+      );
       if (!result.success) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to take screenshot',
-          data: ''
+          requestId: result.requestId || "",
+          errorMessage: result.errorMessage || "Failed to take screenshot",
+          data: "",
         };
       }
-      if(!result.data){
+      if (!result.data) {
         return {
           success: false,
-          requestId: result.requestId || '',
-          errorMessage: result.errorMessage || 'Failed to take screenshot',
-          data: ''
+          requestId: result.requestId || "",
+          errorMessage: result.errorMessage || "Failed to take screenshot",
+          data: "",
         };
       }
-      const screenshotUrl = result.data || '';
+      const screenshotUrl = result.data || "";
       return {
         success: true,
-        requestId: result.requestId || '',
-        errorMessage: '',
-        data: screenshotUrl
+        requestId: result.requestId || "",
+        errorMessage: "",
+        data: screenshotUrl,
       };
     } catch (error) {
       return {
         success: false,
-        requestId: '',
-        errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
-        data: ''
+        requestId: "",
+        errorMessage: `Failed to take screenshot: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        data: "",
       };
     }
   }
@@ -693,7 +818,9 @@ export class Computer {
       return {
         success: false,
         requestId: "",
-        errorMessage: `Unsupported format: ${JSON.stringify(format)}. Supported values: "png", "jpeg".`,
+        errorMessage: `Unsupported format: ${JSON.stringify(
+          format
+        )}. Supported values: "png", "jpeg".`,
         data: new Uint8Array(),
         type: "",
         mimeType: "",
@@ -701,7 +828,11 @@ export class Computer {
     }
 
     try {
-      const result = await this.session.callMcpTool("screenshot", { format: fmt }, false);
+      const result = await this.session.callMcpTool(
+        "screenshot",
+        { format: fmt },
+        false
+      );
       const requestId = result.requestId || "";
       if (!result.success) {
         return {
@@ -713,7 +844,10 @@ export class Computer {
           mimeType: "",
         };
       }
-      const decoded = Computer.decodeScreenshotJsonStrict(String(result.data || ""), fmt);
+      const decoded = Computer.decodeScreenshotJsonStrict(
+        String(result.data || ""),
+        fmt
+      );
       return {
         success: true,
         requestId,
@@ -728,7 +862,9 @@ export class Computer {
       return {
         success: false,
         requestId: "",
-        errorMessage: `Failed to take screenshot: ${error instanceof Error ? error.message : String(error)}`,
+        errorMessage: `Failed to take screenshot: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         data: new Uint8Array(),
         type: "",
         mimeType: "",
@@ -756,7 +892,11 @@ export class Computer {
   async listRootWindows(timeoutMs = 3000): Promise<WindowListResult> {
     try {
       const args = { timeout_ms: timeoutMs };
-    const response = await this.session.callMcpTool('list_root_windows', args, false);
+      const response = await this.session.callMcpTool(
+        "list_root_windows",
+        args,
+        false
+      );
 
       if (!response.success) {
         return {
@@ -776,7 +916,7 @@ export class Computer {
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         windows: [],
         errorMessage: `Failed to list root windows: ${error}`,
@@ -804,7 +944,11 @@ export class Computer {
   async getActiveWindow(): Promise<WindowInfoResult> {
     try {
       const args = {};
-    const response = await this.session.callMcpTool('get_active_window', args, false);
+      const response = await this.session.callMcpTool(
+        "get_active_window",
+        args,
+        false
+      );
 
       if (!response.success) {
         return {
@@ -825,7 +969,7 @@ export class Computer {
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         window: [],
         errorMessage: `Failed to get active window: ${error}`,
@@ -853,16 +997,20 @@ export class Computer {
   async activateWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-    const response = await this.session.callMcpTool('activate_window', args, false);
+      const response = await this.session.callMcpTool(
+        "activate_window",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to activate window: ${error}`,
       };
@@ -890,16 +1038,20 @@ export class Computer {
   async closeWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-    const response = await this.session.callMcpTool('close_window', args, false);
+      const response = await this.session.callMcpTool(
+        "close_window",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to close window: ${error}`,
       };
@@ -927,16 +1079,20 @@ export class Computer {
   async maximizeWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-    const response = await this.session.callMcpTool('maximize_window', args, false);
+      const response = await this.session.callMcpTool(
+        "maximize_window",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to maximize window: ${error}`,
       };
@@ -964,16 +1120,20 @@ export class Computer {
   async minimizeWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-    const response = await this.session.callMcpTool('minimize_window', args, false);
+      const response = await this.session.callMcpTool(
+        "minimize_window",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to minimize window: ${error}`,
       };
@@ -1002,16 +1162,20 @@ export class Computer {
   async restoreWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-    const response = await this.session.callMcpTool('restore_window', args, false);
+      const response = await this.session.callMcpTool(
+        "restore_window",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to restore window: ${error}`,
       };
@@ -1038,19 +1202,27 @@ export class Computer {
    * }
    * ```
    */
-  async resizeWindow(windowId: number, width: number, height: number): Promise<WindowBoolResult> {
+  async resizeWindow(
+    windowId: number,
+    width: number,
+    height: number
+  ): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId, width, height };
-    const response = await this.session.callMcpTool('resize_window', args, false);
+      const response = await this.session.callMcpTool(
+        "resize_window",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to resize window: ${error}`,
       };
@@ -1078,16 +1250,20 @@ export class Computer {
   async fullscreenWindow(windowId: number): Promise<WindowBoolResult> {
     try {
       const args = { window_id: windowId };
-    const response = await this.session.callMcpTool('fullscreen_window', args, false);
+      const response = await this.session.callMcpTool(
+        "fullscreen_window",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to make window fullscreen: ${error}`,
       };
@@ -1114,16 +1290,20 @@ export class Computer {
   async focusMode(on: boolean): Promise<WindowBoolResult> {
     try {
       const args = { on };
-    const response = await this.session.callMcpTool('focus_mode', args, false);
+      const response = await this.session.callMcpTool(
+        "focus_mode",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to toggle focus mode: ${error}`,
       };
@@ -1151,7 +1331,11 @@ export class Computer {
    * }
    * ```
    */
-  async getInstalledApps(startMenu = true, desktop = false, ignoreSystemApps = true): Promise<InstalledAppListResult> {
+  async getInstalledApps(
+    startMenu = true,
+    desktop = false,
+    ignoreSystemApps = true
+  ): Promise<InstalledAppListResult> {
     try {
       const args = {
         start_menu: startMenu,
@@ -1159,7 +1343,11 @@ export class Computer {
         ignore_system_app: ignoreSystemApps,
       };
 
-    const response = await this.session.callMcpTool('get_installed_apps', args, false);
+      const response = await this.session.callMcpTool(
+        "get_installed_apps",
+        args,
+        false
+      );
 
       if (!response.success) {
         return {
@@ -1179,7 +1367,7 @@ export class Computer {
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         data: [],
         errorMessage: `Failed to get installed apps: ${error}`,
@@ -1206,13 +1394,17 @@ export class Computer {
    * }
    * ```
    */
-  async startApp(startCmd: string, workDirectory = "", activity = ""): Promise<ProcessListResult> {
+  async startApp(
+    startCmd: string,
+    workDirectory = "",
+    activity = ""
+  ): Promise<ProcessListResult> {
     try {
       const args: Record<string, string> = { start_cmd: startCmd };
       if (workDirectory) args.work_directory = workDirectory;
       if (activity) args.activity = activity;
 
-    const response = await this.session.callMcpTool('start_app', args, false);
+      const response = await this.session.callMcpTool("start_app", args, false);
 
       if (!response.success) {
         return {
@@ -1232,7 +1424,7 @@ export class Computer {
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         data: [],
         errorMessage: `Failed to start app: ${error}`,
@@ -1260,16 +1452,20 @@ export class Computer {
   async stopAppByPName(pname: string): Promise<WindowBoolResult> {
     try {
       const args = { pname };
-    const response = await this.session.callMcpTool('stop_app_by_pname', args, false);
+      const response = await this.session.callMcpTool(
+        "stop_app_by_pname",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to stop app by pname: ${error}`,
       };
@@ -1297,16 +1493,20 @@ export class Computer {
   async stopAppByPID(pid: number): Promise<WindowBoolResult> {
     try {
       const args = { pid };
-    const response = await this.session.callMcpTool('stop_app_by_pid', args, false);
+      const response = await this.session.callMcpTool(
+        "stop_app_by_pid",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to stop app by pid: ${error}`,
       };
@@ -1333,16 +1533,20 @@ export class Computer {
   async stopAppByCmd(cmd: string): Promise<WindowBoolResult> {
     try {
       const args = { stop_cmd: cmd };
-    const response = await this.session.callMcpTool('stop_app_by_cmd', args, false);
+      const response = await this.session.callMcpTool(
+        "stop_app_by_cmd",
+        args,
+        false
+      );
 
       return {
         requestId: response.requestId,
         success: response.success,
-        errorMessage: response.errorMessage || '',
+        errorMessage: response.errorMessage || "",
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         errorMessage: `Failed to stop app by cmd: ${error}`,
       };
@@ -1367,7 +1571,11 @@ export class Computer {
    */
   async listVisibleApps(): Promise<ProcessListResult> {
     try {
-    const response = await this.session.callMcpTool('list_visible_apps', {}, false);
+      const response = await this.session.callMcpTool(
+        "list_visible_apps",
+        {},
+        false
+      );
 
       if (!response.success) {
         return {
@@ -1387,11 +1595,11 @@ export class Computer {
       };
     } catch (error) {
       return {
-        requestId: '',
+        requestId: "",
         success: false,
         data: [],
         errorMessage: `Failed to list visible apps: ${error}`,
       };
     }
   }
-} 
+}

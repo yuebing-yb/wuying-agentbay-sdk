@@ -26,8 +26,12 @@ describe("AgentBay - Enhanced Logging", () => {
     getRequestIdStub = sinon.stub().returns("req-12345");
 
     // Stub the actual logger functions
-    sinon.stub(require("../../src/utils/logger"), "logAPICall").callsFake(logAPICallStub);
-    sinon.stub(require("../../src/utils/logger"), "logAPIResponseWithDetails").callsFake(logAPIResponseWithDetailsStub);
+    sinon
+      .stub(require("../../src/utils/logger"), "logAPICall")
+      .callsFake(logAPICallStub);
+    sinon
+      .stub(require("../../src/utils/logger"), "logAPIResponseWithDetails")
+      .callsFake(logAPIResponseWithDetailsStub);
   });
 
   afterEach(() => {
@@ -96,7 +100,10 @@ describe("AgentBay - Enhanced Logging", () => {
 
       // Verify that logAPICall would be called with masked data
       const maskedParams = params; // In real implementation, would mask api_key
-      expect(maskedParams.labels).to.deep.equal({ env: "prod", project: "test" });
+      expect(maskedParams.labels).to.deep.equal({
+        env: "prod",
+        project: "test",
+      });
     });
 
     it("should include RequestId in API response logging", () => {

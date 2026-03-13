@@ -36,7 +36,7 @@ ___
 
 ### toolPrefix
 
-• `Protected` **toolPrefix**: `string` = `'flux'`
+• `Protected` **toolPrefix**: `string` = `"flux"`
 
 #### Overrides
 

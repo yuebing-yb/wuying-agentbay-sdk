@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 /**
  * Browser screenshot integration tests for TypeScript SDK
- * 
+ *
  * These tests verify the browser screenshot functionality by:
  * - Creating browser sessions with AgentBay
  * - Initializing browsers with various configurations
@@ -10,13 +10,15 @@
  * - Validating screenshot data and error handling
  */
 
-import { AgentBay, Browser, BrowserOptionClass, log } from '../../src';
-import { chromium } from 'playwright';
+import { AgentBay, Browser, BrowserOptionClass, log } from "../../src";
+import { chromium } from "playwright";
 
 function getTestApiKey(): string {
   const apiKey = process.env.AGENTBAY_API_KEY;
   if (!apiKey) {
-    log("Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing.");
+    log(
+      "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing."
+    );
     return "akm-xxx";
   }
   return apiKey as string;
@@ -28,7 +30,7 @@ function maskSecret(secret: string, visible = 4): string {
   return "*".repeat(secret.length - visible) + secret.slice(-visible);
 }
 
-describe('Browser Screenshot Integration Tests', () => {
+describe("Browser Screenshot Integration Tests", () => {
   let agentBay: any;
   let session: any;
 
@@ -40,18 +42,18 @@ describe('Browser Screenshot Integration Tests', () => {
     // Create a session
     log("Creating a new session for browser screenshot testing...");
     const sessionParam = {
-      imageId: "browser_latest"
+      imageId: "browser_latest",
     };
-    
+
     const result = await agentBay.create(sessionParam);
-    
+
     if (!result.success) {
       log("⚠️ Session creation failed - probably due to resource limitations");
       log("Result data:", result.errorMessage || result);
       session = null; // Mark as failed
       return;
     }
-    
+
     session = result.session;
     log(`Session created with ID: ${session.sessionId}`);
   });
@@ -67,7 +69,7 @@ describe('Browser Screenshot Integration Tests', () => {
     }
   });
 
-  test('Screenshot with valid page', async () => {
+  test("Screenshot with valid page", async () => {
     if (!session) {
       log("⏭️ Skipping test - session creation failed");
       expect(true).toBe(true);
@@ -101,17 +103,22 @@ describe('Browser Screenshot Integration Tests', () => {
         // but we're testing that the method properly indicates what needs to be done
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
-        expect(error.message).toContain("Screenshot functionality requires Playwright TypeScript integration");
+        expect(error.message).toContain(
+          "Screenshot functionality requires Playwright TypeScript integration"
+        );
       }
 
       await page.close();
       await playwrightBrowser.close();
     } catch (error: any) {
-      log("Expected: Browser operations might fail in test environment:", error?.message || error);
+      log(
+        "Expected: Browser operations might fail in test environment:",
+        error?.message || error
+      );
     }
   }, 60000);
 
-  test('Screenshot with full page option', async () => {
+  test("Screenshot with full page option", async () => {
     if (!session) {
       log("⏭️ Skipping test - session creation failed");
       expect(true).toBe(true);
@@ -145,17 +152,22 @@ describe('Browser Screenshot Integration Tests', () => {
         // but we're testing that the method properly indicates what needs to be done
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
-        expect(error.message).toContain("Screenshot functionality requires Playwright TypeScript integration");
+        expect(error.message).toContain(
+          "Screenshot functionality requires Playwright TypeScript integration"
+        );
       }
 
       await page.close();
       await playwrightBrowser.close();
     } catch (error: any) {
-      log("Expected: Browser operations might fail in test environment:", error?.message || error);
+      log(
+        "Expected: Browser operations might fail in test environment:",
+        error?.message || error
+      );
     }
   }, 60000);
 
-  test('Screenshot with custom options', async () => {
+  test("Screenshot with custom options", async () => {
     if (!session) {
       log("⏭️ Skipping test - session creation failed");
       expect(true).toBe(true);
@@ -190,24 +202,29 @@ describe('Browser Screenshot Integration Tests', () => {
           {
             type: "jpeg",
             quality: 80,
-            timeout: 30000
+            timeout: 30000,
           }
         );
         // This should fail because we haven't implemented Playwright integration yet
         // but we're testing that the method properly indicates what needs to be done
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
-        expect(error.message).toContain("Screenshot functionality requires Playwright TypeScript integration");
+        expect(error.message).toContain(
+          "Screenshot functionality requires Playwright TypeScript integration"
+        );
       }
 
       await page.close();
       await playwrightBrowser.close();
     } catch (error: any) {
-      log("Expected: Browser operations might fail in test environment:", error?.message || error);
+      log(
+        "Expected: Browser operations might fail in test environment:",
+        error?.message || error
+      );
     }
   }, 60000);
 
-  test('Screenshot without browser initialization', async () => {
+  test("Screenshot without browser initialization", async () => {
     if (!session) {
       log("⏭️ Skipping test - session creation failed");
       expect(true).toBe(true);
@@ -234,22 +251,27 @@ describe('Browser Screenshot Integration Tests', () => {
       // Attempt to take screenshot with uninitialized browser
       // Manually set browser as uninitialized for testing
       (uninitializedBrowser as any)._initialized = false;
-      
+
       try {
         await uninitializedBrowser.screenshot(page);
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
-        expect(error.message).toContain("Browser must be initialized before calling screenshot");
+        expect(error.message).toContain(
+          "Browser must be initialized before calling screenshot"
+        );
       }
 
       await page.close();
       await playwrightBrowser.close();
     } catch (error: any) {
-      log("Expected: Browser operations might fail in test environment:", error?.message || error);
+      log(
+        "Expected: Browser operations might fail in test environment:",
+        error?.message || error
+      );
     }
   }, 60000);
 
-  test('Screenshot with multiple pages', async () => {
+  test("Screenshot with multiple pages", async () => {
     if (!session) {
       log("⏭️ Skipping test - session creation failed");
       expect(true).toBe(true);
@@ -262,10 +284,7 @@ describe('Browser Screenshot Integration Tests', () => {
     const initialized = await browser.initializeAsync({});
     expect(initialized).toBe(true);
 
-    const urls = [
-      "https://www.aliyun.com",
-      "https://www.taobao.com"
-    ];
+    const urls = ["https://www.aliyun.com", "https://www.taobao.com"];
 
     try {
       const endpointUrl = await browser.getEndpointUrl();
@@ -290,7 +309,9 @@ describe('Browser Screenshot Integration Tests', () => {
           // but we're testing that the method properly indicates what needs to be done
           expect(true).toBe(false); // Should not reach here
         } catch (error: any) {
-          expect(error.message).toContain("Screenshot functionality requires Playwright TypeScript integration");
+          expect(error.message).toContain(
+            "Screenshot functionality requires Playwright TypeScript integration"
+          );
         }
 
         await page.close();
@@ -299,11 +320,14 @@ describe('Browser Screenshot Integration Tests', () => {
 
       await playwrightBrowser.close();
     } catch (error: any) {
-      log("Expected: Browser operations might fail in test environment:", error?.message || error);
+      log(
+        "Expected: Browser operations might fail in test environment:",
+        error?.message || error
+      );
     }
   }, 60000);
 
-  test('Screenshot performance', async () => {
+  test("Screenshot performance", async () => {
     if (!session) {
       log("⏭️ Skipping test - session creation failed");
       expect(true).toBe(true);
@@ -340,7 +364,9 @@ describe('Browser Screenshot Integration Tests', () => {
         // but we're testing that the method properly indicates what needs to be done
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
-        expect(error.message).toContain("Screenshot functionality requires Playwright TypeScript integration");
+        expect(error.message).toContain(
+          "Screenshot functionality requires Playwright TypeScript integration"
+        );
       }
 
       const endTime = Date.now();
@@ -354,7 +380,10 @@ describe('Browser Screenshot Integration Tests', () => {
       // Performance check (should complete within reasonable time even if it fails)
       expect(duration).toBeLessThan(30);
     } catch (error: any) {
-      log("Expected: Browser operations might fail in test environment:", error?.message || error);
+      log(
+        "Expected: Browser operations might fail in test environment:",
+        error?.message || error
+      );
     }
   }, 60000);
 });

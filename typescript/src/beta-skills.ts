@@ -28,10 +28,14 @@ export class BetaSkillsService {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         logAPICall("ListSkillMetaData(beta)");
-        const response = await this.agentBay.getClient().listSkillMetaData(request);
+        const response = await this.agentBay
+          .getClient()
+          .listSkillMetaData(request);
 
         if (!response.body || typeof response.body !== "object") {
-          throw new APIError("ListSkillMetaData(beta) failed: invalid response format");
+          throw new APIError(
+            "ListSkillMetaData(beta) failed: invalid response format"
+          );
         }
 
         if (response.body.success === false) {
@@ -42,7 +46,9 @@ export class BetaSkillsService {
 
         const data = response.body.data;
         if (!Array.isArray(data)) {
-          throw new APIError("ListSkillMetaData(beta) failed: invalid Data field");
+          throw new APIError(
+            "ListSkillMetaData(beta) failed: invalid Data field"
+          );
         }
 
         const items: SkillMetadataItem[] = [];
@@ -58,7 +64,10 @@ export class BetaSkillsService {
       } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : `${error}`;
         logDebug(`ListSkillMetaData(beta) attempt ${attempt} failed: ${msg}`);
-        if (attempt < maxAttempts && (msg.includes("ServiceUnavailable") || msg.includes("503"))) {
+        if (
+          attempt < maxAttempts &&
+          (msg.includes("ServiceUnavailable") || msg.includes("503"))
+        ) {
           await new Promise((resolve) => setTimeout(resolve, delayMs));
           delayMs *= 2;
           continue;
@@ -72,4 +81,3 @@ export class BetaSkillsService {
     throw new APIError("ListSkillMetaData(beta) failed: exhausted retries");
   }
 }
-

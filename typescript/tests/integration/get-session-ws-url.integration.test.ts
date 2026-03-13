@@ -10,7 +10,9 @@ describe("GetSession wsUrl Integration Test", () => {
   beforeAll(async () => {
     const apiKey = process.env.AGENTBAY_API_KEY;
     if (!apiKey) {
-      log("AGENTBAY_API_KEY is not set; skipping GetSession wsUrl integration test");
+      log(
+        "AGENTBAY_API_KEY is not set; skipping GetSession wsUrl integration test"
+      );
       return;
     }
 
@@ -42,4 +44,3 @@ describe("GetSession wsUrl Integration Test", () => {
     expect(String(r.session?.wsUrl)).toMatch(/^wss?:\/\//);
   });
 });
-

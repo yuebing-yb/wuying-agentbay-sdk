@@ -8,4 +8,3 @@ describe("ConfigOptions", () => {
     expect(config.region_id).toBe("ap-southeast-1");
   });
 });
-

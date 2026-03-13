@@ -23,17 +23,17 @@ describe("Logger", () => {
     // (setup.ts may have disabled it for other tests)
     setupLogger({
       enableConsole: true,
-      level: 'DEBUG'
+      level: "DEBUG",
     });
 
     stdoutWriteStub = sinon.stub(process.stdout, "write");
     stderrWriteStub = sinon.stub(process.stderr, "write");
-    setLogLevel('DEBUG');
+    setLogLevel("DEBUG");
   });
 
   afterEach(() => {
     sinon.restore();
-    setLogLevel('INFO');
+    setLogLevel("INFO");
   });
 
   describe("Basic Logging Functions", () => {
@@ -79,7 +79,10 @@ describe("Logger", () => {
       const error = new Error("test error");
       logError("operation failed", error);
       expect(stderrWriteStub.called).to.be.true;
-      const fullOutput = stderrWriteStub.getCalls().map(c => c.args[0]).join("");
+      const fullOutput = stderrWriteStub
+        .getCalls()
+        .map((c) => c.args[0])
+        .join("");
       expect(fullOutput).to.include("test error");
       expect(fullOutput).to.include("Stack");
     });
@@ -100,7 +103,10 @@ describe("Logger", () => {
         resource_url: "https://example.com",
       });
       expect(stdoutWriteStub.called).to.be.true;
-      const output = stdoutWriteStub.getCalls().map(c => c.args[0]).join("");
+      const output = stdoutWriteStub
+        .getCalls()
+        .map((c) => c.args[0])
+        .join("");
       expect(output).to.include("✅ API Response");
       expect(output).to.include("CreateSession");
       expect(output).to.include("req-123");
@@ -109,16 +115,25 @@ describe("Logger", () => {
     });
 
     it("should log API response with error status", () => {
-      logAPIResponseWithDetails("DeleteSession", "req-789", false, {}, "Not found");
+      logAPIResponseWithDetails(
+        "DeleteSession",
+        "req-789",
+        false,
+        {},
+        "Not found"
+      );
       expect(stderrWriteStub.called).to.be.true;
-      const output = stderrWriteStub.getCalls().map(c => c.args[0]).join("");
+      const output = stderrWriteStub
+        .getCalls()
+        .map((c) => c.args[0])
+        .join("");
       expect(output).to.include("❌ API Response Failed");
       expect(output).to.include("DeleteSession");
     });
 
     it("should log API error response details at ERROR level with masking", () => {
-      setupLogger({ enableConsole: true, level: 'ERROR' });
-      setLogLevel('ERROR');
+      setupLogger({ enableConsole: true, level: "ERROR" });
+      setLogLevel("ERROR");
 
       logAPIResponseWithDetails(
         "CallMcpTool(LinkUrl) Response",
@@ -129,7 +144,10 @@ describe("Logger", () => {
       );
 
       expect(stderrWriteStub.called).to.be.true;
-      const output = stderrWriteStub.getCalls().map(c => c.args[0]).join("");
+      const output = stderrWriteStub
+        .getCalls()
+        .map((c) => c.args[0])
+        .join("");
       expect(output).to.include("❌ API Response Failed");
       expect(output).to.include("CallMcpTool(LinkUrl) Response");
       expect(output).to.include("RequestId=link-1");
@@ -203,12 +221,14 @@ describe("Logger", () => {
         custom_secret: "mysecretvalue",
         public_field: "publicvalue",
       };
-      const masked = maskSensitiveData(data, ["custom_secret"]) as Record<string, any>;
+      const masked = maskSensitiveData(data, ["custom_secret"]) as Record<
+        string,
+        any
+      >;
       expect(masked.custom_secret).to.equal("my****ue");
       expect(masked.public_field).to.equal("publicvalue");
     });
   });
-
 
   describe("Multiple Arguments Logging", () => {
     it("should log message with multiple arguments", () => {
@@ -220,7 +240,13 @@ describe("Logger", () => {
     it("should format objects with proper indentation", () => {
       log("message", { nested: { field: "value" } });
       const calls = stdoutWriteStub.getCalls();
-      expect(calls.some(c => c.args[0].includes(JSON.stringify({ nested: { field: "value" } }, null, 2)))).to.be.true;
+      expect(
+        calls.some((c) =>
+          c.args[0].includes(
+            JSON.stringify({ nested: { field: "value" } }, null, 2)
+          )
+        )
+      ).to.be.true;
     });
   });
 
@@ -247,19 +273,19 @@ describe("Logger", () => {
 
   describe("Log Level Control", () => {
     it("should filter DEBUG logs when log level is INFO", () => {
-      setLogLevel('INFO');
+      setLogLevel("INFO");
       logDebug("debug message");
       expect(stdoutWriteStub.called).to.be.false;
     });
 
     it("should show DEBUG logs when log level is DEBUG", () => {
-      setLogLevel('DEBUG');
+      setLogLevel("DEBUG");
       logDebug("debug message");
       expect(stdoutWriteStub.called).to.be.true;
     });
 
     it("should filter lower level logs when log level is ERROR", () => {
-      setLogLevel('ERROR');
+      setLogLevel("ERROR");
       logInfo("info message");
       expect(stdoutWriteStub.called).to.be.false;
       logDebug("debug message");
@@ -267,26 +293,26 @@ describe("Logger", () => {
     });
 
     it("should show error logs regardless of level", () => {
-      setLogLevel('ERROR');
+      setLogLevel("ERROR");
       logError("error message");
       expect(stderrWriteStub.called).to.be.true;
     });
 
     it("should get current log level", () => {
-      setLogLevel('DEBUG');
-      expect(getLogLevel()).to.equal('DEBUG');
-      setLogLevel('INFO');
-      expect(getLogLevel()).to.equal('INFO');
+      setLogLevel("DEBUG");
+      expect(getLogLevel()).to.equal("DEBUG");
+      setLogLevel("INFO");
+      expect(getLogLevel()).to.equal("INFO");
     });
 
     it("should filter INFO logs when log level is WARN", () => {
-      setLogLevel('WARN');
+      setLogLevel("WARN");
       logInfo("info message");
       expect(stdoutWriteStub.called).to.be.false;
     });
 
     it("should show WARN logs when log level is WARN", () => {
-      setLogLevel('WARN');
+      setLogLevel("WARN");
       logWarn("warning message");
       expect(stderrWriteStub.called).to.be.true;
     });
@@ -316,18 +342,17 @@ describe("Logger", () => {
       expect(stdoutWriteStub.called).to.be.true;
       expect(stderrWriteStub.called).to.be.false;
     });
-
   });
 
   describe("API Logging with Log Level", () => {
     it("should respect log level for API logging", () => {
-      setLogLevel('ERROR');
+      setLogLevel("ERROR");
       logAPICall("TestAPI");
       expect(stdoutWriteStub.called).to.be.false;
     });
 
     it("should log API calls at INFO level", () => {
-      setLogLevel('INFO');
+      setLogLevel("INFO");
       logAPICall("TestAPI");
       expect(stdoutWriteStub.called).to.be.true;
     });
