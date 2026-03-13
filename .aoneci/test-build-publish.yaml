@@ -362,26 +362,74 @@ jobs:
           fi
           echo ""
       
+      - id: modify-java-version
+        run: |
+          cd java/agentbay
+          echo "=== Modifying Java Package Version ==="
+          
+          # Read current version from pom.xml
+          BASE_VERSION=$(grep -m 1 "<version>" pom.xml | sed 's/.*<version>\(.*\)<\/version>.*/\1/' | tr -d '[:space:]')
+          echo "Original version: $BASE_VERSION"
+          
+          # Remove -SNAPSHOT suffix if exists
+          FINAL_VERSION=$(echo "0.0.1-SNAPSHOT" )
+          echo "Base version (without SNAPSHOT): $FINAL_VERSION"
+          
+          # Save version to workspace for later use
+          echo "JAVA_FINAL_VERSION=${FINAL_VERSION}" > $AONE_CI_WORKSPACE/JAVA_FINAL_VERSION
+          
+          # Display saved versions
+          cat $AONE_CI_WORKSPACE/JAVA_FINAL_VERSION
+          
+          # Modify pom.xml version (only the first <version> tag which is the project version)
+          sed -i "0,/<version>.*<\/version>/s/<version>.*<\/version>/<version>${FINAL_VERSION}<\/version>/" pom.xml
+          
+          echo "=== Verification ==="
+          echo "Modified pom.xml version:"
+          grep -m 1 "<version>" pom.xml
+          
+          echo "✅ Version modification completed"
+      
+      - id: remove-central-publishing-plugin
+        run: |
+          cd java/agentbay
+          echo "=== Removing Central Publishing Plugin ==="
+          
+          # Remove the central-publishing-maven-plugin from pom.xml
+          # This plugin is only needed for external-release profile, not for internal release
+          # Using awk for safer multi-line deletion
+          awk '
+          BEGIN { in_central_plugin = 0 }
+          /<groupId>org.sonatype.central<\/groupId>/ { in_central_plugin = 1; next }
+          /<\/plugin>/ && in_central_plugin { in_central_plugin = 0; next }
+          !in_central_plugin { print }
+          ' pom.xml > pom.xml.tmp && mv pom.xml.tmp pom.xml
+          
+          echo "✅ Central publishing plugin removed"
+      
       - id: java-build
         run: |
-          cd java
-          cd agentbay
-          echo "check java version"
-          echo "=== Java Version Check ==="
+          cd java/agentbay
+          echo "=== Java Environment Check ==="
+          echo "Java version:"
           java -version 2>&1 | head -3
           echo ""
-          echo "=== Maven Version Check ==="
+          echo "Maven version:"
           mvn -version | head -3
           echo ""
-          echo "=== Javac Version Check ==="
+          echo "Javac version:"
           javac -version 2>&1
-          echo "starting maven deploy"
-          mvn deploy -DskipTests
+          echo ""
+          
+          echo "=== Starting Maven Deploy ==="
+          mvn clean deploy -Dmaven.test.skip=true -P internal-release
           
           # Get version information for output
           JAVA_VERSION=$(mvn help:evaluate "-Dexpression=project.version" -q "-DforceStdout")
           echo "Java package version: $JAVA_VERSION"
           echo "${JAVA_VERSION}" > ${{outputs.env.path}}
+          
+          echo "✅ Maven deploy completed"
   summary:
     continue-on-error: true
     needs: [pypi-build, npm-build, go-build, java-build]
