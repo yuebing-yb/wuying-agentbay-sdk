@@ -95,7 +95,7 @@ func TestWatchDirectoryIntegration(t *testing.T) {
 	// Start directory monitoring
 	fmt.Println("\n2. Starting directory monitoring...")
 	stopCh := make(chan struct{})
-	wg := session.FileSystem.WatchDirectory(
+	wg, readyCh := session.FileSystem.WatchDirectory(
 		testDir,
 		fileChangeCallback,
 		500*time.Millisecond, // Poll every 0.5 seconds for faster testing
@@ -103,8 +103,8 @@ func TestWatchDirectoryIntegration(t *testing.T) {
 	)
 	fmt.Println("✅ Directory monitoring started")
 
-	// Wait a moment for monitoring to initialize
-	time.Sleep(1 * time.Second)
+	// Wait for baseline before file operations
+	<-readyCh
 
 	// Test 1: Create a new file
 	fmt.Println("\n3. Creating a new file...")
@@ -336,14 +336,14 @@ func TestWatchDirectoryFileModificationIntegration(t *testing.T) {
 	// Start monitoring
 	fmt.Println("\n3. Starting directory monitoring...")
 	stopCh := make(chan struct{})
-	wg := session.FileSystem.WatchDirectory(
+	wg, readyCh := session.FileSystem.WatchDirectory(
 		testDir,
 		onFileModified,
 		500*time.Millisecond, // Faster polling for more reliable detection
 		stopCh,
 	)
 	fmt.Println("✅ Directory monitoring started")
-	time.Sleep(1 * time.Second) // Wait for monitoring to start
+	<-readyCh // Wait for baseline before file operations
 
 	// Modify file multiple times
 	fmt.Println("\n4. Modifying file multiple times...")

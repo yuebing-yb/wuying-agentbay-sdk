@@ -88,7 +88,7 @@ describe("FileSystem Watch Directory Integration Tests", () => {
       throwIfAborted: () => { /* no-op */ }
     } as AbortSignal;
     
-    const watchPromise = session.fileSystem.watchDirectory(
+    const { monitoring, ready } = session.fileSystem.watchDirectory(
       testDir,
       fileChangeCallback,
       500, // Poll every 0.5 seconds for faster testing
@@ -96,8 +96,8 @@ describe("FileSystem Watch Directory Integration Tests", () => {
     );
     log("✅ Directory monitoring started");
 
-    // Wait a moment for monitoring to initialize
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for baseline to be established before performing file operations
+    await ready;
 
     try {
       // Test 1: Create a new file
@@ -131,7 +131,7 @@ describe("FileSystem Watch Directory Integration Tests", () => {
       // Stop monitoring
       log("\n6. Stopping directory monitoring...");
       shouldStop = true;
-      await watchPromise;
+      await monitoring;
       log("✅ Directory monitoring stopped");
     }
 

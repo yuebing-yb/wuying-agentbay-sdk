@@ -36,6 +36,36 @@ func (m *MockSessionInterface) EXPECT() *MockSessionInterfaceMockRecorder {
 	return m.recorder
 }
 
+// BetaPause mocks base method.
+func (m *MockSessionInterface) BetaPause(arg0 int, arg1 float64) (*models.SessionPauseResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BetaPause", arg0, arg1)
+	ret0, _ := ret[0].(*models.SessionPauseResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BetaPause indicates an expected call of BetaPause.
+func (mr *MockSessionInterfaceMockRecorder) BetaPause(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BetaPause", reflect.TypeOf((*MockSessionInterface)(nil).BetaPause), arg0, arg1)
+}
+
+// BetaResume mocks base method.
+func (m *MockSessionInterface) BetaResume(arg0 int, arg1 float64) (*models.SessionResumeResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BetaResume", arg0, arg1)
+	ret0, _ := ret[0].(*models.SessionResumeResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BetaResume indicates an expected call of BetaResume.
+func (mr *MockSessionInterfaceMockRecorder) BetaResume(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BetaResume", reflect.TypeOf((*MockSessionInterface)(nil).BetaResume), arg0, arg1)
+}
+
 // Delete mocks base method.
 func (m *MockSessionInterface) Delete(arg0 ...bool) (*agentbay.DeleteResult, error) {
 	m.ctrl.T.Helper()
@@ -53,20 +83,6 @@ func (m *MockSessionInterface) Delete(arg0 ...bool) (*agentbay.DeleteResult, err
 func (mr *MockSessionInterfaceMockRecorder) Delete(arg0 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSessionInterface)(nil).Delete), arg0...)
-}
-
-// FindServerForTool mocks base method.
-func (m *MockSessionInterface) FindServerForTool(arg0 string) string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindServerForTool", arg0)
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// FindServerForTool indicates an expected call of FindServerForTool.
-func (mr *MockSessionInterfaceMockRecorder) FindServerForTool(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindServerForTool", reflect.TypeOf((*MockSessionInterface)(nil).FindServerForTool), arg0)
 }
 
 // GetAPIKey mocks base method.
@@ -156,20 +172,6 @@ func (mr *MockSessionInterfaceMockRecorder) GetSessionId() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionId", reflect.TypeOf((*MockSessionInterface)(nil).GetSessionId))
 }
 
-// HttpPort mocks base method.
-func (m *MockSessionInterface) HttpPort() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HttpPort")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// HttpPort indicates an expected call of HttpPort.
-func (mr *MockSessionInterfaceMockRecorder) HttpPort() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HttpPort", reflect.TypeOf((*MockSessionInterface)(nil).HttpPort))
-}
-
 // Info mocks base method.
 func (m *MockSessionInterface) Info() (*agentbay.InfoResult, error) {
 	m.ctrl.T.Helper()
@@ -185,20 +187,6 @@ func (mr *MockSessionInterfaceMockRecorder) Info() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Info", reflect.TypeOf((*MockSessionInterface)(nil).Info))
 }
 
-// IsVpc mocks base method.
-func (m *MockSessionInterface) IsVpc() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsVpc")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsVpc indicates an expected call of IsVpc.
-func (mr *MockSessionInterfaceMockRecorder) IsVpc() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsVpc", reflect.TypeOf((*MockSessionInterface)(nil).IsVpc))
-}
-
 // ListMcpTools mocks base method.
 func (m *MockSessionInterface) ListMcpTools() (*agentbay.McpToolsResult, error) {
 	m.ctrl.T.Helper()
@@ -212,50 +200,6 @@ func (m *MockSessionInterface) ListMcpTools() (*agentbay.McpToolsResult, error) 
 func (mr *MockSessionInterfaceMockRecorder) ListMcpTools() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMcpTools", reflect.TypeOf((*MockSessionInterface)(nil).ListMcpTools))
-}
-
-// NetworkInterfaceIp mocks base method.
-func (m *MockSessionInterface) NetworkInterfaceIp() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NetworkInterfaceIp")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// NetworkInterfaceIp indicates an expected call of NetworkInterfaceIp.
-func (mr *MockSessionInterfaceMockRecorder) NetworkInterfaceIp() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NetworkInterfaceIp", reflect.TypeOf((*MockSessionInterface)(nil).NetworkInterfaceIp))
-}
-
-// BetaPause mocks base method.
-func (m *MockSessionInterface) BetaPause(arg0 int, arg1 float64) (*models.SessionPauseResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BetaPause", arg0, arg1)
-	ret0, _ := ret[0].(*models.SessionPauseResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// BetaPause indicates an expected call of BetaPause.
-func (mr *MockSessionInterfaceMockRecorder) BetaPause(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BetaPause", reflect.TypeOf((*MockSessionInterface)(nil).BetaPause), arg0, arg1)
-}
-
-// BetaResume mocks base method.
-func (m *MockSessionInterface) BetaResume(arg0 int, arg1 float64) (*models.SessionResumeResult, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BetaResume", arg0, arg1)
-	ret0, _ := ret[0].(*models.SessionResumeResult)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// BetaResume indicates an expected call of BetaResume.
-func (mr *MockSessionInterfaceMockRecorder) BetaResume(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BetaResume", reflect.TypeOf((*MockSessionInterface)(nil).BetaResume), arg0, arg1)
 }
 
 // SetLabels mocks base method.

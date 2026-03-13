@@ -789,7 +789,7 @@ func (fs *FileSystem) WatchDirectory(
 	callback func([]*FileChangeEvent),
 	interval time.Duration,
 	stopCh <-chan struct{},
-) *sync.WaitGroup
+) (*sync.WaitGroup, <-chan struct{})
 ```
 
 WatchDirectory watches a directory for file changes and calls the callback function when changes
@@ -803,6 +803,9 @@ Parameters:
 
 Returns:
   - *sync.WaitGroup: WaitGroup that can be used to wait for monitoring to stop
+  - <-chan struct{}: readyCh that is closed once the filesystem baseline has been established.
+    Wait on this channel before performing any file operations to avoid a race condition where
+    early changes are absorbed into the baseline.
 
 Behavior:
 
@@ -817,7 +820,8 @@ result, _ := client.Create(nil)
 defer result.Session.Delete()
 result.Session.FileSystem.CreateDirectory("/tmp/watch")
 stopCh := make(chan struct{})
-wg := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+wg, readyCh := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+<-readyCh // wait for baseline
 close(stopCh)
 wg.Wait()
 ```
@@ -829,10 +833,12 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 	path string,
 	callback func([]*FileChangeEvent),
 	stopCh <-chan struct{},
-) *sync.WaitGroup
+) (*sync.WaitGroup, <-chan struct{})
 ```
 
-WatchDirectoryWithDefaults watches a directory for file changes with default 500ms polling interval
+WatchDirectoryWithDefaults watches a directory for file changes with default 500ms polling
+interval. Returns (*sync.WaitGroup, <-chan struct{}) - callers should wait on readyCh before
+performing file operations.
 
 ### Write
 

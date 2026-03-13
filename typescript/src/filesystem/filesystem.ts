@@ -1570,24 +1570,49 @@ export class FileSystem {
    *   await result.session.fileSystem.createDirectory(testDir);
    *   const controller = new AbortController();
    *   const callback = (events) => console.log(`Detected ${events.length} changes`);
-   *   await result.session.fileSystem.watchDirectory(testDir, callback, 1000, controller.signal);
+   *   const { ready } = result.session.fileSystem.watchDirectory(testDir, callback, 1000, controller.signal);
+   *   await ready; // wait for baseline to be established
+   *   await result.session.fileSystem.writeFile(`${testDir}/test.txt`, 'hello');
    *   await result.session.delete();
    * }
    * ```
    */
-  async watchDirectory(
+  watchDirectory(
     path: string,
     callback: (events: FileChangeEvent[]) => void,
     interval = 500,
     signal?: AbortSignal
-  ): Promise<void> {
+  ): { monitoring: Promise<void>; ready: Promise<void> } {
     logInfo(`Starting directory monitoring for: ${path}`);
     logInfo(`Polling interval: ${interval} ms`);
 
-    const monitor = async () => {
+    let readyResolve!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      readyResolve = resolve;
+    });
+
+    const monitoring = (async () => {
+      // First poll to establish baseline
+      try {
+        await this.getFileChange(path);
+      } catch (error) {
+        logError(`Error establishing baseline: ${error}`);
+      }
+      readyResolve();
+
       while (!signal?.aborted) {
+        // Wait before next poll
+        await new Promise<void>((resolve) => {
+          const timeoutId = setTimeout(resolve, interval);
+          signal?.addEventListener("abort", () => {
+            clearTimeout(timeoutId);
+            resolve();
+          });
+        });
+
+        if (signal?.aborted) break;
+
         try {
-          // Check if session is still valid
           if ((this.session as any)._isExpired && (this.session as any)._isExpired()) {
             logInfo(`Session expired, stopping directory monitoring for: ${path}`);
             break;
@@ -1607,7 +1632,6 @@ export class FileSystem {
               logError(`Error in callback function: ${error}`);
             }
           } else if (!result.success) {
-            // Check if error is due to session expiry
             const errorMsg = (result.errorMessage || "").toLowerCase();
             if (errorMsg.includes("session") && (errorMsg.includes("expired") || errorMsg.includes("invalid"))) {
               logInfo(`Session expired, stopping directory monitoring for: ${path}`);
@@ -1615,31 +1639,20 @@ export class FileSystem {
             }
             logError(`Error monitoring directory: ${result.errorMessage}`);
           }
-
-          // Wait for next poll
-          await new Promise((resolve) => {
-            const timeoutId = setTimeout(resolve, interval);
-            signal?.addEventListener("abort", () => {
-              clearTimeout(timeoutId);
-              resolve(void 0);
-            });
-          });
         } catch (error) {
           logError(`Unexpected error in directory monitoring: ${error}`);
-          // Check if exception indicates session expiry
           const errorStr = String(error).toLowerCase();
           if (errorStr.includes("session") && (errorStr.includes("expired") || errorStr.includes("invalid"))) {
             logInfo(`Session expired, stopping directory monitoring for: ${path}`);
             break;
           }
-          await new Promise((resolve) => setTimeout(resolve, interval));
         }
       }
 
       logInfo(`Stopped monitoring directory: ${path}`);
-    };
+    })();
 
-    return monitor();
+    return { monitoring, ready };
   }
 
   /**

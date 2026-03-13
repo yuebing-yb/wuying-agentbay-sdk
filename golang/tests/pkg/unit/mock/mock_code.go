@@ -35,7 +35,7 @@ func (m *MockCodeInterface) EXPECT() *MockCodeInterfaceMockRecorder {
 }
 
 // RunCode mocks base method.
-func (m *MockCodeInterface) RunCode(arg0, arg1 string, arg2 ...int) (*code.CodeResult, error) {
+func (m *MockCodeInterface) RunCode(arg0, arg1 string, arg2 ...interface{}) (*code.CodeResult, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {

@@ -70,30 +70,26 @@ describe("FileSystem Watch Directory Tests", () => {
   });
 
   describe("watchDirectory event validation", () => {
-    it("should validate writeFile operations produce expected 5 events", async () => {
-      // This test validates the behavior described in the issue:
-      // writeFile to non-existent file produces: create + modify (2 events)
-      // writeFile to existing file produces: modify (1 event)
-      // Expected: test1.txt creation (create+modify) + test1.txt modification (modify) + test2.txt creation (create+modify) = 5 events
+    it("should validate writeFile operations produce expected 3 events from 2 polling cycles", async () => {
+      // watchDirectory establishes a baseline first (first get_file_change does NOT trigger callback).
+      // Only subsequent polling cycles pass events to the callback.
+      // Mock: baseline (empty) -> poll1: modify test1.txt (1 event) -> poll2: create+modify test2.txt (2 events)
+      // Expected: 1 + 2 = 3 events in callback
 
       const callbackEvents: FileChangeEvent[] = [];
       const callback = (events: FileChangeEvent[]) => {
         callbackEvents.push(...events);
       };
 
-      // Mock responses for 3 writeFile operations that should produce 5 events total
       const mockResponses = [
-        // First call: writeFile test1.txt (new file) -> create + modify
+        // First call: baseline - consumed but NOT passed to callback
         {
           success: true,
-          requestId: "test-1",
-          data: JSON.stringify([
-            { eventType: "create", path: "/tmp/test_dir/test1.txt", pathType: "file" },
-            { eventType: "modify", path: "/tmp/test_dir/test1.txt", pathType: "file" },
-          ]),
+          requestId: "baseline",
+          data: JSON.stringify([]),
           errorMessage: "",
         },
-        // Second call: writeFile test1.txt (existing file) -> modify
+        // Second call: modify test1.txt
         {
           success: true,
           requestId: "test-2",
@@ -102,7 +98,7 @@ describe("FileSystem Watch Directory Tests", () => {
           ]),
           errorMessage: "",
         },
-        // Third call: writeFile test2.txt (new file) -> create + modify
+        // Third call: create + modify test2.txt
         {
           success: true,
           requestId: "test-3",
@@ -146,12 +142,15 @@ describe("FileSystem Watch Directory Tests", () => {
       };
 
       // Start watching
-      const watchPromise = mockFileSystem.watchDirectory(
+      const { monitoring, ready } = mockFileSystem.watchDirectory(
         "/tmp/test_dir",
         callback,
         50, // Fast polling for testing
         mockController.signal
       );
+
+      // Wait for baseline to be established before running the test
+      await ready;
 
       // Let it run to capture all events - need enough time for 3 polling cycles
       // Each cycle takes 50ms + processing time, so 300ms should be sufficient
@@ -159,33 +158,29 @@ describe("FileSystem Watch Directory Tests", () => {
 
       // Stop watching
       mockController.abort();
-      await watchPromise;
+      await monitoring;
 
-      // Verify exact number of events - must be exactly 5
-      const expectedEvents = 5;
+      // Verify exact number of events - 3 (baseline not passed to callback)
+      const expectedEvents = 3;
       expect(callbackEvents.length).toBe(expectedEvents);
 
       // Verify event types and counts
       const createEvents = callbackEvents.filter(event => event.eventType === "create").length;
       const modifyEvents = callbackEvents.filter(event => event.eventType === "modify").length;
 
-      const expectedCreateEvents = 2;
-      const expectedModifyEvents = 3;
+      const expectedCreateEvents = 1;
+      const expectedModifyEvents = 2;
 
       expect(createEvents).toBe(expectedCreateEvents);
       expect(modifyEvents).toBe(expectedModifyEvents);
 
-      // Verify specific event sequence
-      expect(callbackEvents[0].eventType).toBe("create");
+      // Verify specific event sequence (poll1: modify test1, poll2: create+modify test2)
+      expect(callbackEvents[0].eventType).toBe("modify");
       expect(callbackEvents[0].path).toBe("/tmp/test_dir/test1.txt");
-      expect(callbackEvents[1].eventType).toBe("modify");
-      expect(callbackEvents[1].path).toBe("/tmp/test_dir/test1.txt");
+      expect(callbackEvents[1].eventType).toBe("create");
+      expect(callbackEvents[1].path).toBe("/tmp/test_dir/test2.txt");
       expect(callbackEvents[2].eventType).toBe("modify");
-      expect(callbackEvents[2].path).toBe("/tmp/test_dir/test1.txt");
-      expect(callbackEvents[3].eventType).toBe("create");
-      expect(callbackEvents[3].path).toBe("/tmp/test_dir/test2.txt");
-      expect(callbackEvents[4].eventType).toBe("modify");
-      expect(callbackEvents[4].path).toBe("/tmp/test_dir/test2.txt");
+      expect(callbackEvents[2].path).toBe("/tmp/test_dir/test2.txt");
     });
   });
 }); 

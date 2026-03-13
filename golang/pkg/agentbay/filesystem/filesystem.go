@@ -1401,7 +1401,7 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 	path string,
 	callback func([]*FileChangeEvent),
 	stopCh <-chan struct{},
-) *sync.WaitGroup {
+) (*sync.WaitGroup, <-chan struct{}) {
 	return fs.WatchDirectory(path, callback, 500*time.Millisecond, stopCh)
 }
 
@@ -1415,12 +1415,9 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 //
 // Returns:
 //   - *sync.WaitGroup: WaitGroup that can be used to wait for monitoring to stop
-//
-// Behavior:
-//
-// - Continuously monitors directory for file changes at specified interval
-// - Calls callback function asynchronously when changes detected
-// - Stops monitoring when stopCh is closed
+//   - <-chan struct{}: readyCh that is closed once the filesystem baseline has been
+//     established.  Wait on this channel before performing any file operations to
+//     avoid a race condition where early changes are absorbed into the baseline.
 //
 // Example:
 //
@@ -1429,7 +1426,8 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 //	defer result.Session.Delete()
 //	result.Session.FileSystem.CreateDirectory("/tmp/watch")
 //	stopCh := make(chan struct{})
-//	wg := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+//	wg, readyCh := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+//	<-readyCh // wait for baseline
 //	close(stopCh)
 //	wg.Wait()
 func (fs *FileSystem) WatchDirectory(
@@ -1437,8 +1435,9 @@ func (fs *FileSystem) WatchDirectory(
 	callback func([]*FileChangeEvent),
 	interval time.Duration,
 	stopCh <-chan struct{},
-) *sync.WaitGroup {
+) (*sync.WaitGroup, <-chan struct{}) {
 	var wg sync.WaitGroup
+	readyCh := make(chan struct{})
 	wg.Add(1)
 
 	go func() {
@@ -1446,6 +1445,21 @@ func (fs *FileSystem) WatchDirectory(
 		if logger, ok := fs.Session.(internal.Logger); ok {
 			logger.LogInfo(fmt.Sprintf("Starting directory monitoring for: %s", path))
 			logger.LogDebug(fmt.Sprintf("Polling interval: %v", interval))
+		}
+
+		// First poll to establish baseline
+		select {
+		case <-stopCh:
+			close(readyCh)
+			return
+		default:
+		}
+		_, err := fs.GetFileChange(path)
+		close(readyCh)
+		if err != nil {
+			if logger, ok := fs.Session.(internal.Logger); ok {
+				logger.LogError(fmt.Sprintf("Error establishing baseline: %v", err))
+			}
 		}
 
 		ticker := time.NewTicker(interval)
@@ -1461,7 +1475,6 @@ func (fs *FileSystem) WatchDirectory(
 			case <-ticker.C:
 				result, err := fs.GetFileChange(path)
 				if err != nil {
-					// Check if session has expired
 					if strings.Contains(err.Error(), "session not found or expired") {
 						if logger, ok := fs.Session.(internal.Logger); ok {
 							logger.LogWarn(fmt.Sprintf("Session expired, stopping directory monitoring: %s", path))
@@ -1482,7 +1495,6 @@ func (fs *FileSystem) WatchDirectory(
 						}
 					}
 
-					// Call callback in a separate goroutine to avoid blocking
 					session := fs.Session
 					go func(events []*FileChangeEvent) {
 						defer func() {
@@ -1499,7 +1511,7 @@ func (fs *FileSystem) WatchDirectory(
 		}
 	}()
 
-	return &wg
+	return &wg, readyCh
 }
 
 // FileTransferCapableSession extends the base session interface with methods

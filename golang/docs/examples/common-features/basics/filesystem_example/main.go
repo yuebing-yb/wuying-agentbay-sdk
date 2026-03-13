@@ -96,7 +96,7 @@ func main() {
 
 	// Start monitoring
 	stopCh := make(chan struct{})
-	wg := session.FileSystem.WatchDirectory(
+	wg, readyCh := session.FileSystem.WatchDirectory(
 		testDir,
 		onFileChange,
 		500*time.Millisecond, // Check every 500ms (updated default)
@@ -104,8 +104,8 @@ func main() {
 	)
 	fmt.Println("✅ Directory monitoring started")
 
-	// Demonstrate file operations
-	time.Sleep(2 * time.Second) // Wait for monitoring to start
+	// Wait for baseline to be established before file operations
+	<-readyCh
 
 	fmt.Println("\n🔨 Demonstrating file operations...")
 
