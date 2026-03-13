@@ -2,15 +2,13 @@
 Session manager for OpenClaw sandbox sessions.
 
 Responsible for creating, querying, and destroying OpenClaw sandbox sessions.
-Session metadata is persisted to file so that after process restart, sessions can be
-restored via AgentBay API (solution 3).
+Session restore relies on frontend passing form_data (X-OpenClaw-Form-Data header).
 """
 
-import json
+import asyncio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from agentbay import AgentBay, ContextSync, CreateSessionParams, SyncPolicy, UploadMode
@@ -27,47 +25,6 @@ GATEWAY_PORT = 30100
 GATEWAY_TOKEN = "4decb1b9ff4997825eb91e37bf28798e0af1f7f00c6b4b1c"
 CONTEXT_SYNC_PATH = "/home/wuying/.openclaw/"
 
-# Persisted session metadata file (for restore via AgentBay API after restart)
-_SESSIONS_FILE = Path(__file__).resolve().parent.parent / "openclaw_sessions.json"
-
-
-def _load_persisted_sessions() -> Dict[str, Dict[str, Any]]:
-    """Load persisted session metadata from file."""
-    try:
-        if _SESSIONS_FILE.exists():
-            with open(_SESSIONS_FILE, encoding="utf-8") as f:
-                return json.load(f)
-    except Exception as e:
-        logger.warning(f"Failed to load persisted sessions: {e}")
-    return {}
-
-
-def _save_persisted_session(session_id: str, meta: Dict[str, Any]) -> None:
-    """Save session metadata to file for restore via AgentBay API."""
-    try:
-        data = _load_persisted_sessions()
-        data[session_id] = meta
-        _SESSIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(_SESSIONS_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logger.warning(f"Failed to persist session {session_id}: {e}")
-
-
-def _remove_persisted_session(session_id: str) -> None:
-    """Remove session metadata from file."""
-    try:
-        if _SESSIONS_FILE.exists():
-            data = _load_persisted_sessions()
-            data.pop(session_id, None)
-            if data:
-                with open(_SESSIONS_FILE, "w", encoding="utf-8") as f:
-                    json.dump(data, f, ensure_ascii=False, indent=2)
-            else:
-                _SESSIONS_FILE.unlink(missing_ok=True)
-    except Exception as e:
-        logger.warning(f"Failed to remove persisted session {session_id}: {e}")
-
 
 @dataclass
 class SessionManager:
@@ -77,6 +34,8 @@ class SessionManager:
     _sessions: Dict[str, SessionInfo] = field(default_factory=dict)
     # DingTalk setup state per session: {session_id: {"step": str, "client_id": str, "client_secret": str, "error": str}}
     _dingtalk_setup: Dict[str, dict] = field(default_factory=dict)
+    # Feishu setup state per session: {session_id: {"step": str, "app_id": str, "app_secret": str, "error": str}}
+    _feishu_setup: Dict[str, dict] = field(default_factory=dict)
 
     def _execute_command(self, session, command: str, timeout_ms: int = 30000) -> str:
         """Execute command and return output."""
@@ -222,16 +181,6 @@ class SessionManager:
 
             self._sessions[session.session_id] = info
 
-            # Persist metadata for restore via AgentBay API after process restart
-            _save_persisted_session(
-                session.session_id,
-                {
-                    "agentbay_api_key": request.agentbay_api_key,
-                    "username": request.username,
-                    "created_at": now,
-                },
-            )
-
             logger.info(
                 f"Session started! sessionId={session.session_id}, resourceUrl={info.resource_url}"
             )
@@ -247,31 +196,34 @@ class SessionManager:
                     pass
             raise RuntimeError(f"Failed to create session: {e}")
 
-    def get_session(self, session_id: str) -> Optional[SessionResponse]:
-        """Get session by ID. If not in memory, restore via AgentBay API (persisted metadata)."""
+    def get_session(
+        self,
+        session_id: str,
+        form_data: Optional[Dict[str, Any]] = None,
+    ) -> Optional[SessionResponse]:
+        """Get session by ID. If not in memory, restore via AgentBay API (requires form_data from frontend)."""
         info = self._sessions.get(session_id)
         if info:
             return info.to_response()
 
-        # Restore from persisted metadata + AgentBay API (solution 3)
-        persisted = _load_persisted_sessions()
-        meta = persisted.get(session_id)
-        if not meta:
+        # Restore: requires form_data from X-OpenClaw-Form-Data header (agentbayApiKey, etc.)
+        api_key = (form_data or {}).get("agentbayApiKey") or (form_data or {}).get("agentbay_api_key")
+        if not form_data or not api_key:
             return None
 
-        api_key = meta.get("agentbay_api_key")
-        username = meta.get("username", "unknown")
-        created_at = meta.get("created_at", datetime.now().isoformat())
-        if not api_key:
-            logger.warning(f"No agentbay_api_key for session {session_id}, cannot restore")
-            return None
+        username = form_data.get("username") or "unknown"
+        created_at = datetime.now().isoformat()
+        create_request: Optional[CreateSessionRequest] = None
+        try:
+            create_request = CreateSessionRequest.model_validate(form_data)
+        except Exception:
+            pass
 
         try:
             agent_bay = AgentBay(api_key=api_key)
             result = agent_bay.get(session_id)
             if not result.success:
                 logger.info(f"Session {session_id} not found on AgentBay cloud: {result.error_message}")
-                _remove_persisted_session(session_id)
                 return None
 
             session = result.session
@@ -296,7 +248,7 @@ class SessionManager:
                 status=status,
                 agent_bay=agent_bay,
                 session=session,
-                create_request=None,  # Restored session: DingTalk apply may not work
+                create_request=create_request,
             )
             self._sessions[session_id] = info
             logger.info(f"Restored session {session_id} via AgentBay API")
@@ -310,20 +262,46 @@ class SessionManager:
         """Get full SessionInfo (for internal use e.g. dingtalk setup)."""
         return self._sessions.get(session_id)
 
+    def restart_dashboard(self, session_id: str) -> tuple[bool, str]:
+        """
+        Restart dashboard (kill Firefox and reopen with OpenClaw UI) in sandbox.
+        Called when user clicks "打开 OpenClaw UI".
+
+        Returns (success, error_message).
+        """
+        info = self._sessions.get(session_id)
+        if not info or not info.session:
+            return False, "Session not found"
+        session = info.session
+        try:
+            dashboard_url = f"http://127.0.0.1:{GATEWAY_PORT}/#token={GATEWAY_TOKEN}"
+            self._execute_command(session, "pkill -f firefox || true", timeout_ms=5000)
+            self._execute_command(
+                session,
+                f"bash -lc '"
+                f"for i in $(seq 1 15); do "
+                f"curl -fsS http://127.0.0.1:{GATEWAY_PORT} >/dev/null 2>&1 && break; "
+                f"sleep 2; "
+                f"done; "
+                f'nohup firefox "{dashboard_url}" >/dev/null 2>&1 &'
+                f"'",
+                timeout_ms=60000,
+            )
+            logger.info("Dashboard restarted for session %s", session_id)
+            return True, ""
+        except Exception as e:
+            logger.exception("Failed to restart dashboard for session %s", session_id)
+            return False, str(e)
+
     def delete_session(self, session_id: str) -> bool:
-        """Delete session by ID. Restores from persisted + AgentBay if not in memory."""
+        """Delete session by ID. Restores via form_data if not in memory."""
         info = self._sessions.pop(session_id, None)
         self.clear_dingtalk_setup_state(session_id)
+        self.clear_feishu_setup_state(session_id)
         if info is None:
-            # Try restore from persisted + AgentBay, then delete
-            info_restored = self.get_session(session_id)
-            if info_restored is None:
-                return False
-            info = self._sessions.pop(session_id, None)
-            if info is None:
-                return False
+            # Not in memory - cannot restore without form_data (no persisted file)
+            return False
 
-        _remove_persisted_session(session_id)
         try:
             if info.session:
                 # delete() will sync Context data before destroying
@@ -367,6 +345,61 @@ class SessionManager:
     def clear_dingtalk_setup_state(self, session_id: str) -> None:
         """Clear DingTalk setup state when session is deleted."""
         self._dingtalk_setup.pop(session_id, None)
+
+    def get_feishu_setup_state(self, session_id: str) -> Optional[dict]:
+        """Get Feishu setup state for session."""
+        return self._feishu_setup.get(session_id)
+
+    def set_feishu_setup_state(
+        self,
+        session_id: str,
+        step: str,
+        app_id: Optional[str] = None,
+        app_secret: Optional[str] = None,
+        error: Optional[str] = None,
+        backend: Optional[str] = None,
+        applied: Optional[bool] = None,
+        apply_error: Optional[str] = None,
+    ) -> None:
+        """Update Feishu setup state."""
+        state = self._feishu_setup.get(session_id) or {}
+        state["step"] = step
+        if step == "done":
+            try:
+                from .feishu_setup_playwright import clear_feishu_browser_cache
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(clear_feishu_browser_cache(session_id))
+                except RuntimeError:
+                    asyncio.run(clear_feishu_browser_cache(session_id))
+            except ImportError:
+                pass
+        if app_id is not None:
+            state["app_id"] = app_id
+        if app_secret is not None:
+            state["app_secret"] = app_secret
+        if error is not None:
+            state["error"] = error
+        if backend is not None:
+            state["backend"] = backend
+        if applied is not None:
+            state["applied"] = applied
+        if apply_error is not None:
+            state["apply_error"] = apply_error
+        self._feishu_setup[session_id] = state
+
+    def clear_feishu_setup_state(self, session_id: str) -> None:
+        """Clear Feishu setup state when session is deleted."""
+        self._feishu_setup.pop(session_id, None)
+        try:
+            from .feishu_setup_playwright import clear_feishu_browser_cache
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(clear_feishu_browser_cache(session_id))
+            except RuntimeError:
+                asyncio.run(clear_feishu_browser_cache(session_id))
+        except ImportError:
+            pass
 
 
 # Global session manager instance

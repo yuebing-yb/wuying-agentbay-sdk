@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import SessionForm from './components/SessionForm'
 import DingtalkSetupPanel from './components/DingtalkSetupPanel'
+import FeishuSetupPanel from './components/FeishuSetupPanel'
+import {
+  getCredentialsForSession,
+  removeCredentialsForSession,
+  saveCredentialsForSession,
+} from './utils/credentials'
 
 const SESSION_ID_PARAM = 'sessionId'
 
@@ -47,7 +53,16 @@ function App() {
       setState('restoring')
       setError('')
       try {
-        const res = await fetch(`/api/sessions/${sid}`)
+        const creds = getCredentialsForSession(sid)
+        const headers: Record<string, string> = {}
+        if (creds) {
+          const encoded = encodeURIComponent(JSON.stringify(creds)).replace(
+            /%([0-9A-F]{2})/g,
+            (_, p1) => String.fromCharCode(parseInt(p1, 16))
+          )
+          headers['X-OpenClaw-Form-Data'] = btoa(encoded)
+        }
+        const res = await fetch(`/api/sessions/${sid}`, { headers })
         const data = await res.json()
         if (!res.ok) {
           throw new Error(data.detail || '会话不存在')
@@ -79,6 +94,7 @@ function App() {
       setSession(data)
       setState('running')
       updateUrlSessionId(data.sessionId)
+      saveCredentialsForSession(data.sessionId, formData)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '创建会话失败')
       setState('idle')
@@ -97,6 +113,7 @@ function App() {
         const data = await res.json()
         throw new Error(data.detail || '销毁会话失败')
       }
+      removeCredentialsForSession(session.sessionId)
       setSession(null)
       setState('idle')
       updateUrlSessionId(null)
@@ -165,16 +182,29 @@ function App() {
                 </div>
 
                 <DingtalkSetupPanel sessionId={session.sessionId} />
+                <FeishuSetupPanel sessionId={session.sessionId} />
 
                 {session.openclawUrl && (
-                  <a
-                    href={session.openclawUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     className="btn btn-primary resource-link"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(`/api/sessions/${session.sessionId}/restart-dashboard`, {
+                          method: 'POST',
+                        })
+                        if (!res.ok) {
+                          const data = await res.json().catch(() => ({}))
+                          console.warn('Restart dashboard failed:', data.detail || res.statusText)
+                        }
+                      } catch (e) {
+                        console.warn('Restart dashboard failed:', e)
+                      }
+                      window.open(session.openclawUrl, '_blank', 'noopener,noreferrer')
+                    }}
                   >
                     打开 OpenClaw UI
-                  </a>
+                  </button>
                 )}
 
                 <button

@@ -119,8 +119,6 @@ def apply_dingtalk_credentials(
     session = info.session
     from .session_manager import (
         CONFIG_PATH,
-        GATEWAY_PORT,
-        GATEWAY_TOKEN,
         session_manager,
     )
 
@@ -136,27 +134,8 @@ def apply_dingtalk_credentials(
             "bash -lc 'nohup openclaw gateway > /tmp/gateway.log 2>&1 &'",
             timeout_ms=15000,
         )
-        # Kill existing Firefox (dashboard) and reopen dashboard
-        dashboard_url = f"http://127.0.0.1:{GATEWAY_PORT}/#token={GATEWAY_TOKEN}"
-        session_manager._execute_command(
-            session,
-            "pkill -f firefox || true",
-            timeout_ms=5000,
-        )
-        session_manager._execute_command(
-            session,
-            f"bash -lc '"
-            f"for i in $(seq 1 15); do "
-            f"curl -fsS http://127.0.0.1:{GATEWAY_PORT} >/dev/null 2>&1 && break; "
-            f"sleep 2; "
-            f"done; "
-            f'nohup firefox "{dashboard_url}" >/dev/null 2>&1 &'
-            f"'",
-            timeout_ms=60000,
-        )
         logger.info(
-            "Updated OpenClaw config with DingTalk credentials, "
-            "restarted gateway and dashboard"
+            "Updated OpenClaw config with DingTalk credentials, restarted gateway"
         )
         return True, ""
     except Exception as e:

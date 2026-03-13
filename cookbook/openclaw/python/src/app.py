@@ -5,6 +5,9 @@ Provides REST API endpoints for creating, querying, and deleting OpenClaw sandbo
 Serves the frontend static files.
 """
 
+import asyncio
+import base64
+import json
 import logging
 from pathlib import Path
 from typing import List, Optional
@@ -19,7 +22,13 @@ from .dingtalk_setup import (
     continue_dingtalk_setup,
     start_dingtalk_setup,
 )
-from .models import CreateSessionRequest, DingtalkSetupStatus, SessionResponse
+from .feishu_setup import (
+    apply_feishu_credentials,
+    continue_feishu_setup,
+    start_feishu_setup,
+)
+from .feishu_setup_playwright import configure_feishu_event_subscription
+from .models import CreateSessionRequest, DingtalkSetupStatus, FeishuSetupStatus, SessionResponse
 from .session_manager import session_manager
 
 # Configure logging
@@ -76,9 +85,18 @@ async def create_session(request: CreateSessionRequest):
 
 
 @app.get("/api/sessions/{session_id}", response_model=SessionResponse)
-async def get_session(session_id: str):
-    """Query session status by ID."""
-    response = session_manager.get_session(session_id)
+async def get_session(session_id: str, request: Request):
+    """Query session status by ID. Accepts X-OpenClaw-Form-Data (base64 JSON) for restore."""
+    form_data = None
+    raw = request.headers.get("X-OpenClaw-Form-Data")
+    if raw:
+        try:
+            form_data = json.loads(base64.b64decode(raw).decode("utf-8"))
+        except Exception:
+            form_data = None
+    response = session_manager.get_session(
+        session_id, form_data=form_data
+    )
     if response is None:
         raise HTTPException(status_code=404, detail="Session not found")
     return response
@@ -91,6 +109,18 @@ async def delete_session(session_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Session not found")
     return {"message": "Session destroyed", "sessionId": session_id}
+
+
+@app.post("/api/sessions/{session_id}/restart-dashboard")
+async def restart_dashboard(session_id: str):
+    """
+    Restart dashboard (Firefox with OpenClaw UI) in sandbox.
+    Called when user clicks "打开 OpenClaw UI".
+    """
+    success, err = session_manager.restart_dashboard(session_id)
+    if not success:
+        raise HTTPException(status_code=500, detail=err or "Failed to restart dashboard")
+    return {"message": "Dashboard 已重启"}
 
 
 @app.get("/api/sessions", response_model=List[SessionResponse])
@@ -191,6 +221,153 @@ async def dingtalk_setup_apply(
     success, err = apply_dingtalk_credentials(info, client_id, client_secret)
     if not success:
         raise HTTPException(status_code=500, detail=err)
+    return {"message": "配置已更新，Gateway 已重启"}
+
+
+# ── Feishu One-Click Setup ──────────────────────────────────────────
+
+
+@app.post("/api/sessions/{session_id}/feishu-setup/start")
+async def feishu_setup_start(session_id: str, backend: str = "playwright"):
+    """
+    Start Feishu setup: open browser to open.feishu.cn for QR login.
+
+    backend: "playwright" (default)
+    """
+    info = session_manager.get_session_info(session_id)
+    if not info:
+        raise HTTPException(status_code=404, detail="Session not found")
+    success, err = await start_feishu_setup(info, backend=backend)
+    if not success:
+        raise HTTPException(status_code=500, detail=err)
+    session_manager.set_feishu_setup_state(session_id, step="login", backend=backend)
+    return {
+        "message": "已打开飞书开放平台，请使用飞书 APP 扫码登录",
+        "step": "login",
+        "backend": backend,
+    }
+
+
+@app.post("/api/sessions/{session_id}/feishu-setup/continue")
+async def feishu_setup_continue(session_id: str, backend: Optional[str] = None):
+    """
+    Continue after user logged in: create app, configure permissions, extract credentials,
+    and automatically apply to OpenClaw config (restart gateway).
+
+    backend: "playwright". Uses stored backend from start if not provided.
+    """
+    info = session_manager.get_session_info(session_id)
+    if not info:
+        raise HTTPException(status_code=404, detail="Session not found")
+    state = session_manager.get_feishu_setup_state(session_id)
+    backend = backend or (state.get("backend") if state else None) or "playwright"
+    session_manager.set_feishu_setup_state(session_id, step="creating")
+    success, app_id, app_secret, err = await continue_feishu_setup(
+        info, backend=backend
+    )
+    if not success:
+        session_manager.set_feishu_setup_state(
+            session_id, step="error", error=err
+        )
+        raise HTTPException(status_code=500, detail=err)
+
+    # 提取凭证成功后，自动应用到配置并重启 Gateway
+    applied = False
+    apply_err: Optional[str] = None
+    if app_id and app_secret:
+        applied, apply_err = apply_feishu_credentials(info, app_id, app_secret)
+
+    # 自动应用成功后，等待 6 秒再配置事件订阅、回调与版本发布（步骤9、10、11、12，需 Gateway 长连接客户端已启动）
+    if applied:
+        await asyncio.sleep(6)
+        event_ok, event_err = await configure_feishu_event_subscription(info)
+        if not event_ok:
+            logger.warning("[飞书配置] 事件订阅配置失败: %s", event_err)
+        elif event_ok:
+            # 步骤12版本已发布，飞书配置完成，重启 OpenClaw dashboard
+            restart_ok, restart_err = await asyncio.to_thread(
+                session_manager.restart_dashboard, session_id
+            )
+            if not restart_ok:
+                logger.warning("[飞书配置] 重启 Dashboard 失败: %s", restart_err)
+            else:
+                logger.info("[飞书配置] 步骤12版本已发布，Dashboard 已重启")
+
+    session_manager.set_feishu_setup_state(
+        session_id,
+        step="done",
+        app_id=app_id or "",
+        app_secret=app_secret or "",
+        applied=applied,
+        apply_error=apply_err,
+    )
+    if applied:
+        return {
+            "message": "已获取飞书应用凭证并已应用到配置，Gateway 已重启",
+            "step": "done",
+            "appId": app_id,
+            "appSecret": app_secret,
+            "applied": True,
+        }
+    return {
+        "message": "已获取飞书应用凭证，但自动应用失败，请点击「应用到配置」重试",
+        "step": "done",
+        "appId": app_id,
+        "appSecret": app_secret,
+        "applied": False,
+        "applyError": apply_err,
+    }
+
+
+@app.get("/api/sessions/{session_id}/feishu-setup/status", response_model=FeishuSetupStatus)
+async def feishu_setup_status(session_id: str):
+    """Get Feishu setup status."""
+    if not session_manager.get_session_info(session_id):
+        raise HTTPException(status_code=404, detail="Session not found")
+    state = session_manager.get_feishu_setup_state(session_id)
+    if not state:
+        return FeishuSetupStatus(step="idle")
+    return FeishuSetupStatus(
+        step=state.get("step", "idle"),
+        appId=state.get("app_id"),
+        appSecret=state.get("app_secret"),
+        error=state.get("error"),
+        backend=state.get("backend"),
+        applied=state.get("applied"),
+        applyError=state.get("apply_error"),
+    )
+
+
+@app.post("/api/sessions/{session_id}/feishu-setup/apply")
+async def feishu_setup_apply(
+    session_id: str,
+    body: dict,
+):
+    """Apply extracted credentials to OpenClaw config, restart gateway, and configure event subscription."""
+    info = session_manager.get_session_info(session_id)
+    if not info:
+        raise HTTPException(status_code=404, detail="Session not found")
+    app_id = body.get("appId") or body.get("app_id", "")
+    app_secret = body.get("appSecret") or body.get("app_secret", "")
+    if not app_id or not app_secret:
+        raise HTTPException(status_code=400, detail="appId and appSecret required")
+    success, err = apply_feishu_credentials(info, app_id, app_secret)
+    if not success:
+        raise HTTPException(status_code=500, detail=err)
+    # 等待 6 秒后配置事件订阅、回调与版本发布
+    await asyncio.sleep(6)
+    event_ok, event_err = await configure_feishu_event_subscription(info)
+    if not event_ok:
+        logger.warning("[飞书配置] 事件订阅配置失败: %s", event_err)
+    elif event_ok:
+        # 步骤12版本已发布，飞书配置完成，重启 OpenClaw dashboard
+        restart_ok, restart_err = await asyncio.to_thread(
+            session_manager.restart_dashboard, session_id
+        )
+        if not restart_ok:
+            logger.warning("[飞书配置] 重启 Dashboard 失败: %s", restart_err)
+        else:
+            logger.info("[飞书配置] 步骤12版本已发布，Dashboard 已重启")
     return {"message": "配置已更新，Gateway 已重启"}
 
 

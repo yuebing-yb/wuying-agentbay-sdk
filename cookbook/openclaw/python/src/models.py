@@ -54,6 +54,20 @@ class DingtalkSetupStatus(BaseModel):
     model_config = {"populate_by_name": True, "by_alias": True}
 
 
+class FeishuSetupStatus(BaseModel):
+    """Status of one-click Feishu setup flow."""
+
+    step: str = Field(..., description="login | creating | done | error")
+    app_id: Optional[str] = Field(None, alias="appId")
+    app_secret: Optional[str] = Field(None, alias="appSecret")
+    error: Optional[str] = Field(None, description="Error message if step=error")
+    backend: Optional[str] = Field(None, description="playwright")
+    applied: Optional[bool] = Field(None, description="Whether credentials were auto-applied to config")
+    apply_error: Optional[str] = Field(None, alias="applyError", description="Error if auto-apply failed")
+
+    model_config = {"populate_by_name": True, "by_alias": True}
+
+
 class SessionInfo(BaseModel):
     """Internal session information storage."""
 
