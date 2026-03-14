@@ -92,9 +92,6 @@ tmp/
 PROGRESS.md
 CLAUDE.md
 
-# OpenClaw session metadata (sensitive, no longer persisted)
-**/openclaw_sessions.json
-
 # Example result files
 **/results_*/
 **/screenshots/
