@@ -8,7 +8,10 @@
 - 支持 Context 持久化（基于用户名，ARCHIVE 压缩模式）
 - 通过 `getLink` 获取 OpenClaw UI 外部访问链接
 - 支持自定义模型 Base URL 和模型 ID
+- **钉钉 / 飞书机器人一键配置**：会话创建成功后，可自动完成扫码登录、创建应用、提取凭证并回填到 OpenClaw 配置
 - 前端静态文件与 FastAPI 同目录，单进程运行
+
+> 一键配置的详细流程与 PRD 说明见 [AgentBay OpenClaw 一键配置 PRD](../../../.docs/agentbay_openclaw_一键配置prd.md)
 
 ## 快速开始
 
@@ -61,16 +64,20 @@ cookbook/openclaw/python/
 │   ├── models.py        # Pydantic 数据模型
 │   ├── session_manager.py # 会话管理核心
 │   ├── dingtalk_setup.py # 钉钉一键配置入口（三种后端统一调度）
-│   ├── dingtalk_setup_common.py # 共享类型和工具函数
-│   ├── dingtalk_setup_playwright.py # Playwright 实现（默认）
-│   ├── dingtalk_setup_browser_operator.py # Browser Operator 实现
-│   └── dingtalk_setup_browser_agent.py # BrowserUseAgent 实现
+│   ├── dingtalk_setup_common.py # 钉钉共享类型和工具函数
+│   ├── dingtalk_setup_playwright.py # 钉钉 Playwright 实现（默认）
+│   ├── dingtalk_setup_browser_operator.py # 钉钉 Browser Operator 实现
+│   ├── dingtalk_setup_browser_agent.py # 钉钉 BrowserUseAgent 实现
+│   ├── feishu_setup.py # 飞书一键配置入口
+│   ├── feishu_setup_common.py # 飞书共享类型和工具函数
+│   └── feishu_setup_playwright.py # 飞书 Playwright 实现
 ├── frontend/            # React 前端源码
 │   ├── src/
 │   │   ├── App.tsx      # 主应用组件
 │   │   └── components/
 │   │       ├── SessionForm.tsx      # 创建会话表单
-│   │       └── DingtalkSetupPanel.tsx # 钉钉一键配置面板
+│   │       ├── DingtalkSetupPanel.tsx # 钉钉一键配置面板
+│   │       └── FeishuSetupPanel.tsx # 飞书一键配置面板
 │   ├── package.json
 │   └── vite.config.ts
 ├── static/              # 前端构建产物
@@ -79,14 +86,25 @@ cookbook/openclaw/python/
 └── README.md
 ```
 
-### 一键配置钉钉机器人
+### 一键配置钉钉 / 飞书机器人
 
-会话创建成功后，可点击「一键配置钉钉机器人」：
+会话创建成功后，可点击「一键配置钉钉机器人」或「一键配置飞书机器人」，系统将在沙箱内自动打开浏览器，引导完成扫码登录、创建应用、提取凭证并回填到 OpenClaw 配置。
+
+**钉钉配置流程：**
 
 1. **开始配置**：打开钉钉开放平台并展示二维码
 2. **扫码登录**：使用钉钉 APP 扫描右侧云机中的二维码
 3. **我已登录**：登录成功后点击，系统自动创建应用并提取 Client ID、Client Secret
 4. **提交并更新配置**：将凭证写入 OpenClaw 配置并重启 Gateway
+
+**飞书配置流程：**
+
+1. **开始配置**：打开飞书开放平台并展示二维码
+2. **扫码登录**：使用飞书 APP 扫描右侧云机中的二维码
+3. **我已登录**：登录成功后点击，系统自动创建企业自建应用、添加机器人能力、开通权限、配置事件订阅（长连接）、版本发布并提取 App ID、App Secret
+4. **提交并更新配置**：将凭证写入 OpenClaw 配置并重启 Gateway
+
+> 飞书需配置长连接接收事件，详见 [飞书长连接订阅配置指南](../../../.docs/飞书长连接订阅配置指南.md)
 
 ### 前端开发
 
@@ -129,6 +147,15 @@ cp -r frontend/dist/* static/
 | POST   | `/api/sessions/{id}/dingtalk-setup/continue`| 继续配置（登录后创建应用） |
 | GET    | `/api/sessions/{id}/dingtalk-setup/status`  | 获取配置状态             |
 | POST   | `/api/sessions/{id}/dingtalk-setup/apply`   | 应用凭证到 OpenClaw 配置  |
+
+### 飞书一键配置
+
+| 方法   | 路径                                         | 说明                     |
+|--------|---------------------------------------------|-------------------------|
+| POST   | `/api/sessions/{id}/feishu-setup/start`     | 启动配置（打开登录页）     |
+| POST   | `/api/sessions/{id}/feishu-setup/continue`  | 继续配置（登录后创建应用） |
+| GET    | `/api/sessions/{id}/feishu-setup/status`    | 获取配置状态             |
+| POST   | `/api/sessions/{id}/feishu-setup/apply`   | 应用凭证到 OpenClaw 配置  |
 
 API 文档：`http://localhost:8080/docs`
 

@@ -11,7 +11,7 @@ import os
 import logging
 from typing import Optional, Tuple
 
-from .config_builder import build_config
+from .config_builder import build_config, read_existing_channel_credentials
 from .feishu_setup_common import FeishuCredentialsSchema
 from .feishu_setup_playwright import (
     continue_feishu_setup as _continue_playwright,
@@ -73,6 +73,7 @@ def apply_feishu_credentials(
 ) -> Tuple[bool, str]:
     """
     Write updated openclaw.json with Feishu credentials and restart gateway.
+    Preserves existing DingTalk credentials from current config to avoid overwriting.
 
     Returns (success, error_message).
     """
@@ -80,11 +81,17 @@ def apply_feishu_credentials(
     if not req:
         return False, "缺少创建会话时的配置信息"
 
+    # Read existing config to preserve DingTalk credentials when applying Feishu
+    dingtalk_client_id, dingtalk_client_secret, _, _ = read_existing_channel_credentials(info.session)
+    if not dingtalk_client_id or not dingtalk_client_secret:
+        dingtalk_client_id = req.dingtalk_client_id
+        dingtalk_client_secret = req.dingtalk_client_secret
+
     try:
         config_json = build_config(
             bailian_api_key=req.bailian_api_key,
-            dingtalk_client_id=req.dingtalk_client_id,
-            dingtalk_client_secret=req.dingtalk_client_secret,
+            dingtalk_client_id=dingtalk_client_id,
+            dingtalk_client_secret=dingtalk_client_secret,
             feishu_app_id=app_id,
             feishu_app_secret=app_secret,
             model_base_url=req.model_base_url,
