@@ -76,10 +76,8 @@ def test_watch_directory():
             interval=0.5,  # Poll every 0.5 seconds for faster testing
         )
         monitor_thread.start()
-        print("✅ Directory monitoring started")
-
-        # Wait a moment for monitoring to initialize
-        time.sleep(1)
+        monitor_thread.ready_event.wait(timeout=30)
+        print("✅ Directory monitoring started (baseline established)")
 
         # Test 1: Create a new file
         print("\n3. Creating a new file...")
@@ -295,8 +293,8 @@ def test_watch_directory_file_modification():
             path=test_dir, callback=on_file_modified, interval=1.0
         )
         monitor_thread.start()
-        print("✅ Directory monitoring started")
-        time.sleep(1)  # Wait for monitoring to start
+        monitor_thread.ready_event.wait(timeout=30)
+        print("✅ Directory monitoring started (baseline established)")
 
         # Modify file multiple times
         print(f"\n4. Modifying file multiple times...")

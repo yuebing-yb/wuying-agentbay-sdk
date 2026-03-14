@@ -472,7 +472,7 @@ class TestAsyncSession(unittest.TestCase):
     @patch("agentbay._sync.session.GetLinkRequest")
     @pytest.mark.sync
 
-    def test_get_link_with_port(
+    def test_get_link_with_valid_port(
         self, MockGetLinkRequest, mock_extract_request_id
     ):
         """Test get_link with port parameter"""
@@ -488,9 +488,9 @@ class TestAsyncSession(unittest.TestCase):
         }
 
         # Test with various port values
-        test_ports = [30100, 30150, 30199]
+        valid_ports = [30100, 30150, 30199]
 
-        for port in test_ports:
+        for port in valid_ports:
             with self.subTest(port=port):
                 MockGetLinkRequest.reset_mock()
                 self.agent_bay.client.get_link.reset_mock()
@@ -511,7 +511,6 @@ class TestAsyncSession(unittest.TestCase):
                 self.agent_bay.client.get_link.assert_called_once_with(
                     mock_request
                 )
-
 
     @pytest.mark.sync
 

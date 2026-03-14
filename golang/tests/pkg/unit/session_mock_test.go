@@ -209,7 +209,6 @@ func TestSession_GetLink_ValidPortRange_WithMockClient(t *testing.T) {
 	}
 }
 
-
 func TestSession_GetLink_NilPort_WithMockClient(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

@@ -413,7 +413,9 @@ export class BrowserFingerprintGenerator {
     outputFilename = "fingerprint_output.json"
   ): Promise<boolean> {
     try {
-      logInfo(`Starting fingerprint generation, output file: ${outputFilename}`);
+      logInfo(
+        `Starting fingerprint generation, output file: ${outputFilename}`
+      );
 
       // Generate fingerprint data (FingerprintFormat object)
       const fingerprintFormat = await this.generateFingerprint();
@@ -428,7 +430,9 @@ export class BrowserFingerprintGenerator {
       const success = await this.saveToFile(fingerprintJson, outputFilename);
 
       if (success) {
-        logInfo(`Fingerprint generation completed successfully! Saved to ${outputFilename}`);
+        logInfo(
+          `Fingerprint generation completed successfully! Saved to ${outputFilename}`
+        );
         return true;
       } else {
         logError("Failed to save fingerprint data");

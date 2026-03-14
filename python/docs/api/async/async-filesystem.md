@@ -729,7 +729,14 @@ Watch a directory for file changes and call the callback function when changes o
 **Returns**:
 
     threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.
-  Use the thread's stop_event attribute to stop monitoring.
+  The thread has two event attributes:
+  
+  - ``stop_event`` – set this to stop monitoring.
+  - ``ready_event`` – wait on this after calling ``start()`` to
+  ensure the filesystem baseline has been established before
+  performing any file operations.  This prevents a race
+  condition where early file operations may be included in
+  the baseline instead of being reported as change events.
   
 
 **Example**:
@@ -741,6 +748,7 @@ session = (await agent_bay.create()).session
 await session.file_system.create_directory("/tmp/watch_test")
 monitor_thread = session.file_system.watch_directory("/tmp/watch_test", on_changes)
 monitor_thread.start()
+monitor_thread.ready_event.wait(timeout=30)
 await session.file_system.write_file("/tmp/watch_test/test1.txt", "content 1")
 await session.file_system.write_file("/tmp/watch_test/test2.txt", "content 2")
 await session.delete()

@@ -239,15 +239,18 @@ describe("BrowserFingerprintGenerator Unit Tests", () => {
         .mockResolvedValue(mockFingerprintFormat);
 
       (logger.logWarn as jest.Mock).mockClear();
-      (browserGenerator as any).saveToFile = jest.fn().mockImplementation(() => {
-        (logger.logWarn as jest.Mock)(
-          "File saving not supported in browser environment"
-        );
-        return Promise.resolve(false);
-      });
+      (browserGenerator as any).saveToFile = jest
+        .fn()
+        .mockImplementation(() => {
+          (logger.logWarn as jest.Mock)(
+            "File saving not supported in browser environment"
+          );
+          return Promise.resolve(false);
+        });
 
-      const result =
-        await browserGenerator.generateFingerprintToFile("test.json");
+      const result = await browserGenerator.generateFingerprintToFile(
+        "test.json"
+      );
 
       expect(result).toBe(false);
       expect(logger.logWarn).toHaveBeenCalledWith(

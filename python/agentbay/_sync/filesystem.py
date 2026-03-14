@@ -2022,7 +2022,14 @@ class FileSystem(BaseService):
 
         Returns:
             threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.
-                Use the thread's stop_event attribute to stop monitoring.
+                The thread has two event attributes:
+
+                - ``stop_event`` – set this to stop monitoring.
+                - ``ready_event`` – wait on this after calling ``start()`` to
+                  ensure the filesystem baseline has been established before
+                  performing any file operations.  This prevents a race
+                  condition where early file operations may be included in
+                  the baseline instead of being reported as change events.
 
         Example:
             ```python
@@ -2032,6 +2039,7 @@ class FileSystem(BaseService):
             session.file_system.create_directory("/tmp/watch_test")
             monitor_thread = session.file_system.watch_directory("/tmp/watch_test", on_changes)
             monitor_thread.start()
+            monitor_thread.ready_event.wait(timeout=30)
             session.file_system.write_file("/tmp/watch_test/test1.txt", "content 1")
             session.file_system.write_file("/tmp/watch_test/test2.txt", "content 2")
             session.delete()
@@ -2162,10 +2170,13 @@ class FileSystem(BaseService):
                     error_message=f"HTTP request failed: {e}",
                 )
 
+        ready_event = threading.Event()
+
         def _monitor_directory_sync():
             """Synchronous monitor function that runs in a background thread."""
             _logger.info(f"Starting directory monitoring for: {path}")
             _logger.info(f"Polling interval: {interval} seconds")
+            baseline_established = False
 
             while not stop_event.is_set():
                 try:
@@ -2180,6 +2191,12 @@ class FileSystem(BaseService):
                         break
 
                     result = _poll_file_change()
+
+                    if not baseline_established:
+                        baseline_established = True
+                        ready_event.set()
+                        stop_event.wait(interval)
+                        continue
 
                     if result.success:
                         current_events = result.events
@@ -2234,7 +2251,7 @@ class FileSystem(BaseService):
             daemon=True,
         )
 
-        # Add stop_event as an attribute to the thread for easy access
         monitor_thread.stop_event = stop_event
+        monitor_thread.ready_event = ready_event
 
         return monitor_thread

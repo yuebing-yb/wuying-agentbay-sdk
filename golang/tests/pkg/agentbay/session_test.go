@@ -438,7 +438,6 @@ func TestSession_GetLink_ValidPortRange(t *testing.T) {
 	}
 }
 
-
 func TestSession_InfoMethod(t *testing.T) {
 	// Initialize AgentBay client
 	apiKey := testutil.GetTestAPIKey(t)

@@ -45,8 +45,8 @@ type FileSystemInterface interface {
 	GetFileChange(path string) (*filesystem.FileChangeResult, error)
 
 	// WatchDirectory watches a directory for file changes
-	WatchDirectory(path string, callback func([]*filesystem.FileChangeEvent), interval time.Duration, stopCh <-chan struct{}) *sync.WaitGroup
+	WatchDirectory(path string, callback func([]*filesystem.FileChangeEvent), interval time.Duration, stopCh <-chan struct{}) (*sync.WaitGroup, <-chan struct{})
 
 	// WatchDirectoryWithDefaults watches a directory for file changes with default 500ms polling interval
-	WatchDirectoryWithDefaults(path string, callback func([]*filesystem.FileChangeEvent), stopCh <-chan struct{}) *sync.WaitGroup
+	WatchDirectoryWithDefaults(path string, callback func([]*filesystem.FileChangeEvent), stopCh <-chan struct{}) (*sync.WaitGroup, <-chan struct{})
 }
