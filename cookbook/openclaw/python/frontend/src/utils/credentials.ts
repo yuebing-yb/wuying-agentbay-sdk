@@ -53,3 +53,20 @@ export function updateFeishuCredentialsForSession(
     // ignore
   }
 }
+
+/** 更新某 session 的钉钉凭证到 sessionStorage */
+export function updateDingtalkCredentialsForSession(
+  sessionId: string,
+  clientId: string,
+  clientSecret: string
+) {
+  try {
+    const raw = sessionStorage.getItem(CREDENTIALS_STORAGE_KEY)
+    const creds: Record<string, Record<string, string>> = raw ? JSON.parse(raw) : {}
+    const existing = creds[sessionId] ?? {}
+    creds[sessionId] = { ...existing, dingtalkClientId: clientId, dingtalkClientSecret: clientSecret }
+    sessionStorage.setItem(CREDENTIALS_STORAGE_KEY, JSON.stringify(creds))
+  } catch {
+    // ignore
+  }
+}

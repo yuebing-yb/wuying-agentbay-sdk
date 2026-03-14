@@ -50,6 +50,8 @@ class DingtalkSetupStatus(BaseModel):
     client_secret: Optional[str] = Field(None, alias="clientSecret")
     error: Optional[str] = Field(None, description="Error message if step=error")
     backend: Optional[str] = Field(None, description="operator | agent")
+    applied: Optional[bool] = Field(None, description="Whether credentials were auto-applied to config")
+    apply_error: Optional[str] = Field(None, alias="applyError", description="Error if auto-apply failed")
 
     model_config = {"populate_by_name": True, "by_alias": True}
 

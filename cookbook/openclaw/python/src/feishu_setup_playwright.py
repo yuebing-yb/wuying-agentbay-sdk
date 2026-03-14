@@ -24,8 +24,6 @@ from .feishu_setup_common import (
     FEISHU_JSON_TEMPLATE,
     FEISHU_OPEN_URL,
     PERMISSIONS_IMPORT_JSON,
-    REQUIRED_PERMISSIONS,
-    ROBOT_NAME,
     VERSION_DESC,
     VERSION_NUMBER,
     update_json_field,
@@ -156,50 +154,6 @@ async def clear_feishu_browser_cache(session_id: str) -> None:
             logger.warning("[飞书配置] 停止 playwright 失败: %s", e)
 
 
-async def _click_by_text(page, text: str, timeout: int = DEFAULT_TIMEOUT) -> bool:
-    """点击包含指定文本的元素。"""
-    try:
-        loc = page.get_by_text(text, exact=False).first
-        await loc.wait_for(state="visible", timeout=timeout)
-        await loc.click(timeout=timeout)
-        return True
-    except PlaywrightTimeout:
-        return False
-
-
-async def _click_by_role(page, role: str, name: str, timeout: int = DEFAULT_TIMEOUT) -> bool:
-    """点击指定角色的元素。"""
-    try:
-        loc = page.get_by_role(role, name=name).first
-        await loc.wait_for(state="visible", timeout=timeout)
-        await loc.click(timeout=timeout)
-        return True
-    except PlaywrightTimeout:
-        return False
-
-
-async def _fill_by_placeholder(page, placeholder: str, value: str) -> bool:
-    """根据 placeholder 查找输入框并填写。"""
-    try:
-        loc = page.get_by_placeholder(placeholder)
-        await loc.wait_for(state="visible", timeout=DEFAULT_TIMEOUT)
-        await loc.fill(value, timeout=DEFAULT_TIMEOUT)
-        return True
-    except PlaywrightTimeout:
-        return False
-
-
-async def _fill_by_label(page, label: str, value: str) -> bool:
-    """根据 label 查找表单控件并填写。"""
-    try:
-        loc = page.get_by_label(label).first
-        await loc.wait_for(state="visible", timeout=DEFAULT_TIMEOUT)
-        await loc.fill(value, timeout=DEFAULT_TIMEOUT)
-        return True
-    except (PlaywrightTimeout, Exception):
-        return False
-
-
 async def _click_menu_li_by_id_contains(page, id_pattern: str, timeout: int = DEFAULT_TIMEOUT) -> bool:
     """点击 data-menu-id 属性包含指定模式的 li 元素。"""
     try:
@@ -270,7 +224,7 @@ async def _extract_credentials(page, session) -> Tuple[bool, Optional[str], Opti
     return True, app_id, app_secret, ""
 
 
-async def _configure_event_subscription_and_add_event(page, _browser_svc) -> bool:
+async def _configure_event_subscription_and_add_event(page) -> bool:
     """
     步骤9+10：配置事件订阅（使用长连接）并添加接收消息事件。
     1. 进入事件与回调页面，在「事件配置」区域选择「使用长连接接收事件」并保存
@@ -381,7 +335,7 @@ async def _configure_version_and_publish(page: Page) -> Tuple[bool, str]:
     return True, ""
 
 
-async def _configure_callback_subscription(page, _browser_svc) -> bool:
+async def _configure_callback_subscription(page) -> bool:
     """
     步骤11：配置回调订阅（使用长连接）。
     找到 class=ud__overflow__item 且 style="order:1;" 的 div 元素，并点击。
@@ -437,9 +391,9 @@ async def configure_feishu_event_subscription(info: SessionInfo) -> Tuple[bool, 
         return False, err or "Session not found"
 
     try:
-        if not await _configure_event_subscription_and_add_event(ctx.page, ctx.browser_svc):
+        if not await _configure_event_subscription_and_add_event(ctx.page):
             return False, "配置事件订阅或添加接收消息事件失败"
-        if not await _configure_callback_subscription(ctx.page, ctx.browser_svc):
+        if not await _configure_callback_subscription(ctx.page):
             return False, "配置回调订阅失败"
         ok_step12, err_step12 = await _configure_version_and_publish(ctx.page)
         if not ok_step12:

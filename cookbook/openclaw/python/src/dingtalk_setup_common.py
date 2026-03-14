@@ -8,8 +8,6 @@ from typing import Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from agentbay import ActOptions
-
 logger = logging.getLogger(__name__)
 
 APP_NAME = "龙虾虾ByAgentBay"
@@ -89,48 +87,31 @@ def update_json_field(session, json_path: str, field: str) -> None:
     session.command.execute_command(cmd, timeout_ms=5000)
 
 
-def extract_dingtalk_credentials(session, operator) -> Tuple[bool, Optional[str], Optional[str], str]:
+def extract_dingtalk_credentials(session, page) -> Tuple[bool, Optional[str], Optional[str], str]:
     """
-    提取钉钉凭证：复制 Client ID/Secret 到剪贴板、写入 dingding.json 并读取。
-    供 browser_operator 与 playwright 复用。
+    提取钉钉凭证：使用 Playwright 定位复制按钮，复制 Client ID/Secret 到剪贴板、
+    写入 dingding.json 并读取。
 
     Returns (success, client_id, client_secret, error).
     """
-    # r5 = operator.act(
-    #     ActOptions(
-    #         action="在左侧菜单选择「凭证与基础信息」",
-    #         use_vision=True,
-    #     )
-    # )
-    # if not r5.success:
-    #     return False, None, None, r5.message or "进入凭证页面失败"
-
     fs = session.file_system
     write_ok = fs.write_file(DINGDING_JSON_PATH, DINGDING_JSON_TEMPLATE)
     if not write_ok.success:
         return False, None, None, "创建 dingding.json 失败"
 
-    r6 = operator.act(
-        ActOptions(
-            action="点击 Client ID 右边的复制按钮，将 Client ID 复制到剪贴板",
-            use_vision=True,
+    try:
+        table_wrapper = page.locator("div.dtd-table-wrapper")
+        copy_btns = table_wrapper.locator(
+            ".dtd-typography-copy[role='button'][aria-label='复制']"
         )
-    )
-    if not r6.success:
-        return False, None, None, r6.message or "点击 Client ID 复制按钮失败"
-
-    update_json_field(session, DINGDING_JSON_PATH, "client_id")
-
-    r7 = operator.act(
-        ActOptions(
-            action="点击 Client Secret 右边的复制按钮，将完整密钥复制到剪贴板。若有显示、查看、揭晓等按钮可展示完整密钥，先点击它。",
-            use_vision=True,
-        )
-    )
-    if not r7.success:
-        return False, None, None, r7.message or "点击 Client Secret 复制按钮失败"
-
-    update_json_field(session, DINGDING_JSON_PATH, "client_secret")
+        if copy_btns.count() < 2:
+            return False, None, None, f"未找到足够的复制按钮（需要2个，实际{copy_btns.count()}个）"
+        copy_btns.first.click(timeout=5000)
+        update_json_field(session, DINGDING_JSON_PATH, "client_id")
+        copy_btns.nth(1).click(timeout=5000)
+        update_json_field(session, DINGDING_JSON_PATH, "client_secret")
+    except Exception as e:
+        return False, None, None, f"点击复制按钮失败: {e}"
 
     session.command.execute_command(
         f"gedit {DINGDING_JSON_PATH} 2>/dev/null & || xed {DINGDING_JSON_PATH} 2>/dev/null & || true",

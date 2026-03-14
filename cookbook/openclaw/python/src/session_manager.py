@@ -328,10 +328,18 @@ class SessionManager:
         client_secret: Optional[str] = None,
         error: Optional[str] = None,
         backend: Optional[str] = None,
+        applied: Optional[bool] = None,
+        apply_error: Optional[str] = None,
     ) -> None:
         """Update DingTalk setup state."""
         state = self._dingtalk_setup.get(session_id) or {}
         state["step"] = step
+        if step == "done":
+            try:
+                from .dingtalk_setup_playwright import clear_dingtalk_browser_cache
+                clear_dingtalk_browser_cache(session_id)
+            except ImportError:
+                pass
         if client_id is not None:
             state["client_id"] = client_id
         if client_secret is not None:
@@ -340,11 +348,20 @@ class SessionManager:
             state["error"] = error
         if backend is not None:
             state["backend"] = backend
+        if applied is not None:
+            state["applied"] = applied
+        if apply_error is not None:
+            state["apply_error"] = apply_error
         self._dingtalk_setup[session_id] = state
 
     def clear_dingtalk_setup_state(self, session_id: str) -> None:
         """Clear DingTalk setup state when session is deleted."""
         self._dingtalk_setup.pop(session_id, None)
+        try:
+            from .dingtalk_setup_playwright import clear_dingtalk_browser_cache
+            clear_dingtalk_browser_cache(session_id)
+        except ImportError:
+            pass
 
     def get_feishu_setup_state(self, session_id: str) -> Optional[dict]:
         """Get Feishu setup state for session."""

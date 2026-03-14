@@ -156,7 +156,8 @@ async def dingtalk_setup_start(session_id: str, backend: str = "playwright"):
 @app.post("/api/sessions/{session_id}/dingtalk-setup/continue")
 async def dingtalk_setup_continue(session_id: str, backend: Optional[str] = None):
     """
-    Continue after user logged in: create app and extract credentials.
+    Continue after user logged in: create app, extract credentials,
+    and automatically apply to OpenClaw config (restart gateway).
 
     backend: "operator" or "agent". Uses stored backend from start if not provided.
     """
@@ -174,17 +175,47 @@ async def dingtalk_setup_continue(session_id: str, backend: Optional[str] = None
             session_id, step="error", error=err
         )
         raise HTTPException(status_code=500, detail=err)
+
+    # 提取凭证成功后，自动应用到配置并重启 Gateway（参照飞书）
+    applied = False
+    apply_err: Optional[str] = None
+    if client_id and client_secret:
+        applied, apply_err = await asyncio.to_thread(
+            apply_dingtalk_credentials, info, client_id, client_secret
+        )
+        if applied:
+            # 配置已更新，重启 Dashboard
+            restart_ok, restart_err = await asyncio.to_thread(
+                session_manager.restart_dashboard, session_id
+            )
+            if not restart_ok:
+                logger.warning("[钉钉配置] 重启 Dashboard 失败: %s", restart_err)
+            else:
+                logger.info("[钉钉配置] 配置已更新，Dashboard 已重启")
+
     session_manager.set_dingtalk_setup_state(
         session_id,
         step="done",
         client_id=client_id or "",
         client_secret=client_secret or "",
+        applied=applied,
+        apply_error=apply_err,
     )
+    if applied:
+        return {
+            "message": "已获取钉钉应用凭证并已应用到配置，Gateway 已重启",
+            "step": "done",
+            "clientId": client_id,
+            "clientSecret": client_secret,
+            "applied": True,
+        }
     return {
-        "message": "已获取钉钉应用凭证",
+        "message": "已获取钉钉应用凭证，但自动应用失败，请点击「提交并更新配置」重试",
         "step": "done",
         "clientId": client_id,
         "clientSecret": client_secret,
+        "applied": False,
+        "applyError": apply_err,
     }
 
 
@@ -198,10 +229,12 @@ async def dingtalk_setup_status(session_id: str):
         return DingtalkSetupStatus(step="idle")
     return DingtalkSetupStatus(
         step=state.get("step", "idle"),
-        clientId=state.get("client_id"),
-        clientSecret=state.get("client_secret"),
+        client_id=state.get("client_id"),
+        client_secret=state.get("client_secret"),
         error=state.get("error"),
         backend=state.get("backend"),
+        applied=state.get("applied"),
+        apply_error=state.get("apply_error"),
     )
 
 
@@ -210,7 +243,7 @@ async def dingtalk_setup_apply(
     session_id: str,
     body: dict,
 ):
-    """Apply extracted credentials to OpenClaw config and restart gateway."""
+    """Apply extracted credentials to OpenClaw config, restart gateway and dashboard."""
     info = session_manager.get_session_info(session_id)
     if not info:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -221,6 +254,12 @@ async def dingtalk_setup_apply(
     success, err = apply_dingtalk_credentials(info, client_id, client_secret)
     if not success:
         raise HTTPException(status_code=500, detail=err)
+    # 配置已更新，重启 Dashboard
+    restart_ok, restart_err = await asyncio.to_thread(
+        session_manager.restart_dashboard, session_id
+    )
+    if not restart_ok:
+        logger.warning("[钉钉配置] 重启 Dashboard 失败: %s", restart_err)
     return {"message": "配置已更新，Gateway 已重启"}
 
 
