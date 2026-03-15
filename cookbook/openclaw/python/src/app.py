@@ -111,6 +111,31 @@ async def delete_session(session_id: str):
     return {"message": "Session destroyed", "sessionId": session_id}
 
 
+@app.post("/api/sessions/{session_id}/pause")
+async def pause_session(session_id: str):
+    """
+    Pause (hibernate) a session to reduce resource usage.
+    """
+    success, err = session_manager.pause_session(session_id)
+    if not success:
+        raise HTTPException(status_code=500, detail=err or "Failed to pause session")
+    return {"message": "会话已休眠", "sessionId": session_id}
+
+
+@app.post("/api/sessions/{session_id}/resume", response_model=SessionResponse)
+async def resume_session(session_id: str):
+    """
+    Resume (wake) a paused session. Returns updated session data.
+    """
+    success, err = session_manager.resume_session(session_id)
+    if not success:
+        raise HTTPException(status_code=500, detail=err or "Failed to resume session")
+    info = session_manager.get_session_info(session_id)
+    if not info:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return info.to_response()
+
+
 @app.post("/api/sessions/{session_id}/restart-dashboard")
 async def restart_dashboard(session_id: str):
     """

@@ -369,6 +369,18 @@ legend {
   background: #e6f4ff;
 }
 
+.btn-outline {
+  background: #52c41a;
+  color: #fff;
+  border: 1px solid #52c41a;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #389e0d;
+  border-color: #389e0d;
+  color: #fff;
+}
+
 .btn-danger {
   background: #ff4d4f;
   color: #fff;
@@ -384,6 +396,10 @@ legend {
   margin-top: 20px;
   margin-bottom: 0;
   font-size: 16px;
+}
+
+.btn-session-action {
+  margin-top: 12px;
 }
 
 /* ── Session Info Card ───────────────────────── */
@@ -425,6 +441,11 @@ legend {
 
 .status-running {
   color: #52c41a;
+  font-weight: 600;
+}
+
+.status-paused {
+  color: #fa8c16;
   font-weight: 600;
 }
 

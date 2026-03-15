@@ -37,7 +37,7 @@ interface SessionData {
   status: string
 }
 
-type AppState = 'idle' | 'creating' | 'running' | 'destroying' | 'restoring'
+type AppState = 'idle' | 'creating' | 'running' | 'destroying' | 'restoring' | 'pausing' | 'resuming'
 
 function App() {
   const [state, setState] = useState<AppState>('idle')
@@ -101,6 +101,56 @@ function App() {
     }
   }
 
+  const handleResume = async () => {
+    if (!session) return
+    setState('resuming')
+    setError('')
+    try {
+      const res = await fetch(`/api/sessions/${session.sessionId}/resume`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.detail || '恢复会话失败')
+      }
+      // 兼容 snake_case 与 camelCase，确保 resourceUrl 正确更新
+      setSession({
+        sessionId: data.sessionId ?? data.session_id,
+        resourceUrl: data.resourceUrl ?? data.resource_url ?? '',
+        openclawUrl: data.openclawUrl ?? data.openclaw_url ?? '',
+        username: data.username ?? '',
+        createdAt: data.createdAt ?? data.created_at ?? '',
+        status: data.status ?? 'running',
+      })
+      // 恢复成功后 1 秒刷新页面，确保右侧桌面加载最新 resourceUrl
+      setTimeout(() => window.location.reload(), 1000)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '恢复会话失败')
+    } finally {
+      setState('running')
+    }
+  }
+
+  const handlePause = async () => {
+    if (!session) return
+    setState('pausing')
+    setError('')
+    try {
+      const res = await fetch(`/api/sessions/${session.sessionId}/pause`, {
+        method: 'POST',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.detail || '休眠会话失败')
+      }
+      setSession((s) => (s ? { ...s, status: 'paused' } : null))
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '休眠会话失败')
+    } finally {
+      setState('running')
+    }
+  }
+
   const handleDestroy = async () => {
     if (!session) return
     setState('destroying')
@@ -123,7 +173,10 @@ function App() {
     }
   }
 
-  const isSessionActive = (state === 'running' || state === 'destroying' || state === 'restoring') && session
+  const isSessionActive =
+    (state === 'running' || state === 'destroying' || state === 'restoring' || state === 'pausing' ||
+      state === 'resuming') &&
+    session
 
   return (
     <div className={`app ${isSessionActive ? 'session-active' : ''}`}>
@@ -157,7 +210,8 @@ function App() {
           />
         )}
 
-        {(state === 'running' || state === 'destroying') && session && (
+        {(state === 'running' || state === 'destroying' || state === 'pausing' || state === 'resuming') &&
+          session && (
           <div className="session-layout">
             <aside className="session-sidebar">
               <div className="card session-card">
@@ -177,7 +231,11 @@ function App() {
                   </div>
                   <div className="info-row">
                     <span className="info-label">状态</span>
-                    <span className="info-value status-running">{session.status}</span>
+                    <span
+                      className={`info-value ${session.status === 'paused' ? 'status-paused' : 'status-running'}`}
+                    >
+                      {session.status === 'paused' ? '已休眠' : session.status}
+                    </span>
                   </div>
                 </div>
 
@@ -207,6 +265,25 @@ function App() {
                   </button>
                 )}
 
+                {session.status === 'paused' ? (
+                  <button
+                    onClick={handleResume}
+                    disabled={state === 'resuming'}
+                    className="btn btn-primary btn-session-action"
+                  >
+                    {state === 'resuming' ? '正在恢复...' : '恢复会话'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handlePause}
+                    disabled={state === 'pausing'}
+                    className="btn btn-outline btn-session-action"
+                    title="休眠后可通过恢复会话链接重新唤醒"
+                  >
+                    {state === 'pausing' ? '正在休眠...' : '会话休眠'}
+                  </button>
+                )}
+
                 <button
                   onClick={handleDestroy}
                   disabled={state === 'destroying'}
@@ -220,6 +297,7 @@ function App() {
             <section className="desktop-panel">
               {session.resourceUrl ? (
                 <iframe
+                  key={session.resourceUrl}
                   src={session.resourceUrl}
                   title="远程沙箱桌面"
                   className="desktop-iframe"

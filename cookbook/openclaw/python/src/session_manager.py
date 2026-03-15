@@ -227,6 +227,20 @@ class SessionManager:
                 return None
 
             session = result.session
+
+            # If session is paused, wake it up (beta_resume) before connecting
+            try:
+                status_result = session.get_status()
+                if status_result.success and status_result.status in ("PAUSED", "RESUMING"):
+                    logger.info(f"Session {session_id} is paused, waking up...")
+                    resume_result = session.beta_resume(timeout=600, poll_interval=2.0)
+                    if not resume_result.success:
+                        logger.warning(f"Failed to resume session {session_id}: {resume_result.error_message}")
+                    else:
+                        logger.info(f"Session {session_id} resumed successfully")
+            except Exception as e:
+                logger.warning(f"Failed to check/resume session status: {e}")
+
             resource_url = getattr(session, "resource_url", "") or ""
             status = "running"
 
@@ -261,6 +275,63 @@ class SessionManager:
     def get_session_info(self, session_id: str) -> Optional[SessionInfo]:
         """Get full SessionInfo (for internal use e.g. dingtalk setup)."""
         return self._sessions.get(session_id)
+
+    def pause_session(self, session_id: str) -> tuple[bool, str]:
+        """
+        Pause (hibernate) a session to reduce resource usage.
+        Returns (success, error_message).
+        """
+        info = self._sessions.get(session_id)
+        if not info or not info.session:
+            return False, "Session not found"
+        session = info.session
+        try:
+            pause_result = session.beta_pause(timeout=600, poll_interval=2.0)
+            if not pause_result.success:
+                return False, pause_result.error_message or "Failed to pause session"
+            info.status = "paused"
+            logger.info("Session %s paused successfully", session_id)
+            return True, ""
+        except Exception as e:
+            logger.exception("Failed to pause session %s", session_id)
+            return False, str(e)
+
+    def resume_session(self, session_id: str) -> tuple[bool, str]:
+        """
+        Resume (wake) a paused session.
+        Returns (success, error_message).
+        """
+        info = self._sessions.get(session_id)
+        if not info or not info.session:
+            return False, "Session not found"
+        session = info.session
+        try:
+            resume_result = session.beta_resume(timeout=600, poll_interval=2.0)
+            if not resume_result.success:
+                return False, resume_result.error_message or "Failed to resume session"
+            info.status = "running"
+            # Refresh resource_url from GetSession API (may change after resume)
+            agent_bay = info.agent_bay
+            try:
+                get_result = agent_bay.get(session_id)
+                if get_result.success and get_result.session:
+                    new_url = getattr(get_result.session, "resource_url", "") or ""
+                    if new_url:
+                        info.resource_url = new_url
+                        session.resource_url = new_url
+            except Exception as e:
+                logger.warning("Failed to refresh resource_url after resume: %s", e)
+            try:
+                link_result = session.get_link(protocol_type="https", port=GATEWAY_PORT)
+                if link_result.success:
+                    info.openclaw_url = f"{link_result.data}/#token={GATEWAY_TOKEN}"
+            except Exception as e:
+                logger.warning("Failed to refresh OpenClaw link after resume: %s", e)
+            logger.info("Session %s resumed successfully", session_id)
+            return True, ""
+        except Exception as e:
+            logger.exception("Failed to resume session %s", session_id)
+            return False, str(e)
 
     def restart_dashboard(self, session_id: str) -> tuple[bool, str]:
         """
