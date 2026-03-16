@@ -5,6 +5,7 @@ Uses session.browser.operator: navigate, act, extract.
 """
 
 import logging
+import time
 from typing import Optional, Tuple
 
 from agentbay import ActOptions, BrowserOption, ExtractOptions
@@ -25,8 +26,8 @@ from .dingtalk_setup_common import (
     VERSION_DESC,
     ensure_robot_preview_image,
     extract_dingtalk_credentials,
-    update_json_field,
 )
+from .dingtalk_setup_playwright import get_playwright_page_for_credentials
 from .models import SessionInfo
 
 logger = logging.getLogger(__name__)
@@ -272,8 +273,16 @@ def continue_dingtalk_setup(info: SessionInfo) -> Tuple[bool, Optional[str], Opt
         if not r5d.success:
             return False, None, None, r5d.message or "二次确认发布失败"
 
-        # 步骤 10：提取凭证（复用 common 中的提取逻辑）
-        ok, client_id, client_secret, err = extract_dingtalk_credentials(session, operator)
+        # 步骤 10：提取凭证（通过 CDP 获取 page，点击凭证与基础信息，使用 Playwright 定位器）
+        page, page_err = get_playwright_page_for_credentials(info)
+        if not page:
+            return False, None, None, page_err or "获取页面失败"
+        try:
+            page.get_by_text("凭证与基础信息", exact=False).first.click(timeout=5000)
+        except Exception as e:
+            return False, None, None, f"点击凭证与基础信息失败: {e}"
+        time.sleep(1)  # 等待凭证页加载
+        ok, client_id, client_secret, err = extract_dingtalk_credentials(session, page)
         if not ok:
             return False, None, None, err or "提取凭证失败"
 

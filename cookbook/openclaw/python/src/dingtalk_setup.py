@@ -14,7 +14,7 @@ import os
 import logging
 from typing import Optional, Tuple
 
-from .config_builder import build_config
+from .config_builder import build_config, read_existing_channel_credentials
 from .dingtalk_setup_common import DingtalkCredentialsSchema
 from .dingtalk_setup_playwright import (
     continue_dingtalk_setup as _continue_playwright,
@@ -96,6 +96,7 @@ def apply_dingtalk_credentials(
 ) -> Tuple[bool, str]:
     """
     Write updated openclaw.json with DingTalk credentials and restart gateway.
+    Preserves existing Feishu credentials from current config to avoid overwriting.
 
     Returns (success, error_message).
     """
@@ -103,13 +104,19 @@ def apply_dingtalk_credentials(
     if not req:
         return False, "缺少创建会话时的配置信息"
 
+    # Read existing config to preserve Feishu credentials when applying DingTalk
+    _, _, feishu_app_id, feishu_app_secret = read_existing_channel_credentials(info.session)
+    if not feishu_app_id or not feishu_app_secret:
+        feishu_app_id = req.feishu_app_id
+        feishu_app_secret = req.feishu_app_secret
+
     try:
         config_json = build_config(
             bailian_api_key=req.bailian_api_key,
             dingtalk_client_id=client_id,
             dingtalk_client_secret=client_secret,
-            feishu_app_id=req.feishu_app_id,
-            feishu_app_secret=req.feishu_app_secret,
+            feishu_app_id=feishu_app_id,
+            feishu_app_secret=feishu_app_secret,
             model_base_url=req.model_base_url,
             model_id=req.model_id,
         )
@@ -119,8 +126,6 @@ def apply_dingtalk_credentials(
     session = info.session
     from .session_manager import (
         CONFIG_PATH,
-        GATEWAY_PORT,
-        GATEWAY_TOKEN,
         session_manager,
     )
 
@@ -136,27 +141,8 @@ def apply_dingtalk_credentials(
             "bash -lc 'nohup openclaw gateway > /tmp/gateway.log 2>&1 &'",
             timeout_ms=15000,
         )
-        # Kill existing Firefox (dashboard) and reopen dashboard
-        dashboard_url = f"http://127.0.0.1:{GATEWAY_PORT}/#token={GATEWAY_TOKEN}"
-        session_manager._execute_command(
-            session,
-            "pkill -f firefox || true",
-            timeout_ms=5000,
-        )
-        session_manager._execute_command(
-            session,
-            f"bash -lc '"
-            f"for i in $(seq 1 15); do "
-            f"curl -fsS http://127.0.0.1:{GATEWAY_PORT} >/dev/null 2>&1 && break; "
-            f"sleep 2; "
-            f"done; "
-            f'nohup firefox "{dashboard_url}" >/dev/null 2>&1 &'
-            f"'",
-            timeout_ms=60000,
-        )
         logger.info(
-            "Updated OpenClaw config with DingTalk credentials, "
-            "restarted gateway and dashboard"
+            "Updated OpenClaw config with DingTalk credentials, restarted gateway"
         )
         return True, ""
     except Exception as e:
