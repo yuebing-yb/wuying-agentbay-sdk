@@ -6,12 +6,47 @@ No API keys are hardcoded - all come from frontend input.
 """
 
 import json
-from typing import Optional
+from typing import Optional, Tuple
+
+# Same path as session_manager.CONFIG_PATH to avoid circular import
+_OPENCLAW_CONFIG_PATH = "/home/wuying/.openclaw/openclaw.json"
 
 
 def is_not_blank(s: Optional[str]) -> bool:
     """Check if string is not None and not empty."""
     return s is not None and s.strip() != ""
+
+
+def read_existing_channel_credentials(session) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str]]:
+    """
+    Read existing DingTalk and Feishu credentials from openclaw.json in sandbox.
+    Used when applying one platform's credentials to preserve the other's.
+
+    Returns (dingtalk_client_id, dingtalk_client_secret, feishu_app_id, feishu_app_secret).
+    """
+    dingtalk_client_id = None
+    dingtalk_client_secret = None
+    feishu_app_id = None
+    feishu_app_secret = None
+    try:
+        read_res = session.file_system.read_file(_OPENCLAW_CONFIG_PATH, format="text")
+        if not read_res.success or not read_res.content:
+            return dingtalk_client_id, dingtalk_client_secret, feishu_app_id, feishu_app_secret
+        config = json.loads(read_res.content)
+        channels = config.get("channels") or {}
+        # DingTalk - only use if enabled (real credentials, not placeholders)
+        dt = channels.get("dingtalk") or {}
+        if dt.get("enabled") and is_not_blank(dt.get("clientId")) and is_not_blank(dt.get("clientSecret")):
+            dingtalk_client_id = (dt.get("clientId") or "").strip()
+            dingtalk_client_secret = (dt.get("clientSecret") or "").strip()
+        # Feishu - only use if enabled
+        fs = channels.get("feishu") or {}
+        if fs.get("enabled") and is_not_blank(fs.get("appId")) and is_not_blank(fs.get("appSecret")):
+            feishu_app_id = (fs.get("appId") or "").strip()
+            feishu_app_secret = (fs.get("appSecret") or "").strip()
+    except (json.JSONDecodeError, KeyError, TypeError):
+        pass
+    return dingtalk_client_id, dingtalk_client_secret, feishu_app_id, feishu_app_secret
 
 
 def build_config(

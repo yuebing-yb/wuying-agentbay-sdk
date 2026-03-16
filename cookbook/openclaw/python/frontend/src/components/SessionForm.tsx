@@ -8,10 +8,6 @@ const DEFAULT_VALUES = {
   bailianApiKey: '',
   modelBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   modelId: 'qwen3-max-2026-01-23',
-  dingtalkClientId: '',
-  dingtalkClientSecret: '',
-  feishuAppId: '',
-  feishuAppSecret: '',
 } as const
 
 function loadFromStorage(): Record<string, string> {
@@ -39,11 +35,10 @@ interface SessionFormProps {
 }
 
 function SessionForm({ onSubmit, loading }: SessionFormProps) {
-  const [showOptional, setShowOptional] = useState(false)
   const [values, setValues] = useState<Record<string, string>>(loadFromStorage)
 
   const updateField = (name: string, value: string) => {
-    setValues((prev) => {
+    setValues((prev: Record<string, string>) => {
       const next = { ...prev, [name]: value }
       saveToStorage(next)
       return next
@@ -58,8 +53,9 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
       const val = v.toString().trim()
       if (val) data[k] = val
     })
-    saveToStorage({ ...values, ...data })
-    onSubmit(data)
+    const merged = { ...values, ...data }
+    saveToStorage(merged)
+    onSubmit(merged)
   }
 
   return (
@@ -141,82 +137,11 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
         />
       </div>
 
-      {/* 可选字段折叠区域 */}
-      <div className="optional-section">
-        <button
-          type="button"
-          className="toggle-btn"
-          onClick={() => setShowOptional(!showOptional)}
-        >
-          {showOptional ? '收起' : '展开'} 可选配置（钉钉 / 飞书）
-        </button>
-
-        {showOptional && (
-          <div className="optional-fields">
-            <fieldset>
-              <legend>钉钉配置</legend>
-              <div className="form-group">
-                <label htmlFor="dingtalkClientId">Client ID</label>
-                <input
-                  id="dingtalkClientId"
-                  name="dingtalkClientId"
-                  type="text"
-                  placeholder="钉钉 Client ID"
-                  value={values.dingtalkClientId}
-                  onChange={(e) => updateField('dingtalkClientId', e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="dingtalkClientSecret">Client Secret</label>
-                <input
-                  id="dingtalkClientSecret"
-                  name="dingtalkClientSecret"
-                  type="password"
-                  placeholder="钉钉 Client Secret"
-                  value={values.dingtalkClientSecret}
-                  onChange={(e) => updateField('dingtalkClientSecret', e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>飞书配置</legend>
-              <div className="form-group">
-                <label htmlFor="feishuAppId">App ID</label>
-                <input
-                  id="feishuAppId"
-                  name="feishuAppId"
-                  type="text"
-                  placeholder="飞书 App ID"
-                  value={values.feishuAppId}
-                  onChange={(e) => updateField('feishuAppId', e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="feishuAppSecret">App Secret</label>
-                <input
-                  id="feishuAppSecret"
-                  name="feishuAppSecret"
-                  type="password"
-                  placeholder="飞书 App Secret"
-                  value={values.feishuAppSecret}
-                  onChange={(e) => updateField('feishuAppSecret', e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-            </fieldset>
-          </div>
-        )}
-      </div>
-
       <button type="submit" className="btn btn-primary" disabled={loading}>
         {loading ? (
           <span className="loading-text">
             <span className="spinner" />
-            正在创建会话，请稍候（约 1-2 分钟）...
+            正在创建会话，请等待
           </span>
         ) : (
           '启动会话'
