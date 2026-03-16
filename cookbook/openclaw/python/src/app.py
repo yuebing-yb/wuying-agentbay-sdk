@@ -28,6 +28,8 @@ from .feishu_setup import (
     start_feishu_setup,
 )
 from .feishu_setup_playwright import configure_feishu_event_subscription
+from pydantic import BaseModel, Field
+
 from .models import CreateSessionRequest, DingtalkSetupStatus, FeishuSetupStatus, SessionResponse
 from .session_manager import session_manager
 
@@ -150,8 +152,42 @@ async def restart_dashboard(session_id: str):
 
 @app.get("/api/sessions", response_model=List[SessionResponse])
 async def list_sessions():
-    """List all active sessions."""
+    """List all active sessions (in-memory only)."""
     return session_manager.list_sessions()
+
+
+class AgentBayListRequest(BaseModel):
+    """Request body for listing AgentBay sessions by API key."""
+
+    agentbay_api_key: str = Field(..., alias="agentbayApiKey", description="AgentBay API Key")
+
+    model_config = {"populate_by_name": True}
+
+
+@app.post("/api/sessions/agentbay-list")
+async def list_agentbay_sessions(body: AgentBayListRequest):
+    """
+    List all sessions under the given AgentBay API key via AgentBay cloud API.
+    Returns session IDs that can be used to restore/navigate to sessions.
+    """
+    from agentbay import AgentBay
+
+    if not body.agentbay_api_key or not body.agentbay_api_key.strip():
+        raise HTTPException(status_code=400, detail="agentbayApiKey cannot be empty")
+    try:
+        agent_bay = AgentBay(api_key=body.agentbay_api_key.strip())
+        result = agent_bay.list(limit=50)
+        if not result.success:
+            raise HTTPException(
+                status_code=502,
+                detail=result.error_message or "Failed to list sessions from AgentBay",
+            )
+        return {"sessionIds": result.session_ids or []}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to list AgentBay sessions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── DingTalk One-Click Setup ────────────────────────────────────────

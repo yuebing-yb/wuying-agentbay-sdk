@@ -141,7 +141,7 @@ function SessionForm({ onSubmit, loading }: SessionFormProps) {
         {loading ? (
           <span className="loading-text">
             <span className="spinner" />
-            正在创建会话，请稍候（约 1-2 分钟）...
+            正在创建会话，请等待
           </span>
         ) : (
           '启动会话'

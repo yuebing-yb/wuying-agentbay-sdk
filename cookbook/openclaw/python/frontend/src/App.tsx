@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import SessionForm from './components/SessionForm'
 import DingtalkSetupPanel from './components/DingtalkSetupPanel'
 import FeishuSetupPanel from './components/FeishuSetupPanel'
+// import SessionListPanel from './components/SessionListPanel' // 会话列表入口（逻辑有 bug，暂时注释）
 import {
   getCredentialsForSession,
   removeCredentialsForSession,
@@ -16,7 +17,7 @@ function getSessionIdFromUrl(): string | null {
   return params.get(SESSION_ID_PARAM)
 }
 
-/** 更新 URL，添加或移除 sessionId */
+/** 更新 URL，添加或移除 sessionId，并触发导航 */
 function updateUrlSessionId(sessionId: string | null) {
   const url = new URL(window.location.href)
   if (sessionId) {
@@ -26,6 +27,12 @@ function updateUrlSessionId(sessionId: string | null) {
   }
   window.history.replaceState({}, '', url.toString())
 }
+
+/** 跳转到指定 session（更新 URL 并触发恢复流程）- 供 SessionListPanel 使用，会话列表注释时一并注释 */
+// function navigateToSession(sessionId: string) {
+//   updateUrlSessionId(sessionId)
+//   window.location.reload()
+// }
 
 /** 会话响应类型 */
 interface SessionData {
@@ -181,8 +188,18 @@ function App() {
   return (
     <div className={`app ${isSessionActive ? 'session-active' : ''}`}>
       <header className="app-header">
-        <h1>OpenClaw in AgentBay</h1>
-        <p className="subtitle">一键创建 OpenClaw 沙箱环境</p>
+        {/* 会话列表入口（逻辑有 bug，暂时注释）
+        <div className="app-header-left">
+          <SessionListPanel
+            onSelectSession={(sessionId) => navigateToSession(sessionId)}
+            currentSessionId={session?.sessionId ?? null}
+          />
+        </div>
+        */}
+        <div className="app-header-center">
+          <h1>OpenClaw in AgentBay</h1>
+          <p className="subtitle">一键创建 OpenClaw 沙箱环境</p>
+        </div>
       </header>
 
       <main className="app-main">
