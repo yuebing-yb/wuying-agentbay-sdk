@@ -2,7 +2,7 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
-## [0.17.0] - 2026-03-13
+## [0.17.0] - 2026-03-16
 
 ### Added
 
@@ -11,7 +11,7 @@ All notable changes to the Wuying AgentBay SDK will be documented in this file.
 - **Dynamic context binding** (All SDKs): Support for binding contexts to sessions dynamically at runtime.
 - **BrowserSyncMode** (All SDKs): Added `MINIMAL`/`STANDARD` whitelist modes for browser synchronization.
 - **run_code WebSocket streaming** (All SDKs): Re-enabled WebSocket-based streaming for code execution.
-- **Cookbook additions**: 4 new cookbooks (computer use, web scraping, streaming, multi-session), browser login persistence, mobile device simulation, OpenClaw Python/Java web service integration with DingTalk bot and FastAPI.
+- **Cookbook additions**: 4 new cookbooks (computer use, web scraping, streaming, multi-session), browser login persistence, mobile device simulation, OpenClaw Python/Java web service integration with DingTalk bot and FastAPI, Feishu one-click setup, DingTalk credential auto-apply.
 
 ### Changed
 
