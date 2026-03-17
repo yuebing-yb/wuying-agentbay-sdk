@@ -2,16 +2,15 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
-## [0.17.0] - 2026-03-13
+## [0.17.0] - 2026-03-16
 
 ### Added
 
-- **Mobile agent streaming output** (All SDKs): Added WebSocket-based streaming for mobile agent `execute_task`, enabling real-time task execution output via `StreamOptions` callbacks. New `TaskExecution` handle with `wait()` for non-blocking workflows. Supports `on_text`, `on_step`, `on_error`, and `on_complete` callbacks. Includes `MobileTaskOptions` for device-specific configurations.
+- **run_code WebSocket streaming** (All SDKs): Added WebSocket-based streaming for code execution, enabling real-time output delivery during `run_code` operations.
 - **Browser autoLogin & callForUser** (All SDKs): Added `autoLogin` and `callForUser` options for browser sessions, with captcha-solving examples and call-for-user notification channel support.
 - **Dynamic context binding** (All SDKs): Support for binding contexts to sessions dynamically at runtime.
 - **BrowserSyncMode** (All SDKs): Added `MINIMAL`/`STANDARD` whitelist modes for browser synchronization.
-- **run_code WebSocket streaming** (All SDKs): Re-enabled WebSocket-based streaming for code execution.
-- **Cookbook additions**: 4 new cookbooks (computer use, web scraping, streaming, multi-session), browser login persistence, mobile device simulation, OpenClaw Python/Java web service integration with DingTalk bot and FastAPI.
+- **Cookbook additions**: 4 new cookbooks (computer use, web scraping, streaming, multi-session), browser login persistence, mobile device simulation, OpenClaw Python/Java web service integration with DingTalk bot and FastAPI, Feishu one-click setup, DingTalk credential auto-apply.
 
 ### Changed
 
