@@ -2770,3 +2770,162 @@ class Client(OpenApiClient):
     ) -> main_models.GetAdbLinkResponse:
         runtime = RuntimeOptions()
         return await self.get_adb_link_with_options_async(request, runtime)
+
+    def bind_contexts_with_options(
+        self,
+        tmp_req: main_models.BindContextsRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.BindContextsResponse:
+        tmp_req.validate()
+        request = main_models.BindContextsShrinkRequest()
+        Utils.convert(tmp_req, request)
+        if not DaraCore.is_null(tmp_req.persistence_data_list):
+            request.persistence_data_list_shrink = (
+                Utils.array_to_string_with_specified_style(
+                    tmp_req.persistence_data_list, "PersistenceDataList", "json"
+                )
+            )
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.persistence_data_list_shrink):
+            body["PersistenceDataList"] = request.persistence_data_list_shrink
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="BindContexts",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.BindContextsResponse(), self.call_api(params, req, runtime)
+        )
+
+    async def bind_contexts_with_options_async(
+        self,
+        tmp_req: main_models.BindContextsRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.BindContextsResponse:
+        tmp_req.validate()
+        request = main_models.BindContextsShrinkRequest()
+        Utils.convert(tmp_req, request)
+        if not DaraCore.is_null(tmp_req.persistence_data_list):
+            request.persistence_data_list_shrink = (
+                Utils.array_to_string_with_specified_style(
+                    tmp_req.persistence_data_list, "PersistenceDataList", "json"
+                )
+            )
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.persistence_data_list_shrink):
+            body["PersistenceDataList"] = request.persistence_data_list_shrink
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="BindContexts",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.BindContextsResponse(),
+            await self.call_api_async(params, req, runtime),
+        )
+
+    def bind_contexts(
+        self,
+        request: main_models.BindContextsRequest,
+    ) -> main_models.BindContextsResponse:
+        runtime = RuntimeOptions()
+        return self.bind_contexts_with_options(request, runtime)
+
+    async def bind_contexts_async(
+        self,
+        request: main_models.BindContextsRequest,
+    ) -> main_models.BindContextsResponse:
+        runtime = RuntimeOptions()
+        return await self.bind_contexts_with_options_async(request, runtime)
+
+    def describe_session_contexts_with_options(
+        self,
+        request: main_models.DescribeSessionContextsRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.DescribeSessionContextsResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="DescribeSessionContexts",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.DescribeSessionContextsResponse(),
+            self.call_api(params, req, runtime),
+        )
+
+    async def describe_session_contexts_with_options_async(
+        self,
+        request: main_models.DescribeSessionContextsRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.DescribeSessionContextsResponse:
+        request.validate()
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.session_id):
+            body["SessionId"] = request.session_id
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="DescribeSessionContexts",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.DescribeSessionContextsResponse(),
+            await self.call_api_async(params, req, runtime),
+        )
+
+    def describe_session_contexts(
+        self,
+        request: main_models.DescribeSessionContextsRequest,
+    ) -> main_models.DescribeSessionContextsResponse:
+        runtime = RuntimeOptions()
+        return self.describe_session_contexts_with_options(request, runtime)
+
+    async def describe_session_contexts_async(
+        self,
+        request: main_models.DescribeSessionContextsRequest,
+    ) -> main_models.DescribeSessionContextsResponse:
+        runtime = RuntimeOptions()
+        return await self.describe_session_contexts_with_options_async(request, runtime)

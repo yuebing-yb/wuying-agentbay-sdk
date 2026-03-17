@@ -28,7 +28,9 @@ describe("Session Parameters", () => {
   describe("create method options", () => {
     it("should accept empty options", async () => {
       try {
-        const createResponse = await agentBay.create({imageId: "linux_latest"});
+        const createResponse = await agentBay.create({
+          imageId: "linux_latest",
+        });
         session = createResponse.session;
         log(
           `Create Session RequestId: ${createResponse.requestId || "undefined"}`
@@ -48,9 +50,13 @@ describe("Session Parameters", () => {
     it("should accept contextId option", async () => {
       try {
         const contextName = `test-context-${Date.now()}`;
-        const createContextResponse = await agentBay.context.create(contextName);
+        const createContextResponse = await agentBay.context.create(
+          contextName
+        );
         const context = createContextResponse.context;
-        const createResponse = await agentBay.create({imageId: "linux_latest"});
+        const createResponse = await agentBay.create({
+          imageId: "linux_latest",
+        });
         session = createResponse.session;
         log(
           `Create Session with ContextId RequestId: ${
@@ -94,7 +100,9 @@ describe("Session Parameters", () => {
     it("should accept both contextId and labels options", async () => {
       try {
         const contextName = `test-context-${Date.now()}`;
-        const createContextResponse = await agentBay.context.create(contextName);
+        const createContextResponse = await agentBay.context.create(
+          contextName
+        );
         const context = createContextResponse.context;
         const labels = { username: "alice", project: "my-project" };
         const createResponse = await agentBay.create({ labels });
@@ -121,7 +129,9 @@ describe("Session Parameters", () => {
     it("should create a session with the specified options", async () => {
       try {
         const contextName = `test-context-${Date.now()}`;
-        const createContextResponse = await agentBay.context.create(contextName);
+        const createContextResponse = await agentBay.context.create(
+          contextName
+        );
         const context = createContextResponse.context;
         const createResponse = await agentBay.create({
           labels: { username: "alice" },

@@ -23,15 +23,19 @@ describe("CreateMcpSession policyId", () => {
     process.env.AGENTBAY_TIMEOUT_MS = String(mockConfigData.timeout_ms);
 
     clientConstructorStub = sinon.stub().returns(mockClient);
-    sinon.stub(require("../../src/api/client"), "Client").callsFake(clientConstructorStub);
+    sinon
+      .stub(require("../../src/api/client"), "Client")
+      .callsFake(clientConstructorStub);
 
     contextServiceConstructorStub = sinon.stub().returns({
-      get: sinon.stub().resolves({ 
-        success: false, 
-        errorMessage: 'Context not found' 
-      })
+      get: sinon.stub().resolves({
+        success: false,
+        errorMessage: "Context not found",
+      }),
     });
-    sinon.stub(require("../../src/context"), "ContextService").callsFake(contextServiceConstructorStub);
+    sinon
+      .stub(require("../../src/context"), "ContextService")
+      .callsFake(contextServiceConstructorStub);
   });
 
   afterEach(() => {
@@ -62,4 +66,4 @@ describe("CreateMcpSession policyId", () => {
     const arg0 = createMcpSessionStub.getCall(0).args[0];
     expect(arg0.mcpPolicyId).toBe(policyId);
   });
-}); 
+});

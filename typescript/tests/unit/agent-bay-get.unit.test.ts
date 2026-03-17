@@ -14,10 +14,16 @@ describe("AgentBay.get unit tests", () => {
       getContextInfo: sinon.stub(),
     };
 
-    sinon.stub(require("../../src/api/client"), "Client").callsFake(() => mockClient);
-    sinon.stub(require("../../src/context"), "ContextService").callsFake(() => ({
-      get: sinon.stub().resolves({ success: false, errorMessage: "Context not found" }),
-    }));
+    sinon
+      .stub(require("../../src/api/client"), "Client")
+      .callsFake(() => mockClient);
+    sinon
+      .stub(require("../../src/context"), "ContextService")
+      .callsFake(() => ({
+        get: sinon
+          .stub()
+          .resolves({ success: false, errorMessage: "Context not found" }),
+      }));
   });
 
   afterEach(() => {
@@ -95,4 +101,3 @@ describe("AgentBay.get unit tests", () => {
     });
   });
 });
-

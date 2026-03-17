@@ -156,7 +156,7 @@ func TestFileDownloadIntegration(t *testing.T) {
 	// Upload the file first using UploadFile method
 	t.Logf("Uploading %s to %s", tempUploadPath, remotePath)
 	uploadResult := session.FileSystem.UploadFile(tempUploadPath, remotePath, nil)
-	
+
 	// Verify upload result
 	if !uploadResult.Success {
 		t.Logf("Upload failed: %s", uploadResult.Error)
@@ -180,10 +180,9 @@ func TestFileDownloadIntegration(t *testing.T) {
 	// Set longer timeout for download
 	opts := filesystem.DefaultFileTransferOptions()
 	opts.WaitTimeout = 300 * time.Second
-	
-	
+
 	downloadResult := session.FileSystem.DownloadFile(remotePath, localPath, opts)
-	
+
 	// Verify download result
 	if !downloadResult.Success {
 		t.Logf("Download failed: %s", downloadResult.Error)

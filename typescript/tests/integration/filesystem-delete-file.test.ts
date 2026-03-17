@@ -12,7 +12,9 @@ describe("fileSystem.deleteFile", () => {
     const createResponse = await agentBay.create({ imageId: "linux_latest" });
     if (!createResponse.success || !createResponse.session) {
       throw new Error(
-        `Failed to create session: ${createResponse.errorMessage || "Unknown error"}`
+        `Failed to create session: ${
+          createResponse.errorMessage || "Unknown error"
+        }`
       );
     }
     session = createResponse.session;
@@ -32,7 +34,11 @@ describe("fileSystem.deleteFile", () => {
     const dir = "/tmp";
     const path = `${dir}/agentbay-delete-file-${randomString()}.txt`;
 
-    const writeRes = await session.fileSystem.writeFile(path, "hello", "overwrite");
+    const writeRes = await session.fileSystem.writeFile(
+      path,
+      "hello",
+      "overwrite"
+    );
     expect(writeRes.success).toBe(true);
 
     const delRes = await session.fileSystem.deleteFile(path);
@@ -43,5 +49,3 @@ describe("fileSystem.deleteFile", () => {
     expect(infoRes.errorMessage).toBeDefined();
   });
 });
-
-

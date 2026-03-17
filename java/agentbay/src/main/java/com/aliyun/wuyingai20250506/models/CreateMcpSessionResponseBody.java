@@ -107,7 +107,7 @@ public class CreateMcpSessionResponseBody extends TeaModel {
         public String token;
 
         @NameInMap("ToolList")
-        public String toolList;
+        public Object toolList;
 
         @NameInMap("WsUrl")
         public String wsUrl;
@@ -200,11 +200,11 @@ public class CreateMcpSessionResponseBody extends TeaModel {
             return this.token;
         }
 
-        public CreateMcpSessionResponseBodyData setToolList(String toolList) {
+        public CreateMcpSessionResponseBodyData setToolList(Object toolList) {
             this.toolList = toolList;
             return this;
         }
-        public String getToolList() {
+        public Object getToolList() {
             return this.toolList;
         }
 

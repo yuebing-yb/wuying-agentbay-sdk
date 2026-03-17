@@ -3,7 +3,11 @@ import * as $_client from "./api";
 import { APIError } from "./exceptions";
 import { extractRequestId } from "./types/api-response";
 import type { NetworkResult, NetworkStatusResult } from "./types/api-response";
-import { logAPICall, logAPIResponseWithDetails, logDebug } from "./utils/logger";
+import {
+  logAPICall,
+  logAPIResponseWithDetails,
+  logDebug,
+} from "./utils/logger";
 
 /**
  * Beta network service (trial feature).
@@ -32,7 +36,13 @@ export class BetaNetworkService {
       const requestId = extractRequestId(response) || "";
 
       if (!response.body || typeof response.body !== "object") {
-        logAPIResponseWithDetails("CreateNetwork(beta)", requestId, false, undefined, "Invalid response format");
+        logAPIResponseWithDetails(
+          "CreateNetwork(beta)",
+          requestId,
+          false,
+          undefined,
+          "Invalid response format"
+        );
         return {
           requestId,
           success: false,
@@ -106,11 +116,19 @@ export class BetaNetworkService {
         logAPICall("DescribeNetwork(beta)");
         logDebug(`Request: NetworkId=${networkId}`);
 
-        const response = await this.agentBay.getClient().describeNetwork(request);
+        const response = await this.agentBay
+          .getClient()
+          .describeNetwork(request);
         const requestId = extractRequestId(response) || "";
 
         if (!response.body || typeof response.body !== "object") {
-          logAPIResponseWithDetails("DescribeNetwork(beta)", requestId, false, undefined, "Invalid response format");
+          logAPIResponseWithDetails(
+            "DescribeNetwork(beta)",
+            requestId,
+            false,
+            undefined,
+            "Invalid response format"
+          );
           return {
             requestId,
             success: false,
@@ -138,7 +156,10 @@ export class BetaNetworkService {
         };
       } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : `${error}`;
-        if (attempt < maxAttempts && (msg.includes("ServiceUnavailable") || msg.includes("503"))) {
+        if (
+          attempt < maxAttempts &&
+          (msg.includes("ServiceUnavailable") || msg.includes("503"))
+        ) {
           await new Promise((resolve) => setTimeout(resolve, delayMs));
           delayMs *= 2;
           continue;
@@ -149,5 +170,3 @@ export class BetaNetworkService {
     throw new APIError("DescribeNetwork(beta) failed: exhausted retries");
   }
 }
-
-

@@ -16,17 +16,14 @@ The Browser module provides comprehensive browser automation capabilities includ
 
 ```go
 type Browser struct {
-	session		SessionInterface
-	endpointURL	string
-	initialized	bool
-	option		*BrowserOption
+	session			SessionInterface
+	endpointURL		string
+	initialized		bool
+	option			*BrowserOption
+	userCallback		BrowserCallback
+	wsCallbackRegistered	bool
 }
 ```
-
-Browser provides browser-related operations for the session
-
-> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and
-MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
 
 ### Methods
 
@@ -129,6 +126,50 @@ if session.Browser.IsInitialized() {
 }
 ```
 
+### RegisterCallback
+
+```go
+func (b *Browser) RegisterCallback(callback BrowserCallback) (bool, error)
+```
+
+RegisterCallback registers a callback function to handle browser-related push notifications from
+sandbox.
+
+The callback function receives a BrowserNotifyMessage object containing notification details such as
+type, code, message, action, and extra_params.
+
+Returns true if the callback was successfully registered.
+
+**Example:**
+
+```go
+func onBrowserCallback(notifyMsg *browser.BrowserNotifyMessage) {
+    fmt.Printf("Type: %s\n", *notifyMsg.Type)
+    fmt.Printf("Code: %d\n", *notifyMsg.Code)
+    fmt.Printf("Message: %s\n", *notifyMsg.Message)
+    fmt.Printf("Action: %s\n", *notifyMsg.Action)
+    fmt.Printf("Extra params: %v\n", notifyMsg.ExtraParams)
+}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+defer result.Session.Delete()
+session := result.Session
+
+// Initialize browser
+
+session.Browser.Initialize(browser.NewBrowserOption())
+
+// Register callback
+
+success, _ := session.Browser.RegisterCallback(onBrowserCallback)
+
+// ... do work ...
+
+// Unregister when done
+
+session.Browser.UnregisterCallback()
+```
+
 ### Screenshot
 
 ```go
@@ -165,6 +206,136 @@ Returns:
 screenshotData, _ := session.Browser.Screenshot(page, nil)
 ```
 
+### SendNotifyMessage
+
+```go
+func (b *Browser) SendNotifyMessage(notifyMessage *BrowserNotifyMessage) (bool, error)
+```
+
+SendNotifyMessage sends a BrowserNotifyMessage to sandbox.
+
+Returns true if the notify message was successfully sent, false otherwise.
+
+**Example:**
+
+```go
+func onBrowserCallback(notifyMsg *browser.BrowserNotifyMessage) {
+    fmt.Printf("Type: %s\n", *notifyMsg.Type)
+    fmt.Printf("Code: %d\n", *notifyMsg.Code)
+    fmt.Printf("Message: %s\n", *notifyMsg.Message)
+    fmt.Printf("Action: %s\n", *notifyMsg.Action)
+    fmt.Printf("Extra params: %v\n", notifyMsg.ExtraParams)
+}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+defer result.Session.Delete()
+session := result.Session
+
+// Initialize browser
+
+session.Browser.Initialize(browser.NewBrowserOption())
+
+// Register callback
+
+session.Browser.RegisterCallback(onBrowserCallback)
+
+// ... do work ...
+
+// Send notify message
+
+msgType := "call-for-user"
+id := 3
+code := 199
+message := "user handle done"
+action := "takeoverdone"
+notifyMessage := browser.NewBrowserNotifyMessage(&msgType, &id, &code, &message, &action, map[string]interface{}{})
+session.Browser.SendNotifyMessage(notifyMessage)
+
+// Unregister when done
+
+session.Browser.UnregisterCallback()
+```
+
+### SendTakeoverDone
+
+```go
+func (b *Browser) SendTakeoverDone(notifyId int) (bool, error)
+```
+
+SendTakeoverDone sends a takeoverdone notify message to sandbox.
+
+The notifyId parameter is the notification ID associated with the takeover request message.
+
+Returns true if the takeoverdone notify message was successfully sent, false otherwise.
+
+**Example:**
+
+```go
+func onBrowserCallback(notifyMsg *browser.BrowserNotifyMessage) {
+
+    // receive call-for-user "takeover" action
+
+    if notifyMsg.Action != nil && *notifyMsg.Action == "takeover" {
+        takeoverNotifyId := *notifyMsg.ID
+
+        // ... do work in other thread...
+
+        // send takeoverdone notify message
+
+        session.Browser.SendTakeoverDone(takeoverNotifyId)
+
+        // ... end...
+
+    }
+}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+defer result.Session.Delete()
+session := result.Session
+
+// Initialize browser
+
+session.Browser.Initialize(browser.NewBrowserOption())
+
+// Register callback
+
+session.Browser.RegisterCallback(onBrowserCallback)
+
+// ... do work ...
+
+// Unregister when done
+
+session.Browser.UnregisterCallback()
+```
+
+### UnregisterCallback
+
+```go
+func (b *Browser) UnregisterCallback() error
+```
+
+UnregisterCallback unregisters the previously registered callback function.
+
+**Example:**
+
+```go
+func onBrowserCallback(notifyMsg *browser.BrowserNotifyMessage) {
+    fmt.Printf("Notification - Type: %s, Message: %s\n", *notifyMsg.Type, *notifyMsg.Message)
+}
+client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("browser_latest"))
+defer result.Session.Delete()
+session := result.Session
+session.Browser.Initialize(browser.NewBrowserOption())
+session.Browser.RegisterCallback(onBrowserCallback)
+
+// ... do work ...
+
+// Unregister callback
+
+session.Browser.UnregisterCallback()
+```
+
 ### Related Functions
 
 ### NewBrowser
@@ -174,6 +345,14 @@ func NewBrowser(session SessionInterface) *Browser
 ```
 
 NewBrowser creates a new Browser instance
+
+## Type BrowserCallback
+
+```go
+type BrowserCallback func(*BrowserNotifyMessage)
+```
+
+BrowserCallback is a function type for browser notification callbacks
 
 ## Type BrowserFingerprint
 
@@ -207,6 +386,43 @@ func NewBrowserFingerprint(devices, operatingSystems, locales []string) (*Browse
 
 NewBrowserFingerprint creates a new BrowserFingerprint with validation
 
+## Type BrowserNotifyMessage
+
+```go
+type BrowserNotifyMessage struct {
+	Type		*string			`json:"type,omitempty"`
+	ID		*int			`json:"id,omitempty"`
+	Code		*int			`json:"code,omitempty"`
+	Message		*string			`json:"message,omitempty"`
+	Action		*string			`json:"action,omitempty"`
+	ExtraParams	map[string]interface{}	`json:"extraParams,omitempty"`
+}
+```
+
+Browser provides browser-related operations for the session
+
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and
+MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
+BrowserNotifyMessage represents a browser notify message for SDK and sandbox communication
+
+### Related Functions
+
+### BrowserNotifyMessageFromMap
+
+```go
+func BrowserNotifyMessageFromMap(m map[string]interface{}) *BrowserNotifyMessage
+```
+
+FromMap creates BrowserNotifyMessage from map format
+
+### NewBrowserNotifyMessage
+
+```go
+func NewBrowserNotifyMessage(msgType *string, id *int, code *int, message *string, action *string, extraParams map[string]interface{}) *BrowserNotifyMessage
+```
+
+NewBrowserNotifyMessage creates a new BrowserNotifyMessage
+
 ## Type BrowserOption
 
 ```go
@@ -217,6 +433,8 @@ type BrowserOption struct {
 	Screen			*BrowserScreen		`json:"screen,omitempty"`		// Screen configuration
 	Fingerprint		*BrowserFingerprint	`json:"fingerprint,omitempty"`		// Fingerprint configuration
 	SolveCaptchas		bool			`json:"solveCaptchas,omitempty"`	// Auto-solve captchas
+	AutoLogin		bool			`json:"autoLogin,omitempty"`		// Enable auto login feature
+	CallForUser		bool			`json:"callForUser,omitempty"`		// Enable call for user feature
 	Proxies			[]*BrowserProxy		`json:"proxies,omitempty"`		// Proxy configurations
 	ExtensionPath		*string			`json:"extensionPath,omitempty"`	// Path to extensions directory
 	CmdArgs			[]string		`json:"cmdArgs,omitempty"`		// Additional command line arguments
@@ -430,6 +648,7 @@ type SessionInterface interface {
 	GetClient() *client.Client
 	CallMcpToolForBrowser(toolName string, args interface{}) (*McpToolResult, error)
 	GetLinkForBrowser(protocolType *string, port *int32, options *string) (*LinkResult, error)
+	GetWsClient() (interface{}, error)
 }
 ```
 

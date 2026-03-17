@@ -44,20 +44,26 @@ public EnhancedCodeExecutionResult runCode(String code, String language, int tim
 ```
 
 ```java
+public EnhancedCodeExecutionResult runCode(String code, String language, int timeoutS, boolean streamBeta, Consumer<String> onStdout, Consumer<String> onStderr, Consumer<Object> onError)
+```
+
+```java
 public EnhancedCodeExecutionResult runCode(String code, String language)
 ```
 
-Execute code in the specified language with a timeout.
+Execute code with optional WebSocket streaming for real-time stdout/stderr output.
 
 **Parameters:**
 - `code` (String): The code to execute.
-- `language` (String): The programming language of the code. Case-insensitive. Supported values: 'python', 'javascript', 'r', 'java'.
+- `language` (String): The programming language of the code. Case-insensitive.
 - `timeoutS` (int): The timeout for the code execution in seconds.
-                Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+- `streamBeta` (boolean): If true, use WebSocket streaming for real-time output.
+- `onStdout` (Consumer<String>): Callback invoked for each stdout chunk. May be null.
+- `onStderr` (Consumer<String>): Callback invoked for each stderr chunk. May be null.
+- `onError` (Consumer<Object>): Callback invoked when an error occurs. May be null.
 
 **Returns:**
-- `EnhancedCodeExecutionResult`: EnhancedCodeExecutionResult containing success status, execution result,
-        logs, and error message if any.
+- `EnhancedCodeExecutionResult`: EnhancedCodeExecutionResult containing success status, execution result, and logs.
 
 ### execute
 

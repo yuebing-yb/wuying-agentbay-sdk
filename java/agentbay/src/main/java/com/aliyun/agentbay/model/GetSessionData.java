@@ -17,13 +17,15 @@ public class GetSessionData {
     private String status;
     private String code;
     private String toolList;
+    private boolean success;
 
     public GetSessionData() {
     }
 
     public GetSessionData(String sessionId, String appInstanceId, String resourceId,
                          String resourceUrl, boolean vpcResource, String networkInterfaceIp,
-                         String httpPort, String token, String linkUrl, String wsUrl, String code, String toolList) {
+                         String httpPort, String token, String linkUrl, String wsUrl, 
+                         String code, String toolList, boolean success, String status) {
         this.sessionId = sessionId;
         this.appInstanceId = appInstanceId;
         this.resourceId = resourceId;
@@ -36,6 +38,8 @@ public class GetSessionData {
         this.wsUrl = wsUrl;
         this.code = code;
         this.toolList = toolList;
+        this.success = success;
+        this.status = status;
     }
 
     public String getSessionId() {
@@ -140,6 +144,14 @@ public class GetSessionData {
 
     public void setToolList(String toolList) {
         this.toolList = toolList;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
     }
 }
 

@@ -5,14 +5,12 @@ import * as dotenv from "dotenv";
 import * as path from "path";
 import * as fs from "fs";
 
-
 describe("AgentBay beta pause and beta resume integration tests", () => {
   let agentBay: AgentBay;
   let sessionId: string | undefined;
   let sessionCreated = false;
 
   beforeAll(async () => {
-
     const apiKey = process.env.AGENTBAY_API_KEY;
     log(`API Key loaded: ${apiKey ? "YES" : "NO"}`);
     if (!apiKey) {
@@ -23,14 +21,14 @@ describe("AgentBay beta pause and beta resume integration tests", () => {
     try {
       log("🚀 Creating a new session for pause/resume testing...");
       // Create session
-      const params :CreateSessionParams = {
-        imageId:'linux_latest',
-      }
+      const params: CreateSessionParams = {
+        imageId: "linux_latest",
+      };
       const createResult = await agentBay.create(params);
       if (createResult.success && createResult.session) {
         sessionId = createResult.session.sessionId;
         sessionCreated = true;
-      log(`✅ Session created with ID: ${sessionId}`);
+        log(`✅ Session created with ID: ${sessionId}`);
       } else {
         log("⚠️  Session creation failed, some tests will be skipped");
         log(`   Error: ${createResult.errorMessage}`);
@@ -47,70 +45,82 @@ describe("AgentBay beta pause and beta resume integration tests", () => {
     }
 
     log("📋 Test: Pause and resume existing session");
-    
+
     // First get the session object
     const getResult = await agentBay.get(sessionId);
     if (!getResult.success || !getResult.session) {
       log("⊘ Skipping test: failed to get session object");
       return;
     }
-    
+
     const session = getResult.session;
-    
+
     // Pause the session
     log("⏸️  Pausing session...");
     const pauseResult = await agentBay.betaPauseAsync(session);
-    
+
     expect(pauseResult).toBeDefined();
     if (pauseResult.success) {
-      log(`✅ Session pause initiated successfully. Request ID: ${pauseResult.requestId}`);
+      log(
+        `✅ Session pause initiated successfully. Request ID: ${pauseResult.requestId}`
+      );
     } else {
-      log(`⚠️  Session pause failed (this might be expected): ${pauseResult.errorMessage}`);
+      log(
+        `⚠️  Session pause failed (this might be expected): ${pauseResult.errorMessage}`
+      );
     }
-    
+
     // Wait a bit
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     // Resume the session
     log("▶️  Resuming session...");
     const resumeResult = await agentBay.betaResumeAsync(session);
-    
+
     expect(resumeResult).toBeDefined();
     if (resumeResult.success) {
-      log(`✅ Session resume initiated successfully. Request ID: ${resumeResult.requestId}`);
+      log(
+        `✅ Session resume initiated successfully. Request ID: ${resumeResult.requestId}`
+      );
     } else {
-      log(`⚠️  Session resume failed (this might be expected): ${resumeResult.errorMessage}`);
+      log(
+        `⚠️  Session resume failed (this might be expected): ${resumeResult.errorMessage}`
+      );
     }
   });
 
   test("should handle pause of nonexistent session", async () => {
     log("📋 Test: Handle pause of nonexistent session");
-    
+
     // Create a fake session with invalid ID
     const fakeSession = new Session(agentBay, "session-nonexistent-12345");
-    
+
     // Try to pause the nonexistent session
     log("⏸️  Attempting to pause nonexistent session...");
     const pauseResult = await agentBay.betaPauseAsync(fakeSession);
-    
+
     expect(pauseResult).toBeDefined();
     expect(pauseResult.success).toBe(false);
-    log(`✅ Correctly handled pause of nonexistent session: ${pauseResult.errorMessage}`);
+    log(
+      `✅ Correctly handled pause of nonexistent session: ${pauseResult.errorMessage}`
+    );
   });
 
   test("should handle resume of nonexistent session", async () => {
     log("📋 Test: Handle resume of nonexistent session");
-    
+
     // Create a fake session with invalid ID
     const fakeSession = new Session(agentBay, "session-nonexistent-12345");
-    
+
     // Try to resume the nonexistent session
     log("▶️  Attempting to resume nonexistent session...");
     const resumeResult = await agentBay.betaResumeAsync(fakeSession);
-    
+
     expect(resumeResult).toBeDefined();
     expect(resumeResult.success).toBe(false);
-    log(`✅ Correctly handled resume of nonexistent session: ${resumeResult.errorMessage}`);
+    log(
+      `✅ Correctly handled resume of nonexistent session: ${resumeResult.errorMessage}`
+    );
   });
 
   afterAll(async () => {
@@ -125,7 +135,9 @@ describe("AgentBay beta pause and beta resume integration tests", () => {
           if (deleteResult.success) {
             log(`✅ Session ${sessionId} deleted successfully`);
           } else {
-            log(`⚠️  Failed to delete session ${sessionId}: ${deleteResult.errorMessage}`);
+            log(
+              `⚠️  Failed to delete session ${sessionId}: ${deleteResult.errorMessage}`
+            );
           }
         }
       } catch (error) {

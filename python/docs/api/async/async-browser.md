@@ -132,6 +132,183 @@ Takes a screenshot of the specified page with enhanced options and error handlin
     BrowserError: If browser is not initialized.
     RuntimeError: If screenshot capture fails.
 
+### register_callback
+
+```python
+async def register_callback(callback: BrowserCallback) -> bool
+```
+
+Register a callback function to handle browser-related push notifications from sandbox.
+
+**Arguments**:
+
+- `callback` _Callable[[BrowserNotifyMessage], None]_ - Callback function that receives
+  a BrowserNotifyMessage object containing notification details such as type, code,
+  message, action, and extra_params.
+  
+
+**Returns**:
+
+    bool: True if the callback was successfully registered.
+  
+
+**Example**:
+
+```python
+def on_browser_callback(notify_msg: BrowserNotifyMessage):
+  print(f"Type: {notify_msg.type}")
+  print(f"Code: {notify_msg.code}")
+  print(f"Message: {notify_msg.message}")
+  print(f"Action: {notify_msg.action}")
+  print(f"Extra params: {notify_msg.extra_params}")
+
+create_result = await agent_bay.create()
+session = create_result.session
+
+# Initialize browser
+await session.browser.initialize()
+
+# Register callback
+success = await session.browser.register_callback(on_browser_callback)
+
+# ... do work ...
+
+# Unregister when done
+await session.browser.unregister_callback()
+await session.delete()
+```
+
+### unregister_callback
+
+```python
+async def unregister_callback() -> None
+```
+
+Unregister the previously registered callback function.
+
+**Example**:
+
+```python
+def on_browser_callback(notify_msg: BrowserNotifyMessage):
+  print(f"Notification - Type: {notify_msg.type}, Message: {notify_msg.message}")
+
+create_result = await agent_bay.create()
+session = create_result.session
+
+await session.browser.initialize()
+
+await session.browser.register_callback(on_browser_callback)
+
+# ... do work ...
+
+# Unregister callback
+await session.browser.unregister_callback()
+
+await session.delete()
+```
+
+### send_notify_message
+
+```python
+async def send_notify_message(notify_message: BrowserNotifyMessage) -> bool
+```
+
+Send a BrowserNotifyMessage to sandbox.
+
+**Arguments**:
+
+- `notify_message` _BrowserNotifyMessage_ - The notify message to send.
+  
+
+**Returns**:
+
+    bool: True if the notify message was successfully sent, False otherwise.
+  
+
+**Example**:
+
+```python
+def on_browser_callback(notify_msg: BrowserNotifyMessage):
+  print(f"Type: {notify_msg.type}")
+  print(f"Code: {notify_msg.code}")
+  print(f"Message: {notify_msg.message}")
+  print(f"Action: {notify_msg.action}")
+  print(f"Extra params: {notify_msg.extra_params}")
+
+create_result = await agent_bay.create()
+session = create_result.session
+
+# Initialize browser
+await session.browser.initialize()
+
+# Register callback
+success = await session.browser.register_callback(on_browser_callback)
+
+# ... do work ...
+
+# Send notify message
+notify_message = BrowserNotifyMessage(
+  type="call-for-user",
+  id=3,
+  code=199,
+  message="user handle done",
+  action="takeoverdone",
+  extra_params={}
+)
+await session.browser.send_notify_message(notify_message)
+
+# Unregister when done
+await session.browser.unregister_callback()
+await session.delete()
+```
+
+### send_takeover_done
+
+```python
+async def send_takeover_done(notify_id: int) -> bool
+```
+
+Send a takeoverdone notify message to sandbox.
+
+**Arguments**:
+
+- `notify_id` _int_ - The notification ID associated with the takeover request message.
+  
+
+**Returns**:
+
+    bool: True if the takeoverdone notify message was successfully sent, False otherwise.
+  
+
+**Example**:
+
+```python
+def on_browser_callback(notify_msg: BrowserNotifyMessage):
+  # receive call-for-user "takeover" action
+  if notify_msg.action == "takeover":
+      takeover_notify_id = notify_msg.id
+
+      ## ... do work in other thread...
+      # send takeoverdone notify message
+      await session.browser.send_takeover_done(takeover_notify_id)
+      ## ... end...
+
+create_result = await agent_bay.create()
+session = create_result.session
+
+# Initialize browser
+await session.browser.initialize()
+
+# Register callback
+success = await session.browser.register_callback(on_browser_callback)
+
+# ... do work ...
+
+# Unregister when done
+await session.browser.unregister_callback()
+await session.delete()
+```
+
 ### get_endpoint_url
 
 ```python

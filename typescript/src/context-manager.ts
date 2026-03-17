@@ -1,6 +1,19 @@
 import { Client } from "./api/client";
-import { GetContextInfoRequest, SyncContextRequest } from "./api/models/model";
-import { ApiResponse, extractRequestId } from "./types/api-response";
+import {
+  GetContextInfoRequest,
+  SyncContextRequest,
+  BindContextsRequest,
+  BindContextsRequestPersistenceDataList,
+  DescribeSessionContextsRequest,
+} from "./api/models/model";
+import {
+  ApiResponse,
+  ContextBinding,
+  ContextBindResult,
+  ContextBindingsResult,
+  extractRequestId,
+} from "./types/api-response";
+import { ContextSync } from "./context-sync";
 import {
   log,
   logError,
@@ -137,9 +150,19 @@ export class ContextManager {
 
       // Check for API-level errors
       if (response?.body?.success === false && response.body.code) {
-        const errorMsg = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
-        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-        logAPIResponseWithDetails("GetContextInfo", requestId, false, undefined, fullResponse);
+        const errorMsg = `[${response.body.code}] ${
+          response.body.message || "Unknown error"
+        }`;
+        const fullResponse = response.body
+          ? JSON.stringify(response.body, null, 2)
+          : "";
+        logAPIResponseWithDetails(
+          "GetContextInfo",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -183,8 +206,16 @@ export class ContextManager {
       if (request.taskType) {
         keyFields.task_type = request.taskType;
       }
-      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-      logAPIResponseWithDetails("GetContextInfo", requestId, true, keyFields, fullResponse);
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "GetContextInfo",
+        requestId,
+        true,
+        keyFields,
+        fullResponse
+      );
 
       return {
         requestId,
@@ -252,8 +283,8 @@ export class ContextManager {
     if (hasContextId !== hasPath) {
       throw new Error(
         "contextId and path must be provided together or both omitted. " +
-        "If you want to sync a specific context, both contextId and path are required. " +
-        "If you want to sync all contexts, omit both parameters."
+          "If you want to sync a specific context, both contextId and path are required. " +
+          "If you want to sync all contexts, omit both parameters."
       );
     }
 
@@ -295,9 +326,19 @@ export class ContextManager {
 
       // Check for API-level errors
       if (response?.body?.success === false && response.body.code) {
-        const errorMsg = `[${response.body.code}] ${response.body.message || 'Unknown error'}`;
-        const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-        logAPIResponseWithDetails("SyncContext", requestId, false, undefined, fullResponse);
+        const errorMsg = `[${response.body.code}] ${
+          response.body.message || "Unknown error"
+        }`;
+        const fullResponse = response.body
+          ? JSON.stringify(response.body, null, 2)
+          : "";
+        logAPIResponseWithDetails(
+          "SyncContext",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
         return {
           requestId,
           success: false,
@@ -324,17 +365,30 @@ export class ContextManager {
       if (request.mode) {
         keyFields.mode = request.mode;
       }
-      const fullResponse = response.body ? JSON.stringify(response.body, null, 2) : "";
-      logAPIResponseWithDetails("SyncContext", requestId, success, keyFields, fullResponse);
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "SyncContext",
+        requestId,
+        success,
+        keyFields,
+        fullResponse
+      );
 
       // If callback is provided, start polling in background (async mode)
       if (callback && success) {
         // Start polling in background without blocking
-        this.pollForCompletion(callback, contextId, path, maxRetries, retryInterval)
-          .catch((error) => {
-            logError("Error in background polling:", error);
-            callback(false);
-          });
+        this.pollForCompletion(
+          callback,
+          contextId,
+          path,
+          maxRetries,
+          retryInterval
+        ).catch((error) => {
+          logError("Error in background polling:", error);
+          callback(false);
+        });
         return {
           requestId,
           success,
@@ -392,7 +446,9 @@ export class ContextManager {
           }
 
           hasSyncTasks = true;
-          logDebug(`Sync task ${item.contextId} status: ${item.status}, path: ${item.path}`);
+          logDebug(
+            `Sync task ${item.contextId} status: ${item.status}, path: ${item.path}`
+          );
 
           if (item.status !== "Success" && item.status !== "Failed") {
             allCompleted = false;
@@ -401,7 +457,9 @@ export class ContextManager {
 
           if (item.status === "Failed") {
             hasFailure = true;
-            logError(`Sync failed for context ${item.contextId}: ${item.errorMessage}`);
+            logError(
+              `Sync failed for context ${item.contextId}: ${item.errorMessage}`
+            );
           }
         }
 
@@ -420,10 +478,17 @@ export class ContextManager {
           return; // Exit the function immediately after calling callback
         }
 
-        logDebug(`Waiting for context sync to complete, attempt ${retry + 1}/${maxRetries}`);
+        logDebug(
+          `Waiting for context sync to complete, attempt ${
+            retry + 1
+          }/${maxRetries}`
+        );
         await this.sleep(retryInterval);
       } catch (error) {
-        logError(`Error checking context status on attempt ${retry + 1}:`, error);
+        logError(
+          `Error checking context status on attempt ${retry + 1}:`,
+          error
+        );
         await this.sleep(retryInterval);
       }
     }
@@ -459,7 +524,9 @@ export class ContextManager {
           }
 
           hasSyncTasks = true;
-          logDebug(`Sync task ${item.contextId} status: ${item.status}, path: ${item.path}`);
+          logDebug(
+            `Sync task ${item.contextId} status: ${item.status}, path: ${item.path}`
+          );
 
           if (item.status !== "Success" && item.status !== "Failed") {
             allCompleted = false;
@@ -468,7 +535,9 @@ export class ContextManager {
 
           if (item.status === "Failed") {
             hasFailure = true;
-            logError(`Sync failed for context ${item.contextId}: ${item.errorMessage}`);
+            logError(
+              `Sync failed for context ${item.contextId}: ${item.errorMessage}`
+            );
           }
         }
 
@@ -486,16 +555,227 @@ export class ContextManager {
           }
         }
 
-        logDebug(`Waiting for context sync to complete, attempt ${retry + 1}/${maxRetries}`);
+        logDebug(
+          `Waiting for context sync to complete, attempt ${
+            retry + 1
+          }/${maxRetries}`
+        );
         await this.sleep(retryInterval);
       } catch (error) {
-        logError(`Error checking context status on attempt ${retry + 1}:`, error);
+        logError(
+          `Error checking context status on attempt ${retry + 1}:`,
+          error
+        );
         await this.sleep(retryInterval);
       }
     }
 
     // If we've exhausted all retries, return failure
     logError(`Context sync polling timed out after ${maxRetries} attempts`);
+    return false;
+  }
+
+  /**
+   * Dynamically binds one or more contexts to the current session.
+   *
+   * @param contexts - One or more ContextSync objects specifying contexts to bind
+   * @param waitForCompletion - Whether to poll until all bindings are confirmed (default: true)
+   * @returns Promise resolving to ContextBindResult
+   *
+   * @example
+   * ```typescript
+   * const contextSync = new ContextSync(context.id, '/tmp/ctx-data');
+   * const result = await session.context.bind(contextSync);
+   * console.log(`Bind success: ${result.success}`);
+   * ```
+   */
+  async bind(
+    contexts: ContextSync | ContextSync[],
+    waitForCompletion = true
+  ): Promise<ContextBindResult> {
+    const ctxArray = Array.isArray(contexts) ? contexts : [contexts];
+
+    if (ctxArray.length === 0) {
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: "At least one context is required",
+      };
+    }
+
+    const persistenceDataList = ctxArray.map((ctx) => {
+      const item = new BindContextsRequestPersistenceDataList({
+        contextId: ctx.contextId,
+        path: ctx.path,
+      });
+      if (ctx.policy) {
+        item.policy = JSON.stringify(ctx.policy);
+      }
+      return item;
+    });
+
+    const request = new BindContextsRequest({
+      authorization: `Bearer ${this.session.getAPIKey()}`,
+      sessionId: this.session.getSessionId(),
+      persistenceDataList,
+    });
+
+    logAPICall("BindContexts");
+    logDebug(
+      `Request: SessionId=${request.sessionId}, Contexts=${ctxArray
+        .map((c) => c.contextId)
+        .join(",")}`
+    );
+
+    try {
+      const response = await this.session.getClient().bindContexts(request);
+      const requestId = extractRequestId(response) || "";
+
+      if (response?.body?.success === false) {
+        const errorMsg = `[${response.body.code || "Unknown"}] ${
+          response.body.message || "Unknown error"
+        }`;
+        const fullResponse = response.body
+          ? JSON.stringify(response.body, null, 2)
+          : "";
+        logAPIResponseWithDetails(
+          "BindContexts",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
+        return { requestId, success: false, errorMessage: errorMsg };
+      }
+
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "BindContexts",
+        requestId,
+        true,
+        {
+          context_count: ctxArray.length,
+        },
+        fullResponse
+      );
+
+      if (waitForCompletion) {
+        await this.pollForBindCompletion(ctxArray.map((c) => c.contextId));
+      }
+
+      return { requestId, success: true };
+    } catch (error) {
+      logError("Error calling BindContexts:", error);
+      throw new Error(`Failed to bind contexts: ${error}`);
+    }
+  }
+
+  /**
+   * Lists all context bindings for the current session.
+   *
+   * @returns Promise resolving to ContextBindingsResult with the list of bindings
+   *
+   * @example
+   * ```typescript
+   * const result = await session.context.listBindings();
+   * for (const binding of result.bindings) {
+   *   console.log(`Context ${binding.contextId} bound at ${binding.path}`);
+   * }
+   * ```
+   */
+  async listBindings(): Promise<ContextBindingsResult> {
+    const request = new DescribeSessionContextsRequest({
+      authorization: `Bearer ${this.session.getAPIKey()}`,
+      sessionId: this.session.getSessionId(),
+    });
+
+    logAPICall("DescribeSessionContexts");
+    logDebug(`Request: SessionId=${request.sessionId}`);
+
+    try {
+      const response = await this.session
+        .getClient()
+        .describeSessionContexts(request);
+      const requestId = extractRequestId(response) || "";
+
+      if (response?.body?.success === false) {
+        const errorMsg = `[${response.body.code || "Unknown"}] ${
+          response.body.message || "Unknown error"
+        }`;
+        const fullResponse = response.body
+          ? JSON.stringify(response.body, null, 2)
+          : "";
+        logAPIResponseWithDetails(
+          "DescribeSessionContexts",
+          requestId,
+          false,
+          undefined,
+          fullResponse
+        );
+        return {
+          requestId,
+          success: false,
+          bindings: [],
+          errorMessage: errorMsg,
+        };
+      }
+
+      const bindings: ContextBinding[] = [];
+      if (response?.body?.data) {
+        for (const item of response.body.data) {
+          bindings.push({
+            contextId: item.contextId || "",
+            contextName: item.contextName,
+            path: item.path || "",
+            policy: item.policy,
+            bindTime: item.bindTime,
+          });
+        }
+      }
+
+      const fullResponse = response.body
+        ? JSON.stringify(response.body, null, 2)
+        : "";
+      logAPIResponseWithDetails(
+        "DescribeSessionContexts",
+        requestId,
+        true,
+        {
+          binding_count: bindings.length,
+        },
+        fullResponse
+      );
+
+      return { requestId, success: true, bindings };
+    } catch (error) {
+      logError("Error calling DescribeSessionContexts:", error);
+      throw new Error(`Failed to list bindings: ${error}`);
+    }
+  }
+
+  private async pollForBindCompletion(
+    expectedContextIds: string[],
+    maxRetries = 60,
+    retryInterval = 2000
+  ): Promise<boolean> {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const result = await this.listBindings();
+        if (result.success) {
+          const boundIds = new Set(result.bindings.map((b) => b.contextId));
+          if (expectedContextIds.every((id) => boundIds.has(id))) {
+            logInfo("All contexts bound successfully");
+            return true;
+          }
+        }
+      } catch {
+        logDebug(`Polling attempt ${i + 1} failed, retrying...`);
+      }
+      await this.sleep(retryInterval);
+    }
+    logError(`Bind polling timed out after ${maxRetries} attempts`);
     return false;
   }
 

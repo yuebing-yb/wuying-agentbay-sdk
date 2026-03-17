@@ -2,8 +2,7 @@ import { AgentBay, Session } from "../../src";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
 import { zodToJsonSchema } from "zod-to-json-schema";
-const { z } = require('zod');
-
+const { z } = require("zod");
 
 describe("Agent", () => {
   describe("computerExecuteTask", () => {
@@ -16,10 +15,14 @@ describe("Agent", () => {
 
       // Create a session with Windows image for computer agent tasks
       log("Creating a new session for computer agent task testing...");
-      const createResponse = await agentBay.create({ imageId: "windows_latest" });
+      const createResponse = await agentBay.create({
+        imageId: "windows_latest",
+      });
       session = createResponse.session!;
       log(`Session created with ID: ${session.sessionId}`);
-      log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);
+      log(
+        `Create Session RequestId: ${createResponse.requestId || "undefined"}`
+      );
     });
 
     afterEach(async () => {
@@ -28,7 +31,11 @@ describe("Agent", () => {
       try {
         if (session && session.sessionId) {
           const deleteResponse = await agentBay.delete(session);
-          log(`Delete Session RequestId: ${deleteResponse.requestId || "undefined"}`);
+          log(
+            `Delete Session RequestId: ${
+              deleteResponse.requestId || "undefined"
+            }`
+          );
         }
       } catch (error) {
         log(`Warning: Error deleting session: ${error}`);
@@ -38,7 +45,7 @@ describe("Agent", () => {
     it("should execute task successfully", async () => {
       if (session.agent) {
         const task = "create a folder named 'agentbay' in C:\\Windows\\Temp";
-        
+
         // Get timeout from environment or use default
         const timeoutStr = process.env.AGENT_TASK_TIMEOUT;
         let timeout = 180; // default value in seconds
@@ -51,9 +58,14 @@ describe("Agent", () => {
 
         try {
           log(`Executing computer agent task: ${task}`);
-          const result = await session.agent.computer.executeTaskAndWait(task, timeout);
-          
-          log(`Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`);
+          const result = await session.agent.computer.executeTaskAndWait(
+            task,
+            timeout
+          );
+
+          log(
+            `Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`
+          );
           log(`Agent Task RequestId: ${result.requestId || "undefined"}`);
 
           // Verify that the response contains requestId
@@ -64,7 +76,9 @@ describe("Agent", () => {
             log(`Note: Agent task execution failed: ${result.errorMessage}`);
             // Don't fail the test if task execution is not supported in test environment
           } else {
-            log(`Agent task executed successfully with result: ${result.taskResult}`);
+            log(
+              `Agent task executed successfully with result: ${result.taskResult}`
+            );
             expect(result.success).toBe(true);
             expect(result.taskId).toBeTruthy();
           }
@@ -91,7 +105,9 @@ describe("Agent", () => {
       const createResponse = await agentBay.create({ imageId: "linux_latest" });
       session = createResponse.session!;
       log(`Session created with ID: ${session.sessionId}`);
-      log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);
+      log(
+        `Create Session RequestId: ${createResponse.requestId || "undefined"}`
+      );
     });
 
     afterEach(async () => {
@@ -100,7 +116,11 @@ describe("Agent", () => {
       try {
         if (session && session.sessionId) {
           const deleteResponse = await agentBay.delete(session);
-          log(`Delete Session RequestId: ${deleteResponse.requestId || "undefined"}`);
+          log(
+            `Delete Session RequestId: ${
+              deleteResponse.requestId || "undefined"
+            }`
+          );
         }
       } catch (error) {
         log(`Warning: Error deleting session: ${error}`);
@@ -110,7 +130,7 @@ describe("Agent", () => {
     it("should execute task successfully", async () => {
       if (session.agent) {
         const task = "导航到百度查询上海天气.";
-        
+
         // Get timeout from environment or use default
         const timeoutStr = process.env.AGENT_TASK_TIMEOUT;
         let timeout = 180; // default value in seconds
@@ -127,9 +147,16 @@ describe("Agent", () => {
             city: z.string(),
             weather: z.string(),
           });
-          const result = await session.agent.browser.executeTaskAndWait(task, timeout, false, WeatherSchema);
-          
-          log(`Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`);
+          const result = await session.agent.browser.executeTaskAndWait(
+            task,
+            timeout,
+            false,
+            WeatherSchema
+          );
+
+          log(
+            `Agent task result: Success=${result.success}, TaskID=${result.taskId}, Status=${result.taskStatus}`
+          );
           log(`Agent Task RequestId: ${result.requestId || "undefined"}`);
 
           // Verify that the response contains requestId
@@ -140,7 +167,9 @@ describe("Agent", () => {
             log(`Note: Agent task execution failed: ${result.errorMessage}`);
             // Don't fail the test if task execution is not supported in test environment
           } else {
-            log(`Agent task executed successfully with result: ${result.taskResult}`);
+            log(
+              `Agent task executed successfully with result: ${result.taskResult}`
+            );
             expect(result.success).toBe(true);
             expect(result.taskId).toBeTruthy();
           }
@@ -164,10 +193,14 @@ describe("Agent", () => {
 
       // Create a session with mobile image for mobile agent tasks
       log("Creating a new session for mobile agent task testing...");
-      const createResponse = await agentBay.create({ imageId: "mobile_latest" });
+      const createResponse = await agentBay.create({
+        imageId: "mobile_latest",
+      });
       session = createResponse.session!;
       log(`Session created with ID: ${session.sessionId}`);
-      log(`Create Session RequestId: ${createResponse.requestId || "undefined"}`);
+      log(
+        `Create Session RequestId: ${createResponse.requestId || "undefined"}`
+      );
     });
 
     afterEach(async () => {
@@ -176,7 +209,11 @@ describe("Agent", () => {
       try {
         if (session && session.sessionId) {
           const deleteResponse = await agentBay.delete(session);
-          log(`Delete Session RequestId: ${deleteResponse.requestId || "undefined"}`);
+          log(
+            `Delete Session RequestId: ${
+              deleteResponse.requestId || "undefined"
+            }`
+          );
         }
       } catch (error) {
         log(`Warning: Error deleting session: ${error}`);
@@ -190,22 +227,29 @@ describe("Agent", () => {
 
         try {
           log(`Executing mobile agent task (non-blocking): ${task}`);
-          const result = await session.agent.mobile.executeTask(
-              task, maxSteps);
+          const result = await session.agent.mobile.executeTask(task, maxSteps);
 
-          log(`Mobile Agent task result: Success=${result.success}, ` +
-              `TaskID=${result.taskId}, Status=${result.taskStatus}`);
-          log(`Mobile Agent Task RequestId: ${result.requestId || "undefined"}`);
+          log(
+            `Mobile Agent task result: Success=${result.success}, ` +
+              `TaskID=${result.taskId}, Status=${result.taskStatus}`
+          );
+          log(
+            `Mobile Agent Task RequestId: ${result.requestId || "undefined"}`
+          );
 
           expect(result.requestId).toBeDefined();
           expect(typeof result.requestId).toBe("string");
 
           if (!result.success) {
-            log(`Note: Mobile Agent task execution failed: ` +
-                `${result.errorMessage}`);
+            log(
+              `Note: Mobile Agent task execution failed: ` +
+                `${result.errorMessage}`
+            );
           } else {
-            log(`Mobile Agent task executed successfully, ` +
-                `TaskID: ${result.taskId}`);
+            log(
+              `Mobile Agent task executed successfully, ` +
+                `TaskID: ${result.taskId}`
+            );
             expect(result.success).toBe(true);
             expect(result.taskId).toBeTruthy();
             expect(result.taskStatus).toBe("running");
@@ -234,21 +278,32 @@ describe("Agent", () => {
         try {
           log(`Executing mobile agent task (blocking): ${task}`);
           const result = await session.agent.mobile.executeTaskAndWait(
-              task, timeout, maxSteps);
+            task,
+            timeout,
+            maxSteps
+          );
 
-          log(`Mobile Agent task result: Success=${result.success}, ` +
-              `TaskID=${result.taskId}, Status=${result.taskStatus}`);
-          log(`Mobile Agent Task RequestId: ${result.requestId || "undefined"}`);
+          log(
+            `Mobile Agent task result: Success=${result.success}, ` +
+              `TaskID=${result.taskId}, Status=${result.taskStatus}`
+          );
+          log(
+            `Mobile Agent Task RequestId: ${result.requestId || "undefined"}`
+          );
 
           expect(result.requestId).toBeDefined();
           expect(typeof result.requestId).toBe("string");
 
           if (!result.success) {
-            log(`Note: Mobile Agent task execution failed: ` +
-                `${result.errorMessage}`);
+            log(
+              `Note: Mobile Agent task execution failed: ` +
+                `${result.errorMessage}`
+            );
           } else {
-            log(`Mobile Agent task executed successfully with result: ` +
-                `${result.taskResult}`);
+            log(
+              `Mobile Agent task executed successfully with result: ` +
+                `${result.taskResult}`
+            );
             expect(result.success).toBe(true);
             expect(result.taskId).toBeTruthy();
             expect(result.taskStatus).toBe("completed");
@@ -261,4 +316,4 @@ describe("Agent", () => {
       }
     }, 120000);
   });
-}); 
+});

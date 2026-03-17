@@ -3,7 +3,7 @@ import { GetAdbLinkRequest } from "../../src/api/models/model";
 
 describe("GetAdbLink Integration Test", () => {
   let agentBay: AgentBay;
-  let apiKey : string ;
+  let apiKey: string;
 
   beforeAll(() => {
     apiKey = process.env.AGENTBAY_API_KEY as string;
@@ -15,7 +15,7 @@ describe("GetAdbLink Integration Test", () => {
 
   it("should get ADB link with a real mobile session", async () => {
     const params: CreateSessionParams = {
-      imageId: "mobile_latest"
+      imageId: "mobile_latest",
     };
     const sessionResult = await agentBay.create(params);
 
@@ -39,7 +39,9 @@ describe("GetAdbLink Integration Test", () => {
         response = await agentBay.client.getAdbLink(request);
       } catch (error: any) {
         if (error.message && error.message.includes("InvalidAction.NotFound")) {
-          console.log("Skipping test: GetAdbLink API not yet available in production");
+          console.log(
+            "Skipping test: GetAdbLink API not yet available in production"
+          );
           return;
         }
         throw error;
@@ -52,7 +54,9 @@ describe("GetAdbLink Integration Test", () => {
       expect(response.body?.data?.url).not.toBeNull();
 
       const url = response.body?.data?.url;
-      expect(url?.toLowerCase().includes("adb") || url?.includes(":")).toBe(true);
+      expect(url?.toLowerCase().includes("adb") || url?.includes(":")).toBe(
+        true
+      );
       console.log(`ADB URL: ${url}`);
     } finally {
       await session.delete();
@@ -78,4 +82,3 @@ describe("GetAdbLink Integration Test", () => {
     }
   }, 30000);
 });
-

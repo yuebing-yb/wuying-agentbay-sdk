@@ -28,7 +28,7 @@ public class CodeExecutionExample {
             String region = getEnvOrDefault("AGENTBAY_REGION", "us-east-1");
             String endpoint = getEnvOrDefault("AGENTBAY_ENDPOINT", "agentbay.us-east-1.aliyuncs.com");
             int timeout = Integer.parseInt(getEnvOrDefault("AGENTBAY_TIMEOUT", "60000"));
-            String imageId = getEnvOrDefault("AGENTBAY_IMAGE_ID", "imgc-0aae4rxtt0yuix7oh");
+            String imageId = System.getenv("AGENTBAY_IMAGE_ID");
 
             // Print configuration
             System.out.println("========== Configuration ==========");

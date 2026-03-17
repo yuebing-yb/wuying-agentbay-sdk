@@ -59,7 +59,7 @@ export class Code {
     try {
       raw = JSON.parse(data);
       // Handle double-encoded JSON if necessary
-      if (typeof raw === 'string') {
+      if (typeof raw === "string") {
         try {
           raw = JSON.parse(raw);
         } catch (e) {
@@ -80,7 +80,7 @@ export class Code {
     // Check if it's the expected structure (has result array or logs)
     // If parsed but not the structure we want, treat as plain object result?
     // But usually if it parses as object, it's likely our structure or empty object.
-    
+
     const logs: CodeExecutionLogs = {
       stdout: raw.stdout || [],
       stderr: raw.stderr || [],
@@ -91,7 +91,8 @@ export class Code {
       for (const itemStr of raw.result) {
         try {
           // Items in 'result' are JSON strings themselves
-          const itemMap = typeof itemStr === 'string' ? JSON.parse(itemStr) : itemStr;
+          const itemMap =
+            typeof itemStr === "string" ? JSON.parse(itemStr) : itemStr;
           const item: CodeExecutionResultItem = {};
 
           if (itemMap.isMainResult) item.isMainResult = true;
@@ -100,12 +101,14 @@ export class Code {
           // Map MIME types to fields
           if (itemMap["text/plain"]) item.text = itemMap["text/plain"];
           if (itemMap["text/html"]) item.html = itemMap["text/html"];
-          if (itemMap["text/markdown"]) item.markdown = itemMap["text/markdown"];
+          if (itemMap["text/markdown"])
+            item.markdown = itemMap["text/markdown"];
           if (itemMap["image/png"]) item.png = itemMap["image/png"];
           if (itemMap["image/jpeg"]) item.jpeg = itemMap["image/jpeg"];
           if (itemMap["image/svg+xml"]) item.svg = itemMap["image/svg+xml"];
           if (itemMap["text/latex"]) item.latex = itemMap["text/latex"];
-          if (itemMap["application/json"]) item.json = itemMap["application/json"];
+          if (itemMap["application/json"])
+            item.json = itemMap["application/json"];
 
           // Chart support (Vega/Vega-Lite)
           if (itemMap["application/vnd.vegalite.v4+json"]) {
@@ -262,7 +265,9 @@ export class Code {
         }
         if (eventType === "error") {
           const msg =
-            typeof data?.error === "string" ? data.error : this.safeToString(data);
+            typeof data?.error === "string"
+              ? data.error
+              : this.safeToString(data);
           errorMessage = msg;
           errorObj = {
             name: "ExecutionError",
@@ -307,7 +312,8 @@ export class Code {
       };
     }
 
-    const ok = !errorObj && !endData?.executionError && endData?.status !== "failed";
+    const ok =
+      !errorObj && !endData?.executionError && endData?.status !== "failed";
 
     const logs: CodeExecutionLogs = {
       stdout: stdoutChunks,
@@ -329,7 +335,9 @@ export class Code {
       requestId: handle.invocationId,
       success: ok,
       result: resultText,
-      errorMessage: ok ? "" : errorMessage || String(endData?.executionError || ""),
+      errorMessage: ok
+        ? ""
+        : errorMessage || String(endData?.executionError || ""),
       logs,
       results,
       error: errorObj,
@@ -347,6 +355,8 @@ export class Code {
    *                  Supported values: 'python', 'javascript', 'r', 'java'.
    * @param timeoutS - The timeout for the code execution in seconds. Default is 60s.
    *                   Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+   * @param options - Optional streaming options. When streamBeta is true, uses WebSocket
+   *                 streaming for real-time stdout/stderr output.
    * @returns CodeExecutionResult with code execution output and requestId
    * @throws Error if an unsupported language is specified.
    *
@@ -367,7 +377,13 @@ export class Code {
   async runCode(
     code: string,
     language: string,
-    timeoutS = 60
+    timeoutS = 60,
+    options?: {
+      streamBeta?: boolean;
+      onStdout?: (chunk: string) => void;
+      onStderr?: (chunk: string) => void;
+      onError?: (err: any) => void;
+    }
   ): Promise<CodeExecutionResult> {
     try {
       // Normalize and validate language (case-insensitive)
@@ -380,7 +396,8 @@ export class Code {
         node: "javascript",
         nodejs: "javascript",
       };
-      const canonicalLanguage = aliases[normalizedLanguage] || normalizedLanguage;
+      const canonicalLanguage =
+        aliases[normalizedLanguage] || normalizedLanguage;
       const supported = new Set(["python", "javascript", "r", "java"]);
 
       if (!supported.has(canonicalLanguage)) {
@@ -392,9 +409,16 @@ export class Code {
         };
       }
 
-      // Streaming is temporarily disabled in this version.
-      // The streaming implementation is preserved in runCodeStreamWs()
-      // and will be re-enabled in a future release.
+      if (options?.streamBeta) {
+        return await this.runCodeStreamWs({
+          code,
+          language: canonicalLanguage,
+          timeoutS,
+          onStdout: options.onStdout,
+          onStderr: options.onStderr,
+          onError: options.onError,
+        });
+      }
 
       const args = {
         code,
@@ -405,38 +429,40 @@ export class Code {
       const response = await this.session.callMcpTool("run_code", args, false);
 
       let codeResult: CodeExecutionResult;
-      
+
       // Even if response.success is false, data might contain structured error info
       if (response.success) {
         codeResult = this.parseBackendResponse(response.data);
       } else {
         // Check if errorMessage is JSON
         try {
-            if (response.errorMessage && response.errorMessage.trim().startsWith('{')) {
-                codeResult = this.parseBackendResponse(response.errorMessage);
-                codeResult.success = false;
-            } else {
-                 // Real failure not from code execution but tool failure
-                 return {
-                    requestId: response.requestId,
-                    success: false,
-                    result: "",
-                    errorMessage: response.errorMessage,
-                  };
-            }
+          if (
+            response.errorMessage &&
+            response.errorMessage.trim().startsWith("{")
+          ) {
+            codeResult = this.parseBackendResponse(response.errorMessage);
+            codeResult.success = false;
+          } else {
+            // Real failure not from code execution but tool failure
+            return {
+              requestId: response.requestId,
+              success: false,
+              result: "",
+              errorMessage: response.errorMessage,
+            };
+          }
         } catch {
-             return {
-                requestId: response.requestId,
-                success: false,
-                result: "",
-                errorMessage: response.errorMessage,
-              };
+          return {
+            requestId: response.requestId,
+            success: false,
+            result: "",
+            errorMessage: response.errorMessage,
+          };
         }
       }
 
       codeResult.requestId = response.requestId;
       return codeResult;
-
     } catch (error) {
       return {
         requestId: "",
@@ -453,9 +479,15 @@ export class Code {
   async run(
     code: string,
     language: string,
-    timeoutS = 60
+    timeoutS = 60,
+    options?: {
+      streamBeta?: boolean;
+      onStdout?: (chunk: string) => void;
+      onStderr?: (chunk: string) => void;
+      onError?: (err: any) => void;
+    }
   ): Promise<CodeExecutionResult> {
-    return await this.runCode(code, language, timeoutS);
+    return await this.runCode(code, language, timeoutS, options);
   }
 
   /**
@@ -464,8 +496,14 @@ export class Code {
   async execute(
     code: string,
     language: string,
-    timeoutS = 60
+    timeoutS = 60,
+    options?: {
+      streamBeta?: boolean;
+      onStdout?: (chunk: string) => void;
+      onStderr?: (chunk: string) => void;
+      onError?: (err: any) => void;
+    }
   ): Promise<CodeExecutionResult> {
-    return await this.runCode(code, language, timeoutS);
+    return await this.runCode(code, language, timeoutS, options);
   }
 }

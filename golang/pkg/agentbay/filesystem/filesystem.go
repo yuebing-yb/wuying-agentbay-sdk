@@ -10,6 +10,7 @@ import (
 	"time"
 
 	mcp "github.com/aliyun/wuying-agentbay-sdk/golang/api/client"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 )
 
@@ -1206,13 +1207,16 @@ func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteRe
 	chunkSize := ChunkSize
 	contentLen := len(content)
 
-	fmt.Printf("WriteFile: Starting write to %s (total size: %d bytes, chunk size: %d bytes)\n",
-		path, contentLen, chunkSize)
+	if logger, ok := fs.Session.(internal.Logger); ok {
+		logger.LogDebug(fmt.Sprintf("WriteFile: Starting write to %s (total size: %d bytes, chunk size: %d bytes)",
+			path, contentLen, chunkSize))
+	}
 
 	// If content is small enough, use the regular writeFileChunk method
 	if contentLen <= chunkSize {
-		fmt.Printf("WriteFile: Content size (%d bytes) is smaller than chunk size, using normal writeFileChunk\n",
-			contentLen)
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogDebug(fmt.Sprintf("WriteFile: Content size (%d bytes) is smaller than chunk size, using normal writeFileChunk", contentLen))
+		}
 		return fs.writeFileChunk(path, content, mode)
 	}
 
@@ -1222,7 +1226,9 @@ func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteRe
 		firstChunkEnd = contentLen
 	}
 
-	fmt.Printf("WriteFile: Writing first chunk (0-%d bytes) with %s mode\n", firstChunkEnd, mode)
+	if logger, ok := fs.Session.(internal.Logger); ok {
+		logger.LogDebug(fmt.Sprintf("WriteFile: Writing first chunk (0-%d bytes) with %s mode", firstChunkEnd, mode))
+	}
 	result, err := fs.writeFileChunk(path, content[:firstChunkEnd], mode)
 	if err != nil {
 		return nil, fmt.Errorf("error writing first chunk: %w", err)
@@ -1236,8 +1242,10 @@ func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteRe
 			end = contentLen
 		}
 
-		fmt.Printf("WriteFile: Writing chunk %d (%d-%d bytes) with append mode\n",
-			chunkCount+1, offset, end)
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogDebug(fmt.Sprintf("WriteFile: Writing chunk %d (%d-%d bytes) with append mode",
+				chunkCount+1, offset, end))
+		}
 
 		result, err = fs.writeFileChunk(path, content[offset:end], "append")
 		if err != nil {
@@ -1248,8 +1256,10 @@ func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteRe
 		chunkCount++
 	}
 
-	fmt.Printf("WriteFile: Successfully wrote %s in %d chunks (total: %d bytes)\n",
-		path, chunkCount, contentLen)
+	if logger, ok := fs.Session.(internal.Logger); ok {
+		logger.LogInfo(fmt.Sprintf("WriteFile: Successfully wrote %s in %d chunks (total: %d bytes)",
+			path, chunkCount, contentLen))
+	}
 
 	return result, nil
 }
@@ -1391,7 +1401,7 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 	path string,
 	callback func([]*FileChangeEvent),
 	stopCh <-chan struct{},
-) *sync.WaitGroup {
+) (*sync.WaitGroup, <-chan struct{}) {
 	return fs.WatchDirectory(path, callback, 500*time.Millisecond, stopCh)
 }
 
@@ -1405,12 +1415,9 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 //
 // Returns:
 //   - *sync.WaitGroup: WaitGroup that can be used to wait for monitoring to stop
-//
-// Behavior:
-//
-// - Continuously monitors directory for file changes at specified interval
-// - Calls callback function asynchronously when changes detected
-// - Stops monitoring when stopCh is closed
+//   - <-chan struct{}: readyCh that is closed once the filesystem baseline has been
+//     established.  Wait on this channel before performing any file operations to
+//     avoid a race condition where early changes are absorbed into the baseline.
 //
 // Example:
 //
@@ -1419,7 +1426,8 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 //	defer result.Session.Delete()
 //	result.Session.FileSystem.CreateDirectory("/tmp/watch")
 //	stopCh := make(chan struct{})
-//	wg := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+//	wg, readyCh := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+//	<-readyCh // wait for baseline
 //	close(stopCh)
 //	wg.Wait()
 func (fs *FileSystem) WatchDirectory(
@@ -1427,14 +1435,32 @@ func (fs *FileSystem) WatchDirectory(
 	callback func([]*FileChangeEvent),
 	interval time.Duration,
 	stopCh <-chan struct{},
-) *sync.WaitGroup {
+) (*sync.WaitGroup, <-chan struct{}) {
 	var wg sync.WaitGroup
+	readyCh := make(chan struct{})
 	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
-		fmt.Printf("Starting directory monitoring for: %s\n", path)
-		fmt.Printf("Polling interval: %v\n", interval)
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogInfo(fmt.Sprintf("Starting directory monitoring for: %s", path))
+			logger.LogDebug(fmt.Sprintf("Polling interval: %v", interval))
+		}
+
+		// First poll to establish baseline
+		select {
+		case <-stopCh:
+			close(readyCh)
+			return
+		default:
+		}
+		_, err := fs.GetFileChange(path)
+		close(readyCh)
+		if err != nil {
+			if logger, ok := fs.Session.(internal.Logger); ok {
+				logger.LogError(fmt.Sprintf("Error establishing baseline: %v", err))
+			}
+		}
 
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -1442,31 +1468,40 @@ func (fs *FileSystem) WatchDirectory(
 		for {
 			select {
 			case <-stopCh:
-				fmt.Printf("Stopped monitoring directory: %s\n", path)
+				if logger, ok := fs.Session.(internal.Logger); ok {
+					logger.LogInfo(fmt.Sprintf("Stopped monitoring directory: %s", path))
+				}
 				return
 			case <-ticker.C:
 				result, err := fs.GetFileChange(path)
 				if err != nil {
-					// Check if session has expired
 					if strings.Contains(err.Error(), "session not found or expired") {
-						fmt.Printf("Session expired, stopping directory monitoring: %s\n", path)
+						if logger, ok := fs.Session.(internal.Logger); ok {
+							logger.LogWarn(fmt.Sprintf("Session expired, stopping directory monitoring: %s", path))
+						}
 						return
 					}
-					fmt.Printf("Error monitoring directory: %v\n", err)
+					if logger, ok := fs.Session.(internal.Logger); ok {
+						logger.LogError(fmt.Sprintf("Error monitoring directory: %v", err))
+					}
 					continue
 				}
 
 				if len(result.Events) > 0 {
-					fmt.Printf("Detected %d file changes:\n", len(result.Events))
-					for _, event := range result.Events {
-						fmt.Printf("  - %s\n", event.String())
+					if logger, ok := fs.Session.(internal.Logger); ok {
+						logger.LogInfo(fmt.Sprintf("Detected %d file changes", len(result.Events)))
+						for _, event := range result.Events {
+							logger.LogDebug(fmt.Sprintf("  - %s", event.String()))
+						}
 					}
 
-					// Call callback in a separate goroutine to avoid blocking
+					session := fs.Session
 					go func(events []*FileChangeEvent) {
 						defer func() {
 							if r := recover(); r != nil {
-								fmt.Printf("Error in callback function: %v\n", r)
+								if logger, ok := session.(internal.Logger); ok {
+									logger.LogError(fmt.Sprintf("Error in callback function: %v", r))
+								}
 							}
 						}()
 						callback(events)
@@ -1476,7 +1511,7 @@ func (fs *FileSystem) WatchDirectory(
 		}
 	}()
 
-	return &wg
+	return &wg, readyCh
 }
 
 // FileTransferCapableSession extends the base session interface with methods
@@ -1508,7 +1543,11 @@ func (fs *FileSystem) getOrCreateFileTransfer() (*FileTransfer, error) {
 			GetDownloadURLFunc: ftSession.GetFileDownloadUrl,
 		}
 
-		fs.fileTransfer = NewFileTransfer(ftSession, adapter)
+		var logger internal.Logger
+		if l, ok := ftSession.(internal.Logger); ok {
+			logger = l
+		}
+		fs.fileTransfer = NewFileTransfer(ftSession, adapter, logger)
 	})
 
 	if initErr != nil {

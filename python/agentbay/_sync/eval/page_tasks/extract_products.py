@@ -101,7 +101,7 @@ def extract_products(agent, base_url: str) -> List[ProductInfo]:
 
     products = normalize_links(base_url, data.products)
     if not has_valid_products(products):
-        print(
+        _logger.warning(
             f"Extracted products from {base_url} but none were valid after normalization."
         )
         return None
@@ -115,11 +115,11 @@ def ensure_listing_page(
     act(agent, common_action)
     time.sleep(0.6)
     for i in range(max_steps):
-        print(f"Extraction attempt {i+1}/{max_steps} for {base_url}...")
+        _logger.info(f"Extraction attempt {i+1}/{max_steps} for {base_url}...")
         products_found = extract_products(agent, base_url)
         if products_found is not None:
             valid_count = len([p for p in products_found if is_valid_product(p)])
-            print(
+            _logger.info(
                 f"Extraction successful on attempt {i+1}. Found {valid_count} valid products."
             )
 
@@ -127,7 +127,7 @@ def ensure_listing_page(
             return products_found
 
         if i < max_steps - 1:
-            print("Extraction failed, attempting to navigate to a listing page...")
+            _logger.info("Extraction failed, attempting to navigate to a listing page...")
             act(agent, common_action)
             time.sleep(0.6)
 

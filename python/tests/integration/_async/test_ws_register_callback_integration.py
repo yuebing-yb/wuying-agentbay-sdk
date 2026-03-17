@@ -20,8 +20,7 @@ class TestWsRegisterCallbackIntegration:
     async def test_ws_register_callback_should_receive_captcha_push(self, agentbay) -> None:
         playwright = pytest.importorskip("playwright.async_api")
 
-        image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5ta4kuo0x3pa70"
-        created = await agentbay.create(CreateSessionParams(image_id=image_id))
+        created = await agentbay.create(CreateSessionParams())
         assert created.success is True, created.error_message
         assert created.session is not None
         session = created.session

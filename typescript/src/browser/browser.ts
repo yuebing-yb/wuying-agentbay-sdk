@@ -1,8 +1,8 @@
-import { Session } from '../session';
-import { BrowserOperator } from './browser_operator';
-import { BrowserError } from '../exceptions';
-import { InitBrowserRequest } from '../api/models/InitBrowserRequest';
-import { FingerprintFormat } from './fingerprint';
+import { Session } from "../session";
+import { BrowserOperator } from "./browser_operator";
+import { BrowserError } from "../exceptions";
+import { InitBrowserRequest } from "../api/models/InitBrowserRequest";
+import { FingerprintFormat } from "./fingerprint";
 
 // Browser data path constant (moved from config.ts)
 const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
@@ -16,7 +16,7 @@ import {
   logAPICall,
   logAPIResponseWithDetails,
   setRequestId,
-} from '../utils/logger';
+} from "../utils/logger";
 
 export interface BrowserViewport {
   width: number;
@@ -28,9 +28,88 @@ export interface BrowserScreen {
   height: number;
 }
 
+/**
+ * Browser notify message for SDK and sandbox communication, like call-for-user messages.
+ *
+ * @example
+ * ```typescript
+ * const notifyMsg = new BrowserNotifyMessage(
+ *   'call-for-user',
+ *   3,
+ *   201,
+ *   'captcha solving start',
+ *   'pause',
+ *   { max_wait_time: 30 }
+ * );
+ * ```
+ */
+export class BrowserNotifyMessage {
+  type?: string;
+  id?: number;
+  code?: number;
+  message?: string;
+  action?: string;
+  extraParams?: Record<string, any>;
+
+  constructor(
+    type?: string,
+    id?: number,
+    code?: number,
+    message?: string,
+    action?: string,
+    extraParams?: Record<string, any>
+  ) {
+    this.type = type;
+    this.id = id;
+    this.code = code;
+    this.message = message;
+    this.action = action;
+    this.extraParams = extraParams || {};
+  }
+
+  /**
+   * Convert BrowserNotifyMessage to dictionary format.
+   */
+  toMap(): Record<string, any> {
+    const notifyMap: Record<string, any> = {};
+
+    if (this.type !== undefined) notifyMap.type = this.type;
+    if (this.id !== undefined) notifyMap.id = this.id;
+    if (this.code !== undefined) notifyMap.code = this.code;
+    if (this.message !== undefined) notifyMap.message = this.message;
+    if (this.action !== undefined) notifyMap.action = this.action;
+    if (this.extraParams && Object.keys(this.extraParams).length > 0) {
+      notifyMap.extraParams = this.extraParams;
+    }
+
+    return notifyMap;
+  }
+
+  /**
+   * Create BrowserNotifyMessage from dictionary format.
+   */
+  static fromMap(m?: Record<string, any>): BrowserNotifyMessage | null {
+    if (!m) return null;
+
+    return new BrowserNotifyMessage(
+      m.type,
+      m.id,
+      m.code,
+      m.message,
+      m.action,
+      m.extraParams
+    );
+  }
+}
+
+/**
+ * Type alias for browser callback function
+ */
+export type BrowserCallback = (notifyMsg: BrowserNotifyMessage) => void;
+
 export interface BrowserFingerprint {
-  devices?: Array<'desktop' | 'mobile'>;
-  operatingSystems?: Array<'windows' | 'macos' | 'linux' | 'android' | 'ios'>;
+  devices?: Array<"desktop" | "mobile">;
+  operatingSystems?: Array<"windows" | "macos" | "linux" | "android" | "ios">;
   locales?: string[];
 }
 
@@ -58,11 +137,11 @@ export class BrowserFingerprintContext {
 }
 
 export interface BrowserProxy {
-  type: 'custom' | 'wuying' | 'managed';
+  type: "custom" | "wuying" | "managed";
   server?: string;
   username?: string;
   password?: string;
-  strategy?: 'restricted' | 'polling' | 'sticky' | 'rotating' | 'matched';
+  strategy?: "restricted" | "polling" | "sticky" | "rotating" | "matched";
   pollsize?: number;
   userId?: string;
   isp?: string;
@@ -73,11 +152,11 @@ export interface BrowserProxy {
 }
 
 export class BrowserProxyClass implements BrowserProxy {
-  type: 'custom' | 'wuying' | 'managed';
+  type: "custom" | "wuying" | "managed";
   server?: string;
   username?: string;
   password?: string;
-  strategy?: 'restricted' | 'polling' | 'sticky' | 'rotating' | 'matched';
+  strategy?: "restricted" | "polling" | "sticky" | "rotating" | "matched";
   pollsize?: number;
   userId?: string;
   isp?: string;
@@ -86,11 +165,11 @@ export class BrowserProxyClass implements BrowserProxy {
   city?: string;
 
   constructor(
-    proxyType: 'custom' | 'wuying' | 'managed',
+    proxyType: "custom" | "wuying" | "managed",
     server?: string,
     username?: string,
     password?: string,
-    strategy?: 'restricted' | 'polling' | 'sticky' | 'rotating' | 'matched',
+    strategy?: "restricted" | "polling" | "sticky" | "rotating" | "matched",
     pollsize?: number,
     userId?: string,
     isp?: string,
@@ -111,48 +190,63 @@ export class BrowserProxyClass implements BrowserProxy {
     this.city = city;
 
     // Validation
-    if (proxyType !== 'custom' && proxyType !== 'wuying' && proxyType !== 'managed') {
-      throw new Error('proxy_type must be custom, wuying, or managed');
+    if (
+      proxyType !== "custom" &&
+      proxyType !== "wuying" &&
+      proxyType !== "managed"
+    ) {
+      throw new Error("proxy_type must be custom, wuying, or managed");
     }
 
-    if (proxyType === 'custom' && !server) {
-      throw new Error('server is required for custom proxy type');
+    if (proxyType === "custom" && !server) {
+      throw new Error("server is required for custom proxy type");
     }
 
-    if (proxyType === 'wuying') {
+    if (proxyType === "wuying") {
       if (!strategy) {
-        throw new Error('strategy is required for wuying proxy type');
+        throw new Error("strategy is required for wuying proxy type");
       }
-      if (strategy !== 'restricted' && strategy !== 'polling') {
-        throw new Error('strategy must be restricted or polling for wuying proxy type');
+      if (strategy !== "restricted" && strategy !== "polling") {
+        throw new Error(
+          "strategy must be restricted or polling for wuying proxy type"
+        );
       }
-      if (strategy === 'polling' && pollsize !== undefined && pollsize <= 0) {
-        throw new Error('pollsize must be greater than 0 for polling strategy');
+      if (strategy === "polling" && pollsize !== undefined && pollsize <= 0) {
+        throw new Error("pollsize must be greater than 0 for polling strategy");
       }
     }
 
-    if (proxyType === 'managed') {
+    if (proxyType === "managed") {
       if (!strategy) {
-        throw new Error('strategy is required for managed proxy type');
+        throw new Error("strategy is required for managed proxy type");
       }
-      if (strategy !== 'polling' && strategy !== 'sticky' && strategy !== 'rotating' && strategy !== 'matched') {
-        throw new Error('strategy must be polling, sticky, rotating, or matched for managed proxy type');
+      if (
+        strategy !== "polling" &&
+        strategy !== "sticky" &&
+        strategy !== "rotating" &&
+        strategy !== "matched"
+      ) {
+        throw new Error(
+          "strategy must be polling, sticky, rotating, or matched for managed proxy type"
+        );
       }
       if (!userId) {
-        throw new Error('userId is required for managed proxy type');
+        throw new Error("userId is required for managed proxy type");
       }
-      if (strategy === 'matched' && !isp && !country && !province && !city) {
-        throw new Error('at least one of isp, country, province, or city is required for matched strategy');
+      if (strategy === "matched" && !isp && !country && !province && !city) {
+        throw new Error(
+          "at least one of isp, country, province, or city is required for matched strategy"
+        );
       }
     }
   }
 
   toMap(): Record<string, any> {
     const proxyMap: Record<string, any> = {
-      type: this.type
+      type: this.type,
     };
 
-    if (this.type === 'custom') {
+    if (this.type === "custom") {
       proxyMap.server = this.server;
       if (this.username) {
         proxyMap.username = this.username;
@@ -160,12 +254,12 @@ export class BrowserProxyClass implements BrowserProxy {
       if (this.password) {
         proxyMap.password = this.password;
       }
-    } else if (this.type === 'wuying') {
+    } else if (this.type === "wuying") {
       proxyMap.strategy = this.strategy;
-      if (this.strategy === 'polling') {
+      if (this.strategy === "polling") {
         proxyMap.pollsize = this.pollsize;
       }
-    } else if (this.type === 'managed') {
+    } else if (this.type === "managed") {
       proxyMap.strategy = this.strategy;
       if (this.userId) {
         proxyMap.userId = this.userId;
@@ -187,8 +281,10 @@ export class BrowserProxyClass implements BrowserProxy {
     return proxyMap;
   }
 
-  static fromMap(m: Record<string, any> | null | undefined): BrowserProxyClass | null {
-    if (!m || typeof m !== 'object') {
+  static fromMap(
+    m: Record<string, any> | null | undefined
+  ): BrowserProxyClass | null {
+    if (!m || typeof m !== "object") {
       return null;
     }
 
@@ -197,14 +293,9 @@ export class BrowserProxyClass implements BrowserProxy {
       return null;
     }
 
-    if (proxyType === 'custom') {
-      return new BrowserProxyClass(
-        proxyType,
-        m.server,
-        m.username,
-        m.password
-      );
-    } else if (proxyType === 'wuying') {
+    if (proxyType === "custom") {
+      return new BrowserProxyClass(proxyType, m.server, m.username, m.password);
+    } else if (proxyType === "wuying") {
       return new BrowserProxyClass(
         proxyType,
         undefined,
@@ -213,7 +304,7 @@ export class BrowserProxyClass implements BrowserProxy {
         m.strategy,
         m.pollsize || 10
       );
-    } else if (proxyType === 'managed') {
+    } else if (proxyType === "managed") {
       return new BrowserProxyClass(
         proxyType,
         undefined,
@@ -245,6 +336,10 @@ export interface BrowserOption {
   /** Whether to enable fingerprint persistence across sessions */
   fingerprintPersistent?: boolean;
   solveCaptchas?: boolean;
+  /** Whether to enable auto login feature */
+  autoLogin?: boolean;
+  /** Whether to enable call for user feature */
+  callForUser?: boolean;
   proxies?: BrowserProxy[];
   /** Path to the extensions directory. Defaults to "/tmp/extensions/" */
   extensionPath?: string;
@@ -253,7 +348,7 @@ export interface BrowserOption {
   /** Default URL to navigate to when browser starts */
   defaultNavigateUrl?: string;
   /** Browser type: 'chrome' or 'chromium'. Defaults to undefined */
-  browserType?: 'chrome' | 'chromium' | undefined;
+  browserType?: "chrome" | "chromium" | undefined;
 }
 
 export class BrowserOptionClass implements BrowserOption {
@@ -267,11 +362,13 @@ export class BrowserOptionClass implements BrowserOption {
   fingerprintPersistent?: boolean;
   fingerprintPersistPath?: string;
   solveCaptchas?: boolean;
+  autoLogin?: boolean;
+  callForUser?: boolean;
   proxies?: BrowserProxy[];
   extensionPath?: string;
   cmdArgs?: string[];
   defaultNavigateUrl?: string;
-  browserType?: 'chrome' | 'chromium' | undefined;
+  browserType?: "chrome" | "chromium" | undefined;
 
   constructor(
     useStealth = false,
@@ -282,10 +379,12 @@ export class BrowserOptionClass implements BrowserOption {
     fingerprintFormat?: FingerprintFormat,
     fingerprintPersistent = false,
     solveCaptchas = false,
+    autoLogin = false,
+    callForUser = false,
     proxies?: BrowserProxy[],
     cmdArgs?: string[],
     defaultNavigateUrl?: string,
-    browserType?: 'chrome' | 'chromium',
+    browserType?: "chrome" | "chromium"
   ) {
     this.useStealth = useStealth;
     this.userAgent = userAgent;
@@ -295,6 +394,8 @@ export class BrowserOptionClass implements BrowserOption {
     this.fingerprintFormat = fingerprintFormat;
     this.fingerprintPersistent = fingerprintPersistent;
     this.solveCaptchas = solveCaptchas;
+    this.autoLogin = autoLogin;
+    this.callForUser = callForUser;
     this.extensionPath = "/tmp/extensions/";
     this.cmdArgs = cmdArgs;
     this.defaultNavigateUrl = defaultNavigateUrl;
@@ -311,10 +412,10 @@ export class BrowserOptionClass implements BrowserOption {
     // Validate proxies list items
     if (proxies !== undefined) {
       if (!Array.isArray(proxies)) {
-        throw new Error('proxies must be a list');
+        throw new Error("proxies must be a list");
       }
       if (proxies.length > 1) {
-        throw new Error('proxies list length must be limited to 1');
+        throw new Error("proxies list length must be limited to 1");
       }
     }
 
@@ -323,11 +424,15 @@ export class BrowserOptionClass implements BrowserOption {
 
     // Validate cmdArgs
     if (cmdArgs !== undefined && !Array.isArray(cmdArgs)) {
-      throw new Error('cmdArgs must be a list');
+      throw new Error("cmdArgs must be a list");
     }
 
     // Validate browser_type
-    if (browserType !== undefined && browserType !== 'chrome' && browserType !== 'chromium') {
+    if (
+      browserType !== undefined &&
+      browserType !== "chrome" &&
+      browserType !== "chromium"
+    ) {
       throw new Error("browserType must be 'chrome' or 'chromium'");
     }
   }
@@ -335,58 +440,75 @@ export class BrowserOptionClass implements BrowserOption {
   toMap(): Record<string, any> {
     const optionMap: Record<string, any> = {};
     if (process.env.AGENTBAY_BROWSER_BEHAVIOR_SIMULATE) {
-      optionMap['behaviorSimulate'] = (process.env.AGENTBAY_BROWSER_BEHAVIOR_SIMULATE !== "0") as boolean;
+      optionMap["behaviorSimulate"] = (process.env
+        .AGENTBAY_BROWSER_BEHAVIOR_SIMULATE !== "0") as boolean;
     }
     if (this.useStealth !== undefined) {
-      optionMap['useStealth'] = this.useStealth;
+      optionMap["useStealth"] = this.useStealth;
     }
     if (this.userAgent !== undefined) {
-      optionMap['userAgent'] = this.userAgent;
+      optionMap["userAgent"] = this.userAgent;
     }
     if (this.viewport !== undefined) {
-      optionMap['viewport'] = { width: this.viewport.width, height: this.viewport.height };
+      optionMap["viewport"] = {
+        width: this.viewport.width,
+        height: this.viewport.height,
+      };
     }
     if (this.screen !== undefined) {
-      optionMap['screen'] = { width: this.screen.width, height: this.screen.height };
+      optionMap["screen"] = {
+        width: this.screen.width,
+        height: this.screen.height,
+      };
     }
     if (this.fingerprint !== undefined) {
       const fp: Record<string, any> = {};
-      if (this.fingerprint.devices) fp['devices'] = this.fingerprint.devices;
-      if (this.fingerprint.operatingSystems) fp['operatingSystems'] = this.fingerprint.operatingSystems;
-      if (this.fingerprint.locales) fp['locales'] = this.fingerprint.locales;
-      optionMap['fingerprint'] = fp;
+      if (this.fingerprint.devices) fp["devices"] = this.fingerprint.devices;
+      if (this.fingerprint.operatingSystems)
+        fp["operatingSystems"] = this.fingerprint.operatingSystems;
+      if (this.fingerprint.locales) fp["locales"] = this.fingerprint.locales;
+      optionMap["fingerprint"] = fp;
     }
     if (this.fingerprintFormat !== undefined) {
       // Encode fingerprint format to base64 string
       try {
         const jsonStr = this.fingerprintFormat.toJson();
-        optionMap['fingerprintRawData'] = Buffer.from(jsonStr, 'utf-8').toString('base64');
+        optionMap["fingerprintRawData"] = Buffer.from(
+          jsonStr,
+          "utf-8"
+        ).toString("base64");
       } catch (error) {
-        logError('Failed to serialize fingerprint format:', error);
+        logError("Failed to serialize fingerprint format:", error);
         // Skip fingerprint format if serialization fails
       }
     }
     if (this.fingerprintPersistent) {
       this.fingerprintPersistPath = `${BROWSER_FINGERPRINT_PERSIST_PATH}/fingerprint.json`;
-      optionMap['fingerprintPersistPath'] = this.fingerprintPersistPath;
+      optionMap["fingerprintPersistPath"] = this.fingerprintPersistPath;
     }
     if (this.solveCaptchas !== undefined) {
-      optionMap['solveCaptchas'] = this.solveCaptchas;
+      optionMap["solveCaptchas"] = this.solveCaptchas;
+    }
+    if (this.autoLogin !== undefined) {
+      optionMap["autoLogin"] = this.autoLogin;
+    }
+    if (this.callForUser !== undefined) {
+      optionMap["callForUser"] = this.callForUser;
     }
     if (this.proxies !== undefined) {
-      optionMap['proxies'] = this.proxies.map(proxy => proxy.toMap());
+      optionMap["proxies"] = this.proxies.map((proxy) => proxy.toMap());
     }
     if (this.extensionPath !== undefined) {
-      optionMap['extensionPath'] = this.extensionPath;
+      optionMap["extensionPath"] = this.extensionPath;
     }
     if (this.cmdArgs !== undefined) {
-      optionMap['cmdArgs'] = this.cmdArgs;
+      optionMap["cmdArgs"] = this.cmdArgs;
     }
     if (this.defaultNavigateUrl !== undefined) {
-      optionMap['defaultNavigateUrl'] = this.defaultNavigateUrl;
+      optionMap["defaultNavigateUrl"] = this.defaultNavigateUrl;
     }
     if (this.browserType !== undefined) {
-      optionMap['browserType'] = this.browserType;
+      optionMap["browserType"] = this.browserType;
     }
     return optionMap;
   }
@@ -402,7 +524,10 @@ export class BrowserOptionClass implements BrowserOption {
       this.userAgent = map.userAgent;
     }
     if (map.viewport !== undefined) {
-      this.viewport = { width: map.viewport.width, height: map.viewport.height };
+      this.viewport = {
+        width: map.viewport.width,
+        height: map.viewport.height,
+      };
     }
     if (map.screen !== undefined) {
       this.screen = { width: map.screen.width, height: map.screen.height };
@@ -410,7 +535,8 @@ export class BrowserOptionClass implements BrowserOption {
     if (map.fingerprint !== undefined) {
       const fp: BrowserFingerprint = {};
       if (map.fingerprint.devices) fp.devices = map.fingerprint.devices;
-      if (map.fingerprint.operatingSystems) fp.operatingSystems = map.fingerprint.operatingSystems;
+      if (map.fingerprint.operatingSystems)
+        fp.operatingSystems = map.fingerprint.operatingSystems;
       if (map.fingerprint.locales) fp.locales = map.fingerprint.locales;
       this.fingerprint = fp;
     }
@@ -421,19 +547,23 @@ export class BrowserOptionClass implements BrowserOption {
       } else {
         // Convert from plain object to FingerprintFormat
         try {
-          this.fingerprintFormat = FingerprintFormat.fromDict(map.fingerprintFormat);
+          this.fingerprintFormat = FingerprintFormat.fromDict(
+            map.fingerprintFormat
+          );
         } catch (error) {
-          logError('Failed to convert fingerprintFormat from object:', error);
+          logError("Failed to convert fingerprintFormat from object:", error);
           this.fingerprintFormat = undefined;
         }
       }
     } else if (map.fingerprintRawData !== undefined) {
       // Decode base64 string to fingerprint format
       try {
-        const jsonStr = Buffer.from(map.fingerprintRawData, 'base64').toString('utf-8');
+        const jsonStr = Buffer.from(map.fingerprintRawData, "base64").toString(
+          "utf-8"
+        );
         this.fingerprintFormat = FingerprintFormat.fromJson(jsonStr);
       } catch (error) {
-        logError('Failed to decode fingerprint raw data:', error);
+        logError("Failed to decode fingerprint raw data:", error);
         this.fingerprintFormat = undefined;
       }
     }
@@ -448,19 +578,31 @@ export class BrowserOptionClass implements BrowserOption {
     if (map.solveCaptchas !== undefined) {
       this.solveCaptchas = map.solveCaptchas;
     }
+    if (map.autoLogin !== undefined) {
+      this.autoLogin = map.autoLogin;
+    } else {
+      this.autoLogin = false;
+    }
+    if (map.callForUser !== undefined) {
+      this.callForUser = map.callForUser;
+    } else {
+      this.callForUser = false;
+    }
     if (map.proxies !== undefined) {
       const proxyList = map.proxies;
       if (proxyList.length > 1) {
-        throw new Error('proxies list length must be limited to 1');
+        throw new Error("proxies list length must be limited to 1");
       }
-      this.proxies = proxyList.map((proxyData: any) => {
-        // If it's already a BrowserProxyClass instance, return it
-        if (proxyData instanceof BrowserProxyClass) {
-          return proxyData;
-        }
-        // Otherwise, convert from map
-        return BrowserProxyClass.fromMap(proxyData);
-      }).filter(Boolean) as BrowserProxy[];
+      this.proxies = proxyList
+        .map((proxyData: any) => {
+          // If it's already a BrowserProxyClass instance, return it
+          if (proxyData instanceof BrowserProxyClass) {
+            return proxyData;
+          }
+          // Otherwise, convert from map
+          return BrowserProxyClass.fromMap(proxyData);
+        })
+        .filter(Boolean) as BrowserProxy[];
     }
     if (map.extensionPath !== undefined) {
       this.extensionPath = map.extensionPath;
@@ -484,6 +626,10 @@ export class Browser {
   private _initialized = false;
   private _option: BrowserOptionClass | null = null;
   public operator: BrowserOperator;
+
+  // Internal callback management
+  private _userCallback: BrowserCallback | null = null;
+  private _wsCallbackRegistered = false;
 
   constructor(session: Session) {
     this.session = session;
@@ -522,7 +668,7 @@ export class Browser {
 
       // Set enableRecord based on session.enableBrowserReplay
       if (this.session.enableBrowserReplay !== undefined) {
-        browserOptionMap['enableRecord'] = this.session.enableBrowserReplay;
+        browserOptionMap["enableRecord"] = this.session.enableBrowserReplay;
       }
 
       if (Object.keys(browserOptionMap).length > 0) {
@@ -532,7 +678,9 @@ export class Browser {
       const response = this.session.getClient().initBrowserSync(request);
       logDebug(`Response from init_browser data:`, response.body?.data);
 
-      const success = response.body?.data?.port !== null && response.body?.data?.port !== undefined;
+      const success =
+        response.body?.data?.port !== null &&
+        response.body?.data?.port !== undefined;
       if (success) {
         this._initialized = true;
         this._option = browserOption;
@@ -541,7 +689,7 @@ export class Browser {
 
       return success;
     } catch (error) {
-      console.error("Failed to initialize browser instance:", error);
+      logError("Failed to initialize browser instance:", error);
       this._initialized = false;
       this._endpointUrl = null;
       this._option = null;
@@ -567,13 +715,19 @@ export class Browser {
    * }
    * ```
    */
-  async initializeAsync(option: BrowserOptionClass | BrowserOption): Promise<boolean> {
+  async initializeAsync(
+    option: BrowserOptionClass | BrowserOption
+  ): Promise<boolean> {
     if (this.isInitialized()) {
       return true;
     }
 
     try {
-      logDebug(`Initializing browser asynchronously with option: ${JSON.stringify(option)}`);
+      logDebug(
+        `Initializing browser asynchronously with option: ${JSON.stringify(
+          option
+        )}`
+      );
       // Use direct API call to initialize browser
       const request = new InitBrowserRequest();
       request.authorization = `Bearer ${this.session.getAPIKey()}`;
@@ -595,7 +749,7 @@ export class Browser {
 
       // Set enableRecord based on session.enableBrowserReplay
       if (this.session.enableBrowserReplay !== undefined) {
-        browserOptionMap['enableRecord'] = this.session.enableBrowserReplay;
+        browserOptionMap["enableRecord"] = this.session.enableBrowserReplay;
       }
 
       if (Object.keys(browserOptionMap).length > 0) {
@@ -606,17 +760,14 @@ export class Browser {
       const requestId = response.body?.requestId || "";
       setRequestId(requestId);
 
-      const success = response.body?.data?.port !== null && response.body?.data?.port !== undefined;
+      const success =
+        response.body?.data?.port !== null &&
+        response.body?.data?.port !== undefined;
       if (success) {
-        logAPIResponseWithDetails(
-          "InitBrowser",
-          requestId,
-          true,
-          {
-            port: response.body?.data?.port,
-            endpoint: response.body?.data?.endpoint,
-          }
-        );
+        logAPIResponseWithDetails("InitBrowser", requestId, true, {
+          port: response.body?.data?.port,
+          endpoint: response.body?.data?.endpoint,
+        });
         this._initialized = true;
         this._option = browserOption;
       } else {
@@ -650,7 +801,9 @@ export class Browser {
       this._option = null;
       this._endpointUrl = null;
     } else {
-      throw new BrowserError("Browser is not initialized. Cannot destroy browser.");
+      throw new BrowserError(
+        "Browser is not initialized. Cannot destroy browser."
+      );
     }
   }
 
@@ -676,18 +829,22 @@ export class Browser {
    */
   async getEndpointUrl(): Promise<string> {
     if (!this.isInitialized()) {
-      throw new BrowserError("Browser is not initialized. Cannot access endpoint URL.");
+      throw new BrowserError(
+        "Browser is not initialized. Cannot access endpoint URL."
+      );
     }
 
     try {
-      const { GetCdpLinkRequest } = await import('../api/models/model');
+      const { GetCdpLinkRequest } = await import("../api/models/model");
       const request = new GetCdpLinkRequest({
         authorization: `Bearer ${this.session.getAPIKey()}`,
-        sessionId: this.session.sessionId
+        sessionId: this.session.sessionId,
       });
-      const response = await this.session.getAgentBay().getClient().getCdpLink(request);
+      const response = await this.session
+        .getAgentBay()
+        .getClient()
+        .getCdpLink(request);
       if (response.body && response.body.success && response.body.data) {
-        
         this._endpointUrl = response.body.data.url || null;
       } else {
         const errorMsg = response.body?.message || "Unknown error";
@@ -695,7 +852,9 @@ export class Browser {
       }
       return this._endpointUrl!;
     } catch (error) {
-      throw new BrowserError(`Failed to get endpoint URL from session: ${error}`);
+      throw new BrowserError(
+        `Failed to get endpoint URL from session: ${error}`
+      );
     }
   }
 
@@ -720,7 +879,9 @@ export class Browser {
     if (this.isInitialized()) {
       this.session.callMcpTool("stopChrome", {}, false);
     } else {
-      throw new BrowserError("Browser is not initialized. Cannot stop browser.");
+      throw new BrowserError(
+        "Browser is not initialized. Cannot stop browser."
+      );
     }
   }
 
@@ -763,10 +924,16 @@ export class Browser {
    * }
    * ```
    */
-  async screenshot(page: any, fullPage = false, options: Record<string, any> = {}): Promise<Uint8Array> {
+  async screenshot(
+    page: any,
+    fullPage = false,
+    options: Record<string, any> = {}
+  ): Promise<Uint8Array> {
     // Check if browser is initialized
     if (!this.isInitialized()) {
-      throw new BrowserError("Browser must be initialized before calling screenshot.");
+      throw new BrowserError(
+        "Browser must be initialized before calling screenshot."
+      );
     }
 
     if (page === null || page === undefined) {
@@ -815,7 +982,10 @@ export class Browser {
       // Wait a bit for images to load
       await page.waitForTimeout(1500);
       const finalHeight = await page.evaluate("document.body.scrollHeight");
-      await page.setViewportSize({ width: 1920, height: Math.min(finalHeight, 10000) });
+      await page.setViewportSize({
+        width: 1920,
+        height: Math.min(finalHeight, 10000),
+      });
 
       // Take the screenshot
       const screenshotBuffer = await page.screenshot(enhancedOptions);
@@ -839,16 +1009,285 @@ export class Browser {
   /**
    * Scrolls the page to load all content (especially for lazy-loaded elements)
    */
-  private async _scrollToLoadAllContent(page: any, maxScrolls = 8, delayMs = 1200): Promise<void> {
+  private async _scrollToLoadAllContent(
+    page: any,
+    maxScrolls = 8,
+    delayMs = 1200
+  ): Promise<void> {
     let lastHeight = 0;
     for (let i = 0; i < maxScrolls; i++) {
       await page.evaluate("window.scrollTo(0, document.body.scrollHeight)");
       await page.waitForTimeout(delayMs);
-      const newHeight = await page.evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)");
+      const newHeight = await page.evaluate(
+        "Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)"
+      );
       if (newHeight === lastHeight) {
         break;
       }
       lastHeight = newHeight;
+    }
+  }
+
+  /**
+   * Internal WebSocket callback handler.
+   * @private
+   */
+  private _internalWsCallback(payload: Record<string, any>): void {
+    logDebug(`Browser layer received notification: ${JSON.stringify(payload)}`);
+
+    // Basic validation: data field should exist and not be None
+    if (!payload.data) {
+      logDebug(
+        `Ignoring notification with empty data: ${JSON.stringify(payload)}`
+      );
+      return;
+    }
+
+    // Dispatch to user callback if set
+    if (this._userCallback) {
+      try {
+        const notifyMsg = BrowserNotifyMessage.fromMap(payload.data);
+        if (notifyMsg) {
+          this._userCallback(notifyMsg);
+        }
+      } catch (error) {
+        logError(`Error when calling user callback: ${error}`);
+      }
+    }
+  }
+
+  /**
+   * Register a callback function to handle browser-related push notifications from sandbox.
+   *
+   * @param callback - Callback function that receives a BrowserNotifyMessage object containing
+   *                   notification details such as type, code, message, action, and extra_params.
+   * @returns Promise<boolean> - True if the callback was successfully registered.
+   *
+   * @example
+   * ```typescript
+   * function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+   *   console.log(`Type: ${notifyMsg.type}`);
+   *   console.log(`Code: ${notifyMsg.code}`);
+   *   console.log(`Message: ${notifyMsg.message}`);
+   *   console.log(`Action: ${notifyMsg.action}`);
+   *   console.log(`Extra params: ${JSON.stringify(notifyMsg.extraParams)}`);
+   * }
+   *
+   * const createResult = await agentBay.create();
+   * const session = createResult.session;
+   *
+   * // Initialize browser
+   * await session.browser.initialize();
+   *
+   * // Register callback
+   * const success = await session.browser.registerCallback(onBrowserCallback);
+   *
+   * // ... do work ...
+   *
+   * // Unregister when done
+   * await session.browser.unregisterCallback();
+   * await session.delete();
+   * ```
+   */
+  async registerCallback(callback: BrowserCallback): Promise<boolean> {
+    try {
+      // Set user callback (replaces any existing callback)
+      this._userCallback = callback;
+      logInfo("Set user callback");
+
+      // Register internal callback to ws_client only once
+      if (!this._wsCallbackRegistered) {
+        const wsClient = await this.session.getWsClient();
+        await wsClient.connect();
+        wsClient.registerCallback(
+          "wuying_cdp_mcp_server",
+          this._internalWsCallback.bind(this)
+        );
+        this._wsCallbackRegistered = true;
+        logDebug("Registered internal ws_callback to ws_client");
+      }
+
+      return true;
+    } catch (error) {
+      logError(`Failed to register user callback: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Unregister the previously registered callback function.
+   *
+   * @example
+   * ```typescript
+   * function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+   *   console.log(`Notification - Type: ${notifyMsg.type}, Message: ${notifyMsg.message}`);
+   * }
+   *
+   * const createResult = await agentBay.create();
+   * const session = createResult.session;
+   *
+   * await session.browser.initialize();
+   *
+   * await session.browser.registerCallback(onBrowserCallback);
+   *
+   * // ... do work ...
+   *
+   * // Unregister callback
+   * await session.browser.unregisterCallback();
+   *
+   * await session.delete();
+   * ```
+   */
+  async unregisterCallback(): Promise<void> {
+    try {
+      // Clear user callback
+      this._userCallback = null;
+      logInfo("Cleared user callback");
+
+      // Unregister from ws_client
+      if (this._wsCallbackRegistered) {
+        const wsClient = await this.session.getWsClient();
+        wsClient.unregisterCallback(
+          "wuying_cdp_mcp_server",
+          this._internalWsCallback.bind(this)
+        );
+        await wsClient.close();
+        this._wsCallbackRegistered = false;
+        logDebug("Unregistered internal ws_callback from ws_client");
+      }
+    } catch (error) {
+      logError(`Failed to unregister user callback: ${error}`);
+    }
+  }
+
+  /**
+   * Send a BrowserNotifyMessage to sandbox.
+   *
+   * @param notifyMessage - The notify message to send.
+   * @returns Promise<boolean> - True if the notify message was successfully sent, False otherwise.
+   *
+   * @example
+   * ```typescript
+   * function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+   *   console.log(`Type: ${notifyMsg.type}`);
+   *   console.log(`Code: ${notifyMsg.code}`);
+   *   console.log(`Message: ${notifyMsg.message}`);
+   *   console.log(`Action: ${notifyMsg.action}`);
+   *   console.log(`Extra params: ${JSON.stringify(notifyMsg.extraParams)}`);
+   * }
+   *
+   * const createResult = await agentBay.create();
+   * const session = createResult.session;
+   *
+   * // Initialize browser
+   * await session.browser.initialize();
+   *
+   * // Register callback
+   * const success = await session.browser.registerCallback(onBrowserCallback);
+   *
+   * // ... do work ...
+   *
+   * // Send notify message
+   * const notifyMessage = new BrowserNotifyMessage(
+   *   'call-for-user',
+   *   3,
+   *   199,
+   *   'user handle done',
+   *   'takeoverdone',
+   *   {}
+   * );
+   * await session.browser.sendNotifyMessage(notifyMessage);
+   *
+   * // Unregister when done
+   * await session.browser.unregisterCallback();
+   * await session.delete();
+   * ```
+   */
+  async sendNotifyMessage(
+    notifyMessage: BrowserNotifyMessage
+  ): Promise<boolean> {
+    try {
+      const wsClient = await this.session.getWsClient();
+
+      // Send notify message through ws_client
+      await wsClient.sendMessage(
+        "wuying_cdp_mcp_server",
+        notifyMessage.toMap()
+      );
+      logInfo(
+        `Successfully sent browser notify message, notify_message: ${JSON.stringify(
+          notifyMessage.toMap()
+        )}`
+      );
+      return true;
+    } catch (error) {
+      logError(`Failed to send notify message: ${error}`);
+      return false;
+    }
+  }
+
+  /**
+   * Send a takeoverdone notify message to sandbox.
+   *
+   * @param notifyId - The notification ID associated with the takeover request message.
+   * @returns Promise<boolean> - True if the takeoverdone notify message was successfully sent, False otherwise.
+   *
+   * @example
+   * ```typescript
+   * function onBrowserCallback(notifyMsg: BrowserNotifyMessage) {
+   *   // receive call-for-user "takeover" action
+   *   if (notifyMsg.action === 'takeover') {
+   *     const takeoverNotifyId = notifyMsg.id;
+   *
+   *     // ... do work in other thread...
+   *     // send takeoverdone notify message
+   *     await session.browser.sendTakeoverDone(takeoverNotifyId);
+   *     // ... end...
+   *   }
+   * }
+   *
+   * const createResult = await agentBay.create();
+   * const session = createResult.session;
+   *
+   * // Initialize browser
+   * await session.browser.initialize();
+   *
+   * // Register callback
+   * const success = await session.browser.registerCallback(onBrowserCallback);
+   *
+   * // ... do work ...
+   *
+   * // Unregister when done
+   * await session.browser.unregisterCallback();
+   * await session.delete();
+   * ```
+   */
+  async sendTakeoverDone(notifyId: number): Promise<boolean> {
+    try {
+      // Get ws_client
+      const wsClient = await this.session.getWsClient();
+
+      // Build takeoverdone notify message
+      const notifyMessage = new BrowserNotifyMessage(
+        "call-for-user",
+        notifyId,
+        199,
+        "user handle done",
+        "takeoverdone",
+        {}
+      );
+      const messageData = notifyMessage.toMap();
+
+      // Send message through ws_client
+      await wsClient.sendMessage("wuying_cdp_mcp_server", messageData);
+
+      logInfo(
+        `Successfully sent browser takeoverdone notify message, notify_id: ${notifyId}`
+      );
+      return true;
+    } catch (error) {
+      logError(`Failed to send browser notify message: ${error}`);
+      return false;
     }
   }
 }

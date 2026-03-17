@@ -241,12 +241,15 @@ func TestFileSystem_WatchDirectory_Basic(t *testing.T) {
 
 	// Start watching
 	stopCh := make(chan struct{})
-	wg := fs.WatchDirectory(
+	wg, readyCh := fs.WatchDirectory(
 		"/tmp/test_dir",
 		callback,
 		100*time.Millisecond, // Very short interval for testing
 		stopCh,
 	)
+
+	// Wait for baseline before continuing
+	<-readyCh
 
 	// Let it run briefly
 	time.Sleep(200 * time.Millisecond)

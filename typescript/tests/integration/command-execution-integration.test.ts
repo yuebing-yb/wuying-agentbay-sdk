@@ -1,8 +1,8 @@
-import { log } from 'console';
-import { AgentBay, CreateSessionParams } from '../../src';
-import { Session } from '../../src/session';
+import { log } from "console";
+import { AgentBay, CreateSessionParams } from "../../src";
+import { Session } from "../../src/session";
 
-describe('Command Execution Integration Tests', () => {
+describe("Command Execution Integration Tests", () => {
   let agentBay: AgentBay;
 
   beforeAll(() => {
@@ -10,24 +10,23 @@ describe('Command Execution Integration Tests', () => {
     expect(agentBay).toBeDefined();
   });
 
-  describe('3.1 ExecuteCommand Functionality Verification', () => {
+  describe("3.1 ExecuteCommand Functionality Verification", () => {
     let session: Session;
 
     beforeAll(async () => {
       // Step 1: Environment preparation
       expect(agentBay).toBeDefined();
-      const params :CreateSessionParams = {
-        imageId:'linux_latest',
-      }
+      const params: CreateSessionParams = {
+        imageId: "linux_latest",
+      };
 
       // Step 2: Session creation
       const sessionResult = await agentBay.create(params);
       expect(sessionResult.success).toBe(true);
       session = sessionResult.session!;
+    });
 
-    } );
-
-    it('should execute shell commands and verify file operations', async () => {
+    it("should execute shell commands and verify file operations", async () => {
       // Step 3: Command and file system instance retrieval
       const command = session.command;
       const fileSystem = session.fileSystem;
@@ -35,37 +34,47 @@ describe('Command Execution Integration Tests', () => {
       expect(fileSystem).toBeDefined();
 
       // Step 4: File creation command
-      const createCommand = 'echo "Test content from shell command" > /tmp/shell_test.txt';
+      const createCommand =
+        'echo "Test content from shell command" > /tmp/shell_test.txt';
       const createResult = await command.executeCommand(createCommand);
       expect(createResult.success).toBe(true);
 
       // Step 5: File content verification
-      const fileContent = await fileSystem.readFile('/tmp/shell_test.txt');
-      expect(fileContent.content.trim()).toBe('Test content from shell command');
+      const fileContent = await fileSystem.readFile("/tmp/shell_test.txt");
+      expect(fileContent.content.trim()).toBe(
+        "Test content from shell command"
+      );
 
       // Step 6: File deletion command
-      const deleteCommand = 'rm /tmp/shell_test.txt';
+      const deleteCommand = "rm /tmp/shell_test.txt";
       const deleteResult = await command.executeCommand(deleteCommand);
       expect(deleteResult.success).toBe(true);
 
       // Step 7: Deletion verification
-      const searchResults = await fileSystem.searchFiles('shell_test.txt', '/tmp');
-      const deletedFile = searchResults.matches.find(file => file.includes('shell_test.txt'));
+      const searchResults = await fileSystem.searchFiles(
+        "shell_test.txt",
+        "/tmp"
+      );
+      const deletedFile = searchResults.matches.find((file) =>
+        file.includes("shell_test.txt")
+      );
       expect(deletedFile).toBeUndefined();
 
       // Step 8: Complex command test
-      const complexCommand = 'mkdir -p /tmp/test_dir && echo "complex command" > /tmp/test_dir/complex.txt && ls -la /tmp/test_dir';
+      const complexCommand =
+        'mkdir -p /tmp/test_dir && echo "complex command" > /tmp/test_dir/complex.txt && ls -la /tmp/test_dir';
       const complexResult = await command.executeCommand(complexCommand);
       expect(complexResult.success).toBe(true);
-      expect(complexResult.output).toContain('complex.txt');
+      expect(complexResult.output).toContain("complex.txt");
 
       // Verify complex command results
-      const complexContent = await fileSystem.readFile('/tmp/test_dir/complex.txt');
-      expect(complexContent.content.trim()).toBe('complex command');
+      const complexContent = await fileSystem.readFile(
+        "/tmp/test_dir/complex.txt"
+      );
+      expect(complexContent.content.trim()).toBe("complex command");
+    });
 
-    }, );
-
-    it('should support command.run alias and session.fs alias', async () => {
+    it("should support command.run alias and session.fs alias", async () => {
       const command = session.command;
       const fs = (session as any).fs;
       expect(fs).toBe(session.fileSystem);
@@ -74,147 +83,175 @@ describe('Command Execution Integration Tests', () => {
       const createResult = await command.run(createCommand);
       expect(createResult.success).toBe(true);
 
-      const fileContent = await fs.read('/tmp/shell_alias_test.txt');
-      expect(fileContent.content.trim()).toBe('Alias content');
+      const fileContent = await fs.read("/tmp/shell_alias_test.txt");
+      expect(fileContent.content.trim()).toBe("Alias content");
 
-      const deleteResult = await command.exec('rm /tmp/shell_alias_test.txt');
+      const deleteResult = await command.exec("rm /tmp/shell_alias_test.txt");
       expect(deleteResult.success).toBe(true);
     });
 
-    it('should handle command errors and edge cases', async () => {
+    it("should handle command errors and edge cases", async () => {
       const command = session.command;
 
       // Test invalid command
-      const invalidResult = await command.executeCommand('invalid_command_12345');
+      const invalidResult = await command.executeCommand(
+        "invalid_command_12345"
+      );
       expect(invalidResult.success).toBe(false);
       expect(invalidResult.errorMessage).toBeDefined();
 
       // Test command with permission issues (trying to write to protected directory)
-      const permissionResult = await command.executeCommand('echo "test" > /root/protected.txt');
+      const permissionResult = await command.executeCommand(
+        'echo "test" > /root/protected.txt'
+      );
       // This might succeed or fail depending on the environment, but should not crash
-      expect(typeof permissionResult.success).toBe('boolean');
+      expect(typeof permissionResult.success).toBe("boolean");
 
       // Test long-running command with timeout considerations
       const timeCommand = 'echo "completed"';
       const timeResult = await command.executeCommand(timeCommand);
       log(`Command output: ${JSON.stringify(timeResult)}`);
       expect(timeResult.success).toBe(true);
-      expect(timeResult.output).toContain('completed');
+      expect(timeResult.output).toContain("completed");
+    });
 
-    }, );
-
-    it('should test new return format (exitCode, stdout, stderr, traceId)', async () => {
+    it("should test new return format (exitCode, stdout, stderr, traceId)", async () => {
       const command = session.command;
 
       // Test success case with new return format
-      const successResult = await command.executeCommand("echo 'Hello, AgentBay!'");
+      const successResult = await command.executeCommand(
+        "echo 'Hello, AgentBay!'"
+      );
       expect(successResult.success).toBe(true);
       expect(successResult.exitCode).toBeDefined();
       expect(successResult.exitCode).toBe(0);
       expect(successResult.stdout).toBeDefined();
-      expect(successResult.stdout).toContain('Hello, AgentBay!');
+      expect(successResult.stdout).toContain("Hello, AgentBay!");
       expect(successResult.stderr).toBeDefined();
       expect(successResult.output).toBe(successResult.stdout); // output should equal stdout for success
 
       // Test error case with new return format
-      const errorResult = await command.executeCommand('ls /non_existent_directory_12345');
+      const errorResult = await command.executeCommand(
+        "ls /non_existent_directory_12345"
+      );
       expect(errorResult.exitCode).toBeDefined();
       if (errorResult.exitCode !== 0) {
         expect(errorResult.exitCode).not.toBe(0);
         expect(errorResult.stderr).toBeDefined();
         // traceId is optional, only present when exit_code != 0
         if (errorResult.traceId) {
-          expect(typeof errorResult.traceId).toBe('string');
-          log(`Error command test passed: exitCode=${errorResult.exitCode}, stderr=${errorResult.stderr}, traceId=${errorResult.traceId}`);
+          expect(typeof errorResult.traceId).toBe("string");
+          log(
+            `Error command test passed: exitCode=${errorResult.exitCode}, stderr=${errorResult.stderr}, traceId=${errorResult.traceId}`
+          );
         }
       }
 
-      log('✓ New return format test passed');
+      log("✓ New return format test passed");
     });
 
-    it('should test cwd parameter', async () => {
+    it("should test cwd parameter", async () => {
       const command = session.command;
 
-      const result = await command.executeCommand('pwd', 10000, '/tmp');
+      const result = await command.executeCommand("pwd", 10000, "/tmp");
       expect(result.success).toBe(true);
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('/tmp');
+      expect(result.stdout).toContain("/tmp");
 
-      log(`✓ CWD test passed: working directory=${result.stdout?.trim() ?? ''}`);
+      log(
+        `✓ CWD test passed: working directory=${result.stdout?.trim() ?? ""}`
+      );
     });
 
-    it('should test envs parameter', async () => {
+    it("should test envs parameter", async () => {
       const command = session.command;
 
       const result = await command.executeCommand(
-        'echo $TEST_VAR',
+        "echo $TEST_VAR",
         10000,
         undefined,
-        { TEST_VAR: 'test_value_123' }
+        { TEST_VAR: "test_value_123" }
       );
       expect(result.success).toBe(true);
       expect(result.exitCode).toBe(0);
       // The environment variable should be set
-      const output = result.stdout?.trim() ?? '';
-      if (output.includes('test_value_123')) {
-        log(`✓ Envs test passed: environment variable set correctly: ${output}`);
+      const output = result.stdout?.trim() ?? "";
+      if (output.includes("test_value_123")) {
+        log(
+          `✓ Envs test passed: environment variable set correctly: ${output}`
+        );
       } else {
-        log(`⚠ Envs test: environment variable may not be set (output: ${output})`);
+        log(
+          `⚠ Envs test: environment variable may not be set (output: ${output})`
+        );
       }
     });
 
-    it('should test cwd and envs parameters together', async () => {
+    it("should test cwd and envs parameters together", async () => {
       const command = session.command;
 
       const result = await command.executeCommand(
-        'pwd && echo $CUSTOM_VAR',
+        "pwd && echo $CUSTOM_VAR",
         10000,
-        '/tmp',
-        { CUSTOM_VAR: 'custom_value' }
+        "/tmp",
+        { CUSTOM_VAR: "custom_value" }
       );
       expect(result.success).toBe(true);
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('/tmp');
+      expect(result.stdout).toContain("/tmp");
 
       log(`✓ Combined cwd and envs test passed`);
-      log(`  Output: ${result.stdout ?? ''}`);
+      log(`  Output: ${result.stdout ?? ""}`);
     });
 
-    it('should support custom timeout values', async () => {
+    it("should support custom timeout values", async () => {
       const command = session.command;
 
-      const result = await command.executeCommand("echo 'timeout test'", 120000);
+      const result = await command.executeCommand(
+        "echo 'timeout test'",
+        120000
+      );
       expect(result.success).toBe(true);
       expect(result.exitCode).toBe(0);
 
-      log('✓ Custom timeout test passed');
+      log("✓ Custom timeout test passed");
     });
 
-    it('should test cwd with spaces (security test for parameter passing)', async () => {
+    it("should test cwd with spaces (security test for parameter passing)", async () => {
       const command = session.command;
 
       // Create a directory with spaces in the path
       const testDir = "/tmp/test dir with spaces";
-      
+
       // First, create the directory
-      const createResult = await command.executeCommand(`mkdir -p '${testDir}'`);
+      const createResult = await command.executeCommand(
+        `mkdir -p '${testDir}'`
+      );
       expect(createResult.success).toBe(true);
 
       // Test pwd with cwd containing spaces
-      const result = await command.executeCommand('pwd', 10000, testDir);
+      const result = await command.executeCommand("pwd", 10000, testDir);
       expect(result.success).toBe(true);
       expect(result.exitCode).toBe(0);
       // The output should contain the directory path (may be normalized)
       expect(result.stdout).toMatch(/\/tmp\/test/);
 
       // Test creating a file in the directory with spaces
-      const fileResult = await command.executeCommand("echo 'test content' > test_file.txt", 10000, testDir);
+      const fileResult = await command.executeCommand(
+        "echo 'test content' > test_file.txt",
+        10000,
+        testDir
+      );
       expect(fileResult.success).toBe(true);
 
       // Verify file was created
-      const listResult = await command.executeCommand('ls test_file.txt', 10000, testDir);
+      const listResult = await command.executeCommand(
+        "ls test_file.txt",
+        10000,
+        testDir
+      );
       expect(listResult.success).toBe(true);
-      expect(listResult.stdout).toContain('test_file.txt');
+      expect(listResult.stdout).toContain("test_file.txt");
 
       // Cleanup
       await command.executeCommand(`rm -rf '${testDir}'`);
@@ -222,7 +259,7 @@ describe('Command Execution Integration Tests', () => {
       log(`✓ CWD with spaces test passed: directory=${testDir}`);
     });
 
-    it('should test envs with special characters (security test)', async () => {
+    it("should test envs with special characters (security test)", async () => {
       const command = session.command;
 
       // Test environment variable with quotes
@@ -234,11 +271,13 @@ describe('Command Execution Integration Tests', () => {
       );
       expect(result1.success).toBe(true);
       expect(result1.exitCode).toBe(0);
-      const output1 = result1.stdout?.trim() ?? '';
+      const output1 = result1.stdout?.trim() ?? "";
       if (output1.includes("value with") && output1.includes("single quotes")) {
         log(`✓ Envs with single quotes test passed: ${output1}`);
       } else {
-        log(`⚠ Envs with single quotes: output may not match exactly: ${output1}`);
+        log(
+          `⚠ Envs with single quotes: output may not match exactly: ${output1}`
+        );
       }
 
       // Test environment variable with double quotes
@@ -250,11 +289,13 @@ describe('Command Execution Integration Tests', () => {
       );
       expect(result2.success).toBe(true);
       expect(result2.exitCode).toBe(0);
-      const output2 = result2.stdout?.trim() ?? '';
+      const output2 = result2.stdout?.trim() ?? "";
       if (output2.includes("value with") && output2.includes("double quotes")) {
         log(`✓ Envs with double quotes test passed: ${output2}`);
       } else {
-        log(`⚠ Envs with double quotes: output may not match exactly: ${output2}`);
+        log(
+          `⚠ Envs with double quotes: output may not match exactly: ${output2}`
+        );
       }
 
       // Test environment variable with semicolon (potential injection attempt)
@@ -267,7 +308,7 @@ describe('Command Execution Integration Tests', () => {
       );
       expect(result3.success).toBe(true);
       expect(result3.exitCode).toBe(0);
-      const output3 = result3.stdout?.trim() ?? '';
+      const output3 = result3.stdout?.trim() ?? "";
       // The semicolon should be part of the value, not a command separator
       if (output3.includes("value; rm -rf /") || output3.includes("value")) {
         log(`✓ Envs with semicolon test passed (no injection): ${output3}`);
@@ -284,9 +325,14 @@ describe('Command Execution Integration Tests', () => {
       );
       expect(result4.success).toBe(true);
       expect(result4.exitCode).toBe(0);
-      const output4 = result4.stdout?.trim() ?? '';
+      const output4 = result4.stdout?.trim() ?? "";
       if (output4.includes("value with")) {
-        log(`✓ Envs with special characters test passed: ${output4.substring(0, 50)}...`);
+        log(
+          `✓ Envs with special characters test passed: ${output4.substring(
+            0,
+            50
+          )}...`
+        );
       } else {
         log(`⚠ Envs with special characters: output may not match: ${output4}`);
       }
@@ -300,7 +346,7 @@ describe('Command Execution Integration Tests', () => {
       );
       expect(result5.success).toBe(true);
       expect(result5.exitCode).toBe(0);
-      const output5 = result5.stdout?.trim() ?? '';
+      const output5 = result5.stdout?.trim() ?? "";
       if (output5.includes("value")) {
         log(`✓ Envs with newlines test passed: ${output5.substring(0, 50)}...`);
       } else {
@@ -308,12 +354,14 @@ describe('Command Execution Integration Tests', () => {
       }
     });
 
-    it('should test cwd (with spaces) and envs (with special chars) together', async () => {
+    it("should test cwd (with spaces) and envs (with special chars) together", async () => {
       const command = session.command;
 
       // Create a directory with spaces
       const testDir = "/tmp/test dir with spaces";
-      const createResult = await command.executeCommand(`mkdir -p '${testDir}'`);
+      const createResult = await command.executeCommand(
+        `mkdir -p '${testDir}'`
+      );
       expect(createResult.success).toBe(true);
 
       // Test with both cwd (spaces) and envs (special chars)
@@ -328,9 +376,9 @@ describe('Command Execution Integration Tests', () => {
       expect(result.stdout).toMatch(/\/tmp\/test/);
 
       // Verify environment variable was set (may be partially visible)
-      const output = result.stdout?.trim() ?? '';
+      const output = result.stdout?.trim() ?? "";
       if (output.includes("value") || output.includes("TEST_VAR")) {
-        log('✓ Combined cwd (spaces) and envs (special chars) test passed');
+        log("✓ Combined cwd (spaces) and envs (special chars) test passed");
         log(`  Output: ${output.substring(0, 100)}...`);
       } else {
         log(`⚠ Combined test: output may not show env var: ${output}`);
@@ -348,7 +396,7 @@ describe('Command Execution Integration Tests', () => {
     });
   });
 
-  describe('3.2 RunCode Functionality Verification', () => {
+  describe("3.2 RunCode Functionality Verification", () => {
     let session1: Session;
     let session2: Session;
 
@@ -357,9 +405,9 @@ describe('Command Execution Integration Tests', () => {
       expect(agentBay).toBeDefined();
 
       // Step 2: Create two independent sessions
-      const params :CreateSessionParams = {
-        imageId:'code_latest',
-      }
+      const params: CreateSessionParams = {
+        imageId: "code_latest",
+      };
       const sessionResult1 = await agentBay.create(params);
       const sessionResult2 = await agentBay.create(params);
 
@@ -370,10 +418,9 @@ describe('Command Execution Integration Tests', () => {
       session2 = sessionResult2.session!;
 
       expect(session1.getSessionId()).not.toBe(session2.getSessionId());
+    });
 
-    }, );
-
-    it('should execute code concurrently in different sessions', async () => {
+    it("should execute code concurrently in different sessions", async () => {
       // Step 3: Code executor retrieval
       const code1 = session1.code;
       const code2 = session2.code;
@@ -397,8 +444,8 @@ console.log(JSON.stringify(result));
 `.trim();
 
       const [pythonResult, jsResult] = await Promise.all([
-        code1.runCode(pythonCode, 'python'),
-        code2.runCode(jsCode, 'javascript')
+        code1.runCode(pythonCode, "python"),
+        code2.runCode(jsCode, "javascript"),
       ]);
       log(`Python Result: ${JSON.stringify(pythonResult)}`);
       log(`JavaScript Result: ${JSON.stringify(jsResult)}`);
@@ -408,21 +455,20 @@ console.log(JSON.stringify(result));
       expect(jsResult.success).toBe(true);
 
       // Verify Python output contains expected JSON
-      expect(pythonResult.result).toContain('Python execution successful');
-      expect(pythonResult.result).toContain('timestamp');
+      expect(pythonResult.result).toContain("Python execution successful");
+      expect(pythonResult.result).toContain("timestamp");
 
       // Verify JavaScript output contains expected JSON
-      expect(jsResult.result).toContain('JavaScript execution successful');
-      expect(jsResult.result).toContain('timestamp');
+      expect(jsResult.result).toContain("JavaScript execution successful");
+      expect(jsResult.result).toContain("timestamp");
 
       // Step 6: Execution verification
       // Both should complete successfully due to concurrent execution
       expect(pythonResult.requestId).toBeDefined();
       expect(jsResult.requestId).toBeDefined();
-
     });
 
-    it('should execute complex code with file operations', async () => {
+    it("should execute complex code with file operations", async () => {
       const code1 = session1.code;
       const code2 = session2.code;
 
@@ -474,18 +520,17 @@ try {
 `.trim();
 
       // Execute code sequentially to avoid potential race conditions
-      const pythonFileResult = await code1.runCode(pythonFileCode, 'python');
+      const pythonFileResult = await code1.runCode(pythonFileCode, "python");
       expect(pythonFileResult.success).toBe(true);
-      
-      const jsFileResult = await code2.runCode(jsFileCode, 'javascript');
+
+      const jsFileResult = await code2.runCode(jsFileCode, "javascript");
       expect(jsFileResult.success).toBe(true);
 
-      expect(pythonFileResult.result).toContain('Python file operation test');
-      expect(jsFileResult.result).toContain('JavaScript file operation test');
+      expect(pythonFileResult.result).toContain("Python file operation test");
+      expect(jsFileResult.result).toContain("JavaScript file operation test");
+    });
 
-    } );
-
-    it('should handle code execution errors gracefully', async () => {
+    it("should handle code execution errors gracefully", async () => {
       const code1 = session1.code;
 
       // Test Python code with syntax error
@@ -494,7 +539,7 @@ print("Hello"
 # Missing closing parenthesis
 `.trim();
 
-      const badResult = await code1.runCode(badPythonCode, 'python');
+      const badResult = await code1.runCode(badPythonCode, "python");
       expect(badResult.success).toBe(false);
       expect(badResult.errorMessage).toBeDefined();
 
@@ -504,25 +549,33 @@ undefined_variable = nonexistent_variable + 1
 print(undefined_variable)
 `.trim();
 
-      const runtimeResult = await code1.runCode(runtimeErrorCode, 'python');
-      expect(runtimeResult.success).toBe(false);
-      
-      // Check for error information in multiple possible locations
-      const hasErrorInfo = 
-        (runtimeResult.errorMessage && runtimeResult.errorMessage.includes('NameError')) ||
-        (runtimeResult.logs?.stderr && runtimeResult.logs.stderr.some(line => line.includes('NameError'))) ||
-        (runtimeResult.error && runtimeResult.error.value && runtimeResult.error.value.includes('NameError')) ||
-        (runtimeResult.result && runtimeResult.result.includes('NameError'));
-      
-      // If no NameError found, log the actual response for debugging
-      if (!hasErrorInfo) {
-        console.log('Runtime error result:', JSON.stringify(runtimeResult, null, 2));
-      }
-      
-      // At minimum, the execution should fail
+      const runtimeResult = await code1.runCode(runtimeErrorCode, "python");
       expect(runtimeResult.success).toBe(false);
 
-    } );
+      // Check for error information in multiple possible locations
+      const hasErrorInfo =
+        (runtimeResult.errorMessage &&
+          runtimeResult.errorMessage.includes("NameError")) ||
+        (runtimeResult.logs?.stderr &&
+          runtimeResult.logs.stderr.some((line) =>
+            line.includes("NameError")
+          )) ||
+        (runtimeResult.error &&
+          runtimeResult.error.value &&
+          runtimeResult.error.value.includes("NameError")) ||
+        (runtimeResult.result && runtimeResult.result.includes("NameError"));
+
+      // If no NameError found, log the actual response for debugging
+      if (!hasErrorInfo) {
+        console.log(
+          "Runtime error result:",
+          JSON.stringify(runtimeResult, null, 2)
+        );
+      }
+
+      // At minimum, the execution should fail
+      expect(runtimeResult.success).toBe(false);
+    });
 
     afterAll(async () => {
       // Step 8: Resource cleanup

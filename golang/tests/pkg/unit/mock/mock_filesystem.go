@@ -187,11 +187,12 @@ func (mr *MockFileSystemInterfaceMockRecorder) SearchFiles(arg0, arg1, arg2 inte
 }
 
 // WatchDirectory mocks base method.
-func (m *MockFileSystemInterface) WatchDirectory(arg0 string, arg1 func([]*filesystem.FileChangeEvent), arg2 time.Duration, arg3 <-chan struct{}) *sync.WaitGroup {
+func (m *MockFileSystemInterface) WatchDirectory(arg0 string, arg1 func([]*filesystem.FileChangeEvent), arg2 time.Duration, arg3 <-chan struct{}) (*sync.WaitGroup, <-chan struct{}) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WatchDirectory", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*sync.WaitGroup)
-	return ret0
+	ret1, _ := ret[1].(<-chan struct{})
+	return ret0, ret1
 }
 
 // WatchDirectory indicates an expected call of WatchDirectory.
@@ -201,11 +202,12 @@ func (mr *MockFileSystemInterfaceMockRecorder) WatchDirectory(arg0, arg1, arg2, 
 }
 
 // WatchDirectoryWithDefaults mocks base method.
-func (m *MockFileSystemInterface) WatchDirectoryWithDefaults(arg0 string, arg1 func([]*filesystem.FileChangeEvent), arg2 <-chan struct{}) *sync.WaitGroup {
+func (m *MockFileSystemInterface) WatchDirectoryWithDefaults(arg0 string, arg1 func([]*filesystem.FileChangeEvent), arg2 <-chan struct{}) (*sync.WaitGroup, <-chan struct{}) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WatchDirectoryWithDefaults", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*sync.WaitGroup)
-	return ret0
+	ret1, _ := ret[1].(<-chan struct{})
+	return ret0, ret1
 }
 
 // WatchDirectoryWithDefaults indicates an expected call of WatchDirectoryWithDefaults.

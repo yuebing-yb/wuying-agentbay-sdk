@@ -3,8 +3,14 @@ import { ContextService } from "../../src/context";
 
 function makeAgentBayWithMocks() {
   const agentBay = new AgentBay({ apiKey: "test-api-key" });
-  const clientMock = (agentBay as any).getClient ? (agentBay as any).getClient() : (agentBay as any).client;
-  return { agentBay, context: (agentBay as any).context as ContextService, clientMock };
+  const clientMock = (agentBay as any).getClient
+    ? (agentBay as any).getClient()
+    : (agentBay as any).client;
+  return {
+    agentBay,
+    context: (agentBay as any).context as ContextService,
+    clientMock,
+  };
 }
 
 describe("Context File URLs - Unit", () => {
@@ -114,4 +120,4 @@ describe("Context File URLs - Unit", () => {
     const res = await context.deleteFile(contextId, testPath);
     expect(res.success).toBe(true);
   });
-}); 
+});

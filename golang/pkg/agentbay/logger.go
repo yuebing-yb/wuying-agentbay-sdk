@@ -804,6 +804,62 @@ func LogDebug(message string) {
 	}
 }
 
+// LogWarn logs a warning message
+//
+// Example:
+//
+//	agentbay.LogWarn("Configuration value missing, using default")
+func LogWarn(message string) {
+	if globalLogLevel > LOG_WARN {
+		return
+	}
+
+	if globalLogFormat == LogFormatSLS {
+		msg := fmt.Sprintf("WARN: %s", message)
+		if consoleLoggingEnabled {
+			fmt.Println(msg)
+		}
+		writeToFile(msg)
+	} else {
+		reset, _, _, yellow, _ := getColorCodes()
+		coloredMsg := fmt.Sprintf("%s⚠️  %s%s", yellow, message, reset)
+		plainMsg := fmt.Sprintf("⚠️  %s", message)
+
+		if consoleLoggingEnabled {
+			fmt.Println(coloredMsg)
+		}
+		writeToFile(plainMsg)
+	}
+}
+
+// LogError logs an error message
+//
+// Example:
+//
+//	agentbay.LogError("Failed to connect to server")
+func LogError(message string) {
+	if globalLogLevel > LOG_ERROR {
+		return
+	}
+
+	if globalLogFormat == LogFormatSLS {
+		msg := fmt.Sprintf("ERROR: %s", message)
+		if consoleLoggingEnabled {
+			fmt.Println(msg)
+		}
+		writeToFile(msg)
+	} else {
+		reset, _, red, _, _ := getColorCodes()
+		coloredMsg := fmt.Sprintf("%s❌ %s%s", red, message, reset)
+		plainMsg := fmt.Sprintf("❌ %s", message)
+
+		if consoleLoggingEnabled {
+			fmt.Println(coloredMsg)
+		}
+		writeToFile(plainMsg)
+	}
+}
+
 // logInfoWithColor logs an informational message with custom color
 //
 // Example:

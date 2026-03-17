@@ -78,7 +78,7 @@ func TestAgentBay_List_NoLabels_WithMockClient(t *testing.T) {
 		MaxResults: 10,
 		TotalCount: 3,
 	}
-	mockAgentBay.EXPECT().List("",nil, nil, nil).Return(expectedResult, nil)
+	mockAgentBay.EXPECT().List("", nil, nil, nil).Return(expectedResult, nil)
 
 	// Test List method call without labels
 	result, err := mockAgentBay.List("", nil, nil, nil)

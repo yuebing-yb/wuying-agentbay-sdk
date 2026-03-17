@@ -105,7 +105,7 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 				fmt.Printf("  ⚠ Could not get session status %s: %v\n", session.SessionID, err)
 			} else if statusResult.Success {
 				currentStatus := statusResult.Status
-				
+
 				// Resume if paused
 				if currentStatus == "PAUSED" {
 					_, resumeErr := agentBay.BetaResume(session, 600, 2.0)
@@ -115,10 +115,10 @@ func TestAgentBayListStatusIntegration(t *testing.T) {
 						fmt.Printf("  ✓ Resumed session: %s\n", session.SessionID)
 					}
 				}
-				
+
 				// Delete if not already deleting or deleted
-				if currentStatus != "DELETING" && currentStatus != "DELETED" && 
-				   currentStatus != "RESUMING" && currentStatus != "PAUSING" {
+				if currentStatus != "DELETING" && currentStatus != "DELETED" &&
+					currentStatus != "RESUMING" && currentStatus != "PAUSING" {
 					deleteResult, err := agentBay.Delete(session, false)
 					if err != nil {
 						fmt.Printf("  ✗ Error deleting session %s: %v\n", session.SessionID, err)
@@ -280,7 +280,7 @@ func TestAgentBaySessionStatusEnumFunctionality(t *testing.T) {
 	t.Run("GetValidStatuses function", func(t *testing.T) {
 		allValidStatuses := agentbay.GetValidStatuses()
 		assert.Len(t, allValidStatuses, 7, "Should return 7 valid statuses")
-		
+
 		for _, status := range allValidStatuses {
 			assert.True(t, status.IsValid(), fmt.Sprintf("Status %s from GetValidStatuses should be valid", status))
 		}

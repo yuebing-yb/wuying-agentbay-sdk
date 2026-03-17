@@ -65,7 +65,7 @@ async function main(): Promise<void> {
 
       // Start monitoring
       const controller = new AbortController();
-      const watchPromise = session.fileSystem.watchDirectory(
+      const { monitoring, ready } = session.fileSystem.watchDirectory(
         testDir,
         onFileChange,
         1000, // Check every second
@@ -73,6 +73,9 @@ async function main(): Promise<void> {
       );
 
       console.log("✅ Directory monitoring started");
+
+      // Wait for baseline to be established before performing file operations
+      await ready;
 
       // Demonstrate file operations
       console.log("\n🔨 Demonstrating file operations...");
@@ -118,7 +121,7 @@ async function main(): Promise<void> {
       // Stop monitoring
       console.log("\n🛑 Stopping directory monitoring...");
       controller.abort();
-      await watchPromise;
+      await monitoring;
       console.log("✅ Directory monitoring stopped");
 
       // Summary

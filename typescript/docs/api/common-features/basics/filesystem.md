@@ -608,7 +608,7 @@ ___
 
 ### watchDirectory
 
-▸ **watchDirectory**(`path`, `callback`, `interval?`, `signal?`): `Promise`\<`void`\>
+▸ **watchDirectory**(`path`, `callback`, `interval?`, `signal?`): `Object`
 
 Watch a directory for file changes and call the callback function when changes occur
 
@@ -623,9 +623,14 @@ Watch a directory for file changes and call the callback function when changes o
 
 #### Returns
 
-`Promise`\<`void`\>
+`Object`
 
 Promise that resolves when monitoring stops
+
+| Name | Type |
+| :------ | :------ |
+| `monitoring` | `Promise`\<`void`\> |
+| `ready` | `Promise`\<`void`\> |
 
 **`Example`**
 
@@ -637,7 +642,9 @@ if (result.success) {
   await result.session.fileSystem.createDirectory(testDir);
   const controller = new AbortController();
   const callback = (events) => console.log(`Detected ${events.length} changes`);
-  await result.session.fileSystem.watchDirectory(testDir, callback, 1000, controller.signal);
+  const { ready } = result.session.fileSystem.watchDirectory(testDir, callback, 1000, controller.signal);
+  await ready; // wait for baseline to be established
+  await result.session.fileSystem.writeFile(`${testDir}/test.txt`, 'hello');
   await result.session.delete();
 }
 ```

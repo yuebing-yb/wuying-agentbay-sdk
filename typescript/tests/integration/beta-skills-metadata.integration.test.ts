@@ -35,4 +35,3 @@ describe("Beta skills metadata integration tests", () => {
     expect((first as any).dir).toBeUndefined();
   }, 30000);
 });
-

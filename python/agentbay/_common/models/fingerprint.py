@@ -2,8 +2,12 @@
 Fingerprint module data models.
 """
 import json
+import logging
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional, Union
+
+_logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ScreenFingerprint:

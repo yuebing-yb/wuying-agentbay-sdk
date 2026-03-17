@@ -1,14 +1,18 @@
-import { spawn, ChildProcess } from 'child_process';
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
-import { chromium, Browser as PlaywrightBrowser, BrowserContext } from 'playwright';
-import { Session } from '../../session';
-import { Browser } from '../browser';
-import { BrowserOperator } from '../browser_operator';
-import { OperationResult, DeleteResult } from '../../types/api-response';
-import { McpToolResult } from '../../agent/agent';
-import { logInfo, logDebug, logWarn, logError } from '../../utils/logger';
+import { spawn, ChildProcess } from "child_process";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+import { randomUUID } from "crypto";
+import {
+  chromium,
+  Browser as PlaywrightBrowser,
+  BrowserContext,
+} from "playwright";
+import { Session } from "../../session";
+import { Browser } from "../browser";
+import { BrowserOperator } from "../browser_operator";
+import { OperationResult, DeleteResult } from "../../types/api-response";
+import { McpToolResult } from "../../agent/agent";
+import { logInfo, logDebug, logWarn, logError } from "../../utils/logger";
 
 /**
  * Local MCP Client for communicating with MCP servers via stdio
@@ -36,7 +40,12 @@ class LocalMCPClient {
     return this.isConnected && this.workerThread !== null;
   }
 
-  constructor(server: string, command: string, args: string[], env: NodeJS.ProcessEnv | null = null) {
+  constructor(
+    server: string,
+    command: string,
+    args: string[],
+    env: NodeJS.ProcessEnv | null = null
+  ) {
     this.server = server;
     this.command = command;
     this.args = args;
@@ -69,14 +78,18 @@ class LocalMCPClient {
    */
   private async _doConnect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      logInfo('[LocalMCPClient] Starting connection to MCP server');
-      logInfo(`[LocalMCPClient] command = ${this.command}, args = ${this.args.join(' ')}`);
+      logInfo("[LocalMCPClient] Starting connection to MCP server");
+      logInfo(
+        `[LocalMCPClient] command = ${this.command}, args = ${this.args.join(
+          " "
+        )}`
+      );
 
       // Spawn the MCP server process
       // Use provided env if available, otherwise use process.env
       const envToUse = this.env !== null ? this.env : process.env;
       const childProcess = spawn(this.command, this.args, {
-        stdio: ['pipe', 'pipe', 'pipe'],
+        stdio: ["pipe", "pipe", "pipe"],
         env: envToUse,
       });
 
@@ -88,30 +101,38 @@ class LocalMCPClient {
           initResolved = true;
           this.isConnected = true;
           this.connectPromise = null;
-          logInfo('[LocalMCPClient] MCP client connection timeout - marking as connected (server may still be initializing)');
+          logInfo(
+            "[LocalMCPClient] MCP client connection timeout - marking as connected (server may still be initializing)"
+          );
           resolve();
         }
       }, 15000); // 15 second timeout as fallback
 
       // Handle stdout (MCP server responses)
-      let buffer = '';
-      childProcess.stdout?.on('data', (data: Buffer) => {
+      let buffer = "";
+      childProcess.stdout?.on("data", (data: Buffer) => {
         buffer += data.toString();
         // Try to parse JSON messages (simplified - real MCP protocol is more complex)
         try {
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
           for (const line of lines) {
             if (line.trim()) {
               const parsed = JSON.parse(line.trim());
               // Check for initialization response or any response that indicates server is ready
-              if (parsed.result || parsed.method === 'notifications/initialized' || (parsed.id && parsed.id === 'init')) {
+              if (
+                parsed.result ||
+                parsed.method === "notifications/initialized" ||
+                (parsed.id && parsed.id === "init")
+              ) {
                 if (!initResolved) {
                   clearTimeout(initTimeout);
                   initResolved = true;
                   this.isConnected = true;
                   this.connectPromise = null;
-                  logInfo('[LocalMCPClient] MCP client session initialized (received response from server)');
+                  logInfo(
+                    "[LocalMCPClient] MCP client session initialized (received response from server)"
+                  );
                   resolve();
                 }
               }
@@ -124,11 +145,15 @@ class LocalMCPClient {
       });
 
       // Handle stderr
-      childProcess.stderr?.on('data', (data: Buffer) => {
+      childProcess.stderr?.on("data", (data: Buffer) => {
         const stderrText = data.toString();
         logDebug(`[LocalMCPClient] stderr: ${stderrText}`);
         // Check for initialization complete indicators in stderr logs
-        if (stderrText.includes('started') || stderrText.includes('initialized') || stderrText.includes('ready')) {
+        if (
+          stderrText.includes("started") ||
+          stderrText.includes("initialized") ||
+          stderrText.includes("ready")
+        ) {
           // Give it a moment after seeing these messages
           setTimeout(() => {
             if (!initResolved) {
@@ -136,7 +161,9 @@ class LocalMCPClient {
               initResolved = true;
               this.isConnected = true;
               this.connectPromise = null;
-              logInfo('[LocalMCPClient] MCP client session initialized (detected from stderr logs)');
+              logInfo(
+                "[LocalMCPClient] MCP client session initialized (detected from stderr logs)"
+              );
               resolve();
             }
           }, 2000); // Wait 2 seconds after seeing ready message
@@ -144,7 +171,7 @@ class LocalMCPClient {
       });
 
       // Handle process exit
-      childProcess.on('exit', (code: number | null) => {
+      childProcess.on("exit", (code: number | null) => {
         logInfo(`[LocalMCPClient] Process exited with code ${code}`);
         clearTimeout(initTimeout);
         this.isConnected = false;
@@ -152,11 +179,15 @@ class LocalMCPClient {
         this.connectPromise = null; // Clear the promise on exit
         if (!initResolved) {
           initResolved = true;
-          reject(new Error(`MCP server process exited with code ${code} before initialization completed`));
+          reject(
+            new Error(
+              `MCP server process exited with code ${code} before initialization completed`
+            )
+          );
         }
       });
 
-      childProcess.on('error', (error: Error) => {
+      childProcess.on("error", (error: Error) => {
         clearTimeout(initTimeout);
         this.connectPromise = null; // Clear the promise on error
         logError(`[LocalMCPClient] Failed to spawn MCP server: ${error}`);
@@ -168,15 +199,15 @@ class LocalMCPClient {
 
       // Send initialization request (MCP protocol)
       const initRequest = {
-        jsonrpc: '2.0',
-        id: 'init',
-        method: 'initialize',
+        jsonrpc: "2.0",
+        id: "init",
+        method: "initialize",
         params: {
-          protocolVersion: '2024-11-05',
+          protocolVersion: "2024-11-05",
           capabilities: {},
           clientInfo: {
-            name: 'LocalPageAgent',
-            version: '1.0.0',
+            name: "LocalPageAgent",
+            version: "1.0.0",
           },
         },
       };
@@ -184,8 +215,8 @@ class LocalMCPClient {
       // Wait a moment for the process to start, then send init request
       setTimeout(() => {
         if (childProcess.stdin && !childProcess.stdin.destroyed) {
-          childProcess.stdin.write(JSON.stringify(initRequest) + '\n');
-          logInfo('[LocalMCPClient] Sent initialization request to MCP server');
+          childProcess.stdin.write(JSON.stringify(initRequest) + "\n");
+          logInfo("[LocalMCPClient] Sent initialization request to MCP server");
         }
       }, 1000);
     });
@@ -208,24 +239,35 @@ class LocalMCPClient {
 
           //logInfo(`[LocalMCPClient] Tool call response raw data: ${JSON.stringify(responseData, null, 2)}`);
           // If result has content array, extract text from the first content item
-          if (parsed.result && parsed.result.content && Array.isArray(parsed.result.content) && parsed.result.content.length > 0) {
+          if (
+            parsed.result &&
+            parsed.result.content &&
+            Array.isArray(parsed.result.content) &&
+            parsed.result.content.length > 0
+          ) {
             const contentItem = parsed.result.content[0];
             if (contentItem && contentItem.text !== undefined) {
               // Extract the text field which contains the actual data
               responseData = contentItem.text;
             }
-          } else if (typeof parsed.result === 'string') {
+          } else if (typeof parsed.result === "string") {
             // If result is already a string, use it directly
             responseData = parsed.result;
           } else {
             // For other formats, stringify the result
-            responseData = typeof parsed.result === 'string' ? parsed.result : JSON.stringify(parsed.result);
+            responseData =
+              typeof parsed.result === "string"
+                ? parsed.result
+                : JSON.stringify(parsed.result);
           }
 
           const response: OperationResult = {
             requestId: parsed.id || `local_request_${randomUUID()}`,
             success: !parsed.error,
-            data: typeof responseData === 'string' ? responseData : JSON.stringify(responseData),
+            data:
+              typeof responseData === "string"
+                ? responseData
+                : JSON.stringify(responseData),
             errorMessage: parsed.error?.message,
           };
           //logInfo(`[LocalMCPClient] Tool call response: ${JSON.stringify(response, null, 2)}`);
@@ -234,22 +276,34 @@ class LocalMCPClient {
       }
     } catch (e) {
       // Not JSON, continue
-      logDebug(`[LocalMCPClient] Failed to parse message: ${e}, message: ${message.substring(0, 200)}`);
+      logDebug(
+        `[LocalMCPClient] Failed to parse message: ${e}, message: ${message.substring(
+          0,
+          200
+        )}`
+      );
     }
   }
 
   /**
    * Call an MCP tool
    */
-  async callTool(toolName: string, arguments_: Record<string, any>): Promise<OperationResult> {
+  async callTool(
+    toolName: string,
+    arguments_: Record<string, any>
+  ): Promise<OperationResult> {
     if (!this.connected) {
       throw new RuntimeError(
-        'MCP client is not connected. Call connect() and ensure it completes before calling callTool.'
+        "MCP client is not connected. Call connect() and ensure it completes before calling callTool."
       );
     }
 
     return new Promise((resolve, reject) => {
-      logInfo(`[LocalMCPClient] Call tool ${toolName} with arguments ${JSON.stringify(arguments_)}`);
+      logInfo(
+        `[LocalMCPClient] Call tool ${toolName} with arguments ${JSON.stringify(
+          arguments_
+        )}`
+      );
 
       // Queue the tool call
       this.toolCallQueue.push({
@@ -261,16 +315,16 @@ class LocalMCPClient {
 
       // Send tool call request (simplified JSON-RPC format)
       const request = {
-        jsonrpc: '2.0',
+        jsonrpc: "2.0",
         id: randomUUID(),
-        method: 'tools/call',
+        method: "tools/call",
         params: {
           name: toolName,
           arguments: arguments_,
         },
       };
 
-      this.workerThread?.stdin?.write(JSON.stringify(request) + '\n');
+      this.workerThread?.stdin?.write(JSON.stringify(request) + "\n");
 
       // Timeout after 180 seconds
       const TOOL_CALL_TIMEOUT = 180000;
@@ -284,13 +338,13 @@ class LocalMCPClient {
 class RuntimeError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'RuntimeError';
+    this.name = "RuntimeError";
   }
 }
 
 /**
  * Local Page Agent that extends BrowserOperator for local execution
- * 
+ *
  * Note: Since BrowserOperator._callMcpTool is private, we route through the session instead.
  * The LocalSession.callMcpTool method routes to this agent's MCP client.
  */
@@ -300,16 +354,21 @@ export class LocalPageAgent extends BrowserOperator {
   constructor(session: Session, browser: Browser) {
     super(session, browser);
 
-    const mcpScript = process.env.PAGE_TASK_MCP_SERVER_SCRIPT || '';
+    const mcpScript = process.env.PAGE_TASK_MCP_SERVER_SCRIPT || "";
 
     if (mcpScript) {
       // Pass environment variables to MCP client
       const env = { ...process.env };
-      this.mcpClient = new LocalMCPClient('PageUseAgent', "python", [mcpScript], env);
+      this.mcpClient = new LocalMCPClient(
+        "PageUseAgent",
+        "python",
+        [mcpScript],
+        env
+      );
     } else {
       this.mcpClient = null;
       logWarn(
-        'PAGE_TASK_MCP_SERVER_SCRIPT not set. MCP client will not be initialized.'
+        "PAGE_TASK_MCP_SERVER_SCRIPT not set. MCP client will not be initialized."
       );
     }
   }
@@ -328,9 +387,12 @@ export class LocalPageAgent extends BrowserOperator {
    * Public to allow LocalSession to route tool calls through the MCP client
    * Automatically ensures the MCP client is connected before calling
    */
-  async _callMcpToolAsync(name: string, args: Record<string, any>): Promise<OperationResult> {
+  async _callMcpToolAsync(
+    name: string,
+    args: Record<string, any>
+  ): Promise<OperationResult> {
     if (!this.mcpClient) {
-      throw new RuntimeError('mcp_client is not set on LocalPageAgent.');
+      throw new RuntimeError("mcp_client is not set on LocalPageAgent.");
     }
     // Ensure connection is established before calling tool
     if (!this.mcpClient.connected) {
@@ -348,7 +410,8 @@ export class LocalBrowser extends Browser {
   private _browser: PlaywrightBrowser | BrowserContext | null = null;
   private _workerThread: ChildProcess | null = null;
   private _playwrightInteractiveLoopAbortSignal: AbortSignal | null = null;
-  private _playwrightInteractiveLoopAbortController: AbortController | null = null;
+  private _playwrightInteractiveLoopAbortController: AbortController | null =
+    null;
   public agent: LocalPageAgent;
 
   constructor(session?: Session) {
@@ -362,11 +425,15 @@ export class LocalBrowser extends Browser {
 
     // Create an abort signal for the playwright interactive loop
     this._playwrightInteractiveLoopAbortController = new AbortController();
-    this._playwrightInteractiveLoopAbortSignal = this._playwrightInteractiveLoopAbortController.signal;
+    this._playwrightInteractiveLoopAbortSignal =
+      this._playwrightInteractiveLoopAbortController.signal;
 
     // Update the mock session's callMcpTool to use the agent now that it's created
     if (!session && (tempSession as any).__isMock) {
-      (tempSession as any).callMcpTool = async (name: string, args: Record<string, any>) => {
+      (tempSession as any).callMcpTool = async (
+        name: string,
+        args: Record<string, any>
+      ) => {
         return await this.agent._callMcpToolAsync(name, args);
       };
     }
@@ -378,10 +445,12 @@ export class LocalBrowser extends Browser {
   private static _createMinimalMockSession(): Session {
     // Create a minimal session-like object that will be updated after agent creation
     const mockSession = {
-      sessionId: 'local_session',
+      sessionId: "local_session",
       __isMock: true,
       callMcpTool: async (_name: string, _args: Record<string, any>) => {
-        throw new Error('Mock session not yet initialized - this should not be called');
+        throw new Error(
+          "Mock session not yet initialized - this should not be called"
+        );
       },
     } as any as Session;
 
@@ -399,42 +468,49 @@ export class LocalBrowser extends Browser {
     }
 
     return new Promise(async (resolve) => {
-      logInfo('[LocalBrowser] Start launching local browser');
+      logInfo("[LocalBrowser] Start launching local browser");
 
       try {
         // Create CDP ports file
-        const tmpDir = process.platform === 'win32' ? process.env.TEMP || '/tmp' : '/tmp';
-        const chromeCdpPortsPath = join(tmpDir, 'chrome_cdp_ports.json');
+        const tmpDir =
+          process.platform === "win32" ? process.env.TEMP || "/tmp" : "/tmp";
+        const chromeCdpPortsPath = join(tmpDir, "chrome_cdp_ports.json");
         const cdpPortsData = {
           chrome: String(this._cdpPort),
           router: String(this._cdpPort),
           local: String(this._cdpPort),
         };
 
-        await writeFile(chromeCdpPortsPath, JSON.stringify(cdpPortsData, null, 2));
+        await writeFile(
+          chromeCdpPortsPath,
+          JSON.stringify(cdpPortsData, null, 2)
+        );
 
         const cwd = process.cwd();
         const userDataDir = join(
           cwd,
-          'tmp',
+          "tmp",
           `browser_user_data_${process.pid}_${randomUUID()}`
         );
 
         // Read env variable HEADLESS_MODE
-        const headlessMode = process.env.HEADLESS || 'false';
-        const headless = headlessMode.toLowerCase() === 'true';
+        const headlessMode = process.env.HEADLESS || "false";
+        const headless = headlessMode.toLowerCase() === "true";
 
         // Launch Playwright browser with persistent context
-        const playwright = await import('playwright');
-        const browser = await playwright.chromium.launchPersistentContext(userDataDir, {
-          headless: headless,
-          viewport: { width: 1280, height: 1200 },
-          args: [`--remote-debugging-port=${this._cdpPort}`],
-        });
+        const playwright = await import("playwright");
+        const browser = await playwright.chromium.launchPersistentContext(
+          userDataDir,
+          {
+            headless: headless,
+            viewport: { width: 1280, height: 1200 },
+            args: [`--remote-debugging-port=${this._cdpPort}`],
+          }
+        );
 
         this._browser = browser;
 
-        logInfo('[LocalBrowser] Local browser launched successfully');
+        logInfo("[LocalBrowser] Local browser launched successfully");
         // Initialize MCP agent connection (don't block on it, but start it)
         this.agent.initialize().catch((err) => {
           logWarn(`[LocalBrowser] Failed to initialize agent: ${err}`);
@@ -442,8 +518,10 @@ export class LocalBrowser extends Browser {
         resolve(true);
 
         // Keep the process alive
-        await this._playwrightInteractiveLoop(this._playwrightInteractiveLoopAbortSignal ?? undefined);
-        logInfo('[LocalBrowser] Local browser interactive loop completed');
+        await this._playwrightInteractiveLoop(
+          this._playwrightInteractiveLoopAbortSignal ?? undefined
+        );
+        logInfo("[LocalBrowser] Local browser interactive loop completed");
       } catch (error: any) {
         logError(`[LocalBrowser] Failed to connect to browser: ${error}`);
         resolve(false);
@@ -468,7 +546,9 @@ export class LocalBrowser extends Browser {
   /**
    * Playwright interactive loop to keep the browser alive
    */
-  private async _playwrightInteractiveLoop(shutdownSignal?: AbortSignal): Promise<void> {
+  private async _playwrightInteractiveLoop(
+    shutdownSignal?: AbortSignal
+  ): Promise<void> {
     while (!shutdownSignal?.aborted) {
       await new Promise((resolve) => setTimeout(resolve, 3000));
     }
@@ -492,26 +572,31 @@ export class LocalSession extends Session {
   constructor() {
     // Create a mock agent_bay with the required attributes
     const mockAgentBay = {
-      apiKey: process.env.AGENTBAY_API_KEY || '',
+      apiKey: process.env.AGENTBAY_API_KEY || "",
       apiKeyConfigured: !!process.env.AGENTBAY_API_KEY,
       client: {
-        apiBaseUrl: '',
+        apiBaseUrl: "",
         getSessionStatus: (request: any) => ({
           toMap: () => ({
             success: true,
-            data: { status: 'running' },
+            data: { status: "running" },
           }),
         }),
-        callMcpTool: (name: string, args: Record<string, any>, kwargs?: any) => ({
-          requestId: 'mock_request_id',
+        callMcpTool: (
+          name: string,
+          args: Record<string, any>,
+          kwargs?: any
+        ) => ({
+          requestId: "mock_request_id",
           success: false,
           data: null,
-          errorMessage: 'Mock mode: Cannot execute tool calls without proper API connection',
+          errorMessage:
+            "Mock mode: Cannot execute tool calls without proper API connection",
         }),
       },
     } as any;
 
-    super(mockAgentBay, 'local_session');
+    super(mockAgentBay, "local_session");
     // @ts-expect-error - LocalBrowser uses async initialize, incompatible with base Browser type
     this.browser = new LocalBrowser(this);
   }
@@ -534,7 +619,7 @@ export class LocalSession extends Session {
     return {
       success: result.success,
       data: result.data as string,
-      errorMessage: result.errorMessage || '',
+      errorMessage: result.errorMessage || "",
       requestId: result.requestId,
     };
   }
@@ -544,7 +629,7 @@ export class LocalSession extends Session {
    */
   async delete(syncContext = false): Promise<DeleteResult> {
     this.browser.abortPlaywrightInteractiveLoop();
-    
+
     // No-op for local session
     return {
       success: true,
@@ -553,4 +638,3 @@ export class LocalSession extends Session {
     };
   }
 }
-

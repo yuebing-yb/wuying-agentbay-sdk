@@ -1,5 +1,37 @@
 # SessionParams API Reference
 
+## BrowserSyncMode
+
+```python
+class BrowserSyncMode(Enum)
+```
+
+Browser data synchronization mode.
+
+**Attributes**:
+
+    MINIMAL: Synchronize only essential files (Cookies, Local State).
+  Smallest footprint. Sufficient for basic cookie-based auth.
+    STANDARD: Synchronize login state and anti-risk-control data.
+  Includes Cookies, localStorage, IndexedDB, saved passwords,
+  preferences, HSTS, GPU cache, etc. Recommended for most scenarios.
+
+#### MINIMAL
+
+```python
+MINIMAL = "minimal"
+```
+
+Only Cookies + Local State
+
+#### STANDARD
+
+```python
+STANDARD = "standard"
+```
+
+Login state + anti-risk-control (recommended)
+
 ## BrowserContext
 
 ```python
@@ -22,6 +54,9 @@ Key Features:
 
 - `context_id` _str_ - ID of the browser context to bind to the session
 - `auto_upload` _bool_ - Whether to automatically upload browser data when session ends
+- `sync_mode` _BrowserSyncMode_ - Browser data synchronization mode
+  - MINIMAL: Only sync essential files (Cookies, Local State) - fastest
+  - STANDARD: Sync login state + anti-risk-control data - recommended
   fingerprint_context (Optional[BrowserFingerprintContext]):
   Browser fingerprint context configuration object containing fingerprint_context_id.
 - `extension_option` _Optional[ExtensionOption]_ - Extension configuration object containing
@@ -68,6 +103,7 @@ Key Features:
 def __init__(self, 
         context_id: str,
         auto_upload: bool = True,
+        sync_mode: "BrowserSyncMode" = None,
         extension_option: Optional["ExtensionOption"] = None,
         fingerprint_context: Optional["BrowserFingerprintContext"] = None)
 ```
@@ -81,6 +117,12 @@ Initialize BrowserContext with optional extension support.
   
 - `auto_upload` _bool, optional_ - Whether to automatically upload browser data
   when the session ends. Defaults to True.
+  
+- `sync_mode` _BrowserSyncMode, optional_ - Browser data synchronization mode.
+  - MINIMAL: Only sync essential files (Cookies, Local State) - fastest
+  - STANDARD: Sync login state + anti-risk-control data (Cookies, localStorage,
+  IndexedDB, passwords, preferences, HSTS, GPUCache, etc.) - recommended
+  Defaults to MINIMAL.
   
   fingerprint_context (Optional[BrowserFingerprintContext], optional):
   Browser fingerprint context configuration object containing fingerprint_context_id.

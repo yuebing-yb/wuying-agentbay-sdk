@@ -22,4 +22,3 @@ func TestBetaSkillsListMetadata(t *testing.T) {
 	require.Greater(t, len(items), 0)
 	require.NotEmpty(t, items[0].Name)
 }
-

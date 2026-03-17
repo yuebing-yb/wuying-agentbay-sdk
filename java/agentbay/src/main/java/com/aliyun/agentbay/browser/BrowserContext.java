@@ -45,6 +45,7 @@ import java.util.List;
 public class BrowserContext {
     private String contextId;
     private boolean autoUpload;
+    private BrowserSyncMode syncMode;
     private ExtensionOption extensionOption;
     private BrowserFingerprintContext fingerprintContext;
     
@@ -56,21 +57,24 @@ public class BrowserContext {
     private ContextSync fingerprintContextSync;
 
     /**
-     * Initialize BrowserContext with optional extension and fingerprint support.
+     * Initialize BrowserContext with full configuration including sync mode.
      * 
      * @param contextId ID of the browser context to bind to the session.
      *                  This identifies the browser instance for the session.
      * @param autoUpload Whether to automatically upload browser data when the session ends.
+     * @param syncMode Browser data synchronization mode. If null, defaults to STANDARD.
      * @param extensionOption Extension configuration object containing context_id and extension_ids.
      *                       This encapsulates all extension-related configuration. Can be null.
      * @param fingerprintContext Browser fingerprint context configuration object containing 
      *                          fingerprint_context_id. Can be null.
      */
-    public BrowserContext(String contextId, boolean autoUpload, 
+    public BrowserContext(String contextId, boolean autoUpload,
+                         BrowserSyncMode syncMode,
                          ExtensionOption extensionOption,
                          BrowserFingerprintContext fingerprintContext) {
         this.contextId = contextId;
         this.autoUpload = autoUpload;
+        this.syncMode = syncMode != null ? syncMode : BrowserSyncMode.STANDARD;
         this.extensionOption = extensionOption;
         this.fingerprintContext = fingerprintContext;
         
@@ -100,22 +104,38 @@ public class BrowserContext {
     }
 
     /**
+     * Initialize BrowserContext with extension and fingerprint support (backward compatible).
+     * Uses STANDARD sync mode by default.
+     * 
+     * @param contextId ID of the browser context to bind to the session.
+     * @param autoUpload Whether to automatically upload browser data when the session ends.
+     * @param extensionOption Extension configuration object. Can be null.
+     * @param fingerprintContext Browser fingerprint context configuration. Can be null.
+     */
+    public BrowserContext(String contextId, boolean autoUpload,
+                         ExtensionOption extensionOption,
+                         BrowserFingerprintContext fingerprintContext) {
+        this(contextId, autoUpload, null, extensionOption, fingerprintContext);
+    }
+
+    /**
      * Initialize BrowserContext with minimal configuration (no extensions, no fingerprint).
+     * Uses STANDARD sync mode by default.
      * 
      * @param contextId ID of the browser context to bind to the session
      * @param autoUpload Whether to automatically upload browser data when session ends
      */
     public BrowserContext(String contextId, boolean autoUpload) {
-        this(contextId, autoUpload, null, null);
+        this(contextId, autoUpload, null, null, null);
     }
 
     /**
-     * Initialize BrowserContext with default autoUpload=true.
+     * Initialize BrowserContext with default autoUpload=true and STANDARD sync mode.
      * 
      * @param contextId ID of the browser context to bind to the session
      */
     public BrowserContext(String contextId) {
-        this(contextId, true, null, null);
+        this(contextId, true, null, null, null);
     }
 
     /**
@@ -227,6 +247,10 @@ public class BrowserContext {
         return autoUpload;
     }
 
+    public BrowserSyncMode getSyncMode() {
+        return syncMode;
+    }
+
     public ExtensionOption getExtensionOption() {
         return extensionOption;
     }
@@ -249,8 +273,8 @@ public class BrowserContext {
 
     @Override
     public String toString() {
-        return String.format("BrowserContext(contextId='%s', autoUpload=%s, extensions=%d, hasFingerprint=%s)",
-                           contextId, autoUpload, 
+        return String.format("BrowserContext(contextId='%s', autoUpload=%s, syncMode=%s, extensions=%d, hasFingerprint=%s)",
+                           contextId, autoUpload, syncMode,
                            extensionIds != null ? extensionIds.size() : 0,
                            fingerprintContextId != null);
     }

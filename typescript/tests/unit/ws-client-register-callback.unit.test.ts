@@ -2,7 +2,10 @@ import { WebSocketServer } from "ws";
 
 import { WsClient } from "../../src/_internal/ws-client";
 
-function waitForSignal(timeoutMs: number): { promise: Promise<void>; resolve: () => void } {
+function waitForSignal(timeoutMs: number): {
+  promise: Promise<void>;
+  resolve: () => void;
+} {
   let resolve!: () => void;
   const promise = new Promise<void>((res, rej) => {
     resolve = res;
@@ -16,7 +19,8 @@ describe("WsClient registerCallback", () => {
     const wss = new WebSocketServer({ port: 0, host: "127.0.0.1" });
     await new Promise<void>((res) => wss.on("listening", () => res()));
     const addr = wss.address();
-    if (!addr || typeof addr === "string") throw new Error("unexpected ws address");
+    if (!addr || typeof addr === "string")
+      throw new Error("unexpected ws address");
     const url = `ws://127.0.0.1:${addr.port}`;
 
     const { promise, resolve } = waitForSignal(2000);
@@ -33,10 +37,13 @@ describe("WsClient registerCallback", () => {
     });
 
     const client = new WsClient(url, "token_test");
-    client.registerCallback("wuying_cdp_mcp_server", (msg: { requestId: string; target: string; data: any }) => {
-      received.push(msg);
-      resolve();
-    });
+    client.registerCallback(
+      "wuying_cdp_mcp_server",
+      (msg: { requestId: string; target: string; data: any }) => {
+        received.push(msg);
+        resolve();
+      }
+    );
 
     await client.connect();
     await promise;
@@ -57,7 +64,8 @@ describe("WsClient registerCallback", () => {
     const wss = new WebSocketServer({ port: 0, host: "127.0.0.1" });
     await new Promise<void>((res) => wss.on("listening", () => res()));
     const addr = wss.address();
-    if (!addr || typeof addr === "string") throw new Error("unexpected ws address");
+    if (!addr || typeof addr === "string")
+      throw new Error("unexpected ws address");
     const url = `ws://127.0.0.1:${addr.port}`;
 
     const { promise, resolve } = waitForSignal(2000);
@@ -75,10 +83,13 @@ describe("WsClient registerCallback", () => {
     });
 
     const client = new WsClient(url, "token_test");
-    client.registerCallback("wuying_cdp_mcp_server", (msg: { requestId: string; target: string; data: any }) => {
-      received.push(msg);
-      resolve();
-    });
+    client.registerCallback(
+      "wuying_cdp_mcp_server",
+      (msg: { requestId: string; target: string; data: any }) => {
+        received.push(msg);
+        resolve();
+      }
+    );
 
     await client.connect();
     await promise;
@@ -95,4 +106,3 @@ describe("WsClient registerCallback", () => {
     wss.close();
   });
 });
-

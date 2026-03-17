@@ -202,7 +202,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			if params.ContextSync == nil {
 				params.ContextSync = []*ContextSync{}
 			}
-			fmt.Printf("Adding context sync for mobile simulate: %+v\n", mobileSimContextSync)
+			LogDebug(fmt.Sprintf("Adding context sync for mobile simulate: %+v", mobileSimContextSync))
 			params.ContextSync = append(params.ContextSync, mobileSimContextSync)
 		}
 
@@ -329,7 +329,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID != "" {
 
 		simContextID := params.ExtraConfigs.Mobile.SimulateConfig.SimulatedContextID
-		fmt.Printf("ℹ️  Adding context sync for mobile simulate: &{ContextID:%s Path:%s Policy:<nil>}\n", simContextID, MobileInfoDefaultPath)
+		LogInfo(fmt.Sprintf("Adding context sync for mobile simulate: &{ContextID:%s Path:%s Policy:<nil>}", simContextID, MobileInfoDefaultPath))
 
 		// Check if already exists in persistenceDataList
 		exists := false
@@ -444,7 +444,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		session.WsUrl = *response.Body.Data.WsUrl
 	}
 	if response.Body.Data.ToolList != nil {
-		session.McpTools = parseToolListToMcpTools(*response.Body.Data.ToolList)
+		session.McpTools = parseToolListToMcpTools(response.Body.Data.ToolList)
 	}
 
 	// Set browser recording state
@@ -467,7 +467,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 	// If we have persistence data, wait for context synchronization
 	if needsContextSync && len(waitContextIDs) > 0 {
-		fmt.Println("Waiting for context synchronization to complete...")
+		LogInfo("Waiting for context synchronization to complete...")
 
 		// Exponential backoff configuration
 		// Starts with short intervals (0.5s) for fast completion detection
@@ -484,7 +484,7 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 			// Get context status data
 			infoResult, err := session.Context.Info()
 			if err != nil {
-				fmt.Printf("Error getting context info on attempt %d: %v\n", retry+1, err)
+				LogError(fmt.Sprintf("Error getting context info on attempt %d: %v", retry+1, err))
 				time.Sleep(currentInterval)
 				// Exponential backoff: increase interval for next retry, capped at maxInterval
 				currentInterval = time.Duration(float64(currentInterval) * backoffFactor)
@@ -502,11 +502,11 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 					continue
 				}
 				statusByContextID[item.ContextId] = item.Status
-				fmt.Printf("Context %s status: %s, path: %s\n", item.ContextId, item.Status, item.Path)
+				LogDebug(fmt.Sprintf("Context %s status: %s, path: %s", item.ContextId, item.Status, item.Path))
 
 				if item.Status == "Failed" {
 					hasFailure = true
-					fmt.Printf("Context synchronization failed for %s: %s\n", item.ContextId, item.ErrorMessage)
+					LogError(fmt.Sprintf("Context synchronization failed for %s: %s", item.ContextId, item.ErrorMessage))
 				}
 			}
 
@@ -521,14 +521,14 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 			if allCompleted {
 				if hasFailure {
-					fmt.Println("Context synchronization completed with failures")
+					LogWarn("Context synchronization completed with failures")
 				} else {
-					fmt.Println("Context synchronization completed successfully")
+					LogInfo("Context synchronization completed successfully")
 				}
 				break
 			}
 
-			fmt.Printf("Waiting for context synchronization, attempt %d/%d, next interval: %.2fs\n", retry+1, maxRetries, currentInterval.Seconds())
+			LogDebug(fmt.Sprintf("Waiting for context synchronization, attempt %d/%d, next interval: %.2fs", retry+1, maxRetries, currentInterval.Seconds()))
 			time.Sleep(currentInterval)
 
 			// Exponential backoff: increase interval for next retry, capped at maxInterval
@@ -556,18 +556,18 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 
 // waitForMobileSimulate waits for mobile simulate command to complete.
 func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string, mobileSimMode models.MobileSimulateMode) error {
-	fmt.Println("⏳ Mobile simulate: Waiting for completion")
+	LogInfo("⏳ Mobile simulate: Waiting for completion")
 
 	if session.Mobile == nil {
-		fmt.Println("Mobile module not found in session, skipping mobile simulate")
+		LogWarn("Mobile module not found in session, skipping mobile simulate")
 		return nil
 	}
 	if session.Command == nil {
-		fmt.Println("Command module not found in session, skipping mobile simulate")
+		LogWarn("Command module not found in session, skipping mobile simulate")
 		return nil
 	}
 	if mobileSimPath == "" {
-		fmt.Println("Mobile simulate path is empty, skipping mobile simulate")
+		LogWarn("Mobile simulate path is empty, skipping mobile simulate")
 		return nil
 	}
 
@@ -590,17 +590,17 @@ func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string,
 	}
 
 	command := fmt.Sprintf("chmod -R a+rwx %s; wya apply%s %s", mobileSimPath, wyaApplyOption, devInfoFilePath)
-	fmt.Printf("⏳ Waiting for mobile simulate completion, command: %s\n", command)
+	LogInfo(fmt.Sprintf("⏳ Waiting for mobile simulate completion, command: %s", command))
 
 	cmdResult, err := session.Command.ExecuteCommand(command)
 	if err != nil {
-		fmt.Printf("Failed to execute mobile simulate command: %v\n", err)
+		LogError(fmt.Sprintf("Failed to execute mobile simulate command: %v", err))
 		return nil
 	}
 
 	duration := time.Since(startTime)
-	fmt.Printf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds\n", mobileSimMode, duration.Seconds())
-	fmt.Printf("   Output: %s\n", cmdResult.Output)
+	LogInfo(fmt.Sprintf("✅ Mobile simulate completed with mode: %s, duration: %.2f seconds", mobileSimMode, duration.Seconds()))
+	LogDebug(fmt.Sprintf("   Output: %s", cmdResult.Output))
 
 	return nil
 }
@@ -795,7 +795,7 @@ func (a *AgentBay) List(status string, labels map[string]string, page *int, limi
 	requestID := models.ExtractRequestID(response)
 
 	if response != nil && response.Body != nil {
-		fmt.Println("Response from ListSession:", response.Body)
+		LogDebug(fmt.Sprintf("Response from ListSession: %+v", response.Body))
 	}
 
 	// Check for errors in the response
@@ -962,15 +962,38 @@ type GetSessionData struct {
 	Contexts           []ContextInfo
 }
 
-func parseToolListToMcpTools(toolList string) []McpTool {
-	if toolList == "" {
+func parseToolListToMcpTools(toolList interface{}) []McpTool {
+	if toolList == nil {
 		return []McpTool{}
 	}
 
 	var items []map[string]interface{}
-	if err := json.Unmarshal([]byte(toolList), &items); err != nil {
-		logOperationError("ParseToolList", fmt.Sprintf("Error unmarshaling ToolList: %v", err), false)
-		return []McpTool{}
+
+	switch v := toolList.(type) {
+	case string:
+		if v == "" {
+			return []McpTool{}
+		}
+		if err := json.Unmarshal([]byte(v), &items); err != nil {
+			logOperationError("ParseToolList", fmt.Sprintf("Error unmarshaling ToolList: %v", err), false)
+			return []McpTool{}
+		}
+	case []interface{}:
+		for _, elem := range v {
+			if m, ok := elem.(map[string]interface{}); ok {
+				items = append(items, m)
+			}
+		}
+	default:
+		raw, err := json.Marshal(toolList)
+		if err != nil {
+			logOperationError("ParseToolList", fmt.Sprintf("Error marshaling ToolList: %v", err), false)
+			return []McpTool{}
+		}
+		if err := json.Unmarshal(raw, &items); err != nil {
+			logOperationError("ParseToolList", fmt.Sprintf("Error unmarshaling ToolList: %v", err), false)
+			return []McpTool{}
+		}
 	}
 
 	tools := make([]McpTool, 0, len(items))
@@ -1133,7 +1156,14 @@ func (a *AgentBay) getSession(sessionID string) (*GetSessionResult, error) {
 				data.Status = *response.Body.Data.GetStatus()
 			}
 			if response.Body.Data.GetToolList() != nil {
-				data.ToolList = *response.Body.Data.GetToolList()
+				if s, ok := response.Body.Data.GetToolList().(string); ok {
+					data.ToolList = s
+				} else {
+					raw, err := json.Marshal(response.Body.Data.GetToolList())
+					if err == nil {
+						data.ToolList = string(raw)
+					}
+				}
 			}
 			// Extract contexts list from response
 			if response.Body.Data.GetContexts() != nil {

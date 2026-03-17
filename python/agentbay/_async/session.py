@@ -805,13 +805,6 @@ class AsyncSession:
         Asynchronously get a link associated with the current session.
         """
         try:
-            # Validate port range if port is provided
-            if port is not None:
-                if not isinstance(port, int) or port < 30100 or port > 30199:
-                    raise SessionError(
-                        f"Invalid port value: {port}. Port must be an integer in the range [30100, 30199]."
-                    )
-
             # Log API call with parameters
             _log_api_call(
                 "GetLink",

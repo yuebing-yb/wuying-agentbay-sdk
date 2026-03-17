@@ -1,10 +1,13 @@
 package com.aliyun.agentbay;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Configuration class for AgentBay SDK
  */
-
 public class Config {
+    private static final Logger logger = LoggerFactory.getLogger(Config.class);
     // Browser data path constant
     public static final String BROWSER_DATA_PATH = "/tmp/agentbay_browser";
 
@@ -53,7 +56,7 @@ public class Config {
             try {
                 return Integer.parseInt(envValue);
             } catch (NumberFormatException e) {
-                System.err.println("Warning: Invalid AGENTBAY_TIMEOUT_MS value: " + envValue + ", using default");
+                logger.warn("Invalid AGENTBAY_TIMEOUT_MS value: {}, using default", envValue);
             }
         }
         return DEFAULT_TIMEOUT_MS;

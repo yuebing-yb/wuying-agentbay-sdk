@@ -789,7 +789,7 @@ func (fs *FileSystem) WatchDirectory(
 	callback func([]*FileChangeEvent),
 	interval time.Duration,
 	stopCh <-chan struct{},
-) *sync.WaitGroup
+) (*sync.WaitGroup, <-chan struct{})
 ```
 
 WatchDirectory watches a directory for file changes and calls the callback function when changes
@@ -803,11 +803,9 @@ Parameters:
 
 Returns:
   - *sync.WaitGroup: WaitGroup that can be used to wait for monitoring to stop
-
-Behavior:
-
-- Continuously monitors directory for file changes at specified interval - Calls callback function
-asynchronously when changes detected - Stops monitoring when stopCh is closed
+  - <-chan struct{}: readyCh that is closed once the filesystem baseline has been established.
+    Wait on this channel before performing any file operations to avoid a race condition where early
+    changes are absorbed into the baseline.
 
 **Example:**
 
@@ -817,7 +815,8 @@ result, _ := client.Create(nil)
 defer result.Session.Delete()
 result.Session.FileSystem.CreateDirectory("/tmp/watch")
 stopCh := make(chan struct{})
-wg := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+wg, readyCh := result.Session.FileSystem.WatchDirectory("/tmp/watch", func(events []*filesystem.FileChangeEvent) {}, 1*time.Second, stopCh)
+<-readyCh // wait for baseline
 close(stopCh)
 wg.Wait()
 ```
@@ -829,7 +828,7 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 	path string,
 	callback func([]*FileChangeEvent),
 	stopCh <-chan struct{},
-) *sync.WaitGroup
+) (*sync.WaitGroup, <-chan struct{})
 ```
 
 WatchDirectoryWithDefaults watches a directory for file changes with default 500ms polling interval
@@ -897,6 +896,7 @@ type FileTransfer struct {
 	session		FileTransferSession
 	contextSvc	FileTransferContextService
 	httpTimeout	time.Duration
+	logger		internal.Logger
 
 	// Lazy-loaded context information
 	contextID	string
@@ -1016,7 +1016,7 @@ if uploadResult.Success {
 ### NewFileTransfer
 
 ```go
-func NewFileTransfer(session FileTransferSession, contextSvc FileTransferContextService) *FileTransfer
+func NewFileTransfer(session FileTransferSession, contextSvc FileTransferContextService, logger internal.Logger) *FileTransfer
 ```
 
 NewFileTransfer creates a new FileTransfer instance.
@@ -1024,6 +1024,7 @@ NewFileTransfer creates a new FileTransfer instance.
 Parameters:
   - session: Session interface providing API key, client, and session ID
   - contextSvc: Context service interface for getting presigned URLs
+  - logger: Optional logger for debug/info output (nil for no logging)
 
 Returns:
   - *FileTransfer: A new FileTransfer instance ready for upload/download operations

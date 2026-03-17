@@ -209,7 +209,6 @@ export interface ProcessListResult extends OperationResult {
 //   errorMessage?: string;
 // }
 
-
 export interface InstalledApp {
   name: string;
   startCmd: string;
@@ -346,7 +345,7 @@ export interface CodeExecutionResult extends ApiResponse {
   result: string;
   /** Optional error message if the operation failed */
   errorMessage?: string;
-  
+
   /** Enhanced fields */
   logs?: CodeExecutionLogs;
   results?: CodeExecutionResultItem[];
@@ -573,7 +572,6 @@ export interface WindowInfoResult extends ApiResponse {
   errorMessage?: string;
 }
 
-
 /**
  * Interface for context operation responses
  * Corresponds to Python's ContextResult type
@@ -774,7 +772,7 @@ export interface SessionResumeResult extends ApiResponse {
 
 /**
  * Represents the screen dimensions and DPI scaling information.
- * 
+ *
  * @interface ScreenSize
  * @extends OperationResult
  */
@@ -789,7 +787,7 @@ export interface ScreenSize extends OperationResult {
 
 /**
  * Represents the current cursor position on screen.
- * 
+ *
  * @interface CursorPosition
  * @extends OperationResult
  */
@@ -798,4 +796,34 @@ export interface CursorPosition extends OperationResult {
   x: number;
   /** Y coordinate in pixels (0 is top edge of screen) */
   y: number;
+}
+
+/**
+ * Represents a single context binding entry returned by DescribeSessionContexts.
+ */
+export interface ContextBinding {
+  contextId: string;
+  contextName?: string;
+  path: string;
+  policy?: string;
+  bindTime?: string;
+}
+
+/**
+ * Result of a bind() operation on contexts.
+ */
+export interface ContextBindResult extends ApiResponse {
+  requestId: string;
+  success: boolean;
+  errorMessage?: string;
+}
+
+/**
+ * Result of a listBindings() operation.
+ */
+export interface ContextBindingsResult extends ApiResponse {
+  requestId: string;
+  success: boolean;
+  bindings: ContextBinding[];
+  errorMessage?: string;
 }

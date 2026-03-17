@@ -151,7 +151,11 @@ describe("NormalizeKeys", () => {
     });
 
     test("should normalize ctrl+shift+z", () => {
-      expect(normalizeKeys(["ctrl", "shift", "z"])).toEqual(["Ctrl", "Shift", "z"]);
+      expect(normalizeKeys(["ctrl", "shift", "z"])).toEqual([
+        "Ctrl",
+        "Shift",
+        "z",
+      ]);
     });
 
     test("should normalize alt+tab", () => {
@@ -189,7 +193,10 @@ describe("NormalizeKeys", () => {
 
   describe("Arrow Keys Combinations", () => {
     test("should normalize shift+arrowleft", () => {
-      expect(normalizeKeys(["shift", "arrowleft"])).toEqual(["Shift", "ArrowLeft"]);
+      expect(normalizeKeys(["shift", "arrowleft"])).toEqual([
+        "Shift",
+        "ArrowLeft",
+      ]);
     });
 
     test("should normalize SHIFT+LEFT", () => {
@@ -231,7 +238,11 @@ describe("NormalizeKeys", () => {
       expect(normalizeKeys(["ctrl", "z"])).toEqual(["Ctrl", "z"]);
 
       // Redo (Ctrl+Shift+Z)
-      expect(normalizeKeys(["ctrl", "shift", "z"])).toEqual(["Ctrl", "Shift", "z"]);
+      expect(normalizeKeys(["ctrl", "shift", "z"])).toEqual([
+        "Ctrl",
+        "Shift",
+        "z",
+      ]);
     });
 
     test("should normalize window management shortcuts", () => {
@@ -247,7 +258,10 @@ describe("NormalizeKeys", () => {
 
     test("should normalize text editing shortcuts", () => {
       // Shift+ArrowLeft (select text)
-      expect(normalizeKeys(["shift", "arrowleft"])).toEqual(["Shift", "ArrowLeft"]);
+      expect(normalizeKeys(["shift", "arrowleft"])).toEqual([
+        "Shift",
+        "ArrowLeft",
+      ]);
 
       // Ctrl+A (select all)
       expect(normalizeKeys(["ctrl", "a"])).toEqual(["Ctrl", "a"]);

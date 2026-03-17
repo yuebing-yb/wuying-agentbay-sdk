@@ -30,16 +30,10 @@ public class WsPushCallbackCaptchaTongchengExample {
             throw new RuntimeException("AGENTBAY_API_KEY environment variable not set");
         }
 
-        String imageId = System.getenv("AGENTBAY_WS_IMAGE_ID");
-        if (imageId == null || imageId.isEmpty()) {
-            imageId = "imgc-0ab5ta4kuo0x3pa70";
-        }
-
         AgentBay agentBay = new AgentBay(apiKey);
         Session session = null;
         try {
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId(imageId);
             SessionResult created = agentBay.create(params);
             if (!created.isSuccess() || created.getSession() == null) {
                 throw new RuntimeException("Failed to create session: " + created.getErrorMessage());

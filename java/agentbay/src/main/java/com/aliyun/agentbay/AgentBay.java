@@ -1,6 +1,7 @@
 package com.aliyun.agentbay;
 
 import com.aliyun.agentbay.browser.BrowserContext;
+import com.aliyun.agentbay.browser.BrowserSyncMode;
 import com.aliyun.agentbay.client.ApiClient;
 import com.aliyun.agentbay.context.*;
 import com.aliyun.agentbay.exception.AgentBayException;
@@ -8,9 +9,7 @@ import com.aliyun.agentbay.exception.AuthenticationException;
 import com.aliyun.agentbay.mobile.MobileSimulate;
 import com.aliyun.agentbay.mobile.MobileSimulateConfig;
 import com.aliyun.agentbay.mobile.MobileSimulateMode;
-import com.aliyun.agentbay.model.GetSessionData;
-import com.aliyun.agentbay.model.GetSessionResult;
-import com.aliyun.agentbay.model.SessionResult;
+import com.aliyun.agentbay.model.*;
 import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.skills.BetaSkillsService;
 import com.aliyun.agentbay.session.Session;
@@ -20,8 +19,7 @@ import com.aliyun.agentbay.util.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.aliyun.teaopenapi.models.Config;
 import com.aliyun.wuyingai20250506.Client;
-import com.aliyun.wuyingai20250506.models.CreateMcpSessionRequest;
-import com.aliyun.wuyingai20250506.models.CreateMcpSessionResponse;
+import com.aliyun.wuyingai20250506.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,6 +103,115 @@ public class AgentBay {
 
 
     /**
+     * Internal method to get session information by session ID.
+     * 
+     * This method calls the GetSession API and returns raw session data without creating a Session object.
+     * This method is public to allow access from Session class for polling operations.
+     * 
+     * @param sessionId The ID of the session to retrieve
+     * @return GetSessionResult containing session information
+     */
+    public GetSessionResult _getSession(String sessionId) {
+        try {
+            GetSessionRequest request = new GetSessionRequest();
+            request.setAuthorization("Bearer " + apiKey);
+            request.setSessionId(sessionId);
+
+            GetSessionResponse response = client.getSession(request);
+
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response == null || response.getBody() == null) {
+                return new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Invalid response from GetSession API"
+                );
+            }
+
+            GetSessionResponseBody body = response.getBody();
+            Boolean success = body.getSuccess();
+            String code = body.getCode();
+            String message = body.getMessage();
+
+            // Check for API-level errors
+            if (success == null || !success) {
+                String errorMsg = message != null ? message : "Unknown error";
+                if (code != null) {
+                    errorMsg = "[" + code + "] " + errorMsg;
+                }
+                return new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    errorMsg
+                );
+            }
+
+            // Extract session data
+            GetSessionData data = null;
+            if (body.getData() != null) {
+                GetSessionResponseBody.GetSessionResponseBodyData responseData = body.getData();
+                data = new GetSessionData(
+                    responseData.getSessionId(),
+                    responseData.getAppInstanceId(),
+                    responseData.getResourceId(),
+                    responseData.getResourceUrl(),
+                    responseData.getVpcResource() != null ? responseData.getVpcResource() : false,
+                    responseData.getNetworkInterfaceIp(),
+                    responseData.getHttpPort(),
+                    responseData.getToken(),
+                    responseData.getLinkUrl(),
+                    responseData.getWsUrl(),
+                    body.getCode() != null ? body.getCode() : "",
+                    toolListToString(responseData.getToolList()),
+                    success,
+                    responseData.getStatus() != null ? responseData.getStatus() : ""
+                );
+            }
+
+            return new GetSessionResult(
+                requestId,
+                true,
+                data,
+                ""
+            );
+        } catch (com.aliyun.tea.TeaException e) {
+            String errorStr = e.getMessage();
+            String requestId = "";
+            if (e.getData() != null && e.getData().get("RequestId") != null) {
+                requestId = e.getData().get("RequestId").toString();
+            }
+
+            // Check if this is an expected business error (e.g., session not found)
+            if (errorStr != null && (errorStr.contains("InvalidMcpSession.NotFound") ||
+                                     errorStr.contains("NotFound"))) {
+                return new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Session " + sessionId + " not found"
+                );
+            } else {
+                return new GetSessionResult(
+                    requestId,
+                    false,
+                    null,
+                    "Failed to get session " + sessionId + ": " + errorStr
+                );
+            }
+        } catch (Exception e) {
+            return new GetSessionResult(
+                "",
+                false,
+                null,
+                "Failed to get session " + sessionId + ": " + e.getMessage()
+            );
+        }
+    }
+
+    /**
      * Get a session by its ID from remote server.
      * This method calls the GetSession API to retrieve session information and creates a Session object.
      * This method fetches from the remote server, enabling session recovery scenarios.
@@ -124,104 +231,7 @@ public class AgentBay {
         }
 
         // Call GetSession API
-        GetSessionResult getResult;
-        try {
-            com.aliyun.wuyingai20250506.models.GetSessionRequest request =
-                new com.aliyun.wuyingai20250506.models.GetSessionRequest();
-            request.setAuthorization("Bearer " + apiKey);
-            request.setSessionId(sessionId);
-
-            com.aliyun.wuyingai20250506.models.GetSessionResponse response = client.getSession(request);
-
-            String requestId = ResponseUtil.extractRequestId(response);
-
-            if (response == null || response.getBody() == null) {
-                getResult = new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Invalid response from GetSession API"
-                );
-            } else {
-                com.aliyun.wuyingai20250506.models.GetSessionResponseBody body = response.getBody();
-                Boolean success = body.getSuccess();
-                String code = body.getCode();
-                String message = body.getMessage();
-
-                // Check for API-level errors
-                if (success == null || !success) {
-                    String errorMsg = message != null ? message : "Unknown error";
-                    if (code != null) {
-                        errorMsg = "[" + code + "] " + errorMsg;
-                    }
-                    getResult = new GetSessionResult(
-                        requestId,
-                        false,
-                        null,
-                        errorMsg
-                    );
-                } else {
-                    // Extract session data
-                    GetSessionData data = null;
-                    if (body.getData() != null) {
-                        com.aliyun.wuyingai20250506.models.GetSessionResponseBody.GetSessionResponseBodyData responseData =
-                            body.getData();
-                        data = new GetSessionData(
-                            responseData.getSessionId(),
-                            responseData.getAppInstanceId(),
-                            responseData.getResourceId(),
-                            responseData.getResourceUrl(),
-                            responseData.getVpcResource() != null ? responseData.getVpcResource() : false,
-                            responseData.getNetworkInterfaceIp(),
-                            responseData.getHttpPort(),
-                            responseData.getToken(),
-                            responseData.getLinkUrl(),
-                            responseData.getWsUrl(),
-                            body.getCode() != null ? body.getCode() : "",
-                            responseData.getToolList()
-                        );
-                    }
-
-                    getResult = new GetSessionResult(
-                        requestId,
-                        true,
-                        data,
-                        ""
-                    );
-                }
-            }
-        } catch (com.aliyun.tea.TeaException e) {
-            String errorStr = e.getMessage();
-            String requestId = "";
-            if (e.getData() != null && e.getData().get("RequestId") != null) {
-                requestId = e.getData().get("RequestId").toString();
-            }
-
-            // Check if this is an expected business error (e.g., session not found)
-            if (errorStr != null && (errorStr.contains("InvalidMcpSession.NotFound") ||
-                                     errorStr.contains("NotFound"))) {
-                getResult = new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Session " + sessionId + " not found"
-                );
-            } else {
-                getResult = new GetSessionResult(
-                    requestId,
-                    false,
-                    null,
-                    "Failed to get session " + sessionId + ": " + errorStr
-                );
-            }
-        } catch (Exception e) {
-            getResult = new GetSessionResult(
-                "",
-                false,
-                null,
-                "Failed to get session " + sessionId + ": " + e.getMessage()
-            );
-        }
+        GetSessionResult getResult = _getSession(sessionId);
 
         // Check if the API call was successful
         if (!getResult.isSuccess()) {
@@ -246,15 +256,6 @@ public class AgentBay {
             if (data.getToolList() != null && !data.getToolList().isEmpty()) {
                 session.updateMcpTools(data.getToolList());
             }
-
-            // TODO: VPC functionality temporarily disabled
-            /*
-            if (data.isVpcResource()) {
-                session.setHttpPort(data.getHttpPort());
-                session.setToken(data.getToken());
-                session.setNetworkInterfaceIp(data.getNetworkInterfaceIp());
-            }
-            */
         }
 
         SessionResult result = new SessionResult();
@@ -382,12 +383,45 @@ public class AgentBay {
                     UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
                     30
                 );
-
-                // Create BWList with white lists for browser data paths
+    
+                // Build whitelist based on sync mode
                 List<WhiteList> whiteLists = new ArrayList<>();
-                whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
-                whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
-                whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
+                BrowserSyncMode syncMode = browserContext.getSyncMode();
+
+                if (syncMode == BrowserSyncMode.MINIMAL) {
+                    // MINIMAL mode: only Cookies + Local State
+                    whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
+                } else {
+                    // STANDARD mode: login state + anti-risk-control data
+                    // Auth core
+                    whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
+                    // Anti-risk-control device fingerprint (localStorage / IndexedDB)
+                    whiteLists.add(new WhiteList("/Default/Local Storage", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/IndexedDB", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Session Storage", new ArrayList<>()));
+                    // Saved passwords and form autofill
+                    whiteLists.add(new WhiteList("/Default/Login Data", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Login Data-journal", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Login Data For Account", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Login Data For Account-journal", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Web Data", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Web Data-journal", new ArrayList<>()));
+                    // Browser settings and permission consistency
+                    whiteLists.add(new WhiteList("/Default/Preferences", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Secure Preferences", new ArrayList<>()));
+                    // Network behavior consistency (HSTS / QUIC)
+                    whiteLists.add(new WhiteList("/Default/TransportSecurity", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Network Persistent State", new ArrayList<>()));
+                    // Rendering fingerprint stability
+                    whiteLists.add(new WhiteList("/Default/GPUCache", new ArrayList<>()));
+                    // Cross-domain password matching
+                    whiteLists.add(new WhiteList("/Default/Affiliation Database", new ArrayList<>()));
+                    whiteLists.add(new WhiteList("/Default/Affiliation Database-journal", new ArrayList<>()));
+                }
                 BWList bwList = new BWList(whiteLists);
 
                 SyncPolicy syncPolicy = new SyncPolicy(
@@ -650,7 +684,7 @@ public class AgentBay {
 
             String command = String.format("chmod -R a+rwx %s; wya apply %s %s",
                                           mobileSimPath, wyaApplyOption, devInfoFilePath).trim();
-            com.aliyun.agentbay.model.CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
+            CommandResult cmdResult = session.getCommand().executeCommand(command, 300000);
             if (cmdResult.isSuccess()) {
                 // no-op
             } else {
@@ -689,12 +723,12 @@ public class AgentBay {
 
             try {
                 // Get context status data
-                com.aliyun.agentbay.context.ContextInfoResult infoResult = session.getContext().info();
+                ContextInfoResult infoResult = session.getContext().info();
 
                 boolean hasFailure = false;
                 Map<String, String> statusByContextId = new HashMap<>();
 
-                for (com.aliyun.agentbay.context.ContextStatusData item : infoResult.getContextStatusData()) {
+                for (ContextStatusData item : infoResult.getContextStatusData()) {
                     if (!waitContextIds.contains(item.getContextId())) {
                         continue;
                     }
@@ -749,8 +783,8 @@ public class AgentBay {
      *
      * @return ContextService instance
      */
-    public com.aliyun.agentbay.context.ContextService getContextService() {
-        return new com.aliyun.agentbay.context.ContextService(this);
+    public ContextService getContextService() {
+        return new ContextService(this);
     }
 
     /**
@@ -758,7 +792,7 @@ public class AgentBay {
      *
      * @return ContextService instance
      */
-    public com.aliyun.agentbay.context.ContextService getContext() {
+    public ContextService getContext() {
         return getContextService();
     }
 
@@ -772,7 +806,7 @@ public class AgentBay {
      * @param status Status to filter sessions: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED (optional)
      * @return SessionListResult containing paginated list of session information
      */
-    public com.aliyun.agentbay.model.SessionListResult list(
+    public SessionListResult list(
             java.util.Map<String, String> labels,
             Integer page,
             Integer limit,
@@ -785,7 +819,7 @@ public class AgentBay {
 
             // Validate status parameter
             if (status != null && !com.aliyun.agentbay.enums.SessionStatus.isValid(status)) {
-                return new com.aliyun.agentbay.model.SessionListResult(
+                return new SessionListResult(
                     "",
                     false,
                     "Invalid status '" + status + "'. Must be one of: RUNNING, PAUSING, PAUSED, RESUMING, DELETING, DELETED",
@@ -798,7 +832,7 @@ public class AgentBay {
 
             // Validate page number
             if (page != null && page < 1) {
-                return new com.aliyun.agentbay.model.SessionListResult(
+                return new SessionListResult(
                     "",
                     false,
                     "Cannot reach page " + page + ": Page number must be >= 1",
@@ -817,22 +851,22 @@ public class AgentBay {
                 while (currentPage < page) {
                     // Make API call to get next_token
                     String labelsJson = labels != null ? objectMapper.writeValueAsString(labels) : "{}";
-                    com.aliyun.wuyingai20250506.models.ListSessionRequest request =
-                        new com.aliyun.wuyingai20250506.models.ListSessionRequest();
+                    ListSessionRequest request = new ListSessionRequest();
                     request.setAuthorization("Bearer " + apiKey);
                     request.setLabels(labelsJson);
                     request.setMaxResults(limit);
+                    request.setStatus(status);
                     if (nextToken != null && !nextToken.isEmpty()) {
                         request.setNextToken(nextToken);
                     }
 
-                    com.aliyun.wuyingai20250506.models.ListSessionResponse response = client.listSession(request);
+                    ListSessionResponse response = client.listSession(request);
                     String requestId = ResponseUtil.extractRequestId(response);
-                    com.aliyun.wuyingai20250506.models.ListSessionResponseBody body = response.getBody();
+                    ListSessionResponseBody body = response.getBody();
 
                     if (body == null || !body.getSuccess()) {
                         String errorMessage = body != null ? body.getMessage() : "Unknown error";
-                        return new com.aliyun.agentbay.model.SessionListResult(
+                        return new SessionListResult(
                             requestId,
                             false,
                             "Cannot reach page " + page + ": " + errorMessage,
@@ -846,7 +880,7 @@ public class AgentBay {
                     nextToken = body.getNextToken();
                     if (nextToken == null || nextToken.isEmpty()) {
                         // No more pages available
-                        return new com.aliyun.agentbay.model.SessionListResult(
+                        return new SessionListResult(
                             requestId,
                             false,
                             "Cannot reach page " + page + ": No more pages available",
@@ -862,25 +896,25 @@ public class AgentBay {
 
             // Make the actual request for the desired page
             String labelsJson = labels != null ? objectMapper.writeValueAsString(labels) : "{}";
-            com.aliyun.wuyingai20250506.models.ListSessionRequest request =
-                new com.aliyun.wuyingai20250506.models.ListSessionRequest();
+            ListSessionRequest request = new ListSessionRequest();
             request.setAuthorization("Bearer " + apiKey);
             request.setLabels(labelsJson);
             request.setMaxResults(limit);
+            request.setStatus(status);
             if (nextToken != null && !nextToken.isEmpty()) {
                 request.setNextToken(nextToken);
             }
 
-            com.aliyun.wuyingai20250506.models.ListSessionResponse response = client.listSession(request);
+            ListSessionResponse response = client.listSession(request);
 
             // Extract request ID
             String requestId = ResponseUtil.extractRequestId(response);
-            com.aliyun.wuyingai20250506.models.ListSessionResponseBody body = response.getBody();
+            ListSessionResponseBody body = response.getBody();
 
             // Check for errors in the response
             if (body == null || !body.getSuccess()) {
                 String errorMessage = body != null ? body.getMessage() : "Unknown error";
-                return new com.aliyun.agentbay.model.SessionListResult(
+                return new SessionListResult(
                     requestId,
                     false,
                     "Failed to list sessions: " + errorMessage,
@@ -892,13 +926,13 @@ public class AgentBay {
             }
 
             // Extract session data
-            List<com.aliyun.agentbay.model.SessionListResult.SessionInfo> sessionInfos = new ArrayList<>();
+            List<SessionListResult.SessionInfo> sessionInfos = new ArrayList<>();
             if (body.getData() != null) {
-                for (com.aliyun.wuyingai20250506.models.ListSessionResponseBody.ListSessionResponseBodyData sessionData : body.getData()) {
+                for (ListSessionResponseBody.ListSessionResponseBodyData sessionData : body.getData()) {
                     String sessionId = sessionData.getSessionId();
                     String sessionStatus = sessionData.getSessionStatus();
                     if (sessionId != null) {
-                        sessionInfos.add(new com.aliyun.agentbay.model.SessionListResult.SessionInfo(
+                        sessionInfos.add(new SessionListResult.SessionInfo(
                             sessionId,
                             sessionStatus != null ? sessionStatus : "UNKNOWN"
                         ));
@@ -907,7 +941,7 @@ public class AgentBay {
             }
 
             // Return SessionListResult with request ID and pagination info
-            return new com.aliyun.agentbay.model.SessionListResult(
+            return new SessionListResult(
                 requestId,
                 true,
                 "",
@@ -918,7 +952,7 @@ public class AgentBay {
             );
 
         } catch (Exception e) {
-            return new com.aliyun.agentbay.model.SessionListResult(
+            return new SessionListResult(
                 "",
                 false,
                 "Failed to list sessions: " + e.getMessage(),
@@ -935,10 +969,13 @@ public class AgentBay {
      *
      * @return SessionListResult containing paginated list of session information
      */
-    public com.aliyun.agentbay.model.SessionListResult list() {
+    public SessionListResult list() {
         return list(null, null, null, null);
     }
 
+    public SessionListResult list(String status){
+        return list(null, null, null, status);
+    }
     /**
      * Delete a session
      *
@@ -946,17 +983,97 @@ public class AgentBay {
      * @param syncContext Whether to sync context before deletion
      * @return DeleteResult
      */
-    public com.aliyun.agentbay.model.DeleteResult delete(Session session, boolean syncContext) {
+    public DeleteResult delete(Session session, boolean syncContext) {
         if (session == null) {
-            return new com.aliyun.agentbay.model.DeleteResult("", false, "Session is null");
+            return new DeleteResult("", false, "Session is null");
         }
 
-        com.aliyun.agentbay.model.DeleteResult result = session.delete(syncContext);
+        DeleteResult result = session.delete(syncContext);
 
         // Remove from sessions map
         sessions.remove(session.getSessionId());
 
         return result;
+    }
+
+    /**
+     * Pause a session (beta feature), putting it into a dormant state.
+     * 
+     * This is a convenience method that delegates to the session's betaPause method.
+     * 
+     * @param session The session to pause
+     * @param timeout Maximum time to wait for pause completion in seconds (default: 600)
+     * @param pollInterval Interval between status checks in seconds (default: 2.0)
+     * @return SessionPauseResult containing the pause operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionPauseResult betaPause(Session session, int timeout, double pollInterval) 
+            throws AgentBayException {
+        try {
+            return session.betaPause(timeout, pollInterval);
+        } catch (Exception e) {
+            return new SessionPauseResult("", false, "Failed to pause session: " + session.getSessionId() + " - " + e.getMessage());
+        }
+    }
+
+    /**
+     * Pause a session with default parameters (beta feature).
+     * 
+     * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
+     * 
+     * @param session The session to pause
+     * @return SessionPauseResult containing the pause operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionPauseResult betaPause(Session session) throws AgentBayException {
+        return betaPause(session, 600, 2.0);
+    }
+
+    /**
+     * Resume a paused session and wait until it enters RUNNING state (beta feature).
+     * 
+     * This is a convenience method that delegates to the session's betaResume method.
+     * 
+     * @param session The session to resume
+     * @param timeout Maximum time to wait for resume completion in seconds (default: 600)
+     * @param pollInterval Interval between status checks in seconds (default: 2.0)
+     * @return SessionResumeResult containing the resume operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionResumeResult betaResume(Session session, int timeout, double pollInterval) 
+            throws AgentBayException {
+        try {
+            return session.betaResume(timeout, pollInterval);
+        } catch (Exception e) {
+            return new SessionResumeResult("", false, "Failed to resume session: " + session.getSessionId() + " - " + e.getMessage());
+        }
+    }
+
+    /**
+     * Resume a paused session with default parameters (beta feature).
+     * 
+     * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
+     * 
+     * @param session The session to resume
+     * @return SessionResumeResult containing the resume operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionResumeResult betaResume(Session session) throws AgentBayException {
+        return betaResume(session, 600, 2.0);
+    }
+
+    private static String toolListToString(Object toolList) {
+        if (toolList == null) {
+            return null;
+        }
+        if (toolList instanceof String) {
+            return (String) toolList;
+        }
+        try {
+            return new ObjectMapper().writeValueAsString(toolList);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 }

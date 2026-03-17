@@ -57,19 +57,19 @@ func TestComputerWindowsIntegration(t *testing.T) {
 
 	var calculatorWindowID int
 
-		t.Run("StartCalculatorApp", func(t *testing.T) {
+	t.Run("StartCalculatorApp", func(t *testing.T) {
 		t.Log("Testing StartApp - Finding Calculator in installed apps...")
-		
+
 		// First, get installed apps to find Calculator
 		installedApps, err := session.Computer.GetInstalledApps(true, false, true)
 		startCmd := "calc.exe" // Default fallback
-		
+
 		if err != nil {
 			t.Logf("GetInstalledApps failed: %v, using default calc.exe", err)
 		} else {
 			assert.NotNil(t, installedApps.Apps)
 			t.Logf("Found %d installed apps", len(installedApps.Apps))
-			
+
 			// Look for Calculator app
 			for _, app := range installedApps.Apps {
 				if strings.Contains(strings.ToLower(app.Name), "calculator") ||
@@ -80,7 +80,7 @@ func TestComputerWindowsIntegration(t *testing.T) {
 				}
 			}
 		}
-		
+
 		t.Logf("Starting Calculator with command: %s", startCmd)
 		result, err := session.Computer.StartApp(startCmd, "", "")
 
@@ -150,10 +150,10 @@ func TestComputerWindowsIntegration(t *testing.T) {
 		if result.Window != nil {
 			t.Logf("Active window: %s (ID: %d)", result.Window.Title, result.Window.WindowID)
 			// The active window should be Calculator (though title might vary by locale)
-			assert.True(t, 
+			assert.True(t,
 				strings.Contains(strings.ToLower(result.Window.Title), "calculator") ||
-				strings.Contains(strings.ToLower(result.Window.Title), "计算器") ||
-				result.Window.WindowID == calculatorWindowID,
+					strings.Contains(strings.ToLower(result.Window.Title), "计算器") ||
+					result.Window.WindowID == calculatorWindowID,
 				"Active window should be Calculator or match our Calculator window ID")
 		}
 	})
@@ -347,11 +347,11 @@ func saveScreenshotFromURL(screenshotURL, filename string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current directory: %w", err)
 	}
-	
+
 	// Navigate to golang root directory (up 3 levels from tests/pkg/integration)
 	golangRoot := filepath.Join(currentDir, "..", "..", "..")
 	screenshotDir := filepath.Join(golangRoot, "screenshots")
-	
+
 	// Create screenshots directory if it doesn't exist
 	if err := os.MkdirAll(screenshotDir, 0755); err != nil {
 		return fmt.Errorf("failed to create screenshots directory: %w", err)

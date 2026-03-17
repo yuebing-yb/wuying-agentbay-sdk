@@ -1,10 +1,9 @@
 // @ts-nocheck
-// Streaming API temporarily disabled; will be re-enabled in a future release
 
 import { AgentBay, Session } from "../../src";
 import { log, logError } from "../../src/utils/logger";
 
-describe.skip("runCode WS streaming (beta) Integration Test", () => {
+describe("runCode WS streaming (beta) Integration Test", () => {
   let agentBay: AgentBay | null = null;
   let session: Session | null = null;
 
@@ -13,13 +12,14 @@ describe.skip("runCode WS streaming (beta) Integration Test", () => {
   beforeAll(async () => {
     const apiKey = process.env.AGENTBAY_API_KEY;
     if (!apiKey) {
-      log("AGENTBAY_API_KEY is not set; skipping WS streaming integration test");
+      log(
+        "AGENTBAY_API_KEY is not set; skipping WS streaming integration test"
+      );
       return;
     }
 
     agentBay = new AgentBay({ apiKey });
-    const imageId = process.env.AGENTBAY_WS_IMAGE_ID || "imgc-0ab5ta4n2htfrppyw";
-    const created = await agentBay.create({ imageId });
+    const created = await agentBay.create();
     if (!created.success || !created.session) {
       throw new Error(`Failed to create session: ${created.errorMessage}`);
     }
@@ -93,4 +93,3 @@ describe.skip("runCode WS streaming (beta) Integration Test", () => {
     expect((twoT as number) - (helloT as number)).toBeGreaterThanOrEqual(800);
   }, 60000);
 });
-

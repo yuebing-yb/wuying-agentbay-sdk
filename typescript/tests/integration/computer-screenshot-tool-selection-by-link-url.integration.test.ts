@@ -48,7 +48,9 @@ describe("Computer screenshot tool selection by linkUrl", () => {
       expect((beta.height || 0) > 0).toBe(true);
       expect(beta.data instanceof Uint8Array).toBe(true);
       expect(beta.data.length).toBeGreaterThan(0);
-      expect(Array.from(beta.data.slice(0, 8))).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      expect(Array.from(beta.data.slice(0, 8))).toEqual([
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+      ]);
     } finally {
       await session.delete();
     }
@@ -87,10 +89,11 @@ describe("Computer screenshot tool selection by linkUrl", () => {
 
       const beta = await session.computer.betaTakeScreenshot("png");
       expect(beta.success).toBe(false);
-      expect(beta.errorMessage || "").toContain("does not support `beta_take_screenshot()`");
+      expect(beta.errorMessage || "").toContain(
+        "does not support `beta_take_screenshot()`"
+      );
     } finally {
       await session.delete();
     }
   });
 });
-

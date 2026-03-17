@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestNewBrowserContext_DefaultAutoUpload(t *testing.T) {
+func TestNewBrowserContext_Defaults(t *testing.T) {
 	bc := NewBrowserContext("ctx-123")
 	if bc == nil {
 		t.Fatalf("expected non-nil BrowserContext")
@@ -16,9 +16,19 @@ func TestNewBrowserContext_DefaultAutoUpload(t *testing.T) {
 	if bc.AutoUpload != true {
 		t.Fatalf("expected default AutoUpload=true, got %v", bc.AutoUpload)
 	}
+	if bc.SyncMode != BrowserSyncModeStandard {
+		t.Fatalf("expected default SyncMode=%q, got %q", BrowserSyncModeStandard, bc.SyncMode)
+	}
 }
 
-func TestBuildBrowserContextPersistenceDataListItem_PolicyShape(t *testing.T) {
+func TestBrowserContext_WithSyncMode(t *testing.T) {
+	bc := NewBrowserContext("ctx-456").WithSyncMode(BrowserSyncModeMinimal)
+	if bc.SyncMode != BrowserSyncModeMinimal {
+		t.Fatalf("expected SyncMode=%q, got %q", BrowserSyncModeMinimal, bc.SyncMode)
+	}
+}
+
+func TestBuildBrowserContext_StandardMode(t *testing.T) {
 	bc := NewBrowserContext("ctx-abc").WithAutoUpload(false)
 
 	item, err := buildBrowserContextPersistenceDataListItem(bc)
@@ -61,9 +71,28 @@ func TestBuildBrowserContextPersistenceDataListItem_PolicyShape(t *testing.T) {
 	}
 
 	want := map[string]bool{
-		"/Local State":             false,
-		"/Default/Cookies":         false,
-		"/Default/Cookies-journal": false,
+		"/Local State":                            false,
+		"/Default/Cookies":                        false,
+		"/Default/Cookies-journal":                false,
+		"/Default/Local Storage":                  false,
+		"/Default/IndexedDB":                      false,
+		"/Default/Session Storage":                false,
+		"/Default/Login Data":                     false,
+		"/Default/Login Data-journal":             false,
+		"/Default/Login Data For Account":         false,
+		"/Default/Login Data For Account-journal": false,
+		"/Default/Web Data":                       false,
+		"/Default/Web Data-journal":               false,
+		"/Default/Preferences":                    false,
+		"/Default/Secure Preferences":             false,
+		"/Default/TransportSecurity":              false,
+		"/Default/Network Persistent State":       false,
+		"/Default/GPUCache":                       false,
+		"/Default/Affiliation Database":           false,
+		"/Default/Affiliation Database-journal":   false,
+	}
+	if len(policy.BWList.WhiteLists) != len(want) {
+		t.Fatalf("expected %d whitelist entries in STANDARD mode, got %d", len(want), len(policy.BWList.WhiteLists))
 	}
 	for _, wl := range policy.BWList.WhiteLists {
 		if _, ok := want[wl.Path]; ok {
@@ -77,4 +106,38 @@ func TestBuildBrowserContextPersistenceDataListItem_PolicyShape(t *testing.T) {
 	}
 }
 
+func TestBuildBrowserContext_MinimalMode(t *testing.T) {
+	bc := NewBrowserContext("ctx-min").WithSyncMode(BrowserSyncModeMinimal)
 
+	item, err := buildBrowserContextPersistenceDataListItem(bc)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var policy SyncPolicy
+	if err := json.Unmarshal([]byte(*item.Policy), &policy); err != nil {
+		t.Fatalf("failed to unmarshal policy: %v", err)
+	}
+	if policy.BWList == nil || policy.BWList.WhiteLists == nil {
+		t.Fatalf("expected bwList.whiteLists to be present")
+	}
+
+	want := map[string]bool{
+		"/Local State":             false,
+		"/Default/Cookies":         false,
+		"/Default/Cookies-journal": false,
+	}
+	if len(policy.BWList.WhiteLists) != len(want) {
+		t.Fatalf("expected %d whitelist entries in MINIMAL mode, got %d", len(want), len(policy.BWList.WhiteLists))
+	}
+	for _, wl := range policy.BWList.WhiteLists {
+		if _, ok := want[wl.Path]; ok {
+			want[wl.Path] = true
+		}
+	}
+	for path, found := range want {
+		if !found {
+			t.Fatalf("expected whitelist path %q to be present", path)
+		}
+	}
+}

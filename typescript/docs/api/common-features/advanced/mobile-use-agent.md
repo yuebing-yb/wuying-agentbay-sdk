@@ -36,7 +36,7 @@ ___
 
 ### toolPrefix
 
-• `Protected` **toolPrefix**: `string` = `''`
+• `Protected` **toolPrefix**: `string` = `""`
 
 #### Overrides
 

@@ -1,4 +1,4 @@
-import { AgentBay, Session,CreateSessionParams } from "../../src";
+import { AgentBay, Session, CreateSessionParams } from "../../src";
 import { Browser, BrowserOptionClass } from "../../src/browser/browser";
 import * as sinon from "sinon";
 
@@ -35,9 +35,11 @@ describe("Browser Record Integration (Unit Test)", () => {
     mockBrowser = mockSession.browser;
 
     // Mock browser methods
-    sandbox.stub(mockBrowser, 'initializeAsync').resolves(true);
-    sandbox.stub(mockBrowser, 'getEndpointUrl').resolves('ws://localhost:9222/devtools/browser/test-id');
-    sandbox.stub(mockBrowser, 'isInitialized').returns(true);
+    sandbox.stub(mockBrowser, "initializeAsync").resolves(true);
+    sandbox
+      .stub(mockBrowser, "getEndpointUrl")
+      .resolves("ws://localhost:9222/devtools/browser/test-id");
+    sandbox.stub(mockBrowser, "isInitialized").returns(true);
   });
 
   afterEach(() => {
@@ -54,10 +56,10 @@ describe("Browser Record Integration (Unit Test)", () => {
     mockAgentBay.create.resolves(mockCreateResponse);
 
     // Create session with recording enabled
-    const sessionParam :CreateSessionParams = {
-      imageId:'browser_latest',
-      enableBrowserReplay:true,
-    }
+    const sessionParam: CreateSessionParams = {
+      imageId: "browser_latest",
+      enableBrowserReplay: true,
+    };
 
     const result = await mockAgentBay.create(sessionParam);
 
@@ -88,7 +90,7 @@ describe("Browser Record Integration (Unit Test)", () => {
     const endpointUrl = await browser.getEndpointUrl();
     expect(endpointUrl).toBeDefined();
     expect(endpointUrl).not.toBeNull();
-    expect(typeof endpointUrl).toBe('string');
+    expect(typeof endpointUrl).toBe("string");
     expect(endpointUrl).toMatch(/^ws:\/\//); // Should be a WebSocket URL
   });
 
@@ -100,40 +102,68 @@ describe("Browser Record Integration (Unit Test)", () => {
     await browser.initializeAsync(browserOption);
 
     // Mock MCP tool calls for browser operations
-    const mockNavigateResult = { success: true, data: "Navigation successful", errorMessage: "", requestId: "nav-123" };
-    const mockScreenshotResult = { success: true, data: "Screenshot taken", errorMessage: "", requestId: "shot-123" };
-    const mockFillResult = { success: true, data: "Input filled", errorMessage: "", requestId: "fill-123" };
-    const mockClickResult = { success: true, data: "Button clicked", errorMessage: "", requestId: "click-123" };
+    const mockNavigateResult = {
+      success: true,
+      data: "Navigation successful",
+      errorMessage: "",
+      requestId: "nav-123",
+    };
+    const mockScreenshotResult = {
+      success: true,
+      data: "Screenshot taken",
+      errorMessage: "",
+      requestId: "shot-123",
+    };
+    const mockFillResult = {
+      success: true,
+      data: "Input filled",
+      errorMessage: "",
+      requestId: "fill-123",
+    };
+    const mockClickResult = {
+      success: true,
+      data: "Button clicked",
+      errorMessage: "",
+      requestId: "click-123",
+    };
 
     // Set up mock responses for MCP tool calls
-    sandbox.stub(mockSession, 'callMcpTool')
-      .withArgs("browser_navigate", { url: "http://www.baidu.com" }).resolves(mockNavigateResult)
-      .withArgs("browser_screenshot", { path: "/tmp/test_screenshot.png" }).resolves(mockScreenshotResult)
-      .withArgs("browser_fill", { selector: "#kw", text: "AgentBay测试" }).resolves(mockFillResult)
-      .withArgs("browser_click", { selector: "#su" }).resolves(mockClickResult);
+    sandbox
+      .stub(mockSession, "callMcpTool")
+      .withArgs("browser_navigate", { url: "http://www.baidu.com" })
+      .resolves(mockNavigateResult)
+      .withArgs("browser_screenshot", { path: "/tmp/test_screenshot.png" })
+      .resolves(mockScreenshotResult)
+      .withArgs("browser_fill", { selector: "#kw", text: "AgentBay测试" })
+      .resolves(mockFillResult)
+      .withArgs("browser_click", { selector: "#su" })
+      .resolves(mockClickResult);
 
     // Perform browser navigation
     const navigateResult = await mockSession.callMcpTool("browser_navigate", {
-      url: "http://www.baidu.com"
+      url: "http://www.baidu.com",
     });
     expect(navigateResult.success).toBe(true);
 
     // Take screenshot
-    const screenshotResult = await mockSession.callMcpTool("browser_screenshot", {
-      path: "/tmp/test_screenshot.png"
-    });
+    const screenshotResult = await mockSession.callMcpTool(
+      "browser_screenshot",
+      {
+        path: "/tmp/test_screenshot.png",
+      }
+    );
     expect(screenshotResult.success).toBe(true);
 
     // Fill search input
     const fillResult = await mockSession.callMcpTool("browser_fill", {
       selector: "#kw",
-      text: "AgentBay测试"
+      text: "AgentBay测试",
     });
     expect(fillResult.success).toBe(true);
 
     // Click search button
     const clickResult = await mockSession.callMcpTool("browser_click", {
-      selector: "#su"
+      selector: "#su",
     });
     expect(clickResult.success).toBe(true);
 
@@ -168,13 +198,16 @@ describe("Browser Record Integration (Unit Test)", () => {
   });
 
   test("should support method chaining with enableBrowserReplay in CreateSessionParams", () => {
-    const params : CreateSessionParams  ={
-      imageId:'browser_latest',
-      enableBrowserReplay:true,
-      labels:{project: "browser-test", type: "recording"}
-    }
+    const params: CreateSessionParams = {
+      imageId: "browser_latest",
+      enableBrowserReplay: true,
+      labels: { project: "browser-test", type: "recording" },
+    };
 
-    expect(params.labels).toEqual({ project: "browser-test", type: "recording" });
+    expect(params.labels).toEqual({
+      project: "browser-test",
+      type: "recording",
+    });
     expect(params.imageId).toBe("browser_latest");
     expect(params.enableBrowserReplay).toBe(true);
   });

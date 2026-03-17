@@ -46,7 +46,7 @@ export class CreateMcpSessionResponseBodyData extends $dara.Model {
       sessionId: 'string',
       success: 'boolean',
       token: 'string',
-      toolList: 'string',
+      toolList: 'any',
       wsUrl: 'string',
       vpcResource: 'boolean',
     };

@@ -31,9 +31,15 @@ Handles code execution operations in the AgentBay cloud environment.
 ### run_code
 
 ```python
-async def run_code(code: str,
-                   language: str,
-                   timeout_s: int = 60) -> EnhancedCodeExecutionResult
+async def run_code(
+    code: str,
+    language: str,
+    timeout_s: int = 60,
+    stream_beta: bool = False,
+    on_stdout: Optional[Callable[[str], None]] = None,
+    on_stderr: Optional[Callable[[str], None]] = None,
+    on_error: Optional[Callable[[Any], None]] = None
+) -> EnhancedCodeExecutionResult
 ```
 
 Execute code in the specified language with a timeout.
@@ -45,6 +51,14 @@ Execute code in the specified language with a timeout.
   Supported values: 'python', 'javascript', 'r', 'java'.
     timeout_s: The timeout for the code execution in seconds. Default is 60s.
     Note: Due to gateway limitations, each request cannot exceed 60 seconds.
+    stream_beta: If True, use WebSocket streaming for real-time stdout/stderr
+  output. Requires the session to have a valid ws_url. Default is False.
+    on_stdout: Callback invoked with each stdout chunk during streaming.
+  Only used when stream_beta=True.
+    on_stderr: Callback invoked with each stderr chunk during streaming.
+  Only used when stream_beta=True.
+    on_error: Callback invoked when an error occurs during streaming.
+  Only used when stream_beta=True.
   
 
 **Returns**:
@@ -82,9 +96,15 @@ await result.session.delete()
 ### run
 
 ```python
-async def run(code: str,
-              language: str,
-              timeout_s: int = 60) -> EnhancedCodeExecutionResult
+async def run(
+    code: str,
+    language: str,
+    timeout_s: int = 60,
+    stream_beta: bool = False,
+    on_stdout: Optional[Callable[[str], None]] = None,
+    on_stderr: Optional[Callable[[str], None]] = None,
+    on_error: Optional[Callable[[Any], None]] = None
+) -> EnhancedCodeExecutionResult
 ```
 
 Alias of run_code() for better ergonomics and LLM friendliness.
@@ -92,9 +112,15 @@ Alias of run_code() for better ergonomics and LLM friendliness.
 ### execute
 
 ```python
-async def execute(code: str,
-                  language: str,
-                  timeout_s: int = 60) -> EnhancedCodeExecutionResult
+async def execute(
+    code: str,
+    language: str,
+    timeout_s: int = 60,
+    stream_beta: bool = False,
+    on_stdout: Optional[Callable[[str], None]] = None,
+    on_stderr: Optional[Callable[[str], None]] = None,
+    on_error: Optional[Callable[[Any], None]] = None
+) -> EnhancedCodeExecutionResult
 ```
 
 Alias of run_code() for better ergonomics and LLM friendliness.

@@ -2388,3 +2388,106 @@ func (client *Client) GetAndLoadInternalContext(request *GetAndLoadInternalConte
 	_result = _body
 	return _result, _err
 }
+
+func (client *Client) BindContextsWithOptions(tmpReq *BindContextsRequest, runtime *dara.RuntimeOptions) (_result *BindContextsResponse, _err error) {
+	_err = tmpReq.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	request := &BindContextsShrinkRequest{}
+	openapiutil.Convert(tmpReq, request)
+	if !dara.IsNil(tmpReq.PersistenceDataList) {
+		request.PersistenceDataListShrink = openapiutil.ArrayToStringWithSpecifiedStyle(tmpReq.PersistenceDataList, dara.String("PersistenceDataList"), dara.String("json"))
+	}
+
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.PersistenceDataListShrink) {
+		body["PersistenceDataList"] = request.PersistenceDataListShrink
+	}
+	if !dara.IsNil(request.SessionId) {
+		body["SessionId"] = request.SessionId
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("BindContexts"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &BindContextsResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+func (client *Client) BindContexts(request *BindContextsRequest) (_result *BindContextsResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &BindContextsResponse{}
+	_body, _err := client.BindContextsWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+func (client *Client) DescribeSessionContextsWithOptions(request *DescribeSessionContextsRequest, runtime *dara.RuntimeOptions) (_result *DescribeSessionContextsResponse, _err error) {
+	_err = request.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.SessionId) {
+		body["SessionId"] = request.SessionId
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("DescribeSessionContexts"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &DescribeSessionContextsResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+func (client *Client) DescribeSessionContexts(request *DescribeSessionContextsRequest) (_result *DescribeSessionContextsResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &DescribeSessionContextsResponse{}
+	_body, _err := client.DescribeSessionContextsWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}

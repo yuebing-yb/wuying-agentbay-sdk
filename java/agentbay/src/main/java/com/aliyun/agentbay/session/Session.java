@@ -3,17 +3,19 @@ package com.aliyun.agentbay.session;
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.agent.Agent;
 import com.aliyun.agentbay.browser.Browser;
-import com.aliyun.agentbay.browser.BrowserOption;
 import com.aliyun.agentbay.computer.Computer;
 import com.aliyun.agentbay.mobile.Mobile;
 import com.aliyun.agentbay.context.*;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.filesystem.FileSystem;
+import com.aliyun.agentbay.model.GetSessionResult;
 import com.aliyun.agentbay.model.OperationResult;
 import com.aliyun.agentbay.model.SessionInfo;
 import com.aliyun.agentbay.model.SessionInfoResult;
 import com.aliyun.agentbay.model.SessionMetrics;
 import com.aliyun.agentbay.model.SessionMetricsResult;
+import com.aliyun.agentbay.model.SessionPauseResult;
+import com.aliyun.agentbay.model.SessionResumeResult;
 import com.aliyun.agentbay.model.SessionStatusResult;
 import com.aliyun.agentbay.oss.OSS;
 import com.aliyun.agentbay.code.Code;
@@ -539,25 +541,7 @@ public class Session {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> resultData = (Map<String, Object>) resultField;
                 Boolean isError = (Boolean) resultData.get("isError");
-                Object contentObj = resultData.get("content");
-
-                String textContent = "";
-                if (contentObj instanceof java.util.List) {
-                    java.util.List<?> content = (java.util.List<?>) contentObj;
-                    if (!content.isEmpty() && content.get(0) instanceof Map) {
-                        Map<?, ?> firstContent = (Map<?, ?>) content.get(0);
-                        Object text = firstContent.get("text");
-                        Object blob = firstContent.get("blob");
-                        Object data = firstContent.get("data");
-                        if (text != null) {
-                            textContent = text.toString();
-                        } else if (blob != null) {
-                            textContent = blob.toString();
-                        } else if (data != null) {
-                            textContent = data.toString();
-                        }
-                    }
-                }
+                String textContent = extractTextContentFromData(resultData);
 
                 if (isError != null && isError) {
                     return new OperationResult(requestId, false, "", textContent);
@@ -632,7 +616,7 @@ public class Session {
      *
      * @return List of available tools
      * @throws AgentBayException if the call fails
-     */
+     */  
     private List<Object> listTools() throws AgentBayException {
         String img = imageId;
         if (img == null || img.isEmpty()) {
@@ -956,50 +940,6 @@ public class Session {
     }
 
     /**
-     * Initializes a browser instance with the given options.
-     * 
-     * This method calls the AgentBay cloud service to create a browser instance for web automation and testing. The browser is initialized with a persistent path for storing browser data.
-     * 
-     * @param option Browser configuration options including browser type, headless mode, etc.
-     * @return OperationResult containing the initialization result
-     * @throws AgentBayException if browser initialization fails
-     */
-    public OperationResult initializeBrowser(BrowserOption option) throws AgentBayException {
-        try {
-            InitBrowserRequest request = new InitBrowserRequest();
-            request.setAuthorization("Bearer " + getApiKey());
-            request.setSessionId(sessionId);
-            request.setPersistentPath("/tmp/browser_data");  // Default path
-            try {
-                com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                request.setBrowserOption(objectMapper.writeValueAsString(option.toMap()));
-            } catch (Exception e) {
-                throw new AgentBayException("Failed to serialize browser option: " + e.getMessage());
-            }
-
-            InitBrowserResponse response = agentBay.getClient().initBrowser(request);
-
-            if (response == null || response.getBody() == null) {
-                return new OperationResult("", false, "", "Invalid response from init browser API");
-            }
-
-            InitBrowserResponseBody.InitBrowserResponseBodyData data = response.getBody().getData();
-            if (data != null && data.getPort() != null) {
-                return new OperationResult(
-                    ResponseUtil.extractRequestId(response),
-                    true,
-                    "Browser initialized",
-                    ""
-                );
-            } else {
-                return new OperationResult("", false, "", "Failed to get browser port from response");
-            }
-        } catch (Exception e) {
-            return new OperationResult("", false, "", "Failed to initialize browser: " + e.getMessage());
-        }
-    }
-
-    /**
      * Get the API key for this session
      *
      * @return API key
@@ -1208,17 +1148,25 @@ public class Session {
     }
 
     /**
-     * Updates the MCP tools list for this session from a JSON string.
-     * 
-     * This method parses the JSON string and updates the mcpTools list with
-     * the new tool definitions. It handles both Map and String representations
-     * of tool data.
-     * 
-     * @param dataJson JSON string containing the tool definitions
+     * Updates the MCP tools list for this session.
+     *
+     * Accepts either a JSON string or an already-parsed List of tool definitions.
+     * Handles both Map and String representations of tool data.
+     *
+     * @param toolListData JSON string or List containing the tool definitions
      */
-    public void updateMcpTools(String dataJson) {
+    @SuppressWarnings("unchecked")
+    public void updateMcpTools(Object toolListData) {
         try {
-            List<Object> toolsData = objectMapper.readValue(dataJson, List.class);
+            List<Object> toolsData;
+            if (toolListData instanceof String) {
+                toolsData = objectMapper.readValue((String) toolListData, List.class);
+            } else if (toolListData instanceof List) {
+                toolsData = (List<Object>) toolListData;
+            } else {
+                String json = objectMapper.writeValueAsString(toolListData);
+                toolsData = objectMapper.readValue(json, List.class);
+            }
 
             java.util.List<com.aliyun.agentbay.mcp.McpTool> tools = new java.util.ArrayList<>();
             if (toolsData != null) {
@@ -1329,7 +1277,7 @@ public class Session {
      * This method generates a connection URL that can be used to access the session via the specified protocol and port.
      * 
      * @param protocolType The protocol type to use for the link (e.g., "https")
-     * @param port The port number to use for the connection
+     * @param port The port number to use for the connection (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com)
      * @return OperationResult containing the connection link URL
      * @throws AgentBayException if the request fails
      */
@@ -1582,6 +1530,219 @@ public class Session {
         } catch (Exception e) {
             throw new AgentBayException("Failed to get labels: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Pauses this session (beta feature).
+     * 
+     * This method sends a pause request to the backend and polls the session status
+     * until it reaches the PAUSED state or times out.
+     * 
+     * @param timeout Maximum time to wait for pause completion in seconds (default: 600)
+     * @param pollInterval Interval between status checks in seconds (default: 2.0)
+     * @return SessionPauseResult containing the pause operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionPauseResult betaPause(int timeout, double pollInterval) throws AgentBayException {
+        // Validate and set default values for parameters
+        if (timeout <= 0) {
+            timeout = 600;
+        }
+        if (pollInterval <= 0) {
+            pollInterval = 2.0;
+        }
+        
+        try {
+            // Create pause request
+            PauseSessionAsyncRequest request = new PauseSessionAsyncRequest();
+            request.setAuthorization("Bearer " + getApiKey());
+            request.setSessionId(sessionId);
+
+            // Call pause API
+            PauseSessionAsyncResponse response = agentBay.getClient().pauseSessionAsync(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            // Check if the initial request was successful
+            if (response == null || response.getBody() == null) {
+                return new SessionPauseResult(requestId, false, "Invalid response from pause API");
+            }
+
+            PauseSessionAsyncResponseBody body = response.getBody();
+            Boolean success = body.getSuccess();
+            String code = body.getCode() != null ? body.getCode() : "";
+            String message = body.getMessage() != null ? body.getMessage() : "";
+
+            // Check for API-level errors
+            if (success == null || !success) {
+                String errorMessage = message != null && !message.isEmpty() ? message : "Failed to initiate pause";
+                if (!code.isEmpty()) {
+                    errorMessage = "[" + code + "] " + errorMessage;
+                }
+                return new SessionPauseResult(requestId, false, errorMessage);
+            }
+
+            // Poll for status until PAUSED or timeout
+            long startTime = System.currentTimeMillis();
+            long timeoutMs = timeout * 1000L;
+            long pollIntervalMs = (long) (pollInterval * 1000);
+
+            while (System.currentTimeMillis() - startTime < timeoutMs) {
+                try {
+                    // Get session information using _getSession
+                    GetSessionResult sessionResult = agentBay._getSession(sessionId);
+                    
+                    if (sessionResult.isSuccess() && sessionResult.getData() != null) {
+                        String status = sessionResult.getData().getStatus();
+                        // Check if session reached PAUSED state
+                        if ("PAUSED".equals(status)) {
+                            return new SessionPauseResult(requestId, true, "", status);
+                        }
+                        
+                        // Check if session is still pausing
+                        if (!"PAUSING".equals(status)) {
+                            return new SessionPauseResult(requestId, false, 
+                                "Pause failed, session in unexpected state: " + status, status);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.debug("Failed to get session status: {}", e.getMessage());
+                }
+
+                // Sleep before next poll
+                try {
+                    Thread.sleep(pollIntervalMs);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return new SessionPauseResult(requestId, false, "Pause operation interrupted", "");
+                }
+            }
+
+            // Timeout reached
+            logger.error("❌ API Operation Error: beta_pause - Timeout waiting for session {} after {}s", sessionId, timeout);
+            return new SessionPauseResult(requestId, false, 
+                "Timed out after " + timeout + "s waiting for PAUSED state", "");
+
+        } catch (Exception e) {
+            throw new AgentBayException("Failed to pause session: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Pauses this session with default parameters (beta feature).
+     * 
+     * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
+     * 
+     * @return SessionPauseResult containing the pause operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionPauseResult betaPause() throws AgentBayException {
+        return betaPause(600, 2.0);
+    }
+
+    /**
+     * Resumes this session and waits until it enters RUNNING state (beta feature).
+     * 
+     * This method sends a resume request to the backend and polls the session status
+     * until it reaches the RUNNING state or the timeout is exceeded.
+     * 
+     * @param timeout Maximum time to wait in seconds (must be > 0, default 600)
+     * @param pollInterval Time between status checks in seconds (must be > 0, default 2.0)
+     * @return SessionResumeResult containing the resume operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionResumeResult betaResume(int timeout, double pollInterval) throws AgentBayException {
+        // Validate and set default values for parameters
+        if (timeout <= 0) {
+            timeout = 600;
+        }
+        if (pollInterval <= 0) {
+            pollInterval = 2.0;
+        }
+        
+        try {
+            // Create resume request
+            ResumeSessionAsyncRequest request = new ResumeSessionAsyncRequest();
+            request.setAuthorization("Bearer " + getApiKey());
+            request.setSessionId(sessionId);
+
+            // Call resume API
+            ResumeSessionAsyncResponse response = agentBay.getClient().resumeSessionAsync(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            // Check if the initial request was successful
+            if (response == null || response.getBody() == null) {
+                return new SessionResumeResult(requestId, false, "Invalid response from resume API");
+            }
+
+            ResumeSessionAsyncResponseBody body = response.getBody();
+            Boolean success = body.getSuccess();
+            String code = body.getCode() != null ? body.getCode() : "";
+            String message = body.getMessage() != null ? body.getMessage() : "";
+
+            // Check for API-level errors
+            if (success == null || !success) {
+                String errorMessage = message != null && !message.isEmpty() ? message : "Failed to initiate resume";
+                if (!code.isEmpty()) {
+                    errorMessage = "[" + code + "] " + errorMessage;
+                }
+                return new SessionResumeResult(requestId, false, errorMessage);
+            }
+
+            // Poll for status until RUNNING or timeout
+            long startTime = System.currentTimeMillis();
+            long timeoutMs = timeout * 1000L;
+            long pollIntervalMs = (long) (pollInterval * 1000);
+
+            while (System.currentTimeMillis() - startTime < timeoutMs) {
+                try {
+                    // Get session information using _getSession
+                    GetSessionResult sessionResult = agentBay._getSession(sessionId);
+                    
+                    if (sessionResult.isSuccess() && sessionResult.getData() != null) {
+                        String status = sessionResult.getData().getStatus();
+                        // Check if session reached RUNNING state
+                        if ("RUNNING".equals(status)) {
+                            return new SessionResumeResult(requestId, true, "", status);
+                        }
+                        
+                        // Check if session is still resuming
+                        if (!"RESUMING".equals(status)) {
+                            return new SessionResumeResult(requestId, false, 
+                                "Resume failed, session in unexpected state: " + status, status);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.debug("Failed to get session status: {}", e.getMessage());
+                    return new SessionResumeResult(requestId, false, "Failed to get session status:{}" + e.getMessage() , "");
+                }
+                // Sleep before next poll
+                try {
+                    Thread.sleep(pollIntervalMs);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return new SessionResumeResult(requestId, false, "Resume operation interrupted", "");
+                }
+            }
+
+            // Timeout reached
+            return new SessionResumeResult(requestId, false, 
+                "Timed out after " + timeout + "s waiting for RUNNING state", "");
+
+        } catch (Exception e) {
+            throw new AgentBayException("Failed to resume session: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Resumes this session with default parameters (beta feature).
+     * 
+     * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
+     * 
+     * @return SessionResumeResult containing the resume operation result
+     * @throws AgentBayException if the API call fails
+     */
+    public SessionResumeResult betaResume() throws AgentBayException {
+        return betaResume(600, 2.0);
     }
 
     /**

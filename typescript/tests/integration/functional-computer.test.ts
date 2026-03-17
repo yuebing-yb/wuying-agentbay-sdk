@@ -3,9 +3,9 @@
  * These tests validate that operations actually work by checking their effects.
  */
 
-import { AgentBay, CreateSessionParams } from '../../src/agent-bay';
-import { Session } from '../../src/session';
-import { log, logInfo } from '../../src/utils/logger';
+import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
+import { Session } from "../../src/session";
+import { log, logInfo } from "../../src/utils/logger";
 import {
   defaultFunctionalTestConfig,
   createFunctionalTestResult,
@@ -19,9 +19,9 @@ import {
   sleep,
   FunctionalTestConfig,
   FunctionalTestResult,
-} from './functional-helpers';
+} from "./functional-helpers";
 
-describe('Computer Functional Validation', () => {
+describe("Computer Functional Validation", () => {
   let agentBay: AgentBay;
   let session: Session;
   let config: FunctionalTestConfig;
@@ -30,14 +30,14 @@ describe('Computer Functional Validation', () => {
     // Skip if no API key provided
     const apiKey = process.env.AGENTBAY_API_KEY;
     if (!apiKey) {
-      throw new Error('AGENTBAY_API_KEY environment variable not set');
+      throw new Error("AGENTBAY_API_KEY environment variable not set");
     }
 
     // Create AgentBay client and session
     agentBay = new AgentBay({ apiKey });
-    const sessionParams :CreateSessionParams = {
-      imageId:'linux_latest',
-    }
+    const sessionParams: CreateSessionParams = {
+      imageId: "linux_latest",
+    };
     const sessionResult = await agentBay.create(sessionParams);
     expect(sessionResult.session).toBeDefined();
 
@@ -58,24 +58,27 @@ describe('Computer Functional Validation', () => {
           log(`Session ${session.sessionId} deleted successfully`);
         }
       } catch (error) {
-        log('Error deleting session:', error);
+        log("Error deleting session:", error);
       }
     }
   }, 10000);
 
-  test('Mouse Movement Validation', async () => {
-    const result = createFunctionalTestResult('MouseMovementValidation');
+  test("Mouse Movement Validation", async () => {
+    const result = createFunctionalTestResult("MouseMovementValidation");
     const startTime = Date.now();
 
     try {
       // Step 1: Get initial cursor position
       const initialCursor = await session.computer.getCursorPosition();
       if (initialCursor.errorMessage) {
-        setTestFailure(result, `Failed to get initial cursor position: ${initialCursor.errorMessage}`);
+        setTestFailure(
+          result,
+          `Failed to get initial cursor position: ${initialCursor.errorMessage}`
+        );
         return;
       }
 
-      addTestDetail(result, 'initial_cursor', {
+      addTestDetail(result, "initial_cursor", {
         x: initialCursor.x,
         y: initialCursor.y,
       });
@@ -83,11 +86,11 @@ describe('Computer Functional Validation', () => {
       // Step 2: Get screen size for safe movement
       const screen = await session.computer.getScreenSize();
       if (screen.errorMessage || !validateScreenSize(screen)) {
-        setTestFailure(result, 'Invalid screen size');
+        setTestFailure(result, "Invalid screen size");
         return;
       }
 
-      addTestDetail(result, 'screen_size', {
+      addTestDetail(result, "screen_size", {
         width: screen.width,
         height: screen.height,
         dpi: screen.dpiScalingFactor,
@@ -98,7 +101,10 @@ describe('Computer Functional Validation', () => {
       const targetY = Math.floor(screen.height / 2);
       const moveResult = await session.computer.moveMouse(targetX, targetY);
       if (!moveResult.success) {
-        setTestFailure(result, `Mouse move operation failed: ${moveResult.errorMessage}`);
+        setTestFailure(
+          result,
+          `Mouse move operation failed: ${moveResult.errorMessage}`
+        );
         return;
       }
 
@@ -108,28 +114,39 @@ describe('Computer Functional Validation', () => {
       // Step 4: Verify cursor position changed
       const newCursor = await session.computer.getCursorPosition();
       if (newCursor.errorMessage) {
-        setTestFailure(result, `Failed to get new cursor position: ${newCursor.errorMessage}`);
+        setTestFailure(
+          result,
+          `Failed to get new cursor position: ${newCursor.errorMessage}`
+        );
         return;
       }
 
-      addTestDetail(result, 'new_cursor', {
+      addTestDetail(result, "new_cursor", {
         x: newCursor.x,
         y: newCursor.y,
       });
-      addTestDetail(result, 'target_position', { x: targetX, y: targetY });
+      addTestDetail(result, "target_position", { x: targetX, y: targetY });
 
       // Validate cursor movement
-      if (validateCursorPosition(newCursor, screen, targetX, targetY, config.cursorPositionTolerance)) {
-        setTestSuccess(result, 'Mouse movement validated successfully');
+      if (
+        validateCursorPosition(
+          newCursor,
+          screen,
+          targetX,
+          targetY,
+          config.cursorPositionTolerance
+        )
+      ) {
+        setTestSuccess(result, "Mouse movement validated successfully");
         log(
           `✅ Mouse moved from (${initialCursor.x},${initialCursor.y}) ` +
-          `to (${newCursor.x},${newCursor.y}), target was (${targetX},${targetY})`
+            `to (${newCursor.x},${newCursor.y}), target was (${targetX},${targetY})`
         );
       } else {
-        setTestFailure(result, 'Cursor position validation failed');
+        setTestFailure(result, "Cursor position validation failed");
         log(
           `❌ Mouse movement failed: expected (${targetX},${targetY}), ` +
-          `got (${newCursor.x},${newCursor.y})`
+            `got (${newCursor.x},${newCursor.y})`
         );
       }
     } finally {
@@ -141,28 +158,33 @@ describe('Computer Functional Validation', () => {
     expect(result.success).toBe(true);
   }, 60000);
 
-  test('Screenshot Content Validation', async () => {
-    const result = createFunctionalTestResult('ScreenshotContentValidation');
+  test("Screenshot Content Validation", async () => {
+    const result = createFunctionalTestResult("ScreenshotContentValidation");
     const startTime = Date.now();
-    
 
     try {
       // Step 1: Take initial screenshot
-      const [screenshot1, error1] = await safeScreenshot(session.computer, 'initial');
-      addTestDetail(result, 'screenshot1_url', screenshot1);
-      addTestDetail(result, 'screenshot1_error', error1?.message);
+      const [screenshot1, error1] = await safeScreenshot(
+        session.computer,
+        "initial"
+      );
+      addTestDetail(result, "screenshot1_url", screenshot1);
+      addTestDetail(result, "screenshot1_error", error1?.message);
 
       // Step 2: Perform a visible action (move mouse to corner)
       const screen = await session.computer.getScreenSize();
       if (screen.errorMessage) {
-        setTestFailure(result, 'Failed to get screen size');
+        setTestFailure(result, "Failed to get screen size");
         return;
       }
 
       // Move to top-left corner
       const moveResult = await session.computer.moveMouse(50, 50);
       if (!moveResult.success) {
-        setTestFailure(result, `Failed to move mouse: ${moveResult.errorMessage}`);
+        setTestFailure(
+          result,
+          `Failed to move mouse: ${moveResult.errorMessage}`
+        );
         return;
       }
 
@@ -170,28 +192,44 @@ describe('Computer Functional Validation', () => {
       await sleep(config.waitTimeAfterAction);
 
       // Step 3: Take second screenshot
-      const [screenshot2, error2] = await safeScreenshot(session.computer, 'after_move');
-      addTestDetail(result, 'screenshot2_url', screenshot2);
-      addTestDetail(result, 'screenshot2_error', error2?.message);
+      const [screenshot2, error2] = await safeScreenshot(
+        session.computer,
+        "after_move"
+      );
+      addTestDetail(result, "screenshot2_url", screenshot2);
+      addTestDetail(result, "screenshot2_error", error2?.message);
 
       // Validate screenshot functionality
       if (screenshot1 && screenshot2) {
         // Both screenshots successful - validate change
         if (validateScreenshotChanged(screenshot1, screenshot2)) {
-          setTestSuccess(result, 'Screenshot content validation successful - screenshots changed');
+          setTestSuccess(
+            result,
+            "Screenshot content validation successful - screenshots changed"
+          );
           log(`✅ Screenshots changed: ${screenshot1} → ${screenshot2}`);
         } else {
-          setTestSuccess(result, 'Screenshot content validation successful - screenshots captured (no change detected)');
-          log(`ℹ️ Screenshots captured but no change detected: ${screenshot1} = ${screenshot2}`);
+          setTestSuccess(
+            result,
+            "Screenshot content validation successful - screenshots captured (no change detected)"
+          );
+          log(
+            `ℹ️ Screenshots captured but no change detected: ${screenshot1} = ${screenshot2}`
+          );
         }
       } else if (error1 || error2) {
         // Screenshot functionality failed
-        const errorMsg = `Screenshot functionality failed: ${error1?.message || ''} ${error2?.message || ''}`.trim();
+        const errorMsg = `Screenshot functionality failed: ${
+          error1?.message || ""
+        } ${error2?.message || ""}`.trim();
         setTestFailure(result, errorMsg);
         log(`❌ Screenshot validation failed: ${errorMsg}`);
       } else {
         // Screenshots returned null without error
-        setTestFailure(result, 'Screenshot functionality returned null without error');
+        setTestFailure(
+          result,
+          "Screenshot functionality returned null without error"
+        );
         log(`❌ Screenshot validation failed: screenshots returned null`);
       }
     } finally {
@@ -200,99 +238,145 @@ describe('Computer Functional Validation', () => {
     }
     console.log(`Starting Screenshot Content Validation${result}`);
     expect(result.success).toBe(true);
-   
   }, 60000);
 
-  test('Keyboard Input Validation', async () => {
-    const result = createFunctionalTestResult('KeyboardInputValidation');
+  test("Keyboard Input Validation", async () => {
+    const result = createFunctionalTestResult("KeyboardInputValidation");
     const startTime = Date.now();
 
     try {
       // Step 1: Take initial screenshot
-      const [screenshot1] = await safeScreenshot(session.computer, 'before_input');
+      const [screenshot1] = await safeScreenshot(
+        session.computer,
+        "before_input"
+      );
 
       // Step 2: Click somewhere safe (center of screen) to focus
       const screen = await session.computer.getScreenSize();
       if (screen.errorMessage) {
-        setTestFailure(result, 'Failed to get screen size');
+        setTestFailure(result, "Failed to get screen size");
         return;
       }
 
       const centerX = Math.floor(screen.width / 2);
       const centerY = Math.floor(screen.height / 2);
-      const clickResult = await session.computer.clickMouse(centerX, centerY, 'left');
+      const clickResult = await session.computer.clickMouse(
+        centerX,
+        centerY,
+        "left"
+      );
       if (!clickResult.success) {
-        setTestFailure(result, `Failed to click for focus: ${clickResult.errorMessage}`);
+        setTestFailure(
+          result,
+          `Failed to click for focus: ${clickResult.errorMessage}`
+        );
         return;
       }
 
       await sleep(1000);
 
       // Step 3: Input test text
-      const testText = 'AgentBay Functional Test';
+      const testText = "AgentBay Functional Test";
       const inputResult = await session.computer.inputText(testText);
       if (!inputResult.success) {
-        setTestFailure(result, `Failed to input text: ${inputResult.errorMessage}`);
+        setTestFailure(
+          result,
+          `Failed to input text: ${inputResult.errorMessage}`
+        );
         return;
       }
 
-      addTestDetail(result, 'input_text', testText);
+      addTestDetail(result, "input_text", testText);
       await sleep(config.waitTimeAfterAction);
 
       // Step 4: Take screenshot after input
-      const [screenshot2] = await safeScreenshot(session.computer, 'after_input');
+      const [screenshot2] = await safeScreenshot(
+        session.computer,
+        "after_input"
+      );
 
       // Step 5: Select all text and delete it
-      const selectResult = await session.computer.pressKeys(['Ctrl', 'a'], false);
+      const selectResult = await session.computer.pressKeys(
+        ["Ctrl", "a"],
+        false
+      );
       if (!selectResult.success) {
-        setTestFailure(result, `Failed to select all: ${selectResult.errorMessage}`);
+        setTestFailure(
+          result,
+          `Failed to select all: ${selectResult.errorMessage}`
+        );
         return;
       }
 
       await sleep(500);
 
-      const deleteResult = await session.computer.pressKeys(['Delete'], false);
+      const deleteResult = await session.computer.pressKeys(["Delete"], false);
       if (!deleteResult.success) {
-        setTestFailure(result, `Failed to delete text: ${deleteResult.errorMessage}`);
+        setTestFailure(
+          result,
+          `Failed to delete text: ${deleteResult.errorMessage}`
+        );
         return;
       }
 
       await sleep(config.waitTimeAfterAction);
 
       // Step 6: Take final screenshot
-      const [screenshot3] = await safeScreenshot(session.computer, 'after_delete');
+      const [screenshot3] = await safeScreenshot(
+        session.computer,
+        "after_delete"
+      );
 
       // Validate keyboard operations
-      const inputChanged = validateScreenshotChanged(screenshot1 || '', screenshot2 || '');
-      const deleteChanged = validateScreenshotChanged(screenshot2 || '', screenshot3 || '');
+      const inputChanged = validateScreenshotChanged(
+        screenshot1 || "",
+        screenshot2 || ""
+      );
+      const deleteChanged = validateScreenshotChanged(
+        screenshot2 || "",
+        screenshot3 || ""
+      );
 
-      addTestDetail(result, 'screenshots', {
+      addTestDetail(result, "screenshots", {
         initial: screenshot1,
         after_input: screenshot2,
         after_delete: screenshot3,
       });
-      addTestDetail(result, 'input_changed', inputChanged);
-      addTestDetail(result, 'delete_changed', deleteChanged);
+      addTestDetail(result, "input_changed", inputChanged);
+      addTestDetail(result, "delete_changed", deleteChanged);
 
       // More lenient validation: success if operations completed, screenshots are optional
       const hasAllScreenshots = screenshot1 && screenshot2 && screenshot3;
-      const operationsCompleted = inputResult.success && selectResult.success && deleteResult.success;
-      
+      const operationsCompleted =
+        inputResult.success && selectResult.success && deleteResult.success;
+
       if (operationsCompleted) {
         if (hasAllScreenshots) {
-          setTestSuccess(result, 'Keyboard input validation successful - operations completed with screenshots');
-          log('✅ Keyboard operations validated: all operations completed successfully with screenshots');
+          setTestSuccess(
+            result,
+            "Keyboard input validation successful - operations completed with screenshots"
+          );
+          log(
+            "✅ Keyboard operations validated: all operations completed successfully with screenshots"
+          );
           if (inputChanged || deleteChanged) {
-            log('✅ Visual changes detected in screenshots');
+            log("✅ Visual changes detected in screenshots");
           } else {
-            log('ℹ️ No visual changes detected, but operations completed successfully');
+            log(
+              "ℹ️ No visual changes detected, but operations completed successfully"
+            );
           }
         } else {
-          setTestSuccess(result, 'Keyboard input validation successful - operations completed (screenshots unavailable)');
-          log('✅ Keyboard operations validated: all operations completed successfully (screenshots unavailable)');
+          setTestSuccess(
+            result,
+            "Keyboard input validation successful - operations completed (screenshots unavailable)"
+          );
+          log(
+            "✅ Keyboard operations validated: all operations completed successfully (screenshots unavailable)"
+          );
         }
       } else {
-        setTestFailure(result, 'Keyboard operations failed to complete');
+        setTestFailure(result, "Keyboard operations failed to complete");
         log(
           `❌ Keyboard validation failed: hasAllScreenshots=${hasAllScreenshots}, operationsCompleted=${operationsCompleted}`
         );
@@ -305,8 +389,8 @@ describe('Computer Functional Validation', () => {
     expect(result.success).toBe(true);
   }, 60000);
 
-  test('Screen Consistency Validation', async () => {
-    const result = createFunctionalTestResult('ScreenConsistencyValidation');
+  test("Screen Consistency Validation", async () => {
+    const result = createFunctionalTestResult("ScreenConsistencyValidation");
     const startTime = Date.now();
 
     try {
@@ -317,7 +401,7 @@ describe('Computer Functional Validation', () => {
         return;
       }
 
-      addTestDetail(result, 'screen', {
+      addTestDetail(result, "screen", {
         width: screen.width,
         height: screen.height,
         dpi: screen.dpiScalingFactor,
@@ -325,11 +409,11 @@ describe('Computer Functional Validation', () => {
 
       // Step 2: Test cursor positions at screen boundaries
       const testPositions: Array<[string, number, number]> = [
-        ['top_left', 0, 0],
-        ['top_right', screen.width - 1, 0],
-        ['bottom_left', 0, screen.height - 1],
-        ['bottom_right', screen.width - 1, screen.height - 1],
-        ['center', Math.floor(screen.width / 2), Math.floor(screen.height / 2)],
+        ["top_left", 0, 0],
+        ["top_right", screen.width - 1, 0],
+        ["bottom_left", 0, screen.height - 1],
+        ["bottom_right", screen.width - 1, screen.height - 1],
+        ["center", Math.floor(screen.width / 2), Math.floor(screen.height / 2)],
       ];
 
       let allValid = true;
@@ -339,7 +423,9 @@ describe('Computer Functional Validation', () => {
         // Move to position
         const moveResult = await session.computer.moveMouse(x, y);
         if (!moveResult.success) {
-          log(`Failed to move to ${name} (${x},${y}): ${moveResult.errorMessage}`);
+          log(
+            `Failed to move to ${name} (${x},${y}): ${moveResult.errorMessage}`
+          );
           allValid = false;
           positionResults[name] = false;
           continue;
@@ -357,23 +443,31 @@ describe('Computer Functional Validation', () => {
         }
 
         // Validate position
-        const valid = validateCursorPosition(cursor, screen, x, y, config.cursorPositionTolerance);
+        const valid = validateCursorPosition(
+          cursor,
+          screen,
+          x,
+          y,
+          config.cursorPositionTolerance
+        );
         positionResults[name] = valid;
         if (!valid) {
           allValid = false;
-          log(`❌ Position ${name}: expected (${x},${y}), got (${cursor.x},${cursor.y})`);
+          log(
+            `❌ Position ${name}: expected (${x},${y}), got (${cursor.x},${cursor.y})`
+          );
         } else {
           log(`✅ Position ${name}: (${cursor.x},${cursor.y}) validated`);
         }
       }
 
-      addTestDetail(result, 'position_results', positionResults);
-      addTestDetail(result, 'all_positions_valid', allValid);
+      addTestDetail(result, "position_results", positionResults);
+      addTestDetail(result, "all_positions_valid", allValid);
 
       if (allValid) {
-        setTestSuccess(result, 'Screen consistency validation successful');
+        setTestSuccess(result, "Screen consistency validation successful");
       } else {
-        setTestFailure(result, 'Some cursor positions failed validation');
+        setTestFailure(result, "Some cursor positions failed validation");
       }
     } finally {
       result.duration = Date.now() - startTime;
@@ -383,8 +477,8 @@ describe('Computer Functional Validation', () => {
     expect(result.success).toBe(true);
   }, 60000);
 
-  test('Complete Workflow Validation', async () => {
-    const result = createFunctionalTestResult('CompleteWorkflowValidation');
+  test("Complete Workflow Validation", async () => {
+    const result = createFunctionalTestResult("CompleteWorkflowValidation");
     const startTime = Date.now();
 
     try {
@@ -393,14 +487,17 @@ describe('Computer Functional Validation', () => {
       const screenshots: Record<string, string | null> = {};
 
       // Step 1: Initial state
-      const [screenshot] = await safeScreenshot(session.computer, 'workflow_start');
+      const [screenshot] = await safeScreenshot(
+        session.computer,
+        "workflow_start"
+      );
       screenshots.start = screenshot;
-      workflowSteps.push('Initial screenshot taken');
+      workflowSteps.push("Initial screenshot taken");
 
       // Step 2: Get screen info and move to center
       const screen = await session.computer.getScreenSize();
       if (screen.errorMessage) {
-        setTestFailure(result, 'Failed to get screen size');
+        setTestFailure(result, "Failed to get screen size");
         return;
       }
 
@@ -408,87 +505,127 @@ describe('Computer Functional Validation', () => {
       const centerY = Math.floor(screen.height / 2);
       const moveResult = await session.computer.moveMouse(centerX, centerY);
       if (moveResult.success) {
-        workflowSteps.push('Moved mouse to center');
+        workflowSteps.push("Moved mouse to center");
       }
 
       await sleep(1000);
 
       // Step 3: Click and input text
-      const clickResult = await session.computer.clickMouse(centerX, centerY, 'left');
+      const clickResult = await session.computer.clickMouse(
+        centerX,
+        centerY,
+        "left"
+      );
       if (clickResult.success) {
-        workflowSteps.push('Clicked at center');
+        workflowSteps.push("Clicked at center");
       }
 
-      const inputResult = await session.computer.inputText('Workflow Test');
+      const inputResult = await session.computer.inputText("Workflow Test");
       if (inputResult.success) {
-        workflowSteps.push('Input text');
+        workflowSteps.push("Input text");
       }
 
       await sleep(config.waitTimeAfterAction);
 
       // Step 4: Screenshot after input
-      const [screenshot2] = await safeScreenshot(session.computer, 'workflow_input');
+      const [screenshot2] = await safeScreenshot(
+        session.computer,
+        "workflow_input"
+      );
       screenshots.after_input = screenshot2;
 
       // Step 5: Select and copy text
-      const selectResult = await session.computer.pressKeys(['Ctrl', 'a'], false);
+      const selectResult = await session.computer.pressKeys(
+        ["Ctrl", "a"],
+        false
+      );
       if (selectResult.success) {
-        workflowSteps.push('Selected all text');
+        workflowSteps.push("Selected all text");
       }
 
-      const copyResult = await session.computer.pressKeys(['Ctrl', 'c'], false);
+      const copyResult = await session.computer.pressKeys(["Ctrl", "c"], false);
       if (copyResult.success) {
-        workflowSteps.push('Copied text');
+        workflowSteps.push("Copied text");
       }
 
       // Step 6: Delete and paste
-      const deleteResult = await session.computer.pressKeys(['Delete'], false);
+      const deleteResult = await session.computer.pressKeys(["Delete"], false);
       if (deleteResult.success) {
-        workflowSteps.push('Deleted text');
+        workflowSteps.push("Deleted text");
       }
 
       await sleep(1000);
 
-      const pasteResult = await session.computer.pressKeys(['Ctrl', 'v'], false);
+      const pasteResult = await session.computer.pressKeys(
+        ["Ctrl", "v"],
+        false
+      );
       if (pasteResult.success) {
-        workflowSteps.push('Pasted text');
+        workflowSteps.push("Pasted text");
       }
 
       await sleep(config.waitTimeAfterAction);
 
       // Step 7: Final screenshot
-      const [screenshot3] = await safeScreenshot(session.computer, 'workflow_end');
+      const [screenshot3] = await safeScreenshot(
+        session.computer,
+        "workflow_end"
+      );
       screenshots.end = screenshot3;
 
       // Validate workflow
-      const inputChanged = validateScreenshotChanged(screenshots.start || '', screenshots.after_input || '');
-      const workflowCompleted = validateScreenshotChanged(screenshots.after_input || '', screenshots.end || '');
+      const inputChanged = validateScreenshotChanged(
+        screenshots.start || "",
+        screenshots.after_input || ""
+      );
+      const workflowCompleted = validateScreenshotChanged(
+        screenshots.after_input || "",
+        screenshots.end || ""
+      );
 
-      addTestDetail(result, 'workflow_steps', workflowSteps);
-      addTestDetail(result, 'screenshots', screenshots);
-      addTestDetail(result, 'input_changed', inputChanged);
-      addTestDetail(result, 'workflow_completed', workflowCompleted);
+      addTestDetail(result, "workflow_steps", workflowSteps);
+      addTestDetail(result, "screenshots", screenshots);
+      addTestDetail(result, "input_changed", inputChanged);
+      addTestDetail(result, "workflow_completed", workflowCompleted);
 
       // More lenient validation: success if we completed most workflow steps, screenshots are optional
-      const hasAllScreenshots = screenshots.start && screenshots.after_input && screenshots.end;
+      const hasAllScreenshots =
+        screenshots.start && screenshots.after_input && screenshots.end;
       const minStepsCompleted = workflowSteps.length >= 4; // Reduced from 6 to 4
-      
+
       if (minStepsCompleted) {
         if (hasAllScreenshots) {
-          setTestSuccess(result, 'Complete workflow validation successful with screenshots');
-          log(`✅ Workflow completed: ${workflowSteps.length} steps completed successfully with screenshots`);
+          setTestSuccess(
+            result,
+            "Complete workflow validation successful with screenshots"
+          );
+          log(
+            `✅ Workflow completed: ${workflowSteps.length} steps completed successfully with screenshots`
+          );
           if (inputChanged || workflowCompleted) {
-            log('✅ Visual changes detected during workflow');
+            log("✅ Visual changes detected during workflow");
           } else {
-            log('ℹ️ No visual changes detected, but workflow steps completed successfully');
+            log(
+              "ℹ️ No visual changes detected, but workflow steps completed successfully"
+            );
           }
         } else {
-          setTestSuccess(result, 'Complete workflow validation successful (screenshots unavailable)');
-          log(`✅ Workflow completed: ${workflowSteps.length} steps completed successfully (screenshots unavailable)`);
+          setTestSuccess(
+            result,
+            "Complete workflow validation successful (screenshots unavailable)"
+          );
+          log(
+            `✅ Workflow completed: ${workflowSteps.length} steps completed successfully (screenshots unavailable)`
+          );
         }
       } else {
-        setTestFailure(result, 'Workflow validation failed - insufficient steps completed');
-        log(`❌ Workflow failed: ${workflowSteps.length} steps, hasAllScreenshots=${hasAllScreenshots}`);
+        setTestFailure(
+          result,
+          "Workflow validation failed - insufficient steps completed"
+        );
+        log(
+          `❌ Workflow failed: ${workflowSteps.length} steps, hasAllScreenshots=${hasAllScreenshots}`
+        );
       }
     } finally {
       result.duration = Date.now() - startTime;
@@ -497,4 +634,4 @@ describe('Computer Functional Validation', () => {
 
     expect(result.success).toBe(true);
   }, 90000);
-}); 
+});

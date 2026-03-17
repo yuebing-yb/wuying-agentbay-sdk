@@ -92,4 +92,3 @@ func (s *BetaSkillsService) ListMetadata() ([]SkillMetadataItem, error) {
 	}
 	return items, nil
 }
-

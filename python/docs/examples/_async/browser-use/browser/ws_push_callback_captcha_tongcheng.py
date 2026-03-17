@@ -21,9 +21,8 @@ async def main() -> None:
     if not api_key:
         raise RuntimeError("AGENTBAY_API_KEY environment variable not set")
 
-    image_id = os.getenv("AGENTBAY_WS_IMAGE_ID") or "imgc-0ab5ta4kuo0x3pa70"
     agent_bay = AsyncAgentBay(api_key=api_key)
-    created = await agent_bay.create(CreateSessionParams(image_id=image_id))
+    created = await agent_bay.create(CreateSessionParams())
     if not created.success or created.session is None:
         raise RuntimeError(f"Failed to create session: {created.error_message}")
     session = created.session

@@ -1,5 +1,10 @@
 import { AgentBay } from "../../src/agent-bay";
-import { newContextSync, SyncPolicy, BWList, WhiteList } from "../../src/context-sync";
+import {
+  newContextSync,
+  SyncPolicy,
+  BWList,
+  WhiteList,
+} from "../../src/context-sync";
 
 describe("WhiteListValidationIntegration", () => {
   let agentBay: AgentBay;
@@ -17,11 +22,11 @@ describe("WhiteListValidationIntegration", () => {
 
     const contextName = `test-wildcard-validation-${Date.now()}`;
     const contextResult = await agentBay.context.get(contextName, true);
-    
+
     if (!contextResult.success || !contextResult.context) {
       throw new Error("Failed to create context");
     }
-    
+
     contextId = contextResult.context.id;
   });
 
@@ -30,7 +35,10 @@ describe("WhiteListValidationIntegration", () => {
       return;
     }
 
-    const contextResult = await agentBay.context.get(`test-wildcard-validation-${contextId}`, false);
+    const contextResult = await agentBay.context.get(
+      `test-wildcard-validation-${contextId}`,
+      false
+    );
     if (contextResult.success && contextResult.context) {
       await agentBay.context.delete(contextResult.context);
     }
@@ -42,14 +50,14 @@ describe("WhiteListValidationIntegration", () => {
     }
     const policy: SyncPolicy = {
       bwList: {
-        whiteLists: [{ path: "*.json" }]
-      }
+        whiteLists: [{ path: "*.json" }],
+      },
     };
 
     expect(() => {
       newContextSync(contextId, "/tmp/data", policy);
     }).toThrow("Wildcard patterns are not supported in path");
-    
+
     expect(() => {
       newContextSync(contextId, "/tmp/data", policy);
     }).toThrow("*.json");
@@ -61,14 +69,14 @@ describe("WhiteListValidationIntegration", () => {
     }
     const policy: SyncPolicy = {
       bwList: {
-        whiteLists: [{ path: "/src", excludePaths: ["*.log"] }]
-      }
+        whiteLists: [{ path: "/src", excludePaths: ["*.log"] }],
+      },
     };
 
     expect(() => {
       newContextSync(contextId, "/tmp/data", policy);
     }).toThrow("Wildcard patterns are not supported in exclude_paths");
-    
+
     expect(() => {
       newContextSync(contextId, "/tmp/data", policy);
     }).toThrow("*.log");
@@ -80,14 +88,14 @@ describe("WhiteListValidationIntegration", () => {
     }
     const policy: SyncPolicy = {
       bwList: {
-        whiteLists: [{ path: "/data/*" }]
-      }
+        whiteLists: [{ path: "/data/*" }],
+      },
     };
 
     expect(() => {
       newContextSync(contextId, "/tmp/data", policy);
     }).toThrow("Wildcard patterns are not supported in path");
-    
+
     expect(() => {
       newContextSync(contextId, "/tmp/data", policy);
     }).toThrow("/data/*");
@@ -99,8 +107,8 @@ describe("WhiteListValidationIntegration", () => {
     }
     const policy: SyncPolicy = {
       bwList: {
-        whiteLists: [{ path: "/logs/**/*.txt" }]
-      }
+        whiteLists: [{ path: "/logs/**/*.txt" }],
+      },
     };
 
     expect(() => {
@@ -115,16 +123,16 @@ describe("WhiteListValidationIntegration", () => {
     const policy: SyncPolicy = {
       bwList: {
         whiteLists: [
-          { path: "/src", excludePaths: ["/node_modules", "/temp"] }
-        ]
-      }
+          { path: "/src", excludePaths: ["/node_modules", "/temp"] },
+        ],
+      },
     };
 
     const contextSync = newContextSync(contextId, "/tmp/data", policy);
-    
+
     const sessionResult = await agentBay.create({
       contextSync: [contextSync],
-      imageId: "linux_latest"
+      imageId: "linux_latest",
     });
 
     expect(sessionResult.success).toBe(true);
@@ -141,8 +149,8 @@ describe("WhiteListValidationIntegration", () => {
     }
     const policy: SyncPolicy = {
       bwList: {
-        whiteLists: [{ path: "*.txt" }]
-      }
+        whiteLists: [{ path: "*.txt" }],
+      },
     };
 
     expect(() => {

@@ -1,4 +1,8 @@
-import { Extension, ExtensionOption, ExtensionsService } from "../../src/extension";
+import {
+  Extension,
+  ExtensionOption,
+  ExtensionsService,
+} from "../../src/extension";
 import { Context, ContextService } from "../../src/context";
 import { AgentBayError } from "../../src/exceptions";
 import * as sinon from "sinon";
@@ -19,7 +23,7 @@ describe("TestExtension", () => {
 
     it("should initialize Extension without createdAt", () => {
       const extension = new Extension("ext_456", "another-extension.zip");
-      
+
       expect(extension.id).toBe("ext_456");
       expect(extension.name).toBe("another-extension.zip");
       expect(extension.createdAt).toBeUndefined();
@@ -31,7 +35,7 @@ describe("TestExtensionOption", () => {
   describe("test_extension_option_initialization", () => {
     it("should initialize ExtensionOption with valid parameters", () => {
       const option = new ExtensionOption("context_123", ["ext_1", "ext_2"]);
-      
+
       expect(option.contextId).toBe("context_123");
       expect(option.extensionIds).toEqual(["ext_1", "ext_2"]);
       expect(option.validate()).toBe(true);
@@ -53,16 +57,21 @@ describe("TestExtensionOption", () => {
   describe("test_extension_option_string_representations", () => {
     it("should provide proper string representations", () => {
       const option = new ExtensionOption("context_123", ["ext_1", "ext_2"]);
-      
+
       expect(option.toString()).toContain("context_123");
       expect(option.toString()).toContain('["ext_1","ext_2"]');
-      expect(option.toDisplayString()).toBe("Extension Config: 2 extension(s) in context 'context_123'");
+      expect(option.toDisplayString()).toBe(
+        "Extension Config: 2 extension(s) in context 'context_123'"
+      );
     });
   });
 
   describe("test_extension_option_validation", () => {
     it("should validate correctly for valid configuration", () => {
-      const validOption = new ExtensionOption("context_123", ["ext_1", "ext_2"]);
+      const validOption = new ExtensionOption("context_123", [
+        "ext_1",
+        "ext_2",
+      ]);
       expect(validOption.validate()).toBe(true);
     });
 
@@ -106,7 +115,10 @@ describe("TestExtensionsService", () => {
     };
     mockContextService.get.resolves(contextResult);
 
-    mockExtensionsService = new ExtensionsService(mockAgentBay, "test-extensions");
+    mockExtensionsService = new ExtensionsService(
+      mockAgentBay,
+      "test-extensions"
+    );
   });
 
   afterEach(() => {
@@ -172,7 +184,14 @@ describe("TestExtensionsService", () => {
       expect(extensions[1].createdAt).toBe("2023-01-02T12:00:00Z");
 
       expect(mockContextService.listFiles.calledOnce).toBe(true);
-      expect(mockContextService.listFiles.calledWith("ctx_123", "/tmp/extensions", 1, 100)).toBe(true);
+      expect(
+        mockContextService.listFiles.calledWith(
+          "ctx_123",
+          "/tmp/extensions",
+          1,
+          100
+        )
+      ).toBe(true);
     });
   });
 
@@ -186,13 +205,17 @@ describe("TestExtensionsService", () => {
 
       mockContextService.listFiles.resolves(mockFileListResult);
 
-      await expect(mockExtensionsService.list()).rejects.toThrow("Failed to list extensions");
+      await expect(mockExtensionsService.list()).rejects.toThrow(
+        "Failed to list extensions"
+      );
     });
 
     it("should handle context service error", async () => {
       mockContextService.listFiles.rejects(new Error("Context API Error"));
 
-      await expect(mockExtensionsService.list()).rejects.toThrow("An error occurred while listing browser extensions");
+      await expect(mockExtensionsService.list()).rejects.toThrow(
+        "An error occurred while listing browser extensions"
+      );
     });
   });
 
@@ -210,7 +233,12 @@ describe("TestExtensionsService", () => {
 
       expect(result).toBe(true);
       expect(mockContextService.deleteFile.calledOnce).toBe(true);
-      expect(mockContextService.deleteFile.calledWith("ctx_123", "/tmp/extensions/ext_123")).toBe(true);
+      expect(
+        mockContextService.deleteFile.calledWith(
+          "ctx_123",
+          "/tmp/extensions/ext_123"
+        )
+      ).toBe(true);
     });
   });
 
@@ -240,7 +268,7 @@ describe("TestExtensionsService", () => {
       };
       mockContextService.listFiles.resolves(mockFileListResult);
       await mockExtensionsService.list();
-      
+
       const extensionIds = ["ext_1", "ext_2"];
       const option = mockExtensionsService.createExtensionOption(extensionIds);
 
@@ -292,18 +320,28 @@ describe("TestExtensionsService", () => {
       };
       mockContextService.get.resolves(contextResult);
 
-      const failingService = new ExtensionsService(mockAgentBay, "failing-context");
+      const failingService = new ExtensionsService(
+        mockAgentBay,
+        "failing-context"
+      );
 
       // First method call should fail due to initialization error
-      await expect(failingService.list()).rejects.toThrow("Failed to create extension repository context");
+      await expect(failingService.list()).rejects.toThrow(
+        "Failed to create extension repository context"
+      );
     });
 
     it("should handle context service error during initialization", async () => {
       mockContextService.get.rejects(new Error("Context initialization error"));
 
-      const failingService = new ExtensionsService(mockAgentBay, "error-context");
+      const failingService = new ExtensionsService(
+        mockAgentBay,
+        "error-context"
+      );
 
-      await expect(failingService.list()).rejects.toThrow("Failed to initialize ExtensionsService");
+      await expect(failingService.list()).rejects.toThrow(
+        "Failed to initialize ExtensionsService"
+      );
     });
   });
 });

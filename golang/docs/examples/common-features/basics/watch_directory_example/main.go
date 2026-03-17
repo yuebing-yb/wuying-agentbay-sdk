@@ -87,11 +87,10 @@ func main() {
 	fmt.Printf("👀 Starting to watch directory: %s\n", testDir)
 	fmt.Println("📊 Polling interval: 500ms (default)")
 
-	wg := fileSystem.WatchDirectoryWithDefaults(testDir, callback, stopChan)
+	wg, readyCh := fileSystem.WatchDirectoryWithDefaults(testDir, callback, stopChan)
 
-	// Wait for monitoring to start
-	fmt.Println("⏳ Waiting for monitoring to start...")
-	time.Sleep(2 * time.Second)
+	// Wait for baseline before file operations
+	<-readyCh
 
 	// Ensure we wait for the monitoring goroutine to finish when stopping
 	defer func() {

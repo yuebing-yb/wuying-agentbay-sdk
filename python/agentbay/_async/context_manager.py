@@ -5,8 +5,22 @@ from typing import Any, Callable, Dict, List, Optional
 
 from .._common.logger import _log_api_call, _log_api_response_with_details, get_logger
 from .._common.models.response import ApiResponse, extract_request_id
-from .._common.models.context import ContextStatusData, ContextInfoResult, ContextSyncResult
-from ..api.models import GetContextInfoRequest, SyncContextRequest
+from .._common.models.context import (
+    ContextBinding,
+    ContextBindingsResult,
+    ContextBindResult,
+    ContextInfoResult,
+    ContextStatusData,
+    ContextSyncResult,
+)
+from .._common.params.context_sync import ContextSync
+from ..api.models import (
+    BindContextsRequest,
+    BindContextsRequestPersistenceDataList,
+    DescribeSessionContextsRequest,
+    GetContextInfoRequest,
+    SyncContextRequest,
+)
 
 # Initialize logger for this module
 _logger = get_logger("context_manager")
@@ -23,6 +37,175 @@ class AsyncContextManager:
 
     def __init__(self, session):
         self.session = session
+
+    async def bind(
+        self,
+        *contexts: ContextSync,
+        wait_for_completion: bool = True,
+    ) -> ContextBindResult:
+        """
+        Dynamically bind one or more contexts to the running session.
+
+        Args:
+            *contexts: One or more ContextSync objects specifying context_id, path, and optional policy.
+            wait_for_completion: If True, polls list_bindings() until all bound contexts appear.
+
+        Returns:
+            ContextBindResult with success status, error_message, and request_id.
+
+        Example::
+
+            result = await session.context.bind(
+                ContextSync(context_id="SdkCtx-xxx", path="/tmp/ctx-data"),
+            )
+            print(f"Bind success: {result.success}")
+        """
+        if not contexts:
+            return ContextBindResult(success=False, error_message="No contexts provided")
+
+        persistence_data_list = []
+        for ctx in contexts:
+            item = BindContextsRequestPersistenceDataList(
+                context_id=ctx.context_id,
+                path=ctx.path,
+            )
+            if ctx.policy:
+                item.policy = json.dumps(ctx.policy.__dict__())
+            persistence_data_list.append(item)
+
+        request = BindContextsRequest(
+            authorization=f"Bearer {self.session._get_api_key()}",
+            session_id=self.session._get_session_id(),
+            persistence_data_list=persistence_data_list,
+        )
+        context_ids_str = ", ".join(c.context_id for c in contexts)
+        _log_api_call(
+            "BindContexts",
+            f"SessionId={self.session._get_session_id()}, ContextIds=[{context_ids_str}]",
+        )
+
+        response = await self.session._get_client().bind_contexts_async(request)
+        request_id = extract_request_id(response)
+        response_map = response.to_map()
+
+        if isinstance(response_map, dict):
+            body = response_map.get("body", {})
+            if not body.get("Success", False):
+                code = body.get("Code", "Unknown")
+                message = body.get("Message", "Unknown error")
+                _log_api_response_with_details(
+                    api_name="BindContexts",
+                    request_id=request_id,
+                    success=False,
+                    full_response=str(body),
+                )
+                return ContextBindResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=f"[{code}] {message}",
+                )
+
+        _log_api_response_with_details(
+            api_name="BindContexts",
+            request_id=request_id,
+            success=True,
+            key_fields={"context_ids": context_ids_str},
+        )
+
+        if wait_for_completion:
+            expected_ids = {c.context_id for c in contexts}
+            await self._poll_for_bind_completion(expected_ids)
+
+        return ContextBindResult(request_id=request_id, success=True)
+
+    async def _poll_for_bind_completion(
+        self,
+        expected_context_ids: set,
+        max_retries: int = 60,
+        retry_interval: float = 2.0,
+    ) -> bool:
+        """Poll list_bindings() until all expected context IDs appear."""
+        for attempt in range(max_retries):
+            try:
+                result = await self.list_bindings()
+                if result.success:
+                    bound_ids = {b.context_id for b in result.bindings}
+                    if expected_context_ids.issubset(bound_ids):
+                        _logger.info(f"All {len(expected_context_ids)} context(s) bound successfully")
+                        return True
+            except Exception as e:
+                _logger.error(f"Error polling bind completion on attempt {attempt+1}: {e}")
+            await asyncio.sleep(retry_interval)
+
+        _logger.error(f"Bind completion polling timed out after {max_retries} attempts")
+        return False
+
+    async def list_bindings(self) -> ContextBindingsResult:
+        """
+        Query all context bindings on the current session.
+
+        Returns:
+            ContextBindingsResult with list of ContextBinding objects.
+
+        Example::
+
+            result = await session.context.list_bindings()
+            for binding in result.bindings:
+                print(f"Context {binding.context_id} at {binding.path}")
+        """
+        request = DescribeSessionContextsRequest(
+            authorization=f"Bearer {self.session._get_api_key()}",
+            session_id=self.session._get_session_id(),
+        )
+        _log_api_call(
+            "DescribeSessionContexts",
+            f"SessionId={self.session._get_session_id()}",
+        )
+
+        response = await self.session._get_client().describe_session_contexts_async(request)
+        request_id = extract_request_id(response)
+        response_map = response.to_map()
+
+        if isinstance(response_map, dict):
+            body = response_map.get("body", {})
+            if not body.get("Success", False):
+                code = body.get("Code", "Unknown")
+                message = body.get("Message", "Unknown error")
+                _log_api_response_with_details(
+                    api_name="DescribeSessionContexts",
+                    request_id=request_id,
+                    success=False,
+                    full_response=str(body),
+                )
+                return ContextBindingsResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=f"[{code}] {message}",
+                )
+
+            data_list = body.get("Data", [])
+            bindings = []
+            if data_list:
+                for item in data_list:
+                    bindings.append(ContextBinding.from_dict(item))
+
+            _log_api_response_with_details(
+                api_name="DescribeSessionContexts",
+                request_id=request_id,
+                success=True,
+                key_fields={"bindings_count": len(bindings)},
+            )
+            return ContextBindingsResult(
+                request_id=request_id,
+                success=True,
+                bindings=bindings,
+            )
+
+        return ContextBindingsResult(
+            request_id=request_id,
+            success=False,
+            error_message="Unexpected response format",
+        )
 
     async def info(
         self,

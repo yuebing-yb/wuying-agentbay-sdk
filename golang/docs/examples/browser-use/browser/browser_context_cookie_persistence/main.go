@@ -190,5 +190,3 @@ func main() {
 	fmt.Printf("Cookie demo_cookie_2=%s\n", found["demo_cookie_2"])
 	fmt.Println("Done.")
 }
-
-

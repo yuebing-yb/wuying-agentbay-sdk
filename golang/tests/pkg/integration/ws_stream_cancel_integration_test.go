@@ -1,7 +1,6 @@
 package integration_test
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -16,12 +15,7 @@ func TestWsStreamCancelE2E(t *testing.T) {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	imageID := "imgc-0ab5ta4n2htfrppyw"
-	if v := os.Getenv("AGENTBAY_WS_IMAGE_ID"); v != "" {
-		imageID = v
-	}
-	params := agentbay.NewCreateSessionParams().WithImageId(imageID)
-	sessionResult, err := ab.Create(params)
+	sessionResult, err := ab.Create(agentbay.NewCreateSessionParams())
 	if err != nil {
 		t.Fatalf("Error creating session: %v", err)
 	}
@@ -113,4 +107,3 @@ func TestWsStreamCancelE2E(t *testing.T) {
 		t.Fatalf("expected onError WsCancelledError, got %T: %v", errors[0], errors[0])
 	}
 }
-

@@ -6,7 +6,7 @@
  * Converts a snake_case string to camelCase
  * @param str - The snake_case string to convert
  * @returns The camelCase version of the string
- * 
+ *
  * @example
  * ```typescript
  * snakeToCamel('window_id') // returns 'windowId'
@@ -22,7 +22,7 @@ export function snakeToCamel(str: string): string {
  * Converts an object with snake_case keys to camelCase keys
  * @param obj - The object to convert
  * @returns A new object with camelCase keys
- * 
+ *
  * @example
  * ```typescript
  * const input = { window_id: 123, user_name: 'John', age: 30 };
@@ -36,10 +36,10 @@ export function convertObjectKeys<T = any>(obj: any): T {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => convertObjectKeys(item)) as T;
+    return obj.map((item) => convertObjectKeys(item)) as T;
   }
 
-  if (typeof obj === 'object' && obj.constructor === Object) {
+  if (typeof obj === "object" && obj.constructor === Object) {
     const converted: any = {};
     for (const [key, value] of Object.entries(obj)) {
       const camelKey = snakeToCamel(key);
@@ -55,7 +55,7 @@ export function convertObjectKeys<T = any>(obj: any): T {
  * Converts window data from backend snake_case format to frontend camelCase format
  * @param rawWindow - Raw window data from backend
  * @returns Converted window data with camelCase keys
- * 
+ *
  * @example
  * ```typescript
  * const raw = { window_id: 123, title: 'Calculator', pid: 456, pname: 'calc.exe' };
@@ -77,7 +77,7 @@ export function convertWindowData(rawWindow: any): any {
  * Converts an array of window data from backend format to frontend format
  * @param rawWindows - Array of raw window data from backend
  * @returns Array of converted window data with camelCase keys
- * 
+ *
  * @example
  * ```typescript
  * const rawList = [
@@ -93,6 +93,6 @@ export function convertWindowData(rawWindow: any): any {
  */
 export function convertWindowList(rawWindows: any[]): any[] {
   if (!Array.isArray(rawWindows)) return [];
-  
-  return rawWindows.map(window => convertWindowData(window));
+
+  return rawWindows.map((window) => convertWindowData(window));
 }

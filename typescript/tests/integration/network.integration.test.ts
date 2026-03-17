@@ -15,5 +15,3 @@ describe("BetaNetwork integration", () => {
     expect(netResult.networkToken).not.toBe("");
   });
 });
-
-

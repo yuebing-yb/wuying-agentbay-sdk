@@ -10,10 +10,15 @@ describe("Session.getMetrics", () => {
 
   beforeEach(() => {
     mockClient = sinon.createStubInstance(Client);
-    mockAgentBay = sinon.createStubInstance(AgentBay) as unknown as sinon.SinonStubbedInstance<AgentBay>;
+    mockAgentBay = sinon.createStubInstance(
+      AgentBay
+    ) as unknown as sinon.SinonStubbedInstance<AgentBay>;
     mockAgentBay.getAPIKey.returns("test_api_key");
     mockAgentBay.getClient.returns(mockClient as unknown as Client);
-    session = new Session(mockAgentBay as unknown as AgentBay, "test_session_id");
+    session = new Session(
+      mockAgentBay as unknown as AgentBay,
+      "test_session_id"
+    );
   });
 
   afterEach(() => {
@@ -74,8 +79,8 @@ describe("Session.getMetrics", () => {
     expect(result.success).toBe(false);
     expect(result.requestId).toBe("req-2");
     expect(result.data).toBeUndefined();
-    expect(result.errorMessage).toContain("Failed to parse get_metrics response");
+    expect(result.errorMessage).toContain(
+      "Failed to parse get_metrics response"
+    );
   });
 });
-
-

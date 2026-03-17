@@ -6,9 +6,12 @@ import com.aliyun.wuyingai20250506.models.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class ContextManager {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -389,4 +392,152 @@ public class ContextManager {
         return new ContextSyncResult(syncResult.getRequestId(), false);
     }
 
+    /**
+     * Dynamically binds one or more contexts to the current session.
+     *
+     * <pre>{@code
+     * ContextSync cs = ContextSync.create(contextId, "/tmp/ctx-data", null);
+     * ContextBindResult result = session.getContext().bind(cs);
+     * System.out.println("Bind success: " + result.isSuccess());
+     * }</pre>
+     *
+     * @param contexts List of ContextSync objects to bind
+     * @param waitForCompletion Whether to poll until all bindings are confirmed
+     * @return ContextBindResult with the result of the operation
+     */
+    public ContextBindResult bind(List<ContextSync> contexts, boolean waitForCompletion) {
+        if (contexts == null || contexts.isEmpty()) {
+            return new ContextBindResult("", false, "At least one context is required");
+        }
+
+        try {
+            List<BindContextsRequest.BindContextsRequestPersistenceDataList> persistenceDataList = new ArrayList<>();
+            for (ContextSync ctx : contexts) {
+                BindContextsRequest.BindContextsRequestPersistenceDataList item =
+                    new BindContextsRequest.BindContextsRequestPersistenceDataList();
+                item.setContextId(ctx.getContextId());
+                item.setPath(ctx.getPath());
+                if (ctx.getPolicy() != null) {
+                    item.setPolicy(objectMapper.writeValueAsString(ctx.getPolicy()));
+                }
+                persistenceDataList.add(item);
+            }
+
+            BindContextsRequest request = new BindContextsRequest();
+            request.setAuthorization("Bearer " + session.getApiKey());
+            request.setSessionId(session.getSessionId());
+            request.setPersistenceDataList(persistenceDataList);
+
+            BindContextsResponse response = session.getAgentBay().getClient().bindContexts(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response != null && response.getBody() != null) {
+                BindContextsResponseBody body = response.getBody();
+                if (body.getSuccess() != null && !body.getSuccess()) {
+                    String code = body.getCode() != null ? body.getCode() : "Unknown";
+                    String message = body.getMessage() != null ? body.getMessage() : "Unknown error";
+                    return new ContextBindResult(requestId, false, String.format("[%s] %s", code, message));
+                }
+            }
+
+            if (waitForCompletion) {
+                List<String> contextIds = contexts.stream()
+                    .map(ContextSync::getContextId)
+                    .collect(Collectors.toList());
+                pollForBindCompletion(contextIds, 60, 2000);
+            }
+
+            return new ContextBindResult(requestId, true);
+        } catch (Exception e) {
+            return new ContextBindResult("", false, "Failed to bind contexts: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Binds a single context to the current session.
+     *
+     * @param context The ContextSync object to bind
+     * @return ContextBindResult with the result of the operation
+     */
+    public ContextBindResult bind(ContextSync context) {
+        List<ContextSync> list = new ArrayList<>();
+        list.add(context);
+        return bind(list, true);
+    }
+
+    /**
+     * Lists all context bindings for the current session.
+     *
+     * <pre>{@code
+     * ContextBindingsResult result = session.getContext().listBindings();
+     * for (ContextBinding b : result.getBindings()) {
+     *     System.out.println("Context " + b.getContextId() + " at " + b.getPath());
+     * }
+     * }</pre>
+     *
+     * @return ContextBindingsResult with the list of bindings
+     */
+    public ContextBindingsResult listBindings() {
+        try {
+            DescribeSessionContextsRequest request = new DescribeSessionContextsRequest();
+            request.setAuthorization("Bearer " + session.getApiKey());
+            request.setSessionId(session.getSessionId());
+
+            DescribeSessionContextsResponse response =
+                session.getAgentBay().getClient().describeSessionContexts(request);
+            String requestId = ResponseUtil.extractRequestId(response);
+
+            if (response != null && response.getBody() != null) {
+                DescribeSessionContextsResponseBody body = response.getBody();
+                if (body.getSuccess() != null && !body.getSuccess()) {
+                    String code = body.getCode() != null ? body.getCode() : "Unknown";
+                    String message = body.getMessage() != null ? body.getMessage() : "Unknown error";
+                    return new ContextBindingsResult(requestId, false, new ArrayList<>(),
+                        String.format("[%s] %s", code, message));
+                }
+
+                List<ContextBinding> bindings = new ArrayList<>();
+                if (body.getData() != null) {
+                    for (DescribeSessionContextsResponseBody.DescribeSessionContextsResponseBodyData item : body.getData()) {
+                        bindings.add(new ContextBinding(
+                            item.getContextId(),
+                            item.getContextName(),
+                            item.getPath(),
+                            item.getPolicy(),
+                            item.getBindTime()
+                        ));
+                    }
+                }
+
+                return new ContextBindingsResult(requestId, true, bindings);
+            }
+
+            return new ContextBindingsResult(requestId != null ? requestId : "", false, new ArrayList<>(),
+                "Empty response");
+        } catch (Exception e) {
+            return new ContextBindingsResult("", false, new ArrayList<>(),
+                "Failed to list bindings: " + e.getMessage());
+        }
+    }
+
+    private void pollForBindCompletion(List<String> expectedContextIds, int maxRetries, int retryIntervalMs) {
+        for (int i = 0; i < maxRetries; i++) {
+            try {
+                ContextBindingsResult result = listBindings();
+                if (result.isSuccess()) {
+                    Set<String> boundIds = new HashSet<>();
+                    for (ContextBinding b : result.getBindings()) {
+                        boundIds.add(b.getContextId());
+                    }
+                    if (boundIds.containsAll(expectedContextIds)) {
+                        return;
+                    }
+                }
+                Thread.sleep(retryIntervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+    }
 }

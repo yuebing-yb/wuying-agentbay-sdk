@@ -7,6 +7,7 @@ This guide covers AgentBay SDK's data persistence features, including context co
 
 - [Core Concepts](#core-concepts)
 - [Context Management](#context-management)
+- [Dynamic Context Binding](#dynamic-context-binding)
 - [Data Synchronization Strategies](#data-synchronization-strategies)
 
 <a id="core-concepts"></a>
@@ -141,6 +142,72 @@ OSS Storage          Session Environment          OSS Storage After Upload
 - **Reliability**: Cloud storage ensures data durability and availability
 - **Performance**: Local file operations during session for fast I/O
 - **Sharing**: Multiple sessions can mount the same OSS directory
+
+### Dynamic Context Binding
+
+In addition to binding contexts at session creation time, AgentBay supports **dynamic context binding** — mounting contexts to a running session on demand. This is useful when:
+
+- You don't know which contexts will be needed until runtime
+- An AI agent discovers it needs additional data mid-task
+- You want to progressively load data as requirements emerge
+
+#### Binding Contexts After Session Creation
+
+```python
+from agentbay import AgentBay, ContextSync, SyncPolicy, CreateSessionParams
+
+agent_bay = AgentBay()
+
+# Create a session WITHOUT any initial context
+session = agent_bay.create(CreateSessionParams()).session
+
+# Later, dynamically bind a context
+context = agent_bay.context.get("project-data", create=True).context
+context_sync = ContextSync.new(context.id, "/tmp/project-data", SyncPolicy.default())
+
+bind_result = session.context.bind(context_sync)
+if bind_result.success:
+    print("Context bound successfully!")
+    # Files from 'project-data' context are now available at /tmp/project-data
+    content = session.file_system.read_file("/tmp/project-data/config.json")
+```
+
+#### Binding Multiple Contexts at Once
+
+```python
+# Create two contexts
+ctx_a = agent_bay.context.get("dataset-a", create=True).context
+ctx_b = agent_bay.context.get("dataset-b", create=True).context
+
+policy = SyncPolicy.default()
+cs_a = ContextSync.new(ctx_a.id, "/tmp/dataset-a", policy)
+cs_b = ContextSync.new(ctx_b.id, "/tmp/dataset-b", policy)
+
+# Bind both at once
+bind_result = session.context.bind(cs_a, cs_b)
+if bind_result.success:
+    print("Both contexts bound!")
+```
+
+#### Listing Current Bindings
+
+```python
+bindings_result = session.context.list_bindings()
+if bindings_result.success:
+    for binding in bindings_result.bindings:
+        print(f"  Context: {binding.context_name} -> {binding.path}")
+```
+
+#### Key Differences: Creation-Time vs Dynamic Binding
+
+| Aspect | Creation-Time Binding | Dynamic Binding |
+|--------|----------------------|-----------------|
+| **When** | At `create()` call | Any time during session |
+| **How** | `CreateSessionParams(context_syncs=[...])` | `session.context.bind(...)` |
+| **Wait for download** | SDK waits by default | SDK polls until binding confirmed |
+| **Use case** | Known data requirements | Discovered at runtime |
+
+> **Note:** Each path can only be bound once per session. Attempting to bind a different context to an already-bound path will result in a `PathAlreadyBound` error. Paths under `/tmp/` are recommended for dynamic binding.
 
 ### Context vs Session
 

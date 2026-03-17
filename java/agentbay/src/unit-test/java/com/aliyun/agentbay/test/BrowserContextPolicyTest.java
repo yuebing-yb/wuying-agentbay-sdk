@@ -2,6 +2,7 @@ package com.aliyun.agentbay.test;
 
 import com.aliyun.agentbay.Config;
 import com.aliyun.agentbay.browser.BrowserContext;
+import com.aliyun.agentbay.browser.BrowserSyncMode;
 import com.aliyun.agentbay.browser.ExtensionOption;
 import com.aliyun.agentbay.context.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,23 +23,58 @@ public class BrowserContextPolicyTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    public void testBrowserContextPolicyIncludesBWList() throws Exception {
-        // Create browser context
-        String contextId = "test-browser-context";
-        BrowserContext browserContext = new BrowserContext(contextId, true);
+    public void testDefaultSyncModeIsStandard() throws Exception {
+        BrowserContext browserContext = new BrowserContext("test-context", true);
+        assertEquals("Default sync mode should be STANDARD",
+                     BrowserSyncMode.STANDARD, browserContext.getSyncMode());
+    }
 
-        // Create SyncPolicy for browser context (matching the logic in AgentBay.create)
+    @Test
+    public void testExplicitMinimalSyncMode() throws Exception {
+        BrowserContext browserContext = new BrowserContext(
+            "test-context", true, BrowserSyncMode.MINIMAL, null, null);
+        assertEquals("Sync mode should be MINIMAL",
+                     BrowserSyncMode.MINIMAL, browserContext.getSyncMode());
+    }
+
+    @Test
+    public void testBrowserContextStandardModePolicy() throws Exception {
+        BrowserContext browserContext = new BrowserContext("test-browser-context", true);
+
         UploadPolicy uploadPolicy = new UploadPolicy(
             browserContext.isAutoUpload(),
             UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
             30
         );
 
-        // Create BWList with white lists for browser data paths
+        // STANDARD mode whitelist (matching AgentBay.create logic)
         List<WhiteList> whiteLists = new ArrayList<>();
+        // Auth core
         whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
         whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
         whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
+        // Anti-risk-control device fingerprint (localStorage / IndexedDB)
+        whiteLists.add(new WhiteList("/Default/Local Storage", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/IndexedDB", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Session Storage", new ArrayList<>()));
+        // Saved passwords and form autofill
+        whiteLists.add(new WhiteList("/Default/Login Data", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Login Data-journal", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Login Data For Account", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Login Data For Account-journal", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Web Data", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Web Data-journal", new ArrayList<>()));
+        // Browser settings and permission consistency
+        whiteLists.add(new WhiteList("/Default/Preferences", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Secure Preferences", new ArrayList<>()));
+        // Network behavior consistency (HSTS / QUIC)
+        whiteLists.add(new WhiteList("/Default/TransportSecurity", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Network Persistent State", new ArrayList<>()));
+        // Rendering fingerprint stability
+        whiteLists.add(new WhiteList("/Default/GPUCache", new ArrayList<>()));
+        // Cross-domain password matching
+        whiteLists.add(new WhiteList("/Default/Affiliation Database", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Affiliation Database-journal", new ArrayList<>()));
         BWList bwList = new BWList(whiteLists);
 
         SyncPolicy syncPolicy = new SyncPolicy(
@@ -52,7 +88,7 @@ public class BrowserContextPolicyTest {
         // Convert to map and serialize to JSON
         Map<String, Object> policyMap = syncPolicy.toMap();
 
-        System.out.println("Generated policy JSON:");
+        System.out.println("Generated STANDARD mode policy JSON:");
         System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(policyMap));
 
         // Verify the policy contains the expected structure
@@ -69,7 +105,7 @@ public class BrowserContextPolicyTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> whiteListsData = (List<Map<String, Object>>) bwListMap.get("whiteLists");
         assertNotNull("whiteLists should not be null", whiteListsData);
-        assertEquals("Expected 3 white lists", 3, whiteListsData.size());
+        assertEquals("Expected 19 white lists in STANDARD mode", 19, whiteListsData.size());
 
         // Check the specific paths
         List<String> paths = new ArrayList<>();
@@ -77,16 +113,84 @@ public class BrowserContextPolicyTest {
             paths.add((String) wl.get("path"));
         }
 
-        assertTrue("Expected path /Local State not found", paths.contains("/Local State"));
-        assertTrue("Expected path /Default/Cookies not found", paths.contains("/Default/Cookies"));
-        assertTrue("Expected path /Default/Cookies-journal not found", paths.contains("/Default/Cookies-journal"));
+        // Auth core
+        assertTrue(paths.contains("/Local State"));
+        assertTrue(paths.contains("/Default/Cookies"));
+        assertTrue(paths.contains("/Default/Cookies-journal"));
+        // Anti-risk-control device fingerprint
+        assertTrue(paths.contains("/Default/Local Storage"));
+        assertTrue(paths.contains("/Default/IndexedDB"));
+        assertTrue(paths.contains("/Default/Session Storage"));
+        // Saved passwords and form autofill
+        assertTrue(paths.contains("/Default/Login Data"));
+        assertTrue(paths.contains("/Default/Login Data-journal"));
+        assertTrue(paths.contains("/Default/Login Data For Account"));
+        assertTrue(paths.contains("/Default/Login Data For Account-journal"));
+        assertTrue(paths.contains("/Default/Web Data"));
+        assertTrue(paths.contains("/Default/Web Data-journal"));
+        // Browser settings and permission consistency
+        assertTrue(paths.contains("/Default/Preferences"));
+        assertTrue(paths.contains("/Default/Secure Preferences"));
+        // Network behavior consistency
+        assertTrue(paths.contains("/Default/TransportSecurity"));
+        assertTrue(paths.contains("/Default/Network Persistent State"));
+        // Rendering fingerprint stability
+        assertTrue(paths.contains("/Default/GPUCache"));
+        // Cross-domain password matching
+        assertTrue(paths.contains("/Default/Affiliation Database"));
+        assertTrue(paths.contains("/Default/Affiliation Database-journal"));
+    }
 
-        System.out.println("✅ All tests passed! Browser context policy correctly includes BWList with white lists.");
+    @Test
+    public void testBrowserContextMinimalModePolicy() throws Exception {
+        BrowserContext browserContext = new BrowserContext(
+            "test-browser-context", true, BrowserSyncMode.MINIMAL, null, null);
+
+        UploadPolicy uploadPolicy = new UploadPolicy(
+            browserContext.isAutoUpload(),
+            UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
+            30
+        );
+
+        // MINIMAL mode whitelist
+        List<WhiteList> whiteLists = new ArrayList<>();
+        whiteLists.add(new WhiteList("/Local State", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Cookies", new ArrayList<>()));
+        whiteLists.add(new WhiteList("/Default/Cookies-journal", new ArrayList<>()));
+        BWList bwList = new BWList(whiteLists);
+
+        SyncPolicy syncPolicy = new SyncPolicy(
+            uploadPolicy,
+            DownloadPolicy.defaultPolicy(),
+            DeletePolicy.defaultPolicy(),
+            ExtractPolicy.defaultPolicy(),
+            bwList
+        );
+
+        Map<String, Object> policyMap = syncPolicy.toMap();
+
+        System.out.println("Generated MINIMAL mode policy JSON:");
+        System.out.println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(policyMap));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> bwListMap = (Map<String, Object>) policyMap.get("bwList");
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> whiteListsData = (List<Map<String, Object>>) bwListMap.get("whiteLists");
+        assertEquals("Expected 3 white lists in MINIMAL mode", 3, whiteListsData.size());
+
+        List<String> paths = new ArrayList<>();
+        for (Map<String, Object> wl : whiteListsData) {
+            paths.add((String) wl.get("path"));
+        }
+
+        assertTrue(paths.contains("/Local State"));
+        assertTrue(paths.contains("/Default/Cookies"));
+        assertTrue(paths.contains("/Default/Cookies-journal"));
     }
 
     @Test
     public void testExtensionContextSyncPolicy() throws Exception {
-        // Test that extension context syncs have correct policy
         ExtensionOption extensionOption = new ExtensionOption(
             "ext-context",
             Arrays.asList("ext1.zip", "ext2.zip")

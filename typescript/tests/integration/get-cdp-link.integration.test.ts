@@ -14,7 +14,7 @@ describe("GetCdpLink Integration Test", () => {
 
   it("should get CDP link with a real browser session", async () => {
     const params: CreateSessionParams = {
-      imageId: "linux_latest"
+      imageId: "linux_latest",
     };
     const sessionResult = await agentBay.create(params);
 
@@ -35,7 +35,9 @@ describe("GetCdpLink Integration Test", () => {
         response = await agentBay.client.getCdpLink(request);
       } catch (error: any) {
         if (error.message && error.message.includes("InvalidAction.NotFound")) {
-          console.log("Skipping test: GetCdpLink API not yet available in production");
+          console.log(
+            "Skipping test: GetCdpLink API not yet available in production"
+          );
           return;
         }
         throw error;
@@ -72,4 +74,3 @@ describe("GetCdpLink Integration Test", () => {
     }
   }, 30000);
 });
-

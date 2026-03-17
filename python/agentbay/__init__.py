@@ -40,6 +40,7 @@ from ._common.params.context_sync import (
 from ._sync.extension import Extension, ExtensionOption, ExtensionsService
 from ._common.params.session_params import (
     BrowserContext,
+    BrowserSyncMode,
     CreateSessionParams,
     ListSessionParams,
 )
@@ -75,6 +76,7 @@ from ._sync.browser import (
 from ._common.models import (
     FingerprintFormat,
     BrowserOption,
+    BrowserNotifyMessage,
     BrowserViewport,
     BrowserScreen,
     BrowserProxy,
@@ -120,7 +122,13 @@ from ._sync.filesystem import (
 )
 from ._sync.oss import Oss, OSSClientResult, OSSDownloadResult, OSSUploadResult
 from ._sync.context_manager import ContextManager
-from ._common.models.context import ContextInfoResult, ContextSyncResult
+from ._common.models.context import (
+    ContextBinding,
+    ContextBindingsResult,
+    ContextBindResult,
+    ContextInfoResult,
+    ContextSyncResult,
+)
 from ._common.models.context import ContextStatusData
 from ._sync.context import (
     ContextListParams,
@@ -173,6 +181,7 @@ __all__ = [
     "AsyncSession",
     # Enums
     "SessionStatus",
+    "BrowserSyncMode",
     # Functional Modules
     "Browser",
     "AsyncBrowser",
@@ -240,12 +249,16 @@ __all__ = [
     "BrowserFingerprint",
     "BrowserProxy",
     "BrowserFingerprintContext",
+    "BrowserNotifyMessage",
     "BrowserOperator",
     "AsyncBrowserOperator",
     "BrowserFingerprintGenerator",
     "FingerprintFormat",
     # Context related
     "ContextListParams",
+    "ContextBinding",
+    "ContextBindingsResult",
+    "ContextBindResult",
     "ContextInfoResult",
     "ContextSyncResult",
     "ContextService",

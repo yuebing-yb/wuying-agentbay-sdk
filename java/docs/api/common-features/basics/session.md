@@ -278,25 +278,6 @@ Set the file transfer context ID for this session
 **Parameters:**
 - `fileTransferContextId` (String): File transfer context ID
 
-### initializeBrowser
-
-```java
-public OperationResult initializeBrowser(BrowserOption option) throws AgentBayException
-```
-
-Initializes a browser instance with the given options.
-
-This method calls the AgentBay cloud service to create a browser instance for web automation and testing. The browser is initialized with a persistent path for storing browser data.
-
-**Parameters:**
-- `option` (BrowserOption): Browser configuration options including browser type, headless mode, etc.
-
-**Returns:**
-- `OperationResult`: OperationResult containing the initialization result
-
-**Throws:**
-- `AgentBayException`: if browser initialization fails
-
 ### getApiKey
 
 ```java
@@ -492,7 +473,7 @@ This method generates a connection URL that can be used to access the session vi
 
 **Parameters:**
 - `protocolType` (String): The protocol type to use for the link (e.g., "https")
-- `port` (Integer): The port number to use for the connection
+- `port` (Integer): The port number to use for the connection (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com)
 
 **Returns:**
 - `OperationResult`: OperationResult containing the connection link URL
@@ -555,6 +536,56 @@ This method retrieves all labels that have been set for this session.
 
 **Returns:**
 - `OperationResult`: OperationResult containing the labels map as JSON string in the data field
+
+**Throws:**
+- `AgentBayException`: if the API call fails
+
+### betaPause
+
+```java
+public SessionPauseResult betaPause(int timeout, double pollInterval) throws AgentBayException
+```
+
+```java
+public SessionPauseResult betaPause() throws AgentBayException
+```
+
+Pauses this session (beta feature).
+
+This method sends a pause request to the backend and polls the session status
+until it reaches the PAUSED state or times out.
+
+**Parameters:**
+- `timeout` (int): Maximum time to wait for pause completion in seconds (default: 600)
+- `pollInterval` (double): Interval between status checks in seconds (default: 2.0)
+
+**Returns:**
+- `SessionPauseResult`: SessionPauseResult containing the pause operation result
+
+**Throws:**
+- `AgentBayException`: if the API call fails
+
+### betaResume
+
+```java
+public SessionResumeResult betaResume(int timeout, double pollInterval) throws AgentBayException
+```
+
+```java
+public SessionResumeResult betaResume() throws AgentBayException
+```
+
+Resumes this session and waits until it enters RUNNING state (beta feature).
+
+This method sends a resume request to the backend and polls the session status
+until it reaches the RUNNING state or the timeout is exceeded.
+
+**Parameters:**
+- `timeout` (int): Maximum time to wait in seconds (must be > 0, default 600)
+- `pollInterval` (double): Time between status checks in seconds (must be > 0, default 2.0)
+
+**Returns:**
+- `SessionResumeResult`: SessionResumeResult containing the resume operation result
 
 **Throws:**
 - `AgentBayException`: if the API call fails

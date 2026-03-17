@@ -374,7 +374,7 @@ Retrieves an access link for the session.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `protocolType?` | `string` | Protocol type for the link (optional, reserved for future use) |
-| `port?` | `number` | Specific port number to access (must be in range [30100, 30199]). If not specified, returns the default session link. |
+| `port?` | `number` | Specific port number to access (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com). If not specified, returns the default session link. |
 | `options?` | `string` | - |
 
 #### Returns
@@ -408,7 +408,7 @@ if (result.success) {
 **Behavior:**
 - Without port: Returns the default session access URL
 - With port: Returns URL for accessing specific port-mapped service
-- Port must be in range [30100, 30199] for port forwarding
+- Default open port range: [30100, 30199]; other ports require whitelist approval
 - For ADB connections, use `session.mobile.getAdbUrl()` with appropriate ADB public key
 
 **Best Practices:**
@@ -433,7 +433,7 @@ Asynchronously get a link associated with the current session.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `protocolType?` | `string` | Optional protocol type to use for the link |
-| `port?` | `number` | Optional port to use for the link (must be in range [30100, 30199]) |
+| `port?` | `number` | Optional port to use for the link (default open range: [30100, 30199]; other ports require whitelist approval) |
 | `options?` | `string` | - |
 
 #### Returns

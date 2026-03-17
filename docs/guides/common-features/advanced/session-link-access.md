@@ -73,7 +73,7 @@ Examples below use the async session (via `AsyncAgentBay`). For synchronous sess
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `protocol_type` | `str` | No | Protocol type: `"https"` or `"wss"`. If not specified, defaults to WSS for browser CDP endpoint |
-| `port` | `int` | No | Port number in range [30100, 30199] for custom services |
+| `port` | `int` | No | Port number for custom services. Default open range: [30100, 30199]; other ports require whitelist approval |
 | `options` | `str` | No | Optional passthrough string for backend options |
 
 ### Return Value
@@ -128,7 +128,7 @@ if result.success:
 
 ### Parameter Constraints
 
-- **Port Range**: Must be in [30100, 30199]
+- **Port Range**: The default open range is [30100, 30199]. If you need to expose a port outside this range, contact agentbay_dev@alibabacloud.com to request a whitelist entry.
 - **Protocol Types**: Only `"https"` and `"wss"` are supported; omit to use the default WebSocket/CDP endpoint
 - **Browser CDP**: Requires Browser Use image (e.g., `browser_latest`)
 - **Options**: Optional string passed through to the backend unchanged
@@ -137,9 +137,9 @@ if result.success:
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| "Invalid port value: <port>. Port must be an integer in the range [30100, 30199]." | Port outside valid range or not an integer | Use a port in the valid range |
 | "http not supported" | Using `protocol_type="http"` | Use `"https"` instead |
 | "only BrowserUse image support cdp" | Non-browser image with no parameters | Use `browser_latest` image or specify a service port |
+| Port not accessible | Port outside [30100, 30199] and not whitelisted | Use a port in the default range, or email agentbay_dev@alibabacloud.com to request a whitelist entry |
 
 ---
 
@@ -187,20 +187,36 @@ if __name__ == "__main__":
     asyncio.run(get_multiple_links())
 ```
 
-### Best Practices
+### Server-Sent Events (SSE) Support
 
-#### 1. Parameter Validation
+The HTTPS links returned by `get_link` go through a reverse proxy that **buffers responses by default**. This works well for normal HTTP requests, but breaks SSE (Server-Sent Events) streaming because the proxy waits for the complete response before forwarding.
+
+**To enable SSE streaming**, your service must include the `X-Accel-Buffering: no` header in SSE responses. This tells the proxy to switch to streaming mode for that response.
 
 ```python
-def safe_get_link(session, protocol_type=None, port=None):
-    """Safely get session link with validation"""
-    if port is not None and not (30100 <= port <= 30199):
-        raise ValueError(f"Port {port} outside valid range [30100, 30199]")
-    
-    return session.get_link(protocol_type=protocol_type, port=port)
+from flask import Flask, Response
+import json, time
+
+app = Flask(__name__)
+
+def event_stream():
+    for i in range(10):
+        yield f"data: {json.dumps({'counter': i})}\n\n"
+        time.sleep(1)
+
+@app.route("/sse")
+def sse():
+    resp = Response(event_stream(), mimetype="text/event-stream")
+    resp.headers["Cache-Control"] = "no-cache"
+    resp.headers["X-Accel-Buffering"] = "no"  # Required for SSE through the proxy
+    return resp
 ```
 
-#### 2. Error Handling
+> **Important**: Without the `X-Accel-Buffering: no` header, SSE events will be buffered and delivered all at once when the connection closes (or trigger a timeout). This also applies to any streaming HTTP response that uses chunked transfer encoding.
+
+### Best Practices
+
+#### 1. Error Handling
 
 ```python
 def robust_get_link(session, protocol_type=None, port=None):

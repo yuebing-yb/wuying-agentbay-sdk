@@ -38,7 +38,8 @@ describe("Session LinkUrl logging", () => {
     fetchStub.resolves({
       ok: false,
       status: 502,
-      text: async () => '{"code":"BadGateway","message":"upstream","token":"tok_123456"}',
+      text: async () =>
+        '{"code":"BadGateway","message":"upstream","token":"tok_123456"}',
     });
 
     const result = await s.callMcpTool(
@@ -61,4 +62,3 @@ describe("Session LinkUrl logging", () => {
     expect(String(calls[0].args[4])).to.include("tok_123456");
   });
 });
-

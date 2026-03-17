@@ -1,1 +1,7 @@
-export { Computer, BoolResult, CursorPosition, ScreenSize, ScreenshotResult } from './computer'; 
+export {
+  Computer,
+  BoolResult,
+  CursorPosition,
+  ScreenSize,
+  ScreenshotResult,
+} from "./computer";

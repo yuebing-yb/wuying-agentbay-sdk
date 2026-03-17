@@ -48,7 +48,11 @@ import {
   setRequestId,
 } from "./utils/logger";
 
-async function fetchCompat(input: any, init: any, timeoutMs?: number): Promise<any> {
+async function fetchCompat(
+  input: any,
+  init: any,
+  timeoutMs?: number
+): Promise<any> {
   // Add timeout support using AbortController if timeout is specified
   if (timeoutMs && timeoutMs > 0) {
     // Use globalThis.AbortController for better compatibility
@@ -67,12 +71,12 @@ async function fetchCompat(input: any, init: any, timeoutMs?: number): Promise<a
 
     const controller = new AbortControllerClass();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
+
     init = {
       ...init,
       signal: controller.signal,
     };
-    
+
     try {
       const f = (globalThis as any).fetch;
       if (typeof f === "function") {
@@ -88,13 +92,13 @@ async function fetchCompat(input: any, init: any, timeoutMs?: number): Promise<a
       return response;
     } catch (error: any) {
       clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
+      if (error.name === "AbortError") {
         throw new Error(`Request timeout after ${timeoutMs}ms`);
       }
       throw error;
     }
   }
-  
+
   const f = (globalThis as any).fetch;
   if (typeof f === "function") {
     return await f(input, init);
@@ -427,7 +431,10 @@ export class Session {
       const errorStr = String(error);
       const errorCode = error?.data?.Code || error?.code || "";
 
-      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+      if (
+        errorCode === "InvalidMcpSession.NotFound" ||
+        errorStr.includes("NotFound")
+      ) {
         logInfoWithColor(`Session not found: ${this.sessionId}`);
         logDebug(`GetSessionDetail error details: ${errorStr}`);
         return {
@@ -467,11 +474,14 @@ export class Session {
       });
 
       const response = await this.getClient().refreshSessionIdleTime(request);
-      const requestId = extractRequestId(response) || response?.body?.requestId || "";
+      const requestId =
+        extractRequestId(response) || response?.body?.requestId || "";
 
       const body = response?.body;
       if (body?.success === false && body.code) {
-        const errorMessage = `[${body.code}] ${body.message || "Unknown error"}`;
+        const errorMessage = `[${body.code}] ${
+          body.message || "Unknown error"
+        }`;
         logAPIResponseWithDetails(
           "RefreshSessionIdleTime",
           requestId,
@@ -564,8 +574,7 @@ export class Session {
       if (this._wsClient) {
         try {
           await this._wsClient.close();
-        } catch (_e) {
-        }
+        } catch (_e) {}
         this._wsClient = null;
       }
       if (syncContext) {
@@ -675,7 +684,9 @@ export class Session {
 
           if (isNotFound) {
             // Session is deleted
-            logInfo(`✅ Session ${this.sessionId} successfully deleted (NotFound)`);
+            logInfo(
+              `✅ Session ${this.sessionId} successfully deleted (NotFound)`
+            );
             break;
           } else {
             // Other error, continue polling
@@ -698,12 +709,9 @@ export class Session {
       }
 
       // Log successful deletion
-      logAPIResponseWithDetails(
-        "DeleteSessionAsync",
-        requestId,
-        true,
-        { sessionId: this.sessionId }
-      );
+      logAPIResponseWithDetails("DeleteSessionAsync", requestId, true, {
+        sessionId: this.sessionId,
+      });
 
       // Return success result with request ID
       return {
@@ -1082,9 +1090,9 @@ export class Session {
           `❌ Failed to get session info for session ${this.sessionId}`,
           error
         );
-      throw new Error(
-        `Failed to get session info for session ${this.sessionId}: ${error}`
-      );
+        throw new Error(
+          `Failed to get session info for session ${this.sessionId}: ${error}`
+        );
       }
     }
   }
@@ -1093,7 +1101,7 @@ export class Session {
    * Retrieves an access link for the session.
    *
    * @param protocolType - Protocol type for the link (optional, reserved for future use)
-   * @param port - Specific port number to access (must be in range [30100, 30199]).
+   * @param port - Specific port number to access (default open range: [30100, 30199]; other ports require whitelist approval via agentbay_dev@alibabacloud.com).
    *               If not specified, returns the default session link.
    *
    * @returns Promise resolving to OperationResult containing:
@@ -1119,7 +1127,7 @@ export class Session {
    * **Behavior:**
    * - Without port: Returns the default session access URL
    * - With port: Returns URL for accessing specific port-mapped service
-   * - Port must be in range [30100, 30199] for port forwarding
+   * - Default open port range: [30100, 30199]; other ports require whitelist approval
    * - For ADB connections, use `session.mobile.getAdbUrl()` with appropriate ADB public key
    *
    * **Best Practices:**
@@ -1135,15 +1143,6 @@ export class Session {
     options?: string
   ): Promise<OperationResult> {
     try {
-      // Validate port range if port is provided
-      if (port) {
-        if (!Number.isInteger(port) || port < 30100 || port > 30199) {
-          throw new Error(
-            `Invalid port value: ${port}. Port must be an integer in the range [30100, 30199].`
-          );
-        }
-      }
-
       // Log API call
       let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${
         protocolType || "default"
@@ -1214,7 +1213,7 @@ export class Session {
    * Asynchronously get a link associated with the current session.
    *
    * @param protocolType - Optional protocol type to use for the link
-   * @param port - Optional port to use for the link (must be in range [30100, 30199])
+   * @param port - Optional port to use for the link (default open range: [30100, 30199]; other ports require whitelist approval)
    * @returns OperationResult containing the link as data and request ID
    * @throws Error if the operation fails (matching Python SessionError)
    *
@@ -1235,15 +1234,6 @@ export class Session {
     options?: string
   ): Promise<OperationResult> {
     try {
-      // Validate port range if port is provided
-      if (port !== undefined) {
-        if (!Number.isInteger(port) || port < 30100 || port > 30199) {
-          throw new Error(
-            `Invalid port value: ${port}. Port must be an integer in the range [30100, 30199].`
-          );
-        }
-      }
-
       // Log API call
       let requestParams = `SessionId=${this.getSessionId()}, ProtocolType=${
         protocolType || "default"
@@ -1626,7 +1616,9 @@ export class Session {
 
     logAPICall(
       "CallMcpTool(LinkUrl)",
-      `Tool=${toolName}, ArgsLength=${JSON.stringify(args).length}, RequestId=${requestId}`
+      `Tool=${toolName}, ArgsLength=${
+        JSON.stringify(args).length
+      }, RequestId=${requestId}`
     );
 
     const url = `${linkUrl.replace(/\/+$/, "")}/callTool`;
@@ -1638,14 +1630,18 @@ export class Session {
       token,
     };
 
-    const resp = await fetchCompat(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Access-Token": token,
+    const resp = await fetchCompat(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Access-Token": token,
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    }, 900000); // 900 seconds timeout
+      900000
+    ); // 900 seconds timeout
 
     if (!resp.ok) {
       const bodyText = await resp.text().catch(() => "");
@@ -1673,12 +1669,17 @@ export class Session {
 
     const resultField = parsedData?.result;
     const isError = resultField?.isError === true;
-    const content = Array.isArray(resultField?.content) ? resultField.content : [];
+    const content = Array.isArray(resultField?.content)
+      ? resultField.content
+      : [];
     const first = content[0] ?? {};
     const textContent =
       typeof first === "string"
         ? first
-        : (first as any).text ?? (first as any).blob ?? (first as any).data ?? "";
+        : (first as any).text ??
+          (first as any).blob ??
+          (first as any).data ??
+          "";
 
     logAPIResponseWithDetails(
       "CallMcpTool(LinkUrl) Response",
@@ -1695,7 +1696,9 @@ export class Session {
 
     if (toolName === "run_code") {
       const dataStr =
-        typeof textContent === "string" ? textContent : JSON.stringify(textContent);
+        typeof textContent === "string"
+          ? textContent
+          : JSON.stringify(textContent);
       logCodeExecutionOutput(requestId, dataStr);
       return {
         success: !isError,
@@ -1746,7 +1749,9 @@ export class Session {
 
     try {
       const raw =
-        typeof toolResult.data === "string" ? JSON.parse(toolResult.data) : toolResult.data;
+        typeof toolResult.data === "string"
+          ? JSON.parse(toolResult.data)
+          : toolResult.data;
 
       if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
         throw new Error("get_metrics returned non-object JSON");
@@ -1760,13 +1765,29 @@ export class Session {
         memTotal: Number((raw as any).mem_total ?? 0),
         memUsed: Number((raw as any).mem_used ?? 0),
         rxRateKbytePerS: Number(
-          (raw as any).rx_rate_kbyte_per_s ?? (raw as any).rx_rate_kbps ?? (raw as any).rx_rate_KBps ?? 0,
+          (raw as any).rx_rate_kbyte_per_s ??
+            (raw as any).rx_rate_kbps ??
+            (raw as any).rx_rate_KBps ??
+            0
         ),
         txRateKbytePerS: Number(
-          (raw as any).tx_rate_kbyte_per_s ?? (raw as any).tx_rate_kbps ?? (raw as any).tx_rate_KBps ?? 0,
+          (raw as any).tx_rate_kbyte_per_s ??
+            (raw as any).tx_rate_kbps ??
+            (raw as any).tx_rate_KBps ??
+            0
         ),
-        rxUsedKbyte: Number((raw as any).rx_used_kbyte ?? (raw as any).rx_used_kb ?? (raw as any).rx_used_KB ?? 0),
-        txUsedKbyte: Number((raw as any).tx_used_kbyte ?? (raw as any).tx_used_kb ?? (raw as any).tx_used_KB ?? 0),
+        rxUsedKbyte: Number(
+          (raw as any).rx_used_kbyte ??
+            (raw as any).rx_used_kb ??
+            (raw as any).rx_used_KB ??
+            0
+        ),
+        txUsedKbyte: Number(
+          (raw as any).tx_used_kbyte ??
+            (raw as any).tx_used_kb ??
+            (raw as any).tx_used_KB ??
+            0
+        ),
         timestamp: String((raw as any).timestamp ?? ""),
       };
 
@@ -1783,7 +1804,9 @@ export class Session {
         success: false,
         data: undefined,
         raw: undefined,
-        errorMessage: `Failed to parse get_metrics response: ${err?.message || String(err)}`,
+        errorMessage: `Failed to parse get_metrics response: ${
+          err?.message || String(err)
+        }`,
       };
     }
   }
@@ -1836,7 +1859,10 @@ export class Session {
    *
    * @see {@link betaResumeAsync}
    */
-  async betaPauseAsync(timeout = 600, pollInterval = 2.0): Promise<SessionPauseResult> {
+  async betaPauseAsync(
+    timeout = 600,
+    pollInterval = 2.0
+  ): Promise<SessionPauseResult> {
     try {
       const request = new $_client.PauseSessionAsyncRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -1890,7 +1916,10 @@ export class Session {
         };
       }
 
-      logInfo(`PauseSessionAsync`, `Session ${this.sessionId} pause initiated successfully`);
+      logInfo(
+        `PauseSessionAsync`,
+        `Session ${this.sessionId} pause initiated successfully`
+      );
 
       // Poll for session status until PAUSED or timeout
       const startTime = Date.now();
@@ -1912,7 +1941,9 @@ export class Session {
         // Check session status
         if (getResult.data) {
           const status = getResult.data.status || "UNKNOWN";
-          logDebug(`Session status: ${status} (attempt ${attempt + 1}/${maxAttempts})`);
+          logDebug(
+            `Session status: ${status} (attempt ${attempt + 1}/${maxAttempts})`
+          );
 
           // Check if session is paused
           if (status === "PAUSED") {
@@ -1943,7 +1974,9 @@ export class Session {
         // Only wait if we're not at the last attempt
         attempt++;
         if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
+          await new Promise((resolve) =>
+            setTimeout(resolve, pollInterval * 1000)
+          );
         }
       }
 
@@ -2011,7 +2044,10 @@ export class Session {
    *
    * @see {@link betaPauseAsync}
    */
-  async betaResumeAsync(timeout = 600, pollInterval = 2.0): Promise<SessionResumeResult> {
+  async betaResumeAsync(
+    timeout = 600,
+    pollInterval = 2.0
+  ): Promise<SessionResumeResult> {
     try {
       const request = new $_client.ResumeSessionAsyncRequest({
         authorization: `Bearer ${this.getAPIKey()}`,
@@ -2065,7 +2101,10 @@ export class Session {
         };
       }
 
-      logInfo(`ResumeSessionAsync`, `Session ${this.sessionId} resume initiated successfully`);
+      logInfo(
+        `ResumeSessionAsync`,
+        `Session ${this.sessionId} resume initiated successfully`
+      );
 
       // Poll for session status until RUNNING or timeout
       const startTime = Date.now();
@@ -2087,7 +2126,9 @@ export class Session {
         // Check session status
         if (getResult.data) {
           const status = getResult.data.status || "UNKNOWN";
-          logDebug(`Session status: ${status} (attempt ${attempt + 1}/${maxAttempts})`);
+          logDebug(
+            `Session status: ${status} (attempt ${attempt + 1}/${maxAttempts})`
+          );
 
           // Check if session is running
           if (status === "RUNNING") {
@@ -2118,7 +2159,9 @@ export class Session {
         // Only wait if we're not at the last attempt
         attempt++;
         if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
+          await new Promise((resolve) =>
+            setTimeout(resolve, pollInterval * 1000)
+          );
         }
       }
 

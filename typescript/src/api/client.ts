@@ -138,9 +138,12 @@ export class Client extends OpenApi {
    * @param runtime - runtime options for this request RuntimeOptions
    * @returns ClearContextResponse
    */
-  async clearContextWithOptions(request: $_model.ClearContextRequest, runtime: $dara.RuntimeOptions): Promise<$_model.ClearContextResponse> {
+  async clearContextWithOptions(
+    request: $_model.ClearContextRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.ClearContextResponse> {
     request.validate();
-    const body : {[key: string ]: any} = { };
+    const body: { [key: string]: any } = {};
     if (!$dara.isNull(request.authorization)) {
       body["Authorization"] = request.authorization;
     }
@@ -163,7 +166,19 @@ export class Client extends OpenApi {
       reqBodyType: "formData",
       bodyType: "json",
     });
-    return $dara.cast<$_model.ClearContextResponse>(await this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new $_model.ClearContextResponse({}));
+    return $dara.cast<$_model.ClearContextResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.ClearContextResponse({})
+    );
   }
 
   /**
@@ -172,8 +187,10 @@ export class Client extends OpenApi {
    * @param request - ClearContextRequest
    * @returns ClearContextResponse
    */
-  async clearContext(request: $_model.ClearContextRequest): Promise<$_model.ClearContextResponse> {
-    const runtime = new $dara.RuntimeOptions({ });
+  async clearContext(
+    request: $_model.ClearContextRequest
+  ): Promise<$_model.ClearContextResponse> {
+    const runtime = new $dara.RuntimeOptions({});
     return await this.clearContextWithOptions(request, runtime);
   }
   /**
@@ -401,15 +418,18 @@ export class Client extends OpenApi {
   }
 
   /**
-   * Delete session 
-   * 
+   * Delete session
+   *
    * @param request - DeleteSessionAsyncRequest
    * @param runtime - runtime options for this request RuntimeOptions
    * @returns DeleteSessionAsyncResponse
    */
-  async deleteSessionAsyncWithOptions(request: $_model.DeleteSessionAsyncRequest, runtime: $dara.RuntimeOptions): Promise<$_model.DeleteSessionAsyncResponse> {
+  async deleteSessionAsyncWithOptions(
+    request: $_model.DeleteSessionAsyncRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.DeleteSessionAsyncResponse> {
     request.validate();
-    const body : {[key: string ]: any} = { };
+    const body: { [key: string]: any } = {};
     if (!$dara.isNull(request.authorization)) {
       body["Authorization"] = request.authorization;
     }
@@ -432,20 +452,33 @@ export class Client extends OpenApi {
       reqBodyType: "formData",
       bodyType: "json",
     });
-    return $dara.cast<$_model.DeleteSessionAsyncResponse>(await this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new $_model.DeleteSessionAsyncResponse({}));
+    return $dara.cast<$_model.DeleteSessionAsyncResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.DeleteSessionAsyncResponse({})
+    );
   }
 
   /**
    * Delete session
-   * 
+   *
    * @param request - DeleteSessionAsyncRequest
    * @returns DeleteSessionAsyncResponse
    */
-  async deleteSessionAsync(request: $_model.DeleteSessionAsyncRequest): Promise<$_model.DeleteSessionAsyncResponse> {
-    const runtime = new $dara.RuntimeOptions({ });
+  async deleteSessionAsync(
+    request: $_model.DeleteSessionAsyncRequest
+  ): Promise<$_model.DeleteSessionAsyncResponse> {
+    const runtime = new $dara.RuntimeOptions({});
     return await this.deleteSessionAsyncWithOptions(request, runtime);
   }
-
 
   /**
    * Delete persistent context
@@ -1085,7 +1118,6 @@ export class Client extends OpenApi {
     return await this.getMcpResourceWithOptions(request, runtime);
   }
 
-
   /**
    * Get internal context request
    *
@@ -1093,7 +1125,10 @@ export class Client extends OpenApi {
    * @param runtime - runtime options for this request RuntimeOptions
    * @returns GetAndLoadInternalContextResponse
    */
-  async getAndLoadInternalContextWithOptions(request: $_model.GetAndLoadInternalContextRequest, runtime: $dara.RuntimeOptions): Promise<$_model.GetAndLoadInternalContextResponse> {
+  async getAndLoadInternalContextWithOptions(
+    request: $_model.GetAndLoadInternalContextRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.GetAndLoadInternalContextResponse> {
     request.validate();
     const query = OpenApiUtil.query(request.toMap());
     const req = new $OpenApiUtil.OpenApiRequest({
@@ -1110,7 +1145,19 @@ export class Client extends OpenApi {
       reqBodyType: "formData",
       bodyType: "json",
     });
-    return $dara.cast<$_model.GetAndLoadInternalContextResponse>(await this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new $_model.GetAndLoadInternalContextResponse({}));
+    return $dara.cast<$_model.GetAndLoadInternalContextResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.GetAndLoadInternalContextResponse({})
+    );
   }
 
   /**
@@ -1119,8 +1166,10 @@ export class Client extends OpenApi {
    * @param request - GetAndLoadInternalContextRequest
    * @returns GetAndLoadInternalContextResponse
    */
-  async getAndLoadInternalContext(request: $_model.GetAndLoadInternalContextRequest): Promise<$_model.GetAndLoadInternalContextResponse> {
-    const runtime = new $dara.RuntimeOptions({ });
+  async getAndLoadInternalContext(
+    request: $_model.GetAndLoadInternalContextRequest
+  ): Promise<$_model.GetAndLoadInternalContextResponse> {
+    const runtime = new $dara.RuntimeOptions({});
     return await this.getAndLoadInternalContextWithOptions(request, runtime);
   }
 
@@ -2066,5 +2115,117 @@ export class Client extends OpenApi {
   ): Promise<$_model.GetAdbLinkResponse> {
     const runtime = new $dara.RuntimeOptions({});
     return await this.getAdbLinkWithOptions(request, runtime);
+  }
+
+  async bindContextsWithOptions(
+    tmpReq: $_model.BindContextsRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.BindContextsResponse> {
+    tmpReq.validate();
+    const request = new $_model.BindContextsShrinkRequest({});
+    OpenApiUtil.convert(tmpReq, request);
+    if (!$dara.isNull(tmpReq.persistenceDataList)) {
+      request.persistenceDataListShrink =
+        OpenApiUtil.arrayToStringWithSpecifiedStyle(
+          tmpReq.persistenceDataList,
+          "PersistenceDataList",
+          "json"
+        );
+    }
+
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.persistenceDataListShrink)) {
+      body["PersistenceDataList"] = request.persistenceDataListShrink;
+    }
+    if (!$dara.isNull(request.sessionId)) {
+      body["SessionId"] = request.sessionId;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "BindContexts",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.BindContextsResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.BindContextsResponse({})
+    );
+  }
+
+  async bindContexts(
+    request: $_model.BindContextsRequest
+  ): Promise<$_model.BindContextsResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.bindContextsWithOptions(request, runtime);
+  }
+
+  async describeSessionContextsWithOptions(
+    request: $_model.DescribeSessionContextsRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.DescribeSessionContextsResponse> {
+    request.validate();
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+    if (!$dara.isNull(request.sessionId)) {
+      body["SessionId"] = request.sessionId;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "DescribeSessionContexts",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.DescribeSessionContextsResponse>(
+      await this.doRPCRequest(
+        params.action,
+        params.version,
+        params.protocol,
+        params.method,
+        params.authType,
+        params.bodyType,
+        req,
+        runtime
+      ),
+      new $_model.DescribeSessionContextsResponse({})
+    );
+  }
+
+  async describeSessionContexts(
+    request: $_model.DescribeSessionContextsRequest
+  ): Promise<$_model.DescribeSessionContextsResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.describeSessionContextsWithOptions(request, runtime);
   }
 }

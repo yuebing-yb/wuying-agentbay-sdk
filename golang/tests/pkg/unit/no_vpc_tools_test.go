@@ -22,4 +22,3 @@ func TestNoVpcParamsInCreateSessionParams(t *testing.T) {
 		}
 	})
 }
-

@@ -1,10 +1,35 @@
-import { ContextSync, SyncPolicy, newUploadPolicy, newExtractPolicy,newRecyclePolicy,Lifecycle,DownloadStrategy, WhiteList, newDeletePolicy } from "./context-sync";
+import {
+  ContextSync,
+  SyncPolicy,
+  newUploadPolicy,
+  newExtractPolicy,
+  newRecyclePolicy,
+  Lifecycle,
+  DownloadStrategy,
+  WhiteList,
+  newDeletePolicy,
+} from "./context-sync";
 import { ExtensionOption } from "./extension";
 import { BrowserFingerprintContext } from "./browser";
 import { ExtraConfigs, extraConfigsToJSON } from "./types/extra-configs";
 
 // Browser fingerprint persistent path constant (moved from config.ts)
 const BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/browser_fingerprint";
+
+/**
+ * Browser data synchronization mode.
+ *
+ * Controls the scope of browser data synchronized between sessions.
+ * - MINIMAL: Only Cookies + Local State. Smallest footprint, sufficient for basic cookie-based auth.
+ * - STANDARD: Login state + anti-risk-control data. Includes Cookies, localStorage, IndexedDB,
+ *   saved passwords, preferences, HSTS, GPU cache, etc. Recommended for most scenarios.
+ */
+export enum BrowserSyncMode {
+  /** Synchronize only essential files (Cookies, Local State). */
+  MINIMAL = "minimal",
+  /** Synchronize login state and anti-risk-control data (recommended). */
+  STANDARD = "standard",
+}
 import {
   log,
   logError,
@@ -19,36 +44,36 @@ import {
 
 /**
  * Browser context configuration for session with optional extension support.
- * 
+ *
  * This class provides browser context configuration for cloud sessions and supports
  * automatic extension synchronization when ExtensionOption is provided.
- * 
+ *
  * Key Features:
  * - Browser context binding for sessions
  * - Automatic browser data upload on session end
  * - Optional extension integration with automatic context sync generation
  * - Clean API with ExtensionOption encapsulation
- * 
+ *
  * Extension Configuration:
  * - **ExtensionOption**: Pass an ExtensionOption object with contextId and extensionIds
  * - **No Extensions**: Don't provide extensionOption parameter (extensionContextSyncs will be undefined)
- * 
+ *
  * Usage Examples:
  * ```typescript
  * // With extensions using ExtensionOption
  * import { ExtensionOption } from "./extension";
- * 
+ *
  * const extOption = new ExtensionOption(
  *   "my_extensions",
  *   ["ext1", "ext2"]
  * );
- * 
+ *
  * const browserContext = new BrowserContext(
  *   "browser_session",
  *   true,
  *   extOption
  * );
- * 
+ *
  * // Without extensions (minimal configuration)
  * const browserContext = new BrowserContext(
  *   "browser_session",
@@ -62,6 +87,8 @@ export class BrowserContext {
   contextId: string;
   /** Whether to automatically upload browser data when the session ends */
   autoUpload: boolean;
+  /** Browser data synchronization mode. Defaults to STANDARD. */
+  syncMode: BrowserSyncMode;
   /** Optional browser fingerprint context configuration object containing fingerprintContextId */
   fingerprintContext?: BrowserFingerprintContext;
   /** ID of the fingerprint context for browser fingerprint. Set automatically from fingerprint_context. */
@@ -92,6 +119,10 @@ export class BrowserContext {
    *                            fingerprintContextId. This encapsulates
    *                            all fingerprint-related configuration.
    *                            Defaults to undefined.
+   * @param syncMode - Browser data synchronization mode.
+   *                  MINIMAL: only Cookies + Local State.
+   *                  STANDARD: login state + anti-risk-control data (recommended).
+   *                  Defaults to STANDARD.
    *
    * Extension Configuration:
    * - **ExtensionOption**: Use extensionOption parameter with an ExtensionOption object
@@ -113,10 +144,12 @@ export class BrowserContext {
     contextId: string,
     autoUpload = true,
     extensionOption?: ExtensionOption,
-    fingerprintContext?: BrowserFingerprintContext
+    fingerprintContext?: BrowserFingerprintContext,
+    syncMode: BrowserSyncMode = BrowserSyncMode.STANDARD
   ) {
     this.contextId = contextId;
     this.autoUpload = autoUpload;
+    this.syncMode = syncMode;
     this.extensionOption = extensionOption;
     this.fingerprintContext = fingerprintContext;
 
@@ -157,38 +190,42 @@ export class BrowserContext {
    *                         Returns empty list if extension configuration is invalid.
    */
   private _createExtensionContextSyncs(): ContextSync[] {
-    if (!this.extensionIds || this.extensionIds.length === 0 || !this.extensionContextId) {
+    if (
+      !this.extensionIds ||
+      this.extensionIds.length === 0 ||
+      !this.extensionContextId
+    ) {
       return [];
     }
 
     // Create whitelist for each extension ID
-    const whiteLists: WhiteList[] = this.extensionIds.map(extId => ({
+    const whiteLists: WhiteList[] = this.extensionIds.map((extId) => ({
       path: extId,
-      excludePaths: []
+      excludePaths: [],
     }));
 
     // Create sync policy for extensions
     const syncPolicy: SyncPolicy = {
       uploadPolicy: {
         ...newUploadPolicy(),
-        autoUpload: false
+        autoUpload: false,
       },
       extractPolicy: {
         ...newExtractPolicy(),
         extract: true,
-        deleteSrcFile: true
+        deleteSrcFile: true,
       },
       deletePolicy: {
         ...newDeletePolicy(),
-        syncLocalFile: false
+        syncLocalFile: false,
       },
       recyclePolicy: newRecyclePolicy(),
       bwList: {
-        whiteLists: whiteLists
+        whiteLists: whiteLists,
       },
-      downloadPolicy:{
-        autoDownload:true,
-        downloadStrategy: DownloadStrategy.DownloadAsync
+      downloadPolicy: {
+        autoDownload: true,
+        downloadStrategy: DownloadStrategy.DownloadAsync,
       },
     };
 
@@ -220,21 +257,21 @@ export class BrowserContext {
     const syncPolicy: SyncPolicy = {
       uploadPolicy: {
         ...newUploadPolicy(),
-        autoUpload: false
+        autoUpload: false,
       },
       extractPolicy: {
         ...newExtractPolicy(),
         extract: true,
-        deleteSrcFile: true
+        deleteSrcFile: true,
       },
       deletePolicy: {
         ...newDeletePolicy(),
-        syncLocalFile: false
+        syncLocalFile: false,
       },
       recyclePolicy: newRecyclePolicy(),
       bwList: {
-        whiteLists: []
-      }
+        whiteLists: [],
+      },
     };
 
     // Create context sync for fingerprint
@@ -265,7 +302,6 @@ export class BrowserContext {
   getFingerprintContextSync(): ContextSync | undefined {
     return this.fingerprintContextSync;
   }
-  
 }
 
 /**
@@ -341,7 +377,6 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
   public framework: string;
 
   public browserContext?: BrowserContext;
-  
 
   constructor(params?: CreateSessionParamsInterface) {
     this.labels = params?.labels || {};
@@ -349,33 +384,52 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
     const idle = (params as any)?.idleReleaseTimeout;
     if (idle === undefined || idle === null) {
       this.idleReleaseTimeout = 0;
-    } else if (typeof idle !== "number" || !Number.isInteger(idle) || idle <= 0) {
-      throw new Error("idleReleaseTimeout must be a positive integer (seconds)");
+    } else if (
+      typeof idle !== "number" ||
+      !Number.isInteger(idle) ||
+      idle <= 0
+    ) {
+      throw new Error(
+        "idleReleaseTimeout must be a positive integer (seconds)"
+      );
     } else {
       this.idleReleaseTimeout = idle;
     }
     this.isVpc = params?.isVpc || false;
     // Handle policyId mapping - if policyId is provided, use it, otherwise use mcpPolicyId
-    this.mcpPolicyId = params?.mcpPolicyId ? params.mcpPolicyId :'';
-    this.policyId = params?.policyId ? params.policyId : '';
+    this.mcpPolicyId = params?.mcpPolicyId ? params.mcpPolicyId : "";
+    this.policyId = params?.policyId ? params.policyId : "";
     this.betaNetworkId = params?.betaNetworkId;
     // Default to true like Python version
-    this.enableBrowserReplay = params?.enableBrowserReplay ? params.enableBrowserReplay : true;
+    this.enableBrowserReplay = params?.enableBrowserReplay
+      ? params.enableBrowserReplay
+      : true;
     this.extraConfigs = params?.extraConfigs;
     this.framework = params?.framework || "";
-    
+
     // Start with provided contextSync
     let allContextSyncs = params?.contextSync ? [...params.contextSync] : [];
 
     // Add extension context syncs from browserContext if available
     if (params?.browserContext && params.browserContext.extensionContextSyncs) {
-      allContextSyncs = [...allContextSyncs, ...params.browserContext.extensionContextSyncs];
-      log(`Added ${params.browserContext.extensionContextSyncs.length} extension context sync(s) from BrowserContext`);
+      allContextSyncs = [
+        ...allContextSyncs,
+        ...params.browserContext.extensionContextSyncs,
+      ];
+      log(
+        `Added ${params.browserContext.extensionContextSyncs.length} extension context sync(s) from BrowserContext`
+      );
     }
-    
+
     // Add fingerprint context sync from browserContext if available
-    if (params?.browserContext && params.browserContext.fingerprintContextSync) {
-      allContextSyncs = [...allContextSyncs, params.browserContext.fingerprintContextSync];
+    if (
+      params?.browserContext &&
+      params.browserContext.fingerprintContextSync
+    ) {
+      allContextSyncs = [
+        ...allContextSyncs,
+        params.browserContext.fingerprintContextSync,
+      ];
       log("Added fingerprint context sync from BrowserContext");
     }
 

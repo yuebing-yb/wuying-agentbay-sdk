@@ -11,7 +11,9 @@ describe("FileSystem Watch Directory Integration Tests", () => {
     // Skip if no API key
     const apiKey = getTestApiKey();
     if (!apiKey) {
-      log("Skipping integration test: AGENTBAY_API_KEY environment variable not set");
+      log(
+        "Skipping integration test: AGENTBAY_API_KEY environment variable not set"
+      );
       return;
     }
 
@@ -24,7 +26,7 @@ describe("FileSystem Watch Directory Integration Tests", () => {
 
     // Create session with code_latest ImageId
     const sessionResult = await agentBay.create({
-      imageId: "code_latest"
+      imageId: "code_latest",
     });
     expect(sessionResult.success).toBe(true);
     expect(sessionResult.session).toBeDefined();
@@ -75,20 +77,28 @@ describe("FileSystem Watch Directory Integration Tests", () => {
 
     // Start directory monitoring
     log("\n2. Starting directory monitoring...");
-    
+
     // Create a simple stop mechanism
     let shouldStop = false;
     const stopSignal = {
-      get aborted() { return shouldStop; },
-      addEventListener: (_type: string, _listener: any) => { /* no-op */ },
-      removeEventListener: (_type: string, _listener: any) => { /* no-op */ },
+      get aborted() {
+        return shouldStop;
+      },
+      addEventListener: (_type: string, _listener: any) => {
+        /* no-op */
+      },
+      removeEventListener: (_type: string, _listener: any) => {
+        /* no-op */
+      },
       dispatchEvent: (_event: any) => false,
       onabort: null,
       reason: undefined,
-      throwIfAborted: () => { /* no-op */ }
+      throwIfAborted: () => {
+        /* no-op */
+      },
     } as AbortSignal;
-    
-    const watchPromise = session.fileSystem.watchDirectory(
+
+    const { monitoring, ready } = session.fileSystem.watchDirectory(
       testDir,
       fileChangeCallback,
       500, // Poll every 0.5 seconds for faster testing
@@ -96,42 +106,50 @@ describe("FileSystem Watch Directory Integration Tests", () => {
     );
     log("✅ Directory monitoring started");
 
-    // Wait a moment for monitoring to initialize
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for baseline to be established before performing file operations
+    await ready;
 
     try {
       // Test 1: Create a new file
       log("\n3. Creating a new file...");
-      const writeResult = await session.fileSystem.writeFile(`${testDir}/test1.txt`, "Initial content");
+      const writeResult = await session.fileSystem.writeFile(
+        `${testDir}/test1.txt`,
+        "Initial content"
+      );
       log(`Write file result: ${writeResult.success}`);
       expect(writeResult.success).toBe(true);
 
       // Wait for detection
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Test 2: Modify the file
       log("\n4. Modifying the file...");
-      const modifyResult = await session.fileSystem.writeFile(`${testDir}/test1.txt`, "Modified content");
+      const modifyResult = await session.fileSystem.writeFile(
+        `${testDir}/test1.txt`,
+        "Modified content"
+      );
       log(`Modify file result: ${modifyResult.success}`);
       expect(modifyResult.success).toBe(true);
 
       // Wait for detection
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Test 3: Create another file
       log("\n5. Creating another file...");
-      const writeResult2 = await session.fileSystem.writeFile(`${testDir}/test2.txt`, "Second file content");
+      const writeResult2 = await session.fileSystem.writeFile(
+        `${testDir}/test2.txt`,
+        "Second file content"
+      );
       log(`Write second file result: ${writeResult2.success}`);
       expect(writeResult2.success).toBe(true);
 
       // Wait for detection
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     } finally {
       // Stop monitoring
       log("\n6. Stopping directory monitoring...");
       shouldStop = true;
-      await watchPromise;
+      await monitoring;
       log("✅ Directory monitoring stopped");
     }
 
@@ -143,7 +161,11 @@ describe("FileSystem Watch Directory Integration Tests", () => {
 
     log("\nDetected events:");
     for (let i = 0; i < detectedEvents.length; i++) {
-      log(`  ${i + 1}. ${detectedEvents[i].eventType}: ${detectedEvents[i].path} (${detectedEvents[i].pathType})`);
+      log(
+        `  ${i + 1}. ${detectedEvents[i].eventType}: ${
+          detectedEvents[i].path
+        } (${detectedEvents[i].pathType})`
+      );
     }
 
     // Verify exact number of events - must be exactly 5
@@ -152,7 +174,9 @@ describe("FileSystem Watch Directory Integration Tests", () => {
     // Expected: test1.txt creation (create+modify) + test1.txt modification (modify) + test2.txt creation (create+modify) = 5 events
     const expectedEvents = 5;
     if (detectedEvents.length !== expectedEvents) {
-      log(`❌ Expected exactly ${expectedEvents} events, got ${detectedEvents.length}`);
+      log(
+        `❌ Expected exactly ${expectedEvents} events, got ${detectedEvents.length}`
+      );
       log("Expected breakdown:");
       log("  - writeFile test1.txt (new): create + modify = 2 events");
       log("  - writeFile test1.txt (existing): modify = 1 event");
@@ -165,8 +189,12 @@ describe("FileSystem Watch Directory Integration Tests", () => {
     expect(detectedEvents.length).toBe(expectedEvents);
 
     // Verify event types and counts
-    const createEvents = detectedEvents.filter(event => event.eventType === "create").length;
-    const modifyEvents = detectedEvents.filter(event => event.eventType === "modify").length;
+    const createEvents = detectedEvents.filter(
+      (event) => event.eventType === "create"
+    ).length;
+    const modifyEvents = detectedEvents.filter(
+      (event) => event.eventType === "modify"
+    ).length;
 
     log("\nEvent type breakdown:");
     log(`  Create events: ${createEvents} (expected: 2)`);
@@ -180,11 +208,16 @@ describe("FileSystem Watch Directory Integration Tests", () => {
     expect(modifyEvents).toBe(expectedModifyEvents);
     expect(detectedEvents.length).toBe(expectedEvents);
 
-    if (createEvents === expectedCreateEvents && modifyEvents === expectedModifyEvents) {
+    if (
+      createEvents === expectedCreateEvents &&
+      modifyEvents === expectedModifyEvents
+    ) {
       log("✅ Event type distribution is correct");
     } else {
       log("❌ Event type distribution is incorrect");
-      throw new Error(`Event type validation failed: got ${createEvents} create + ${modifyEvents} modify, expected ${expectedCreateEvents} create + ${expectedModifyEvents} modify`);
+      throw new Error(
+        `Event type validation failed: got ${createEvents} create + ${modifyEvents} modify, expected ${expectedCreateEvents} create + ${expectedModifyEvents} modify`
+      );
     }
 
     // Verify deduplication
@@ -210,13 +243,19 @@ describe("FileSystem Watch Directory Integration Tests", () => {
     }
 
     // Summary
-    if (detectedEvents.length === expectedEvents && createEvents === expectedCreateEvents && modifyEvents === expectedModifyEvents) {
+    if (
+      detectedEvents.length === expectedEvents &&
+      createEvents === expectedCreateEvents &&
+      modifyEvents === expectedModifyEvents
+    ) {
       log("\n✅ watch_directory integration test completed successfully!");
       log("All expected events were detected with correct types.");
     } else {
       log("\n❌ watch_directory integration test failed!");
-      log(`Expected ${expectedEvents} events (${expectedCreateEvents} create + ${expectedModifyEvents} modify), got ${detectedEvents.length} events (${createEvents} create + ${modifyEvents} modify)`);
+      log(
+        `Expected ${expectedEvents} events (${expectedCreateEvents} create + ${expectedModifyEvents} modify), got ${detectedEvents.length} events (${createEvents} create + ${modifyEvents} modify)`
+      );
       throw new Error("Integration test validation failed");
     }
   });
-}); 
+});

@@ -22,7 +22,7 @@ describe("SessionDeleteIntegration", () => {
   itif("should delete session without parameters", async () => {
     // Create a new session
     log("Creating a new session for delete testing...");
-    const createResponse = await agentBay.create({ imageId: "linux_latest"});
+    const createResponse = await agentBay.create({ imageId: "linux_latest" });
     expect(createResponse.success).toBe(true);
 
     const session = createResponse.session;
@@ -32,12 +32,14 @@ describe("SessionDeleteIntegration", () => {
     log("Deleting session without parameters...");
     const deleteResult = await session.delete();
     expect(deleteResult.success).toBe(true);
-    log(`Session deleted (RequestId: ${deleteResult.requestId || "undefined"})`);
+    log(
+      `Session deleted (RequestId: ${deleteResult.requestId || "undefined"})`
+    );
 
     // Verify the session was deleted
     const listResult = await agentBay.list();
     expect(listResult.success).toBe(true);
-    
+
     // Check that our session is not in the list
     const sessions = listResult.sessionIds || [];
     for (const sessionId of sessions) {
@@ -53,7 +55,7 @@ describe("SessionDeleteIntegration", () => {
       const contextResult = await agentBay.context.create(contextName);
       expect(contextResult.contextId).toBeDefined();
       expect(contextResult.contextId.length).toBeGreaterThan(0);
-      
+
       const contextId = contextResult.contextId;
       log(`Context created with ID: ${contextId}`);
 
@@ -61,14 +63,14 @@ describe("SessionDeleteIntegration", () => {
       const persistenceData = [
         {
           contextId: contextId,
-          path: "/home/wuying/test"
-        } as ContextSync
+          path: "/home/wuying/test",
+        } as ContextSync,
       ];
 
       // Create a session with context
       const params = {
         imageId: "linux_latest",
-        contextSync: persistenceData
+        contextSync: persistenceData,
       };
 
       log("Creating a session with context...");
@@ -80,7 +82,8 @@ describe("SessionDeleteIntegration", () => {
 
       // Create a test file in the session
       try {
-        const testCmd = "echo 'test file content' > /home/wuying/test/testfile.txt";
+        const testCmd =
+          "echo 'test file content' > /home/wuying/test/testfile.txt";
         const cmdResult = await session.command.executeCommand(testCmd);
         log(`Created test file: ${cmdResult}`);
       } catch (error) {
@@ -91,12 +94,16 @@ describe("SessionDeleteIntegration", () => {
       log("Deleting session with syncContext=true...");
       const deleteResult = await session.delete(true);
       expect(deleteResult.success).toBe(true);
-      log(`Session deleted with syncContext=true (RequestId: ${deleteResult.requestId || "undefined"})`);
+      log(
+        `Session deleted with syncContext=true (RequestId: ${
+          deleteResult.requestId || "undefined"
+        })`
+      );
 
       // Verify the session was deleted
       const listResult = await agentBay.list();
       expect(listResult.success).toBe(true);
-      
+
       // Check that our session is not in the list
       const sessions = listResult.sessionIds || [];
       for (const sessionId of sessions) {
@@ -107,8 +114,12 @@ describe("SessionDeleteIntegration", () => {
       try {
         const getContextResult = await agentBay.context.get(contextName);
         if (getContextResult.context) {
-          const deleteContextResult = await agentBay.context.delete(getContextResult.context);
-          log(`Context ${contextId} deleted (Success: ${deleteContextResult.success})`);
+          const deleteContextResult = await agentBay.context.delete(
+            getContextResult.context
+          );
+          log(
+            `Context ${contextId} deleted (Success: ${deleteContextResult.success})`
+          );
         }
       } catch (error) {
         log(`Warning: Failed to clean up context: ${error}`);
@@ -118,76 +129,88 @@ describe("SessionDeleteIntegration", () => {
     }
   });
 
-  itif("should delete session using AgentBay.delete with syncContext=true", async () => {
-    try {
-      // Create a context
-      const contextName = `test-context-${generateUniqueId()}`;
-      log(`Creating context: ${contextName}...`);
-      const contextResult = await agentBay.context.create(contextName);
-      expect(contextResult.contextId).toBeDefined();
-      expect(contextResult.contextId.length).toBeGreaterThan(0);
-      
-      const contextId = contextResult.contextId;
-      log(`Context created with ID: ${contextId}`);
-
-      // Create persistence configuration
-      const persistenceData = [
-        {
-          contextId: contextId,
-          path: "/home/wuying/test2"
-        } as ContextSync
-      ];
-
-      // Create a session with context
-      const params = {
-        imageId: "linux_latest",
-        contextSync: persistenceData
-      };
-
-      log("Creating a session with context...");
-      const createResponse = await agentBay.create(params);
-      expect(createResponse.success).toBe(true);
-
-      const session = createResponse.session;
-      log(`Session created with ID: ${session.sessionId}`);
-
-      // Create a test file in the session
+  itif(
+    "should delete session using AgentBay.delete with syncContext=true",
+    async () => {
       try {
-        const testCmd = "echo 'test file for agentbay delete' > /home/wuying/test2/testfile2.txt";
-        const cmdResult = await session.command.executeCommand(testCmd);
-        log(`Created test file: ${cmdResult}`);
-      } catch (error) {
-        log(`Warning: Failed to create test file: ${error}`);
-      }
+        // Create a context
+        const contextName = `test-context-${generateUniqueId()}`;
+        log(`Creating context: ${contextName}...`);
+        const contextResult = await agentBay.context.create(contextName);
+        expect(contextResult.contextId).toBeDefined();
+        expect(contextResult.contextId.length).toBeGreaterThan(0);
 
-      // Delete session with AgentBay.delete and syncContext=true
-      log("Deleting session with AgentBay.delete and syncContext=true...");
-      const deleteResult = await agentBay.delete(session, true);
-      expect(deleteResult.success).toBe(true);
-      log(`Session deleted with AgentBay.delete and syncContext=true (RequestId: ${deleteResult.requestId || "undefined"})`);
+        const contextId = contextResult.contextId;
+        log(`Context created with ID: ${contextId}`);
 
-      // Verify the session was deleted
-      const listResult = await agentBay.list();
-      expect(listResult.success).toBe(true);
-      
-      // Check that our session is not in the list
-      const sessions = listResult.sessionIds || [];
-      for (const sessionId of sessions) {
-        expect(sessionId).not.toBe(session.sessionId);
-      }
+        // Create persistence configuration
+        const persistenceData = [
+          {
+            contextId: contextId,
+            path: "/home/wuying/test2",
+          } as ContextSync,
+        ];
 
-      // Clean up context
-      try {
-        const getContextResult = await agentBay.context.get(contextName);
-        if (getContextResult.context) {
-          const deleteContextResult = await agentBay.context.delete(getContextResult.context);
-          log(`Context ${contextId} deleted (Success: ${deleteContextResult.success})`);
+        // Create a session with context
+        const params = {
+          imageId: "linux_latest",
+          contextSync: persistenceData,
+        };
+
+        log("Creating a session with context...");
+        const createResponse = await agentBay.create(params);
+        expect(createResponse.success).toBe(true);
+
+        const session = createResponse.session;
+        log(`Session created with ID: ${session.sessionId}`);
+
+        // Create a test file in the session
+        try {
+          const testCmd =
+            "echo 'test file for agentbay delete' > /home/wuying/test2/testfile2.txt";
+          const cmdResult = await session.command.executeCommand(testCmd);
+          log(`Created test file: ${cmdResult}`);
+        } catch (error) {
+          log(`Warning: Failed to create test file: ${error}`);
+        }
+
+        // Delete session with AgentBay.delete and syncContext=true
+        log("Deleting session with AgentBay.delete and syncContext=true...");
+        const deleteResult = await agentBay.delete(session, true);
+        expect(deleteResult.success).toBe(true);
+        log(
+          `Session deleted with AgentBay.delete and syncContext=true (RequestId: ${
+            deleteResult.requestId || "undefined"
+          })`
+        );
+
+        // Verify the session was deleted
+        const listResult = await agentBay.list();
+        expect(listResult.success).toBe(true);
+
+        // Check that our session is not in the list
+        const sessions = listResult.sessionIds || [];
+        for (const sessionId of sessions) {
+          expect(sessionId).not.toBe(session.sessionId);
+        }
+
+        // Clean up context
+        try {
+          const getContextResult = await agentBay.context.get(contextName);
+          if (getContextResult.context) {
+            const deleteContextResult = await agentBay.context.delete(
+              getContextResult.context
+            );
+            log(
+              `Context ${contextId} deleted (Success: ${deleteContextResult.success})`
+            );
+          }
+        } catch (error) {
+          log(`Warning: Failed to clean up context: ${error}`);
         }
       } catch (error) {
-        log(`Warning: Failed to clean up context: ${error}`);
+        fail(`Test failed with error: ${error}`);
       }
-    } catch (error) {
-      fail(`Test failed with error: ${error}`);
     }
-  });
-}); 
+  );
+});

@@ -1,31 +1,23 @@
 package integration_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/code"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
 func TestRunCodeWsStreamingBetaE2E(t *testing.T) {
-	// Streaming API temporarily disabled; will be re-enabled in a future release
-	t.Skip("Streaming API temporarily disabled; will be re-enabled in a future release")
 	apiKey := testutil.GetTestAPIKey(t)
 	ab, err := agentbay.NewAgentBay(apiKey)
 	if err != nil {
 		t.Fatalf("Error initializing AgentBay client: %v", err)
 	}
 
-	imageID := "imgc-0ab5ta4n2htfrppyw"
-	if v := os.Getenv("AGENTBAY_WS_IMAGE_ID"); v != "" {
-		imageID = v
-	}
-
-	params := agentbay.NewCreateSessionParams().WithImageId(imageID)
-	sessionResult, err := ab.Create(params)
+	sessionResult, err := ab.Create(agentbay.NewCreateSessionParams())
 	if err != nil {
 		t.Fatalf("Error creating session: %v", err)
 	}
@@ -48,8 +40,6 @@ func TestRunCodeWsStreamingBetaE2E(t *testing.T) {
 	}
 
 	start := time.Now()
-	// Note: streaming API temporarily disabled; this test is skipped.
-	// When re-enabled, use the exported RunCodeStreamBetaOptions type.
 	r, err := session.Code.RunCode(
 		"import time\n"+
 			"print('hello', flush=True)\n"+
@@ -57,9 +47,12 @@ func TestRunCodeWsStreamingBetaE2E(t *testing.T) {
 			"print(2, flush=True)\n",
 		"python",
 		60,
+		&code.RunCodeStreamBetaOptions{
+			StreamBeta: true,
+			OnStdout:   onStdout,
+			OnError:    onError,
+		},
 	)
-	_ = onStdout
-	_ = onError
 	end := time.Now()
 	if err != nil {
 		t.Fatalf("run code streaming error: %v", err)
@@ -108,4 +101,3 @@ func TestRunCodeWsStreamingBetaE2E(t *testing.T) {
 		t.Fatalf("stdout did not behave like streaming; delta=%s chunks=%v", twoT.Sub(*helloT), stdoutChunks)
 	}
 }
-

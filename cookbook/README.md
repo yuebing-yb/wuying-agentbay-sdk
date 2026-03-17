@@ -18,22 +18,31 @@ Currently, distinct session environments are implemented:
 
 1. [Form-Filling Agent](./browser/form-filling-agent/) - Demonstrates browser automation capabilities by automatically filling HTML forms
 2. [E-commerce Inspector](./browser/e-commerce-inspector/) - Automated product information extraction from e-commerce websites with AI-powered navigation
+3. [Browser Login Persistence](./browser/login-persistence/) - Persist browser login state (cookies, localStorage, etc.) across multiple cloud sessions using BrowserContext
+4. [Web Scraping Pipeline](./browser/web-scraping-pipeline/) - Build a complete web scraping pipeline with AI-powered data extraction, cloud storage, and command-line processing
 
 ### Codespace Environment
 
-3. [Auto Testing Agent](./codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
-4. [OpenAI Data Analysis](./codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
-5. [AI Code Assistant](./codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
+5. [Auto Testing Agent](./codespace/auto-testing-agent/) - Shows how to automate Python testing workflows in cloud environments
+6. [OpenAI Data Analysis](./codespace/openai-data-analysis/) - Demonstrates AI-powered data analysis using OpenAI function calling with AgentBay code execution
+7. [AI Code Assistant](./codespace/ai-code-assistant/) - An interactive web-based AI code assistant with real-time Python execution and visualization powered by Alibaba Cloud Bailian
+8. [Multi-Session Orchestration](./codespace/multi-session-orchestration/) - Run multiple cloud sessions concurrently for parallel task execution with significant speedup
+9. [Real-time Code Streaming](./codespace/realtime-code-streaming/) - Stream code execution output in real-time via WebSocket for live progress monitoring
 
 ### Mobile Environment
 
-6. [App Login Persistence](./mobile/app-login-persistence/) - Demonstrates how to maintain login state for mobile applications (Xiaohongshu, Pinduoduo, Weibo, Ele.me) across sessions
+10. [App Login Persistence](./mobile/app-login-persistence/) - Demonstrates how to maintain login state for mobile applications (Xiaohongshu, Pinduoduo, Weibo, Ele.me) across sessions
+11. [Device Simulation](./mobile/device-simulation/) - Make a cloud phone appear as a real physical device with persistent device identity across sessions
+
+### Computer Use Environment
+
+12. [Desktop GUI Automation](./computer-use/desktop-gui-automation/) - Automate desktop GUI applications (mouse, keyboard, screenshots) in a cloud Linux environment
 
 ### Desktop Environment
 
-7. [OpenClaw Session Setup](./openclaw/) - Create and configure an OpenClaw (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
-8. [Official Skills Sandbox (AgentScope)](./skills/agentscope-official-skills-sandbox/) - Experience official skills running inside a sandbox with AgentScope
-9. [Official Skills Sandbox (LangChain DeepAgents)](./skills/langchain-deepagents-official-skills-sandbox/) - Experience official skills running inside a sandbox with LangChain DeepAgents
+13. [OpenClaw Session Setup](./openclaw/) - Create and configure an OpenClaw (formerly Clawdbot) session, then pause for manual exploration via Cloud Desktop URL
+14. [Official Skills Sandbox (AgentScope)](./skills/agentscope-official-skills-sandbox/) - Experience official skills running inside a sandbox with AgentScope
+15. [Official Skills Sandbox (LangChain DeepAgents)](./skills/langchain-deepagents-official-skills-sandbox/) - Experience official skills running inside a sandbox with LangChain DeepAgents
 
 ## Overview
 
@@ -80,6 +89,14 @@ This cookbook demonstrates how to build an interactive web-based AI code assista
 - Session persistence for continuous development workflow
 - Dark mode UI with responsive design
 
+### Browser Login Persistence
+This cookbook demonstrates how to persist browser login state across cloud sessions using BrowserContext. The example shows:
+- Creating a persistent Context for browser data storage
+- Setting cookies in a cloud browser session via Playwright
+- Saving browser data when a session ends (sync_context=True)
+- Restoring cookies automatically in a new session
+- Understanding MINIMAL vs STANDARD sync modes
+
 ### App Login Persistence (Mobile)
 This cookbook demonstrates how to persist mobile application login states across session lifecycles using Context Synchronization. It includes examples for:
 - **Xiaohongshu (Red)**
@@ -88,6 +105,42 @@ This cookbook demonstrates how to persist mobile application login states across
 - **Ele.me**
 
 It shows how to mount application data directories to persistent Contexts so that you don't need to re-login every time you start a new mobile agent session.
+
+### Device Simulation (Mobile)
+This cookbook demonstrates how to make a cloud phone appear as a real physical device using MobileSimulateService. The example shows:
+- Uploading device info (brand, model, manufacturer) to simulate a specific device
+- Creating sessions with simulated device properties
+- Persisting device identity across multiple sessions using simulate_context_id
+- Verifying device properties match the target device
+
+### Web Scraping Pipeline (Browser)
+This cookbook demonstrates how to build a complete web scraping pipeline using a cloud browser. The example shows:
+- Initializing a stealth-mode cloud browser to avoid bot detection
+- Navigating to target websites and extracting structured data with AI
+- Saving extracted data to the cloud file system as JSON
+- Processing data with command-line tools (Python analysis scripts)
+- Performing search engine scraping with Baidu
+
+### Desktop GUI Automation (Computer Use)
+This cookbook demonstrates how to automate a Linux desktop GUI application using the Computer Use module. The example shows:
+- Creating a cloud desktop session with screen info and screenshots
+- Launching applications (gedit) and simulating keyboard/mouse interactions
+- Typing text, selecting content with Ctrl+A, and capturing visual screenshots
+- Saving file content reliably via the command module
+
+### Multi-Session Orchestration (Codespace)
+This cookbook demonstrates how to run multiple cloud sessions concurrently for parallel task execution. The example shows:
+- Sequential vs concurrent execution comparison
+- Using asyncio.gather for parallel session creation and code execution
+- Achieving significant speedup (2-3x) with concurrent sessions
+- Collecting and aggregating results from multiple sessions
+
+### Real-time Code Streaming (Codespace)
+This cookbook demonstrates how to stream code execution output in real-time via WebSocket. The example shows:
+- Using stream_beta=True with on_stdout/on_stderr callbacks for live output
+- Real-time progress monitoring with timestamps
+- Streaming data analysis with visual output
+- Comparison between streaming and non-streaming modes
 
 ## Framework Integration
 

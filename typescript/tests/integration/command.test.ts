@@ -140,9 +140,12 @@ print(x)
         log("Testing with invalid language...");
 
         try {
-          const result = await session.code.runCode('print("test")', "invalid_language");
-          expect(result.success).toBe(false)
-          expect(result.errorMessage).toBeDefined()
+          const result = await session.code.runCode(
+            'print("test")',
+            "invalid_language"
+          );
+          expect(result.success).toBe(false);
+          expect(result.errorMessage).toBeDefined();
           // If we get here, the test should fail
           log("Error: Expected error for invalid language, but got success");
         } catch (error) {

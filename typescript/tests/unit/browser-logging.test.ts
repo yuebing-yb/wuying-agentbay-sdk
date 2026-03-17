@@ -27,7 +27,9 @@ describe("Browser - Enhanced Logging", () => {
     sinon
       .stub(require("../../src/utils/logger"), "logAPIResponseWithDetails")
       .callsFake(logAPIResponseWithDetailsStub);
-    sinon.stub(require("../../src/utils/logger"), "logError").callsFake(logErrorStub);
+    sinon
+      .stub(require("../../src/utils/logger"), "logError")
+      .callsFake(logErrorStub);
   });
 
   afterEach(() => {

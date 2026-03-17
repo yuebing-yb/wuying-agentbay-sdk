@@ -3,18 +3,18 @@
  * sensitive data masking, and RequestID management.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Log level type
  */
-export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
 
 /**
  * Log format type
  */
-export type LogFormat = 'pretty' | 'sls';
+export type LogFormat = "pretty" | "sls";
 
 /**
  * Logger configuration options
@@ -71,30 +71,27 @@ const LOG_LEVEL_VALUES: Record<LogLevel, number> = {
 /**
  * RequestID storage for tracking across API calls
  */
-let currentRequestId = '';
+let currentRequestId = "";
 
 /**
  * Current log level configuration
  * Supports both LOG_LEVEL and AGENTBAY_LOG_LEVEL environment variables
  */
-let currentLogLevel: LogLevel = (
+let currentLogLevel: LogLevel =
   (process.env.LOG_LEVEL as LogLevel) ||
   (process.env.AGENTBAY_LOG_LEVEL as LogLevel) ||
-  'INFO'
-);
+  "INFO";
 
 /**
  * Current log format configuration
  */
-let currentLogFormat: LogFormat = (
-    (process.env.AGENTBAY_LOG_FORMAT as LogFormat) || 'pretty'
-);
-if (['sls', 'compact'].includes(String(currentLogFormat).toLowerCase())) {
-    currentLogFormat = 'sls';
+let currentLogFormat: LogFormat =
+  (process.env.AGENTBAY_LOG_FORMAT as LogFormat) || "pretty";
+if (["sls", "compact"].includes(String(currentLogFormat).toLowerCase())) {
+  currentLogFormat = "sls";
 } else {
-    currentLogFormat = 'pretty';
+  currentLogFormat = "pretty";
 }
-
 
 /**
  * File logging configuration
@@ -110,17 +107,20 @@ let consoleLoggingEnabled = true;
  */
 function shouldUseColors(): boolean {
   // Disable colors if SLS format is enabled
-  if (currentLogFormat === 'sls') {
+  if (currentLogFormat === "sls") {
     return false;
   }
 
   // Priority 1: Explicit disable via DISABLE_COLORS
-  if (process.env.DISABLE_COLORS === 'true') {
+  if (process.env.DISABLE_COLORS === "true") {
     return false;
   }
 
   // Priority 2: Explicit enable via FORCE_COLOR
-  if (process.env.FORCE_COLOR !== undefined && process.env.FORCE_COLOR !== '0') {
+  if (
+    process.env.FORCE_COLOR !== undefined &&
+    process.env.FORCE_COLOR !== "0"
+  ) {
     return true;
   }
 
@@ -131,7 +131,7 @@ function shouldUseColors(): boolean {
   }
 
   // Priority 4: IDE environment detection
-  const isVSCode = process.env.TERM_PROGRAM === 'vscode';
+  const isVSCode = process.env.TERM_PROGRAM === "vscode";
   const isGoLand = process.env.GOLAND !== undefined;
   const isIntelliJ = process.env.IDEA_INITIAL_DIRECTORY !== undefined;
   if (isVSCode || isGoLand || isIntelliJ) {
@@ -145,12 +145,12 @@ function shouldUseColors(): boolean {
 /**
  * ANSI color codes
  */
-const ANSI_RESET = '\x1b[0m';
-const ANSI_BLUE = '\x1b[34m';
-const ANSI_CYAN = '\x1b[36m';
-const ANSI_YELLOW = '\x1b[33m';
-const ANSI_RED = '\x1b[31m';
-const ANSI_GREEN = '\x1b[32m';
+const ANSI_RESET = "\x1b[0m";
+const ANSI_BLUE = "\x1b[34m";
+const ANSI_CYAN = "\x1b[36m";
+const ANSI_YELLOW = "\x1b[33m";
+const ANSI_RED = "\x1b[31m";
+const ANSI_GREEN = "\x1b[32m";
 
 /**
  * Determine if colors should be used (evaluated once at startup)
@@ -161,29 +161,37 @@ let useColors = shouldUseColors();
  * Sensitive field names for data masking
  */
 const SENSITIVE_FIELDS = [
-  'api_key', 'apikey', 'api-key',
-  'password', 'passwd', 'pwd',
-  'token', 'access_token', 'auth_token',
-  'secret', 'private_key', 'authorization',
+  "api_key",
+  "apikey",
+  "api-key",
+  "password",
+  "passwd",
+  "pwd",
+  "token",
+  "access_token",
+  "auth_token",
+  "secret",
+  "private_key",
+  "authorization",
 ];
 
 /**
  * Get emoji for log level
  */
 function getLogLevelEmoji(level: LogLevel): string {
-  if (currentLogFormat === 'sls') {
-      // No emojis in SLS format
-      return level;
+  if (currentLogFormat === "sls") {
+    // No emojis in SLS format
+    return level;
   }
   switch (level) {
-    case 'DEBUG':
-      return '🐛 DEBUG';
-    case 'INFO':
-      return 'ℹ️  INFO';
-    case 'WARN':
-      return '⚠️  WARN';
-    case 'ERROR':
-      return '❌ ERROR';
+    case "DEBUG":
+      return "🐛 DEBUG";
+    case "INFO":
+      return "ℹ️  INFO";
+    case "WARN":
+      return "⚠️  WARN";
+    case "ERROR":
+      return "❌ ERROR";
     default:
       return level;
   }
@@ -199,13 +207,17 @@ function shouldLog(level: LogLevel): boolean {
 /**
  * Format log message with level and RequestID
  */
-function formatLogMessage(level: LogLevel, message: string, forFile = false): string {
-  if (currentLogFormat === 'sls') {
-      let formattedMessage = `${level}: ${message}`;
-      if (currentRequestId) {
-          formattedMessage += ` [RequestId=${currentRequestId}]`;
-      }
-      return formattedMessage;
+function formatLogMessage(
+  level: LogLevel,
+  message: string,
+  forFile = false
+): string {
+  if (currentLogFormat === "sls") {
+    let formattedMessage = `${level}: ${message}`;
+    if (currentRequestId) {
+      formattedMessage += ` [RequestId=${currentRequestId}]`;
+    }
+    return formattedMessage;
   }
 
   let formattedMessage = `${getLogLevelEmoji(level)}: ${message}`;
@@ -227,16 +239,16 @@ function formatLogMessage(level: LogLevel, message: string, forFile = false): st
  */
 function getColorForLevel(level: LogLevel): string {
   switch (level) {
-    case 'DEBUG':
+    case "DEBUG":
       return ANSI_CYAN;
-    case 'INFO':
+    case "INFO":
       return ANSI_BLUE;
-    case 'WARN':
+    case "WARN":
       return ANSI_YELLOW;
-    case 'ERROR':
+    case "ERROR":
       return ANSI_RED;
     default:
-      return '';
+      return "";
   }
 }
 
@@ -255,15 +267,15 @@ export function maskSensitiveData(data: unknown, fields?: string[]): unknown {
       return obj;
     }
 
-    if (typeof obj === 'object') {
+    if (typeof obj === "object") {
       const objRef = obj as object;
       if (visitedObjects.has(objRef)) {
-        return '[Circular]';
+        return "[Circular]";
       }
       visitedObjects.add(objRef);
 
       if (Array.isArray(obj)) {
-        return obj.map(item => mask(item));
+        return obj.map((item) => mask(item));
       }
 
       const masked: Record<string, unknown> = {};
@@ -271,11 +283,18 @@ export function maskSensitiveData(data: unknown, fields?: string[]): unknown {
       for (const key in record) {
         if (Object.prototype.hasOwnProperty.call(record, key)) {
           const value = record[key];
-          if (sensitiveFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
-            if (typeof value === 'string' && value.length > 4) {
-              masked[key] = value.substring(0, 2) + '****' + value.substring(value.length - 2);
+          if (
+            sensitiveFields.some((field) =>
+              key.toLowerCase().includes(field.toLowerCase())
+            )
+          ) {
+            if (typeof value === "string" && value.length > 4) {
+              masked[key] =
+                value.substring(0, 2) +
+                "****" +
+                value.substring(value.length - 2);
             } else {
-              masked[key] = '****';
+              masked[key] = "****";
             }
           } else {
             masked[key] = mask(value);
@@ -285,7 +304,7 @@ export function maskSensitiveData(data: unknown, fields?: string[]): unknown {
       return masked;
     }
 
-    if (typeof obj === 'string') {
+    if (typeof obj === "string") {
       return obj;
     }
 
@@ -315,7 +334,9 @@ function maskSensitiveDataString(input: string): string {
       out = out.replace(re, (_m, p1, p2, p3) => {
         const v = String(p2 || "");
         if (v.length > 4) {
-          return `${p1}${v.substring(0, 2)}****${v.substring(v.length - 2)}${p3}`;
+          return `${p1}${v.substring(0, 2)}****${v.substring(
+            v.length - 2
+          )}${p3}`;
         }
         return `${p1}****${p3}`;
       });
@@ -362,7 +383,7 @@ export function getRequestId(): string {
  * Clear the current RequestID
  */
 export function clearRequestId(): void {
-  currentRequestId = '';
+  currentRequestId = "";
 }
 
 /**
@@ -377,14 +398,14 @@ function parseFileSize(sizeStr: string): number {
   }
 
   const value = parseInt(match[1], 10);
-  const unit = (match[2] || 'MB').toUpperCase();
+  const unit = (match[2] || "MB").toUpperCase();
 
   switch (unit) {
-    case 'KB':
+    case "KB":
       return value * 1024;
-    case 'MB':
+    case "MB":
       return value * 1024 * 1024;
-    case 'GB':
+    case "GB":
       return value * 1024 * 1024 * 1024;
     default:
       return value * 1024 * 1024;
@@ -415,7 +436,7 @@ function writeToFile(message: string): void {
     }
 
     // Append to file (create if doesn't exist)
-    fs.appendFileSync(logFilePath, message + '\n', 'utf8');
+    fs.appendFileSync(logFilePath, message + "\n", "utf8");
   } catch (error) {
     // Silently fail to avoid infinite loop
     if (consoleLoggingEnabled) {
@@ -488,23 +509,23 @@ export function setupLogger(config: LoggerConfig): void {
   if (config.enableConsole !== undefined) {
     consoleLoggingEnabled = config.enableConsole;
   }
-  
+
   if (config.format) {
-      if (['sls', 'compact'].includes(String(config.format).toLowerCase())) {
-          currentLogFormat = 'sls';
-      } else {
-          currentLogFormat = 'pretty';
-      }
+    if (["sls", "compact"].includes(String(config.format).toLowerCase())) {
+      currentLogFormat = "sls";
+    } else {
+      currentLogFormat = "pretty";
+    }
   } else {
-      // Respect env var if not set in config
-      const envFormat = process.env.AGENTBAY_LOG_FORMAT;
-      if (envFormat) {
-          if (['sls', 'compact'].includes(String(envFormat).toLowerCase())) {
-              currentLogFormat = 'sls';
-          } else {
-              currentLogFormat = 'pretty';
-          }
+    // Respect env var if not set in config
+    const envFormat = process.env.AGENTBAY_LOG_FORMAT;
+    if (envFormat) {
+      if (["sls", "compact"].includes(String(envFormat).toLowerCase())) {
+        currentLogFormat = "sls";
+      } else {
+        currentLogFormat = "pretty";
       }
+    }
   }
   // Re-evaluate colors based on format
   useColors = shouldUseColors();
@@ -517,7 +538,7 @@ export function setupLogger(config: LoggerConfig): void {
  * @param args Optional arguments to log
  */
 export function log(message: string, ...args: unknown[]): void {
-  if (!shouldLog('INFO')) return;
+  if (!shouldLog("INFO")) return;
 
   if (consoleLoggingEnabled) {
     process.stdout.write(message + "\n");
@@ -528,9 +549,10 @@ export function log(message: string, ...args: unknown[]): void {
 
   if (args.length > 0) {
     for (const arg of args) {
-      const argStr = typeof arg === "object" && arg !== null
-        ? JSON.stringify(arg, null, 2)
-        : String(arg);
+      const argStr =
+        typeof arg === "object" && arg !== null
+          ? JSON.stringify(arg, null, 2)
+          : String(arg);
 
       if (consoleLoggingEnabled) {
         process.stdout.write(argStr + "\n");
@@ -546,10 +568,10 @@ export function log(message: string, ...args: unknown[]): void {
  * @param args Optional arguments to log
  */
 export function logDebug(message: string, ...args: unknown[]): void {
-  if (!shouldLog('DEBUG')) return;
+  if (!shouldLog("DEBUG")) return;
 
-  const formattedMessage = formatLogMessage('DEBUG', message);
-  const fileMessage = formatLogMessage('DEBUG', message, true);
+  const formattedMessage = formatLogMessage("DEBUG", message);
+  const fileMessage = formatLogMessage("DEBUG", message, true);
 
   if (consoleLoggingEnabled) {
     process.stdout.write(formattedMessage + "\n");
@@ -558,9 +580,10 @@ export function logDebug(message: string, ...args: unknown[]): void {
 
   if (args.length > 0) {
     for (const arg of args) {
-      const argStr = typeof arg === "object" && arg !== null
-        ? JSON.stringify(arg, null, 2)
-        : String(arg);
+      const argStr =
+        typeof arg === "object" && arg !== null
+          ? JSON.stringify(arg, null, 2)
+          : String(arg);
 
       if (consoleLoggingEnabled) {
         process.stdout.write(argStr + "\n");
@@ -576,10 +599,10 @@ export function logDebug(message: string, ...args: unknown[]): void {
  * @param args Optional arguments to log
  */
 export function logInfo(message: string, ...args: unknown[]): void {
-  if (!shouldLog('INFO')) return;
+  if (!shouldLog("INFO")) return;
 
-  const formattedMessage = formatLogMessage('INFO', message);
-  const fileMessage = formatLogMessage('INFO', message, true);
+  const formattedMessage = formatLogMessage("INFO", message);
+  const fileMessage = formatLogMessage("INFO", message, true);
 
   if (consoleLoggingEnabled) {
     process.stdout.write(formattedMessage + "\n");
@@ -588,9 +611,10 @@ export function logInfo(message: string, ...args: unknown[]): void {
 
   if (args.length > 0) {
     for (const arg of args) {
-      const argStr = typeof arg === "object" && arg !== null
-        ? JSON.stringify(arg, null, 2)
-        : String(arg);
+      const argStr =
+        typeof arg === "object" && arg !== null
+          ? JSON.stringify(arg, null, 2)
+          : String(arg);
 
       if (consoleLoggingEnabled) {
         process.stdout.write(argStr + "\n");
@@ -606,10 +630,10 @@ export function logInfo(message: string, ...args: unknown[]): void {
  * @param args Optional arguments to log
  */
 export function logWarn(message: string, ...args: unknown[]): void {
-  if (!shouldLog('WARN')) return;
+  if (!shouldLog("WARN")) return;
 
-  const formattedMessage = formatLogMessage('WARN', message);
-  const fileMessage = formatLogMessage('WARN', message, true);
+  const formattedMessage = formatLogMessage("WARN", message);
+  const fileMessage = formatLogMessage("WARN", message, true);
 
   if (consoleLoggingEnabled) {
     process.stderr.write(formattedMessage + "\n");
@@ -618,9 +642,10 @@ export function logWarn(message: string, ...args: unknown[]): void {
 
   if (args.length > 0) {
     for (const arg of args) {
-      const argStr = typeof arg === "object" && arg !== null
-        ? JSON.stringify(arg, null, 2)
-        : String(arg);
+      const argStr =
+        typeof arg === "object" && arg !== null
+          ? JSON.stringify(arg, null, 2)
+          : String(arg);
 
       if (consoleLoggingEnabled) {
         process.stderr.write(argStr + "\n");
@@ -636,10 +661,10 @@ export function logWarn(message: string, ...args: unknown[]): void {
  * @param error Optional error object
  */
 export function logError(message: string, error?: unknown): void {
-  if (!shouldLog('ERROR')) return;
+  if (!shouldLog("ERROR")) return;
 
-  const formattedMessage = formatLogMessage('ERROR', message);
-  const fileMessage = formatLogMessage('ERROR', message, true);
+  const formattedMessage = formatLogMessage("ERROR", message);
+  const fileMessage = formatLogMessage("ERROR", message, true);
 
   if (consoleLoggingEnabled) {
     process.stderr.write(formattedMessage + "\n");
@@ -647,7 +672,7 @@ export function logError(message: string, error?: unknown): void {
   writeToFile(fileMessage);
 
   if (error) {
-    let errorStr = '';
+    let errorStr = "";
     if (error instanceof Error) {
       errorStr = error.message;
       if (error.stack) {
@@ -672,32 +697,32 @@ export function logError(message: string, error?: unknown): void {
  * @param requestData Optional request data to log at DEBUG level
  */
 export function logAPICall(apiName: string, requestData?: unknown): void {
-  if (!shouldLog('INFO')) return;
-  
-  if (currentLogFormat === 'sls') {
-      let message = `API Call: ${apiName}`;
-      if (requestData) {
-          const maskedData = maskSensitiveData(requestData);
-          if (typeof maskedData === 'string') {
-              message += `, ${maskedData}`;
-          } else {
-              // Convert object to comma separated string if possible, or simple JSON
-              // For SLS compact mode, usually key=value or inline json
-              message += `, ${JSON.stringify(maskedData)}`;
-          }
+  if (!shouldLog("INFO")) return;
+
+  if (currentLogFormat === "sls") {
+    let message = `API Call: ${apiName}`;
+    if (requestData) {
+      const maskedData = maskSensitiveData(requestData);
+      if (typeof maskedData === "string") {
+        message += `, ${maskedData}`;
+      } else {
+        // Convert object to comma separated string if possible, or simple JSON
+        // For SLS compact mode, usually key=value or inline json
+        message += `, ${JSON.stringify(maskedData)}`;
       }
-      if (consoleLoggingEnabled) {
-          process.stdout.write(message + '\n');
-      }
-      writeToFile(message);
-      return;
+    }
+    if (consoleLoggingEnabled) {
+      process.stdout.write(message + "\n");
+    }
+    writeToFile(message);
+    return;
   }
 
   const message = `🔗 API Call: ${apiName}`;
 
   // Temporarily clear RequestId since it's not available until API response
   const savedRequestId = currentRequestId;
-  currentRequestId = '';
+  currentRequestId = "";
 
   if (useColors) {
     if (consoleLoggingEnabled) {
@@ -710,7 +735,7 @@ export function logAPICall(apiName: string, requestData?: unknown): void {
 
   currentRequestId = savedRequestId;
 
-  if (requestData && shouldLog('DEBUG')) {
+  if (requestData && shouldLog("DEBUG")) {
     const maskedData = maskSensitiveData(requestData);
     logDebug(`📤 Request: ${JSON.stringify(maskedData)}`);
   }
@@ -731,44 +756,46 @@ export function logAPIResponseWithDetails(
   keyFields?: Record<string, unknown>,
   fullResponse?: string
 ): void {
-  
-  if (currentLogFormat === 'sls') {
-    if (!shouldLog(success ? 'INFO' : 'ERROR')) return;
-    
+  if (currentLogFormat === "sls") {
+    if (!shouldLog(success ? "INFO" : "ERROR")) return;
+
     const status = success ? "API Response" : "API Response Failed";
     let msg = `${status}: ${apiName}`;
-    
+
     if (requestId) {
-        msg += `, RequestId=${requestId}`;
+      msg += `, RequestId=${requestId}`;
     }
-    
+
     if (keyFields) {
-        for (const [key, value] of Object.entries(keyFields)) {
-            const maskedValue = maskSensitiveData({ [key]: value }) as Record<string, unknown>;
-            msg += `, ${key}=${maskedValue[key]}`;
-        }
+      for (const [key, value] of Object.entries(keyFields)) {
+        const maskedValue = maskSensitiveData({ [key]: value }) as Record<
+          string,
+          unknown
+        >;
+        msg += `, ${key}=${maskedValue[key]}`;
+      }
     }
-    
+
     if (success) {
-        if (consoleLoggingEnabled) {
-            process.stdout.write(msg + '\n');
-        }
-        writeToFile(msg);
+      if (consoleLoggingEnabled) {
+        process.stdout.write(msg + "\n");
+      }
+      writeToFile(msg);
     } else {
-        if (consoleLoggingEnabled) {
-            process.stderr.write(msg + '\n');
-        }
-        writeToFile(msg);
+      if (consoleLoggingEnabled) {
+        process.stderr.write(msg + "\n");
+      }
+      writeToFile(msg);
     }
-    
-    if (fullResponse && shouldLog('DEBUG')) {
-        logDebug(`Full Response: ${fullResponse}`);
+
+    if (fullResponse && shouldLog("DEBUG")) {
+      logDebug(`Full Response: ${fullResponse}`);
     }
     return;
   }
 
   if (success) {
-    if (shouldLog('INFO')) {
+    if (shouldLog("INFO")) {
       let mainMessage = `✅ API Response: ${apiName}`;
       if (requestId) {
         mainMessage += `, RequestId=${requestId}`;
@@ -776,7 +803,9 @@ export function logAPIResponseWithDetails(
 
       if (useColors) {
         if (consoleLoggingEnabled) {
-          process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${mainMessage}${ANSI_RESET}\n`);
+          process.stdout.write(
+            `${ANSI_GREEN}ℹ️  INFO: ${mainMessage}${ANSI_RESET}\n`
+          );
         }
         writeToFile(`ℹ️  INFO: ${mainMessage}`);
       } else {
@@ -785,11 +814,16 @@ export function logAPIResponseWithDetails(
 
       if (keyFields) {
         for (const [key, value] of Object.entries(keyFields)) {
-          const maskedValue = maskSensitiveData({ [key]: value }) as Record<string, unknown>;
+          const maskedValue = maskSensitiveData({ [key]: value }) as Record<
+            string,
+            unknown
+          >;
           const keyMessage = `  └─ ${key}=${maskedValue[key]}`;
           if (useColors) {
             if (consoleLoggingEnabled) {
-              process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${keyMessage}${ANSI_RESET}\n`);
+              process.stdout.write(
+                `${ANSI_GREEN}ℹ️  INFO: ${keyMessage}${ANSI_RESET}\n`
+              );
             }
             writeToFile(`ℹ️  INFO: ${keyMessage}`);
           } else {
@@ -799,12 +833,15 @@ export function logAPIResponseWithDetails(
       }
     }
 
-    if (fullResponse && shouldLog('DEBUG')) {
-      const masked = truncateStringForLog(maskSensitiveDataString(fullResponse), 2000);
+    if (fullResponse && shouldLog("DEBUG")) {
+      const masked = truncateStringForLog(
+        maskSensitiveDataString(fullResponse),
+        2000
+      );
       logDebug(`📥 Full Response: ${masked}`);
     }
   } else {
-    if (shouldLog('ERROR')) {
+    if (shouldLog("ERROR")) {
       let errorMessage = `❌ API Response Failed: ${apiName}`;
       if (requestId) {
         errorMessage += `, RequestId=${requestId}`;
@@ -812,7 +849,9 @@ export function logAPIResponseWithDetails(
 
       if (useColors) {
         if (consoleLoggingEnabled) {
-          process.stderr.write(`${ANSI_RED}❌ ERROR: ${errorMessage}${ANSI_RESET}\n`);
+          process.stderr.write(
+            `${ANSI_RED}❌ ERROR: ${errorMessage}${ANSI_RESET}\n`
+          );
         }
         writeToFile(`❌ ERROR: ${errorMessage}`);
       } else {
@@ -821,11 +860,16 @@ export function logAPIResponseWithDetails(
 
       if (keyFields) {
         for (const [key, value] of Object.entries(keyFields)) {
-          const maskedValue = maskSensitiveData({ [key]: value }) as Record<string, unknown>;
+          const maskedValue = maskSensitiveData({ [key]: value }) as Record<
+            string,
+            unknown
+          >;
           const keyMessage = `  └─ ${key}=${maskedValue[key]}`;
           if (useColors) {
             if (consoleLoggingEnabled) {
-              process.stderr.write(`${ANSI_RED}❌ ERROR: ${keyMessage}${ANSI_RESET}\n`);
+              process.stderr.write(
+                `${ANSI_RED}❌ ERROR: ${keyMessage}${ANSI_RESET}\n`
+              );
             }
             writeToFile(`❌ ERROR: ${keyMessage}`);
           } else {
@@ -835,10 +879,15 @@ export function logAPIResponseWithDetails(
       }
 
       if (fullResponse) {
-        const masked = truncateStringForLog(maskSensitiveDataString(fullResponse), 2000);
+        const masked = truncateStringForLog(
+          maskSensitiveDataString(fullResponse),
+          2000
+        );
         if (useColors) {
           if (consoleLoggingEnabled) {
-            process.stderr.write(`${ANSI_RED}❌ ERROR: 📥 Response: ${masked}${ANSI_RESET}\n`);
+            process.stderr.write(
+              `${ANSI_RED}❌ ERROR: 📥 Response: ${masked}${ANSI_RESET}\n`
+            );
           }
           writeToFile(`❌ ERROR: 📥 Response: ${masked}`);
         } else {
@@ -854,8 +903,11 @@ export function logAPIResponseWithDetails(
  * @param requestId Request ID from the API response
  * @param rawOutput Raw JSON output from the MCP tool
  */
-export function logCodeExecutionOutput(requestId: string, rawOutput: string): void {
-  if (!shouldLog('INFO')) return;
+export function logCodeExecutionOutput(
+  requestId: string,
+  rawOutput: string
+): void {
+  if (!shouldLog("INFO")) return;
 
   try {
     // Parse the JSON response to extract the actual code output
@@ -863,11 +915,16 @@ export function logCodeExecutionOutput(requestId: string, rawOutput: string): vo
 
     // Extract text from all content items
     const texts: string[] = [];
-    if (response && typeof response === 'object' && 'content' in response) {
+    if (response && typeof response === "object" && "content" in response) {
       const content = response.content;
       if (Array.isArray(content)) {
         for (const item of content) {
-          if (item && typeof item === 'object' && item.type === 'text' && item.text) {
+          if (
+            item &&
+            typeof item === "object" &&
+            item.type === "text" &&
+            item.text
+          ) {
             texts.push(item.text);
           }
         }
@@ -878,29 +935,31 @@ export function logCodeExecutionOutput(requestId: string, rawOutput: string): vo
       return;
     }
 
-    const actualOutput = texts.join('');
-    
-    if (currentLogFormat === 'sls') {
-        const header = `Code Execution Output (RequestID: ${requestId}):`;
-        if (consoleLoggingEnabled) {
-            process.stdout.write(header + '\n');
-            process.stdout.write(actualOutput + '\n');
-        }
-        writeToFile(header);
-        writeToFile(actualOutput);
-        return;
+    const actualOutput = texts.join("");
+
+    if (currentLogFormat === "sls") {
+      const header = `Code Execution Output (RequestID: ${requestId}):`;
+      if (consoleLoggingEnabled) {
+        process.stdout.write(header + "\n");
+        process.stdout.write(actualOutput + "\n");
+      }
+      writeToFile(header);
+      writeToFile(actualOutput);
+      return;
     }
 
     // Format the output with a clear separator
     const header = `📋 Code Execution Output (RequestID: ${requestId}):`;
 
-    const lines = actualOutput.trimEnd().split('\n');
+    const lines = actualOutput.trimEnd().split("\n");
 
     if (useColors) {
       if (consoleLoggingEnabled) {
         process.stdout.write(`${ANSI_GREEN}ℹ️  INFO: ${header}${ANSI_RESET}\n`);
         for (const line of lines) {
-          process.stdout.write(`${ANSI_GREEN}ℹ️  INFO:    ${line}${ANSI_RESET}\n`);
+          process.stdout.write(
+            `${ANSI_GREEN}ℹ️  INFO:    ${line}${ANSI_RESET}\n`
+          );
         }
       }
       writeToFile(header);
@@ -925,19 +984,19 @@ export function logCodeExecutionOutput(requestId: string, rawOutput: string): vo
  * @param details Optional operation details
  */
 export function logOperationStart(operation: string, details?: string): void {
-  if (!shouldLog('INFO')) return;
-  
-  if (currentLogFormat === 'sls') {
-      let msg = `Starting: ${operation}`;
-      if (details) msg += `, Details: ${details}`;
-      logInfo(msg); // logInfo uses formatLogMessage which handles sls
-      return;
+  if (!shouldLog("INFO")) return;
+
+  if (currentLogFormat === "sls") {
+    let msg = `Starting: ${operation}`;
+    if (details) msg += `, Details: ${details}`;
+    logInfo(msg); // logInfo uses formatLogMessage which handles sls
+    return;
   }
-  
+
   const message = `🚀 Starting: ${operation}`;
   logInfo(message);
 
-  if (details && shouldLog('DEBUG')) {
+  if (details && shouldLog("DEBUG")) {
     logDebug(`📋 Details: ${details}`);
   }
 }
@@ -947,20 +1006,20 @@ export function logOperationStart(operation: string, details?: string): void {
  * @param operation Name of the operation
  * @param result Optional operation result
  */
-export function logOperationSuccess(operation: string, result?: string): void{
-  if (!shouldLog('INFO')) return;
-  
-  if (currentLogFormat === 'sls') {
-      let msg = `Completed: ${operation}`;
-      if (result) msg += `, Result: ${result}`;
-      logInfo(msg);
-      return;
+export function logOperationSuccess(operation: string, result?: string): void {
+  if (!shouldLog("INFO")) return;
+
+  if (currentLogFormat === "sls") {
+    let msg = `Completed: ${operation}`;
+    if (result) msg += `, Result: ${result}`;
+    logInfo(msg);
+    return;
   }
-  
+
   const message = `✅ Completed: ${operation}`;
   logInfo(message);
 
-  if (result && shouldLog('DEBUG')) {
+  if (result && shouldLog("DEBUG")) {
     logDebug(`📊 Result: ${result}`);
   }
 }
@@ -976,17 +1035,20 @@ export function logOperationError(
   error: string | Error,
   includeStackTrace = false
 ): void {
-  if (!shouldLog('ERROR')) return;
-  
-  if (currentLogFormat === 'sls') {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      logError(`Failed: ${operation}, Error: ${errorMsg}`, includeStackTrace ? error : undefined);
-      return;
+  if (!shouldLog("ERROR")) return;
+
+  if (currentLogFormat === "sls") {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logError(
+      `Failed: ${operation}, Error: ${errorMsg}`,
+      includeStackTrace ? error : undefined
+    );
+    return;
   }
-  
+
   const message = `❌ Failed: ${operation}`;
 
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     logError(message, new Error(error));
   } else if (error instanceof Error) {
     if (includeStackTrace) {
@@ -1004,16 +1066,19 @@ export function logOperationError(
  * @param message The message to log
  * @param color ANSI color code (defaults to red)
  */
-export function logInfoWithColor(message: string, color: string = ANSI_RED): void {
-  if (!shouldLog('INFO')) return;
+export function logInfoWithColor(
+  message: string,
+  color: string = ANSI_RED
+): void {
+  if (!shouldLog("INFO")) return;
 
-  if (currentLogFormat === 'sls') {
-      // No colors in SLS
-      logInfo(message);
-      return;
+  if (currentLogFormat === "sls") {
+    // No colors in SLS
+    logInfo(message);
+    return;
   }
 
-  const emoji = 'ℹ️  INFO';
+  const emoji = "ℹ️  INFO";
   const fullMessage = `${emoji}: ${message}`;
 
   if (useColors) {

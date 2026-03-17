@@ -23,9 +23,13 @@ describe("Mobile beta screenshot integration tests", () => {
       return;
     }
 
-    const sessionResult = await agentBay.create({ imageId: "mobile-use-android-12-gw" });
+    const sessionResult = await agentBay.create({
+      imageId: "mobile-use-android-12-gw",
+    });
     if (!sessionResult.success || !sessionResult.session) {
-      throw new Error(`Failed to create session: ${sessionResult.errorMessage || ""}`);
+      throw new Error(
+        `Failed to create session: ${sessionResult.errorMessage || ""}`
+      );
     }
     const session = sessionResult.session!;
 
@@ -36,23 +40,35 @@ describe("Mobile beta screenshot integration tests", () => {
       for (const c of cmds) {
         const r = await session.command.executeCommand(c, 10000);
         if (!r.success) {
-          throw new Error(`command failed: ${c}, error=${r.errorMessage}, output=${r.output}`);
+          throw new Error(
+            `command failed: ${c}, error=${r.errorMessage}, output=${r.output}`
+          );
         }
       }
 
-      const start = await session.mobile.startApp("monkey -p com.android.settings 1");
+      const start = await session.mobile.startApp(
+        "monkey -p com.android.settings 1"
+      );
       expect(start.success).toBe(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const s = await session.mobile.betaTakeScreenshot();
       if (!s.success) {
-        throw new Error(`betaTakeScreenshot failed: requestId=${s.requestId || ""}, error=${s.errorMessage || ""}`);
+        throw new Error(
+          `betaTakeScreenshot failed: requestId=${s.requestId || ""}, error=${
+            s.errorMessage || ""
+          }`
+        );
       }
       expect(s.requestId).toBeDefined();
       expect(s.type).toBe("image");
       expect(s.mimeType).toBe("image/png");
       expect(s.data.length).toBeGreaterThan(8);
-      expect(Buffer.from(s.data).slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(true);
+      expect(
+        Buffer.from(s.data)
+          .slice(0, 8)
+          .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+      ).toBe(true);
       expect(typeof s.width).toBe("number");
       expect(typeof s.height).toBe("number");
       expect((s.width as number) > 0).toBe(true);
@@ -68,9 +84,13 @@ describe("Mobile beta screenshot integration tests", () => {
       return;
     }
 
-    const sessionResult = await agentBay.create({ imageId: "mobile-use-android-12-gw" });
+    const sessionResult = await agentBay.create({
+      imageId: "mobile-use-android-12-gw",
+    });
     if (!sessionResult.success || !sessionResult.session) {
-      throw new Error(`Failed to create session: ${sessionResult.errorMessage || ""}`);
+      throw new Error(
+        `Failed to create session: ${sessionResult.errorMessage || ""}`
+      );
     }
     const session = sessionResult.session!;
 
@@ -81,23 +101,35 @@ describe("Mobile beta screenshot integration tests", () => {
       for (const c of cmds) {
         const r = await session.command.executeCommand(c, 10000);
         if (!r.success) {
-          throw new Error(`command failed: ${c}, error=${r.errorMessage}, output=${r.output}`);
+          throw new Error(
+            `command failed: ${c}, error=${r.errorMessage}, output=${r.output}`
+          );
         }
       }
 
-      const start = await session.mobile.startApp("monkey -p com.android.settings 1");
+      const start = await session.mobile.startApp(
+        "monkey -p com.android.settings 1"
+      );
       expect(start.success).toBe(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const s = await (session.mobile as any).betaTakeScreenshot("jpeg");
       if (!s.success) {
-        throw new Error(`betaTakeScreenshot failed: requestId=${s.requestId || ""}, error=${s.errorMessage || ""}`);
+        throw new Error(
+          `betaTakeScreenshot failed: requestId=${s.requestId || ""}, error=${
+            s.errorMessage || ""
+          }`
+        );
       }
       expect(s.requestId).toBeDefined();
       expect(s.type).toBe("image");
       expect(s.mimeType).toBe("image/jpeg");
       expect(s.data.length).toBeGreaterThan(3);
-      expect(Buffer.from(s.data).slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))).toBe(true);
+      expect(
+        Buffer.from(s.data)
+          .slice(0, 3)
+          .equals(Buffer.from([0xff, 0xd8, 0xff]))
+      ).toBe(true);
       expect(typeof s.width).toBe("number");
       expect(typeof s.height).toBe("number");
       expect((s.width as number) > 0).toBe(true);
@@ -113,9 +145,13 @@ describe("Mobile beta screenshot integration tests", () => {
       return;
     }
 
-    const sessionResult = await agentBay.create({ imageId: "mobile-use-android-12-gw" });
+    const sessionResult = await agentBay.create({
+      imageId: "mobile-use-android-12-gw",
+    });
     if (!sessionResult.success || !sessionResult.session) {
-      throw new Error(`Failed to create session: ${sessionResult.errorMessage || ""}`);
+      throw new Error(
+        `Failed to create session: ${sessionResult.errorMessage || ""}`
+      );
     }
     const session = sessionResult.session!;
 
@@ -126,31 +162,46 @@ describe("Mobile beta screenshot integration tests", () => {
       for (const c of cmds) {
         const r = await session.command.executeCommand(c, 10000);
         if (!r.success) {
-          throw new Error(`command failed: ${c}, error=${r.errorMessage}, output=${r.output}`);
+          throw new Error(
+            `command failed: ${c}, error=${r.errorMessage}, output=${r.output}`
+          );
         }
       }
 
-      const start = await session.mobile.startApp("monkey -p com.android.settings 1");
+      const start = await session.mobile.startApp(
+        "monkey -p com.android.settings 1"
+      );
       expect(start.success).toBe(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const nav = await session.command.executeCommand("am start -a android.settings.SETTINGS", 10000);
+      const nav = await session.command.executeCommand(
+        "am start -a android.settings.SETTINGS",
+        10000
+      );
       if (!nav.success) {
-        throw new Error(`command failed: am start -a android.settings.SETTINGS, error=${nav.errorMessage}, output=${nav.output}`);
+        throw new Error(
+          `command failed: am start -a android.settings.SETTINGS, error=${nav.errorMessage}, output=${nav.output}`
+        );
       }
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const ls = await session.mobile.betaTakeLongScreenshot(2, "png");
       if (!ls.success) {
         throw new Error(
-          `betaTakeLongScreenshot failed: requestId=${ls.requestId || ""}, error=${ls.errorMessage || ""}`
+          `betaTakeLongScreenshot failed: requestId=${
+            ls.requestId || ""
+          }, error=${ls.errorMessage || ""}`
         );
       }
       expect(ls.requestId).toBeDefined();
       expect(ls.type).toBe("image");
       expect(ls.mimeType).toBe("image/png");
       expect(ls.data.length).toBeGreaterThan(8);
-      expect(Buffer.from(ls.data).slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(true);
+      expect(
+        Buffer.from(ls.data)
+          .slice(0, 8)
+          .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+      ).toBe(true);
       expect(typeof ls.width).toBe("number");
       expect(typeof ls.height).toBe("number");
       expect((ls.width as number) > 0).toBe(true);
@@ -166,9 +217,13 @@ describe("Mobile beta screenshot integration tests", () => {
       return;
     }
 
-    const sessionResult = await agentBay.create({ imageId: "mobile-use-android-12-gw" });
+    const sessionResult = await agentBay.create({
+      imageId: "mobile-use-android-12-gw",
+    });
     if (!sessionResult.success || !sessionResult.session) {
-      throw new Error(`Failed to create session: ${sessionResult.errorMessage || ""}`);
+      throw new Error(
+        `Failed to create session: ${sessionResult.errorMessage || ""}`
+      );
     }
     const session = sessionResult.session!;
 
@@ -179,17 +234,26 @@ describe("Mobile beta screenshot integration tests", () => {
       for (const c of cmds) {
         const r = await session.command.executeCommand(c, 10000);
         if (!r.success) {
-          throw new Error(`command failed: ${c}, error=${r.errorMessage}, output=${r.output}`);
+          throw new Error(
+            `command failed: ${c}, error=${r.errorMessage}, output=${r.output}`
+          );
         }
       }
 
-      const start = await session.mobile.startApp("monkey -p com.android.settings 1");
+      const start = await session.mobile.startApp(
+        "monkey -p com.android.settings 1"
+      );
       expect(start.success).toBe(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const nav = await session.command.executeCommand("am start -a android.settings.SETTINGS", 10000);
+      const nav = await session.command.executeCommand(
+        "am start -a android.settings.SETTINGS",
+        10000
+      );
       if (!nav.success) {
-        throw new Error(`command failed: am start -a android.settings.SETTINGS, error=${nav.errorMessage}, output=${nav.output}`);
+        throw new Error(
+          `command failed: am start -a android.settings.SETTINGS, error=${nav.errorMessage}, output=${nav.output}`
+        );
       }
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -202,12 +266,16 @@ describe("Mobile beta screenshot integration tests", () => {
 
       if (!high.success) {
         throw new Error(
-          `betaTakeLongScreenshot (jpeg, q=95) failed: requestId=${high.requestId || ""}, error=${high.errorMessage || ""}`
+          `betaTakeLongScreenshot (jpeg, q=95) failed: requestId=${
+            high.requestId || ""
+          }, error=${high.errorMessage || ""}`
         );
       }
       if (!low.success) {
         throw new Error(
-          `betaTakeLongScreenshot (jpeg, q=10) failed: requestId=${low.requestId || ""}, error=${low.errorMessage || ""}`
+          `betaTakeLongScreenshot (jpeg, q=10) failed: requestId=${
+            low.requestId || ""
+          }, error=${low.errorMessage || ""}`
         );
       }
 
@@ -215,7 +283,11 @@ describe("Mobile beta screenshot integration tests", () => {
       expect(high.type).toBe("image");
       expect(high.mimeType).toBe("image/jpeg");
       expect(high.data.length).toBeGreaterThan(3);
-      expect(Buffer.from(high.data).slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))).toBe(true);
+      expect(
+        Buffer.from(high.data)
+          .slice(0, 3)
+          .equals(Buffer.from([0xff, 0xd8, 0xff]))
+      ).toBe(true);
       expect(typeof high.width).toBe("number");
       expect(typeof high.height).toBe("number");
       expect((high.width as number) > 0).toBe(true);
@@ -225,7 +297,11 @@ describe("Mobile beta screenshot integration tests", () => {
       expect(low.type).toBe("image");
       expect(low.mimeType).toBe("image/jpeg");
       expect(low.data.length).toBeGreaterThan(3);
-      expect(Buffer.from(low.data).slice(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))).toBe(true);
+      expect(
+        Buffer.from(low.data)
+          .slice(0, 3)
+          .equals(Buffer.from([0xff, 0xd8, 0xff]))
+      ).toBe(true);
       expect(typeof low.width).toBe("number");
       expect(typeof low.height).toBe("number");
       expect((low.width as number) > 0).toBe(true);
@@ -237,4 +313,3 @@ describe("Mobile beta screenshot integration tests", () => {
     }
   }, 90000);
 });
-

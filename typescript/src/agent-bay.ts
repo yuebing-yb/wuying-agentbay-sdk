@@ -4,11 +4,20 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import * as $_client from "./api";
-import { ListSessionRequest, CreateMcpSessionRequestPersistenceDataList, GetSessionRequest as $GetSessionRequest } from "./api/models/model";
+import {
+  ListSessionRequest,
+  CreateMcpSessionRequestPersistenceDataList,
+  GetSessionRequest as $GetSessionRequest,
+} from "./api/models/model";
 import type { McpTool } from "./session";
 import { Client } from "./api/client";
 
-import { Config, BROWSER_RECORD_PATH, loadConfig, loadDotEnvWithFallback } from "./config";
+import {
+  Config,
+  BROWSER_RECORD_PATH,
+  loadConfig,
+  loadDotEnvWithFallback,
+} from "./config";
 import type { ConfigOptions } from "./config";
 import { ContextService } from "./context";
 import { BetaNetworkService } from "./beta-network";
@@ -16,7 +25,12 @@ import { BetaSkillsService } from "./beta-skills";
 import { ContextSync } from "./context-sync";
 import { APIError, AuthenticationError } from "./exceptions";
 import { Session } from "./session";
-import { BrowserContext, CreateSessionParamsInterface, CreateSessionParams as CreateSessionParamsClass } from "./session-params";
+import {
+  BrowserContext,
+  CreateSessionParamsInterface,
+  CreateSessionParams as CreateSessionParamsClass,
+} from "./session-params";
+import { BrowserSyncMode } from "./session-params";
 import { Context } from "./context";
 import { ExtraConfigs } from "./types/extra-configs";
 import {
@@ -46,8 +60,6 @@ import { VERSION, IS_RELEASE } from "./version";
 
 // Browser data path constant (moved from config.ts)
 const BROWSER_DATA_PATH = "/tmp/agentbay_browser";
-
-
 
 /**
  * Parameters for creating a session.
@@ -193,25 +205,33 @@ export class AgentBay {
         wyaApplyOption = "-all";
       }
 
-      const command = `chmod -R a+rwx ${mobileSimPath}; wya apply ${wyaApplyOption} ${devInfoFilePath}`.trim();
-      logInfo(`ℹ️  ⏳ Waiting for mobile simulate completion, command: [${command}]`);
+      const command =
+        `chmod -R a+rwx ${mobileSimPath}; wya apply ${wyaApplyOption} ${devInfoFilePath}`.trim();
+      logInfo(
+        `ℹ️  ⏳ Waiting for mobile simulate completion, command: [${command}]`
+      );
 
       const cmdResult = await (session as any).command.executeCommand(command);
       if (cmdResult.success) {
         const endTime = Date.now();
         const consumeTime = (endTime - startTime) / 1000;
-        log(`✅ Mobile simulate completed with mode: ${mobileSimMode || 'PropertiesOnly'}, duration: ${consumeTime.toFixed(2)} seconds`);
+        log(
+          `✅ Mobile simulate completed with mode: ${
+            mobileSimMode || "PropertiesOnly"
+          }, duration: ${consumeTime.toFixed(2)} seconds`
+        );
         if (cmdResult.output) {
           log(`   Output: ${cmdResult.output.trim()}`);
         }
       } else {
-        logInfo(`Failed to execute mobile simulate command: ${cmdResult.errorMessage}`);
+        logInfo(
+          `Failed to execute mobile simulate command: ${cmdResult.errorMessage}`
+        );
       }
     } catch (error) {
       logInfo(`Error executing mobile simulate command: ${error}`);
     }
   }
-
 
   /**
    * Create a new session in the AgentBay cloud environment.
@@ -263,11 +283,14 @@ export class AgentBay {
     try {
       // Create a deep copy of params to avoid modifying the original object
       const paramsCopy = this.deepCopyParams(params);
-      logDebug(`default context syncs length: ${paramsCopy.contextSync?.length}`);
+      logDebug(
+        `default context syncs length: ${paramsCopy.contextSync?.length}`
+      );
 
       // Add context syncs for mobile simulate if provided
       if (paramsCopy.extraConfigs?.mobile?.simulateConfig) {
-        const mobileSimContextId = paramsCopy.extraConfigs.mobile.simulateConfig.simulatedContextId;
+        const mobileSimContextId =
+          paramsCopy.extraConfigs.mobile.simulateConfig.simulatedContextId;
         if (mobileSimContextId) {
           const mobileSimContextSync = new ContextSync(
             mobileSimContextId,
@@ -276,7 +299,11 @@ export class AgentBay {
           if (!paramsCopy.contextSync) {
             paramsCopy.contextSync = [];
           }
-          logInfo(`Adding context sync for mobile simulate: ${JSON.stringify(mobileSimContextSync)}`);
+          logInfo(
+            `Adding context sync for mobile simulate: ${JSON.stringify(
+              mobileSimContextSync
+            )}`
+          );
           paramsCopy.contextSync.push(mobileSimContextSync);
         }
       }
@@ -321,7 +348,11 @@ export class AgentBay {
       }
 
       // SDK idle release timeout (seconds)
-      if ((paramsCopy as any).idleReleaseTimeout !== undefined && (paramsCopy as any).idleReleaseTimeout !== null && (paramsCopy as any).idleReleaseTimeout > 0) {
+      if (
+        (paramsCopy as any).idleReleaseTimeout !== undefined &&
+        (paramsCopy as any).idleReleaseTimeout !== null &&
+        (paramsCopy as any).idleReleaseTimeout > 0
+      ) {
         (request as any).timeout = (paramsCopy as any).idleReleaseTimeout;
       }
 
@@ -336,12 +367,14 @@ export class AgentBay {
 
       // Add context sync configurations if provided
       if (paramsCopy.contextSync && paramsCopy.contextSync.length > 0) {
-        const persistenceDataList: CreateMcpSessionRequestPersistenceDataList[] = [];
+        const persistenceDataList: CreateMcpSessionRequestPersistenceDataList[] =
+          [];
         for (const contextSync of paramsCopy.contextSync) {
-          const persistenceItem = new CreateMcpSessionRequestPersistenceDataList({
-            contextId: contextSync.contextId,
-            path: contextSync.path,
-          });
+          const persistenceItem =
+            new CreateMcpSessionRequestPersistenceDataList({
+              contextId: contextSync.contextId,
+              path: contextSync.path,
+            });
 
           // Convert policy to JSON string if provided
           if (contextSync.policy) {
@@ -359,21 +392,66 @@ export class AgentBay {
 
       // Add BrowserContext as a ContextSync if provided
       if (paramsCopy.browserContext) {
-        // Create a simple sync policy for browser context
+        const bc = paramsCopy.browserContext;
+        const syncMode = bc.syncMode ?? BrowserSyncMode.STANDARD;
+
+        let whiteLists: { path: string; excludePaths: string[] }[];
+        if (syncMode === BrowserSyncMode.MINIMAL) {
+          whiteLists = [
+            { path: "/Local State", excludePaths: [] },
+            { path: "/Default/Cookies", excludePaths: [] },
+            { path: "/Default/Cookies-journal", excludePaths: [] },
+          ];
+        } else {
+          // STANDARD mode: login state + anti-risk-control data
+          whiteLists = [
+            // Auth core
+            { path: "/Local State", excludePaths: [] },
+            { path: "/Default/Cookies", excludePaths: [] },
+            { path: "/Default/Cookies-journal", excludePaths: [] },
+            // Anti-risk-control device fingerprint (localStorage / IndexedDB)
+            { path: "/Default/Local Storage", excludePaths: [] },
+            { path: "/Default/IndexedDB", excludePaths: [] },
+            { path: "/Default/Session Storage", excludePaths: [] },
+            // Saved passwords and form autofill
+            { path: "/Default/Login Data", excludePaths: [] },
+            { path: "/Default/Login Data-journal", excludePaths: [] },
+            { path: "/Default/Login Data For Account", excludePaths: [] },
+            {
+              path: "/Default/Login Data For Account-journal",
+              excludePaths: [],
+            },
+            { path: "/Default/Web Data", excludePaths: [] },
+            { path: "/Default/Web Data-journal", excludePaths: [] },
+            // Browser settings and permission consistency
+            { path: "/Default/Preferences", excludePaths: [] },
+            { path: "/Default/Secure Preferences", excludePaths: [] },
+            // Network behavior consistency (HSTS / QUIC)
+            { path: "/Default/TransportSecurity", excludePaths: [] },
+            { path: "/Default/Network Persistent State", excludePaths: [] },
+            // Rendering fingerprint stability
+            { path: "/Default/GPUCache", excludePaths: [] },
+            // Cross-domain password matching
+            { path: "/Default/Affiliation Database", excludePaths: [] },
+            { path: "/Default/Affiliation Database-journal", excludePaths: [] },
+          ];
+        }
+
         const syncPolicy = {
-          uploadPolicy: { autoUpload: paramsCopy.browserContext.autoUpload },
+          uploadPolicy: { autoUpload: bc.autoUpload },
           downloadPolicy: null,
           deletePolicy: null,
-          bwList: null,
+          bwList: { whiteLists },
           recyclePolicy: null,
         };
 
         // Create browser context sync item
-        const browserContextSync = new CreateMcpSessionRequestPersistenceDataList({
-          contextId: paramsCopy.browserContext.contextId,
-          path: BROWSER_DATA_PATH, // Using a constant path for browser data
-          policy: JSON.stringify(syncPolicy)
-        });
+        const browserContextSync =
+          new CreateMcpSessionRequestPersistenceDataList({
+            contextId: bc.contextId,
+            path: BROWSER_DATA_PATH,
+            policy: JSON.stringify(syncPolicy),
+          });
 
         // Add to persistence data list or create new one if not exists
         if (!request.persistenceDataList) {
@@ -390,12 +468,16 @@ export class AgentBay {
 
         // Check mobile simulate config
         if (paramsCopy.extraConfigs.mobile?.simulateConfig?.simulate) {
-          mobileSimPath = paramsCopy.extraConfigs.mobile.simulateConfig.simulatePath;
+          mobileSimPath =
+            paramsCopy.extraConfigs.mobile.simulateConfig.simulatePath;
           if (!mobileSimPath) {
-            logInfo("mobile_sim_path is not set now, skip mobile simulate operation");
+            logInfo(
+              "mobile_sim_path is not set now, skip mobile simulate operation"
+            );
           } else {
             needsMobileSim = true;
-            mobileSimMode = paramsCopy.extraConfigs.mobile.simulateConfig.simulateMode;
+            mobileSimMode =
+              paramsCopy.extraConfigs.mobile.simulateConfig.simulateMode;
           }
         }
       }
@@ -405,7 +487,9 @@ export class AgentBay {
         labels: paramsCopy.labels,
         imageId: paramsCopy.imageId,
         policyId: paramsCopy.policyId,
-        persistenceDataCount: paramsCopy.contextSync ? paramsCopy.contextSync.length : 0,
+        persistenceDataCount: paramsCopy.contextSync
+          ? paramsCopy.contextSync.length
+          : 0,
       });
 
       const response = await this.client.createMcpSession(request);
@@ -434,7 +518,9 @@ export class AgentBay {
 
       // Check for API-level errors
       if (sessionData.success === false && sessionData.code) {
-        const errorMessage = `[${sessionData.code}] ${sessionData.message || 'Unknown error'}`;
+        const errorMessage = `[${sessionData.code}] ${
+          sessionData.message || "Unknown error"
+        }`;
         logAPIResponseWithDetails(
           "CreateMcpSession",
           requestId,
@@ -506,15 +592,10 @@ export class AgentBay {
       // ResourceUrl is optional in CreateMcpSession response
       const resourceUrl = data.resourceUrl || "";
 
-      logAPIResponseWithDetails(
-        "CreateMcpSession",
-        requestId,
-        true,
-        {
-          sessionId,
-          resourceUrl,
-        }
-      );
+      logAPIResponseWithDetails("CreateMcpSession", requestId, true, {
+        sessionId,
+        resourceUrl,
+      });
 
       const session = new Session(this, sessionId);
 
@@ -537,11 +618,15 @@ export class AgentBay {
       if (paramsCopy.extraConfigs && paramsCopy.extraConfigs.mobile) {
         log("Applying mobile configuration...");
         try {
-          const configResult = await session.mobile.configure(paramsCopy.extraConfigs.mobile);
+          const configResult = await session.mobile.configure(
+            paramsCopy.extraConfigs.mobile
+          );
           if (configResult.success) {
             log("Mobile configuration applied successfully");
           } else {
-            logError(`Warning: Failed to apply mobile configuration: ${configResult.errorMessage}`);
+            logError(
+              `Warning: Failed to apply mobile configuration: ${configResult.errorMessage}`
+            );
             // Continue with session creation even if mobile config fails
           }
         } catch (error) {
@@ -578,11 +663,15 @@ export class AgentBay {
                 continue;
               }
               statusByContextId.set(item.contextId, item.status);
-              logDebug(`Context ${item.contextId} status: ${item.status}, path: ${item.path}`);
+              logDebug(
+                `Context ${item.contextId} status: ${item.status}, path: ${item.path}`
+              );
 
               if (item.status === "Failed") {
                 hasFailure = true;
-                logError(`Context synchronization failed for ${item.contextId}: ${item.errorMessage}`);
+                logError(
+                  `Context synchronization failed for ${item.contextId}: ${item.errorMessage}`
+                );
               }
             }
 
@@ -604,24 +693,46 @@ export class AgentBay {
               break;
             }
 
-            logDebug(`Waiting for context synchronization, attempt ${retry+1}/${maxRetries}, next interval: ${(currentInterval / 1000).toFixed(2)}s`);
-            await new Promise(resolve => setTimeout(resolve, currentInterval));
+            logDebug(
+              `Waiting for context synchronization, attempt ${
+                retry + 1
+              }/${maxRetries}, next interval: ${(
+                currentInterval / 1000
+              ).toFixed(2)}s`
+            );
+            await new Promise((resolve) =>
+              setTimeout(resolve, currentInterval)
+            );
 
             // Exponential backoff: increase interval for next retry, capped at maxInterval
-            currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
+            currentInterval = Math.min(
+              currentInterval * backoffFactor,
+              maxInterval
+            );
           } catch (error) {
-            logError(`Error checking context status on attempt ${retry+1}: ${error}`);
-            await new Promise(resolve => setTimeout(resolve, currentInterval));
+            logError(
+              `Error checking context status on attempt ${retry + 1}: ${error}`
+            );
+            await new Promise((resolve) =>
+              setTimeout(resolve, currentInterval)
+            );
 
             // Exponential backoff: increase interval for next retry, capped at maxInterval
-            currentInterval = Math.min(currentInterval * backoffFactor, maxInterval);
+            currentInterval = Math.min(
+              currentInterval * backoffFactor,
+              maxInterval
+            );
           }
         }
       }
 
       // If we need to do mobile simulate by command, wait for it
       if (needsMobileSim && mobileSimPath) {
-        await this._waitForMobileSimulate(session, mobileSimPath, mobileSimMode);
+        await this._waitForMobileSimulate(
+          session,
+          mobileSimPath,
+          mobileSimMode
+        );
       }
 
       // Return SessionResult with request ID
@@ -639,7 +750,6 @@ export class AgentBay {
       };
     }
   }
-
 
   /**
    * Returns paginated list of session IDs filtered by labels and status.
@@ -668,12 +778,21 @@ export class AgentBay {
     try {
       // Validate status parameter
       if (status !== undefined) {
-        const validStatuses = ["RUNNING", "PAUSING", "PAUSED", "RESUMING", "DELETING", "DELETED"];
+        const validStatuses = [
+          "RUNNING",
+          "PAUSING",
+          "PAUSED",
+          "RESUMING",
+          "DELETING",
+          "DELETED",
+        ];
         if (!validStatuses.includes(status)) {
           return {
             requestId: "",
             success: false,
-            errorMessage: `Invalid status '${status}'. Must be one of: ${validStatuses.join(', ')}`,
+            errorMessage: `Invalid status '${status}'. Must be one of: ${validStatuses.join(
+              ", "
+            )}`,
             sessionIds: [],
             nextToken: "",
             maxResults: limit,
@@ -788,7 +907,10 @@ export class AgentBay {
           {},
           `[${code}] ${message}`
         );
-        logDebug("Full ListSession response:", JSON.stringify(response.body, null, 2));
+        logDebug(
+          "Full ListSession response:",
+          JSON.stringify(response.body, null, 2)
+        );
         return {
           requestId,
           success: false,
@@ -800,7 +922,8 @@ export class AgentBay {
         };
       }
 
-      const sessionIds: Array<{sessionId: string; sessionStatus: string}> = [];
+      const sessionIds: Array<{ sessionId: string; sessionStatus: string }> =
+        [];
 
       // Extract session data
       if (response.body.data) {
@@ -809,23 +932,18 @@ export class AgentBay {
             // Create a structured session object with both ID and status
             const sessionInfo = {
               sessionId: sessionData.sessionId,
-              sessionStatus: sessionData.sessionStatus || "UNKNOWN"
+              sessionStatus: sessionData.sessionStatus || "UNKNOWN",
             };
             sessionIds.push(sessionInfo);
           }
         }
       }
 
-      logAPIResponseWithDetails(
-        "ListSession",
-        requestId,
-        true,
-        {
-          sessionCount: sessionIds.length,
-          totalCount: response.body.totalCount || 0,
-          maxResults: response.body.maxResults || limit,
-        }
-      );
+      logAPIResponseWithDetails("ListSession", requestId, true, {
+        sessionCount: sessionIds.length,
+        totalCount: response.body.totalCount || 0,
+        maxResults: response.body.maxResults || limit,
+      });
 
       // Return SessionListResult with request ID and pagination info
       return {
@@ -923,7 +1041,7 @@ export class AgentBay {
           requestId,
           false,
           {},
-          `[${body.code}] ${body.message || 'Unknown error'}`
+          `[${body.code}] ${body.message || "Unknown error"}`
         );
         logDebug("Full GetSession response:", JSON.stringify(body, null, 2));
         return {
@@ -931,7 +1049,7 @@ export class AgentBay {
           httpStatusCode: body.httpStatusCode || 0,
           code: body.code,
           success: false,
-          errorMessage: `[${body.code}] ${body.message || 'Unknown error'}`,
+          errorMessage: `[${body.code}] ${body.message || "Unknown error"}`,
         };
       }
 
@@ -949,7 +1067,7 @@ export class AgentBay {
         const contexts: Array<{ name: string; id: string }> = [];
         if (Array.isArray(contextsList)) {
           for (const ctx of contextsList) {
-            if (ctx && typeof ctx === 'object' && ctx.name && ctx.id) {
+            if (ctx && typeof ctx === "object" && ctx.name && ctx.id) {
               contexts.push({
                 name: ctx.name,
                 id: ctx.id,
@@ -977,16 +1095,11 @@ export class AgentBay {
         };
         result.data = data;
 
-        logAPIResponseWithDetails(
-          "GetSession",
-          requestId,
-          true,
-          {
-            sessionId: data.sessionId,
-            resourceId: data.resourceId,
-            httpPort: data.httpPort,
-          }
-        );
+        logAPIResponseWithDetails("GetSession", requestId, true, {
+          sessionId: data.sessionId,
+          resourceId: data.resourceId,
+          httpPort: data.httpPort,
+        });
       }
 
       return result;
@@ -995,7 +1108,10 @@ export class AgentBay {
       const errorStr = String(error);
       const errorCode = error?.data?.Code || error?.code || "";
 
-      if (errorCode === "InvalidMcpSession.NotFound" || errorStr.includes("NotFound")) {
+      if (
+        errorCode === "InvalidMcpSession.NotFound" ||
+        errorStr.includes("NotFound")
+      ) {
         // This is an expected error - session doesn't exist
         // Use info level logging without stack trace, but with red color for visibility
         logInfo(`Session not found: ${sessionId}`);
@@ -1043,10 +1159,7 @@ export class AgentBay {
    */
   async get(sessionId: string): Promise<SessionResult> {
     // Validate input
-    if (
-      !sessionId ||
-      (typeof sessionId === "string" && !sessionId.trim())
-    ) {
+    if (!sessionId || (typeof sessionId === "string" && !sessionId.trim())) {
       return {
         requestId: "",
         success: false,
@@ -1151,7 +1264,11 @@ export class AgentBay {
    *
    * @see {@link betaResumeAsync}, {@link Session.betaPauseAsync}
    */
-  async betaPauseAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionPauseResult> {
+  async betaPauseAsync(
+    session: Session,
+    timeout = 600,
+    pollInterval = 2.0
+  ): Promise<import("./types/api-response").SessionPauseResult> {
     try {
       // Call session's pause_async method directly
       return await session.betaPauseAsync(timeout, pollInterval);
@@ -1194,7 +1311,11 @@ export class AgentBay {
    *
    * @see {@link betaPauseAsync}, {@link Session.betaResumeAsync}
    */
-  async betaResumeAsync(session: Session, timeout = 600, pollInterval = 2.0): Promise<import("./types/api-response").SessionResumeResult> {
+  async betaResumeAsync(
+    session: Session,
+    timeout = 600,
+    pollInterval = 2.0
+  ): Promise<import("./types/api-response").SessionResumeResult> {
     try {
       // Call session's resume_async method directly
       return await session.betaResumeAsync(timeout, pollInterval);
@@ -1255,9 +1376,11 @@ export class AgentBay {
    * @param params - The original params object to copy
    * @returns A deep copy of the params object as interface with merged context syncs
    */
-  private deepCopyParams(params: CreateSessionParams): CreateSessionParamsInterface {
+  private deepCopyParams(
+    params: CreateSessionParams
+  ): CreateSessionParamsInterface {
     let result: CreateSessionParamsInterface;
-    
+
     // Check if params is a CreateSessionParams class instance
     if (params instanceof CreateSessionParamsClass) {
       // For class instances, extension contexts are already merged automatically when browserContext was set
@@ -1280,41 +1403,59 @@ export class AgentBay {
       // Use any type for JSON.parse result since params could be either interface or class instance
       const copied = JSON.parse(JSON.stringify(params)) as any;
       result = copied as CreateSessionParamsInterface;
-      if(!result.enableBrowserReplay || !("enableBrowserReplay" in result)){
+      if (!result.enableBrowserReplay || !("enableBrowserReplay" in result)) {
         result.enableBrowserReplay = true;
       }
-      const allContextSyncs = params?.contextSync ? [...params.contextSync] : [];
+      const allContextSyncs = params?.contextSync
+        ? [...params.contextSync]
+        : [];
       // **IMPORTANT: Apply extension context merging for plain objects automatically**
       // Check if browserContext exists and has extension syncs to merge
-      if (result.browserContext && result.browserContext.extensionContextSyncs) {
+      if (
+        result.browserContext &&
+        result.browserContext.extensionContextSyncs
+      ) {
         // Merge with extension syncs (equivalent to automatic merging in class)
-        result.contextSync = [...allContextSyncs, ...result.browserContext.extensionContextSyncs];
+        result.contextSync = [
+          ...allContextSyncs,
+          ...result.browserContext.extensionContextSyncs,
+        ];
       }
-      if (params?.browserContext && params.browserContext.fingerprintContextSync) {
-        result.contextSync = [...(result.contextSync || []), params.browserContext.fingerprintContextSync];
+      if (
+        params?.browserContext &&
+        params.browserContext.fingerprintContextSync
+      ) {
+        result.contextSync = [
+          ...(result.contextSync || []),
+          params.browserContext.fingerprintContextSync,
+        ];
         log("Added fingerprint context sync from BrowserContext");
       }
       // Reconstruct ContextSync objects if they exist (since they might be class instances)
       if (result.contextSync && Array.isArray(result.contextSync)) {
         result.contextSync = result.contextSync.map((cs: any) => {
           // Reconstruct from plain object (JSON.parse converts class instances to plain objects)
-          return new ContextSync(cs.contextId, cs.path, cs.policy, cs.betaWaitForCompletion);
+          return new ContextSync(
+            cs.contextId,
+            cs.path,
+            cs.policy,
+            cs.betaWaitForCompletion
+          );
         });
       }
 
       // Reconstruct BrowserContext if it exists
       if (result.browserContext) {
         const bc = result.browserContext as any;
-        // Use the BrowserContext constructor to properly recreate the instance
         result.browserContext = new BrowserContext(
           bc.contextId,
           bc.autoUpload,
-          bc.extensionOption
+          bc.extensionOption,
+          bc.fingerprintContext,
+          bc.syncMode
         );
       }
     }
-
-    
 
     return result;
   }

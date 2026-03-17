@@ -29,7 +29,7 @@ Handles code execution operations in the AgentBay cloud environment.
 
 ### execute
 
-▸ **execute**(`code`, `language`, `timeoutS?`): `Promise`\<`CodeExecutionResult`\>
+▸ **execute**(`code`, `language`, `timeoutS?`, `options?`): `Promise`\<`CodeExecutionResult`\>
 
 Alias of runCode().
 
@@ -40,6 +40,11 @@ Alias of runCode().
 | `code` | `string` | `undefined` |
 | `language` | `string` | `undefined` |
 | `timeoutS` | `number` | `60` |
+| `options?` | `Object` | `undefined` |
+| `options.onError?` | (`err`: `any`) => `void` | `undefined` |
+| `options.onStderr?` | (`chunk`: `string`) => `void` | `undefined` |
+| `options.onStdout?` | (`chunk`: `string`) => `void` | `undefined` |
+| `options.streamBeta?` | `boolean` | `undefined` |
 
 #### Returns
 
@@ -49,7 +54,7 @@ ___
 
 ### run
 
-▸ **run**(`code`, `language`, `timeoutS?`): `Promise`\<`CodeExecutionResult`\>
+▸ **run**(`code`, `language`, `timeoutS?`, `options?`): `Promise`\<`CodeExecutionResult`\>
 
 Alias of runCode().
 
@@ -60,6 +65,11 @@ Alias of runCode().
 | `code` | `string` | `undefined` |
 | `language` | `string` | `undefined` |
 | `timeoutS` | `number` | `60` |
+| `options?` | `Object` | `undefined` |
+| `options.onError?` | (`err`: `any`) => `void` | `undefined` |
+| `options.onStderr?` | (`chunk`: `string`) => `void` | `undefined` |
+| `options.onStdout?` | (`chunk`: `string`) => `void` | `undefined` |
+| `options.streamBeta?` | `boolean` | `undefined` |
 
 #### Returns
 
@@ -69,7 +79,7 @@ ___
 
 ### runCode
 
-▸ **runCode**(`code`, `language`, `timeoutS?`): `Promise`\<`CodeExecutionResult`\>
+▸ **runCode**(`code`, `language`, `timeoutS?`, `options?`): `Promise`\<`CodeExecutionResult`\>
 
 Execute code in the specified language with a timeout.
 Corresponds to Python's run_code() method
@@ -81,6 +91,11 @@ Corresponds to Python's run_code() method
 | `code` | `string` | `undefined` | The code to execute. |
 | `language` | `string` | `undefined` | The programming language of the code. Case-insensitive. Supported values: 'python', 'javascript', 'r', 'java'. |
 | `timeoutS` | `number` | `60` | The timeout for the code execution in seconds. Default is 60s. Note: Due to gateway limitations, each request cannot exceed 60 seconds. |
+| `options?` | `Object` | `undefined` | Optional streaming options. When streamBeta is true, uses WebSocket streaming for real-time stdout/stderr output. |
+| `options.onError?` | (`err`: `any`) => `void` | `undefined` | - |
+| `options.onStderr?` | (`chunk`: `string`) => `void` | `undefined` | - |
+| `options.onStdout?` | (`chunk`: `string`) => `void` | `undefined` | - |
+| `options.streamBeta?` | `boolean` | `undefined` | - |
 
 #### Returns
 

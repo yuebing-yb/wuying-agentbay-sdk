@@ -98,7 +98,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 	t.Run("ListAllSessions", func(t *testing.T) {
 		t.Log("\n=== Testing List() without labels ===")
 
-		result, err := agentBayClient.List("",nil, nil, nil)
+		result, err := agentBayClient.List("", nil, nil, nil)
 		if err != nil {
 			t.Fatalf("Error listing all sessions: %v", err)
 		}
@@ -339,7 +339,7 @@ func TestAgentBay_List_Integration(t *testing.T) {
 		t.Log("\n=== Testing List() request_id presence ===")
 
 		// Test 1: No labels
-		result1, err := agentBayClient.List("",nil, nil, nil)
+		result1, err := agentBayClient.List("", nil, nil, nil)
 		if err != nil {
 			t.Fatalf("Error in test 1: %v", err)
 		}
