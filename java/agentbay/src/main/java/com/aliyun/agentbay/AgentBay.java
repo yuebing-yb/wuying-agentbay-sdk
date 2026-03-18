@@ -987,7 +987,17 @@ public class AgentBay {
         return list(null, null, null, status);
     }
     /**
-     * Delete a session
+     * Delete a session without context synchronization.
+     *
+     * @param session The session to delete
+     * @return DeleteResult
+     */
+    public DeleteResult delete(Session session) {
+        return delete(session, false);
+    }
+
+    /**
+     * Delete a session with optional context synchronization.
      *
      * @param session The session to delete
      * @param syncContext Whether to sync context before deletion
@@ -998,12 +1008,18 @@ public class AgentBay {
             return new DeleteResult("", false, "Session is null");
         }
 
-        DeleteResult result = session.delete(syncContext);
+        try {
+            DeleteResult result = session.delete(syncContext);
 
-        // Remove from sessions map
-        sessions.remove(session.getSessionId());
+            // Remove from sessions map
+            sessions.remove(session.getSessionId());
 
-        return result;
+            return result;
+        } catch (Exception e) {
+            logger.error("Failed to delete session {}: {}", session.getSessionId(), e.getMessage(), e);
+            return new DeleteResult("", false,
+                "Failed to delete session " + session.getSessionId() + ": " + e.getMessage());
+        }
     }
 
     /**

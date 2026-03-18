@@ -8,15 +8,7 @@ import com.aliyun.agentbay.mobile.Mobile;
 import com.aliyun.agentbay.context.*;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.filesystem.FileSystem;
-import com.aliyun.agentbay.model.GetSessionResult;
-import com.aliyun.agentbay.model.OperationResult;
-import com.aliyun.agentbay.model.SessionInfo;
-import com.aliyun.agentbay.model.SessionInfoResult;
-import com.aliyun.agentbay.model.SessionMetrics;
-import com.aliyun.agentbay.model.SessionMetricsResult;
-import com.aliyun.agentbay.model.SessionPauseResult;
-import com.aliyun.agentbay.model.SessionResumeResult;
-import com.aliyun.agentbay.model.SessionStatusResult;
+import com.aliyun.agentbay.model.*;
 import com.aliyun.agentbay.oss.OSS;
 import com.aliyun.agentbay.code.Code;
 import com.aliyun.agentbay.command.Command;
@@ -1317,115 +1309,132 @@ public class Session {
 
 
     /**
-     * Deletes this session.
+     * Deletes this session and releases all associated resources.
      * 
-     * This method releases the cloud resources associated with this session.
-     * Context synchronization is not performed before deletion.
+     * <p>Context synchronization is not performed before deletion.</p>
      * 
      * @return DeleteResult containing the deletion result
      */
-    public com.aliyun.agentbay.model.DeleteResult delete() {
+    public DeleteResult delete() {
         return delete(false);
     }
 
     /**
      * Deletes this session with optional context synchronization.
      * 
-     * This method releases the cloud resources associated with this session.
-     * If syncContext is true, it will first synchronize the context (upload files)
-     * before deleting the session, waiting for all uploads to complete.
+     * <p>This method uses the DeleteSessionAsync API to release cloud resources.
+     * If syncContext is true, it will first synchronize the context (trigger file uploads)
+     * before deleting the session. After initiating deletion, it polls the session status
+     * until the session is confirmed deleted (NotFound or FINISH) or timeout.</p>
      * 
      * @param syncContext Whether to synchronize context before deletion
      * @return DeleteResult containing the deletion result
      */
-    public com.aliyun.agentbay.model.DeleteResult delete(boolean syncContext) {
+    public DeleteResult delete(boolean syncContext) {
         try {
-            // If sync_context is True, trigger file uploads first
+            // Perform context synchronization if needed
             if (syncContext) {
-                // Trigger file upload
+                long syncStartTime = System.currentTimeMillis();
+
                 try {
                     ContextSyncResult syncResult = contextManager.sync();
-                    if (!syncResult.isSuccess()) {
-                    }
+                    long syncDuration = System.currentTimeMillis() - syncStartTime;
                 } catch (Exception e) {
+                    long syncDuration = System.currentTimeMillis() - syncStartTime;
+                    logger.warn("Failed to trigger context sync after {}ms: {}", syncDuration, e.getMessage());
                     // Continue with deletion even if sync fails
-                }
-
-                // Wait for uploads to complete
-                int maxRetries = 150; // Maximum number of retries
-                int retryInterval = 2000; // 2 seconds in milliseconds
-
-                for (int retry = 0; retry < maxRetries; retry++) {
-                    try {
-                        // Get context status data
-                        ContextInfoResult infoResult = contextManager.info();
-
-                        // Check if all upload context items have status "Success" or "Failed"
-                        boolean allCompleted = true;
-                        boolean hasFailure = false;
-                        boolean hasUploads = false;
-
-                        for (ContextStatusData item : infoResult.getContextStatusData()) {
-                            // We only care about upload tasks
-                            if (!"upload".equals(item.getTaskType())) {
-                                continue;
-                            }
-
-                            hasUploads = true;
-                            if (!"Success".equals(item.getStatus()) && !"Failed".equals(item.getStatus())) {
-                                allCompleted = false;
-                                break;
-                            }
-
-                            if ("Failed".equals(item.getStatus())) {
-                                hasFailure = true;
-                            }
-                        }
-
-                        if (allCompleted || !hasUploads) {
-                            if (hasFailure) {
-                            } else if (hasUploads) {
-                            } else {
-                            }
-                            break;
-                        }
-                        Thread.sleep(retryInterval);
-                    } catch (Exception e) {
-                        try {
-                            Thread.sleep(retryInterval);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
-                    }
                 }
             }
 
-            // Proceed with session deletion
-            ReleaseMcpSessionRequest request = new ReleaseMcpSessionRequest();
+            // Proceed with session deletion using DeleteSessionAsync API
+            DeleteSessionAsyncRequest request = new DeleteSessionAsyncRequest();
             request.setAuthorization("Bearer " + getApiKey());
             request.setSessionId(sessionId);
 
-            ReleaseMcpSessionResponse response = agentBay.getClient().releaseMcpSession(request);
-
+            DeleteSessionAsyncResponse response = agentBay.getClient().deleteSessionAsync(request);
             String requestId = ResponseUtil.extractRequestId(response);
 
             // Check if the response is successful
-            boolean success = true;
             if (response != null && response.getBody() != null) {
-                success = response.getBody().getSuccess() != null ? response.getBody().getSuccess() : true;
+                Boolean success = response.getBody().getSuccess();
+                if (success != null && !success) {
+                    String code = response.getBody().getCode() != null ? response.getBody().getCode() : "Unknown";
+                    String message = response.getBody().getMessage() != null 
+                        ? response.getBody().getMessage() : "Failed to delete session";
+                    String errorMessage = "[" + code + "] " + message;
+                    return new DeleteResult(requestId, false, errorMessage);
+                }
             }
 
-            if (!success) {
-                return new com.aliyun.agentbay.model.DeleteResult(
-                    requestId, false, "Failed to delete session");
+            // Poll for session deletion status
+            long pollTimeout = 300_000L; // 5 minutes in milliseconds
+            long pollInterval = 1_000L;  // 1 second
+            long pollStartTime = System.currentTimeMillis();
+
+            while (true) {
+                // Check timeout
+                long elapsedTime = System.currentTimeMillis() - pollStartTime;
+                if (elapsedTime >= pollTimeout) {
+                    String errorMessage = "Timeout waiting for session deletion after " + (pollTimeout / 1000) + "s";
+                    return new DeleteResult(requestId, false, errorMessage);
+                }
+
+                // Get session status
+                SessionStatusResult sessionResult = getStatus();
+
+                // Check if session is deleted (NotFound error)
+                if (!sessionResult.isSuccess()) {
+                    String errorCode = sessionResult.getCode() != null ? sessionResult.getCode() : "";
+                    String errorMessage = sessionResult.getErrorMessage() != null ? sessionResult.getErrorMessage() : "";
+                    int httpStatusCode = sessionResult.getHttpStatusCode();
+
+                    // Check for InvalidMcpSession.NotFound, 400 with "not found", or error_message containing "not found"
+                    boolean isNotFound = "InvalidMcpSession.NotFound".equals(errorCode)
+                        || (httpStatusCode == 400 && (
+                            errorMessage.toLowerCase().contains("not found")
+                            || errorCode.contains("NotFound")))
+                        || errorMessage.toLowerCase().contains("not found");
+
+                    if (isNotFound) {
+                        // Session is deleted
+                        logger.info("Session {} successfully deleted (NotFound)", sessionId);
+                        break;
+                    }
+                } else if (sessionResult.getStatus() != null && !sessionResult.getStatus().isEmpty()) {
+                    // Check session status if we got valid data
+                    String status = sessionResult.getStatus();
+                    if ("FINISH".equals(status)) {
+                        break;
+                    }
+                }
+
+                // Wait before next poll
+                try {
+                    Thread.sleep(pollInterval);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return new DeleteResult(requestId, false, 
+                        "Delete operation interrupted");
+                }
             }
-            return new com.aliyun.agentbay.model.DeleteResult(requestId, true, "");
+
+            // Return success result
+            return new DeleteResult(requestId, true, "");
 
         } catch (Exception e) {
-            return new com.aliyun.agentbay.model.DeleteResult(
+            return new DeleteResult(
                 "", false, "Failed to delete session " + sessionId + ": " + e.getMessage());
         } finally {
+            // Clean up WS client
+            WsClient ws = this.wsClient;
+            this.wsClient = null;
+            if (ws != null) {
+                try {
+                    ws.close();
+                } catch (Exception ignored) {
+                }
+            }
+            // Clean up link HTTP client
             try {
                 closeLinkHttpClient();
             } catch (Exception ignored) {

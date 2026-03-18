@@ -182,7 +182,7 @@ public class ContextSyncLifecycleExample {
             // Clean up
             if (session != null) {
                 System.out.println("\n🧹 Cleaning up session...");
-                agentBay.delete(session, false);
+                agentBay.delete(session, true);
                 System.out.println("✅ Session deleted");
             }
             
@@ -292,7 +292,7 @@ public class ContextSyncLifecycleExample {
             // Clean up
             if (session != null) {
                 System.out.println("\n🧹 Cleaning up session...");
-                agentBay.delete(session, false);
+                agentBay.delete(session, true);
                 System.out.println("✅ Session deleted");
             }
             
@@ -386,7 +386,7 @@ public class ContextSyncLifecycleExample {
             // Clean up
             if (session != null) {
                 System.out.println("\n🧹 Cleaning up session...");
-                agentBay.delete(session, false);
+                agentBay.delete(session, true);
                 System.out.println("✅ Session deleted");
             }
             
@@ -529,12 +529,12 @@ public class ContextSyncLifecycleExample {
             // Clean up sessions
             if (session1 != null) {
                 System.out.println("\n🧹 Cleaning up first session...");
-                agentBay.delete(session1, false);
+                agentBay.delete(session1, true);
             }
             
             if (session2 != null) {
                 System.out.println("🧹 Cleaning up second session...");
-                agentBay.delete(session2, false);
+                agentBay.delete(session2, true);
             }
             
             // Clean up context

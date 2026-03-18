@@ -77,7 +77,7 @@ public class  ContextManagerIntegrationTest {
         // Clean up session
         if (session != null && agentBay != null) {
             try {
-                agentBay.delete(session, false);
+                agentBay.delete(session, true);
             } catch (Exception e) {
             }
         }

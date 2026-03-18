@@ -203,14 +203,14 @@ public class ContextSyncIntegrationTest {
             // Clean up sessions
             if (session1 != null) {
                 try {
-                    agentBay.delete(session1, false);
+                    agentBay.delete(session1, true);
                 } catch (Exception e) {
                 }
             }
             
             if (session2 != null) {
                 try {
-                    agentBay.delete(session2, false);
+                    agentBay.delete(session2, true);
                 } catch (Exception e) {
                 }
             }
