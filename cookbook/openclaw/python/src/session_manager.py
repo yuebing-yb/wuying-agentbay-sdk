@@ -191,7 +191,7 @@ class SessionManager:
             logger.error(f"Error during session creation, cleaning up...", exc_info=True)
             if session:
                 try:
-                    agent_bay.delete(session)
+                    agent_bay.delete(session, True)
                 except Exception:
                     pass
             raise RuntimeError(f"Failed to create session: {e}")
@@ -375,8 +375,8 @@ class SessionManager:
 
         try:
             if info.session:
-                # delete() will sync Context data before destroying
-                info.session.delete()
+                # sync_context=True: upload Context data before destroying
+                info.session.delete(sync_context=True)
                 logger.info(f"Session {session_id} destroyed (Context synced)")
         except Exception as e:
             logger.error(f"Error destroying session {session_id}: {e}")
