@@ -16,10 +16,12 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         image_id: Optional[str] = None,
         timeout: Optional[int] = None,
         labels: Optional[str] = None,
+        load_skill: Optional[bool] = None,
         mcp_policy_id: Optional[str] = None,
         network_id: Optional[str] = None,
         persistence_data_list_shrink: Optional[str] = None,
         session_id: Optional[str] = None,
+        skills_shrink: Optional[str] = None,
         vpc_resource: Optional[bool] = None,
         extra_configs: Optional[str] = None,
         sdk_stats: Optional[str] = None,
@@ -31,10 +33,12 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         self.image_id = image_id
         self.timeout = timeout
         self.labels = labels
+        self.load_skill = load_skill
         self.mcp_policy_id = mcp_policy_id
         self.network_id = network_id
         self.persistence_data_list_shrink = persistence_data_list_shrink
         self.session_id = session_id
+        self.skills_shrink = skills_shrink
         self.vpc_resource = vpc_resource
         self.extra_configs = extra_configs
         self.sdk_stats = sdk_stats
@@ -66,6 +70,9 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         if self.labels is not None:
             result["Labels"] = self.labels
 
+        if self.load_skill is not None:
+            result["LoadSkill"] = self.load_skill
+
         if self.mcp_policy_id is not None:
             result["McpPolicyId"] = self.mcp_policy_id
 
@@ -77,6 +84,9 @@ class CreateMcpSessionShrinkRequest(DaraModel):
 
         if self.session_id is not None:
             result["SessionId"] = self.session_id
+
+        if self.skills_shrink is not None:
+            result["Skills"] = self.skills_shrink
 
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
@@ -112,6 +122,9 @@ class CreateMcpSessionShrinkRequest(DaraModel):
         if m.get("Labels") is not None:
             self.labels = m.get("Labels")
 
+        if m.get("LoadSkill") is not None:
+            self.load_skill = m.get("LoadSkill")
+
         if m.get("McpPolicyId") is not None:
             self.mcp_policy_id = m.get("McpPolicyId")
 
@@ -123,6 +136,9 @@ class CreateMcpSessionShrinkRequest(DaraModel):
 
         if m.get("SessionId") is not None:
             self.session_id = m.get("SessionId")
+
+        if m.get("Skills") is not None:
+            self.skills_shrink = m.get("Skills")
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")

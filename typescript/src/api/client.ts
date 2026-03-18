@@ -215,6 +215,13 @@ export class Client extends OpenApi {
           "json"
         );
     }
+    if (!$dara.isNull(tmpReq.skills)) {
+      request.skillsShrink = OpenApiUtil.arrayToStringWithSpecifiedStyle(
+        tmpReq.skills,
+        "Skills",
+        "json"
+      );
+    }
 
     const body: { [key: string]: any } = {};
     if (!$dara.isNull(request.authorization)) {
@@ -275,6 +282,14 @@ export class Client extends OpenApi {
 
     if (!$dara.isNull(request.loginRegionId)) {
       body["LoginRegionId"] = request.loginRegionId;
+    }
+
+    if (!$dara.isNull(request.loadSkill)) {
+      body["LoadSkill"] = request.loadSkill;
+    }
+
+    if (!$dara.isNull(request.skillGroupIdsShrink)) {
+      body["SkillGroupIds"] = request.skillGroupIdsShrink;
     }
 
     const req = new $OpenApiUtil.OpenApiRequest({
@@ -1407,6 +1422,74 @@ export class Client extends OpenApi {
   ): Promise<$_model.ListSkillMetaDataResponse> {
     const runtime = new $dara.RuntimeOptions({});
     return await this.listSkillMetaDataWithOptions(request, runtime);
+  }
+
+  /**
+   * GetSkillMetaData
+   *
+   * @param tmpReq - GetSkillMetaDataRequest
+   * @param runtime - runtime options for this request RuntimeOptions
+   * @returns GetSkillMetaDataResponse
+   */
+  async getSkillMetaDataWithOptions(
+    tmpReq: $_model.GetSkillMetaDataRequest,
+    runtime: $dara.RuntimeOptions
+  ): Promise<$_model.GetSkillMetaDataResponse> {
+    tmpReq.validate();
+    const request = new $_model.GetSkillMetaDataShrinkRequest({});
+    OpenApiUtil.convert(tmpReq, request);
+    if (!$dara.isNull(tmpReq.skillGroupIds)) {
+      request.skillGroupIdsShrink = OpenApiUtil.arrayToStringWithSpecifiedStyle(
+        tmpReq.skillGroupIds,
+        "SkillGroupIds",
+        "json"
+      );
+    }
+
+    const body: { [key: string]: any } = {};
+    if (!$dara.isNull(request.authorization)) {
+      body["Authorization"] = request.authorization;
+    }
+
+    if (!$dara.isNull(request.imageId)) {
+      body["ImageId"] = request.imageId;
+    }
+
+    if (!$dara.isNull(request.skillGroupIdsShrink)) {
+      body["SkillGroupIds"] = request.skillGroupIdsShrink;
+    }
+
+    const req = new $OpenApiUtil.OpenApiRequest({
+      body: OpenApiUtil.parseToMap(body),
+    });
+    const params = new $OpenApiUtil.Params({
+      action: "GetSkillMetaData",
+      version: "2025-05-06",
+      protocol: "HTTPS",
+      pathname: "/",
+      method: "POST",
+      authType: "Anonymous",
+      style: "RPC",
+      reqBodyType: "formData",
+      bodyType: "json",
+    });
+    return $dara.cast<$_model.GetSkillMetaDataResponse>(
+      await this.callApi(params, req, runtime),
+      new $_model.GetSkillMetaDataResponse({})
+    );
+  }
+
+  /**
+   * GetSkillMetaData
+   *
+   * @param request - GetSkillMetaDataRequest
+   * @returns GetSkillMetaDataResponse
+   */
+  async getSkillMetaData(
+    request: $_model.GetSkillMetaDataRequest
+  ): Promise<$_model.GetSkillMetaDataResponse> {
+    const runtime = new $dara.RuntimeOptions({});
+    return await this.getSkillMetaDataWithOptions(request, runtime);
   }
 
   /**

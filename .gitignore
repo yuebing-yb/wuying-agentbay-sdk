@@ -92,6 +92,13 @@ tmp/
 PROGRESS.md
 CLAUDE.md
 
+# AI tools metadata
+.agent/
+.agents/
+.claude/
+.iflow/
+skills-lock.json
+
 # Example result files
 **/results_*/
 **/screenshots/

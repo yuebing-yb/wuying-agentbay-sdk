@@ -18,6 +18,8 @@ export class CreateMcpSessionShrinkRequest extends $dara.Model {
   extraConfigs?: string;
   sdkStats?: string;
   loginRegionId?: string;
+  loadSkill?: boolean;
+  skillsShrink?: string;
   static names(): { [key: string]: string } {
     return {
       authorization: 'Authorization',
@@ -35,6 +37,8 @@ export class CreateMcpSessionShrinkRequest extends $dara.Model {
       extraConfigs: 'ExtraConfigs',
       sdkStats: 'SdkStats',
       loginRegionId: 'LoginRegionId',
+      loadSkill: 'LoadSkill',
+      skillsShrink: 'Skills',
     };
   }
 
@@ -55,6 +59,8 @@ export class CreateMcpSessionShrinkRequest extends $dara.Model {
       extraConfigs: 'string',
       sdkStats: 'string',
       loginRegionId: 'string',
+      loadSkill: 'boolean',
+      skillsShrink: 'string',
     };
   }
 

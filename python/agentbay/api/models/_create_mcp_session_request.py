@@ -20,12 +20,14 @@ class CreateMcpSessionRequest(DaraModel):
         image_id: Optional[str] = None,
         timeout: Optional[int] = None,
         labels: Optional[str] = None,
+        load_skill: Optional[bool] = None,
         mcp_policy_id: Optional[str] = None,
         network_id: Optional[str] = None,
         persistence_data_list: Optional[
             List[main_models.CreateMcpSessionRequestPersistenceDataList]
         ] = None,
         session_id: Optional[str] = None,
+        skills: Optional[List[str]] = None,
         vpc_resource: Optional[bool] = None,
         extra_configs: Optional[main_models.ExtraConfigs] = None,
         sdk_stats: Optional[str] = None,
@@ -38,10 +40,12 @@ class CreateMcpSessionRequest(DaraModel):
         self.image_id = image_id
         self.timeout = timeout
         self.labels = labels
+        self.load_skill = load_skill
         self.mcp_policy_id = mcp_policy_id
         self.network_id = network_id
         self.persistence_data_list = persistence_data_list
         self.session_id = session_id
+        self.skills = skills
         self.vpc_resource = vpc_resource
         self.extra_configs = extra_configs
         self.sdk_stats = sdk_stats
@@ -81,6 +85,9 @@ class CreateMcpSessionRequest(DaraModel):
         if self.labels is not None:
             result["Labels"] = self.labels
 
+        if self.load_skill is not None:
+            result["LoadSkill"] = self.load_skill
+
         if self.mcp_policy_id is not None:
             result["McpPolicyId"] = self.mcp_policy_id
 
@@ -94,6 +101,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if self.session_id is not None:
             result["SessionId"] = self.session_id
+
+        if self.skills is not None:
+            result["Skills"] = self.skills
 
         if self.vpc_resource is not None:
             result["VpcResource"] = self.vpc_resource
@@ -132,6 +142,9 @@ class CreateMcpSessionRequest(DaraModel):
         if m.get("Labels") is not None:
             self.labels = m.get("Labels")
 
+        if m.get("LoadSkill") is not None:
+            self.load_skill = m.get("LoadSkill")
+
         if m.get("McpPolicyId") is not None:
             self.mcp_policy_id = m.get("McpPolicyId")
 
@@ -146,6 +159,9 @@ class CreateMcpSessionRequest(DaraModel):
 
         if m.get("SessionId") is not None:
             self.session_id = m.get("SessionId")
+
+        if m.get("Skills") is not None:
+            self.skills = m.get("Skills")
 
         if m.get("VpcResource") is not None:
             self.vpc_resource = m.get("VpcResource")

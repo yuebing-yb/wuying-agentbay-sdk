@@ -482,6 +482,14 @@ export class AgentBay {
         }
       }
 
+      // Add skills loading if requested
+      if (paramsCopy.loadSkills) {
+        request.loadSkill = true;
+        if (paramsCopy.skillNames && paramsCopy.skillNames.length > 0) {
+          request.skills = paramsCopy.skillNames;
+        }
+      }
+
       // Log API request
       logAPICall("CreateMcpSession", {
         labels: paramsCopy.labels,
@@ -1398,6 +1406,8 @@ export class AgentBay {
         enableBrowserReplay: params.enableBrowserReplay,
         extraConfigs: params.extraConfigs,
         framework: params.framework,
+        loadSkills: params.loadSkills,
+        skillNames: params.skillNames,
       };
     } else {
       // Use any type for JSON.parse result since params could be either interface or class instance

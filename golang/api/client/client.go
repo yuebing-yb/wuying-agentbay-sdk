@@ -233,6 +233,9 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 	if !dara.IsNil(tmpReq.PersistenceDataList) {
 		request.PersistenceDataListShrink = openapiutil.ArrayToStringWithSpecifiedStyle(tmpReq.PersistenceDataList, dara.String("PersistenceDataList"), dara.String("json"))
 	}
+	if !dara.IsNil(tmpReq.Skills) {
+		request.SkillsShrink = openapiutil.ArrayToStringWithSpecifiedStyle(tmpReq.Skills, dara.String("Skills"), dara.String("json"))
+	}
 
 	body := map[string]interface{}{}
 	if !dara.IsNil(request.Authorization) {
@@ -293,6 +296,14 @@ func (client *Client) CreateMcpSessionWithOptions(tmpReq *CreateMcpSessionReques
 
 	if !dara.IsNil(request.LoginRegionId) {
 		body["LoginRegionId"] = request.LoginRegionId
+	}
+
+	if !dara.IsNil(request.LoadSkill) {
+		body["LoadSkill"] = request.LoadSkill
+	}
+
+	if !dara.IsNil(request.SkillsShrink) {
+		body["Skills"] = request.SkillsShrink
 	}
 
 	req := &openapiutil.OpenApiRequest{
@@ -1633,6 +1644,78 @@ func (client *Client) ListSkillMetaData(request *ListSkillMetaDataRequest) (_res
 	runtime := &dara.RuntimeOptions{}
 	_result = &ListSkillMetaDataResponse{}
 	_body, _err := client.ListSkillMetaDataWithOptions(request, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_result = _body
+	return _result, _err
+}
+
+// Summary:
+//
+// # GetSkillMetaData
+//
+// @param tmpReq - GetSkillMetaDataRequest
+//
+// @param runtime - runtime options for this request RuntimeOptions
+//
+// @return GetSkillMetaDataResponse
+func (client *Client) GetSkillMetaDataWithOptions(tmpReq *GetSkillMetaDataRequest, runtime *dara.RuntimeOptions) (_result *GetSkillMetaDataResponse, _err error) {
+	_err = tmpReq.Validate()
+	if _err != nil {
+		return _result, _err
+	}
+	request := &GetSkillMetaDataShrinkRequest{}
+	openapiutil.Convert(tmpReq, request)
+	if !dara.IsNil(tmpReq.SkillGroupIds) {
+		request.SkillGroupIdsShrink = openapiutil.ArrayToStringWithSpecifiedStyle(tmpReq.SkillGroupIds, dara.String("SkillGroupIds"), dara.String("json"))
+	}
+
+	body := map[string]interface{}{}
+	if !dara.IsNil(request.Authorization) {
+		body["Authorization"] = request.Authorization
+	}
+	if !dara.IsNil(request.ImageId) {
+		body["ImageId"] = request.ImageId
+	}
+	if !dara.IsNil(request.SkillGroupIdsShrink) {
+		body["SkillGroupIds"] = request.SkillGroupIdsShrink
+	}
+
+	req := &openapiutil.OpenApiRequest{
+		Body: openapiutil.ParseToMap(body),
+	}
+	params := &openapiutil.Params{
+		Action:      dara.String("GetSkillMetaData"),
+		Version:     dara.String("2025-05-06"),
+		Protocol:    dara.String("HTTPS"),
+		Pathname:    dara.String("/"),
+		Method:      dara.String("POST"),
+		AuthType:    dara.String("Anonymous"),
+		Style:       dara.String("RPC"),
+		ReqBodyType: dara.String("formData"),
+		BodyType:    dara.String("json"),
+	}
+	_result = &GetSkillMetaDataResponse{}
+	_body, _err := client.DoRPCRequest(params.Action, params.Version, params.Protocol, params.Method, params.AuthType, params.BodyType, req, runtime)
+	if _err != nil {
+		return _result, _err
+	}
+	_err = dara.Convert(_body, &_result)
+	return _result, _err
+}
+
+// Summary:
+//
+// # GetSkillMetaData
+//
+// @param request - GetSkillMetaDataRequest
+//
+// @return GetSkillMetaDataResponse
+func (client *Client) GetSkillMetaData(request *GetSkillMetaDataRequest) (_result *GetSkillMetaDataResponse, _err error) {
+	runtime := &dara.RuntimeOptions{}
+	_result = &GetSkillMetaDataResponse{}
+	_body, _err := client.GetSkillMetaDataWithOptions(request, runtime)
 	if _err != nil {
 		return _result, _err
 	}

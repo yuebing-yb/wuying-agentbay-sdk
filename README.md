@@ -24,7 +24,8 @@
   <a href="docs/guides/browser-use/README.md">Browser</a> ·
   <a href="docs/guides/computer-use/README.md">Desktop</a> ·
   <a href="docs/guides/mobile-use/README.md">Mobile</a> ·
-  <a href="docs/guides/codespace/README.md">Code</a>
+  <a href="docs/guides/codespace/README.md">Code</a> ·
+  <a href="docs/guides/common-features/advanced/skills.md">Skills</a>
 </p>
 
 ---
@@ -39,6 +40,30 @@ Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud d
 | [Java](cookbook/openclaw/java/) | Spring Boot + React | `mvn clean compile && mvn spring-boot:run` |
 
 Both include Context persistence, external HTTPS access via `getLink`, and custom model configuration. Visit `http://localhost:8080` after launch.
+
+## ✨ Skills — Equip Your Agents (Beta)
+
+Load reusable capability modules into sandbox sessions to give AI agents pre-configured tools and workflows — no manual setup needed.
+
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+agent_bay = AgentBay()
+
+# Discover available skills
+meta = agent_bay.beta_skills.get_metadata()
+for skill in meta.skills:
+    print(f"  {skill.name} — {skill.description}")
+
+# Create a session with skills loaded into the sandbox
+result = agent_bay.create(CreateSessionParams(load_skills=True, skill_names=["my-skill"]))
+session = result.session
+
+# Read a skill's instructions directly from the sandbox
+content = session.file_system.read_file(f"{meta.skills_root_path}/my-skill/SKILL.md")
+```
+
+Available in all four SDKs. [Learn more →](docs/guides/common-features/advanced/skills.md)
 
 ## 📦 Installation
 
@@ -206,7 +231,7 @@ agentBay.delete(session, false);
 
 ### 🎯 Scenario-Based Features
 - **Computer Use** - General automation and desktop operations
-- **Browser Use** - Web automation, scraping, and browser control  
+- **Browser Use** - Web automation, scraping, and browser control
 - **CodeSpace** - Code execution and development environment
 - **Mobile Use** - Mobile device simulation and control
 

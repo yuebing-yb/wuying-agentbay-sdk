@@ -17,6 +17,12 @@ export { Code } from "./code";
 export * from "./command";
 export { Context, ContextService } from "./context";
 export { BetaNetworkService } from "./beta-network";
+export {
+  BetaSkillsService,
+  type SkillMetadataItem,
+  type SkillsMetadataResult,
+  type GetMetadataOptions,
+} from "./beta-skills";
 export { Computer } from "./computer";
 export * from "./exceptions";
 export * from "./extension";

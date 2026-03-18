@@ -102,11 +102,9 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Apply options safely
 	config_option := &AgentBayConfig{}
-	if opts != nil {
-		for _, opt := range opts {
-			if opt != nil {
-				opt(config_option)
-			}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(config_option)
 		}
 	}
 
@@ -276,6 +274,18 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 		if extraConfigsJSON != "" {
 			createSessionRequest.ExtraConfigs = tea.String(extraConfigsJSON)
+		}
+	}
+
+	// Add skills loading if requested
+	if params.LoadSkills {
+		createSessionRequest.LoadSkill = tea.Bool(true)
+		if len(params.SkillNames) > 0 {
+			skillPtrs := make([]*string, len(params.SkillNames))
+			for i, name := range params.SkillNames {
+				skillPtrs[i] = tea.String(name)
+			}
+			createSessionRequest.Skills = skillPtrs
 		}
 	}
 
@@ -1408,6 +1418,7 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 		BetaNetworkId:       params.BetaNetworkId,
 		Framework:           params.Framework,
 		EnableBrowserReplay: params.EnableBrowserReplay,
+		LoadSkills:          params.LoadSkills,
 	}
 
 	// Deep copy Labels map
@@ -1441,6 +1452,13 @@ func (a *AgentBay) copyCreateSessionParams(params *CreateSessionParams) *CreateS
 
 	// Copy BrowserContext (shallow copy is sufficient as it is immutable in typical usage)
 	copy.BrowserContext = params.BrowserContext
+
+	if params.SkillNames != nil {
+		copy.SkillNames = make([]string, len(params.SkillNames))
+		for i, name := range params.SkillNames {
+			copy.SkillNames[i] = name
+		}
+	}
 
 	return copy
 }

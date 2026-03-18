@@ -32,6 +32,9 @@ public class CreateMcpSessionRequest extends TeaModel {
     @NameInMap("Labels")
     public String labels;
 
+    @NameInMap("LoadSkill")
+    public Boolean loadSkill;
+
     @NameInMap("LoginRegionId")
     public String loginRegionId;
 
@@ -49,6 +52,9 @@ public class CreateMcpSessionRequest extends TeaModel {
 
     @NameInMap("SessionId")
     public String sessionId;
+
+    @NameInMap("Skills")
+    public java.util.List<String> skills;
 
     @NameInMap("VpcResource")
     public Boolean vpcResource;
@@ -122,6 +128,14 @@ public class CreateMcpSessionRequest extends TeaModel {
         return this.labels;
     }
 
+    public CreateMcpSessionRequest setLoadSkill(Boolean loadSkill) {
+        this.loadSkill = loadSkill;
+        return this;
+    }
+    public Boolean getLoadSkill() {
+        return this.loadSkill;
+    }
+
     public CreateMcpSessionRequest setLoginRegionId(String loginRegionId) {
         this.loginRegionId = loginRegionId;
         return this;
@@ -168,6 +182,14 @@ public class CreateMcpSessionRequest extends TeaModel {
     }
     public String getSessionId() {
         return this.sessionId;
+    }
+
+    public CreateMcpSessionRequest setSkills(java.util.List<String> skills) {
+        this.skills = skills;
+        return this;
+    }
+    public java.util.List<String> getSkills() {
+        return this.skills;
     }
 
     public CreateMcpSessionRequest setVpcResource(Boolean vpcResource) {
