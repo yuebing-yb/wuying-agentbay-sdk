@@ -401,6 +401,20 @@ type McpSession interface {
 
 McpSession interface defines the methods needed by Agent
 
+## Type McpSessionLogger
+
+```go
+type McpSessionLogger interface {
+	LogDebug(msg string)
+	LogInfo(msg string)
+	LogWarn(msg string)
+	LogError(msg string)
+}
+```
+
+McpSessionLogger is an optional interface for logging. If McpSession implements it, the agent will
+use it for logging instead of fmt.Print.
+
 ## Type MobileTaskOptions
 
 ```go

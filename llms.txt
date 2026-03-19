@@ -58,7 +58,8 @@ FILE: README.md
   <a href="docs/guides/browser-use/README.md">Browser</a> ·
   <a href="docs/guides/computer-use/README.md">Desktop</a> ·
   <a href="docs/guides/mobile-use/README.md">Mobile</a> ·
-  <a href="docs/guides/codespace/README.md">Code</a>
+  <a href="docs/guides/codespace/README.md">Code</a> ·
+  <a href="docs/guides/common-features/advanced/skills.md">Skills</a>
 </p>
 
 ---
@@ -73,6 +74,30 @@ Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud d
 | [Java](cookbook/openclaw/java/) | Spring Boot + React | `mvn clean compile && mvn spring-boot:run` |
 
 Both include Context persistence, external HTTPS access via `getLink`, and custom model configuration. Visit `http://localhost:8080` after launch.
+
+## ✨ Skills — Equip Your Agents (Beta)
+
+Load reusable capability modules into sandbox sessions to give AI agents pre-configured tools and workflows — no manual setup needed.
+
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+agent_bay = AgentBay()
+
+# Discover available skills
+meta = agent_bay.beta_skills.get_metadata()
+for skill in meta.skills:
+    print(f"  {skill.name} — {skill.description}")
+
+# Create a session with skills loaded into the sandbox
+result = agent_bay.create(CreateSessionParams(load_skills=True, skill_names=["my-skill"]))
+session = result.session
+
+# Read a skill's instructions directly from the sandbox
+content = session.file_system.read_file(f"{meta.skills_root_path}/my-skill/SKILL.md")
+```
+
+Available in all four SDKs. [Learn more →](docs/guides/common-features/advanced/skills.md)
 
 ## 📦 Installation
 
@@ -133,38 +158,8 @@ await agentBay.delete(session);
 ```
 
 ### Golang
-```go
-import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 
-// Create session and execute code
-client, _ := agentbay.NewAgentBay("", nil)
-result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
-session := result.Session
-
-res, _ := session.Code.RunCode("print('Hello AgentBay')", "python")
-fmt.Println(res.Output)  // Hello AgentBay
-
-// Clean up
-client.Delete(session, false)
-```
-
-### Java
-```java
-import com.aliyun.agentbay.*;
-
-// Create session and execute code
-AgentBay agentBay = new AgentBay();
-CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
-Session session = agentBay.create(params).getSession();
-
-CodeExecutionResult result = session.getCode().runCode("print('Hello AgentBay')", "python");
-if (result.isSuccess()) {
-    System.out.println(result.getResult());  // Hello AgentBay
-}
-
-// Clean up
-
-... [truncated, 5,516 chars remaining] ...
+... [truncated, 6,396 chars remaining] ...
 
 ================================================
 FILE: docs/README.md

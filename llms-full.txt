@@ -215,7 +215,8 @@ FILE: README.md
   <a href="docs/guides/browser-use/README.md">Browser</a> ·
   <a href="docs/guides/computer-use/README.md">Desktop</a> ·
   <a href="docs/guides/mobile-use/README.md">Mobile</a> ·
-  <a href="docs/guides/codespace/README.md">Code</a>
+  <a href="docs/guides/codespace/README.md">Code</a> ·
+  <a href="docs/guides/common-features/advanced/skills.md">Skills</a>
 </p>
 
 ---
@@ -230,6 +231,30 @@ Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud d
 | [Java](cookbook/openclaw/java/) | Spring Boot + React | `mvn clean compile && mvn spring-boot:run` |
 
 Both include Context persistence, external HTTPS access via `getLink`, and custom model configuration. Visit `http://localhost:8080` after launch.
+
+## ✨ Skills — Equip Your Agents (Beta)
+
+Load reusable capability modules into sandbox sessions to give AI agents pre-configured tools and workflows — no manual setup needed.
+
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+agent_bay = AgentBay()
+
+# Discover available skills
+meta = agent_bay.beta_skills.get_metadata()
+for skill in meta.skills:
+    print(f"  {skill.name} — {skill.description}")
+
+# Create a session with skills loaded into the sandbox
+result = agent_bay.create(CreateSessionParams(load_skills=True, skill_names=["my-skill"]))
+session = result.session
+
+# Read a skill's instructions directly from the sandbox
+content = session.file_system.read_file(f"{meta.skills_root_path}/my-skill/SKILL.md")
+```
+
+Available in all four SDKs. [Learn more →](docs/guides/common-features/advanced/skills.md)
 
 ## 📦 Installation
 
@@ -290,38 +315,8 @@ await agentBay.delete(session);
 ```
 
 ### Golang
-```go
-import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 
-// Create session and execute code
-client, _ := agentbay.NewAgentBay("", nil)
-result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
-session := result.Session
-
-res, _ := session.Code.RunCode("print('Hello AgentBay')", "python")
-fmt.Println(res.Output)  // Hello AgentBay
-
-// Clean up
-client.Delete(session, false)
-```
-
-### Java
-```java
-import com.aliyun.agentbay.*;
-
-// Create session and execute code
-AgentBay agentBay = new AgentBay();
-CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
-Session session = agentBay.create(params).getSession();
-
-CodeExecutionResult result = session.getCode().runCode("print('Hello AgentBay')", "python");
-if (result.isSuccess()) {
-    System.out.println(result.getResult());  // Hello AgentBay
-}
-
-// Clean up
-
-... [truncated, 5,516 chars remaining] ...
+... [truncated, 6,396 chars remaining] ...
 
 ================================================
 FILE: docs/README.md
@@ -2797,6 +2792,7 @@ import (
 	"time"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/browser"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
 	"github.com/invopop/jsonschema"
 )
@@ -2816,6 +2812,67 @@ type StreamItem struct {
 	Content     string `json:"content,omitempty"`
 	Reasoning   string `json:"reasoning,omitempty"`
 	TimestampMs *int64 `json:"timestamp_ms,omitempty"`
+}
+
+// AgentEvent represents a streaming event from an Agent execution.
+//
+// Event types: "reasoning", "content", "tool_call", "tool_result", "error".
+//
+// The Result field in tool_result events carries an agent-defined structure
+// that the SDK passes through without parsing. Typical fields include
+// "isError" (bool), "output" (string), and optionally "screenshot" (base64).
+// The final task outcome is delivered via the ExecutionResult return value
+// of ExecuteTaskAndWait.
+type AgentEvent struct {
+	Type       string                 `json:"type"`
+	Seq        int                    `json:"seq"`
+	Round      int                    `json:"round"`
+	Content    string                 `json:"content,omitempty"`
+	ToolCallID string                 `json:"toolCallId,omitempty"`
+	ToolName   string                 `json:"toolName,omitempty"`
+	Args       map[string]interface{} `json:"args,omitempty"`
+	Result     map[string]interface{} `json:"result,omitempty"`
+	Error      map[string]interface{} `json:"error,omitempty"`
+}
+
+// AgentEventCallback is a function type for handling agent streaming events.
+type AgentEventCallback func(event AgentEvent)
+
+// StreamOptions holds streaming callback options.
+type StreamOptions struct {
+	OnReasoning  AgentEventCallback
+	OnContent    AgentEventCallback
+	OnToolCall   AgentEventCallback
+	OnToolResult AgentEventCallback
+	OnError      AgentEventCallback
+}
+
+// MobileTaskOptions holds options for mobile task execution, including
+// streaming callbacks inherited from StreamOptions.
+type MobileTaskOptions struct {
+	StreamOptions
+	MaxSteps      int
+	OnCallForUser func(event AgentEvent) string
+}
+
+// streamContext holds mutable state shared between WS callbacks and TaskExecution.Wait().
+type streamContext struct {
+	contentParts []string
+	lastError    map[string]interface{}
+	streamErr    error
+}
+
+// TaskExecution represents a running task that can be waited on for its final result.
+// Returned by MobileUseAgent.ExecuteTask when the task is started.
+type TaskExecution struct {
+	TaskID string
+	waitFn func(timeout int) *ExecutionResult
+}
+
+// Wait blocks until the task finishes or the timeout (in seconds) is reached.
+// A timeout of 0 means wait indefinitely (until the task finishes or fails).
+func (te *TaskExecution) Wait(timeout int) *ExecutionResult {
+	return te.waitFn(timeout)
 }
 
 // QueryResult represents the result of query operations
@@ -2877,12 +2934,14 @@ func (b *baseTaskAgent) getToolName(action string) string {
 	return baseName
 }
 
-func (b *baseTaskAgent) getServerName() string {
-	if b.ToolPrefix == "flux" {
-		return "flux"
-	}
+// getWsTarget returns the WebSocket target for agent streaming.
+// browser_use -> wuying_browseruse, flux -> wuying_computer_agent, empty -> wuying_mobile_agent
+func (b *baseTaskAgent) getWsTarget() string {
 	if b.ToolPrefix == "browser_use" {
 		return "wuying_browseruse"
+	}
+	if b.ToolPrefix == "flux" {
+		return "wuying_computer_agent"
 	}
 	return "wuying_mobile_agent"
 }
@@ -3125,360 +3184,300 @@ func (b *baseTaskAgent) executeTaskAndWait(task string, timeout int) *ExecutionR
 	}
 }
 
-// getTaskStatus gets the status of the task with the given task ID
-func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
-	args := map[string]interface{}{
-		"task_id": taskID,
-	}
-
-	result, err := b.Session.CallMcpTool(b.getToolName("get_status"), args)
+// executeTaskStreamWs executes a task via WebSocket streaming channel.
+func (b *baseTaskAgent) executeTaskStreamWs(taskParams map[string]interface{}, timeout int, opts StreamOptions) *ExecutionResult {
+	wsClientRaw, err := b.Session.GetWsClient()
 	if err != nil {
-		return &QueryResult{
+		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to get task status: %v", err),
-			TaskID:       taskID,
+			ErrorMessage: err.Error(),
 			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
 		}
 	}
-
-	if !result.Success {
-		errorMessage := result.ErrorMessage
-		if errorMessage == "" {
-			errorMessage = "Failed to get task status"
-		}
-		return &QueryResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
+	wsClient, wsOk := wsClientRaw.(*internal.WsClient)
+	if !wsOk || wsClient == nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
-			ErrorMessage: errorMessage,
-			TaskID:       taskID,
+			ErrorMessage: "invalid or nil WsClient returned from session",
 			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
 		}
 	}
 
-	var queryResult map[string]interface{}
-	if err := json.Unmarshal([]byte(result.Data), &queryResult); err != nil {
-		return &QueryResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-			TaskID:       taskID,
-			TaskStatus:   "failed",
-		}
-	}
+	target := b.getWsTarget()
+	var contentParts []string
+	var lastError map[string]interface{}
+	var streamErr error
 
-	taskIDFromResult, ok := queryResult["task_id"].(string)
-	if !ok {
-		taskIDFromResult = taskID
-	}
+	handle, err := wsClient.CallStream(
+		target,
+		map[string]interface{}{
+			"method": "exec_task",
+			"params": taskParams,
+		},
+		func(_ string, data map[string]interface{}) {
+			eventType, _ := data["eventType"].(string)
+			seq, _ := toIntAgent(data["seq"])
+			round, _ := toIntAgent(data["round"])
 
-	status, ok := queryResult["status"].(string)
-	if !ok {
-		status = "finised"
-	}
+			evt := AgentEvent{Type: eventType, Seq: seq, Round: round}
 
-	action, ok := queryResult["action"].(string)
-	if !ok {
-		action = ""
-	}
-
-	product, ok := queryResult["product"].(string)
-	if !ok {
-		product = ""
-	}
-
-	// Extract stream and error fields
-	var stream []StreamItem
-	if streamValue, ok := queryResult["stream"]; ok {
-		if streamArray, ok := streamValue.([]interface{}); ok {
-			stream = make([]StreamItem, 0, len(streamArray))
-			for _, item := range streamArray {
-				if itemMap, ok := item.(map[string]interface{}); ok {
-					streamItem := StreamItem{}
-					if content, ok := itemMap["content"].(string); ok {
-						streamItem.Content = content
-					}
-					if reasoning, ok := itemMap["reasoning"].(string); ok {
-						streamItem.Reasoning = reasoning
-					}
-					if timestampMs, ok := itemMap["timestamp_ms"].(float64); ok {
-						timestampInt := int64(timestampMs)
-						streamItem.TimestampMs = &timestampInt
-					}
-					stream = append(stream, streamItem)
+			switch eventType {
+			case "reasoning":
+				evt.Content, _ = data["content"].(string)
+			case "content":
+				contentText, _ := data["content"].(string)
+				contentParts = append(contentParts, contentText)
+				evt.Content = contentText
+			case "tool_call":
+				evt.ToolCallID, _ = data["toolCallId"].(string)
+				evt.ToolName, _ = data["toolName"].(string)
+				if args, ok := data["args"].(map[string]interface{}); ok {
+					evt.Args = args
 				}
+			case "tool_result":
+				evt.ToolCallID, _ = data["toolCallId"].(string)
+				evt.ToolName, _ = data["toolName"].(string)
+				if res, ok := data["result"].(map[string]interface{}); ok {
+					evt.Result = res
+				}
+			case "error":
+				if e, ok := data["error"].(map[string]interface{}); ok {
+					lastError = e
+				} else {
+					lastError = data
+				}
+				evt.Error = lastError
 			}
-		}
-	}
 
-	var errorMsg string
-	if errorValue, ok := queryResult["error"].(string); ok {
-		errorMsg = errorValue
-	}
-
-	return &QueryResult{
-		ApiResponse: models.ApiResponse{RequestID: result.RequestID},
-		Success:     true,
-		TaskID:      taskIDFromResult,
-		TaskStatus:  status,
-		TaskAction:  action,
-		TaskProduct: product,
-		Stream:      stream,
-		Error:       errorMsg,
-	}
-}
-
-// terminateTask terminates a task with a specified task ID
-func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
-	b.logInfo("Terminating task")
-
-	args := map[string]interface{}{
-		"task_id": taskID,
-	}
-
-	result, err := b.Session.CallMcpTool(b.getToolName("terminate"), args)
+			typedCb := map[string]AgentEventCallback{
+				"reasoning":   opts.OnReasoning,
+				"content":     opts.OnContent,
+				"tool_call":   opts.OnToolCall,
+				"tool_result": opts.OnToolResult,
+				"error":       opts.OnError,
+			}
+			if cb, ok := typedCb[eventType]; ok && cb != nil {
+				cb(evt)
+			}
+		},
+		func(_ string, _ map[string]interface{}) {},
+		func(_ string, e error) {
+			streamErr = e
+		},
+	)
 	if err != nil {
 		return &ExecutionResult{
 			ApiResponse:  models.ApiResponse{RequestID: ""},
 			Success:      false,
-			ErrorMessage: fmt.Sprintf("Failed to terminate: %v", err),
-			TaskID:       taskID,
+			ErrorMessage: err.Error(),
 			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   "Task Failed",
 		}
 	}
 
-	var content map[string]interface{}
-	if result.Data != "" {
-		if err := json.Unmarshal([]byte(result.Data), &content); err != nil {
-			return &ExecutionResult{
-				ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-				Success:      false,
-				ErrorMessage: fmt.Sprintf("Failed to parse response: %v", err),
-				TaskID:       taskID,
-				TaskStatus:   "failed",
-			}
-		}
-	}
-
-	terminatedTaskID := taskID
-	if content != nil {
-		if tid, ok := content["task_id"].(string); ok {
-			terminatedTaskID = tid
-		}
-	}
-
-	if result.Success {
-		status := "finised"
-		if content != nil {
-			if s, ok := content["status"].(string); ok {
-				status = s
-			}
-		}
+	endData, err := handle.WaitEnd()
+	if err != nil {
 		return &ExecutionResult{
-			ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-			Success:      true,
-			ErrorMessage: "",
-			TaskID:       terminatedTaskID,
-			TaskStatus:   status,
+			ApiResponse:  models.ApiResponse{RequestID: handle.InvocationID},
+			Success:      false,
+			ErrorMessage: err.Error(),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   strings.Join(contentParts, ""),
 		}
 	}
 
-	// When result.Success is false, still try to parse status from content if available
-	status := "failed"
-	if content != nil {
-		if s, ok := content["status"].(string); ok {
-			status = s
+	if streamErr != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: handle.InvocationID},
+			Success:      false,
+			ErrorMessage: streamErr.Error(),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   strings.Join(contentParts, ""),
 		}
 	}
 
-	errorMessage := result.ErrorMessage
-	if errorMessage == "" {
-		errorMessage = "Failed to terminate task"
+	if lastError != nil {
+		return &ExecutionResult{
+			ApiResponse:  models.ApiResponse{RequestID: handle.InvocationID},
+			Success:      false,
+			ErrorMessage: fmt.Sprintf("%v", lastError),
+			TaskStatus:   "failed",
+			TaskID:       "",
+			TaskResult:   strings.Join(contentParts, ""),
+		}
+	}
+
+	status, _ := endData["status"].(string)
+	if status == "" {
+		status = "finished"
+	}
+	taskResult, _ := endData["taskResult"].(string)
+	if taskResult == "" {
+		taskResult = strings.Join(contentParts, "")
 	}
 
 	return &ExecutionResult{
-		ApiResponse:  models.ApiResponse{RequestID: result.RequestID},
-		Success:      false,
-		ErrorMessage: errorMessage,
-		TaskID:       terminatedTaskID,
-		TaskStatus:   status,
+		ApiResponse: models.ApiResponse{RequestID: handle.InvocationID},
+		Success:     status == "finished",
+		ErrorMessage: func() string {
+			if status == "finished" {
+				return ""
+			}
+			return fmt.Sprintf("Task ended with status: %s", status)
+		}(),
+		TaskStatus: status,
+		TaskResult: taskResult,
 	}
 }
 
-// ComputerUseAgent represents an agent to manipulate a browser to complete specific tasks
-//
-// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
-type ComputerUseAgent struct {
-	*baseTaskAgent
-}
-
-// BrowserUseAgent represents an agent to manipulate a browser to complete specific tasks
-//
-// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
-type BrowserUseAgent struct {
-	*baseTaskAgent
-	initialized bool
-}
-
-// MobileUseAgent represents an agent to perform tasks on mobile devices
-//
-// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
-type MobileUseAgent struct {
-	*baseTaskAgent
-}
-
-// Agent represents an agent to manipulate applications to complete specific tasks
-//
-// > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
-type Agent struct {
-	Browser  *BrowserUseAgent
-	Computer *ComputerUseAgent
-	Mobile   *MobileUseAgent
-}
-
-// McpSession interface defines the methods needed by Agent
-type McpSession interface {
-	GetAPIKey() string
-	GetSessionId() string
-	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
-	GetBrowser() *browser.Browser
-}
-
-// McpSessionLogger is an optional interface for logging. If McpSession implements it,
-// the agent will use it for logging instead of fmt.Print.
-type McpSessionLogger interface {
-	LogDebug(msg string)
-	LogInfo(msg string)
-	LogWarn(msg string)
-	LogError(msg string)
-}
-
-func (b *baseTaskAgent) logDebug(msg string) {
-	if logger, ok := b.Session.(McpSessionLogger); ok {
-		logger.LogDebug(msg)
+// startTaskStreamWs sets up a WS streaming connection and returns immediately
+// with a TaskExecution handle and a shared streamContext. The WS events are
+// dispatched to the provided opts callbacks in the background.
+func (b *baseTaskAgent) startTaskStreamWs(taskParams map[string]interface{}, opts MobileTaskOptions) (*TaskExecution, *streamContext, error) {
+	wsClientRaw, err := b.Session.GetWsClient()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get WS client: %w", err)
 	}
-}
-
-func (b *baseTaskAgent) logInfo(msg string) {
-	if logger, ok := b.Session.(McpSessionLogger); ok {
-		logger.LogInfo(msg)
+	wsClient, wsOk := wsClientRaw.(*internal.WsClient)
+	if !wsOk || wsClient == nil {
+		return nil, nil, fmt.Errorf("invalid or nil WsClient returned from session")
 	}
-}
 
-func (b *baseTaskAgent) logWarn(msg string) {
-	if logger, ok := b.Session.(McpSessionLogger); ok {
-		logger.LogWarn(msg)
-	}
-}
+	target := b.getWsTarget()
+	ctx := &streamContext{}
+	var handleRef *internal.WsStreamHandle
 
-func (b *baseTaskAgent) logError(msg string) {
-	if logger, ok := b.Session.(McpSessionLogger); ok {
-		logger.LogError(msg)
-	}
-}
-
-func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {
-	return &BrowserUseAgent{
-		baseTaskAgent: &baseTaskAgent{
-			Session:    session,
-			ToolPrefix: "browser_use",
+	handle, err := wsClient.CallStream(
+		target,
+		map[string]interface{}{
+			"method": "exec_task",
+			"params": taskParams,
 		},
-		initialized: false,
-	}
-}
+		func(_ string, data map[string]interface{}) {
+			eventType, _ := data["eventType"].(string)
+			seq, _ := toIntAgent(data["seq"])
+			round, _ := toIntAgent(data["round"])
 
-func NewComputerUseAgent(session McpSession) *ComputerUseAgent {
-	return &ComputerUseAgent{
-		baseTaskAgent: &baseTaskAgent{
-			Session:    session,
-			ToolPrefix: "flux",
+			evt := AgentEvent{Type: eventType, Seq: seq, Round: round}
+
+			switch eventType {
+			case "reasoning":
+				evt.Content, _ = data["content"].(string)
+			case "content":
+				contentText, _ := data["content"].(string)
+				ctx.contentParts = append(ctx.contentParts, contentText)
+				evt.Content = contentText
+			case "tool_call":
+				evt.ToolCallID, _ = data["toolCallId"].(string)
+				evt.ToolName, _ = data["toolName"].(string)
+				if args, ok := data["args"].(map[string]interface{}); ok {
+					evt.Args = args
+				}
+				if evt.ToolName == "call_for_user" {
+					if prompt, ok := evt.Args["prompt"].(string); ok {
+						evt.Content = prompt
+					}
+				}
+			case "tool_result":
+				evt.ToolCallID, _ = data["toolCallId"].(string)
+				evt.ToolName, _ = data["toolName"].(string)
+				if res, ok := data["result"].(map[string]interface{}); ok {
+					evt.Result = res
+				}
+			case "error":
+				if e, ok := data["error"].(map[string]interface{}); ok {
+					ctx.lastError = e
+				} else {
+					ctx.lastError = data
+				}
+				evt.Error = ctx.lastError
+			}
+
+			typedCb := map[string]AgentEventCallback{
+				"reasoning":   opts.OnReasoning,
+				"content":     opts.OnContent,
+				"tool_call":   opts.OnToolCall,
+				"tool_result": opts.OnToolResult,
+				"error":       opts.OnError,
+			}
+			if cb, ok := typedCb[eventType]; ok && cb != nil {
+				cb(evt)
+			}
+			if evt.ToolName == "call_for_user" {
+				evtCopy := evt
+				go func() {
+					response := ""
+					if opts.OnCallForUser != nil {
+						response = opts.OnCallForUser(evtCopy)
+					} else {
+						fmt.Println("[WARN] Received call_for_user but no OnCallForUser callback is set, sending empty response")
+					}
+					for i := 0; i < 100; i++ {
+						if handleRef != nil {
+							break
+						}
+						time.Sleep(10 * time.Millisecond)
+					}
+					if handleRef != nil {
+						_ = handleRef.Write(map[string]interface{}{
+							"method": "resume_task",
+							"params": map[string]interface{}{
+								"toolCallId": evtCopy.ToolCallID,
+								"response":   response,
+							},
+						})
+					}
+				}()
+			}
 		},
-	}
-}
-
-func NewMobileUseAgent(session McpSession) *MobileUseAgent {
-	return &MobileUseAgent{
-		baseTaskAgent: &baseTaskAgent{
-			Session:    session,
-			ToolPrefix: "",
+		func(_ string, _ map[string]interface{}) {},
+		func(_ string, e error) {
+			ctx.streamErr = e
 		},
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to start WS stream: %w", err)
 	}
-}
+	handleRef = handle
 
-// NewAgent creates a new Agent instance
-func NewAgent(session McpSession) *Agent {
-	return &Agent{
-		Browser:  NewBrowserUseAgent(session),
-		Computer: NewComputerUseAgent(session),
-		Mobile:   NewMobileUseAgent(session),
-	}
-}
+	execution := &TaskExecution{
+		TaskID: "",
 
-// ExecuteTask executes a task in human language.
-// If timeout is provided, it will wait for task completion (blocking).
-// If timeout is not provided, it returns immediately with a task ID (non-blocking).
-//
-// Non-blocking usage (new style):
-//
-//	result := sessionResult.Session.Agent.Computer.ExecuteTask("Open Chrome browser")
-//	status := sessionResult.Session.Agent.Computer.GetTaskStatus(result.TaskID)
-//
-// Blocking usage (backward compatible):
-//
-//	result := sessionResult.Session.Agent.Computer.ExecuteTask("Open Chrome browser", 20)
-func (a *ComputerUseAgent) ExecuteTask(task string, timeout ...int) *ExecutionResult {
-	if len(timeout) > 0 {
-		// Backward compatible: blocking version
-		return a.baseTaskAgent.executeTaskAndWait(task, timeout[0])
-	}
-	// New non-blocking version
-	return a.baseTaskAgent.executeTask(task)
-}
-
-// ExecuteTaskAndWait executes a specific task described in human language synchronously.
-// This is a synchronous interface that blocks until the task is completed or
-// an error occurs, or timeout happens. The default polling interval is 3 seconds.
-//
-// Example:
-//
-//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//	sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//	defer sessionResult.Session.Delete()
-//	result := sessionResult.Session.Agent.Computer.ExecuteTaskAndWait("Open Chrome browser", 60)
-func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, timeout int) *ExecutionResult {
-	return a.baseTaskAgent.executeTaskAndWait(task, timeout)
-}
-
-// GetTaskStatus gets the status of the task with the given task ID
-//
-// Example:
-//
-//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-//	sessionResult, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("windows_latest"))
-//	defer sessionResult.Session.Delete()
-//	execResult := sessionResult.Session.Agent.Computer.ExecuteTask("Find weather in NYC", 10)
-//	statusResult := sessionResult.Session.Agent.Computer.GetTaskStatus(execResult.TaskID)
-func (a *ComputerUseAgent) GetTaskStatus(taskID string) *QueryResult {
-	return a.baseTaskAgent.getTaskStatus(taskID)
-}
-
-// TerminateTask terminates a task with a specified task ID
-//
-// Example:
-//
-//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
-
-... [truncated, 25,827 chars remaining] ...
+... [truncated, 37,964 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
+func toIntAgent(v interface{}) (int, bool) {
+func (b *baseTaskAgent) getTaskStatus(taskID string) *QueryResult {
+func (b *baseTaskAgent) terminateTask(taskID string) *ExecutionResult {
+func (b *baseTaskAgent) logDebug(msg string) {
+func (b *baseTaskAgent) logInfo(msg string) {
+func (b *baseTaskAgent) logWarn(msg string) {
+func (b *baseTaskAgent) logError(msg string) {
+func NewBrowserUseAgent(session McpSession) *BrowserUseAgent {
+func NewComputerUseAgent(session McpSession) *ComputerUseAgent {
+func NewMobileUseAgent(session McpSession) *MobileUseAgent {
+func NewAgent(session McpSession) *Agent {
+func (a *ComputerUseAgent) ExecuteTask(task string, timeout ...int) *ExecutionResult {
+func (a *ComputerUseAgent) ExecuteTaskAndWait(task string, timeout int) *ExecutionResult {
+func (a *ComputerUseAgent) GetTaskStatus(taskID string) *QueryResult {
 func (a *ComputerUseAgent) TerminateTask(taskID string) *ExecutionResult {
 func (a *BrowserUseAgent) Initialize(option *browser.BrowserOption) (bool, error) {
 func (a *BrowserUseAgent) ExecuteTask(task string, use_vision bool, output_schema interface{}) *ExecutionResult {
 func (a *BrowserUseAgent) ExecuteTaskAndWait(task string, timeout int, use_vision bool, output_schema interface{}) *E...
 func (a *BrowserUseAgent) GetTaskStatus(taskID string) *QueryResult {
 func (a *BrowserUseAgent) TerminateTask(taskID string) *ExecutionResult {
-func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult {
-func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout int) *ExecutionResult {
+func (a *MobileUseAgent) ExecuteTask(task string, opts ...MobileTaskOptions) *TaskExecution {
+func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string) func(timeout int) *ExecutionResult {
+func (a *MobileUseAgent) ExecuteTaskAndWait(task string, timeout int, opts ...MobileTaskOptions) *ExecutionResult {
 func (a *MobileUseAgent) GetTaskStatus(taskID string) *QueryResult {
 func (a *MobileUseAgent) TerminateTask(taskID string) *ExecutionResult {
 
@@ -3589,11 +3588,9 @@ func NewAgentBay(apiKey string, opts ...Option) (*AgentBay, error) {
 
 	// Apply options safely
 	config_option := &AgentBayConfig{}
-	if opts != nil {
-		for _, opt := range opts {
-			if opt != nil {
-				opt(config_option)
-			}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(config_option)
 		}
 	}
 
@@ -3763,6 +3760,18 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		}
 		if extraConfigsJSON != "" {
 			createSessionRequest.ExtraConfigs = tea.String(extraConfigsJSON)
+		}
+	}
+
+	// Add skills loading if requested
+	if params.LoadSkills {
+		createSessionRequest.LoadSkill = tea.Bool(true)
+		if len(params.SkillNames) > 0 {
+			skillPtrs := make([]*string, len(params.SkillNames))
+			for i, name := range params.SkillNames {
+				skillPtrs[i] = tea.String(name)
+			}
+			createSessionRequest.Skills = skillPtrs
 		}
 	}
 
@@ -4076,18 +4085,8 @@ func (a *AgentBay) waitForMobileSimulate(session *Session, mobileSimPath string,
 		wyaApplyOption = " -all"
 	}
 
-	command := fmt.Sprintf("chmod -R a+rwx %s; wya apply%s %s", mobileSimPath, wyaApplyOption, devInfoFilePath)
-	LogInfo(fmt.Sprintf("⏳ Waiting for mobile simulate completion, command: %s", command))
 
-	cmdResult, err := session.Command.ExecuteCommand(command)
-	if err != nil {
-		LogError(fmt.Sprintf("Failed to execute mobile simulate command: %v", err))
-		return nil
-	}
-
-	duration := time.Since(startTime)
-
-... [truncated, 26,944 chars remaining] ...
+... [truncated, 27,560 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
 func NewListSessionParams() *ListSessionParams {
@@ -9135,7 +9134,8 @@ from ._sync.mobile import Mobile
 from ._common.models.mobile import KeyCode, UIElementListResult
 from ._sync.mobile_simulate import MobileSimulateService
 from ._sync.agent import Agent
-from ._common.models.agent import ExecutionResult
+from ._common.models.agent import AgentEvent, ExecutionResult
+from ._sync.agent import TaskExecution
 from ._sync.command import Command, CommandResult
 from ._sync.filesystem import (
     FileSystem,
@@ -9326,7 +9326,9 @@ __all__ = [
     "GetSessionResult",
     "GetSessionData",
     "extract_request_id",
+    "AgentEvent",
     "ExecutionResult",
+    "TaskExecution",
     "CommandResult",
     "CodeExecutionResult",
     "EnhancedCodeExecutionResult",
@@ -9386,11 +9388,13 @@ FILE: python/agentbay/_async/agent.py
 import asyncio
 import json
 import sys
-from typing import TYPE_CHECKING, Type, Optional
+from collections.abc import Awaitable
+from typing import TYPE_CHECKING, Any, Callable, Type, Optional, Union
 
 from .._common.exceptions import AgentBayError, AgentError
 from .._common.logger import get_logger
 from .._common.models.agent import (
+    AgentEvent,
     ExecutionResult,
     QueryResult,
     DefaultSchema,
@@ -9403,8 +9407,229 @@ from .base_service import AsyncBaseService
 if TYPE_CHECKING:
     from .session import AsyncSession
 
-# Initialize logger for this module
 _logger = get_logger("agent")
+
+AgentEventCallback = Optional[Callable[[AgentEvent], None]]
+AsyncAgentEventCallback = Optional[Callable[[AgentEvent], Union[Awaitable[str], str]]]
+
+
+class _StreamContext:
+    """Mutable state shared between WS event callbacks and TaskExecution.wait()."""
+    __slots__ = ("final_content_parts", "last_error", "errors")
+
+    def __init__(self):
+        self.final_content_parts: list[str] = []
+        self.last_error: Optional[dict] = None
+        self.errors: list[Exception] = []
+
+
+class TaskExecution:
+    """Handle for a running task, returned by ``execute_task()``.
+
+    If streaming callbacks were registered, events are dispatched in the
+    background as soon as the WebSocket connection delivers them.  Call
+    ``wait()`` to block until the task completes and retrieve the final
+    ``ExecutionResult``.
+
+    Attributes:
+        task_id: The identifier of the running task (empty when using
+            the WebSocket streaming path, since the task is managed
+            by the server stream).
+    """
+
+    def __init__(
+        self,
+        task_id: str = "",
+        *,
+        _ws_handle: Optional[Any] = None,
+        _context: Optional[_StreamContext] = None,
+        _agent: Optional[Any] = None,
+        _result: Optional[ExecutionResult] = None,
+        _request_id: str = "",
+    ):
+        self.task_id = task_id
+        self._ws_handle = _ws_handle
+        self._context = _context
+        self._agent = _agent
+        self._result = _result
+        self._request_id = _request_id
+
+    async def wait(self, timeout: int = 300) -> ExecutionResult:
+        """Block until the task completes and return the final result.
+
+        Args:
+            timeout: Maximum seconds to wait. Default 300.
+
+        Returns:
+            ExecutionResult with the task outcome.
+        """
+        if self._result is not None:
+            return self._result
+        if self._ws_handle is not None:
+            return await self._wait_ws(timeout)
+        elif self._agent is not None:
+            return await self._wait_polling(timeout)
+        else:
+            raise RuntimeError("TaskExecution is not properly initialized")
+
+    async def _wait_ws(self, timeout: int) -> ExecutionResult:
+        ctx = self._context
+        ws_request_id = getattr(self._ws_handle, "invocation_id", "") or ""
+        try:
+            end_data = await self._ws_handle.wait_end_with_timeout(timeout)
+        except TimeoutError:
+            try:
+                await self._ws_handle.cancel()
+            except Exception:
+                pass
+            return ExecutionResult(
+                request_id=ws_request_id,
+                success=False,
+                error_message=f"Task execution timed out after {timeout} seconds.",
+                task_status="failed",
+                task_result="".join(ctx.final_content_parts) or "Task execution timed out.",
+            )
+
+        if ctx.errors:
+            return ExecutionResult(
+                request_id=ws_request_id,
+                success=False,
+                error_message=str(ctx.errors[0]),
+                task_status="failed",
+                task_result="".join(ctx.final_content_parts),
+            )
+
+        if ctx.last_error:
+            return ExecutionResult(
+                request_id=ws_request_id,
+                success=False,
+                error_message=str(ctx.last_error),
+                task_status="failed",
+                task_result="".join(ctx.final_content_parts),
+            )
+
+        status = end_data.get("status", "finished") if end_data else "finished"
+        task_result = end_data.get("taskResult", "") if end_data else ""
+        if not task_result:
+            task_result = "".join(ctx.final_content_parts)
+
+        return ExecutionResult(
+            request_id=ws_request_id,
+            success=(status == "finished"),
+            error_message="" if status == "finished" else f"Task ended with status: {status}",
+            task_status=status,
+            task_result=task_result,
+        )
+
+    async def _wait_polling(self, timeout: int) -> ExecutionResult:
+        agent = self._agent
+        task_id = self.task_id
+        poll_interval = 3
+        max_poll_attempts = timeout // poll_interval
+
+        last_request_id = self._request_id
+        tried_time = 0
+        processed_timestamps: set = set()
+        last_query = None
+
+        while tried_time < max_poll_attempts:
+            query = await agent.get_task_status(task_id)
+            if query.stream:
+                last_query = query
+
+            if query.stream:
+                for stream_item in query.stream:
+                    if isinstance(stream_item, dict):
+                        timestamp = stream_item.get("timestamp_ms")
+                        if timestamp is not None and timestamp not in processed_timestamps:
+                            processed_timestamps.add(timestamp)
+                            content = stream_item.get("content", "")
+                            reasoning = stream_item.get("reasoning", "")
+                            if content:
+                                sys.stdout.write(content)
+                                sys.stdout.flush()
+                            if reasoning:
+                                _logger.debug(f"💭 {reasoning}")
+
+            if query.error:
+                _logger.warning(f"⚠️ Task error: {query.error}")
+
+            if query.task_status == "completed":
+                return ExecutionResult(
+                    request_id=last_request_id,
+                    success=True,
+                    task_id=task_id,
+                    task_status=query.task_status,
+                    task_result=query.task_product,
+                )
+            elif query.task_status in ("failed", "cancelled", "unsupported"):
+                error_msg = query.error or query.error_message or f"Task {query.task_status}."
+                return ExecutionResult(
+                    request_id=query.request_id,
+                    success=False,
+                    error_message=error_msg,
+                    task_id=task_id,
+                    task_status=query.task_status,
+                )
+
+            _logger.info(f"⏳ Task {task_id} running 🚀: {query.task_action}.")
+            await asyncio.sleep(poll_interval)
+            tried_time += 1
+
+        _logger.warning("⚠️ task execution timeout!")
+        try:
+            terminate_result = await agent.terminate_task(task_id)
+            if terminate_result.success:
+                _logger.info(f"✅ Terminate request sent for task {task_id} after timeout")
+            else:
+                _logger.warning(f"⚠️ Failed to terminate task {task_id}: {terminate_result.error_message}")
+        except Exception as e:
+            _logger.warning(f"⚠️ Exception while terminating task {task_id}: {e}")
+
+        _logger.info(f"⏳ Waiting for task {task_id} to be fully terminated...")
+        terminate_tried = 0
+        while terminate_tried < 30:
+            try:
+                status_query = await agent.get_task_status(task_id)
+                if not status_query.success:
+                    error_msg = status_query.error_message or ""
+                    if error_msg.startswith("Task not found or already finished"):
+                        _logger.info(f"✅ Task {task_id} confirmed terminated")
+                        break
+                await asyncio.sleep(1)
+                terminate_tried += 1
+            except Exception:
+                await asyncio.sleep(1)
+                terminate_tried += 1
+
+        task_result_parts = [f"Task execution timed out after {timeout} seconds."]
+        if last_query:
+            if last_query.stream:
+                stream_parts = []
+                for item in last_query.stream:
+                    if isinstance(item, dict):
+                        c = item.get("content", "")
+                        if c:
+                            stream_parts.append(c)
+                if stream_parts:
+                    task_result_parts.append(f"Last task status output: {''.join(stream_parts)}")
+            if last_query.task_action:
+                task_result_parts.append(f"Last action: {last_query.task_action}")
+            if last_query.task_product:
+                task_result_parts.append(f"Last result: {last_query.task_product}")
+            if last_query.error:
+                task_result_parts.append(f"Last error: {last_query.error}")
+            if last_query.task_status:
+                task_result_parts.append(f"Last status: {last_query.task_status}")
+
+        return ExecutionResult(
+            request_id=last_request_id,
+            success=False,
+            error_message=f"Task execution timed out after {timeout} seconds. Task ID: {task_id}.",
+            task_id=task_id,
+            task_status="failed",
+            task_result=" | ".join(task_result_parts),
+        )
 
 
 class AsyncAgent(AsyncBaseService):
@@ -9546,323 +9771,133 @@ class AsyncAgent(AsyncBaseService):
                     task_id="",
                 )
 
-        async def execute_task_and_wait(
-            self, task: str, timeout: int
-        ) -> ExecutionResult:
-            """
-            Execute a specific task described in human language synchronously.
-
-            This is a synchronous interface that blocks until the task is completed or
-            an error occurs, or timeout happens. The default polling interval is 3 seconds.
-
-            Args:
-                task: Task description in human language.
-                timeout: Maximum time to wait for task completion in seconds.
-                    Used to control how long to wait for task completion.
-
-            Returns:
-                ExecutionResult: Result object containing success status, task ID,
-                    task status, and error message if any.
-
-            Example:
-                ```python
-                session_result = await agent_bay.create()
-                session = session_result.session
-                result = await session.agent.computer.execute_task_and_wait("Open Chrome browser", timeout=60)
-                print(f"Task result: {result.task_result}")
-                await session.delete()
-                ```
-            """
-            poll_interval = 3
-            max_poll_attempts = timeout // poll_interval
-
-            try:
-                args = {"task": task}
-                tool_name = self._get_tool_name("execute")
-                result = await self.session.call_mcp_tool(
-                    tool_name,
-                    args,
-                )
-                if result.success:
-                    content = json.loads(result.data)
-                    task_id = content.get("task_id", "")
-                    tried_time: int = 0
-                    while tried_time < max_poll_attempts:
-                        query = await self.get_task_status(task_id)
-                        if query.task_status == "finished":
-                            return ExecutionResult(
-                                request_id=result.request_id,
-                                success=True,
-                                error_message="",
-                                task_id=task_id,
-                                task_status=query.task_status,
-                                task_result=query.task_product,
-                            )
-                        elif query.task_status == "failed":
-                            error_msg = query.error_message or "Failed to execute task."
-                            return ExecutionResult(
-                                request_id=query.request_id,
-                                success=False,
-                                error_message="Failed to execute task.",
-                                task_id=task_id,
-                                task_status=query.task_status,
-                            )
-                        elif query.task_status == "unsupported":
-                            error_msg = query.error_message or "Unsupported task."
-                            return ExecutionResult(
-                                request_id=query.request_id,
-                                success=False,
-                                error_message=error_msg,
-                                task_id=task_id,
-                                task_status=query.task_status,
-                            )
-                        _logger.info(
-                            f"⏳ Task {task_id} running 🚀: {query.task_action}."
-                        )
-                        await asyncio.sleep(poll_interval)
-                        tried_time += 1
-                    _logger.warning("⚠️ task execution timeout!")
-                    # Automatically terminate the task on timeout
-                    try:
-                        terminate_result = await self.terminate_task(task_id)
-                        if terminate_result.success:
-                            _logger.info(f"✅ Task {task_id} terminated successfully after timeout")
-                        else:
-                            _logger.warning(f"⚠️ Failed to terminate task {task_id} after timeout: {terminate_result.error_message}")
-                    except Exception as e:
-                        _logger.warning(f"⚠️ Exception while terminating task {task_id} after timeout: {e}")
-                    timeout_error_msg = f"Task execution timed out after {timeout} seconds. Task ID: {task_id}. Polled {tried_time} times (max: {max_poll_attempts})."
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message=timeout_error_msg,
-                        task_id=task_id,
-                        task_status="failed",
-                        task_result=f"Task execution timed out after {timeout} seconds.",
-                    )
-                else:
-                    _logger.error("❌ Task execution failed")
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message=result.error_message or "Failed to execute task",
-                        task_status="failed",
-                        task_id="",
-                        task_result="Task Failed",
-                    )
-            except AgentError as e:
-                handled_error = self._handle_error(e)
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=str(handled_error),
-                    task_status="failed",
-                    task_id="",
-                    task_result="Task Failed",
-                )
-            except Exception as e:
-                handled_error = self._handle_error(AgentBayError(str(e)))
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Failed to execute: {handled_error}",
-                    task_status="failed",
-                    task_id="",
-                    task_result="Task Failed",
-                )
-
-        async def get_task_status(self, task_id: str) -> QueryResult:
-            """
-            Get the status of the task with the given task ID.
-
-            Args:
-                task_id: The ID of the task to query.
-
-            Returns:
-                QueryResult: Result object containing success status, task status,
-                    task action, task product, and error message if any.
-
-            Example:
-                ```python
-                session_result = await agent_bay.create()
-                session = session_result.session
-                result = await session.agent.computer.execute_task("Query the weather in Shanghai with Baidu")
-                status = await session.agent.computer.get_task_status(result.task_id)
-                print(f"Status: {status.task_status}, Action: {status.task_action}")
-                await session.delete()
-                ```
-            """
-            try:
-                args = {"task_id": task_id}
-                tool_name = self._get_tool_name("get_status")
-                result = await self.session.call_mcp_tool(
-                    tool_name,
-                    args,
-                )
-                if result.success:
-                    content = json.loads(result.data)
-                    return QueryResult(
-                        success=True,
-                        request_id=result.request_id,
-                        error_message="",
-                        task_id=content.get("task_id", task_id),
-                        task_status=content.get("status", "finished"),
-                        task_action=content.get("action", ""),
-                        task_product=content.get("product", ""),
-                    )
-                else:
-                    return QueryResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message=result.error_message
-                        or "Failed to get task status",
-                        task_id=task_id,
-                        task_status="failed",
-                    )
-            except AgentError as e:
-                handled_error = self._handle_error(e)
-                return QueryResult(
-                    request_id="",
-                    success=False,
-                    error_message=str(handled_error),
-                    task_id=task_id,
-                    task_status="failed",
-                )
-            except Exception as e:
-                handled_error = self._handle_error(AgentBayError(str(e)))
-                return QueryResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Failed to get task status: {handled_error}",
-                    task_id=task_id,
-                    task_status="failed",
-                )
-
-        async def terminate_task(self, task_id: str) -> ExecutionResult:
-            """
-            Terminate a task with a specified task ID.
-
-            Args:
-                task_id: The ID of the running task to terminate.
-
-            Returns:
-                ExecutionResult: Result object containing success status, task ID,
-                    task status, and error message if any.
-
-            Example:
-                ```python
-                session_result = await agent_bay.create()
-                session = session_result.session
-                result = await session.agent.computer.execute_task("Query the weather in Shanghai with Baidu")
-                terminate_result = await session.agent.computer.terminate_task(result.task_id)
-                print(f"Terminated: {terminate_result.success}")
-                await session.delete()
-                ```
-            """
-            _logger.info("Terminating task")
-            try:
-                args = {"task_id": task_id}
-                tool_name = self._get_tool_name("terminate")
-                result = await self.session.call_mcp_tool(
-                    tool_name,
-                    args,
-                )
-                if result.success:
-                    content = json.loads(result.data)
-                    task_id = content.get("task_id", task_id)
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=True,
-                        error_message="",
-                        task_id=task_id,
-                        task_status=content.get("status", "finised"),
-                    )
-                else:
-                    content = json.loads(result.data) if result.data else {}
-                    return ExecutionResult(
-                        request_id=result.request_id,
-                        success=False,
-                        error_message=result.error_message
-                        or "Failed to terminate task",
-                        task_id=task_id,
-                        task_status="failed",
-                    )
-            except AgentError as e:
-                handled_error = self._handle_error(e)
-                return ExecutionResult(
-                    request_id=result.request_id if "result" in locals() else "",
-                    success=False,
-                    error_message=str(handled_error),
-                    task_id=task_id,
-                    task_status="failed",
-                )
-            except Exception as e:
-                handled_error = self._handle_error(AgentBayError(str(e)))
-                return ExecutionResult(
-                    request_id="",
-                    success=False,
-                    error_message=f"Failed to terminate: {handled_error}",
-                    task_id=task_id,
-                    task_status="failed",
-                )
-
-    class Computer(_BaseTaskAgent):
-        """
-        An Agent to perform tasks on the computer.
-
-        > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
-        """
-
-        def __init__(self, session: "AsyncSession"):
-            super().__init__(session, tool_prefix="flux")
-
-    class Browser(_BaseTaskAgent):
-        """
-
-        > **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent, and MobileUseAgent), we do not provide services for overseas users registered with **alibabacloud.com**.
-        """
-
-        def __init__(self, session: "AsyncSession"):
-            super().__init__(session, tool_prefix="browser_use")
-            self.initialized = False
-
-        async def initialize(self, option:Optional[BrowserOption]=None) -> bool:
-            """
-            Initialize the browser on which the agent performs tasks.
-            You are supposed to call this API before executeTask is called, but it's not optional.
-            If you want perform a hybrid usage of browser, you must call this API before executeTask is called.
-            Returns:
-                bool: True if the browser is successfully initialized, False otherwise.
-            """
-            if self.initialized:
-                return True
-
-            if option is None:
-                option = BrowserOption()
-            success = await self.session.browser.initialize(option)
-            self.initialized = success
-            return success
-
-
-        async def execute_task(
+        def _has_streaming_params(
             self,
-            task: str,
-            use_vision: bool = False,
-            output_schema: Type[Schema] = None,
-            full_page_screenshot: Optional[bool] = False,
-        ) -> ExecutionResult:
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
+            on_error: AgentEventCallback = None,
+            on_call_for_user: AsyncAgentEventCallback = None,
+        ) -> bool:
+            return any([on_reasoning, on_content, on_tool_call, on_tool_result, on_error, on_call_for_user])
+
+        def _resolve_agent_target(self) -> str:
+            """Resolve the WS target for this agent from MCP tools list."""
+            execute_tool_name = self._get_tool_name("execute")
+            for tool in getattr(self.session, "mcpTools", []) or []:
+                try:
+                    if getattr(tool, "name", "") == execute_tool_name and getattr(tool, "server", ""):
+                        return tool.server
+                except Exception:
+                    continue
+            if self.tool_prefix == "browser_use":
+                return "wuying_browseruse"
+            elif self.tool_prefix == "flux":
+                return "wuying_computer_agent"
+            else:
+                return "wuying_mobile_agent"
+
+        async def _start_task_stream_ws(
+            self,
+            task_params: dict,
+            on_reasoning: AgentEventCallback = None,
+            on_content: AgentEventCallback = None,
+            on_tool_call: AgentEventCallback = None,
+            on_tool_result: AgentEventCallback = None,
+            on_error: AgentEventCallback = None,
+            on_call_for_user: AsyncAgentEventCallback = None,
+        ) -> tuple[Any, _StreamContext]:
+            """Set up WS streaming for a task (non-blocking).
+
+            Returns (ws_handle, stream_context). Events are dispatched
+            to the provided callbacks in the background. Use the returned
+            handle with ``TaskExecution`` to wait for the final result.
             """
-            Execute a task described in human language on a browser without waiting for completion (non-blocking).
+            target = self._resolve_agent_target()
+            ws_client = await self.session._get_ws_client()
 
-            This is a fire-and-return interface that immediately provides a task ID.
-            Call get_task_status to check the task status. You can control the timeout
-            of the task execution in your own code by setting the frequency of calling
-            get_task_status.
+            ctx = _StreamContext()
+            _ws_handle_ref: list[Any] = [None]
 
+            def _dispatch_event(event: AgentEvent) -> None:
+                try:
+                    cb = {
+                        "reasoning": on_reasoning,
+                        "content": on_content,
+                        "tool_call": on_tool_call,
+                        "tool_result": on_tool_result,
+                        "error": on_error,
+                    }.get(event.type)
+                    if cb:
+                        cb(event)
+                except Exception as ex:
+                    _logger.warning(f"on_{event.type} callback error: {ex}")
 
-... [truncated, 34,109 chars remaining] ...
+            async def _handle_call_for_user(event: AgentEvent) -> None:
+                response = ""
+                if on_call_for_user:
+                    try:
+                        result = on_call_for_user(event)
+                        if asyncio.iscoroutine(result) or asyncio.isfuture(result):
+                            response = await result
+                        else:
+                            response = result
+                    except Exception as ex:
+                        _logger.warning(f"on_call_for_user callback error: {ex}")
+                        response = ""
+                else:
+                    _logger.warning("Received call_for_user but no on_call_for_user callback is set, sending empty response")
+                if _ws_handle_ref[0] is not None:
+                    try:
+                        await _ws_handle_ref[0].write({
+                            "method": "resume_task",
+                            "params": {
+                                "toolCallId": event.tool_call_id,
+                                "response": response or "",
+                            },
+                        })
+                    except Exception as ex:
+                        _logger.warning(f"Failed to send resume_task: {ex}")
+
+            def _on_event(invocation_id: str, data: dict[str, Any]) -> None:
+                event_type = data.get("eventType", "")
+                seq = data.get("seq", 0)
+                round_num = data.get("round", 0)
+
+                if event_type == "reasoning":
+                    event = AgentEvent(
+                        type="reasoning", seq=seq, round=round_num,
+                        content=data.get("content", ""),
+                    )
+                    _dispatch_event(event)
+                elif event_type == "content":
+                    content_text = data.get("content", "")
+                    ctx.final_content_parts.append(content_text)
+                    event = AgentEvent(
+                        type="content", seq=seq, round=round_num,
+                        content=content_text,
+                    )
+                    _dispatch_event(event)
+                elif event_type == "tool_call":
+                    args = data.get("args", {})
+                    tool_name = data.get("toolName", "")
+                    event = AgentEvent(
+                        type="tool_call", seq=seq, round=round_num,
+                        tool_call_id=data.get("toolCallId", ""),
+
+... [truncated, 42,915 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
+            def _on_error_ws(invocation_id: str, err: Exception) -> None:
+        async def _execute_task_stream_ws(
+        async def execute_task_and_wait(
+        async def get_task_status(self, task_id: str) -> QueryResult:
+        async def terminate_task(self, task_id: str) -> ExecutionResult:
+        def __init__(self, session: "AsyncSession"):
+        def __init__(self, session: "AsyncSession"):
+        async def initialize(self, option:Optional[BrowserOption]=None) -> bool:
+        async def execute_task(
         async def execute_task_and_wait(
         def __init__(self, session: "AsyncSession"):
         async def execute_task(
@@ -9980,6 +10015,7 @@ class AsyncAgentBay:
         self.context = AsyncContextService(self)
         self.beta_network = AsyncBetaNetworkService(self)
         self.beta = AsyncBetaNamespace(self)
+        self.beta_skills = self.beta.skills
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):
@@ -10377,7 +10413,7 @@ class AsyncAgentBay:
                 )
         except Exception as e:
 
-... [truncated, 33,030 chars remaining] ...
+... [truncated, 33,302 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
     def _log_request_debug_info(self, request: CreateMcpSessionRequest) -> None:
@@ -10396,7 +10432,8 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import asyncio
-from ..api.models import ListSkillMetaDataRequest
+from ..api.models import ListSkillMetaDataRequest, GetSkillMetaDataRequest
+from .._common.models.skill_info import SkillInfo, SkillsMetadataResult
 
 if TYPE_CHECKING:
     from .agentbay import AsyncAgentBay
@@ -10409,11 +10446,9 @@ class AsyncBetaSkillsService:
     """
     Beta skills service.
 
-    Current capability:
-    - List official skills metadata via POP Action `ListSkillMetaData`.
-
-    Notes:
-    - Backend returns Name/Description only.
+    Capabilities:
+    - Get skills metadata via POP Action `GetSkillMetaData` (supports filtering).
+    - List official skills metadata via POP Action `ListSkillMetaData` (deprecated).
     """
 
     def __init__(self, agent_bay: "AsyncAgentBay", skills_root: Optional[str] = None):
@@ -10429,14 +10464,93 @@ class AsyncBetaSkillsService:
         n = (name or "").strip().lstrip("/")
         return f"{self._skills_root}/{n}" if n else self._skills_root
 
-    async def list_metadata(self) -> List[Dict[str, str]]:
-        """
-        List official skills metadata.
+    async def get_metadata(
+        self,
+        image_id: Optional[str] = None,
+        skill_names: Optional[List[str]] = None,
+    ) -> SkillsMetadataResult:
+        """Get skills metadata without starting a sandbox.
+
+        Args:
+            image_id: Image ID to determine the skills root path. Uses default image if not specified.
+            skill_names: Filter by skill names. Returns all visible skills if not specified.
 
         Returns:
-            List[Dict[str, str]]: Each item contains:
-            - name (str)
-            - description (str)
+            SkillsMetadataResult with skills list and skills_root_path.
+
+        Raises:
+            RuntimeError: If the API call fails.
+        """
+        request = GetSkillMetaDataRequest(
+            authorization=f"Bearer {self._agent_bay.api_key}",
+            image_id=image_id,
+            skill_group_ids=skill_names,
+        )
+
+        max_attempts = 3
+        delay_s = 0.2
+        last_err: Optional[BaseException] = None
+        resp = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                resp = await self._agent_bay.client.get_skill_meta_data_async(request)
+                last_err = None
+                break
+            except Exception as e:
+                last_err = e
+                msg = str(e)
+                if attempt < max_attempts and (
+                    "ServiceUnavailable" in msg
+                    or "statusCode': 503" in msg
+                    or "code: 503" in msg
+                ):
+                    await asyncio.sleep(delay_s)
+                    delay_s *= 2
+                    continue
+                raise
+
+        if last_err is not None:
+            raise RuntimeError(f"GetSkillMetaData failed: {last_err}") from last_err
+
+        body = getattr(resp, "body", None)
+        if body is None:
+            raise RuntimeError("GetSkillMetaData failed: missing response body")
+
+        if getattr(body, "success", None) is None or not body.success:
+            code = str(getattr(body, "code", "") or "")
+            msg = str(getattr(body, "message", "") or "")
+            if code:
+                raise RuntimeError(f"GetSkillMetaData failed: [{code}] {msg}")
+            raise RuntimeError(f"GetSkillMetaData failed: {msg or 'Unknown error'}")
+
+        data = getattr(body, "data", None)
+        if data is None:
+            raise RuntimeError("GetSkillMetaData failed: missing Data field")
+
+        skill_path = str(getattr(data, "skill_path", "") or "")
+        meta_data_list = getattr(data, "meta_data_list", None) or []
+
+        skills: List[SkillInfo] = []
+        for raw in meta_data_list:
+            name = str(getattr(raw, "name", "") or "").strip()
+            if not name:
+                continue
+            description = str(getattr(raw, "description", "") or "")
+            skills.append(SkillInfo(name=name, description=description))
+
+        return SkillsMetadataResult(
+            skills=skills,
+            skills_root_path=skill_path,
+        )
+
+    async def list_metadata(self) -> List[Dict[str, str]]:
+        """List official skills metadata.
+
+        .. deprecated::
+            Use :meth:`get_metadata` instead.
+
+        Returns:
+            List[Dict[str, str]]: Each item contains name and description.
         """
         request = ListSkillMetaDataRequest(
             authorization=f"Bearer {self._agent_bay.api_key}",
@@ -19884,6 +19998,14 @@ export class AgentBay {
         }
       }
 
+      // Add skills loading if requested
+      if (paramsCopy.loadSkills) {
+        request.loadSkill = true;
+        if (paramsCopy.skillNames && paramsCopy.skillNames.length > 0) {
+          request.skills = paramsCopy.skillNames;
+        }
+      }
+
       // Log API request
       logAPICall("CreateMcpSession", {
         labels: paramsCopy.labels,
@@ -19970,22 +20092,12 @@ export class AgentBay {
         return {
           requestId,
           success: false,
-          errorMessage,
-        };
-      }
 
-      const sessionId = data.sessionId;
-      if (!sessionId) {
-        logAPIResponseWithDetails(
-          "CreateMcpSession",
-          requestId,
-          false,
-          {},
-          "SessionId not found in response"
-
-... [truncated, 29,398 chars remaining] ...
+... [truncated, 29,745 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
+      if (!sessionId) {
+        logAPIResponseWithDetails(
         logDebug("Full response:", JSON.stringify(sessionData, null, 2));
       logAPIResponseWithDetails("CreateMcpSession", requestId, true, {
       if (paramsCopy.extraConfigs && paramsCopy.extraConfigs.mobile) {
@@ -20091,6 +20203,7 @@ import { z, ZodTypeAny } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 const DefaultSchema = z.object({});
+
 /**
  * Result of task execution.
  */
@@ -20117,6 +20230,39 @@ export interface QueryResult extends ApiResponse {
 }
 
 /**
+ * Represents a streaming event from an Agent execution.
+ *
+ * Event types map directly to LLM output field names:
+ * - "reasoning": from LLM reasoning_content (model's internal reasoning/thinking)
+ * - "content": from LLM content (model's text output, intermediate analysis or final answer)
+ * - "tool_call": from LLM tool_calls (tool invocation request)
+ * - "tool_result": tool execution result
+ * - "error": execution error
+ *
+ * The `result` field in tool_result events carries an agent-defined structure
+ * that the SDK passes through without parsing. Typical fields include
+ * `isError` (boolean), `output` (string), and optionally `screenshot`
+ * (base64 string). The final task outcome is delivered via the
+ * `ExecutionResult` return value of `executeTaskAndWait`.
+ */
+export interface AgentEvent {
+  type: string;
+  seq: number;
+  round: number;
+  content?: string;
+  toolCallId?: string;
+  toolName?: string;
+  args?: Record<string, any>;
+  /** Prompt text for call_for_user tool_call events. */
+  prompt?: string;
+  /** Agent-defined tool execution result (e.g. {isError, output, screenshot}). Not parsed by SDK. */
+  result?: Record<string, any>;
+  error?: Record<string, any>;
+}
+
+export type AgentEventCallback = (event: AgentEvent) => void;
+
+/**
  * Result of an MCP tool call.
  */
 export interface McpToolResult {
@@ -20137,6 +20283,77 @@ export interface McpSession {
     args: Record<string, any>,
     autoGenSession?: boolean
   ): Promise<McpToolResult>;
+}
+
+/**
+ * Options for executeTaskAndWait when using WebSocket streaming.
+ */
+export interface AgentStreamingOptions {
+  onReasoning?: AgentEventCallback;
+  onContent?: AgentEventCallback;
+  onToolCall?: AgentEventCallback;
+  /** The `result` field is agent-defined; the SDK does not parse it. */
+  onToolResult?: AgentEventCallback;
+  onError?: AgentEventCallback;
+}
+
+/**
+ * Options for MobileUseAgent executeTask/executeTaskAndWait.
+ */
+export interface MobileTaskOptions extends AgentStreamingOptions {
+  maxSteps?: number;
+  onCallForUser?: (event: AgentEvent) => Promise<string>;
+}
+
+/**
+ * Handle for a task started via executeTask. Call wait() to block until completion.
+ */
+export class TaskExecution {
+  readonly taskId: string;
+  private _resultPromise: Promise<ExecutionResult>;
+  private _cancelFn?: () => void;
+  private _requestId: string;
+
+  constructor(
+    taskId: string,
+    resultPromise: Promise<ExecutionResult>,
+    cancelFn?: () => void,
+    requestId?: string
+  ) {
+    this.taskId = taskId;
+    this._resultPromise = resultPromise;
+    this._cancelFn = cancelFn;
+    this._requestId = requestId ?? "";
+  }
+
+  async wait(timeout?: number): Promise<ExecutionResult> {
+    if (timeout) {
+      let timerId: ReturnType<typeof setTimeout>;
+      const timer = new Promise<ExecutionResult>((resolve) => {
+        timerId = setTimeout(() => {
+          if (this._cancelFn) {
+            try {
+              this._cancelFn();
+            } catch {
+              /* ignore cancel errors */
+            }
+          }
+          resolve({
+            requestId: this._requestId,
+            success: false,
+            errorMessage: `Task execution timed out after ${timeout} seconds.`,
+            taskId: this.taskId,
+            taskStatus: "failed",
+            taskResult: "Task execution timed out.",
+          });
+        }, timeout * 1000);
+      });
+      return Promise.race([this._resultPromise, timer]).finally(() =>
+        clearTimeout(timerId)
+      );
+    }
+    return this._resultPromise;
+  }
 }
 
 /**
@@ -20170,7 +20387,331 @@ abstract class BaseTaskAgent {
   }
 
   /**
+   * Check if any streaming option is provided.
+   */
+  protected hasStreamingParams(
+    options?: AgentStreamingOptions | MobileTaskOptions
+  ): boolean {
+    if (!options) return false;
+    return !!(
+      options.onReasoning ||
+      options.onContent ||
+      options.onToolCall ||
+      options.onToolResult ||
+      options.onError ||
+      (options as MobileTaskOptions).onCallForUser
+    );
+  }
+
+  /**
+   * Resolve the WS target for this agent from MCP tools list.
+   */
+  protected resolveAgentTarget(): string {
+    const executeToolName = this.getToolName("execute");
+    const sessionWithTools = this.session as McpSession & {
+      mcpTools?: Array<{ name?: string; server?: string }>;
+    };
+    for (const tool of sessionWithTools.mcpTools || []) {
+      if (tool?.name === executeToolName && tool?.server) {
+        return tool.server;
+      }
+    }
+    if (this.toolPrefix === "browser_use") {
+      return "wuying_browseruse";
+    }
+    if (this.toolPrefix === "flux") {
+      return "wuying_computer_agent";
+    }
+    return "wuying_mobile_agent";
+  }
+
+  /**
+   * Start a task via WebSocket streaming channel. Returns handle and context
+   * immediately without blocking. Use handle.waitEnd() to await completion.
+   */
+  protected async startTaskStreamWs(params: {
+    taskParams: Record<string, any>;
+    options?: AgentStreamingOptions | MobileTaskOptions;
+  }): Promise<{
+    handle: {
+      waitEnd: () => Promise<any>;
+      cancel: () => Promise<void>;
+      write: (data: Record<string, any>) => Promise<void>;
+      invocationId: string;
+    };
+    context: {
+      finalContentParts: string[];
+      lastError: Record<string, any> | undefined;
+      errors: Error[];
+    };
+  }> {
+    const { taskParams, options } = params;
+    const sessionWithWs = this.session as McpSession & {
+      getWsClient?: () => Promise<{
+        callStream: (p: any) => Promise<{
+          waitEnd: () => Promise<any>;
+          cancel: () => Promise<void>;
+          write: (data: Record<string, any>) => Promise<void>;
+          invocationId: string;
+        }>;
+      }>;
+    };
+    if (!sessionWithWs.getWsClient) {
+      throw new Error("WS streaming is not available in this session");
+    }
+
+    const wsClient = await sessionWithWs.getWsClient();
+    const target = this.resolveAgentTarget();
+
+    const finalContentParts: string[] = [];
+    let lastError: Record<string, any> | undefined;
+    const errors: Error[] = [];
+    const handleRef: {
+      current: { write: (data: Record<string, any>) => Promise<void> } | null;
+    } = { current: null };
+
+    const dispatchEvent = (event: AgentEvent): void => {
+      const cb = {
+        reasoning: options?.onReasoning,
+        content: options?.onContent,
+        tool_call: options?.onToolCall,
+        tool_result: options?.onToolResult,
+        error: options?.onError,
+      }[event.type];
+      if (cb) {
+        try {
+          cb(event);
+        } catch (ex) {
+          logWarn(`on_${event.type} callback error: ${ex}`);
+        }
+      }
+    };
+
+    const handle = await wsClient.callStream({
+      target,
+      data: {
+        method: "exec_task",
+        params: taskParams,
+      },
+      onEvent: (_invocationId: string, data: any) => {
+        const eventType = data?.eventType ?? "";
+        const seq = data?.seq ?? 0;
+        const round = data?.round ?? 0;
+
+        if (eventType === "reasoning") {
+          dispatchEvent({
+            type: "reasoning",
+            seq,
+            round,
+            content: data?.content ?? "",
+          });
+        } else if (eventType === "content") {
+          const contentText = data?.content ?? "";
+          finalContentParts.push(contentText);
+          dispatchEvent({ type: "content", seq, round, content: contentText });
+        } else if (eventType === "tool_call") {
+          const toolName = String(data?.toolName ?? "");
+          const args = (data?.args as Record<string, any>) ?? {};
+          const evt: AgentEvent = {
+            type: "tool_call",
+            seq,
+            round,
+            toolCallId: String(data?.toolCallId ?? ""),
+            toolName,
+            args,
+            prompt:
+              toolName === "call_for_user" ? args?.prompt ?? "" : undefined,
+            content:
+              toolName === "call_for_user" ? args?.prompt ?? "" : undefined,
+          };
+          dispatchEvent(evt);
+          if (toolName === "call_for_user") {
+            (async () => {
+              let response = "";
+              const onCb = (options as MobileTaskOptions)?.onCallForUser;
+              if (onCb) {
+                try {
+                  response = (await onCb(evt)) ?? "";
+                } catch (e) {
+                  logWarn(`onCallForUser callback error: ${e}`);
+                }
+              } else {
+                logWarn(
+                  "Received call_for_user but no onCallForUser callback is set, sending empty response"
+                );
+              }
+              if (handleRef.current) {
+                try {
+                  await handleRef.current.write({
+                    method: "resume_task",
+                    params: {
+                      toolCallId: evt.toolCallId,
+                      response: response || "",
+                    },
+                  });
+                } catch (e) {
+                  logWarn(`Failed to send resume_task: ${e}`);
+                }
+              }
+            })();
+          }
+        } else if (eventType === "tool_result") {
+          dispatchEvent({
+            type: "tool_result",
+            seq,
+            round,
+            toolCallId: data?.toolCallId ?? "",
+            toolName: data?.toolName ?? "",
+            result: data?.result ?? {},
+          });
+        } else if (eventType === "error") {
+          lastError = data?.error ?? data;
+          dispatchEvent({
+            type: "error",
+            seq,
+            round,
+            error: lastError,
+          });
+        }
+      },
+      onError: (_invocationId: string, err: Error) => {
+        errors.push(err);
+      },
+    });
+
+    handleRef.current = handle;
+
+    return {
+      handle,
+      context: { finalContentParts, lastError, errors },
+    };
+  }
+
+  /**
+   * Execute a task via WebSocket streaming channel.
+   */
+  protected async executeTaskStreamWs(params: {
+    taskParams: Record<string, any>;
+    timeout: number;
+    options?: AgentStreamingOptions | MobileTaskOptions;
+  }): Promise<ExecutionResult> {
+    const { taskParams, timeout, options } = params;
+    const sessionWithWs = this.session as McpSession & {
+      getWsClient?: () => Promise<{
+        callStream: (p: any) => Promise<{
+          waitEnd: () => Promise<any>;
+          cancel: () => Promise<void>;
+          write: (data: Record<string, any>) => Promise<void>;
+          invocationId: string;
+        }>;
+      }>;
+    };
+    if (!sessionWithWs.getWsClient) {
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: "WS streaming is not available in this session",
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "WS streaming is not available.",
+      };
+    }
+
+    let handle: {
+      waitEnd: () => Promise<any>;
+      cancel: () => Promise<void>;
+      write: (data: Record<string, any>) => Promise<void>;
+      invocationId: string;
+    };
+    let context: {
+      finalContentParts: string[];
+      lastError: Record<string, any> | undefined;
+      errors: Error[];
+    };
+    try {
+      const result = await this.startTaskStreamWs({ taskParams, options });
+      handle = result.handle;
+      context = result.context;
+    } catch (e: any) {
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: e instanceof Error ? e.message : String(e),
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "WS streaming is not available.",
+      };
+    }
+
+    const { finalContentParts, lastError, errors } = context;
+    let endData: any = {};
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(`Task execution timed out after ${timeout} seconds.`)
+            ),
+          timeout * 1000
+        )
+      );
+      endData = await Promise.race([handle.waitEnd(), timeoutPromise]);
+    } catch (e: any) {
+      try {
+        await handle.cancel();
+      } catch (_cancelErr) {
+        // ignore
+      }
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        requestId: handle.invocationId,
+        success: false,
+        errorMessage: msg,
+        taskStatus: "timeout",
+        taskId: "",
+        taskResult: finalContentParts.join("") || msg,
+      };
+    }
+
+    if (errors.length > 0) {
+      return {
+        requestId: handle.invocationId,
+        success: false,
+        errorMessage: String(errors[0]),
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: finalContentParts.join(""),
+      };
+    }
+
+    if (lastError) {
+      return {
+        requestId: handle.invocationId,
+        success: false,
+        errorMessage: String(lastError),
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: finalContentParts.join(""),
+      };
+    }
+
+    const status = endData?.status ?? "finished";
+    const taskResult = endData?.taskResult ?? finalContentParts.join("");
+
+    return {
+      requestId: handle.invocationId,
+      success: status === "finished",
+      errorMessage:
+        status === "finished" ? "" : `Task ended with status: ${status}`,
+      taskStatus: status,
+      taskId: "",
+      taskResult,
+    };
+  }
+
+  /**
    * Execute a specific task described in human language.
+   * Note: MobileUseAgent overrides this to return TaskExecution instead.
    */
   async executeTask(task: string): Promise<ExecutionResult> {
     try {
@@ -20336,453 +20877,46 @@ abstract class BaseTaskAgent {
           const errorMsg = statusQuery.errorMessage || "";
           if (errorMsg.startsWith("Task not found or already finished")) {
             logDebug(
-              `✅ Task ${taskId} confirmed terminated (not found or finished)`
-            );
-            taskTerminatedConfirmed = true;
-            break;
-          }
-        }
-        await new Promise((resolve) =>
-          setTimeout(resolve, terminatePollInterval * 1000)
-        );
-        terminateTriedTime++;
-      } catch (e) {
-        logDebug(
-          `⚠️ Exception while polling task status during termination: ${e}`
-        );
-        await new Promise((resolve) =>
-          setTimeout(resolve, terminatePollInterval * 1000)
-        );
-        terminateTriedTime++;
-      }
-    }
 
-    if (!taskTerminatedConfirmed) {
-      logDebug(`⚠️ Timeout waiting for task ${taskId} to be fully terminated`);
-    }
-
-    const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
-    return {
-      requestId: result.requestId,
-      success: false,
-      errorMessage: timeoutErrorMsg,
-      taskStatus: "timeout",
-      taskId: taskId,
-      taskResult: `Task execution timed out after ${timeout} seconds.`,
-    };
-  }
-
-  /**
-   * Get the status of the task with the given task ID.
-   */
-  async getTaskStatus(taskId: string): Promise<QueryResult> {
-    try {
-      const args = { task_id: taskId };
-      const result = await this.session.callMcpTool(
-        this.getToolName("get_status"),
-        args,
-        false
-      );
-
-      if (!result.success) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: result.errorMessage,
-          taskId: taskId,
-          taskAction: "",
-          taskProduct: "",
-          taskStatus: "failed",
-        };
-      }
-      let queryResult: Record<string, any>;
-      try {
-        queryResult = JSON.parse(result.data);
-        return {
-          requestId: result.requestId,
-          success: true,
-          errorMessage: "",
-          taskId: queryResult.task_id || taskId,
-          taskAction: queryResult.action || "",
-          taskProduct: queryResult.product || "",
-          taskStatus: queryResult.status || "finised",
-        };
-      } catch (error) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: `Failed to get task status: ${error}`,
-          taskId: taskId,
-          taskAction: "",
-          taskProduct: "",
-          taskStatus: "failed",
-        };
-      }
-    } catch (error) {
-      return {
-        requestId: "",
-        success: false,
-        errorMessage: `Failed to get task status: ${error}`,
-        taskId: taskId,
-        taskAction: "",
-        taskProduct: "",
-        taskStatus: "failed",
-      };
-    }
-  }
-
-  /**
-   * Terminate a task with a specified task ID.
-   */
-  async terminateTask(taskId: string): Promise<ExecutionResult> {
-    logDebug("Terminating task");
-
-    try {
-      const args = { task_id: taskId };
-      const result = await this.session.callMcpTool(
-        this.getToolName("terminate"),
-        args,
-        false
-      );
-
-      let content: Record<string, any>;
-      try {
-        content = JSON.parse(result.data);
-      } catch (err) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: `Failed to parse response: ${err}`,
-          taskId,
-          taskStatus: "failed",
-          taskResult: "",
-        };
-      }
-
-      const terminatedTaskId = content.task_id || taskId;
-      const status = content.status || "finised";
-
-      if (result.success) {
-        return {
-          requestId: result.requestId,
-          success: true,
-          errorMessage: "",
-          taskId: terminatedTaskId,
-          taskStatus: status,
-          taskResult: "",
-        };
-      }
-
-      return {
-        requestId: result.requestId,
-        success: false,
-        errorMessage: result.errorMessage,
-        taskId: terminatedTaskId,
-        taskStatus: status,
-        taskResult: "",
-      };
-    } catch (error) {
-      return {
-        requestId: "",
-        success: false,
-        errorMessage: `Failed to terminate: ${error}`,
-        taskId,
-        taskStatus: "failed",
-        taskResult: "",
-      };
-    }
-  }
-}
-
-/**
- * An Agent to perform tasks on the computer.
- */
-export class ComputerUseAgent extends BaseTaskAgent {
-  protected toolPrefix = "flux";
-}
-
-export class BrowserUseAgent extends BaseTaskAgent {
-  protected toolPrefix = "browser_use";
-  private initialized = false;
-
-  /**
-   * Initialize the browser on which the agent performs tasks.
-   * You are supposed to call this API before executeTask is called, but it's optional.
-   * If you want to perform a hybrid usage of browser, you must call this API before executeTask is called.
-   *
-   * @param option - Browser configuration options. If not provided, default options will be used.
-   * @returns Promise<boolean> - True if the browser is successfully initialized, False otherwise.
-   *
-   * @example
-   * ```typescript
-   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
-   * const result = await agentBay.create({ imageId: 'browser_latest' });
-   * if (result.success) {
-   *   const success = await result.session.agent.browser.initialize();
-   *   console.log('Browser initialized:', success);
-   *   await result.session.delete();
-   * }
-   * ```
-   */
-  async initialize(option?: BrowserOption): Promise<boolean> {
-    if (this.initialized) {
-      return true;
-    }
-
-    if (!option) {
-      option = {};
-    }
-
-    try {
-      // Access browser through session - assuming session has a browser property
-      const success = await (this.session as any).browser.initializeAsync(
-        option
-      );
-      this.initialized = success;
-      return success;
-    } catch (error) {
-      logWarn(`Failed to initialize browser: ${error}`);
-      return false;
-    }
-  }
-
-  /**
-   * Execute a task described in human language on a browser without waiting for completion
-   * (non-blocking). This is a fire-and-return interface that immediately
-   * provides a task ID. Call getTaskStatus to check the task status.
-   *
-   * @param task - Task description in human language.
-   * @param use_vision - Whether to use vision in the task.
-   * @param output_schema - Optional Zod schema for a structured task output if you need.
-   * @returns ExecutionResult containing success status, task ID, task status,
-   *     and error message if any.
-   *
-   * @example
-   * ```typescript
-   * const WeatherSchema = z.object({city: z.string(), weather:z.string()});
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   * const result = await agentBay.create({ imageId: 'linux_latest' });
-   * if (result.success) {
-   *   const execResult = await result.session.agent.browser.executeTask(
-   *     'Query the weather in Shanghai', false, WeatherSchema
-   *   );
-   *   console.log(`Task ID: ${execResult.taskId}`);
-   *   await result.session.delete();
-   * }
-   * ```
-   */
-  async executeTask<TSchema extends ZodTypeAny>(
-    task: string,
-    use_vision = true,
-    output_schema?: TSchema
-  ): Promise<ExecutionResult> {
-    if (!this.initialized) {
-      logInfo("Browser is not initialized, initializing browser!");
-      const success = await this.initialize();
-      if (!success) {
-        logWarn("Browser initialization failed!");
-        return {
-          requestId: "",
-          success: false,
-          errorMessage: "Browser initialization failed",
-          taskStatus: "failed",
-          taskId: "",
-          taskResult: "Browser initialization failed",
-        };
-      }
-    }
-    try {
-      let json_schema = null;
-      if (output_schema !== undefined) {
-        json_schema = zodToJsonSchema(output_schema, {
-          $refStrategy: "none",
-        });
-      } else {
-        json_schema = zodToJsonSchema(DefaultSchema, {
-          $refStrategy: "none",
-        });
-      }
-
-      const args: any = {
-        task,
-        use_vision: use_vision,
-        output_schema: JSON.stringify(json_schema),
-      };
-      const result = await this.session.callMcpTool(
-        this.getToolName("execute"),
-        args
-      );
-
-      if (!result.success) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: result.errorMessage,
-          taskStatus: "failed",
-          taskId: "",
-          taskResult: "Task Failed",
-        };
-      }
-
-      // Parse task ID from response
-      let content: any;
-      try {
-        content = JSON.parse(result.data);
-      } catch (err) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: `Failed to parse response: ${err}`,
-          taskStatus: "failed",
-          taskId: "",
-          taskResult: "Invalid execution response.",
-        };
-      }
-
-      const taskId = content.task_id || "";
-      if (!taskId) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: "Task ID not found in response",
-          taskStatus: "failed",
-          taskId: "",
-          taskResult: "Invalid task ID.",
-        };
-      }
-
-      return {
-        requestId: result.requestId,
-        success: true,
-        errorMessage: "",
-        taskId: taskId,
-        taskStatus: "running",
-        taskResult: "",
-      };
-    } catch (error) {
-      return {
-        requestId: "",
-        success: false,
-        errorMessage: `Failed to execute: ${error}`,
-        taskStatus: "failed",
-        taskId: "",
-        taskResult: "Task Failed",
-      };
-    }
-  }
-
-  /**
-   * Execute a task described in human language on a browser synchronously.
-   * This is a synchronous interface that blocks until the task is completed or
-   * an error occurs, or timeout happens. The default polling interval is 3 seconds.
-   *
-   * @param task - Task description in human language.
-   * @param timeout - Maximum time to wait for task completion (in seconds). Used to control how long to wait for task completion.
-   * @param use_vision - Whether to use vision in the task.
-   * @param output_schema - Optional Zod schema for a structured task output if you need.
-   * @returns ExecutionResult containing success status, task ID, task status,
-   *     and error message if any.
-   *
-   * @example
-   * ```typescript
-   * const WeatherSchema = z.object({city: z.string(), weather:z.string()});
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   * const result = await agentBay.create({ imageId: 'linux_latest' });
-   * if (result.success) {
-   *   const execResult = await result.session.agent.browser.executeTask(
-   *     'Query the weather in Shanghai', false, WeatherSchema
-   *   );
-   *   console.log(`Task ID: ${execResult.taskId}`);
-   *   const pollInterval = 3;
-   *   const timeout = 180;
-   *   const maxPollAttempts = Math.floor(timeout / pollInterval);
-   *   let triedTime = 0;
-   *   while(triedTime < maxPollAttempts) {
-   *     const queryResult = await result.session.agent.browser.getTaskStatus(execResult.taskId);
-   *     if (queryResult.taskStatus === 'finished') {
-   *       console.log(`Task ${execResult.taskId} finished with result: ${queryResult.taskResult}`);
-   *       break;
-   *     }
-   *     triedTime++;
-   *   }
-   *   await result.session.delete();
-   * }
-   * ```
-   */
-  async executeTaskAndWait<TSchema extends ZodTypeAny>(
-    task: string,
-    timeout: number,
-    use_vision = true,
-    output_schema?: TSchema
-  ): Promise<ExecutionResult> {
-    const result = await this.executeTask(task, use_vision, output_schema);
-    if (!result.success) {
-      return result;
-    }
-
-    const taskId = result.taskId;
-    const pollInterval = 3;
-    const maxPollAttempts = Math.floor(timeout / pollInterval);
-    let triedTime = 0;
-
-    while (triedTime < maxPollAttempts) {
-      const query = await this.getTaskStatus(taskId);
-      if (!query.success) {
-        return {
-          requestId: query.requestId,
-          success: false,
-          errorMessage: query.errorMessage,
-          taskStatus: "failed",
-          taskId: taskId,
-          taskResult: "",
-        };
-      }
-
-      switch (query.taskStatus) {
-        case "finished":
-          return {
-            requestId: query.requestId,
-            success: true,
-            errorMessage: "",
-            taskId: taskId,
-            taskStatus: "finished",
-            taskResult: query.taskProduct,
-          };
-        case "failed":
-          return {
-            requestId: query.requestId,
-            success: false,
-            errorMessage: query.errorMessage || "Failed to execute task.",
-            taskId: taskId,
-            taskStatus: "failed",
-            taskResult: "",
-          };
-        case "unsupported":
-          return {
-            requestId: query.requestId,
-            success: false,
-            errorMessage: query.errorMessage || "Unsupported task.",
-            taskId: taskId,
-            taskStatus: "unsupported",
-            taskResult: "",
-          };
-      }
-
-
-... [truncated, 17,794 chars remaining] ...
+... [truncated, 31,475 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
+          setTimeout(resolve, terminatePollInterval * 1000)
+        logDebug(
+          setTimeout(resolve, terminatePollInterval * 1000)
+    if (!taskTerminatedConfirmed) {
+      logDebug(`⚠️ Timeout waiting for task ${taskId} to be fully terminated`);
+  async getTaskStatus(taskId: string): Promise<QueryResult> {
+      if (!result.success) {
+  async terminateTask(taskId: string): Promise<ExecutionResult> {
+    logDebug("Terminating task");
+      if (result.success) {
+  async initialize(option?: BrowserOption): Promise<boolean> {
+    if (this.initialized) {
+    if (!option) {
+      logWarn(`Failed to initialize browser: ${error}`);
+  async executeTask<TSchema extends ZodTypeAny>(
+    if (!this.initialized) {
+      logInfo("Browser is not initialized, initializing browser!");
+      if (!success) {
+        logWarn("Browser initialization failed!");
+      if (output_schema !== undefined) {
+      if (!result.success) {
+      if (!taskId) {
+  async executeTaskAndWait<TSchema extends ZodTypeAny>(
+    if (!this.initialized) {
+      logInfo("Browser is not initialized, initializing browser!");
+      if (!success) {
+        logWarn("Browser initialization failed!");
+    if (!result.success) {
+    while (triedTime < maxPollAttempts) {
+      if (!query.success) {
+      switch (query.taskStatus) {
       logDebug(`Task ${taskId} is still running, please wait for a while.`);
       if (terminateResult.success) {
         logDebug(`✅ Task ${taskId} terminated successfully after timeout`);
         logDebug(
       logDebug(
-  async executeTask(task: string, maxSteps = 50): Promise<ExecutionResult> {
-      if (!result.success) {
-      if (!taskId) {
-  async executeTaskAndWait(
-    if (!result.success) {
-    if (!taskId) {
     while (triedTime < maxPollAttempts) {
       if (!query.success) {
       if (query.stream && query.stream.length > 0) {
@@ -20790,8 +20924,6 @@ export class BrowserUseAgent extends BaseTaskAgent {
         for (const streamItem of query.stream) {
           if (timestamp !== undefined && !processedTimestamps.has(timestamp)) {
             if (content) {
-            if (reasoning) {
-      if (query.error) {
       switch (query.taskStatus) {
       logDebug(`⏳ Task ${taskId} running 🚀: ${query.taskAction}.`);
     logDebug("⚠️ task execution timeout!");
@@ -20818,6 +20950,14 @@ export class BrowserUseAgent extends BaseTaskAgent {
       if (lastQuery.taskProduct) {
       if (lastQuery.error) {
       if (lastQuery.taskStatus) {
+  async executeTask(
+    if (this.hasStreamingParams(options)) {
+      if (!sessionWithWs.getWsClient) {
+        if (errors.length > 0) {
+        if (lastError) {
+      if (!result.success) {
+      if (!taskId) {
+  async executeTaskAndWait(
   async getTaskStatus(taskId: string): Promise<QueryResult> {
       if (!result.success) {
   async terminateTask(taskId: string): Promise<ExecutionResult> {
@@ -24688,6 +24828,12 @@ export { Code } from "./code";
 export * from "./command";
 export { Context, ContextService } from "./context";
 export { BetaNetworkService } from "./beta-network";
+export {
+  BetaSkillsService,
+  type SkillMetadataItem,
+  type SkillsMetadataResult,
+  type GetMetadataOptions,
+} from "./beta-skills";
 export { Computer } from "./computer";
 export * from "./exceptions";
 export * from "./extension";

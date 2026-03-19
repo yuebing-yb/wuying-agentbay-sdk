@@ -47,7 +47,9 @@ def __init__(self, task_id: str = "",
              *,
              _ws_handle: Optional[Any] = None,
              _context: Optional[_StreamContext] = None,
-             _agent: Optional[Any] = None)
+             _agent: Optional[Any] = None,
+             _result: Optional[ExecutionResult] = None,
+             _request_id: str = "")
 ```
 
 ### wait

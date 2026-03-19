@@ -509,68 +509,68 @@ describe("TestSession", () => {
   });
 
   describe("test_get_link_with_invalid_port_below_range", () => {
-    it("should throw error when port is below valid range (< 30100)", async () => {
-      const invalidPort = 30099; // Below valid range
+    it("should pass port below range to backend for server-side validation", async () => {
+      const invalidPort = 30099;
+
+      mockClient.getLink.rejects(
+        new Error("Bad Request: Invalid port parameter")
+      );
 
       try {
         await mockSession.getLink("wss", invalidPort);
-        expect(true).toBe(false); // Should not reach here
+        expect(true).toBe(false);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toContain(
-          `Invalid port value: ${invalidPort}`
-        );
-        expect((error as Error).message).toContain(
-          "Port must be an integer in the range [30100, 30199]"
-        );
+        expect((error as Error).message).toContain("Failed to get link");
       }
 
-      // Verify that the API was not called due to client-side validation
-      expect(mockClient.getLink.called).toBe(false);
+      expect(mockClient.getLink.calledOnce).toBe(true);
+      const callArgs = mockClient.getLink.getCall(0).args[0];
+      expect(callArgs.port).toBe(invalidPort);
     });
   });
 
   describe("test_get_link_with_invalid_port_above_range", () => {
-    it("should throw error when port is above valid range (> 30199)", async () => {
-      const invalidPort = 30200; // Above valid range
+    it("should pass port above range to backend for server-side validation", async () => {
+      const invalidPort = 30200;
+
+      mockClient.getLink.rejects(
+        new Error("Bad Request: Invalid port parameter")
+      );
 
       try {
         await mockSession.getLink("wss", invalidPort);
-        expect(true).toBe(false); // Should not reach here
+        expect(true).toBe(false);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toContain(
-          `Invalid port value: ${invalidPort}`
-        );
-        expect((error as Error).message).toContain(
-          "Port must be an integer in the range [30100, 30199]"
-        );
+        expect((error as Error).message).toContain("Failed to get link");
       }
 
-      // Verify that the API was not called due to client-side validation
-      expect(mockClient.getLink.called).toBe(false);
+      expect(mockClient.getLink.calledOnce).toBe(true);
+      const callArgs = mockClient.getLink.getCall(0).args[0];
+      expect(callArgs.port).toBe(invalidPort);
     });
   });
 
   describe("test_get_link_with_non_integer_port", () => {
-    it("should throw error when port is not an integer", async () => {
-      const invalidPort = 30150.5; // Non-integer
+    it("should pass non-integer port to backend for server-side validation", async () => {
+      const invalidPort = 30150.5;
+
+      mockClient.getLink.rejects(
+        new Error("Bad Request: Invalid port parameter")
+      );
 
       try {
         await mockSession.getLink("wss", invalidPort);
-        expect(true).toBe(false); // Should not reach here
+        expect(true).toBe(false);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toContain(
-          `Invalid port value: ${invalidPort}`
-        );
-        expect((error as Error).message).toContain(
-          "Port must be an integer in the range [30100, 30199]"
-        );
+        expect((error as Error).message).toContain("Failed to get link");
       }
 
-      // Verify that the API was not called due to client-side validation
-      expect(mockClient.getLink.called).toBe(false);
+      expect(mockClient.getLink.calledOnce).toBe(true);
+      const callArgs = mockClient.getLink.getCall(0).args[0];
+      expect(callArgs.port).toBe(invalidPort);
     });
   });
 
@@ -641,24 +641,24 @@ describe("TestSession", () => {
   });
 
   describe("test_get_link_async_with_invalid_port", () => {
-    it("should throw error when port is invalid in getLinkAsync", async () => {
-      const invalidPort = 25000; // Below valid range
+    it("should pass invalid port to backend for server-side validation in getLinkAsync", async () => {
+      const invalidPort = 25000;
+
+      mockClient.getLink.rejects(
+        new Error("Bad Request: Invalid port parameter")
+      );
 
       try {
         await mockSession.getLinkAsync("wss", invalidPort);
-        expect(true).toBe(false); // Should not reach here
+        expect(true).toBe(false);
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toContain(
-          `Invalid port value: ${invalidPort}`
-        );
-        expect((error as Error).message).toContain(
-          "Port must be an integer in the range [30100, 30199]"
-        );
+        expect((error as Error).message).toContain("Failed to get link");
       }
 
-      // Verify that the API was not called due to client-side validation
-      expect(mockClient.getLink.called).toBe(false);
+      expect(mockClient.getLink.calledOnce).toBe(true);
+      const callArgs = mockClient.getLink.getCall(0).args[0];
+      expect(callArgs.port).toBe(invalidPort);
     });
   });
 });
