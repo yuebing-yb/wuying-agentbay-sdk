@@ -1543,10 +1543,10 @@ func (a *MobileUseAgent) ExecuteTask(task string, opts ...MobileTaskOptions) *Ta
 			TaskID: "",
 			waitFn: func(_ int) *ExecutionResult {
 				return &ExecutionResult{
-					ApiResponse:  models.ApiResponse{RequestID: reqID},
-					Success:      true,
-					TaskStatus:   "completed",
-					TaskResult:   data,
+					ApiResponse: models.ApiResponse{RequestID: reqID},
+					Success:     true,
+					TaskStatus:  "completed",
+					TaskResult:  data,
 				}
 			},
 		}
@@ -1564,10 +1564,10 @@ func (a *MobileUseAgent) ExecuteTask(task string, opts ...MobileTaskOptions) *Ta
 			TaskID: "",
 			waitFn: func(_ int) *ExecutionResult {
 				return &ExecutionResult{
-					ApiResponse:  models.ApiResponse{RequestID: reqID},
-					Success:      true,
-					TaskStatus:   "completed",
-					TaskResult:   data,
+					ApiResponse: models.ApiResponse{RequestID: reqID},
+					Success:     true,
+					TaskStatus:  "completed",
+					TaskResult:  data,
 				}
 			},
 		}
@@ -1623,11 +1623,11 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 			case "completed":
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
-					Success:     true,
+					Success:      true,
 					ErrorMessage: "",
-					TaskID:      taskID,
-					TaskStatus:  taskStatus,
-					TaskResult:  query.TaskProduct,
+					TaskID:       taskID,
+					TaskStatus:   taskStatus,
+					TaskResult:   query.TaskProduct,
 				}
 			case "failed":
 				errorMsg := query.Error
@@ -1639,10 +1639,10 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 				}
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
-					Success:     false,
+					Success:      false,
 					ErrorMessage: errorMsg,
-					TaskID:      taskID,
-					TaskStatus:  taskStatus,
+					TaskID:       taskID,
+					TaskStatus:   taskStatus,
 				}
 			case "cancelled":
 				errorMsg := query.Error
@@ -1654,10 +1654,10 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 				}
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
-					Success:     false,
+					Success:      false,
 					ErrorMessage: errorMsg,
-					TaskID:      taskID,
-					TaskStatus:  taskStatus,
+					TaskID:       taskID,
+					TaskStatus:   taskStatus,
 				}
 			case "unsupported":
 				errorMsg := query.Error
@@ -1669,10 +1669,10 @@ func (a *MobileUseAgent) buildPollingWait(taskID string, initialRequestID string
 				}
 				return &ExecutionResult{
 					ApiResponse:  models.ApiResponse{RequestID: query.RequestID},
-					Success:     false,
+					Success:      false,
 					ErrorMessage: errorMsg,
-					TaskID:      taskID,
-					TaskStatus:  taskStatus,
+					TaskID:       taskID,
+					TaskStatus:   taskStatus,
 				}
 			}
 

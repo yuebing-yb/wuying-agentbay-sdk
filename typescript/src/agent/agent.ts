@@ -1461,8 +1461,11 @@ export class MobileUseAgent extends BaseTaskAgent {
         };
       })();
 
-      return new TaskExecution(handle.invocationId, resultPromise, () =>
-        handle.cancel(), handle.invocationId
+      return new TaskExecution(
+        handle.invocationId,
+        resultPromise,
+        () => handle.cancel(),
+        handle.invocationId
       );
     }
 
@@ -1527,7 +1530,12 @@ export class MobileUseAgent extends BaseTaskAgent {
         result.requestId,
         86400
       );
-      return new TaskExecution(taskId, resultPromise, undefined, result.requestId);
+      return new TaskExecution(
+        taskId,
+        resultPromise,
+        undefined,
+        result.requestId
+      );
     } catch (error) {
       return new TaskExecution(
         "",
