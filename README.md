@@ -32,38 +32,11 @@
 
 ## 🔥 OpenClaw Quick Deployment
 
-Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes with a turnkey web management UI.
-
-| Implementation | Stack | Get Started |
-|---------------|-------|-------------|
-| [Python](cookbook/openclaw/python/) | FastAPI + React | `pip install -r requirements.txt && python main.py` |
-| [Java](cookbook/openclaw/java/) | Spring Boot + React | `mvn clean compile && mvn spring-boot:run` |
-
-Both include Context persistence, external HTTPS access via `getLink`, and custom model configuration. Visit `http://localhost:8080` after launch.
+Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes. Available in [Python](cookbook/openclaw/python/) and [Java](cookbook/openclaw/java/).
 
 ## ✨ Skills — Equip Your Agents (Beta)
 
-Load reusable capability modules into sandbox sessions to give AI agents pre-configured tools and workflows — no manual setup needed.
-
-```python
-from agentbay import AgentBay, CreateSessionParams
-
-agent_bay = AgentBay()
-
-# Discover available skills
-meta = agent_bay.beta_skills.get_metadata()
-for skill in meta.skills:
-    print(f"  {skill.name} — {skill.description}")
-
-# Create a session with skills loaded into the sandbox
-result = agent_bay.create(CreateSessionParams(load_skills=True, skill_names=["my-skill"]))
-session = result.session
-
-# Read a skill's instructions directly from the sandbox
-content = session.file_system.read_file(f"{meta.skills_root_path}/my-skill/SKILL.md")
-```
-
-Available in all four SDKs. [Learn more →](docs/guides/common-features/advanced/skills.md)
+Load reusable capability modules into sandbox sessions — pre-configured tools and workflows, no manual setup needed. Available in all four SDKs. [Learn more →](docs/guides/common-features/advanced/skills.md)
 
 ## 📦 Installation
 

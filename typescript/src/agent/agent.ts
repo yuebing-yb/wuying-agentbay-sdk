@@ -88,22 +88,30 @@ export interface McpSession {
 }
 
 /**
- * Options for executeTaskAndWait when using WebSocket streaming.
+ * Options for streaming callbacks when using WebSocket-based agent execution.
+ * Providing any callback enables WebSocket streaming mode automatically.
  */
 export interface AgentStreamingOptions {
+  /** Called when the agent produces a reasoning step (thinking process). */
   onReasoning?: AgentEventCallback;
+  /** Called when the agent produces content output (final or partial results). */
   onContent?: AgentEventCallback;
+  /** Called when the agent invokes a tool (e.g. browser_navigate, tap). */
   onToolCall?: AgentEventCallback;
-  /** The `result` field is agent-defined; the SDK does not parse it. */
+  /** Called when a tool returns its result. The `result` field is agent-defined; the SDK does not parse it. */
   onToolResult?: AgentEventCallback;
+  /** Called when an error occurs during task execution. */
   onError?: AgentEventCallback;
 }
 
 /**
  * Options for MobileUseAgent executeTask/executeTaskAndWait.
+ * Extends AgentStreamingOptions with mobile-specific options.
  */
 export interface MobileTaskOptions extends AgentStreamingOptions {
+  /** Maximum number of steps the agent can take (default: server-defined). */
   maxSteps?: number;
+  /** Called when the agent requests user input (human-in-the-loop). Return a string response. */
   onCallForUser?: (event: AgentEvent) => Promise<string>;
 }
 

@@ -152,6 +152,21 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+## 🤖 Agent Streaming Output (Beta)
+
+Real-time streaming for mobile agent tasks via WebSocket — receive reasoning steps, content, and tool calls as they happen:
+
+```python
+result = session.agent.mobile.execute_task_and_wait(
+    task="Open Settings and check device name",
+    timeout=180,
+    on_reasoning=lambda e: print(f"[Think] {e.content}"),
+    on_content=lambda e: print(f"[Output] {e.content}"),
+)
+```
+
+See [streaming examples](docs/examples/_async/mobile-use/mobile_agent_streaming.py) and the [Agent Modules guide](../docs/guides/common-features/advanced/agent-modules.md) for details.
+
 ## 📖 Complete Documentation
 
 ### 🆕 New Users

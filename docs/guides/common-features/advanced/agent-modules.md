@@ -125,6 +125,81 @@ else:
     print(f"Task failed: {execution_result.error_message}")
 ```
 
+## Agent Streaming Output (Beta)
+
+MobileUseAgent supports real-time streaming output via WebSocket, allowing you to receive reasoning steps, content updates, tool calls, and error events as they happen during task execution.
+
+### Streaming with Callbacks
+
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+agent_bay = AgentBay()
+result = agent_bay.create(CreateSessionParams(image_id="mobile_latest"))
+session = result.session
+
+def on_reasoning(event):
+    print(f"[Reasoning] {event.content}")
+
+def on_content(event):
+    print(f"[Content] {event.content}")
+
+def on_error(event):
+    print(f"[Error] {event.error}")
+
+execution_result = session.agent.mobile.execute_task_and_wait(
+    task="Open the Settings app and check the device name",
+    timeout=180,
+    on_reasoning=on_reasoning,
+    on_content=on_content,
+    on_error=on_error,
+)
+
+print(f"Success: {execution_result.success}")
+print(f"Result: {execution_result.task_result}")
+
+session.delete()
+```
+
+### Using TaskExecution Handle
+
+For more control, use `execute_task` to get a `TaskExecution` handle that supports deferred waiting:
+
+```python
+execution = await session.agent.mobile.execute_task(
+    task="Take a screenshot of the home screen",
+    on_content=lambda e: print(e.content),
+)
+
+# Do other work while the task runs...
+
+result = await execution.wait(timeout=120)
+```
+
+### Human-in-the-Loop
+
+The `on_call_for_user` callback enables interactive workflows where the agent can request user input:
+
+```python
+def handle_user_call(event):
+    print(f"Agent asks: {event.content}")
+    return "Yes, please continue"
+
+execution_result = session.agent.mobile.execute_task_and_wait(
+    task="Install an app and confirm permissions",
+    timeout=300,
+    on_call_for_user=handle_user_call,
+)
+```
+
+> **Note**: Agent streaming is currently available for MobileUseAgent only. Streaming requires a WebSocket connection which is automatically managed by the SDK.
+
+For language-specific streaming examples, see:
+- [Python (Async)](../../../../python/docs/examples/_async/mobile-use/mobile_agent_streaming.py) | [Python (Sync)](../../../../python/docs/examples/_sync/mobile-use/mobile_agent_streaming.py)
+- [TypeScript](../../../../typescript/docs/examples/mobile-use/mobile-agent-streaming.ts)
+- [Golang](../../../../golang/docs/examples/mobile-use/mobile_agent_streaming/main.go)
+- [Java](../../../../java/agentbay/src/main/java/com/aliyun/agentbay/examples/MobileAgentStreamingExample.java)
+
 ## 📚 Related Resources
 
 - [Session Management Guide](../basics/session-management.md)
