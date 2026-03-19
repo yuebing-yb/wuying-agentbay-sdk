@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, Link } from 'react-router-dom'
 import SessionForm from './components/SessionForm'
 import DingtalkSetupPanel from './components/DingtalkSetupPanel'
 import FeishuSetupPanel from './components/FeishuSetupPanel'
-// import SessionListPanel from './components/SessionListPanel' // 会话列表入口（逻辑有 bug，暂时注释）
+import OpenClawChatPanel from './components/OpenClawChatPanel'
+import OpenClawChatPage from './pages/OpenClawChatPage'
 import {
   getCredentialsForSession,
   removeCredentialsForSession,
@@ -190,6 +192,11 @@ function App() {
     session
 
   return (
+    <Routes>
+      <Route path="/chat" element={<OpenClawChatPage />} />
+      <Route
+        path="/*"
+        element={(
     <div className={`app ${isSessionActive ? 'session-active' : ''}`}>
       <header className="app-header">
         {/* 会话列表入口（逻辑有 bug，暂时注释）
@@ -235,7 +242,7 @@ function App() {
           session && (
           <div className="session-layout">
             <aside className="session-sidebar">
-              <div className="card session-card">
+              <div className="card session-card" data-session-id={session.sessionId}>
                 <h2>会话已就绪</h2>
                 <div className="session-info">
                   <div className="info-row">
@@ -276,6 +283,16 @@ function App() {
                   </div>
                 </div>
 
+                <OpenClawChatPanel sessionId={session.sessionId} />
+                <Link
+                  to={`/chat?sessionId=${session.sessionId}`}
+                  className="btn btn-outline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="openclaw-standalone-chat-link"
+                >
+                  独立对话页
+                </Link>
                 <DingtalkSetupPanel sessionId={session.sessionId} />
                 <FeishuSetupPanel sessionId={session.sessionId} />
 
@@ -352,6 +369,9 @@ function App() {
         )}
       </main>
     </div>
+        )}
+      />
+    </Routes>
   )
 }
 
