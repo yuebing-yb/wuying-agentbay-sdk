@@ -174,6 +174,8 @@ class SessionManager:
                 username=request.username,
                 created_at=now,
                 status="running",
+                context_name=context_name,
+                context_id=context_id,
                 agent_bay=agent_bay,
                 session=session,
                 create_request=request,
@@ -253,6 +255,37 @@ class SessionManager:
             except Exception as e:
                 logger.warning(f"Failed to get OpenClaw link for restored session: {e}")
 
+            # Get context info from session bindings (OpenClaw uses CONTEXT_SYNC_PATH)
+            context_name = f"openclaw-{username}"
+            context_id = None
+            try:
+                bindings_result = session.context.list_bindings()
+                if bindings_result.success and bindings_result.bindings:
+                    for b in bindings_result.bindings:
+                        if b.path.rstrip("/") == CONTEXT_SYNC_PATH.rstrip("/"):
+                            if b.context_name:
+                                context_name = b.context_name
+                            if b.context_id:
+                                context_id = b.context_id
+                            break
+                    if not context_id and bindings_result.bindings:
+                        b = bindings_result.bindings[0]
+                        if b.context_name:
+                            context_name = b.context_name
+                        if b.context_id:
+                            context_id = b.context_id
+            except Exception as e:
+                logger.warning(f"Failed to get context bindings for restored session: {e}")
+            # Fallback: fetch context_id from agent_bay.context.get() when list_bindings didn't return it
+            if not context_id:
+                try:
+                    ctx_result = agent_bay.context.get(context_name)
+                    if ctx_result.success and ctx_result.context:
+                        context_id = ctx_result.context.id
+                        logger.info(f"Got context_id from context.get: {context_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to get context by name for restored session: {e}")
+
             info = SessionInfo(
                 session_id=session_id,
                 resource_url=resource_url,
@@ -260,6 +293,8 @@ class SessionManager:
                 username=username,
                 created_at=created_at,
                 status=status,
+                context_name=context_name,
+                context_id=context_id,
                 agent_bay=agent_bay,
                 session=session,
                 create_request=create_request,
