@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 
 /** Build proxy WebSocket URL */
 function buildProxyWssUrl(sessionId: string): string {
@@ -224,7 +225,7 @@ function OpenClawChatPage() {
         if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current)
         fallbackTimerRef.current = setTimeout(async () => {
           fallbackTimerRef.current = null
-          const hasReply = document.querySelector('.chat-msg-assistant .chat-content')
+          const hasReply = document.querySelector('.chat-msg-bubble-assistant .chat-content')
           if (hasReply) return
           try {
             const res = await fetch(`/api/sessions/${sessionId}/openclaw-chat`, {
@@ -286,82 +287,139 @@ function OpenClawChatPage() {
     }
   }
 
-  return (
-    <div className="openclaw-chat-page">
-      <header className="chat-page-header">
-        <Link to="/" className="back-link">← 返回管理页</Link>
-        <h1>OpenClaw 对话</h1>
-        <p className="chat-page-subtitle">与 OpenClaw 进行对话</p>
-      </header>
+  const formatTime = (d: Date) => {
+    return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  }
 
-      <main className="chat-page-main">
-        {!sessionId ? (
-          <div className="card chat-session-form">
-            <h2>输入会话 ID</h2>
-            <p className="hint">请从管理页创建会话后，将 sessionId 填入下方，或直接访问 /chat?sessionId=xxx</p>
-            <form onSubmit={handleSessionIdSubmit}>
-              <input
-                type="text"
-                name="sessionId"
-                placeholder="例如: s-04owxw8oxc0icdcfw"
-                className="chat-input"
-                autoFocus
-              />
-              <button type="submit" className="btn btn-primary">进入对话</button>
-            </form>
-          </div>
-        ) : (
-          <div className="chat-page-content">
-            <div className="chat-session-bar">
-              <span className="session-id-label">会话 ID: {sessionId}</span>
+  return (
+    <div className="openclaw-chat-page openclaw-chat-im">
+      {!sessionId ? (
+        <>
+          <header className="chat-im-header">
+            <Link to="/" className="back-link">← 返回管理页</Link>
+            <h1>OpenClaw 对话</h1>
+          </header>
+          <main className="chat-im-main chat-im-session-form">
+            <div className="chat-im-welcome-card">
+              <div className="chat-im-welcome-icon">💬</div>
+              <h2>输入会话 ID</h2>
+              <p className="chat-im-hint">请从管理页创建会话后，将 sessionId 填入下方，或直接访问 /chat?sessionId=xxx</p>
+              <form onSubmit={handleSessionIdSubmit} className="chat-im-session-form-inner">
+                <input
+                  type="text"
+                  name="sessionId"
+                  placeholder="例如: s-04owxw8oxc0icdcfw"
+                  className="chat-im-input"
+                  autoFocus
+                />
+                <button type="submit" className="btn btn-primary chat-im-submit">进入对话</button>
+              </form>
+            </div>
+          </main>
+        </>
+      ) : (
+        <>
+          <header className="chat-im-header chat-im-header-bar">
+            <Link to="/" className="chat-im-back">← 返回</Link>
+            <div className="chat-im-header-center">
+              <h1>OpenClaw</h1>
+              <div className="chat-im-status">
+                <span className={`chat-im-status-dot ${connected ? 'connected' : ''}`} />
+                <span className="chat-im-status-text">{connected ? '已连接' : '未连接'}</span>
+              </div>
+            </div>
+            <div className="chat-im-header-actions">
               {!connected ? (
-                <button type="button" className="btn btn-primary" onClick={connect} data-testid="openclaw-connect-btn">
+                <button type="button" className="btn btn-primary chat-im-connect-btn" onClick={connect} data-testid="openclaw-connect-btn">
                   连接 OpenClaw
                 </button>
               ) : (
-                <button type="button" className="btn btn-outline btn-sm" onClick={disconnect}>
-                  断开连接
+                <button type="button" className="btn btn-outline chat-im-disconnect-btn" onClick={disconnect}>
+                  断开
                 </button>
               )}
             </div>
+          </header>
 
-            <div className="chat-messages chat-messages-full">
+          <main className="chat-im-main chat-im-conversation">
+            <div className="chat-im-messages">
+              {messages.length === 0 && (
+                <div className="chat-im-empty">
+                  <div className="chat-im-empty-icon">🤖</div>
+                  <p className="chat-im-empty-title">开始与 OpenClaw 对话</p>
+                  <p className="chat-im-empty-hint">输入消息后按 Enter 发送，Shift+Enter 换行</p>
+                  <p className="chat-im-empty-session">会话: {sessionId}</p>
+                </div>
+              )}
               {messages.map((m) => (
-                <div key={m.id} className={`chat-msg chat-msg-${m.role}`}>
-                  <span className="chat-role">{m.role === 'user' ? '我' : 'OpenClaw'}</span>
-                  <div className="chat-content">
-                    {m.content || (m.streaming ? '...' : '')}
+                <div key={m.id} className={`chat-im-bubble chat-im-bubble-${m.role}`}>
+                  <div className="chat-im-bubble-inner">
+                    {m.role === 'assistant' && (
+                      <div className="chat-im-avatar chat-im-avatar-assistant" title="OpenClaw">OC</div>
+                    )}
+                    <div className="chat-im-bubble-content">
+                      <div className="chat-im-bubble-body">
+                        {m.role === 'assistant' ? (
+                          <div className="chat-im-content chat-im-content-markdown">
+                            <ReactMarkdown>{m.content || (m.streaming ? '...' : '')}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="chat-im-content">{m.content}</div>
+                        )}
+                      </div>
+                      <div className="chat-im-bubble-meta">
+                        <span className="chat-im-meta-label">{m.role === 'user' ? '我' : 'OpenClaw'}</span>
+                        <span className="chat-im-meta-time">{formatTime(m.timestamp)}</span>
+                      </div>
+                    </div>
+                    {m.role === 'user' && (
+                      <div className="chat-im-avatar chat-im-avatar-user">我</div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="chat-input-row chat-input-row-full">
-              <input
-                type="text"
-                className="chat-input"
-                placeholder="输入消息..."
-                data-testid="openclaw-chat-input"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                disabled={sending}
-              />
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={sendMessage}
-                disabled={sending || !inputText.trim()}
-                data-testid="openclaw-send-btn"
-              >
-                {sending ? '发送中...' : '发送'}
-              </button>
+            <div className="chat-im-input-bar">
+              {error && (
+                <div className="chat-im-error-bar">
+                  <span>{error}</span>
+                </div>
+              )}
+              <div className="chat-im-input-wrapper">
+                <textarea
+                  className="chat-im-textarea"
+                  placeholder="输入消息，Enter 发送，Shift+Enter 换行"
+                  data-testid="openclaw-chat-input"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
+                  disabled={sending}
+                  rows={1}
+                />
+                <div className="chat-im-input-buttons">
+                  <Link to="/" className="chat-im-btn-new">新会话</Link>
+                  <button
+                    type="button"
+                    className="chat-im-btn-send"
+                    onClick={sendMessage}
+                    disabled={sending || !inputText.trim()}
+                    data-testid="openclaw-send-btn"
+                  >
+                    {sending ? (
+                      <span className="chat-im-send-loading">发送中</span>
+                    ) : (
+                      <>
+                        <span className="chat-im-send-icon">发送</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
-
-            {error && <p className="error-text">{error}</p>}
-          </div>
-        )}
-      </main>
+          </main>
+        </>
+      )}
     </div>
   )
 }
