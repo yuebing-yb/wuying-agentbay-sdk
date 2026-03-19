@@ -2,6 +2,8 @@ package com.aliyun.agentbay.test;
 
 import com.aliyun.agentbay.AgentBay;
 import com.aliyun.agentbay.agent.Agent;
+import com.aliyun.agentbay.agent.MobileTaskOptions;
+import com.aliyun.agentbay.agent.TaskExecution;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.ExecutionResult;
 import com.aliyun.agentbay.model.QueryResult;
@@ -72,25 +74,20 @@ public class MobileAgentIntegrationTest {
         String taskId = null;
         
         try {
-            ExecutionResult result = agent.getMobile().executeTask(task, 1);
+            TaskExecution execution = agent.getMobile().executeTask(task, MobileTaskOptions.mobileBuilder().maxSteps(1).build());
+            taskId = execution.getTaskId();
 
-            if (!result.isSuccess()) {
+            if (taskId == null || taskId.isEmpty()) {
+                ExecutionResult errResult = execution.wait(5);
                 System.out.println("ExecutionResult details:");
-                System.out.println("  Success: " + result.isSuccess());
-                System.out.println("  Error Message: " + result.getErrorMessage());
-                System.out.println("  Request ID: " + result.getRequestId());
-                System.out.println("  Task ID: " + result.getTaskId());
-                System.out.println("  Task Status: " + result.getTaskStatus());
+                System.out.println("  Success: " + errResult.isSuccess());
+                System.out.println("  Error Message: " + errResult.getErrorMessage());
+                System.out.println("  Request ID: " + errResult.getRequestId());
+                System.out.println("  Task ID: " + errResult.getTaskId());
+                System.out.println("  Task Status: " + errResult.getTaskStatus());
             }
-            assertTrue("Task execution should succeed. Error: " + result.getErrorMessage(), result.isSuccess());
-            assertNotNull("Request ID should not be null", result.getRequestId());
-            assertFalse("Request ID should not be empty", result.getRequestId().isEmpty());
-            assertEquals("Error message should be empty", "", result.getErrorMessage());
-            assertNotNull("Task ID should not be null", result.getTaskId());
-            assertFalse("Task ID should not be empty", result.getTaskId().isEmpty());
-            assertEquals("Initial status should be running", "running", result.getTaskStatus());
-
-            taskId = result.getTaskId();
+            assertNotNull("Task ID should not be null", taskId);
+            assertFalse("Task execution should succeed with taskId. Error: " + (taskId.isEmpty() ? execution.wait(1).getErrorMessage() : ""), taskId.isEmpty());
             System.out.println("✅ Task ID: " + taskId);
 
             // Poll until task completes to avoid blocking subsequent tests
@@ -156,7 +153,7 @@ public class MobileAgentIntegrationTest {
                 ? Integer.parseInt(timeoutEnv)
                 : 300;
 
-            ExecutionResult result = agent.getMobile().executeTaskAndWait(task, 10, timeout);
+            ExecutionResult result = agent.getMobile().executeTaskAndWait(task, timeout, MobileTaskOptions.mobileBuilder().maxSteps(10).build());
             taskId = result.getTaskId();
 
             if (!result.isSuccess()) {
@@ -205,18 +202,10 @@ public class MobileAgentIntegrationTest {
         String taskId = null;
         
         try {
-            ExecutionResult executeResult = agent.getMobile().executeTask(task, 1);
-
-            if (!executeResult.isSuccess()) {
-                System.out.println("ExecutionResult details:");
-                System.out.println("  Success: " + executeResult.isSuccess());
-                System.out.println("  Error Message: " + executeResult.getErrorMessage());
-                System.out.println("  Request ID: " + executeResult.getRequestId());
-                System.out.println("  Task ID: " + executeResult.getTaskId());
-                System.out.println("  Task Status: " + executeResult.getTaskStatus());
-            }
-            assertTrue("Task execution should succeed. Error: " + executeResult.getErrorMessage(), executeResult.isSuccess());
-            taskId = executeResult.getTaskId();
+            TaskExecution execution = agent.getMobile().executeTask(task, MobileTaskOptions.mobileBuilder().maxSteps(1).build());
+            taskId = execution.getTaskId();
+            assertNotNull("Task ID should not be null", taskId);
+            assertFalse("Task execution should succeed with taskId", taskId.isEmpty());
             assertNotNull("Task ID should not be null", taskId);
             assertFalse("Task ID should not be empty", taskId.isEmpty());
 
@@ -285,18 +274,17 @@ public class MobileAgentIntegrationTest {
         String taskId = null;
         
         try {
-            ExecutionResult executeResult = agent.getMobile().executeTask(task, 100);
+            TaskExecution execution = agent.getMobile().executeTask(task, MobileTaskOptions.mobileBuilder().maxSteps(100).build());
+            String execTaskId = execution.getTaskId();
 
-            if (!executeResult.isSuccess()) {
+            if (execTaskId == null || execTaskId.isEmpty()) {
+                ExecutionResult errResult = execution.wait(5);
                 System.out.println("ExecutionResult details:");
-                System.out.println("  Success: " + executeResult.isSuccess());
-                System.out.println("  Error Message: " + executeResult.getErrorMessage());
-                System.out.println("  Request ID: " + executeResult.getRequestId());
-                System.out.println("  Task ID: " + executeResult.getTaskId());
-                System.out.println("  Task Status: " + executeResult.getTaskStatus());
+                System.out.println("  Success: " + errResult.isSuccess());
+                System.out.println("  Error Message: " + errResult.getErrorMessage());
+                assertTrue("Task execution should succeed. Error: " + errResult.getErrorMessage(), false);
             }
-            assertTrue("Task execution should succeed. Error: " + executeResult.getErrorMessage(), executeResult.isSuccess());
-            taskId = executeResult.getTaskId();
+            taskId = execTaskId;
             assertNotNull("Task ID should not be null", taskId);
             assertFalse("Task ID should not be empty", taskId.isEmpty());
 

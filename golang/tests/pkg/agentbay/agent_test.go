@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/agent"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/tests/pkg/agentbay/testutil"
 )
 
@@ -111,30 +112,14 @@ func TestMobileAgent_ExecuteTask(t *testing.T) {
 
 	if session.Agent != nil {
 		task := "Open WeChat app"
-		maxSteps := 100
 
 		t.Logf("Executing mobile agent task (non-blocking): %s", task)
-		result := session.Agent.Mobile.ExecuteTask(task, maxSteps)
+		execution := session.Agent.Mobile.ExecuteTask(task, agent.MobileTaskOptions{MaxSteps: 100})
 
-		t.Logf("Mobile Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
-			result.RequestID, result.Success, result.TaskID, result.TaskStatus)
+		t.Logf("Mobile Agent task started, TaskID=%s", execution.TaskID)
 
-		if !result.Success {
-			t.Errorf("Mobile Agent task execution failed: %s", result.ErrorMessage)
-		} else {
-			t.Logf("Mobile Agent task executed successfully, TaskID: %s", result.TaskID)
-
-			if result.RequestID == "" {
-				t.Errorf("Agent.Mobile.ExecuteTask did not return RequestID")
-			}
-
-			if result.TaskID == "" {
-				t.Errorf("Agent.Mobile.ExecuteTask did not return TaskID")
-			}
-
-			if result.TaskStatus != "running" {
-				t.Errorf("Expected task status to be 'running', got: %s", result.TaskStatus)
-			}
+		if execution.TaskID == "" {
+			t.Errorf("Agent.Mobile.ExecuteTask did not return TaskID")
 		}
 	} else {
 		t.Log("Note: Agent interface is nil, skipping mobile agent test")
@@ -158,11 +143,9 @@ func TestMobileAgent_ExecuteTaskAndWait(t *testing.T) {
 			}
 		}
 
-		maxSteps := 100
-
 		t.Logf("Executing mobile agent task (blocking): %s", task)
 		result := session.Agent.Mobile.ExecuteTaskAndWait(
-			task, maxSteps, timeout)
+			task, timeout, agent.MobileTaskOptions{MaxSteps: 100})
 
 		t.Logf("Mobile Agent task result with RequestID %s: Success=%v, TaskID=%s, Status=%s",
 			result.RequestID, result.Success, result.TaskID, result.TaskStatus)

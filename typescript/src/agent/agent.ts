@@ -5,6 +5,7 @@ import { z, ZodTypeAny } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 const DefaultSchema = z.object({});
+
 /**
  * Result of task execution.
  */
@@ -31,6 +32,39 @@ export interface QueryResult extends ApiResponse {
 }
 
 /**
+ * Represents a streaming event from an Agent execution.
+ *
+ * Event types map directly to LLM output field names:
+ * - "reasoning": from LLM reasoning_content (model's internal reasoning/thinking)
+ * - "content": from LLM content (model's text output, intermediate analysis or final answer)
+ * - "tool_call": from LLM tool_calls (tool invocation request)
+ * - "tool_result": tool execution result
+ * - "error": execution error
+ *
+ * The `result` field in tool_result events carries an agent-defined structure
+ * that the SDK passes through without parsing. Typical fields include
+ * `isError` (boolean), `output` (string), and optionally `screenshot`
+ * (base64 string). The final task outcome is delivered via the
+ * `ExecutionResult` return value of `executeTaskAndWait`.
+ */
+export interface AgentEvent {
+  type: string;
+  seq: number;
+  round: number;
+  content?: string;
+  toolCallId?: string;
+  toolName?: string;
+  args?: Record<string, any>;
+  /** Prompt text for call_for_user tool_call events. */
+  prompt?: string;
+  /** Agent-defined tool execution result (e.g. {isError, output, screenshot}). Not parsed by SDK. */
+  result?: Record<string, any>;
+  error?: Record<string, any>;
+}
+
+export type AgentEventCallback = (event: AgentEvent) => void;
+
+/**
  * Result of an MCP tool call.
  */
 export interface McpToolResult {
@@ -51,6 +85,77 @@ export interface McpSession {
     args: Record<string, any>,
     autoGenSession?: boolean
   ): Promise<McpToolResult>;
+}
+
+/**
+ * Options for executeTaskAndWait when using WebSocket streaming.
+ */
+export interface AgentStreamingOptions {
+  onReasoning?: AgentEventCallback;
+  onContent?: AgentEventCallback;
+  onToolCall?: AgentEventCallback;
+  /** The `result` field is agent-defined; the SDK does not parse it. */
+  onToolResult?: AgentEventCallback;
+  onError?: AgentEventCallback;
+}
+
+/**
+ * Options for MobileUseAgent executeTask/executeTaskAndWait.
+ */
+export interface MobileTaskOptions extends AgentStreamingOptions {
+  maxSteps?: number;
+  onCallForUser?: (event: AgentEvent) => Promise<string>;
+}
+
+/**
+ * Handle for a task started via executeTask. Call wait() to block until completion.
+ */
+export class TaskExecution {
+  readonly taskId: string;
+  private _resultPromise: Promise<ExecutionResult>;
+  private _cancelFn?: () => void;
+  private _requestId: string;
+
+  constructor(
+    taskId: string,
+    resultPromise: Promise<ExecutionResult>,
+    cancelFn?: () => void,
+    requestId?: string
+  ) {
+    this.taskId = taskId;
+    this._resultPromise = resultPromise;
+    this._cancelFn = cancelFn;
+    this._requestId = requestId ?? "";
+  }
+
+  async wait(timeout?: number): Promise<ExecutionResult> {
+    if (timeout) {
+      let timerId: ReturnType<typeof setTimeout>;
+      const timer = new Promise<ExecutionResult>((resolve) => {
+        timerId = setTimeout(() => {
+          if (this._cancelFn) {
+            try {
+              this._cancelFn();
+            } catch {
+              /* ignore cancel errors */
+            }
+          }
+          resolve({
+            requestId: this._requestId,
+            success: false,
+            errorMessage: `Task execution timed out after ${timeout} seconds.`,
+            taskId: this.taskId,
+            taskStatus: "failed",
+            taskResult: "Task execution timed out.",
+          });
+        }, timeout * 1000);
+      });
+      return Promise.race([this._resultPromise, timer]).finally(() =>
+        clearTimeout(timerId)
+      );
+    }
+    return this._resultPromise;
+  }
 }
 
 /**
@@ -84,7 +189,331 @@ abstract class BaseTaskAgent {
   }
 
   /**
+   * Check if any streaming option is provided.
+   */
+  protected hasStreamingParams(
+    options?: AgentStreamingOptions | MobileTaskOptions
+  ): boolean {
+    if (!options) return false;
+    return !!(
+      options.onReasoning ||
+      options.onContent ||
+      options.onToolCall ||
+      options.onToolResult ||
+      options.onError ||
+      (options as MobileTaskOptions).onCallForUser
+    );
+  }
+
+  /**
+   * Resolve the WS target for this agent from MCP tools list.
+   */
+  protected resolveAgentTarget(): string {
+    const executeToolName = this.getToolName("execute");
+    const sessionWithTools = this.session as McpSession & {
+      mcpTools?: Array<{ name?: string; server?: string }>;
+    };
+    for (const tool of sessionWithTools.mcpTools || []) {
+      if (tool?.name === executeToolName && tool?.server) {
+        return tool.server;
+      }
+    }
+    if (this.toolPrefix === "browser_use") {
+      return "wuying_browseruse";
+    }
+    if (this.toolPrefix === "flux") {
+      return "wuying_computer_agent";
+    }
+    return "wuying_mobile_agent";
+  }
+
+  /**
+   * Start a task via WebSocket streaming channel. Returns handle and context
+   * immediately without blocking. Use handle.waitEnd() to await completion.
+   */
+  protected async startTaskStreamWs(params: {
+    taskParams: Record<string, any>;
+    options?: AgentStreamingOptions | MobileTaskOptions;
+  }): Promise<{
+    handle: {
+      waitEnd: () => Promise<any>;
+      cancel: () => Promise<void>;
+      write: (data: Record<string, any>) => Promise<void>;
+      invocationId: string;
+    };
+    context: {
+      finalContentParts: string[];
+      lastError: Record<string, any> | undefined;
+      errors: Error[];
+    };
+  }> {
+    const { taskParams, options } = params;
+    const sessionWithWs = this.session as McpSession & {
+      getWsClient?: () => Promise<{
+        callStream: (p: any) => Promise<{
+          waitEnd: () => Promise<any>;
+          cancel: () => Promise<void>;
+          write: (data: Record<string, any>) => Promise<void>;
+          invocationId: string;
+        }>;
+      }>;
+    };
+    if (!sessionWithWs.getWsClient) {
+      throw new Error("WS streaming is not available in this session");
+    }
+
+    const wsClient = await sessionWithWs.getWsClient();
+    const target = this.resolveAgentTarget();
+
+    const finalContentParts: string[] = [];
+    let lastError: Record<string, any> | undefined;
+    const errors: Error[] = [];
+    const handleRef: {
+      current: { write: (data: Record<string, any>) => Promise<void> } | null;
+    } = { current: null };
+
+    const dispatchEvent = (event: AgentEvent): void => {
+      const cb = {
+        reasoning: options?.onReasoning,
+        content: options?.onContent,
+        tool_call: options?.onToolCall,
+        tool_result: options?.onToolResult,
+        error: options?.onError,
+      }[event.type];
+      if (cb) {
+        try {
+          cb(event);
+        } catch (ex) {
+          logWarn(`on_${event.type} callback error: ${ex}`);
+        }
+      }
+    };
+
+    const handle = await wsClient.callStream({
+      target,
+      data: {
+        method: "exec_task",
+        params: taskParams,
+      },
+      onEvent: (_invocationId: string, data: any) => {
+        const eventType = data?.eventType ?? "";
+        const seq = data?.seq ?? 0;
+        const round = data?.round ?? 0;
+
+        if (eventType === "reasoning") {
+          dispatchEvent({
+            type: "reasoning",
+            seq,
+            round,
+            content: data?.content ?? "",
+          });
+        } else if (eventType === "content") {
+          const contentText = data?.content ?? "";
+          finalContentParts.push(contentText);
+          dispatchEvent({ type: "content", seq, round, content: contentText });
+        } else if (eventType === "tool_call") {
+          const toolName = String(data?.toolName ?? "");
+          const args = (data?.args as Record<string, any>) ?? {};
+          const evt: AgentEvent = {
+            type: "tool_call",
+            seq,
+            round,
+            toolCallId: String(data?.toolCallId ?? ""),
+            toolName,
+            args,
+            prompt:
+              toolName === "call_for_user" ? args?.prompt ?? "" : undefined,
+            content:
+              toolName === "call_for_user" ? args?.prompt ?? "" : undefined,
+          };
+          dispatchEvent(evt);
+          if (toolName === "call_for_user") {
+            (async () => {
+              let response = "";
+              const onCb = (options as MobileTaskOptions)?.onCallForUser;
+              if (onCb) {
+                try {
+                  response = (await onCb(evt)) ?? "";
+                } catch (e) {
+                  logWarn(`onCallForUser callback error: ${e}`);
+                }
+              } else {
+                logWarn(
+                  "Received call_for_user but no onCallForUser callback is set, sending empty response"
+                );
+              }
+              if (handleRef.current) {
+                try {
+                  await handleRef.current.write({
+                    method: "resume_task",
+                    params: {
+                      toolCallId: evt.toolCallId,
+                      response: response || "",
+                    },
+                  });
+                } catch (e) {
+                  logWarn(`Failed to send resume_task: ${e}`);
+                }
+              }
+            })();
+          }
+        } else if (eventType === "tool_result") {
+          dispatchEvent({
+            type: "tool_result",
+            seq,
+            round,
+            toolCallId: data?.toolCallId ?? "",
+            toolName: data?.toolName ?? "",
+            result: data?.result ?? {},
+          });
+        } else if (eventType === "error") {
+          lastError = data?.error ?? data;
+          dispatchEvent({
+            type: "error",
+            seq,
+            round,
+            error: lastError,
+          });
+        }
+      },
+      onError: (_invocationId: string, err: Error) => {
+        errors.push(err);
+      },
+    });
+
+    handleRef.current = handle;
+
+    return {
+      handle,
+      context: { finalContentParts, lastError, errors },
+    };
+  }
+
+  /**
+   * Execute a task via WebSocket streaming channel.
+   */
+  protected async executeTaskStreamWs(params: {
+    taskParams: Record<string, any>;
+    timeout: number;
+    options?: AgentStreamingOptions | MobileTaskOptions;
+  }): Promise<ExecutionResult> {
+    const { taskParams, timeout, options } = params;
+    const sessionWithWs = this.session as McpSession & {
+      getWsClient?: () => Promise<{
+        callStream: (p: any) => Promise<{
+          waitEnd: () => Promise<any>;
+          cancel: () => Promise<void>;
+          write: (data: Record<string, any>) => Promise<void>;
+          invocationId: string;
+        }>;
+      }>;
+    };
+    if (!sessionWithWs.getWsClient) {
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: "WS streaming is not available in this session",
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "WS streaming is not available.",
+      };
+    }
+
+    let handle: {
+      waitEnd: () => Promise<any>;
+      cancel: () => Promise<void>;
+      write: (data: Record<string, any>) => Promise<void>;
+      invocationId: string;
+    };
+    let context: {
+      finalContentParts: string[];
+      lastError: Record<string, any> | undefined;
+      errors: Error[];
+    };
+    try {
+      const result = await this.startTaskStreamWs({ taskParams, options });
+      handle = result.handle;
+      context = result.context;
+    } catch (e: any) {
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: e instanceof Error ? e.message : String(e),
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "WS streaming is not available.",
+      };
+    }
+
+    const { finalContentParts, lastError, errors } = context;
+    let endData: any = {};
+    try {
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(`Task execution timed out after ${timeout} seconds.`)
+            ),
+          timeout * 1000
+        )
+      );
+      endData = await Promise.race([handle.waitEnd(), timeoutPromise]);
+    } catch (e: any) {
+      try {
+        await handle.cancel();
+      } catch (_cancelErr) {
+        // ignore
+      }
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        requestId: handle.invocationId,
+        success: false,
+        errorMessage: msg,
+        taskStatus: "timeout",
+        taskId: "",
+        taskResult: finalContentParts.join("") || msg,
+      };
+    }
+
+    if (errors.length > 0) {
+      return {
+        requestId: handle.invocationId,
+        success: false,
+        errorMessage: String(errors[0]),
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: finalContentParts.join(""),
+      };
+    }
+
+    if (lastError) {
+      return {
+        requestId: handle.invocationId,
+        success: false,
+        errorMessage: String(lastError),
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: finalContentParts.join(""),
+      };
+    }
+
+    const status = endData?.status ?? "finished";
+    const taskResult = endData?.taskResult ?? finalContentParts.join("");
+
+    return {
+      requestId: handle.invocationId,
+      success: status === "finished",
+      errorMessage:
+        status === "finished" ? "" : `Task ended with status: ${status}`,
+      taskStatus: status,
+      taskId: "",
+      taskResult,
+    };
+  }
+
+  /**
    * Execute a specific task described in human language.
+   * Note: MobileUseAgent overrides this to return TaskExecution instead.
    */
   async executeTask(task: string): Promise<ExecutionResult> {
     try {
@@ -319,7 +748,7 @@ abstract class BaseTaskAgent {
           taskId: queryResult.task_id || taskId,
           taskAction: queryResult.action || "",
           taskProduct: queryResult.product || "",
-          taskStatus: queryResult.status || "finised",
+          taskStatus: queryResult.status || "finished",
         };
       } catch (error) {
         return {
@@ -374,7 +803,7 @@ abstract class BaseTaskAgent {
       }
 
       const terminatedTaskId = content.task_id || taskId;
-      const status = content.status || "finised";
+      const status = content.status || "finished";
 
       if (result.success) {
         return {
@@ -626,10 +1055,32 @@ export class BrowserUseAgent extends BaseTaskAgent {
   async executeTaskAndWait<TSchema extends ZodTypeAny>(
     task: string,
     timeout: number,
-    use_vision = true,
+    use_vision?: boolean,
     output_schema?: TSchema
   ): Promise<ExecutionResult> {
-    const result = await this.executeTask(task, use_vision, output_schema);
+    const use_vision_resolved = use_vision === undefined ? true : use_vision;
+
+    if (!this.initialized) {
+      logInfo("Browser is not initialized, initializing browser!");
+      const success = await this.initialize();
+      if (!success) {
+        logWarn("Browser initialization failed!");
+        return {
+          requestId: "",
+          success: false,
+          errorMessage: "Browser initialization failed",
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Browser initialization failed",
+        };
+      }
+    }
+
+    const result = await this.executeTask(
+      task,
+      use_vision_resolved,
+      output_schema
+    );
     if (!result.success) {
       return result;
     }
@@ -722,190 +1173,19 @@ export class MobileUseAgent extends BaseTaskAgent {
   protected toolPrefix = "";
 
   /**
-   * Execute a task in human language without waiting for completion
-   * (non-blocking). This is a fire-and-return interface that immediately
-   * provides a task ID. Call getTaskStatus to check the task status.
-   *
-   * @param task - Task description in human language.
-   * @param maxSteps - Maximum number of steps (clicks/swipes/etc.) allowed.
-   *                   Used to prevent infinite loops or excessive resource
-   *                   consumption. Default is 50.
-   * @returns ExecutionResult containing success status, task ID, task status,
-   *     and error message if any.
-   *
-   * @example
-   * ```typescript
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   * const result = await agentBay.create({ imageId: 'mobile_latest' });
-   * if (result.success) {
-   *   const execResult = await result.session.agent.mobile.executeTask(
-   *     'Open WeChat app', 100
-   *   );
-   *   console.log(`Task ID: ${execResult.taskId}`);
-   *   await result.session.delete();
-   * }
-   * ```
+   * Poll task status until completion or timeout.
    */
-  async executeTask(task: string, maxSteps = 50): Promise<ExecutionResult> {
-    const args = {
-      task,
-      max_steps: maxSteps,
-    };
-
-    try {
-      const result = await this.session.callMcpTool(
-        this.getToolName("execute"),
-        args
-      );
-
-      if (!result.success) {
-        const errorMessage = result.errorMessage || "Failed to execute task";
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: errorMessage,
-          taskStatus: "failed",
-          taskId: "",
-          taskResult: "Task Failed",
-        };
-      }
-
-      let content: Record<string, any>;
-      try {
-        content = JSON.parse(result.data);
-      } catch (err) {
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: `Failed to parse response: ${err}`,
-          taskStatus: "failed",
-          taskId: "",
-          taskResult: "Invalid execution response.",
-        };
-      }
-
-      const taskId = content.taskId || content.task_id;
-      if (!taskId) {
-        // 从后端返回的content中提取error信息
-        const errorMessage = content.error || "Task ID not found in response";
-        return {
-          requestId: result.requestId,
-          success: false,
-          errorMessage: errorMessage,
-          taskStatus: "failed",
-          taskId: "",
-          taskResult: "Invalid task ID.",
-        };
-      }
-
-      return {
-        requestId: result.requestId,
-        success: true,
-        errorMessage: "",
-        taskId: taskId,
-        taskStatus: "running",
-        taskResult: "",
-      };
-    } catch (error) {
-      return {
-        requestId: "",
-        success: false,
-        errorMessage: `Failed to execute: ${error}`,
-        taskStatus: "failed",
-        taskId: "",
-        taskResult: "Task Failed",
-      };
-    }
-  }
-
-  /**
-   * Execute a specific task described in human language synchronously.
-   * This is a synchronous interface that blocks until the task is completed or
-   * an error occurs, or timeout happens. The default polling interval is
-   * 3 seconds.
-   *
-   * @param task - Task description in human language.
-   * @param timeout - Maximum time to wait for task completion (in seconds).
-   *                  Used to control how long to wait for task completion.
-   * @param maxSteps - Maximum number of steps (clicks/swipes/etc.) allowed.
-   *                   Used to prevent infinite loops or excessive resource
-   *                   consumption. Default is 50.
-   * @returns ExecutionResult containing success status, task ID, task status,
-   *     and error message if any.
-   *
-   * @example
-   * ```typescript
-   * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
-   * const result = await agentBay.create({ imageId: 'mobile_latest' });
-   * if (result.success) {
-   *   const execResult = await result.session.agent.mobile.executeTaskAndWait(
-   *     'Open WeChat app', 180, 100
-   *   );
-   *   console.log(`Task result: ${execResult.taskResult}`);
-   *   await result.session.delete();
-   * }
-   * ```
-   */
-  async executeTaskAndWait(
-    task: string,
-    timeout: number,
-    maxSteps = 50
+  private async _pollTaskUntilComplete(
+    taskId: string,
+    requestId: string,
+    timeout: number
   ): Promise<ExecutionResult> {
-    const args = {
-      task,
-      max_steps: maxSteps,
-    };
-
-    const result = await this.session.callMcpTool(
-      this.getToolName("execute"),
-      args
-    );
-
-    if (!result.success) {
-      const errorMessage = result.errorMessage || "Failed to execute task";
-      return {
-        requestId: result.requestId,
-        success: false,
-        errorMessage: errorMessage,
-        taskStatus: "failed",
-        taskId: "",
-        taskResult: "Task Failed",
-      };
-    }
-
-    let content: Record<string, any>;
-    try {
-      content = JSON.parse(result.data);
-    } catch (err) {
-      return {
-        requestId: result.requestId,
-        success: false,
-        errorMessage: `Failed to parse response: ${err}`,
-        taskStatus: "failed",
-        taskId: "",
-        taskResult: "Invalid execution response.",
-      };
-    }
-
-    const taskId = content.taskId || content.task_id;
-    if (!taskId) {
-      // 从后端返回的content中提取error信息
-      const errorMessage = content.error || "Task ID not found in response";
-      return {
-        requestId: result.requestId,
-        success: false,
-        errorMessage: errorMessage,
-        taskStatus: "failed",
-        taskId: "",
-        taskResult: "Invalid task ID.",
-      };
-    }
-
     const pollInterval = 3;
     const maxPollAttempts = Math.floor(timeout / pollInterval);
     let triedTime = 0;
-    const processedTimestamps = new Set<number>(); // Track processed stream fragments by timestamp_ms
-    let lastQuery: QueryResult | null = null; // Save last query status for timeout result
+    const processedTimestamps = new Set<number>();
+    let lastQuery: QueryResult | null = null;
+
     while (triedTime < maxPollAttempts) {
       const query = await this.getTaskStatus(taskId);
       if (!query.success) {
@@ -919,38 +1199,21 @@ export class MobileUseAgent extends BaseTaskAgent {
         };
       }
 
-      // Only update lastQuery if stream is not empty
       if (query.stream && query.stream.length > 0) {
         lastQuery = query;
       }
 
-      // Process new stream fragments for real-time output
       if (query.stream) {
         for (const streamItem of query.stream) {
           const timestamp = streamItem.timestamp_ms;
-          // Use timestamp_ms to identify new fragments (handles backend returning snapshots)
           if (timestamp !== undefined && !processedTimestamps.has(timestamp)) {
-            processedTimestamps.add(timestamp); // Mark as processed immediately
-
-            // Output immediately for true streaming effect
+            processedTimestamps.add(timestamp);
             const content = streamItem.content || "";
-            const reasoning = streamItem.reasoning || "";
             if (content) {
-              // Use process.stdout.write for streaming output without automatic newlines
               process.stdout.write(content);
-            }
-            if (reasoning) {
-              // Log reasoning at debug level if needed
-              // logDebug(`💭 ${reasoning}`);
             }
           }
         }
-      }
-
-      // Check for error field
-      if (query.error) {
-        // Log error if needed
-        // logWarning(`⚠️ Task error: ${query.error}`);
       }
 
       switch (query.taskStatus) {
@@ -1055,14 +1318,11 @@ export class MobileUseAgent extends BaseTaskAgent {
     }
 
     const timeoutErrorMsg = `Task execution timed out after ${timeout} seconds. Task ID: ${taskId}. Polled ${triedTime} times (max: ${maxPollAttempts}).`;
-
-    // Build task_result with last query status information
     const taskResultParts: string[] = [
       `Task execution timed out after ${timeout} seconds.`,
     ];
 
     if (lastQuery) {
-      // Concatenate stream content from last query
       if (lastQuery.stream && lastQuery.stream.length > 0) {
         const streamContentParts: string[] = [];
         for (const streamItem of lastQuery.stream) {
@@ -1070,14 +1330,12 @@ export class MobileUseAgent extends BaseTaskAgent {
             streamContentParts.push(streamItem.content);
           }
         }
-
         if (streamContentParts.length > 0) {
-          const streamContent = streamContentParts.join("");
-          taskResultParts.push(`Last task status output: ${streamContent}`);
+          taskResultParts.push(
+            `Last task status output: ${streamContentParts.join("")}`
+          );
         }
       }
-
-      // Also add other status information if available
       if (lastQuery.taskAction) {
         taskResultParts.push(`Last action: ${lastQuery.taskAction}`);
       }
@@ -1092,16 +1350,226 @@ export class MobileUseAgent extends BaseTaskAgent {
       }
     }
 
-    const taskResult = taskResultParts.join(" | ");
-
     return {
-      requestId: result.requestId,
+      requestId,
       success: false,
       errorMessage: timeoutErrorMsg,
       taskStatus: "failed",
       taskId: taskId,
-      taskResult: taskResult,
+      taskResult: taskResultParts.join(" | "),
     };
+  }
+
+  /**
+   * Execute a task in human language without waiting for completion
+   * (non-blocking). Returns TaskExecution; call wait() to block until done.
+   *
+   * @param task - Task description in human language.
+   * @param options - Optional MobileTaskOptions (maxSteps, streaming callbacks).
+   * @returns TaskExecution with taskId and wait() method.
+   */
+  // @ts-expect-error MobileUseAgent returns TaskExecution; base returns ExecutionResult
+  async executeTask(
+    task: string,
+    options?: MobileTaskOptions
+  ): Promise<TaskExecution> {
+    const maxSteps = options?.maxSteps ?? 50;
+
+    if (this.hasStreamingParams(options)) {
+      const sessionWithWs = this.session as McpSession & {
+        getWsClient?: () => Promise<{
+          callStream: (p: any) => Promise<{
+            waitEnd: () => Promise<any>;
+            cancel: () => Promise<void>;
+            write: (data: Record<string, any>) => Promise<void>;
+            invocationId: string;
+          }>;
+        }>;
+      };
+      if (!sessionWithWs.getWsClient) {
+        return new TaskExecution(
+          "",
+          Promise.resolve({
+            requestId: "",
+            success: false,
+            errorMessage: "WS streaming is not available in this session",
+            taskStatus: "failed",
+            taskId: "",
+            taskResult: "WS streaming is not available.",
+          })
+        );
+      }
+
+      const { handle, context } = await this.startTaskStreamWs({
+        taskParams: { task, max_steps: maxSteps },
+        options,
+      });
+      const resultPromise = (async (): Promise<ExecutionResult> => {
+        const { finalContentParts, lastError, errors } = context;
+        let endData: any = {};
+        try {
+          endData = await handle.waitEnd();
+        } catch (e: any) {
+          try {
+            await handle.cancel();
+          } catch (_cancelErr) {
+            // ignore
+          }
+          const msg = e instanceof Error ? e.message : String(e);
+          return {
+            requestId: handle.invocationId,
+            success: false,
+            errorMessage: msg,
+            taskStatus: "timeout",
+            taskId: "",
+            taskResult: finalContentParts.join("") || msg,
+          };
+        }
+
+        if (errors.length > 0) {
+          return {
+            requestId: handle.invocationId,
+            success: false,
+            errorMessage: String(errors[0]),
+            taskStatus: "failed",
+            taskId: "",
+            taskResult: finalContentParts.join(""),
+          };
+        }
+
+        if (lastError) {
+          return {
+            requestId: handle.invocationId,
+            success: false,
+            errorMessage: String(lastError),
+            taskStatus: "failed",
+            taskId: "",
+            taskResult: finalContentParts.join(""),
+          };
+        }
+
+        const status = endData?.status ?? "finished";
+        const taskResult = endData?.taskResult ?? finalContentParts.join("");
+        return {
+          requestId: handle.invocationId,
+          success: status === "finished",
+          errorMessage:
+            status === "finished" ? "" : `Task ended with status: ${status}`,
+          taskStatus: status,
+          taskId: "",
+          taskResult,
+        };
+      })();
+
+      return new TaskExecution(handle.invocationId, resultPromise, () =>
+        handle.cancel(), handle.invocationId
+      );
+    }
+
+    const args = { task, max_steps: maxSteps };
+    try {
+      const result = await this.session.callMcpTool(
+        this.getToolName("execute"),
+        args
+      );
+
+      if (!result.success) {
+        return new TaskExecution(
+          "",
+          Promise.resolve({
+            requestId: result.requestId,
+            success: false,
+            errorMessage: result.errorMessage || "Failed to execute task",
+            taskStatus: "failed",
+            taskId: "",
+            taskResult: "Task Failed",
+          })
+        );
+      }
+
+      let content: Record<string, any>;
+      try {
+        content = JSON.parse(result.data);
+      } catch {
+        // Backend executed the task synchronously and returned
+        // the result as plain text instead of JSON with taskId.
+        return new TaskExecution(
+          "",
+          Promise.resolve({
+            requestId: result.requestId,
+            success: true,
+            errorMessage: "",
+            taskStatus: "completed",
+            taskId: "",
+            taskResult: result.data || "",
+          })
+        );
+      }
+
+      const taskId = content.taskId || content.task_id;
+      if (!taskId) {
+        // No taskId means the backend completed the task synchronously.
+        return new TaskExecution(
+          "",
+          Promise.resolve({
+            requestId: result.requestId,
+            success: true,
+            errorMessage: "",
+            taskStatus: "completed",
+            taskId: "",
+            taskResult: result.data || "",
+          })
+        );
+      }
+
+      const resultPromise = this._pollTaskUntilComplete(
+        taskId,
+        result.requestId,
+        86400
+      );
+      return new TaskExecution(taskId, resultPromise, undefined, result.requestId);
+    } catch (error) {
+      return new TaskExecution(
+        "",
+        Promise.resolve({
+          requestId: "",
+          success: false,
+          errorMessage: `Failed to execute: ${error}`,
+          taskStatus: "failed",
+          taskId: "",
+          taskResult: "Task Failed",
+        })
+      );
+    }
+  }
+
+  /**
+   * Execute a task described in human language synchronously.
+   * Blocks until the task is completed, an error occurs, or timeout.
+   *
+   * @param task - Task description in human language.
+   * @param timeout - Maximum time to wait for task completion (in seconds).
+   * @param options - Optional MobileTaskOptions (maxSteps, streaming callbacks).
+   * @returns ExecutionResult containing success status, task ID, task status.
+   */
+  async executeTaskAndWait(
+    task: string,
+    timeout: number,
+    options?: MobileTaskOptions
+  ): Promise<ExecutionResult> {
+    try {
+      const execution = await this.executeTask(task, options);
+      return await execution.wait(timeout);
+    } catch (e: any) {
+      return {
+        requestId: "",
+        success: false,
+        errorMessage: e instanceof Error ? e.message : String(e),
+        taskStatus: "failed",
+        taskId: "",
+        taskResult: "Task Failed",
+      };
+    }
   }
 
   /**

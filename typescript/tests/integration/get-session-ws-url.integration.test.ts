@@ -17,7 +17,9 @@ describe("GetSession wsUrl Integration Test", () => {
     }
 
     agentBay = new AgentBay({ apiKey });
-    const created = await agentBay.create();
+    const imageId =
+      process.env.AGENTBAY_GET_SESSION_IMAGE_ID || "imgc-0a9mg1h4et0z42hv5";
+    const created = await agentBay.create({ imageId });
     if (!created.success || !created.session) {
       throw new Error(`Failed to create session: ${created.errorMessage}`);
     }

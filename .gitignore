@@ -75,6 +75,9 @@ start_app
 golang/mobile_agent_streaming
 golang/ws_push_callback_captcha_tongcheng
 
+# Java
+**/target/
+
 # IDE
 .idea/
 .vscode/

@@ -223,36 +223,29 @@ describe("Agent", () => {
     it("should execute task successfully (non-blocking)", async () => {
       if (session.agent) {
         const task = "Open WeChat app";
-        const maxSteps = 100;
 
         try {
           log(`Executing mobile agent task (non-blocking): ${task}`);
-          const result = await session.agent.mobile.executeTask(task, maxSteps);
+          const execution = await session.agent.mobile.executeTask(task, {
+            maxSteps: 100,
+          });
 
-          log(
-            `Mobile Agent task result: Success=${result.success}, ` +
-              `TaskID=${result.taskId}, Status=${result.taskStatus}`
-          );
-          log(
-            `Mobile Agent Task RequestId: ${result.requestId || "undefined"}`
-          );
+          expect(execution).toBeDefined();
+          expect(execution.taskId).toBeDefined();
+          log(`Mobile Agent task started, TaskID: ${execution.taskId}`);
 
-          expect(result.requestId).toBeDefined();
-          expect(typeof result.requestId).toBe("string");
+          const result = await execution.wait(120);
+          log(
+            `Mobile Agent task result: Success=${result.success}, Status=${result.taskStatus}`
+          );
 
           if (!result.success) {
             log(
-              `Note: Mobile Agent task execution failed: ` +
-                `${result.errorMessage}`
+              `Note: Mobile Agent task execution failed: ${result.errorMessage}`
             );
           } else {
-            log(
-              `Mobile Agent task executed successfully, ` +
-                `TaskID: ${result.taskId}`
-            );
+            log(`Mobile Agent task executed successfully`);
             expect(result.success).toBe(true);
-            expect(result.taskId).toBeTruthy();
-            expect(result.taskStatus).toBe("running");
           }
         } catch (error) {
           log(`Note: Mobile Agent task execution failed: ${error}`);
@@ -280,7 +273,7 @@ describe("Agent", () => {
           const result = await session.agent.mobile.executeTaskAndWait(
             task,
             timeout,
-            maxSteps
+            { maxSteps }
           );
 
           log(
