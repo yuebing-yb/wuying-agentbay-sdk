@@ -278,6 +278,8 @@ public class Agent extends BaseService {
                 streamHandleRef.set(handle);
             }
 
+            String wsRequestId = handle.invocationId != null ? handle.invocationId : "";
+
             Map<String, Object> endData;
             try {
                 endData = handle.waitEnd().get(timeout, TimeUnit.SECONDS);
@@ -288,7 +290,7 @@ public class Agent extends BaseService {
                 }
                 String accumulated = String.join("", finalContentParts);
                 return new ExecutionResult(
-                        "",
+                        wsRequestId,
                         false,
                         "Task execution timed out after " + timeout + " seconds.",
                         "",
@@ -300,7 +302,7 @@ public class Agent extends BaseService {
             if (lastError[0] != null) {
                 String errMsg = String.valueOf(lastError[0].getOrDefault("message", lastError[0]));
                 return new ExecutionResult(
-                        "",
+                        wsRequestId,
                         false,
                         errMsg,
                         "",
@@ -317,7 +319,7 @@ public class Agent extends BaseService {
             }
 
             return new ExecutionResult(
-                    "",
+                    wsRequestId,
                     "finished".equals(status),
                     "finished".equals(status) ? "" : "Task ended with status: " + status,
                     "",

@@ -62,12 +62,14 @@ class TaskExecution:
         _context: Optional[_StreamContext] = None,
         _agent: Optional[Any] = None,
         _result: Optional[ExecutionResult] = None,
+        _request_id: str = "",
     ):
         self.task_id = task_id
         self._ws_handle = _ws_handle
         self._context = _context
         self._agent = _agent
         self._result = _result
+        self._request_id = _request_id
 
     def wait(self, timeout: int = 300) -> ExecutionResult:
         """Block until the task completes and return the final result.
@@ -89,6 +91,7 @@ class TaskExecution:
 
     def _wait_ws(self, timeout: int) -> ExecutionResult:
         ctx = self._context
+        ws_request_id = getattr(self._ws_handle, "invocation_id", "") or ""
         try:
             end_data = self._ws_handle.wait_end_with_timeout(timeout)
         except TimeoutError:
@@ -97,6 +100,7 @@ class TaskExecution:
             except Exception:
                 pass
             return ExecutionResult(
+                request_id=ws_request_id,
                 success=False,
                 error_message=f"Task execution timed out after {timeout} seconds.",
                 task_status="failed",
@@ -105,6 +109,7 @@ class TaskExecution:
 
         if ctx.errors:
             return ExecutionResult(
+                request_id=ws_request_id,
                 success=False,
                 error_message=str(ctx.errors[0]),
                 task_status="failed",
@@ -113,6 +118,7 @@ class TaskExecution:
 
         if ctx.last_error:
             return ExecutionResult(
+                request_id=ws_request_id,
                 success=False,
                 error_message=str(ctx.last_error),
                 task_status="failed",
@@ -125,6 +131,7 @@ class TaskExecution:
             task_result = "".join(ctx.final_content_parts)
 
         return ExecutionResult(
+            request_id=ws_request_id,
             success=(status == "finished"),
             error_message="" if status == "finished" else f"Task ended with status: {status}",
             task_status=status,
@@ -137,7 +144,7 @@ class TaskExecution:
         poll_interval = 3
         max_poll_attempts = timeout // poll_interval
 
-        last_request_id = ""
+        last_request_id = self._request_id
         tried_time = 0
         processed_timestamps: set = set()
         last_query = None
@@ -1252,7 +1259,7 @@ class Agent(BaseService):
                                 task_result=result.data or "",
                             ),
                         )
-                    return TaskExecution(task_id=task_id, _agent=self)
+                    return TaskExecution(task_id=task_id, _agent=self, _request_id=result.request_id)
                 else:
                     error_message = result.error_message or "Failed to execute task"
                     _logger.error(f"Task execution failed: {error_message}")

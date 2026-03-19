@@ -114,15 +114,18 @@ export class TaskExecution {
   readonly taskId: string;
   private _resultPromise: Promise<ExecutionResult>;
   private _cancelFn?: () => void;
+  private _requestId: string;
 
   constructor(
     taskId: string,
     resultPromise: Promise<ExecutionResult>,
-    cancelFn?: () => void
+    cancelFn?: () => void,
+    requestId?: string
   ) {
     this.taskId = taskId;
     this._resultPromise = resultPromise;
     this._cancelFn = cancelFn;
+    this._requestId = requestId ?? "";
   }
 
   async wait(timeout?: number): Promise<ExecutionResult> {
@@ -138,6 +141,7 @@ export class TaskExecution {
             }
           }
           resolve({
+            requestId: this._requestId,
             success: false,
             errorMessage: `Task execution timed out after ${timeout} seconds.`,
             taskId: this.taskId,
@@ -1458,7 +1462,7 @@ export class MobileUseAgent extends BaseTaskAgent {
       })();
 
       return new TaskExecution(handle.invocationId, resultPromise, () =>
-        handle.cancel()
+        handle.cancel(), handle.invocationId
       );
     }
 
@@ -1523,7 +1527,7 @@ export class MobileUseAgent extends BaseTaskAgent {
         result.requestId,
         86400
       );
-      return new TaskExecution(taskId, resultPromise);
+      return new TaskExecution(taskId, resultPromise, undefined, result.requestId);
     } catch (error) {
       return new TaskExecution(
         "",

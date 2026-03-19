@@ -483,6 +483,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
         )
         self.assertIsInstance(result, ExecutionResult)
         self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "request-123")
         self.assertEqual(result.task_status, "completed")
         self.assertEqual(result.error_message, "")
         self.assertEqual(result.task_result, "Task completed successfully")
@@ -545,6 +546,7 @@ class TestAsyncAgentMobile(unittest.TestCase):
             )
         self.assertIsInstance(result, ExecutionResult)
         self.assertFalse(result.success)
+        self.assertEqual(result.request_id, "request-123")
         self.assertIn("timed out", result.error_message)
         self.assertEqual(result.task_status, "failed")
 
