@@ -2,6 +2,28 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.18.0] - 2026-03-19
+
+### Added
+
+- **Agent streaming output** (All SDKs): WebSocket-based streaming for agent task execution, delivering real-time reasoning and content event types via `on_reasoning`, `on_content`, `on_call_for_user`, and `on_error` callbacks.
+- **TaskExecution handle** (All SDKs): New `TaskExecution` object returned from `execute_task` that supports `wait()` for deferred result retrieval and streaming callback attachment.
+- **MobileTaskOptions** (All SDKs): Structured options for mobile agent task execution, including streaming configuration and timeout settings.
+- **StreamOptions** (All SDKs): Dedicated configuration for agent streaming parameters across all task types.
+- **Skills feature (Beta)** (All SDKs): Skills metadata API (`get_metadata`) and session-level skill loading via `skill_ids` parameter in session creation.
+
+### Changed
+
+- **Renamed `stream` to `stream_beta`** (All SDKs): Agent streaming WebSocket protocol renamed to `stream_beta` to indicate experimental status.
+- **Removed redundant `on_event` callback** (All SDKs): Simplified streaming API by removing the catch-all `on_event` callback in favor of typed callbacks.
+
+### Fixed
+
+- **Restored `request_id` in `execute_task_and_wait`** (All SDKs): Fixed missing `request_id` in return values from `execute_task_and_wait` across all SDKs.
+- **Restored backward compatibility for non-streaming Mobile `execute_task`** (All SDKs): Non-streaming mobile task execution continues to work without streaming callbacks.
+- **Java API doc generator** (Java): Improved handling of inner classes and `TaskExecution.wait` in API documentation generation.
+- **TypeScript port validation tests**: Updated outdated unit tests that still expected client-side port range validation removed in v0.17.0.
+
 ## [0.17.0] - 2026-03-16
 
 ### Added
