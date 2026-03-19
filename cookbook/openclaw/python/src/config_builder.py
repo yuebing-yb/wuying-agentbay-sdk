@@ -169,7 +169,11 @@ def build_config(
             "port": 30100,
             "mode": "local",
             "bind": "lan",
-            "controlUi": {"allowedOrigins": ["*"], "dangerouslyDisableDeviceAuth": True},
+            "controlUi": {
+                "allowedOrigins": ["*"],
+                "dangerouslyDisableDeviceAuth": True,
+                "allowInsecureAuth": True,
+            },
             "auth": {
                 "mode": "token",
                 "token": "4decb1b9ff4997825eb91e37bf28798e0af1f7f00c6b4b1c",

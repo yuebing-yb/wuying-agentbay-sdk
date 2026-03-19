@@ -74,6 +74,7 @@ cookbook/openclaw/python/
 │   │   ├── App.tsx      # 主应用组件
 │   │   └── components/
 │   │       ├── SessionForm.tsx      # 创建会话表单
+│   │       ├── OpenClawChatPanel.tsx # OpenClaw 对话面板（WSS 长连接）
 │   │       ├── DingtalkSetupPanel.tsx # 钉钉一键配置面板
 │   │       └── FeishuSetupPanel.tsx # 飞书一键配置面板
 │   ├── package.json
@@ -154,6 +155,14 @@ cp -r frontend/dist/* static/
 | POST   | `/api/sessions/{id}/feishu-setup/continue`  | 继续配置（登录后创建应用） |
 | GET    | `/api/sessions/{id}/feishu-setup/status`    | 获取配置状态             |
 | POST   | `/api/sessions/{id}/feishu-setup/apply`   | 应用凭证到 OpenClaw 配置  |
+
+### OpenClaw 对话（WSS 长连接）
+
+| 方法   | 路径                                         | 说明                     |
+|--------|---------------------------------------------|-------------------------|
+| GET    | `/api/sessions/{id}/openclaw-wss-url`       | 获取 OpenClaw Gateway 的 WSS 代理链接（通过 get_link） |
+
+会话创建成功后，在「OpenClaw 对话」面板中点击「连接 OpenClaw」即可通过 get_link 代理的 WSS 长连接与 OpenClaw 进行对话。
 
 API 文档：`http://localhost:8080/docs`
 

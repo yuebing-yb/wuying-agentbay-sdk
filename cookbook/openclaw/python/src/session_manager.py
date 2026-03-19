@@ -7,6 +7,7 @@ Session restore relies on frontend passing form_data (X-OpenClaw-Form-Data heade
 
 import asyncio
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -367,6 +368,58 @@ class SessionManager:
         except Exception as e:
             logger.exception("Failed to resume session %s", session_id)
             return False, str(e)
+
+    def get_openclaw_wss_url(self, session_id: str) -> Optional[tuple[str, str]]:
+        """
+        Get the external WSS URL for OpenClaw Gateway via get_link.
+        Uses the same token as openclawUrl (OpenClaw UI) - append ?token=xxx for auth.
+        Returns (wss_url_with_token, gateway_token) or None if session not found.
+        """
+        info = self._sessions.get(session_id)
+        if not info or not info.session:
+            return None
+        session = info.session
+        try:
+            link_result = session.get_link(protocol_type="wss", port=GATEWAY_PORT)
+            if not link_result.success or not link_result.data:
+                return None
+            wss_base = link_result.data.strip()
+            # Use same token as openclawUrl (OpenClaw UI: https://...#token=xxx)
+            token = GATEWAY_TOKEN
+            if info.openclaw_url and "token=" in info.openclaw_url:
+                m = re.search(r"[#&]token=([^&]+)", info.openclaw_url)
+                if m:
+                    token = m.group(1).strip()
+            sep = "&" if "?" in wss_base else "?"
+            full_url = f"{wss_base}{sep}token={token}"
+            logger.info(
+                "get_link WSS URL (with token): %s",
+                full_url,
+            )
+            return (full_url, token)
+        except Exception as e:
+            logger.warning(f"Failed to get OpenClaw WSS link for session {session_id}: {e}")
+        return None
+
+    def get_openclaw_https_base(self, session_id: str) -> Optional[tuple[str, str]]:
+        """
+        Get the HTTPS base URL and token for OpenClaw Gateway (for HTTP API).
+        Returns (base_url, token) or None if session not found.
+        """
+        result = self.get_openclaw_wss_url(session_id)
+        if not result:
+            return None
+        wss_url, token = result
+        # Convert wss://... to https://...
+        if wss_url.startswith("wss://"):
+            base = "https://" + wss_url[6:]
+        elif wss_url.startswith("ws://"):
+            base = "http://" + wss_url[5:]
+        else:
+            return None
+        # Remove query (token)
+        base = base.split("?")[0].split("#")[0].rstrip("/")
+        return (base, token)
 
     def restart_dashboard(self, session_id: str) -> tuple[bool, str]:
         """

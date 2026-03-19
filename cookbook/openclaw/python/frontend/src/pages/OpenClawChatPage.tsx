@@ -31,12 +31,128 @@ function OpenClawChatPage() {
   const [sending, setSending] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const msgIdRef = useRef(0)
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const wssUrl = sessionId ? buildProxyWssUrl(sessionId) : ''
 
   useEffect(() => {
     if (sessionIdFromUrl) setSessionId(sessionIdFromUrl)
   }, [sessionIdFromUrl])
+
+  const clearFallbackTimer = useCallback(() => {
+    if (fallbackTimerRef.current) {
+      clearTimeout(fallbackTimerRef.current)
+      fallbackTimerRef.current = null
+    }
+  }, [])
+
+  const handleGatewayMessage = useCallback((msg: Record<string, unknown>) => {
+    const type = msg.type as string
+
+    if (type === 'error') {
+      const m = msg.message
+      const errStr = typeof m === 'string' ? m : (m && typeof m === 'object' && 'message' in m ? String((m as { message?: unknown }).message) : '连接失败')
+      // Ignore "unknown method: sessions.messages.subscribe" - may come from Control UI or older Gateway
+      if (errStr.includes('sessions.messages.subscribe')) return
+      setError(errStr)
+      return
+    }
+
+    if (type === 'event' && msg.event === 'connect.challenge') {
+      setError('Gateway 需要设备认证。请确认 WSS 链接已正确附加 token')
+      return
+    }
+
+    if (type === 'event' && msg.event === 'session.message') {
+      clearFallbackTimer()
+      const payload = msg.payload as { messages?: Array<{ role?: string; text?: string; content?: string }> } | undefined
+      const messages = payload?.messages
+      if (Array.isArray(messages)) {
+        for (const m of messages) {
+          if (m?.role === 'assistant') {
+            const text = m.text ?? m.content ?? ''
+            if (text) {
+              setMessages((prev) => {
+                const last = prev[prev.length - 1]
+                if (last?.role === 'assistant' && last.streaming) {
+                  return [...prev.slice(0, -1), { ...last, content: last.content + text, streaming: false }]
+                }
+                return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
+              })
+            }
+          }
+        }
+      }
+      return
+    }
+
+    if (type === 'response') {
+      clearFallbackTimer()
+      const payload = msg.payload as { text?: string } | undefined
+      const text = payload?.text ?? ''
+      setMessages((prev) => {
+        const last = prev[prev.length - 1]
+        if (last?.role === 'assistant' && last.streaming) {
+          return [...prev.slice(0, -1), { ...last, content: text, streaming: false }]
+        }
+        return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
+      })
+      return
+    }
+
+    const chatDelta = type === 'chat.delta' || (type === 'event' && msg.event === 'chat.delta')
+    if (chatDelta) {
+      clearFallbackTimer()
+      const data = (msg.data ?? msg.payload) as { delta?: string } | undefined
+      const delta = data?.delta ?? ''
+      setMessages((prev) => {
+        const last = prev[prev.length - 1]
+        if (last?.role === 'assistant' && last.streaming) {
+          return [...prev.slice(0, -1), { ...last, content: last.content + delta }]
+        }
+        return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: delta, timestamp: new Date(), streaming: true }]
+      })
+      return
+    }
+
+    const chatDone = type === 'chat.done' || (type === 'event' && msg.event === 'chat.done')
+    if (chatDone) {
+      clearFallbackTimer()
+      setMessages((prev) => {
+        const last = prev[prev.length - 1]
+        if (last?.role === 'assistant' && last.streaming) {
+          return [...prev.slice(0, -1), { ...last, streaming: false }]
+        }
+        return prev
+      })
+      return
+    }
+
+    if (type === 'res') {
+      const payload = msg.payload as Record<string, unknown> | undefined
+      const errRaw = msg.error
+      if (errRaw) {
+        const errStr = typeof errRaw === 'string' ? errRaw : (errRaw && typeof errRaw === 'object' && 'message' in errRaw ? String((errRaw as { message?: unknown }).message) : JSON.stringify(errRaw))
+        // Ignore "unknown method: sessions.messages.subscribe" - may come from Control UI or older Gateway
+        if (errStr.includes('sessions.messages.subscribe')) return
+        setError(errStr)
+        return
+      }
+      if (payload?.type === 'chat.done' || payload?.text || payload?.delta) {
+        clearFallbackTimer()
+        const text = (payload.text as string) ?? (payload.delta as string) ?? ''
+        if (text) {
+          setMessages((prev) => {
+            const last = prev[prev.length - 1]
+            if (last?.role === 'assistant' && last.streaming) {
+              return [...prev.slice(0, -1), { ...last, content: last.content + text, streaming: false }]
+            }
+            return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
+          })
+        }
+      }
+    }
+  }, [clearFallbackTimer])
 
   const connect = useCallback(() => {
     if (!wssUrl || wsRef.current?.readyState === WebSocket.OPEN) return
@@ -75,85 +191,15 @@ function OpenClawChatPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : '连接失败')
     }
-  }, [wssUrl])
+  }, [wssUrl, handleGatewayMessage])
 
-  const handleGatewayMessage = useCallback((msg: Record<string, unknown>) => {
-    const type = msg.type as string
-
-    if (type === 'error') {
-      const m = msg.message
-      setError(typeof m === 'string' ? m : (m && typeof m === 'object' && 'message' in m ? String((m as { message?: unknown }).message) : '连接失败'))
-      return
-    }
-
-    if (type === 'event' && msg.event === 'connect.challenge') {
-      setError('Gateway 需要设备认证。请确认 WSS 链接已正确附加 token')
-      return
-    }
-
-    if (type === 'response') {
-      const payload = msg.payload as { text?: string } | undefined
-      const text = payload?.text ?? ''
-      setMessages((prev) => {
-        const last = prev[prev.length - 1]
-        if (last?.role === 'assistant' && last.streaming) {
-          return [...prev.slice(0, -1), { ...last, content: text, streaming: false }]
-        }
-        return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
-      })
-      return
-    }
-
-    if (type === 'chat.delta') {
-      const data = msg.data as { delta?: string } | undefined
-      const delta = data?.delta ?? ''
-      setMessages((prev) => {
-        const last = prev[prev.length - 1]
-        if (last?.role === 'assistant' && last.streaming) {
-          return [...prev.slice(0, -1), { ...last, content: last.content + delta }]
-        }
-        return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: delta, timestamp: new Date(), streaming: true }]
-      })
-      return
-    }
-
-    if (type === 'chat.done') {
-      setMessages((prev) => {
-        const last = prev[prev.length - 1]
-        if (last?.role === 'assistant' && last.streaming) {
-          return [...prev.slice(0, -1), { ...last, streaming: false }]
-        }
-        return prev
-      })
-      return
-    }
-
-    if (type === 'res') {
-      const payload = msg.payload as Record<string, unknown> | undefined
-      const errRaw = msg.error
-      if (errRaw) {
-        const errStr = typeof errRaw === 'string' ? errRaw : (errRaw && typeof errRaw === 'object' && 'message' in errRaw ? String((errRaw as { message?: unknown }).message) : JSON.stringify(errRaw))
-        setError(errStr)
-        return
-      }
-      if (payload?.type === 'chat.done' || payload?.text || payload?.delta) {
-        const text = (payload.text as string) ?? (payload.delta as string) ?? ''
-        if (text) {
-          setMessages((prev) => {
-            const last = prev[prev.length - 1]
-            if (last?.role === 'assistant' && last.streaming) {
-              return [...prev.slice(0, -1), { ...last, content: last.content + text, streaming: false }]
-            }
-            return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
-          })
-        }
-      }
-    }
-  }, [])
-
-  const sendMessage = useCallback(() => {
+  const sendMessage = useCallback(async () => {
     const text = inputText.trim()
-    if (!text || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN || sending) return
+    if (!text || sending) return
+    if (!sessionId) {
+      setError('请先输入会话 ID')
+      return
+    }
 
     setSending(true)
     setInputText('')
@@ -161,17 +207,54 @@ function OpenClawChatPage() {
 
     setMessages((prev) => [...prev, { id: msgId, role: 'user', content: text, timestamp: new Date() }])
 
+    const addAssistantReply = (content: string) => {
+      setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content, timestamp: new Date() }])
+    }
+
     try {
-      wsRef.current.send(JSON.stringify({
-        type: 'req',
-        id: msgId,
-        method: 'chat.send',
-        params: {
-          sessionKey: 'main',
-          message: text,
-          idempotencyKey: msgId,
-        },
-      }))
+      // 1. Try WebSocket chat.send if connected
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'req',
+          id: msgId,
+          method: 'chat.send',
+          params: { sessionKey: 'main', message: text, idempotencyKey: msgId },
+        }))
+        // 2. HTTP fallback: if no assistant reply in 20s, call HTTP API (older Gateway may not send chat.delta)
+        if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current)
+        fallbackTimerRef.current = setTimeout(async () => {
+          fallbackTimerRef.current = null
+          const hasReply = document.querySelector('.chat-msg-assistant .chat-content')
+          if (hasReply) return
+          try {
+            const res = await fetch(`/api/sessions/${sessionId}/openclaw-chat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: text }),
+            })
+            const data = await res.json()
+            if (res.ok && data?.response) {
+              addAssistantReply(data.response)
+            }
+          } catch {
+            // ignore
+          }
+        }, 20000)
+      } else {
+        // 3. Not connected: use HTTP directly
+        const res = await fetch(`/api/sessions/${sessionId}/openclaw-chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data.detail || '发送失败')
+        }
+        if (data?.response) {
+          addAssistantReply(data.response)
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : '发送失败')
       setMessages((prev) => prev.slice(0, -1))
@@ -179,7 +262,7 @@ function OpenClawChatPage() {
     } finally {
       setSending(false)
     }
-  }, [inputText, sending])
+  }, [inputText, sending, sessionId])
 
   const disconnect = useCallback(() => {
     if (wsRef.current) {
@@ -262,13 +345,13 @@ function OpenClawChatPage() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                disabled={sending || !connected}
+                disabled={sending}
               />
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={sendMessage}
-                disabled={sending || !inputText.trim() || !connected}
+                disabled={sending || !inputText.trim()}
                 data-testid="openclaw-send-btn"
               >
                 {sending ? '发送中...' : '发送'}

@@ -79,6 +79,8 @@ function OpenClawChatPanel({ sessionId }: OpenClawChatPanelProps) {
     // Proxy error from backend
     if (type === 'error') {
       const msgText = (msg.message as string) || '连接失败'
+      // Ignore "unknown method: sessions.messages.subscribe" - may come from Control UI or older Gateway
+      if (msgText.includes('sessions.messages.subscribe')) return
       setError(msgText)
       return
     }
@@ -86,6 +88,29 @@ function OpenClawChatPanel({ sessionId }: OpenClawChatPanelProps) {
     // Protocol v3: connect.challenge - proxy should handle this; if client sees it, proxy may have failed
     if (type === 'event' && msg.event === 'connect.challenge') {
       setError('Gateway 需要设备认证。请确认 WSS 链接已正确附加 token（与「打开 OpenClaw UI」一致）')
+      return
+    }
+
+    // session.message: transcript updates (from sessions.messages.subscribe)
+    if (type === 'event' && msg.event === 'session.message') {
+      const payload = msg.payload as { messages?: Array<{ role?: string; text?: string; content?: string }> } | undefined
+      const messages = payload?.messages
+      if (Array.isArray(messages)) {
+        for (const m of messages) {
+          if (m?.role === 'assistant') {
+            const text = m.text ?? m.content ?? ''
+            if (text) {
+              setMessages((prev) => {
+                const last = prev[prev.length - 1]
+                if (last?.role === 'assistant' && last.streaming) {
+                  return [...prev.slice(0, -1), { ...last, content: last.content + text, streaming: false }]
+                }
+                return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
+              })
+            }
+          }
+        }
+      }
       return
     }
 
@@ -105,9 +130,10 @@ function OpenClawChatPanel({ sessionId }: OpenClawChatPanelProps) {
       return
     }
 
-    // opencodedocs format: chat.delta (streaming)
-    if (type === 'chat.delta') {
-      const data = msg.data as { delta?: string } | undefined
+    // chat.delta: streaming (as type or as event)
+    const chatDelta = type === 'chat.delta' || (type === 'event' && msg.event === 'chat.delta')
+    if (chatDelta) {
+      const data = (msg.data ?? msg.payload) as { delta?: string } | undefined
       const delta = data?.delta ?? ''
       setMessages((prev) => {
         const last = prev[prev.length - 1]
@@ -119,8 +145,9 @@ function OpenClawChatPanel({ sessionId }: OpenClawChatPanelProps) {
       return
     }
 
-    // opencodedocs format: chat.done
-    if (type === 'chat.done') {
+    // chat.done: response complete
+    const chatDone = type === 'chat.done' || (type === 'event' && msg.event === 'chat.done')
+    if (chatDone) {
       setMessages((prev) => {
         const last = prev[prev.length - 1]
         if (last?.role === 'assistant' && last.streaming) {
@@ -137,6 +164,8 @@ function OpenClawChatPanel({ sessionId }: OpenClawChatPanelProps) {
       const errRaw = msg.error
       if (errRaw) {
         const errStr = typeof errRaw === 'string' ? errRaw : (errRaw && typeof errRaw === 'object' && 'message' in errRaw ? String((errRaw as { message?: unknown }).message) : JSON.stringify(errRaw))
+        // Ignore "unknown method: sessions.messages.subscribe" - may come from Control UI or older Gateway
+        if (errStr.includes('sessions.messages.subscribe')) return
         setError(errStr)
         return
       }
@@ -169,7 +198,7 @@ function OpenClawChatPanel({ sessionId }: OpenClawChatPanelProps) {
     setMessages((prev) => [...prev, { id: msgId, role: 'user', content: text, timestamp: new Date() }])
 
     try {
-      // Protocol v3: type=req, method, params (schema: sessionKey, message, idempotencyKey)
+      // Protocol: chat.send (v3) or chat.run (OpenCodeDocs); both use sessionKey + message
       const reqMsg = {
         type: 'req',
         id: msgId,
