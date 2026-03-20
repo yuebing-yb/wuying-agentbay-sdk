@@ -136,7 +136,7 @@ def build_config(
                 "subagents": {"maxConcurrent": 8},
             }
         },
-        "tools": {"profile": "messaging"},
+        "tools": {"profile": "full"},
         "messages": {"ackReactionScope": "group-mentions"},
         "commands": {
             "native": "auto",
