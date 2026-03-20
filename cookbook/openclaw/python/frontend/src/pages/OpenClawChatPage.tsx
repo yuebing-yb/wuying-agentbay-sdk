@@ -104,10 +104,7 @@ function OpenClawChatPage() {
   const wsRef = useRef<WebSocket | null>(null)
   const messagesScrollRef = useRef<HTMLDivElement | null>(null)
   const msgIdRef = useRef(0)
-  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const chatHistoryReqIdRef = useRef<string | null>(null)
-  /** 当前等待回复的 send msgId；收到助手回复时置空，用于 HTTP fallback 判断（不能用 DOM，历史消息会误判） */
-  const pendingSendMsgIdRef = useRef<string | null>(null)
 
   const wssUrl = sessionId ? buildProxyWssUrl(sessionId) : ''
 
@@ -149,13 +146,6 @@ function OpenClawChatPage() {
     scrollMessagesToBottom()
   }, [sessionId, messages, loadingHistory, scrollMessagesToBottom])
 
-  const clearFallbackTimer = useCallback(() => {
-    if (fallbackTimerRef.current) {
-      clearTimeout(fallbackTimerRef.current)
-      fallbackTimerRef.current = null
-    }
-  }, [])
-
   const handleGatewayMessage = useCallback((msg: Record<string, unknown>) => {
     const type = msg.type as string
 
@@ -175,8 +165,6 @@ function OpenClawChatPage() {
     }
 
     if (type === 'event' && msg.event === 'session.message') {
-      clearFallbackTimer()
-      pendingSendMsgIdRef.current = null
       const payload = msg.payload as { messages?: Array<{ role?: string; text?: string; content?: string }> } | undefined
       const messages = payload?.messages
       if (Array.isArray(messages)) {
@@ -211,8 +199,6 @@ function OpenClawChatPage() {
     }
 
     if (type === 'response') {
-      clearFallbackTimer()
-      pendingSendMsgIdRef.current = null
       const payload = msg.payload as { text?: string } | undefined
       const text = payload?.text ?? ''
         setMessages((prev) => {
@@ -284,12 +270,6 @@ function OpenClawChatPage() {
             last?.role === 'assistant' &&
             (last.content === '思考中...' || last.streaming || last.content === '')
           if (canFill) {
-            if (state === 'final') {
-              queueMicrotask(() => {
-                clearFallbackTimer()
-                pendingSendMsgIdRef.current = null
-              })
-            }
             const useTypewriter =
               last.content === '思考中...' || last.content === ''
             return [
@@ -310,8 +290,6 @@ function OpenClawChatPage() {
 
     const chatDelta = type === 'chat.delta' || (type === 'event' && msg.event === 'chat.delta')
     if (chatDelta) {
-      clearFallbackTimer()
-      pendingSendMsgIdRef.current = null
       const data = (msg.data ?? msg.payload) as { delta?: string } | undefined
       const delta = data?.delta ?? ''
         setMessages((prev) => {
@@ -400,8 +378,6 @@ function OpenClawChatPage() {
         return
       }
       if (payload?.type === 'chat.done' || payload?.text || payload?.delta) {
-        clearFallbackTimer()
-        pendingSendMsgIdRef.current = null
         const text = (payload.text as string) ?? (payload.delta as string) ?? ''
         if (text) {
           setMessages((prev) => {
@@ -426,7 +402,7 @@ function OpenClawChatPage() {
         }
       }
     }
-  }, [clearFallbackTimer])
+  }, [])
 
   const connect = useCallback(() => {
     if (!wssUrl || wsRef.current?.readyState === WebSocket.OPEN) return
@@ -494,11 +470,19 @@ function OpenClawChatPage() {
     }
   }, [wssUrl, handleGatewayMessage])
 
-  const sendMessage = useCallback(async () => {
+  const sendMessage = useCallback(() => {
     const text = inputText.trim()
     if (!text || sending) return
     if (!sessionId) {
       setError('请先输入会话 ID')
+      return
+    }
+    if (wsRef.current?.readyState !== WebSocket.OPEN) {
+      setError('请先点击「连接 OpenClaw」建立 WebSocket 后再发送')
+      return
+    }
+    if (loadingHistory) {
+      setError('正在加载对话历史，请稍候再发送')
       return
     }
 
@@ -506,7 +490,6 @@ function OpenClawChatPage() {
     setInputText('')
     const msgId = `msg-${++msgIdRef.current}`
 
-    // Immediately show user message and assistant loading state for better UX (as per phase 7 requirement)
     setMessages((prev) => [
       ...prev,
       { id: msgId, role: 'user', content: text, timestamp: new Date() },
@@ -521,111 +504,22 @@ function OpenClawChatPage() {
     ])
 
     try {
-      // 1. Try WebSocket chat.send if connected
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        const sendReq = {
-          type: 'req',
-          id: msgId,
-          method: 'chat.send',
-          params: { sessionKey: 'main', message: text, idempotencyKey: msgId },
-        }
-        console.log('[WSS 发送]', sendReq)
-        wsRef.current.send(JSON.stringify(sendReq))
-        pendingSendMsgIdRef.current = msgId
-        // 2. HTTP fallback: if no assistant reply in 20s, call HTTP API (older Gateway may not send chat.delta)
-        if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current)
-        fallbackTimerRef.current = setTimeout(async () => {
-          fallbackTimerRef.current = null
-          // 用 ref 判断是否已收到本次发送的回复，不能用 DOM（历史消息会误判为已有回复）
-          if (pendingSendMsgIdRef.current !== msgId) return
-          pendingSendMsgIdRef.current = null
-          try {
-            const res = await fetch(`/api/sessions/${sessionId}/openclaw-chat`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ message: text }),
-            })
-            const data = await res.json()
-            if (res.ok && data?.response) {
-              // Replace loading state with real response
-              setMessages((prev) => {
-                const lastIdx = prev.length - 1
-                if (lastIdx >= 0 && prev[lastIdx].role === 'assistant' && prev[lastIdx].content === '思考中...') {
-                  return [
-                    ...prev.slice(0, -1),
-                    {
-                      id: `a-${Date.now()}`,
-                      role: 'assistant',
-                      content: data.response,
-                      timestamp: new Date(),
-                      revealType: 'typewriter',
-                    },
-                  ]
-                }
-                return [
-                  ...prev,
-                  {
-                    id: `a-${Date.now()}`,
-                    role: 'assistant',
-                    content: data.response,
-                    timestamp: new Date(),
-                    revealType: 'typewriter',
-                  },
-                ]
-              })
-            }
-          } catch {
-            // ignore
-          }
-        }, 20000)
-      } else {
-        // 3. Not connected: use HTTP directly
-        const res = await fetch(`/api/sessions/${sessionId}/openclaw-chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text }),
-        })
-        const data = await res.json()
-        if (!res.ok) {
-          throw new Error(data.detail || '发送失败')
-        }
-      if (data?.response) {
-        // Replace loading state with real response (CLI fallback or HTTP)
-        setMessages((prev) => {
-          const lastIdx = prev.length - 1
-          if (lastIdx >= 0 && prev[lastIdx].role === 'assistant' && prev[lastIdx].content === '思考中...') {
-            return [
-              ...prev.slice(0, -1),
-              {
-                id: `a-${Date.now()}`,
-                role: 'assistant',
-                content: data.response,
-                timestamp: new Date(),
-                revealType: 'typewriter',
-              },
-            ]
-          }
-          return [
-            ...prev,
-            {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
-              content: data.response,
-              timestamp: new Date(),
-              revealType: 'typewriter',
-            },
-          ]
-        })
+      const sendReq = {
+        type: 'req',
+        id: msgId,
+        method: 'chat.send',
+        params: { sessionKey: 'main', message: text, idempotencyKey: msgId },
       }
-      }
+      console.log('[WSS 发送]', sendReq)
+      wsRef.current!.send(JSON.stringify(sendReq))
     } catch (e) {
       setError(e instanceof Error ? e.message : '发送失败')
-      setMessages((prev) => prev.slice(0, -1))
+      setMessages((prev) => prev.slice(0, -2))
       setInputText(text)
     } finally {
       setSending(false)
     }
-  }, [inputText, sending, sessionId])
+  }, [inputText, sending, sessionId, loadingHistory])
 
   const disconnect = useCallback(() => {
     if (wsRef.current) {
@@ -770,7 +664,7 @@ function OpenClawChatPage() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
-                  disabled={sending}
+                  disabled={sending || loadingHistory || !connected}
                   rows={1}
                 />
                 <div className="chat-im-input-buttons">
@@ -779,7 +673,7 @@ function OpenClawChatPage() {
                     type="button"
                     className="chat-im-btn-send"
                     onClick={sendMessage}
-                    disabled={sending || !inputText.trim()}
+                    disabled={sending || loadingHistory || !connected || !inputText.trim()}
                     data-testid="openclaw-send-btn"
                   >
                     {sending ? (

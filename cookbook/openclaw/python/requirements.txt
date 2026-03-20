@@ -14,6 +14,3 @@ playwright>=1.40.0
 
 # WebSocket client for OpenClaw WSS proxy
 websockets>=12.0
-
-# HTTP client for OpenClaw Gateway HTTP API (chat fallback)
-httpx>=0.27.0

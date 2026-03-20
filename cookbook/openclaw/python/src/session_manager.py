@@ -401,26 +401,6 @@ class SessionManager:
             logger.warning(f"Failed to get OpenClaw WSS link for session {session_id}: {e}")
         return None
 
-    def get_openclaw_https_base(self, session_id: str) -> Optional[tuple[str, str]]:
-        """
-        Get the HTTPS base URL and token for OpenClaw Gateway (for HTTP API).
-        Returns (base_url, token) or None if session not found.
-        """
-        result = self.get_openclaw_wss_url(session_id)
-        if not result:
-            return None
-        wss_url, token = result
-        # Convert wss://... to https://...
-        if wss_url.startswith("wss://"):
-            base = "https://" + wss_url[6:]
-        elif wss_url.startswith("ws://"):
-            base = "http://" + wss_url[5:]
-        else:
-            return None
-        # Remove query (token)
-        base = base.split("?")[0].split("#")[0].rstrip("/")
-        return (base, token)
-
     def restart_dashboard(self, session_id: str) -> tuple[bool, str]:
         """
         Restart dashboard (kill Firefox and reopen with OpenClaw UI) in sandbox.
