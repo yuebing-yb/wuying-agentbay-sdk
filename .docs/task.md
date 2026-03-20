@@ -106,3 +106,18 @@ openclaw set gateway.bind lan
 - 解决了用户反馈的“发送后无立即交互/ loading 慢”的问题
 - 即使 OpenClaw 回复较慢，用户也能立即看到交互反馈
 - 保持原有 WSS/HTTP fallback 逻辑，兼容慢回复情况
+
+## 第八阶段
+聊天页面交互优化：
+1. 每次展示聊天列表时，自动滚动到底；
+2. 用户发送消息时，聊天列表继续往底部滚动；
+3. OpenClaw的回复实现打字机式回复；
+
+**完成状态**: ✅ 已完成
+
+**修改内容**:
+- `chat-im-messages` 增加 `ref`，`useLayoutEffect` 在 `messages` / `loadingHistory` / `sessionId` 变化时将 `scrollTop` 置为 `scrollHeight`，保证列表展示与发送后始终贴底
+- 新增 `AssistantMarkdownBody`：区分 `instant`（历史/流式已结束）、`streaming`（增量展示 + 闪烁光标）、`typewriter`（整段回复逐字Reveal）；打字机 tick 通过 `onContentLayout` 回调继续贴底
+- 各网关/HTTP 路径为助手消息设置 `revealType`；历史消息为 `instant`，WSS 增量为 `streaming`，一次性整段（含 HTTP fallback）为 `typewriter`
+- `App.css` 增加 `.chat-im-typewriter-caret` 与闪烁动画
+- 前端构建并同步至 `static/`

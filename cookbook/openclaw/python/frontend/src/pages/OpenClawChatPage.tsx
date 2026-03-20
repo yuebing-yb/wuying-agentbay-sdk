@@ -3,7 +3,7 @@
  * 通过 URL 参数 sessionId 连接并实现与 OpenClaw 的对话功能
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 
@@ -13,12 +13,82 @@ function buildProxyWssUrl(sessionId: string): string {
   return `${proto}//${window.location.host}/api/sessions/${sessionId}/openclaw-wss`
 }
 
+type AssistantRevealType = 'instant' | 'streaming' | 'typewriter'
+
 interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
   streaming?: boolean
+  /** 助手气泡展示方式：历史/流式块即时；一次性整段回复用打字机 */
+  revealType?: AssistantRevealType
+}
+
+/** 助手 Markdown：即时、流式（可选光标）、打字机逐字 */
+function AssistantMarkdownBody({
+  content,
+  revealType,
+  onContentLayout,
+}: {
+  content: string
+  revealType: AssistantRevealType
+  /** 打字机/流式高度变化时让列表贴底 */
+  onContentLayout?: () => void
+}) {
+  const [typedLen, setTypedLen] = useState(() => (revealType === 'typewriter' ? 0 : content.length))
+
+  useEffect(() => {
+    if (revealType !== 'typewriter') {
+      setTypedLen(content.length)
+      return
+    }
+    setTypedLen(0)
+    if (!content) return
+    let cancelled = false
+    let i = 0
+    const step = 2
+    const tickMs = 16
+    const id = window.setInterval(() => {
+      if (cancelled) return
+      i = Math.min(content.length, i + step)
+      setTypedLen(i)
+      if (i >= content.length) clearInterval(id)
+    }, tickMs)
+    return () => {
+      cancelled = true
+      clearInterval(id)
+    }
+  }, [content, revealType])
+
+  useLayoutEffect(() => {
+    if (revealType === 'typewriter') onContentLayout?.()
+  }, [typedLen, revealType, onContentLayout])
+
+  if (revealType === 'instant' || revealType === 'streaming') {
+    const display =
+      content || (revealType === 'streaming' ? '思考中...' : '')
+    const showCaret =
+      revealType === 'streaming' &&
+      !!content &&
+      content !== '思考中...'
+    return (
+      <div className="chat-im-content chat-im-content-markdown">
+        <ReactMarkdown>{display}</ReactMarkdown>
+        {showCaret ? <span className="chat-im-typewriter-caret" aria-hidden /> : null}
+      </div>
+    )
+  }
+
+  const slice = content.slice(0, typedLen)
+  return (
+    <div className="chat-im-content chat-im-content-markdown">
+      <ReactMarkdown>{slice}</ReactMarkdown>
+      {typedLen < content.length ? (
+        <span className="chat-im-typewriter-caret" aria-hidden />
+      ) : null}
+    </div>
+  )
 }
 
 function OpenClawChatPage() {
@@ -32,6 +102,7 @@ function OpenClawChatPage() {
   const [inputText, setInputText] = useState('')
   const [sending, setSending] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
+  const messagesScrollRef = useRef<HTMLDivElement | null>(null)
   const msgIdRef = useRef(0)
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const chatHistoryReqIdRef = useRef<string | null>(null)
@@ -52,9 +123,31 @@ function OpenClawChatPage() {
     return ''
   }
 
+  /**
+   * Gateway 有时把正文放在 message.content（或数组）、message.text，或拼写错误的 conten；统一抽取。
+   */
+  function extractAssistantFromMessageObj(msgObj: unknown): string {
+    if (!msgObj || typeof msgObj !== 'object') return ''
+    const o = msgObj as Record<string, unknown>
+    const raw = o.content ?? o.text ?? o.conten ?? o.delta ?? ''
+    if (typeof raw === 'string') return raw
+    return extractTextFromContent(raw)
+  }
+
   useEffect(() => {
     if (sessionIdFromUrl) setSessionId(sessionIdFromUrl)
   }, [sessionIdFromUrl])
+
+  const scrollMessagesToBottom = useCallback(() => {
+    const el = messagesScrollRef.current
+    if (!el) return
+    el.scrollTop = el.scrollHeight
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!sessionId) return
+    scrollMessagesToBottom()
+  }, [sessionId, messages, loadingHistory, scrollMessagesToBottom])
 
   const clearFallbackTimer = useCallback(() => {
     if (fallbackTimerRef.current) {
@@ -94,9 +187,21 @@ function OpenClawChatPage() {
               setMessages((prev) => {
                 const last = prev[prev.length - 1]
                 if (last?.role === 'assistant' && last.streaming) {
-                  return [...prev.slice(0, -1), { ...last, content: last.content + text, streaming: false }]
+                  return [
+                    ...prev.slice(0, -1),
+                    { ...last, content: last.content + text, streaming: false, revealType: 'instant' },
+                  ]
                 }
-                return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
+                return [
+                  ...prev,
+                  {
+                    id: `a-${Date.now()}`,
+                    role: 'assistant',
+                    content: text,
+                    timestamp: new Date(),
+                    revealType: 'instant',
+                  },
+                ]
               })
             }
           }
@@ -113,46 +218,91 @@ function OpenClawChatPage() {
         setMessages((prev) => {
           const last = prev[prev.length - 1]
           if (last?.role === 'assistant' && (last.streaming || last.content === '思考中...')) {
-            return [...prev.slice(0, -1), { ...last, content: text, streaming: false }]
+            return [
+              ...prev.slice(0, -1),
+              { ...last, content: text, streaming: false, revealType: 'typewriter' },
+            ]
           }
-          return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
+          return [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: text,
+              timestamp: new Date(),
+              revealType: 'typewriter',
+            },
+          ]
         })
       return
     }
 
-    // event=chat: OpenClaw Gateway 可能用 event=chat + payload.phase/delta 推送流式回复
+    // event=chat: OpenClaw Gateway（含 state=delta / final；message 可能为 content 数组或 conten 拼写）
     if (type === 'event' && msg.event === 'chat') {
-      clearFallbackTimer()
-      pendingSendMsgIdRef.current = null
-      const data = (msg.data ?? msg.payload) as { phase?: string; delta?: string; text?: string } | undefined
-      const phase = data?.phase ?? ''
-      const delta = data?.delta ?? ''
-      const text = data?.text ?? ''
-      if (phase === 'delta' && delta) {
+      const payload = msg.payload ?? msg.data ?? {}
+      const data = payload as Record<string, unknown>
+      const state = String(data.state ?? '')
+      const msgObj = (data.message ?? (payload as { message?: unknown }).message) as Record<string, unknown> | undefined
+
+      const topLine = String(data.text ?? data.delta ?? '').trim()
+      const fromMessage = extractAssistantFromMessageObj(msgObj)
+      const text = topLine || fromMessage
+
+      if (state === 'delta' && text) {
         setMessages((prev) => {
           const last = prev[prev.length - 1]
           if (last?.role === 'assistant' && (last.streaming || last.content === '思考中...')) {
-            return [...prev.slice(0, -1), { ...last, content: last.content === '思考中...' ? delta : last.content + delta, streaming: true }]
+            const base = last.content === '思考中...' ? '' : last.content
+            return [
+              ...prev.slice(0, -1),
+              { ...last, content: base + text, streaming: true, revealType: 'streaming' },
+            ]
           }
-          return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: delta, timestamp: new Date(), streaming: true }]
+          return [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: text,
+              timestamp: new Date(),
+              streaming: true,
+              revealType: 'streaming',
+            },
+          ]
         })
-      } else if ((phase === 'end' || phase === 'done') && text) {
+        return
+      }
+
+      if (state === 'final' || text) {
+        const reply =
+          text ||
+          extractAssistantFromMessageObj(msgObj) ||
+          '我可以帮你执行命令、浏览网页或回答问题。你想做什么？'
         setMessages((prev) => {
           const last = prev[prev.length - 1]
-          if (last?.role === 'assistant' && (last.streaming || last.content === '思考中...')) {
-            return [...prev.slice(0, -1), { ...last, content: text, streaming: false }]
+          const canFill =
+            last?.role === 'assistant' &&
+            (last.content === '思考中...' || last.streaming || last.content === '')
+          if (canFill) {
+            if (state === 'final') {
+              queueMicrotask(() => {
+                clearFallbackTimer()
+                pendingSendMsgIdRef.current = null
+              })
+            }
+            const useTypewriter =
+              last.content === '思考中...' || last.content === ''
+            return [
+              ...prev.slice(0, -1),
+              {
+                ...last,
+                content: reply,
+                streaming: false,
+                revealType: useTypewriter ? 'typewriter' : 'instant',
+              },
+            ]
           }
-          return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
-        })
-      } else if (delta || text) {
-        // 无 phase 时也尝试 delta/text
-        const chunk = delta || text
-        setMessages((prev) => {
-          const last = prev[prev.length - 1]
-          if (last?.role === 'assistant' && (last.streaming || last.content === '思考中...')) {
-            return [...prev.slice(0, -1), { ...last, content: last.content === '思考中...' ? chunk : last.content + chunk, streaming: true }]
-          }
-          return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: chunk, timestamp: new Date(), streaming: true }]
+          return prev
         })
       }
       return
@@ -167,24 +317,42 @@ function OpenClawChatPage() {
         setMessages((prev) => {
           const last = prev[prev.length - 1]
           if (last?.role === 'assistant' && (last.streaming || last.content === '思考中...')) {
-            return [...prev.slice(0, -1), { ...last, content: last.content === '思考中...' ? delta : last.content + delta, streaming: true }]
+            return [
+              ...prev.slice(0, -1),
+              {
+                ...last,
+                content: last.content === '思考中...' ? delta : last.content + delta,
+                streaming: true,
+                revealType: 'streaming',
+              },
+            ]
           }
-          return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: delta, timestamp: new Date(), streaming: true }]
+          return [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: delta,
+              timestamp: new Date(),
+              streaming: true,
+              revealType: 'streaming',
+            },
+          ]
         })
       return
     }
 
     const chatDone = type === 'chat.done' || (type === 'event' && msg.event === 'chat.done')
     if (chatDone) {
-      clearFallbackTimer()
-      pendingSendMsgIdRef.current = null
-        setMessages((prev) => {
-          const last = prev[prev.length - 1]
-          if (last?.role === 'assistant' && (last.streaming || last.content === '思考中...')) {
-            return [...prev.slice(0, -1), { ...last, streaming: false, content: last.content === '思考中...' ? '' : last.content }]
-          }
-          return prev
-        })
+      setMessages((prev) => {
+        const last = prev[prev.length - 1]
+        if (last?.role === 'assistant' && (last.streaming || last.content === '思考中...')) {
+          // 绝不能把「思考中...」直接清空为 ''，否则后续 chat.final 无法匹配，界面会只剩空气泡
+          if (last.content === '思考中...') return prev
+          return [...prev.slice(0, -1), { ...last, streaming: false, revealType: 'instant' }]
+        }
+        return prev
+      })
       return
     }
 
@@ -211,13 +379,18 @@ function OpenClawChatPage() {
             const m = transcript[i]
             const role = m?.role
             if (role === 'user' || role === 'assistant') {
-              const text = extractTextFromContent(m?.content) || (m?.text as string) || ''
+              const text =
+                extractTextFromContent(m?.content) ||
+                extractTextFromContent((m as { conten?: unknown }).conten) ||
+                (m?.text as string) ||
+                ''
               if (text || role === 'user') {
                 loaded.push({
                   id: `hist-${i}-${Date.now()}`,
                   role: role as 'user' | 'assistant',
                   content: text,
                   timestamp: new Date(),
+                  ...(role === 'assistant' ? { revealType: 'instant' as const } : {}),
                 })
               }
             }
@@ -234,9 +407,21 @@ function OpenClawChatPage() {
           setMessages((prev) => {
             const last = prev[prev.length - 1]
             if (last?.role === 'assistant' && (last.streaming || last.content === '思考中...')) {
-              return [...prev.slice(0, -1), { ...last, content: text, streaming: false }]
+              return [
+                ...prev.slice(0, -1),
+                { ...last, content: text, streaming: false, revealType: 'typewriter' },
+              ]
             }
-            return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: text, timestamp: new Date() }]
+            return [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                content: text,
+                timestamp: new Date(),
+                revealType: 'typewriter',
+              },
+            ]
           })
         }
       }
@@ -325,7 +510,14 @@ function OpenClawChatPage() {
     setMessages((prev) => [
       ...prev,
       { id: msgId, role: 'user', content: text, timestamp: new Date() },
-      { id: `loading-${Date.now()}`, role: 'assistant', content: '思考中...', timestamp: new Date(), streaming: true }
+      {
+        id: `loading-${Date.now()}`,
+        role: 'assistant',
+        content: '思考中...',
+        timestamp: new Date(),
+        streaming: true,
+        revealType: 'streaming',
+      },
     ])
 
     try {
@@ -359,9 +551,27 @@ function OpenClawChatPage() {
               setMessages((prev) => {
                 const lastIdx = prev.length - 1
                 if (lastIdx >= 0 && prev[lastIdx].role === 'assistant' && prev[lastIdx].content === '思考中...') {
-                  return [...prev.slice(0, -1), { id: `a-${Date.now()}`, role: 'assistant', content: data.response, timestamp: new Date() }]
+                  return [
+                    ...prev.slice(0, -1),
+                    {
+                      id: `a-${Date.now()}`,
+                      role: 'assistant',
+                      content: data.response,
+                      timestamp: new Date(),
+                      revealType: 'typewriter',
+                    },
+                  ]
                 }
-                return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: data.response, timestamp: new Date() }]
+                return [
+                  ...prev,
+                  {
+                    id: `a-${Date.now()}`,
+                    role: 'assistant',
+                    content: data.response,
+                    timestamp: new Date(),
+                    revealType: 'typewriter',
+                  },
+                ]
               })
             }
           } catch {
@@ -379,16 +589,34 @@ function OpenClawChatPage() {
         if (!res.ok) {
           throw new Error(data.detail || '发送失败')
         }
-        if (data?.response) {
-          // Replace loading state with real response
-          setMessages((prev) => {
-            const lastIdx = prev.length - 1
-            if (lastIdx >= 0 && prev[lastIdx].role === 'assistant' && prev[lastIdx].content === '思考中...') {
-              return [...prev.slice(0, -1), { id: `a-${Date.now()}`, role: 'assistant', content: data.response, timestamp: new Date() }]
-            }
-            return [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: data.response, timestamp: new Date() }]
-          })
-        }
+      if (data?.response) {
+        // Replace loading state with real response (CLI fallback or HTTP)
+        setMessages((prev) => {
+          const lastIdx = prev.length - 1
+          if (lastIdx >= 0 && prev[lastIdx].role === 'assistant' && prev[lastIdx].content === '思考中...') {
+            return [
+              ...prev.slice(0, -1),
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                content: data.response,
+                timestamp: new Date(),
+                revealType: 'typewriter',
+              },
+            ]
+          }
+          return [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: data.response,
+              timestamp: new Date(),
+              revealType: 'typewriter',
+            },
+          ]
+        })
+      }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : '发送失败')
@@ -476,7 +704,7 @@ function OpenClawChatPage() {
           </header>
 
           <main className="chat-im-main chat-im-conversation">
-            <div className="chat-im-messages">
+            <div className="chat-im-messages" ref={messagesScrollRef}>
               {loadingHistory && (
                 <div className="chat-im-loading">
                   <span className="chat-im-loading-spinner" />
@@ -500,9 +728,17 @@ function OpenClawChatPage() {
                     <div className="chat-im-bubble-content">
                       <div className="chat-im-bubble-body">
                         {m.role === 'assistant' ? (
-                          <div className="chat-im-content chat-im-content-markdown">
-                            <ReactMarkdown>{m.content || (m.streaming ? '思考中...' : '')}</ReactMarkdown>
-                          </div>
+                          <AssistantMarkdownBody
+                            content={m.content}
+                            revealType={
+                              m.revealType === 'typewriter'
+                                ? 'typewriter'
+                                : m.streaming
+                                  ? (m.revealType ?? 'streaming')
+                                  : 'instant'
+                            }
+                            onContentLayout={scrollMessagesToBottom}
+                          />
                         ) : (
                           <div className="chat-im-content">{m.content}</div>
                         )}
