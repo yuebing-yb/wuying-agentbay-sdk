@@ -59,7 +59,7 @@ func exampleTypedCallbacks(client *agentbay.AgentBay) {
 }
 
 func main() {
-	fmt.Println("Mobile Agent Streaming Output Examples\n")
+	fmt.Println("Mobile Agent Streaming Output Examples")
 
 	apiKey := os.Getenv("AGENTBAY_API_KEY")
 	client, err := agentbay.NewAgentBay(apiKey, nil)
