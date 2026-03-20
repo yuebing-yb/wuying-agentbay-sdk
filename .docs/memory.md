@@ -44,3 +44,12 @@
 - 前端构建并部署到 `cookbook/openclaw/python/static/`
 
 **验证**: 前端 `npm run build` 通过；`fill_api_keys_and_verify.py --phase4` Playwright 自动化验证通过
+
+## [2026-03-20] 第九阶段 完成
+
+**需求**: 更新 OpenClaw cookbook README，文档化 WSS 代理连接、与 OpenClaw 对话能力，以及企业通过 WSS 代理通道自建聊天页的方式
+
+**修改内容**:
+- `cookbook/openclaw/python/README.md`：功能列表、专章「WSS 代理与 OpenClaw 对话」、API 表与项目结构更新
+
+**验证**: 文档与现有实现（`get_link` WSS、`/api/sessions/{id}/openclaw-wss` 代理、`openclaw-wss-url`、`openclaw-chat`、`/chat`）一致；无需前端构建

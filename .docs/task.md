@@ -121,3 +121,20 @@ openclaw set gateway.bind lan
 - 各网关/HTTP 路径为助手消息设置 `revealType`；历史消息为 `instant`，WSS 增量为 `streaming`，一次性整段（含 HTTP fallback）为 `typewriter`
 - `App.css` 增加 `.chat-im-typewriter-caret` 与闪烁动画
 - 前端构建并同步至 `static/`
+
+## 第九阶段
+1. 更新 cookbook openclaw 项目的readme，添加新增的WSS 代理连接功能，可以与OpenClaw对话，通过WSS代理通道，企业可以定制自己的OpenClaw聊天页与OpenClaw对话。
+
+**完成状态**: ✅ 已完成
+
+**修改内容**:
+- 在「功能」中补充 WSS 代理、与 OpenClaw 对话、企业自建聊天页说明
+- 新增章节「WSS 代理与 OpenClaw 对话（企业可自建聊天页）」：链路说明（Mermaid）、同源 WebSocket 代理、外网 WSS URL、HTTP 备用、企业集成对照表
+- 扩展 API 表：`WebSocket /api/.../openclaw-wss`、`GET openclaw-wss-url`、`POST openclaw-chat`；说明 `/chat?sessionId=` 与内置面板
+- 项目结构中补充 `pages/OpenClawChatPage.tsx`
+
+## 第十阶段
+1. 写一篇ATA文章，介绍一下这个项目，需要取一个比较吸引眼球的标题；
+2. ATA的写作例子，你可以学习参考这篇文章（此文章本地可访问）：file:///Users/dongni.wx/Documents/OpenClaw%20%E5%AE%9E%E6%88%98%EF%BC%9A%E4%B8%80%E4%B8%AA%E4%BA%BA%E3%80%81%E4%B8%80%E5%8F%B0%20Mac%E3%80%81%E5%85%AD%E4%B8%AA%20AI%20Agent%20%E2%80%94%20%E4%BB%8E_%E8%83%BD%E8%81%8A%E5%A4%A9_%E5%88%B0_%E8%83%BD%E5%B9%B2%E6%B4%BB_%E7%9A%84%E5%B7%A5%E7%A8%8B%E5%AE%9E%E6%88%98%20-%20ATA.html
+3. 介绍一下AgentBay的OpenClaw沙箱如何使用，有哪些能力，比如支持一键配置钉钉和飞书机器人，可以把OpenClawd的gateway代理出来，自己定制聊天页、包括持久化的能力，显示流化界面的能力等等；
+4. 使用云沙箱运行OpenClaw的方案的优势是，更加安全可控，弹性自适应；

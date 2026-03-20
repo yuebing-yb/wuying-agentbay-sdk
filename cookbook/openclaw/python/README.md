@@ -7,6 +7,8 @@
 - 通过 AgentBay SDK 创建沙箱会话，自动部署 OpenClaw
 - 支持 Context 持久化（基于用户名，ARCHIVE 压缩模式）
 - 通过 `getLink` 获取 OpenClaw UI 外部访问链接
+- **WSS 代理与对话**：通过 `get_link(protocol_type="wss")` 将沙箱内 OpenClaw Gateway 的长连接暴露到外网；本服务提供**同源 WebSocket 代理**与 **HTTP 备用接口**，可与 OpenClaw 实时对话
+- **企业可自建聊天页**：任意 Web / 移动端只要持有有效的 `sessionId`，即可连接本服务的 WSS 代理路径或调用 HTTP 接口，定制自己的 OpenClaw 对话 UI（流式、打字机等由前端自行实现；本仓库 `/chat` 为参考实现）
 - 支持自定义模型 Base URL 和模型 ID
 - **钉钉 / 飞书机器人一键配置**：会话创建成功后，可自动完成扫码登录、创建应用、提取凭证并回填到 OpenClaw 配置
 - 前端静态文件与 FastAPI 同目录，单进程运行
@@ -103,9 +105,11 @@ cookbook/openclaw/python/
 ├── frontend/            # React 前端源码
 │   ├── src/
 │   │   ├── App.tsx      # 主应用组件
+│   │   ├── pages/
+│   │   │   └── OpenClawChatPage.tsx # 独立对话页 /chat（IM 风格，WSS + HTTP 备用）
 │   │   └── components/
 │   │       ├── SessionForm.tsx      # 创建会话表单
-│   │       ├── OpenClawChatPanel.tsx # OpenClaw 对话面板（WSS 长连接）
+│   │       ├── OpenClawChatPanel.tsx # OpenClaw 对话面板（WSS 同源代理）
 │   │       ├── DingtalkSetupPanel.tsx # 钉钉一键配置面板
 │   │       └── FeishuSetupPanel.tsx # 飞书一键配置面板
 │   ├── package.json
@@ -156,6 +160,74 @@ npm run build
 cp -r frontend/dist/* static/
 ```
 
+## WSS 代理与 OpenClaw 对话（企业可自建聊天页）
+
+沙箱内的 OpenClaw Gateway 默认监听 **30100** 端口。AgentBay 的 `get_link` 可将该端口以 **WSS** 形式映射到公网（与 OpenClaw UI 的 HTTPS 链接同属 Gateway 端口能力，**Pro / Ultra** 默认可用 **30100–30199**，其他端口需向官方申请加白）。
+
+本 cookbook 在此基础上提供两层能力：**对外长连接地址**（AgentBay 暴露）与 **应用内同源代理**（FastAPI 转发），便于浏览器与自建前端安全接入。
+
+### 链路说明
+
+```mermaid
+flowchart LR
+  subgraph browser [企业自建或本仓库前端]
+    UI[聊天页 WebSocket / HTTP]
+  end
+  subgraph cookbook [本服务 FastAPI]
+    Proxy["/api/sessions/{id}/openclaw-wss"]
+    HttpChat["POST .../openclaw-chat"]
+  end
+  subgraph agentbay [AgentBay get_link]
+    WSS[公网 WSS Gateway]
+  end
+  subgraph sandbox [沙箱]
+    GW[OpenClaw Gateway :30100]
+  end
+  UI --> Proxy
+  UI --> HttpChat
+  Proxy --> WSS
+  HttpChat --> GW
+  WSS --> GW
+```
+
+### 方式一：同源 WebSocket 代理（推荐用于浏览器 / H5）
+
+前端使用**当前站点**的 WebSocket URL（与页面同域，避免部分环境下的跨域与证书问题）：
+
+- **非 HTTPS 页面**：`ws://{host}:{port}/api/sessions/{sessionId}/openclaw-wss`
+- **HTTPS 页面**：`wss://{host}/api/sessions/{sessionId}/openclaw-wss`
+
+服务端会再连接到 `get_link` 返回的外网 WSS，并完成 OpenClaw **协议 v3** 的握手（如 `connect.challenge` → 带 `auth.token` 的 `connect`），之后**双向透传**帧数据。实现参考：`src/app.py` 中 `openclaw_wss_proxy`，前端参考：`OpenClawChatPanel.tsx`、`OpenClawChatPage.tsx` 中的 `buildProxyWssUrl`。
+
+**内置页面**：管理页「OpenClaw 对话」面板，以及独立 IM 页 **`/chat?sessionId={sessionId}`**（「与 OpenClaw 对话」链接），均使用该代理。
+
+### 方式二：获取外网 WSS 地址（适合服务端、原生客户端）
+
+若你的聊天逻辑跑在**后端或 App 内**，可调用：
+
+`GET /api/sessions/{sessionId}/openclaw-wss-url`
+
+返回 JSON：`wssUrl`（已在 query 中附带 `token`）、`gatewayToken`。你需自行实现与 OpenClaw Gateway 的 WebSocket 协议（`minProtocol` / `maxProtocol`、角色与 scopes、订阅消息等），与本仓库代理内逻辑保持一致即可对接。
+
+### 方式三：HTTP 备用对话（简单集成或 Gateway 流式能力受限时）
+
+当部分 Gateway 版本不支持会话级 WebSocket 订阅、或仅需「一问一答」时，可调用：
+
+`POST /api/sessions/{sessionId}/openclaw-chat`  
+Body：`{"message": "用户输入"}`  
+
+服务端会依次尝试 Gateway 的 HTTP 接口（如 `/v1/agent/run`、`/v1/responses`），必要时在沙箱内执行 `openclaw agent --local --message` 作为兜底。本仓库 `/chat` 页面在 WSS 长时间无增量回复时会自动走该路径，企业自建页也可只依赖此接口快速上线。
+
+### 企业自建聊天页的要点
+
+| 目标 | 建议 |
+|------|------|
+| 与官方 Control UI 体验一致的流式对话 | 使用 **方式一** 连接同源 WSS 代理，按 OpenClaw 网关事件解析 `chat.delta` / `chat.done` 等（可参考 `OpenClawChatPage.tsx`） |
+| 最小改造成本、服务端聚合 | 使用 **方式三** HTTP 接口 |
+| 完全自建协议栈 | **方式二** 取 `wssUrl`，在后端完成握手与鉴权，勿将 token 泄露给不可信环境 |
+
+**前置条件**：与会话管理相同，需有效的 AgentBay API Key；WSS / HTTPS 外链能力受套餐与端口白名单约束，见下文「外部访问链接」。
+
 ## API
 
 ### 会话管理
@@ -187,13 +259,15 @@ cp -r frontend/dist/* static/
 | GET    | `/api/sessions/{id}/feishu-setup/status`    | 获取配置状态             |
 | POST   | `/api/sessions/{id}/feishu-setup/apply`   | 应用凭证到 OpenClaw 配置  |
 
-### OpenClaw 对话（WSS 长连接）
+### OpenClaw 对话（WSS 代理 + HTTP 备用）
 
-| 方法   | 路径                                         | 说明                     |
-|--------|---------------------------------------------|-------------------------|
-| GET    | `/api/sessions/{id}/openclaw-wss-url`       | 获取 OpenClaw Gateway 的 WSS 代理链接（通过 get_link） |
+| 方法 / 类型 | 路径                                         | 说明 |
+|-------------|---------------------------------------------|------|
+| **WebSocket** | `/api/sessions/{id}/openclaw-wss`           | **同源 WSS 代理**：浏览器连接此路径，服务端经 `get_link(wss)` 转发至沙箱内 Gateway，并完成 OpenClaw v3 握手 |
+| GET         | `/api/sessions/{id}/openclaw-wss-url`       | 返回公网 **WSS URL**（含 `token`）与 `gatewayToken`，供服务端或原生客户端直连 Gateway |
+| POST        | `/api/sessions/{id}/openclaw-chat`          | **HTTP 对话**：Body `{"message":"..."}`，依次尝试 Gateway HTTP API 与沙箱内 CLI 兜底 |
 
-会话创建成功后，在「OpenClaw 对话」面板中点击「连接 OpenClaw」即可通过 get_link 代理的 WSS 长连接与 OpenClaw 进行对话。
+会话创建成功后，在「OpenClaw 对话」面板点击「连接 OpenClaw」，或打开 **`/chat?sessionId={id}`**，即可经 **WSS 代理**与 OpenClaw 对话；亦可仅用 **HTTP 接口**在企业自有系统中集成。
 
 API 文档：`http://localhost:8080/docs`
 
