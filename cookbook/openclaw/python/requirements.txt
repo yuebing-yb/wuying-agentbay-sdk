@@ -1,5 +1,5 @@
-# AgentBay SDK (install from local path)
-# pip install -e ../../../python
+# AgentBay SDK (PyPI name: wuying-agentbay-sdk; editable install from monorepo root python/)
+-e ../../../python
 
 # FastAPI web framework
 fastapi>=0.109.0
