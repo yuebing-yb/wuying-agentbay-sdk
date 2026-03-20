@@ -90,3 +90,19 @@ openclaw set gateway.bind lan
 - 运行 Playwright 验证脚本 (`--phase4`) 测试对话功能
 - 服务器启动成功，聊天页面可正常加载并发送消息
 - 验证通过：OpenClaw 能响应“你好”等指令（通过 HTTP fallback 或 WSS）
+
+## 第七阶段
+
+**完成状态**: ✅ 已完成
+
+**修改内容**:
+- 前端聊天页面立即显示「思考中...」 loading 状态（用户消息发送后立即添加 assistant 消息，避免空白等待）
+- 更新所有消息处理逻辑（WSS chat.delta/event/chat、HTTP fallback）以正确替换 loading 状态
+- 优化 React state 更新，处理 '思考中...' 特殊情况，确保流畅 UX
+- 重新构建并部署前端静态资源到 static/ 目录
+- 验证脚本运行成功，服务器启动正常，聊天交互得到优化
+
+**优化说明**:
+- 解决了用户反馈的“发送后无立即交互/ loading 慢”的问题
+- 即使 OpenClaw 回复较慢，用户也能立即看到交互反馈
+- 保持原有 WSS/HTTP fallback 逻辑，兼容慢回复情况
