@@ -8,6 +8,8 @@ Usage:
 
 Environment Variables:
     AGENTBAY_API_KEY: Optional default API key (can be overridden per request)
+    LOG_LEVEL / OPENCLAW_LOG_LEVEL: override default DEBUG (e.g. INFO in production; see README: 日志)
+    OPENCLAW_LOG_FULL, OPENCLAW_LOG_MAX_CHARS: control truncation of long diagnostic log lines
 """
 
 import argparse
@@ -16,9 +18,9 @@ import os
 
 import uvicorn
 
-# Configure logging
+# Configure logging（默认 DEBUG，便于本地排查；生产可设 LOG_LEVEL=INFO）
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
@@ -67,11 +69,17 @@ def main() -> None:
     # Import and run the FastAPI app
     from src.app import app
 
+    _uv_log = (
+        os.environ.get("OPENCLAW_LOG_LEVEL")
+        or os.environ.get("LOG_LEVEL")
+        or "debug"
+    ).lower()
     uvicorn.run(
         "src.app:app",
         host=args.host,
         port=args.port,
         reload=args.reload,
+        log_level=_uv_log,
     )
 
 

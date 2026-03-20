@@ -3,7 +3,6 @@ import { Routes, Route, Link } from 'react-router-dom'
 import SessionForm from './components/SessionForm'
 import DingtalkSetupPanel from './components/DingtalkSetupPanel'
 import FeishuSetupPanel from './components/FeishuSetupPanel'
-import OpenClawChatPanel from './components/OpenClawChatPanel'
 import OpenClawChatPage from './pages/OpenClawChatPage'
 import {
   getCredentialsForSession,
@@ -283,7 +282,6 @@ function App() {
                   </div>
                 </div>
 
-                <OpenClawChatPanel sessionId={session.sessionId} />
                 <Link
                   to={`/chat?sessionId=${session.sessionId}`}
                   className="btn btn-outline"
@@ -291,7 +289,7 @@ function App() {
                   rel="noopener noreferrer"
                   data-testid="openclaw-standalone-chat-link"
                 >
-                  独立对话页
+                  与OpenClaw 对话
                 </Link>
                 <DingtalkSetupPanel sessionId={session.sessionId} />
                 <FeishuSetupPanel sessionId={session.sessionId} />

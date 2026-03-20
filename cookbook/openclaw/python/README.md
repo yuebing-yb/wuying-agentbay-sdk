@@ -50,6 +50,37 @@ python main.py --reload
 | `--port` | 端口，默认 8080 |
 | `--reload` | 开发模式，代码更改自动重载 |
 
+### 日志（默认 DEBUG + 长文本截断策略）
+
+**本地默认**：`python main.py` 时根 logger 与 **uvicorn** 的 `log_level` 均为 **debug**（未设置 `LOG_LEVEL` / `OPENCLAW_LOG_LEVEL` 时）。仅 `uvicorn src.app:app` 时以 `src/app.py` 中的 **DEBUG** 为准。部署建议设置 `LOG_LEVEL=INFO` 或 `WARNING` 降噪。
+
+WSS / HTTP 诊断类日志中的**长字符串**（如整帧 JSON、响应 body）：在 **DEBUG** 且未设置 `OPENCLAW_LOG_MAX_CHARS` 时**不截断**；在 **INFO 及以上** 时默认**截断**（最多 4000 字符），避免刷屏。可通过**环境变量**进一步控制：
+
+| 变量 | 说明 |
+|------|------|
+| `LOG_LEVEL` 或 `OPENCLAW_LOG_LEVEL` | 覆盖默认级别，例如生产：`export LOG_LEVEL=INFO` |
+| `OPENCLAW_LOG_FULL` | `1` / `true` / `yes` / `on` → **始终不截断**（优先级最高） |
+| `OPENCLAW_LOG_MAX_CHARS` | 正整数：超过该长度则截断；`0` 或负数 → **不截断** |
+
+示例：
+
+```bash
+# 默认已是 DEBUG，长诊断日志一般不截断
+python main.py
+
+# 生产：降噪 + 长日志按策略截断
+export LOG_LEVEL=INFO
+python main.py
+
+# INFO 下仍希望单条更长
+export OPENCLAW_LOG_MAX_CHARS=20000
+python main.py
+
+# 任意级别强制完整
+export OPENCLAW_LOG_FULL=1
+python main.py
+```
+
 ## 项目结构
 
 ```
