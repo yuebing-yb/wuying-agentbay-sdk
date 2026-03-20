@@ -523,6 +523,54 @@ Take a screenshot using act method.
 **Throws:**
 - `BrowserException`: if operation fails
 
+## ObserveResultTuple
+
+Tuple class to hold observe operation results.
+
+### Constructor
+
+```java
+public ObserveResultTuple(boolean success, List<ObserveResult> results)
+```
+
+### Methods
+
+### isSuccess
+
+```java
+public boolean isSuccess()
+```
+
+### getResults
+
+```java
+public List<ObserveResult> getResults()
+```
+
+## ExtractResultTuple
+
+Tuple class to hold extract operation results.
+
+### Constructor
+
+```java
+public ExtractResultTuple(boolean success, T data)
+```
+
+### Methods
+
+### isSuccess
+
+```java
+public boolean isSuccess()
+```
+
+### getData
+
+```java
+public T getData()
+```
+
 
 
 ## 💡 Best Practices

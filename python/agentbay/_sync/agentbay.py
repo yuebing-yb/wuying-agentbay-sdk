@@ -107,6 +107,7 @@ class AgentBay:
         self.context = ContextService(self)
         self.beta_network = SyncBetaNetworkService(self)
         self.beta = SyncBetaNamespace(self)
+        self.beta_skills = self.beta.skills
         self._file_transfer_context: Optional[Any] = None
 
     def _safe_serialize(self, obj):
@@ -650,6 +651,12 @@ class AgentBay:
 
             if params.image_id:
                 request.image_id = params.image_id
+
+            # Skills loading
+            if hasattr(params, "load_skills") and params.load_skills:
+                request.load_skill = True
+                if hasattr(params, "skill_names") and params.skill_names:
+                    request.skills = params.skill_names
 
             # Add extra_configs if provided
             mobile_sim_path = None

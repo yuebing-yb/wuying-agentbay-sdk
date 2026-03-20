@@ -29,6 +29,39 @@ func NewAgent(session McpSession) *Agent
 
 NewAgent creates a new Agent instance
 
+## Type AgentEvent
+
+```go
+type AgentEvent struct {
+	Type		string			`json:"type"`
+	Seq		int			`json:"seq"`
+	Round		int			`json:"round"`
+	Content		string			`json:"content,omitempty"`
+	ToolCallID	string			`json:"toolCallId,omitempty"`
+	ToolName	string			`json:"toolName,omitempty"`
+	Args		map[string]interface{}	`json:"args,omitempty"`
+	Result		map[string]interface{}	`json:"result,omitempty"`
+	Error		map[string]interface{}	`json:"error,omitempty"`
+}
+```
+
+AgentEvent represents a streaming event from an Agent execution.
+
+Event types: "reasoning", "content", "tool_call", "tool_result", "error".
+
+The Result field in tool_result events carries an agent-defined structure that the SDK passes
+through without parsing. Typical fields include "isError" (bool), "output" (string), and optionally
+"screenshot" (base64). The final task outcome is delivered via the ExecutionResult return value of
+ExecuteTaskAndWait.
+
+## Type AgentEventCallback
+
+```go
+type AgentEventCallback func(event AgentEvent)
+```
+
+AgentEventCallback is a function type for handling agent streaming events.
+
 ## Type BrowserUseAgent
 
 ```go
@@ -362,6 +395,7 @@ type McpSession interface {
 	GetSessionId() string
 	CallMcpTool(toolName string, args interface{}) (*models.McpToolResult, error)
 	GetBrowser() *browser.Browser
+	GetWsClient() (interface{}, error)
 }
 ```
 
@@ -381,6 +415,19 @@ type McpSessionLogger interface {
 McpSessionLogger is an optional interface for logging. If McpSession implements it, the agent will
 use it for logging instead of fmt.Print.
 
+## Type MobileTaskOptions
+
+```go
+type MobileTaskOptions struct {
+	StreamOptions
+	MaxSteps	int
+	OnCallForUser	func(event AgentEvent) string
+}
+```
+
+MobileTaskOptions holds options for mobile task execution, including streaming callbacks inherited
+from StreamOptions.
+
 ## Type MobileUseAgent
 
 ```go
@@ -399,35 +446,67 @@ MobileUseAgent), we do not provide services for overseas users registered with *
 ### ExecuteTask
 
 ```go
-func (a *MobileUseAgent) ExecuteTask(task string, maxSteps int) *ExecutionResult
+func (a *MobileUseAgent) ExecuteTask(task string, opts ...MobileTaskOptions) *TaskExecution
 ```
 
-ExecuteTask executes a task in human language without waiting for completion (non-blocking).
-This is a fire-and-return interface that immediately provides a task ID. Call GetTaskStatus to check
-the task status.
+ExecuteTask starts a mobile task and returns a TaskExecution handle immediately (non-blocking).
+Use TaskExecution.Wait(timeout) to block until the task completes.
 
-**Example:**
+When streaming callbacks are provided in MobileTaskOptions, real-time events are delivered via
+WebSocket. Otherwise the task is started via MCP and the handle supports polling-based Wait().
 
-```go
-result := sessionResult.Session.Agent.Mobile.ExecuteTask("Open WeChat app", 100)
-status := sessionResult.Session.Agent.Mobile.GetTaskStatus(result.TaskID)
-```
+Example (non-blocking):
+
+
+execution := session.Agent.Mobile.ExecuteTask("Open WeChat app")
+
+result := execution.Wait(180)
+
+Example (with streaming):
+
+
+execution := session.Agent.Mobile.ExecuteTask("Open Settings", agent.MobileTaskOptions{
+
+    MaxSteps: 50,
+
+    StreamOptions: agent.StreamOptions{
+
+        OnReasoning: func(e agent.AgentEvent) { fmt.Println(e.Content) },
+
+    },
+
+})
+
+result := execution.Wait(180)
 
 ### ExecuteTaskAndWait
 
 ```go
-func (a *MobileUseAgent) ExecuteTaskAndWait(task string, maxSteps int, timeout int) *ExecutionResult
+func (a *MobileUseAgent) ExecuteTaskAndWait(task string, timeout int, opts ...MobileTaskOptions) *ExecutionResult
 ```
 
-ExecuteTaskAndWait executes a specific task described in human language synchronously. This is
-a synchronous interface that blocks until the task is completed or an error occurs, or timeout
-happens. The default polling interval is 3 seconds.
+ExecuteTaskAndWait is a convenience wrapper that starts a task via ExecuteTask and immediately
+blocks until it completes or times out.
 
-**Example:**
+Example (simple):
 
-```go
-result := sessionResult.Session.Agent.Mobile.ExecuteTaskAndWait("Open WeChat app", 100, 180)
-```
+
+result := session.Agent.Mobile.ExecuteTaskAndWait("Open WeChat app", 180)
+
+Example (with streaming):
+
+
+result := session.Agent.Mobile.ExecuteTaskAndWait("Open Settings", 180, agent.MobileTaskOptions{
+
+    MaxSteps: 50,
+
+    StreamOptions: agent.StreamOptions{
+
+        OnReasoning: func(e agent.AgentEvent) { fmt.Println(e.Content) },
+
+    },
+
+})
 
 ### GetTaskStatus
 
@@ -495,6 +574,43 @@ type StreamItem struct {
 
 StreamItem represents a single stream fragment
 
+## Type StreamOptions
+
+```go
+type StreamOptions struct {
+	OnReasoning	AgentEventCallback
+	OnContent	AgentEventCallback
+	OnToolCall	AgentEventCallback
+	OnToolResult	AgentEventCallback
+	OnError		AgentEventCallback
+}
+```
+
+StreamOptions holds streaming callback options.
+
+## Type TaskExecution
+
+```go
+type TaskExecution struct {
+	TaskID	string
+	waitFn	func(timeout int) *ExecutionResult
+}
+```
+
+TaskExecution represents a running task that can be waited on for its final result. Returned by
+MobileUseAgent.ExecuteTask when the task is started.
+
+### Methods
+
+### Wait
+
+```go
+func (te *TaskExecution) Wait(timeout int) *ExecutionResult
+```
+
+Wait blocks until the task finishes or the timeout (in seconds) is reached. A timeout of 0 means
+wait indefinitely (until the task finishes or fails).
+
 ## Type baseTaskAgent
 
 ```go
@@ -505,6 +621,18 @@ type baseTaskAgent struct {
 ```
 
 baseTaskAgent provides common functionality for task execution agents
+
+## Type streamContext
+
+```go
+type streamContext struct {
+	contentParts	[]string
+	lastError	map[string]interface{}
+	streamErr	error
+}
+```
+
+streamContext holds mutable state shared between WS callbacks and TaskExecution.Wait().
 
 ## Related Resources
 

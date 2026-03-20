@@ -5,7 +5,8 @@ import time
 import os
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from ..api.models import ListSkillMetaDataRequest
+from ..api.models import ListSkillMetaDataRequest, GetSkillMetaDataRequest
+from .._common.models.skill_info import SkillInfo, SkillsMetadataResult
 
 if TYPE_CHECKING:
     from .agentbay import AgentBay
@@ -18,11 +19,9 @@ class SyncBetaSkillsService:
     """
     Beta skills service.
 
-    Current capability:
-    - List official skills metadata via POP Action `ListSkillMetaData`.
-
-    Notes:
-    - Backend returns Name/Description only.
+    Capabilities:
+    - Get skills metadata via POP Action `GetSkillMetaData` (supports filtering).
+    - List official skills metadata via POP Action `ListSkillMetaData` (deprecated).
     """
 
     def __init__(self, agent_bay: "AgentBay", skills_root: Optional[str] = None):
@@ -38,14 +37,93 @@ class SyncBetaSkillsService:
         n = (name or "").strip().lstrip("/")
         return f"{self._skills_root}/{n}" if n else self._skills_root
 
-    def list_metadata(self) -> List[Dict[str, str]]:
-        """
-        List official skills metadata.
+    def get_metadata(
+        self,
+        image_id: Optional[str] = None,
+        skill_names: Optional[List[str]] = None,
+    ) -> SkillsMetadataResult:
+        """Get skills metadata without starting a sandbox.
+
+        Args:
+            image_id: Image ID to determine the skills root path. Uses default image if not specified.
+            skill_names: Filter by skill names. Returns all visible skills if not specified.
 
         Returns:
-            List[Dict[str, str]]: Each item contains:
-            - name (str)
-            - description (str)
+            SkillsMetadataResult with skills list and skills_root_path.
+
+        Raises:
+            RuntimeError: If the API call fails.
+        """
+        request = GetSkillMetaDataRequest(
+            authorization=f"Bearer {self._agent_bay.api_key}",
+            image_id=image_id,
+            skill_group_ids=skill_names,
+        )
+
+        max_attempts = 3
+        delay_s = 0.2
+        last_err: Optional[BaseException] = None
+        resp = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                resp = self._agent_bay.client.get_skill_meta_data(request)
+                last_err = None
+                break
+            except Exception as e:
+                last_err = e
+                msg = str(e)
+                if attempt < max_attempts and (
+                    "ServiceUnavailable" in msg
+                    or "statusCode': 503" in msg
+                    or "code: 503" in msg
+                ):
+                    time.sleep(delay_s)
+                    delay_s *= 2
+                    continue
+                raise
+
+        if last_err is not None:
+            raise RuntimeError(f"GetSkillMetaData failed: {last_err}") from last_err
+
+        body = getattr(resp, "body", None)
+        if body is None:
+            raise RuntimeError("GetSkillMetaData failed: missing response body")
+
+        if getattr(body, "success", None) is None or not body.success:
+            code = str(getattr(body, "code", "") or "")
+            msg = str(getattr(body, "message", "") or "")
+            if code:
+                raise RuntimeError(f"GetSkillMetaData failed: [{code}] {msg}")
+            raise RuntimeError(f"GetSkillMetaData failed: {msg or 'Unknown error'}")
+
+        data = getattr(body, "data", None)
+        if data is None:
+            raise RuntimeError("GetSkillMetaData failed: missing Data field")
+
+        skill_path = str(getattr(data, "skill_path", "") or "")
+        meta_data_list = getattr(data, "meta_data_list", None) or []
+
+        skills: List[SkillInfo] = []
+        for raw in meta_data_list:
+            name = str(getattr(raw, "name", "") or "").strip()
+            if not name:
+                continue
+            description = str(getattr(raw, "description", "") or "")
+            skills.append(SkillInfo(name=name, description=description))
+
+        return SkillsMetadataResult(
+            skills=skills,
+            skills_root_path=skill_path,
+        )
+
+    def list_metadata(self) -> List[Dict[str, str]]:
+        """List official skills metadata.
+
+        .. deprecated::
+            Use :meth:`get_metadata` instead.
+
+        Returns:
+            List[Dict[str, str]]: Each item contains name and description.
         """
         request = ListSkillMetaDataRequest(
             authorization=f"Bearer {self._agent_bay.api_key}",

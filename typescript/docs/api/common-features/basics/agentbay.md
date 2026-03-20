@@ -25,7 +25,7 @@ Main class for interacting with the AgentBay cloud runtime environment.
 
 ```typescript
 betaNetwork: [`BetaNetworkService`](../advanced/network.md)
-betaSkills: `BetaSkillsService`
+betaSkills: ``BetaSkillsService``
 client: ``Client``
 context: [`ContextService`](context.md)
 network: [`BetaNetworkService`](../advanced/network.md)

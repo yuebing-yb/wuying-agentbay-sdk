@@ -58,21 +58,19 @@ FILE: README.md
   <a href="docs/guides/browser-use/README.md">Browser</a> ·
   <a href="docs/guides/computer-use/README.md">Desktop</a> ·
   <a href="docs/guides/mobile-use/README.md">Mobile</a> ·
-  <a href="docs/guides/codespace/README.md">Code</a>
+  <a href="docs/guides/codespace/README.md">Code</a> ·
+  <a href="docs/guides/common-features/advanced/skills.md">Skills</a>
 </p>
 
 ---
 
 ## 🔥 OpenClaw Quick Deployment
 
-Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes with a turnkey web management UI.
+Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes. Available in [Python](cookbook/openclaw/python/) and [Java](cookbook/openclaw/java/).
 
-| Implementation | Stack | Get Started |
-|---------------|-------|-------------|
-| [Python](cookbook/openclaw/python/) | FastAPI + React | `pip install -r requirements.txt && python main.py` |
-| [Java](cookbook/openclaw/java/) | Spring Boot + React | `mvn clean compile && mvn spring-boot:run` |
+## ✨ Skills — Equip Your Agents (Beta)
 
-Both include Context persistence, external HTTPS access via `getLink`, and custom model configuration. Visit `http://localhost:8080` after launch.
+Load reusable capability modules into sandbox sessions — pre-configured tools and workflows, no manual setup needed. Available in all four SDKs. [Learn more →](docs/guides/common-features/advanced/skills.md)
 
 ## 📦 Installation
 
@@ -163,8 +161,17 @@ if (result.isSuccess()) {
 }
 
 // Clean up
+agentBay.delete(session, false);
+```
 
-... [truncated, 5,516 chars remaining] ...
+
+
+## 🎯 Use Cases
+
+<table>
+<tr>
+
+... [truncated, 5,445 chars remaining] ...
 
 ================================================
 FILE: docs/README.md
@@ -1210,19 +1217,23 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## 📖 Complete Documentation
+## 🤖 Agent Streaming Output (Beta)
 
-### 🆕 New Users
-- [📚 Quick Start Tutorial](https://github.com/agentbay-ai/wuying-agentbay-sdk/tree/main/docs/quickstart/README.md) - Get started in 5 minutes
+Real-time streaming for mobile agent tasks via WebSocket — receive reasoning steps, content, and tool calls as they happen:
 
-... [truncated, 5,830 chars remaining] ...
+```python
+result = session.agent.mobile.execute_task_and_wait(
+    task="Open Settings and check device name",
+    timeout=180,
+
+... [truncated, 6,325 chars remaining] ...
 
 ================================================
 FILE: python/pyproject.toml
 ================================================
 [tool.poetry]
 name = "wuying-agentbay-sdk"
-version = "0.17.0"
+version = "0.18.0"
 description = "Python SDK for interacting with the Wuying AgentBay cloud runtime environment"
 readme = ["README.md", "CHANGELOG.md"]
 packages = [{include = "agentbay"}]
@@ -1417,7 +1428,7 @@ FILE: typescript/package.json
 ================================================
 {
     "name": "wuying-agentbay-sdk",
-    "version": "0.17.0",
+    "version": "0.18.0",
     "description": "TypeScript SDK for interacting with the Wuying AgentBay cloud runtime environment",
     "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",

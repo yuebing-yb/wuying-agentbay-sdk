@@ -226,6 +226,8 @@ Parameters for creating a new session in the AgentBay cloud environment.
 - `extra_configs` _Optional[ExtraConfigs]_ - Advanced configuration parameters for mobile environments.
 - `framework` _Optional[str]_ - Framework name for tracking (e.g., "langchain"). Defaults to empty string (direct call).
 - `beta_network_id` _Optional[str]_ - Beta network ID to bind this session to.
+- `load_skills` _Optional[bool]_ - Whether to load skills into the sandbox.
+- `skill_names` _Optional[List[str]]_ - Skill names to load. Loads all visible skills when load_skills=True and this is not specified.
 
 ### __init__
 
@@ -239,7 +241,9 @@ def __init__(self, labels: Optional[Dict[str, str]] = None,
              beta_network_id: Optional[str] = None,
              enable_browser_replay: Optional[bool] = None,
              extra_configs: Optional[ExtraConfigs] = None,
-             framework: Optional[str] = None)
+             framework: Optional[str] = None,
+             load_skills: Optional[bool] = None,
+             skill_names: Optional[List[str]] = None)
 ```
 
 Initialize CreateSessionParams.

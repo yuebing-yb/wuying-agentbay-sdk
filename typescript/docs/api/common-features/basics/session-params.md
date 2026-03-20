@@ -26,8 +26,10 @@ in the AgentBay cloud environment.
 - `extraConfigs`
 - `imageId`
 - `isVpc`
+- `loadSkills`
 - `mcpPolicyId`
 - `policyId`
+- `skillNames`
 
 ## Properties
 
@@ -130,6 +132,18 @@ ___
 
 ___
 
+### loadSkills
+
+• `Optional` **loadSkills**: `boolean`
+
+Whether to load skills into the sandbox.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`loadSkills`
+
+___
+
 ### mcpPolicyId
 
 • `Optional` **mcpPolicyId**: `string`
@@ -151,6 +165,18 @@ Security policy ID (interface field name). Maps to mcpPolicyId internally.
 #### Implementation of
 
 `CreateSessionParamsInterface`.`policyId`
+
+___
+
+### skillNames
+
+• `Optional` **skillNames**: `string`[]
+
+Skill names to load.
+
+#### Implementation of
+
+`CreateSessionParamsInterface`.`skillNames`
 
 ## Best Practices
 

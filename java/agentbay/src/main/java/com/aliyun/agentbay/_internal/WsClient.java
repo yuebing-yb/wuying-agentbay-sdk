@@ -65,10 +65,12 @@ public class WsClient {
     public class StreamHandle {
         public final String invocationId;
         private final CompletableFuture<Map<String, Object>> endFuture;
+        private final String target;
 
-        StreamHandle(String invocationId, CompletableFuture<Map<String, Object>> endFuture) {
+        StreamHandle(String invocationId, CompletableFuture<Map<String, Object>> endFuture, String target) {
             this.invocationId = invocationId;
             this.endFuture = endFuture;
+            this.target = target;
         }
 
         public CompletableFuture<Map<String, Object>> waitEnd() {
@@ -77,6 +79,26 @@ public class WsClient {
 
         public void cancel() {
             cancelPending(invocationId);
+        }
+
+        public void write(Map<String, Object> data) {
+            WebSocket ws = WsClient.this.webSocket;
+            if (ws == null) {
+                logger.warn("Failed to write: WS is not connected");
+                return;
+            }
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("invocationId", invocationId);
+            payload.put("source", "SDK");
+            payload.put("target", target);
+            payload.put("data", data);
+            logFrame(">>", payload);
+            try {
+                String raw = objectMapper.writeValueAsString(payload);
+                ws.send(raw);
+            } catch (Exception e) {
+                logger.warn("Failed to write: {}", e.getMessage());
+            }
         }
     }
 
@@ -179,7 +201,7 @@ public class WsClient {
                 throw new RuntimeException(e);
             }
 
-            return new StreamHandle(invocationId, pending.endFuture);
+            return new StreamHandle(invocationId, pending.endFuture, target);
         });
     }
 

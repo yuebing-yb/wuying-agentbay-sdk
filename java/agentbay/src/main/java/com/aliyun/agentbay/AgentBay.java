@@ -12,6 +12,7 @@ import com.aliyun.agentbay.mobile.MobileSimulateMode;
 import com.aliyun.agentbay.model.*;
 import com.aliyun.agentbay.network.BetaNetworkService;
 import com.aliyun.agentbay.skills.BetaSkillsService;
+
 import com.aliyun.agentbay.session.Session;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.util.ResponseUtil;
@@ -485,6 +486,14 @@ public class AgentBay {
                 request.setNetworkId(params.getBetaNetworkId());
             }
 
+            // Add skills loading if requested
+            if (params.getLoadSkills() != null && params.getLoadSkills()) {
+                request.setLoadSkill(true);
+                if (params.getSkillNames() != null && !params.getSkillNames().isEmpty()) {
+                    request.setSkills(params.getSkillNames());
+                }
+            }
+
             // Set enable_browser_replay if explicitly set to false
             // Browser replay is enabled by default, so only set when explicitly False
             if (params.getEnableBrowserReplay() != null && !params.getEnableBrowserReplay()) {
@@ -597,6 +606,7 @@ public class AgentBay {
             sessions.put(result.getSessionId(), session);
             result.setSession(session);
 
+            // Populate skills if loadSkills was requested
             // Process mobile configuration if provided
             if (params.getExtraConfigs() != null && params.getExtraConfigs().getMobile() != null) {
                 try {

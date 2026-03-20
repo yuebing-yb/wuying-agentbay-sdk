@@ -39,6 +39,10 @@ type iCreateMcpSessionRequest interface {
 	GetSdkStats() *string
 	SetLoginRegionId(v string) *CreateMcpSessionRequest
 	GetLoginRegionId() *string
+	SetLoadSkill(v bool) *CreateMcpSessionRequest
+	GetLoadSkill() *bool
+	SetSkills(v []*string) *CreateMcpSessionRequest
+	GetSkills() []*string
 }
 
 type CreateMcpSessionRequest struct {
@@ -57,6 +61,8 @@ type CreateMcpSessionRequest struct {
 	ExtraConfigs        *string                                       `json:"ExtraConfigs,omitempty" xml:"ExtraConfigs,omitempty"`
 	SdkStats            *string                                       `json:"SdkStats,omitempty" xml:"SdkStats,omitempty"`
 	LoginRegionId       *string                                       `json:"LoginRegionId,omitempty" xml:"LoginRegionId,omitempty"`
+	LoadSkill           *bool                                         `json:"LoadSkill,omitempty" xml:"LoadSkill,omitempty"`
+	Skills              []*string                                     `json:"Skills,omitempty" xml:"Skills,omitempty" type:"Repeated"`
 }
 
 func (s CreateMcpSessionRequest) String() string {
@@ -200,6 +206,24 @@ func (s *CreateMcpSessionRequest) SetLoginRegionId(v string) *CreateMcpSessionRe
 
 func (s *CreateMcpSessionRequest) GetLoginRegionId() *string {
 	return s.LoginRegionId
+}
+
+func (s *CreateMcpSessionRequest) GetLoadSkill() *bool {
+	return s.LoadSkill
+}
+
+func (s *CreateMcpSessionRequest) GetSkills() []*string {
+	return s.Skills
+}
+
+func (s *CreateMcpSessionRequest) SetLoadSkill(v bool) *CreateMcpSessionRequest {
+	s.LoadSkill = &v
+	return s
+}
+
+func (s *CreateMcpSessionRequest) SetSkills(v []*string) *CreateMcpSessionRequest {
+	s.Skills = v
+	return s
 }
 
 func (s *CreateMcpSessionRequest) Validate() error {

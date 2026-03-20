@@ -68,7 +68,6 @@ global:
       - getClass
       - notify
       - notifyAll
-      - wait
       - finalize
 
     # Java Bean风格的getter/setter排除

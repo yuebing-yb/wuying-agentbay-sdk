@@ -139,6 +139,26 @@ params.setExtraConfigs(extraConfigs);
 Session session = agentBay.create(params).getSession();
 ```
 
+### 7. MobileAgentStreamingExample.java
+**Source**: [`../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileAgentStreamingExample.java`](../../../agentbay/src/main/java/com/aliyun/agentbay/examples/MobileAgentStreamingExample.java)
+
+Mobile agent task execution with real-time streaming output:
+- WebSocket-based streaming callbacks
+- Real-time reasoning and content events
+- Error handling during streaming
+
+**Key features demonstrated:**
+```java
+// Execute task with streaming callbacks
+MobileTaskOptions options = new MobileTaskOptions();
+options.setOnReasoning(event -> System.out.println("[Reasoning] " + event.getContent()));
+options.setOnContent(event -> System.out.println("[Content] " + event.getContent()));
+options.setOnError(event -> System.out.println("[Error] " + event.getError()));
+
+TaskExecution execution = session.getAgent().getMobile().executeTask("Open Settings app", options);
+ExecutionResult result = execution.wait(180);
+```
+
 ## Running the Examples
 
 ### Prerequisites

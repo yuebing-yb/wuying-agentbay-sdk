@@ -10,6 +10,7 @@ Advanced capabilities for complex use cases.
 - [Network (Beta)](network.md) - Share an isolated network across sessions
 - [Agent Modules](agent-modules.md) - AI-powered task execution
 - [OSS Integration](oss-integration.md) - Object Storage Service integration
+- [Skills (Beta)](skills.md) - Load reusable skill modules into sandbox sessions
 
 ## Getting Help
 

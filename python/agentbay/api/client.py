@@ -266,6 +266,12 @@ class Client(OpenApiClient):
                     tmp_req.persistence_data_list, "PersistenceDataList", "json"
                 )
             )
+        if not DaraCore.is_null(tmp_req.skills):
+            request.skills_shrink = (
+                Utils.array_to_string_with_specified_style(
+                    tmp_req.skills, "Skills", "json"
+                )
+            )
         body = {}
         if not DaraCore.is_null(request.authorization):
             body["Authorization"] = request.authorization
@@ -279,6 +285,8 @@ class Client(OpenApiClient):
             body["Timeout"] = request.timeout
         if not DaraCore.is_null(request.labels):
             body["Labels"] = request.labels
+        if not DaraCore.is_null(request.load_skill):
+            body["LoadSkill"] = request.load_skill
         if not DaraCore.is_null(request.mcp_policy_id):
             body["McpPolicyId"] = request.mcp_policy_id
         if not DaraCore.is_null(request.network_id):
@@ -287,6 +295,8 @@ class Client(OpenApiClient):
             body["PersistenceDataList"] = request.persistence_data_list_shrink
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
+        if not DaraCore.is_null(request.skills_shrink):
+            body["Skills"] = request.skills_shrink
         if not DaraCore.is_null(request.vpc_resource):
             body["VpcResource"] = request.vpc_resource
         if not DaraCore.is_null(request.extra_configs):
@@ -328,6 +338,12 @@ class Client(OpenApiClient):
                     tmp_req.persistence_data_list, "PersistenceDataList", "json"
                 )
             )
+        if not DaraCore.is_null(tmp_req.skills):
+            request.skills_shrink = (
+                Utils.array_to_string_with_specified_style(
+                    tmp_req.skills, "Skills", "json"
+                )
+            )
         body = {}
         if not DaraCore.is_null(request.authorization):
             body["Authorization"] = request.authorization
@@ -341,6 +357,8 @@ class Client(OpenApiClient):
             body["Timeout"] = request.timeout
         if not DaraCore.is_null(request.labels):
             body["Labels"] = request.labels
+        if not DaraCore.is_null(request.load_skill):
+            body["LoadSkill"] = request.load_skill
         if not DaraCore.is_null(request.mcp_policy_id):
             body["McpPolicyId"] = request.mcp_policy_id
         if not DaraCore.is_null(request.network_id):
@@ -349,6 +367,8 @@ class Client(OpenApiClient):
             body["PersistenceDataList"] = request.persistence_data_list_shrink
         if not DaraCore.is_null(request.session_id):
             body["SessionId"] = request.session_id
+        if not DaraCore.is_null(request.skills_shrink):
+            body["Skills"] = request.skills_shrink
         if not DaraCore.is_null(request.vpc_resource):
             body["VpcResource"] = request.vpc_resource
         if not DaraCore.is_null(request.extra_configs):
@@ -1981,6 +2001,92 @@ class Client(OpenApiClient):
     ) -> main_models.ListSkillMetaDataResponse:
         runtime = RuntimeOptions()
         return await self.list_skill_meta_data_with_options_async(request, runtime)
+
+    def get_skill_meta_data_with_options(
+        self,
+        tmp_req: main_models.GetSkillMetaDataRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.GetSkillMetaDataResponse:
+        tmp_req.validate()
+        request = main_models.GetSkillMetaDataShrinkRequest()
+        Utils.convert(tmp_req, request)
+        if not DaraCore.is_null(tmp_req.skill_group_ids):
+            request.skill_group_ids_shrink = Utils.array_to_string_with_specified_style(
+                tmp_req.skill_group_ids, "SkillGroupIds", "json"
+            )
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.image_id):
+            body["ImageId"] = request.image_id
+        if not DaraCore.is_null(request.skill_group_ids_shrink):
+            body["SkillGroupIds"] = request.skill_group_ids_shrink
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="GetSkillMetaData",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.GetSkillMetaDataResponse(),
+            self.call_api(params, req, runtime),
+        )
+
+    async def get_skill_meta_data_with_options_async(
+        self,
+        tmp_req: main_models.GetSkillMetaDataRequest,
+        runtime: RuntimeOptions,
+    ) -> main_models.GetSkillMetaDataResponse:
+        tmp_req.validate()
+        request = main_models.GetSkillMetaDataShrinkRequest()
+        Utils.convert(tmp_req, request)
+        if not DaraCore.is_null(tmp_req.skill_group_ids):
+            request.skill_group_ids_shrink = Utils.array_to_string_with_specified_style(
+                tmp_req.skill_group_ids, "SkillGroupIds", "json"
+            )
+        body = {}
+        if not DaraCore.is_null(request.authorization):
+            body["Authorization"] = request.authorization
+        if not DaraCore.is_null(request.image_id):
+            body["ImageId"] = request.image_id
+        if not DaraCore.is_null(request.skill_group_ids_shrink):
+            body["SkillGroupIds"] = request.skill_group_ids_shrink
+        req = open_api_util_models.OpenApiRequest(body=Utils.parse_to_map(body))
+        params = open_api_util_models.Params(
+            action="GetSkillMetaData",
+            version="2025-05-06",
+            protocol="HTTPS",
+            pathname="/",
+            method="POST",
+            auth_type="Anonymous",
+            style="RPC",
+            req_body_type="formData",
+            body_type="json",
+        )
+        return DaraCore.from_map(
+            main_models.GetSkillMetaDataResponse(),
+            await self.call_api_async(params, req, runtime),
+        )
+
+    def get_skill_meta_data(
+        self,
+        request: main_models.GetSkillMetaDataRequest,
+    ) -> main_models.GetSkillMetaDataResponse:
+        runtime = RuntimeOptions()
+        return self.get_skill_meta_data_with_options(request, runtime)
+
+    async def get_skill_meta_data_async(
+        self,
+        request: main_models.GetSkillMetaDataRequest,
+    ) -> main_models.GetSkillMetaDataResponse:
+        runtime = RuntimeOptions()
+        return await self.get_skill_meta_data_with_options_async(request, runtime)
 
     def modify_context_with_options(
         self,

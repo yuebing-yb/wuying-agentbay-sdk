@@ -333,6 +333,10 @@ export interface CreateSessionParamsInterface {
   isVpc?: boolean;
   /** MCP policy id to apply when creating the session (class field name). */
   mcpPolicyId?: string;
+  /** Whether to load skills into the sandbox. */
+  loadSkills?: boolean;
+  /** Skill names to load. Loads all visible skills when loadSkills=true and this is not specified. */
+  skillNames?: string[];
 }
 
 /**
@@ -377,6 +381,12 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
   public framework: string;
 
   public browserContext?: BrowserContext;
+
+  /** Whether to load skills into the sandbox. */
+  public loadSkills?: boolean;
+
+  /** Skill names to load. */
+  public skillNames?: string[];
 
   constructor(params?: CreateSessionParamsInterface) {
     this.labels = params?.labels || {};
@@ -435,5 +445,7 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
 
     this.contextSync = allContextSyncs;
     this.browserContext = params?.browserContext;
+    this.loadSkills = params?.loadSkills;
+    this.skillNames = params?.skillNames;
   }
 }

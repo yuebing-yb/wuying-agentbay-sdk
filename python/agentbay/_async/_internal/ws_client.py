@@ -91,6 +91,16 @@ class WsStreamHandle:
     async def wait_end(self) -> dict[str, Any]:
         return await asyncio.shield(self._pending.end_future)
 
+    async def wait_end_with_timeout(self, timeout: int) -> dict[str, Any]:
+        # Avoid asyncio.wait_for + asyncio.shield combination due to
+        # Python 3.10 bug (bpo-45097) where CancelledError can escape
+        # instead of being converted to TimeoutError.
+        shielded = asyncio.shield(self._pending.end_future)
+        done, _ = await asyncio.wait([shielded], timeout=timeout)
+        if done:
+            return done.pop().result()
+        raise TimeoutError()
+
 
 class WsClient:
     """

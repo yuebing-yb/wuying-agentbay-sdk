@@ -61,6 +61,12 @@ public class CreateSessionParams {
     /** Beta network ID to bind this session to. */
     private String betaNetworkId;
 
+    /** Whether to load skills into the sandbox. */
+    private Boolean loadSkills;
+
+    /** Skill names to load. Loads all visible skills when loadSkills=true and this is not specified. */
+    private List<String> skillNames;
+
     /**
      * Create a new CreateSessionParams instance with default values(contextSyncs: empty list,idleReleaseTimeout: 300 seconds).
      * 
@@ -272,6 +278,42 @@ public class CreateSessionParams {
      */
     public void setBetaNetworkId(String betaNetworkId) {
         this.betaNetworkId = betaNetworkId;
+    }
+
+    /**
+     * Get whether to load skills into the sandbox.
+     *
+     * @return true to load skills, null or false otherwise
+     */
+    public Boolean getLoadSkills() {
+        return loadSkills;
+    }
+
+    /**
+     * Set whether to load skills into the sandbox.
+     *
+     * @param loadSkills true to load skills
+     */
+    public void setLoadSkills(Boolean loadSkills) {
+        this.loadSkills = loadSkills;
+    }
+
+    /**
+     * Get skill names to load.
+     *
+     * @return list of skill names, or null
+     */
+    public List<String> getSkillNames() {
+        return skillNames;
+    }
+
+    /**
+     * Set skill names to load. Loads all visible skills when loadSkills=true and this is not specified.
+     *
+     * @param skillNames list of skill names
+     */
+    public void setSkillNames(List<String> skillNames) {
+        this.skillNames = skillNames;
     }
 
 }
