@@ -214,6 +214,10 @@ public class Client extends com.aliyun.teaopenapi.Client {
             request.persistenceDataListShrink = com.aliyun.openapiutil.Client.arrayToStringWithSpecifiedStyle(tmpReq.persistenceDataList, "PersistenceDataList", "json");
         }
 
+        if (!com.aliyun.teautil.Common.isUnset(tmpReq.skills)) {
+            request.skillsShrink = com.aliyun.openapiutil.Client.arrayToStringWithSpecifiedStyle(tmpReq.skills, "Skills", "json");
+        }
+
         java.util.Map<String, Object> body = new java.util.HashMap<>();
         if (!com.aliyun.teautil.Common.isUnset(request.authorization)) {
             body.put("Authorization", request.authorization);
@@ -275,6 +279,14 @@ public class Client extends com.aliyun.teaopenapi.Client {
             body.put("SdkStats", request.sdkStats);
         }
 
+        if (!com.aliyun.teautil.Common.isUnset(request.loadSkill)) {
+            body.put("LoadSkill", request.loadSkill);
+        }
+
+        if (!com.aliyun.teautil.Common.isUnset(request.skillsShrink)) {
+            body.put("Skills", request.skillsShrink);
+        }
+
         if (!com.aliyun.teautil.Common.isUnset(request.timeout)) {
             body.put("Timeout", request.timeout);
         }
@@ -306,6 +318,64 @@ public class Client extends com.aliyun.teaopenapi.Client {
     public CreateMcpSessionResponse createMcpSession(CreateMcpSessionRequest request) throws Exception {
         com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
         return this.createMcpSessionWithOptions(request, runtime);
+    }
+
+    /**
+     * <b>summary</b> :
+     * <p>GetSkillMetaData</p>
+     *
+     * @param tmpReq GetSkillMetaDataRequest
+     * @param runtime runtime options for this request RuntimeOptions
+     * @return GetSkillMetaDataResponse
+     */
+    public GetSkillMetaDataResponse getSkillMetaDataWithOptions(GetSkillMetaDataRequest tmpReq, com.aliyun.teautil.models.RuntimeOptions runtime) throws Exception {
+        com.aliyun.teautil.Common.validateModel(tmpReq);
+        GetSkillMetaDataShrinkRequest request = new GetSkillMetaDataShrinkRequest();
+        com.aliyun.openapiutil.Client.convert(tmpReq, request);
+        if (!com.aliyun.teautil.Common.isUnset(tmpReq.skillGroupIds)) {
+            request.skillGroupIdsShrink = com.aliyun.openapiutil.Client.arrayToStringWithSpecifiedStyle(tmpReq.skillGroupIds, "SkillGroupIds", "json");
+        }
+
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        if (!com.aliyun.teautil.Common.isUnset(request.authorization)) {
+            body.put("Authorization", request.authorization);
+        }
+
+        if (!com.aliyun.teautil.Common.isUnset(request.imageId)) {
+            body.put("ImageId", request.imageId);
+        }
+
+        if (!com.aliyun.teautil.Common.isUnset(request.skillGroupIdsShrink)) {
+            body.put("SkillGroupIds", request.skillGroupIdsShrink);
+        }
+
+        com.aliyun.teaopenapi.models.OpenApiRequest req = com.aliyun.teaopenapi.models.OpenApiRequest.build(TeaConverter.buildMap(
+            new TeaPair("body", com.aliyun.openapiutil.Client.parseToMap(body))
+        ));
+        com.aliyun.teaopenapi.models.Params params = com.aliyun.teaopenapi.models.Params.build(TeaConverter.buildMap(
+            new TeaPair("action", "GetSkillMetaData"),
+            new TeaPair("version", "2025-05-06"),
+            new TeaPair("protocol", "HTTPS"),
+            new TeaPair("pathname", "/"),
+            new TeaPair("method", "POST"),
+            new TeaPair("authType", "Anonymous"),
+            new TeaPair("style", "RPC"),
+            new TeaPair("reqBodyType", "formData"),
+            new TeaPair("bodyType", "json")
+        ));
+        return TeaModel.toModel(this.doRPCRequest(params.action, params.version, params.protocol, params.method, params.authType, params.bodyType, req, runtime), new GetSkillMetaDataResponse());
+    }
+
+    /**
+     * <b>summary</b> :
+     * <p>GetSkillMetaData</p>
+     *
+     * @param request GetSkillMetaDataRequest
+     * @return GetSkillMetaDataResponse
+     */
+    public GetSkillMetaDataResponse getSkillMetaData(GetSkillMetaDataRequest request) throws Exception {
+        com.aliyun.teautil.models.RuntimeOptions runtime = new com.aliyun.teautil.models.RuntimeOptions();
+        return this.getSkillMetaDataWithOptions(request, runtime);
     }
 
     /**

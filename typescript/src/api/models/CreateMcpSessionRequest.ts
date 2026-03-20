@@ -19,6 +19,8 @@ export class CreateMcpSessionRequest extends $dara.Model {
   extraConfigs?: string;
   sdkStats?: string;
   loginRegionId?: string;
+  loadSkill?: boolean;
+  skills?: string[];
   static names(): { [key: string]: string } {
     return {
       authorization: 'Authorization',
@@ -36,6 +38,8 @@ export class CreateMcpSessionRequest extends $dara.Model {
       extraConfigs: 'ExtraConfigs',
       sdkStats: 'SdkStats',
       loginRegionId: 'LoginRegionId',
+      loadSkill: 'LoadSkill',
+      skills: 'Skills',
     };
   }
 
@@ -56,12 +60,17 @@ export class CreateMcpSessionRequest extends $dara.Model {
       extraConfigs: 'string',
       sdkStats: 'string',
       loginRegionId: 'string',
+      loadSkill: 'boolean',
+      skills: { 'type': 'array', 'itemType': 'string' },
     };
   }
 
   validate() {
     if(Array.isArray(this.persistenceDataList)) {
       $dara.Model.validateArray(this.persistenceDataList);
+    }
+    if(Array.isArray(this.skills)) {
+      $dara.Model.validateArray(this.skills);
     }
     super.validate();
   }

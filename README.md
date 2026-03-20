@@ -24,21 +24,19 @@
   <a href="docs/guides/browser-use/README.md">Browser</a> ·
   <a href="docs/guides/computer-use/README.md">Desktop</a> ·
   <a href="docs/guides/mobile-use/README.md">Mobile</a> ·
-  <a href="docs/guides/codespace/README.md">Code</a>
+  <a href="docs/guides/codespace/README.md">Code</a> ·
+  <a href="docs/guides/common-features/advanced/skills.md">Skills</a>
 </p>
 
 ---
 
 ## 🔥 OpenClaw Quick Deployment
 
-Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes with a turnkey web management UI.
+Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes. Available in [Python](cookbook/openclaw/python/) and [Java](cookbook/openclaw/java/).
 
-| Implementation | Stack | Get Started |
-|---------------|-------|-------------|
-| [Python](cookbook/openclaw/python/) | FastAPI + React | `pip install -r requirements.txt && python main.py` |
-| [Java](cookbook/openclaw/java/) | Spring Boot + React | `mvn clean compile && mvn spring-boot:run` |
+## ✨ Skills — Equip Your Agents (Beta)
 
-Both include Context persistence, external HTTPS access via `getLink`, and custom model configuration. Visit `http://localhost:8080` after launch.
+Load reusable capability modules into sandbox sessions — pre-configured tools and workflows, no manual setup needed. Available in all four SDKs. [Learn more →](docs/guides/common-features/advanced/skills.md)
 
 ## 📦 Installation
 
@@ -206,7 +204,7 @@ agentBay.delete(session, false);
 
 ### 🎯 Scenario-Based Features
 - **Computer Use** - General automation and desktop operations
-- **Browser Use** - Web automation, scraping, and browser control  
+- **Browser Use** - Web automation, scraping, and browser control
 - **CodeSpace** - Code execution and development environment
 - **Mobile Use** - Mobile device simulation and control
 

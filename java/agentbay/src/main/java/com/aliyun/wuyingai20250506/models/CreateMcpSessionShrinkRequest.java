@@ -29,6 +29,9 @@ public class CreateMcpSessionShrinkRequest extends TeaModel {
     @NameInMap("Labels")
     public String labels;
 
+    @NameInMap("LoadSkill")
+    public Boolean loadSkill;
+
     @NameInMap("LoginRegionId")
     public String loginRegionId;
 
@@ -46,6 +49,9 @@ public class CreateMcpSessionShrinkRequest extends TeaModel {
 
     @NameInMap("SessionId")
     public String sessionId;
+
+    @NameInMap("Skills")
+    public String skillsShrink;
 
     @NameInMap("VpcResource")
     public Boolean vpcResource;
@@ -117,6 +123,14 @@ public class CreateMcpSessionShrinkRequest extends TeaModel {
         return this.labels;
     }
 
+    public CreateMcpSessionShrinkRequest setLoadSkill(Boolean loadSkill) {
+        this.loadSkill = loadSkill;
+        return this;
+    }
+    public Boolean getLoadSkill() {
+        return this.loadSkill;
+    }
+
     public CreateMcpSessionShrinkRequest setLoginRegionId(String loginRegionId) {
         this.loginRegionId = loginRegionId;
         return this;
@@ -163,6 +177,14 @@ public class CreateMcpSessionShrinkRequest extends TeaModel {
     }
     public String getSessionId() {
         return this.sessionId;
+    }
+
+    public CreateMcpSessionShrinkRequest setSkillsShrink(String skillsShrink) {
+        this.skillsShrink = skillsShrink;
+        return this;
+    }
+    public String getSkillsShrink() {
+        return this.skillsShrink;
     }
 
     public CreateMcpSessionShrinkRequest setVpcResource(Boolean vpcResource) {

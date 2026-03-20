@@ -177,6 +177,7 @@ export class WsClient {
     invocationId: string;
     waitEnd: () => Promise<Record<string, any>>;
     cancel: () => Promise<void>;
+    write: (data: Record<string, any>) => Promise<void>;
   }> {
     await this.connect();
     const ws = this.ws;
@@ -205,11 +206,24 @@ export class WsClient {
     this.logFrame(">>", payload);
     ws.send(safeStringify(payload));
 
+    const target = params.target;
     return {
       invocationId,
       waitEnd: async () => await endPromise,
       cancel: async () => {
         this.cancelPending(invocationId);
+      },
+      write: async (data: Record<string, any>) => {
+        const ws = this.ws;
+        if (!ws) throw new Error("WS not connected");
+        const writePayload = {
+          invocationId,
+          source: "SDK",
+          target,
+          data,
+        };
+        this.logFrame(">>", writePayload);
+        ws.send(safeStringify(writePayload));
       },
     };
   }

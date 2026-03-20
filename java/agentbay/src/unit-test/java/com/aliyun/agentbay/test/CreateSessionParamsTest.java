@@ -7,6 +7,7 @@ import com.aliyun.agentbay.model.ExtraConfigs;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -176,6 +177,19 @@ public class CreateSessionParamsTest {
         params.setBetaNetworkId("");
 
         assertEquals("", params.getBetaNetworkId());
+    }
+
+    @Test
+    public void testCreateSessionParamsWithLoadSkillsAndSkillNames() {
+        CreateSessionParams params = new CreateSessionParams();
+        params.setLoadSkills(true);
+        params.setSkillNames(Arrays.asList("skill-1", "skill-2"));
+
+        assertTrue(params.getLoadSkills());
+        assertNotNull(params.getSkillNames());
+        assertEquals(2, params.getSkillNames().size());
+        assertEquals("skill-1", params.getSkillNames().get(0));
+        assertEquals("skill-2", params.getSkillNames().get(1));
     }
 
     @Test

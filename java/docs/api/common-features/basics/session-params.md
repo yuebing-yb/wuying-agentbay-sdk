@@ -251,6 +251,50 @@ Set the Beta network ID to bind this session to.
 **Parameters:**
 - `betaNetworkId` (String): beta network ID
 
+### getLoadSkills
+
+```java
+public Boolean getLoadSkills()
+```
+
+Get whether to load skills into the sandbox.
+
+**Returns:**
+- `Boolean`: true to load skills, null or false otherwise
+
+### setLoadSkills
+
+```java
+public void setLoadSkills(Boolean loadSkills)
+```
+
+Set whether to load skills into the sandbox.
+
+**Parameters:**
+- `loadSkills` (Boolean): true to load skills
+
+### getSkillNames
+
+```java
+public List<String> getSkillNames()
+```
+
+Get skill names to load.
+
+**Returns:**
+- `List<String>`: list of skill names, or null
+
+### setSkillNames
+
+```java
+public void setSkillNames(List<String> skillNames)
+```
+
+Set skill names to load. Loads all visible skills when loadSkills=true and this is not specified.
+
+**Parameters:**
+- `skillNames` (List<String>): list of skill names
+
 
 
 ## 💡 Best Practices

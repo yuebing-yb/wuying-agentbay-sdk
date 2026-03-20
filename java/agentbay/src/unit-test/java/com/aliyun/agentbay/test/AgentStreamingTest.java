@@ -1,0 +1,168 @@
+package com.aliyun.agentbay.test;
+
+import com.aliyun.agentbay.agent.AgentEvent;
+import com.aliyun.agentbay.agent.MobileTaskOptions;
+import com.aliyun.agentbay.agent.StreamOptions;
+import com.aliyun.agentbay.agent.TaskExecution;
+import com.aliyun.agentbay.model.ExecutionResult;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Unit tests for Agent streaming functionality.
+ */
+class AgentStreamingTest {
+
+    @Test
+    void testAgentEventFields() {
+        AgentEvent event = new AgentEvent("reasoning", 1, 1);
+        event.setContent("thinking...");
+
+        assertEquals("reasoning", event.getType());
+        assertEquals(1, event.getSeq());
+        assertEquals(1, event.getRound());
+        assertEquals("thinking...", event.getContent());
+    }
+
+    @Test
+    void testAgentEventToolCall() {
+        AgentEvent event = new AgentEvent("tool_call", 2, 1);
+        event.setToolCallId("call_001");
+        event.setToolName("click");
+        Map<String, Object> args = new HashMap<>();
+        args.put("x", 100);
+        event.setArgs(args);
+
+        assertEquals("tool_call", event.getType());
+        assertEquals("click", event.getToolName());
+        assertEquals(100, event.getArgs().get("x"));
+    }
+
+    @Test
+    void testAgentEventError() {
+        AgentEvent event = new AgentEvent("error", 3, 1);
+        Map<String, Object> error = new HashMap<>();
+        error.put("message", "something went wrong");
+        event.setError(error);
+
+        assertEquals("error", event.getType());
+        assertEquals("something went wrong", event.getError().get("message"));
+    }
+
+    @Test
+    void testStreamOptionsNoStreamBeta() {
+        StreamOptions opts = new StreamOptions();
+        assertFalse(opts.hasStreamingParams());
+    }
+
+    @Test
+    void testStreamOptionsWithOnReasoning() {
+        StreamOptions opts = StreamOptions.builder()
+                .onReasoning(e -> {})
+                .build();
+        assertTrue(opts.hasStreamingParams());
+    }
+
+    @Test
+    void testStreamOptionsWithOnContent() {
+        StreamOptions opts = StreamOptions.builder()
+                .onContent(e -> {})
+                .build();
+        assertTrue(opts.hasStreamingParams());
+    }
+
+    @Test
+    void testStreamOptionsWithOnToolCall() {
+        StreamOptions opts = StreamOptions.builder()
+                .onToolCall(e -> {})
+                .build();
+        assertTrue(opts.hasStreamingParams());
+    }
+
+    @Test
+    void testStreamOptionsWithOnToolResult() {
+        StreamOptions opts = StreamOptions.builder()
+                .onToolResult(e -> {})
+                .build();
+        assertTrue(opts.hasStreamingParams());
+    }
+
+    @Test
+    void testStreamOptionsWithOnError() {
+        StreamOptions opts = StreamOptions.builder()
+                .onError(e -> {})
+                .build();
+        assertTrue(opts.hasStreamingParams());
+    }
+
+    @Test
+    void testStreamOptionsBuilderAllCallbacks() {
+        StreamOptions opts = StreamOptions.builder()
+                .onReasoning(e -> {})
+                .onContent(e -> {})
+                .onToolCall(e -> {})
+                .onToolResult(e -> {})
+                .onError(e -> {})
+                .build();
+
+        assertNotNull(opts.getOnReasoning());
+        assertNotNull(opts.getOnContent());
+        assertNotNull(opts.getOnToolCall());
+        assertNotNull(opts.getOnToolResult());
+        assertNotNull(opts.getOnError());
+        assertTrue(opts.hasStreamingParams());
+    }
+
+    @Test
+    void testMobileTaskOptionsNoStreaming() {
+        MobileTaskOptions opts = new MobileTaskOptions();
+        assertFalse(opts.hasStreamingParams());
+        assertEquals(50, opts.getMaxSteps());
+    }
+
+    @Test
+    void testMobileTaskOptionsWithOnCallForUser() {
+        MobileTaskOptions opts = MobileTaskOptions.mobileBuilder()
+                .onCallForUser(e -> "user response")
+                .build();
+        assertTrue(opts.hasStreamingParams());
+        assertNotNull(opts.getOnCallForUser());
+        assertEquals("user response", opts.getOnCallForUser().apply(new AgentEvent("call_for_user", 1, 1)));
+    }
+
+    @Test
+    void testMobileTaskOptionsWithMaxSteps() {
+        MobileTaskOptions opts = MobileTaskOptions.mobileBuilder()
+                .maxSteps(100)
+                .build();
+        assertEquals(100, opts.getMaxSteps());
+    }
+
+    @Test
+    void testTaskExecutionWait() {
+        ExecutionResult expected = new ExecutionResult("req1", true, "", "task1", "completed", "done");
+        TaskExecution execution = new TaskExecution("task1", CompletableFuture.completedFuture(expected));
+        assertEquals("task1", execution.getTaskId());
+        ExecutionResult result = execution.wait(10);
+        assertTrue(result.isSuccess());
+        assertEquals("task1", result.getTaskId());
+        assertEquals("completed", result.getTaskStatus());
+        assertEquals("done", result.getTaskResult());
+    }
+
+    @Test
+    void testTaskExecutionWaitTimeout() {
+        CompletableFuture<ExecutionResult> neverComplete = new CompletableFuture<>();
+        TaskExecution execution = new TaskExecution("task1", neverComplete);
+        ExecutionResult result = execution.wait(1);
+        assertFalse(result.isSuccess());
+        assertEquals("task1", result.getTaskId());
+        assertEquals("failed", result.getTaskStatus());
+        assertTrue(result.getErrorMessage().contains("timed out"));
+    }
+}

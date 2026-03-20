@@ -42,6 +42,12 @@ type CreateSessionParams struct {
 	// When set, the session will be bound to the given cloud context and browser state will
 	// persist across sessions.
 	BrowserContext *BrowserContext
+
+	// LoadSkills when true, loads skills into the sandbox. Use BetaSkills.GetMetadata() to discover available skills.
+	LoadSkills bool
+
+	// SkillNames filter which skills to load by name. When LoadSkills is true and this is empty, loads all visible skills.
+	SkillNames []string
 }
 
 // NewCreateSessionParams creates a new CreateSessionParams with default values.
@@ -101,6 +107,18 @@ func (p *CreateSessionParams) WithEnableBrowserReplay(enableBrowserReplay bool) 
 // WithBrowserContext sets the browser context configuration for the session parameters.
 func (p *CreateSessionParams) WithBrowserContext(browserContext *BrowserContext) *CreateSessionParams {
 	p.BrowserContext = browserContext
+	return p
+}
+
+// WithLoadSkills sets whether to load skills into the sandbox.
+func (p *CreateSessionParams) WithLoadSkills(loadSkills bool) *CreateSessionParams {
+	p.LoadSkills = loadSkills
+	return p
+}
+
+// WithSkillNames sets the skill names to load. When LoadSkills is true and this is empty, loads all visible skills.
+func (p *CreateSessionParams) WithSkillNames(names []string) *CreateSessionParams {
+	p.SkillNames = names
 	return p
 }
 

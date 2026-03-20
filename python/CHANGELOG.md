@@ -2,6 +2,17 @@
 
 All notable changes to the Wuying AgentBay SDK will be documented in this file.
 
+## [0.18.0] - 2026-03-19
+
+### Added
+
+- **Skills feature (Beta)** (All SDKs): Skills metadata API (`get_metadata`) and session-level skill loading via `skill_ids` parameter in session creation.
+- **Agent streaming output (Beta)** (All SDKs): WebSocket-based streaming for agent task execution with `TaskExecution` handle, delivering real-time reasoning and content events via typed callbacks (`on_reasoning`, `on_content`, `on_call_for_user`, `on_error`). Includes `MobileTaskOptions` and `StreamOptions` for structured configuration.
+
+### Breaking Changes
+
+- **MobileUseAgent.execute_task** (All SDKs): Now returns `TaskExecution` instead of `ExecutionResult`. Use `execution.wait(timeout)` to get the result. `ComputerUseAgent` and `BrowserUseAgent` are not affected.
+
 ## [0.17.0] - 2026-03-16
 
 ### Added

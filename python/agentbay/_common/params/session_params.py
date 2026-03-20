@@ -313,6 +313,8 @@ class CreateSessionParams:
         extra_configs (Optional[ExtraConfigs]): Advanced configuration parameters for mobile environments.
         framework (Optional[str]): Framework name for tracking (e.g., "langchain"). Defaults to empty string (direct call).
         beta_network_id (Optional[str]): Beta network ID to bind this session to.
+        load_skills (Optional[bool]): Whether to load skills into the sandbox.
+        skill_names (Optional[List[str]]): Skill names to load. Loads all visible skills when load_skills=True and this is not specified.
     """
 
     def __init__(
@@ -327,6 +329,8 @@ class CreateSessionParams:
         enable_browser_replay: Optional[bool] = None,
         extra_configs: Optional[ExtraConfigs] = None,
         framework: Optional[str] = None,
+        load_skills: Optional[bool] = None,
+        skill_names: Optional[List[str]] = None,
     ):
         """
         Initialize CreateSessionParams.
@@ -386,6 +390,8 @@ class CreateSessionParams:
         self.enable_browser_replay = enable_browser_replay if enable_browser_replay is not None else True
         self.extra_configs = extra_configs
         self.framework = framework or ""
+        self.load_skills = load_skills
+        self.skill_names = skill_names
 
 
 class ListSessionParams:
