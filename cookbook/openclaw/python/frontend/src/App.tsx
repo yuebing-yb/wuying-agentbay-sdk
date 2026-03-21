@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, Link } from 'react-router-dom'
 import SessionForm from './components/SessionForm'
 import DingtalkSetupPanel from './components/DingtalkSetupPanel'
 import FeishuSetupPanel from './components/FeishuSetupPanel'
-// import SessionListPanel from './components/SessionListPanel' // 会话列表入口（逻辑有 bug，暂时注释）
+import OpenClawChatPage from './pages/OpenClawChatPage'
 import {
   getCredentialsForSession,
   removeCredentialsForSession,
@@ -42,6 +43,8 @@ interface SessionData {
   username: string
   createdAt: string
   status: string
+  contextName?: string
+  contextId?: string
 }
 
 type AppState = 'idle' | 'creating' | 'running' | 'destroying' | 'restoring' | 'pausing' | 'resuming'
@@ -128,6 +131,8 @@ function App() {
         username: data.username ?? '',
         createdAt: data.createdAt ?? data.created_at ?? '',
         status: data.status ?? 'running',
+        contextName: data.contextName ?? data.context_name ?? undefined,
+        contextId: data.contextId ?? data.context_id ?? undefined,
       })
       // 恢复成功后 1 秒刷新页面，确保右侧桌面加载最新 resourceUrl
       setTimeout(() => window.location.reload(), 1000)
@@ -186,6 +191,11 @@ function App() {
     session
 
   return (
+    <Routes>
+      <Route path="/chat" element={<OpenClawChatPage />} />
+      <Route
+        path="/*"
+        element={(
     <div className={`app ${isSessionActive ? 'session-active' : ''}`}>
       <header className="app-header">
         {/* 会话列表入口（逻辑有 bug，暂时注释）
@@ -231,7 +241,7 @@ function App() {
           session && (
           <div className="session-layout">
             <aside className="session-sidebar">
-              <div className="card session-card">
+              <div className="card session-card" data-session-id={session.sessionId}>
                 <h2>会话已就绪</h2>
                 <div className="session-info">
                   <div className="info-row">
@@ -242,6 +252,22 @@ function App() {
                     <span className="info-label">会话 ID</span>
                     <span className="info-value mono">{session.sessionId}</span>
                   </div>
+                  {(session.contextName ?? session.contextId) && (
+                    <>
+                      {session.contextName && (
+                        <div className="info-row">
+                          <span className="info-label">Context 名称</span>
+                          <span className="info-value">{session.contextName}</span>
+                        </div>
+                      )}
+                      {session.contextId && (
+                        <div className="info-row">
+                          <span className="info-label">Context ID</span>
+                          <span className="info-value mono">{session.contextId}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
                   <div className="info-row">
                     <span className="info-label">创建时间</span>
                     <span className="info-value">{session.createdAt}</span>
@@ -256,6 +282,15 @@ function App() {
                   </div>
                 </div>
 
+                <Link
+                  to={`/chat?sessionId=${session.sessionId}`}
+                  className="btn btn-outline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="openclaw-standalone-chat-link"
+                >
+                  与OpenClaw 对话
+                </Link>
                 <DingtalkSetupPanel sessionId={session.sessionId} />
                 <FeishuSetupPanel sessionId={session.sessionId} />
 
@@ -332,6 +367,9 @@ function App() {
         )}
       </main>
     </div>
+        )}
+      />
+    </Routes>
   )
 }
 

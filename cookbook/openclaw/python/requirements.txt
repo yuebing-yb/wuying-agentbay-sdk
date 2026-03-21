@@ -1,5 +1,5 @@
-# AgentBay SDK (install from local path)
-# pip install -e ../../../python
+# AgentBay SDK (PyPI name: wuying-agentbay-sdk; editable install from monorepo root python/)
+-e ../../../python
 
 # FastAPI web framework
 fastapi>=0.109.0
@@ -11,3 +11,6 @@ pydantic>=2.0.0
 
 # Playwright for browser automation (dingtalk setup)
 playwright>=1.40.0
+
+# WebSocket client for OpenClaw WSS proxy
+websockets>=12.0
