@@ -7,6 +7,7 @@ Session restore relies on frontend passing form_data (X-OpenClaw-Form-Data heade
 
 import asyncio
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -174,6 +175,8 @@ class SessionManager:
                 username=request.username,
                 created_at=now,
                 status="running",
+                context_name=context_name,
+                context_id=context_id,
                 agent_bay=agent_bay,
                 session=session,
                 create_request=request,
@@ -191,7 +194,7 @@ class SessionManager:
             logger.error(f"Error during session creation, cleaning up...", exc_info=True)
             if session:
                 try:
-                    agent_bay.delete(session)
+                    agent_bay.delete(session, True)
                 except Exception:
                     pass
             raise RuntimeError(f"Failed to create session: {e}")
@@ -253,6 +256,37 @@ class SessionManager:
             except Exception as e:
                 logger.warning(f"Failed to get OpenClaw link for restored session: {e}")
 
+            # Get context info from session bindings (OpenClaw uses CONTEXT_SYNC_PATH)
+            context_name = f"openclaw-{username}"
+            context_id = None
+            try:
+                bindings_result = session.context.list_bindings()
+                if bindings_result.success and bindings_result.bindings:
+                    for b in bindings_result.bindings:
+                        if b.path.rstrip("/") == CONTEXT_SYNC_PATH.rstrip("/"):
+                            if b.context_name:
+                                context_name = b.context_name
+                            if b.context_id:
+                                context_id = b.context_id
+                            break
+                    if not context_id and bindings_result.bindings:
+                        b = bindings_result.bindings[0]
+                        if b.context_name:
+                            context_name = b.context_name
+                        if b.context_id:
+                            context_id = b.context_id
+            except Exception as e:
+                logger.warning(f"Failed to get context bindings for restored session: {e}")
+            # Fallback: fetch context_id from agent_bay.context.get() when list_bindings didn't return it
+            if not context_id:
+                try:
+                    ctx_result = agent_bay.context.get(context_name)
+                    if ctx_result.success and ctx_result.context:
+                        context_id = ctx_result.context.id
+                        logger.info(f"Got context_id from context.get: {context_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to get context by name for restored session: {e}")
+
             info = SessionInfo(
                 session_id=session_id,
                 resource_url=resource_url,
@@ -260,6 +294,8 @@ class SessionManager:
                 username=username,
                 created_at=created_at,
                 status=status,
+                context_name=context_name,
+                context_id=context_id,
                 agent_bay=agent_bay,
                 session=session,
                 create_request=create_request,
@@ -333,6 +369,38 @@ class SessionManager:
             logger.exception("Failed to resume session %s", session_id)
             return False, str(e)
 
+    def get_openclaw_wss_url(self, session_id: str) -> Optional[tuple[str, str]]:
+        """
+        Get the external WSS URL for OpenClaw Gateway via get_link.
+        Uses the same token as openclawUrl (OpenClaw UI) - append ?token=xxx for auth.
+        Returns (wss_url_with_token, gateway_token) or None if session not found.
+        """
+        info = self._sessions.get(session_id)
+        if not info or not info.session:
+            return None
+        session = info.session
+        try:
+            link_result = session.get_link(protocol_type="wss", port=GATEWAY_PORT)
+            if not link_result.success or not link_result.data:
+                return None
+            wss_base = link_result.data.strip()
+            # Use same token as openclawUrl (OpenClaw UI: https://...#token=xxx)
+            token = GATEWAY_TOKEN
+            if info.openclaw_url and "token=" in info.openclaw_url:
+                m = re.search(r"[#&]token=([^&]+)", info.openclaw_url)
+                if m:
+                    token = m.group(1).strip()
+            sep = "&" if "?" in wss_base else "?"
+            full_url = f"{wss_base}{sep}token={token}"
+            logger.info(
+                "get_link WSS URL (with token): %s",
+                full_url,
+            )
+            return (full_url, token)
+        except Exception as e:
+            logger.warning(f"Failed to get OpenClaw WSS link for session {session_id}: {e}")
+        return None
+
     def restart_dashboard(self, session_id: str) -> tuple[bool, str]:
         """
         Restart dashboard (kill Firefox and reopen with OpenClaw UI) in sandbox.
@@ -375,8 +443,8 @@ class SessionManager:
 
         try:
             if info.session:
-                # delete() will sync Context data before destroying
-                info.session.delete()
+                # sync_context=True: upload Context data before destroying
+                info.session.delete(sync_context=True)
                 logger.info(f"Session {session_id} destroyed (Context synced)")
         except Exception as e:
             logger.error(f"Error destroying session {session_id}: {e}")

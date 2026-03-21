@@ -35,6 +35,8 @@ class SessionResponse(BaseModel):
     username: str = Field(..., description="Username")
     created_at: str = Field(..., alias="createdAt", description="Creation timestamp")
     status: str = Field(..., description="Session status")
+    context_name: Optional[str] = Field(None, alias="contextName", description="Context name for persistence")
+    context_id: Optional[str] = Field(None, alias="contextId", description="Context ID for persistence")
 
     model_config = {
         "populate_by_name": True,
@@ -79,6 +81,8 @@ class SessionInfo(BaseModel):
     username: str
     created_at: str
     status: str
+    context_name: Optional[str] = None
+    context_id: Optional[str] = None
     agent_bay: object = Field(exclude=True)  # Exclude from serialization
     session: object = Field(exclude=True)  # Exclude from serialization
     create_request: Optional[CreateSessionRequest] = Field(
@@ -98,4 +102,6 @@ class SessionInfo(BaseModel):
             username=self.username,
             created_at=self.created_at,
             status=self.status,
+            context_name=self.context_name,
+            context_id=self.context_id,
         )

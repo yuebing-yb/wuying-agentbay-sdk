@@ -9,10 +9,14 @@ import asyncio
 import base64
 import json
 import logging
+import os
 from pathlib import Path
 from typing import List, Optional
+from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException, Request
+import websockets
+
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -33,12 +37,50 @@ from pydantic import BaseModel, Field
 from .models import CreateSessionRequest, DingtalkSetupStatus, FeishuSetupStatus, SessionResponse
 from .session_manager import session_manager
 
-# Configure logging
+# Configure logging（默认 DEBUG：本地启动便于诊断；部署时可设 LOG_LEVEL=INFO）
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# LOG_LEVEL / OPENCLAW_LOG_LEVEL 覆盖默认级别（如生产环境 INFO / WARNING）
+_env_log = (os.environ.get("OPENCLAW_LOG_LEVEL") or os.environ.get("LOG_LEVEL") or "").strip().upper()
+if _env_log:
+    _lvl = getattr(logging, _env_log, None)
+    if _lvl is not None:
+        logging.getLogger().setLevel(_lvl)
+
+
+def _diagnostic_log_text(text: str) -> str:
+    """
+    长文本日志是否截断，由环境与 logging 级别共同决定：
+    - OPENCLAW_LOG_FULL=1|true|yes|on → 永不截断
+    - OPENCLAW_LOG_MAX_CHARS=N → 超过 N 字符截断；N<=0 表示不截断
+    - 未设置 MAX_CHARS 且当前 logger 为 DEBUG（本地默认）→ 不截断
+    - 否则默认截断到 4000 字符（INFO 及以上时常用）
+    """
+    if not text:
+        return text
+    full = os.environ.get("OPENCLAW_LOG_FULL", "").strip().lower() in ("1", "true", "yes", "on")
+    if full:
+        return text
+    raw_max = os.environ.get("OPENCLAW_LOG_MAX_CHARS", "").strip()
+    if raw_max:
+        try:
+            n = int(raw_max)
+            if n <= 0:
+                return text
+            max_chars = n
+        except ValueError:
+            max_chars = 4000
+    else:
+        if logger.isEnabledFor(logging.DEBUG):
+            return text
+        max_chars = 4000
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + f"...(truncated, total_len={len(text)})"
 
 # Create FastAPI app
 app = FastAPI(
@@ -148,6 +190,195 @@ async def restart_dashboard(session_id: str):
     if not success:
         raise HTTPException(status_code=500, detail=err or "Failed to restart dashboard")
     return {"message": "Dashboard 已重启"}
+
+
+@app.get("/api/sessions/{session_id}/openclaw-wss-url")
+async def get_openclaw_wss_url(session_id: str):
+    """
+    Get the external WSS URL for OpenClaw Gateway via get_link.
+    Used for connecting to OpenClaw's WebSocket API for chat/dialogue.
+    Prefer using the WebSocket proxy at /api/sessions/{id}/openclaw-wss for same-origin connection.
+    """
+    result = session_manager.get_openclaw_wss_url(session_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Session not found or WSS link unavailable")
+    wss_url, gateway_token = result
+    return {"wssUrl": wss_url, "gatewayToken": gateway_token}
+
+
+@app.websocket("/api/sessions/{session_id}/openclaw-wss")
+async def openclaw_wss_proxy(websocket: WebSocket, session_id: str):
+    """
+    WebSocket proxy: relay between frontend and OpenClaw Gateway WSS.
+    Frontend connects here (same origin); backend connects to external WSS and relays.
+    """
+    await websocket.accept()
+    logger.info("[WSS] 前端已连接 session_id=%s", session_id)
+    result = session_manager.get_openclaw_wss_url(session_id)
+    if not result:
+        await websocket.close(code=4004, reason="Session not found")
+        return
+    wss_url, gateway_token = result
+    logger.info("OpenClaw WSS proxy using get_link URL (with token): %s", wss_url)
+
+    # Origin: same host as gateway (allowedOrigins: ["*"] may not match null; use gateway origin)
+    parsed = urlparse(wss_url)
+    origin = f"https://{parsed.hostname}" + (f":{parsed.port}" if parsed.port else "")
+    logger.info("OpenClaw WSS proxy Origin header: %s", origin)
+
+    async def forward_to_remote():
+        try:
+            async with websockets.connect(
+                wss_url,
+                origin=origin,
+                close_timeout=5,
+                open_timeout=15,
+            ) as ws:
+                # OpenClaw Protocol v3: handle connect.challenge -> connect (token-only, like Control UI)
+                first = await ws.recv()
+                first_str = first if isinstance(first, str) else first.decode("utf-8")
+                first_msg = json.loads(first_str)
+
+                if (
+                    first_msg.get("type") == "event"
+                    and first_msg.get("event") == "connect.challenge"
+                ):
+                    # Send connect with auth.token (same as "打开 OpenClaw UI" token-in-URL approach)
+                    connect_req = {
+                        "type": "req",
+                        "id": f"connect-{session_id}",
+                        "method": "connect",
+                        "params": {
+                            "minProtocol": 3,
+                            "maxProtocol": 3,
+                            "client": {
+                                "id": "openclaw-control-ui",
+                                "version": "1.0",
+                                "platform": "web",
+                                "mode": "webchat",
+                            },
+                            "role": "operator",
+                            "scopes": ["operator.read", "operator.write", "operator.admin"],
+                            "auth": {"token": gateway_token},
+                            "locale": "zh-CN",
+                            "userAgent": "openclaw-agentbay-proxy/1.0",
+                        },
+                    }
+                    await ws.send(json.dumps(connect_req))
+                    # Forward hello-ok (or error) to client
+                    second = await ws.recv()
+                    second_str = second if isinstance(second, str) else second.decode("utf-8")
+                    await websocket.send_text(second_str)
+                    second_msg = json.loads(second_str)
+                    if (
+                        second_msg.get("type") == "res"
+                        and not second_msg.get("ok", True)
+                    ):
+                        err = second_msg.get("error", {})
+                        logger.warning("OpenClaw connect rejected: %s", err)
+                        return
+                    logger.info("[WSS] Gateway 连接成功，开始双向转发")
+                else:
+                    # Not connect.challenge, forward and continue
+                    await websocket.send_text(first_str)
+                    logger.info("[WSS] Gateway 已连接（无 challenge），开始双向转发")
+
+                async def from_remote_to_client():
+                    try:
+                        msg_count = 0
+                        async for msg in ws:
+                            txt = msg if isinstance(msg, str) else msg.decode("utf-8")
+                            msg_count += 1
+                            try:
+                                m = json.loads(txt)
+                                t = m.get("type", "")
+                                ev = m.get("event", "")
+                                # 始终打印 chat 相关事件（调试无回复问题）
+                                if t == "chat.delta" or ev == "chat.delta" or ev == "session.message" or t == "chat.done" or ev == "chat.done" or ev == "chat":
+                                    pl = m.get("payload") or m.get("data") or {}
+                                    keys = list(pl.keys()) if isinstance(pl, dict) else []
+                                    try:
+                                        full_msg = json.dumps(m, ensure_ascii=False)
+                                    except Exception:
+                                        full_msg = str(m)
+                                    logger.info(
+                                        "[WSS 收到Gateway] #%d type=%s event=%s id=%s keys=%s %s",
+                                        msg_count,
+                                        t,
+                                        ev,
+                                        m.get("id", ""),
+                                        keys,
+                                        _diagnostic_log_text(full_msg),
+                                    )
+                                elif msg_count <= 5:
+                                    logger.info(
+                                        "[WSS 收到Gateway] #%d type=%s event=%s id=%s",
+                                        msg_count,
+                                        t,
+                                        ev or "-",
+                                        m.get("id", ""),
+                                    )
+                            except Exception:
+                                if msg_count <= 5:
+                                    logger.info(
+                                        "[WSS 收到Gateway] #%d raw=%s",
+                                        msg_count,
+                                        _diagnostic_log_text(txt),
+                                    )
+                            await websocket.send_text(txt)
+                    except Exception as e:
+                        logger.debug("Remote->client forward ended: %s", e)
+
+                async def from_client_to_remote():
+                    try:
+                        while True:
+                            data = await websocket.receive_text()
+                            try:
+                                parsed = json.loads(data)
+                                method = parsed.get("method", "")
+                                req_id = parsed.get("id", "")
+                                logger.info(
+                                    "[WSS 收到前端] id=%s method=%s payload=%s",
+                                    req_id,
+                                    method,
+                                    _diagnostic_log_text(
+                                        json.dumps(parsed.get("params", {}), ensure_ascii=False)
+                                    ),
+                                )
+                            except Exception:
+                                logger.info(
+                                    "[WSS 收到前端] raw=%s",
+                                    _diagnostic_log_text(data if data else ""),
+                                )
+                            await ws.send(data)
+                    except WebSocketDisconnect:
+                        logger.info("[WSS] 前端断开连接")
+                        pass
+                    except Exception as e:
+                        logger.debug("Client->remote forward ended: %s", e)
+
+                await asyncio.gather(
+                    asyncio.create_task(from_remote_to_client()),
+                    asyncio.create_task(from_client_to_remote()),
+                )
+        except Exception as e:
+            logger.warning("OpenClaw WSS proxy connect failed: %s", e)
+            try:
+                await websocket.send_text(
+                    json.dumps({"type": "error", "message": str(e)})
+                )
+            except Exception:
+                pass
+        finally:
+            try:
+                await websocket.close()
+            except Exception:
+                pass
+
+    try:
+        await forward_to_remote()
+    except WebSocketDisconnect:
+        pass
 
 
 @app.get("/api/sessions", response_model=List[SessionResponse])
@@ -475,8 +706,9 @@ async def feishu_setup_apply(
 
 
 @app.get("/")
+@app.get("/chat")
 async def serve_index():
-    """Serve the frontend index.html."""
+    """Serve the frontend index.html (SPA fallback for / and /chat)."""
     index_path = STATIC_DIR / "index.html"
     if index_path.exists():
         return FileResponse(index_path)
