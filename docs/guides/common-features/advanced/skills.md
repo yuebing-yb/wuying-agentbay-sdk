@@ -21,21 +21,84 @@ The Skills feature provides:
 
 ## Typical Workflow
 
-```
-1. Create a skill directory locally with SKILL.md
-2. Push it to the cloud via CLI:  agentbay skills push my-skill/
-3. Query metadata via SDK:        get_metadata() → list of skills + root path
-4. Create a session with skills:  create(load_skills=True) → sandbox has skills loaded
-5. Use skills in the sandbox:     read_file("{root}/my-skill/SKILL.md")
+```mermaid
+flowchart LR
+    subgraph CLI ["CLI (local machine)"]
+        A["1. Create skill directory\nwith SKILL.md"] --> B["2. Push to cloud\nagentbay skills push"]
+    end
+    subgraph SDK ["SDK (your application)"]
+        C["3. Query metadata\nget_metadata()"] --> D["4. Create session\ncreate(load_skills=True)"]
+        D --> E["5. Use skills\nin sandbox"]
+    end
+    B --> C
 ```
 
-Steps 3-5 are in SDK code. Step 3 (`get_metadata()`) can run without a sandbox — useful for building LLM prompts before creating sessions. Step 4 tells the backend to actually place skill files into the sandbox.
+- **Steps 1-2** use the CLI on your local machine to create and upload skills.
+- **Steps 3-5** use the SDK in your application code.
+- Step 3 (`get_metadata()`) can run **without** a sandbox — useful for building LLM prompts before creating sessions.
+- Step 4 tells the backend to place skill files into the sandbox at creation time.
 
 ## Prerequisites
 
+- **SDK** (for querying metadata and creating sessions with skills):
+  ```bash
+  pip install wuying-agentbay-sdk
+  export AGENTBAY_API_KEY="your-api-key"
+  ```
+- **CLI** (for pushing skills to the cloud): see [Installing the CLI](#installing-the-cli) below.
+
+You need the CLI only if you want to create and publish skills. If you only consume existing skills via the SDK, the CLI is not required.
+
+## Installing the CLI
+
+The `agentbay` CLI is used to push local skills to the cloud. Install it via Homebrew (recommended) or download a binary manually.
+
+### Install via Homebrew (Recommended)
+
 ```bash
-pip install wuying-agentbay-sdk
-export AGENTBAY_API_KEY="your-api-key"
+# 1. Add the AgentBay Cloud Homebrew tap
+brew tap aliyun/agentbay
+
+# 2. Install the agentbay CLI
+brew install agentbay
+
+# 3. Verify installation
+agentbay version
+```
+
+**Update to the latest version:**
+
+```bash
+brew upgrade agentbay
+```
+
+**Uninstall:**
+
+```bash
+brew uninstall agentbay
+
+# Remove the tap (optional)
+brew untap aliyun/agentbay
+```
+
+### Manual Download
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/aliyun/agentbay-cli/releases).
+
+## Authentication
+
+Before using skill management commands (`skills push`, `skills show`), authenticate with your Alibaba Cloud account:
+
+```bash
+agentbay login
+```
+
+The CLI opens a browser for OAuth authentication. Once complete, tokens are saved locally at `~/.config/agentbay/config.json` and refreshed automatically.
+
+To log out:
+
+```bash
+agentbay logout
 ```
 
 ## Creating and Publishing Skills (CLI)
@@ -73,28 +136,61 @@ echo 'print("Hello from my-skill!")' > my-skill/main.py
 
 ### Step 2: Push to Cloud
 
+Push a local skill directory (or a pre-packaged `.zip`) to the cloud:
+
 ```bash
 agentbay skills push my-skill/
-# Output: Skill "my-skill" created (skill-id: sk-abc123)
 ```
 
-The `push` command reads `name` and `description` from `SKILL.md`, packages the directory, and uploads it. If a skill with the same name already exists, it will be updated.
+**Output:**
+
+```
+[STEP 1/3] Getting upload credential...
+[STEP 2/3] Packing and uploading skill...
+[STEP 3/3] Creating skill...
+
+[SUCCESS] ✅ Skill created successfully!
+[RESULT] Skill ID: <skill-id>
+```
+
+The `push` command reads `name` and `description` from `SKILL.md`, packages the directory into a zip, and uploads it. If a skill with the same name already exists, it will be updated.
+
+You can also push a pre-packaged zip directly:
+
+```bash
+agentbay skills push my-skill.zip
+```
+
+**`SKILL.md` requirements:**
+
+- Must contain a `name:` line (required). The CLI parses this to identify the skill.
+- May contain a `description:` line (optional).
+- Recommended format is YAML frontmatter as shown above.
+
+### Step 3: View Skill Details
+
+After pushing, use the returned Skill ID to inspect the skill:
+
+```bash
+agentbay skills show <skill-id>
+```
 
 ### Other CLI Commands
 
 ```bash
-# List all your skills (your own + public)
-agentbay skills list
-
 # View skill details
 agentbay skills show <skill-id>
-
-# Delete a skill
-agentbay skills delete <skill-id>
-
-# Preview metadata without starting a sandbox
-agentbay skills metadata [--name <skill-name>...] [--format json|table]
 ```
+
+### CLI Global Options
+
+All commands support the following options:
+
+| Option | Description |
+|--------|-------------|
+| `--help, -h` | Show help |
+| `--verbose, -v` | Enable verbose output (upload URLs, request IDs, etc.) |
+| `--version` | Show CLI version |
 
 ## Querying Skills Metadata (SDK)
 
@@ -149,7 +245,7 @@ root = meta.skills_root_path  # e.g. "/home/wuying/skills"
 
 # 2. Create a session that loads skills into the sandbox
 result = agent_bay.create(CreateSessionParams(load_skills=True))
-session = result.session
+session = result.session  # CreateResult contains the session object
 
 # 3. Access skill files inside the sandbox
 skill_md = session.file_system.read_file(f"{root}/my-skill/SKILL.md")
