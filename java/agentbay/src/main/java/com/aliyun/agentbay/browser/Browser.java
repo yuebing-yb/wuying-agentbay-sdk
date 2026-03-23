@@ -397,6 +397,7 @@ public class Browser extends BaseService {
                 internalWsCallback = (payload) -> {
                     try {
                         if (userCallback != null) {
+                            logger.info("Received callback from remote browser: {}", payload);
                             BrowserNotifyMessage notifyMsg = BrowserNotifyMessage.fromMap(payload);
                             userCallback.onNotify(notifyMsg);
                         }
@@ -406,6 +407,14 @@ public class Browser extends BaseService {
                 };
                 
                 wsClient.registerCallback(SERVER_CDP, internalWsCallback);
+                try {
+                    // Explicitly establish WS connection right after callback registration.
+                    wsClient.connect().join();
+                } catch (Exception e) {
+                    wsClient.unregisterCallback(SERVER_CDP, internalWsCallback);
+                    internalWsCallback = null;
+                    throw new BrowserException("Failed to connect websocket client after callback registration", e);
+                }
                 wsCallbackRegistered = true;
             }
             

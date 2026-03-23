@@ -47,7 +47,7 @@ public class BrowserCaptchaSolvingExample {
         try {
             AgentBay agentBay = new AgentBay();
             CreateSessionParams params = new CreateSessionParams();
-            params.setImageId("imgc-0ab5ta4kuo0x3pa70");
+            params.setImageId("browser_latest");
             
             SessionResult result = agentBay.create(params);
             
@@ -58,6 +58,7 @@ public class BrowserCaptchaSolvingExample {
 
             Session session = result.getSession();
             String takeoverUrl = session.getResourceUrl();
+            System.out.println("🌐 Takeover URL: " + takeoverUrl);
 
             // Register browser callback
             BrowserCallback callback = (notifyMsg) -> {

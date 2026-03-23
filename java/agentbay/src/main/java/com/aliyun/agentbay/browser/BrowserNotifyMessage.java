@@ -81,14 +81,30 @@ public class BrowserNotifyMessage {
         if (map == null) {
             return null;
         }
-        
-        String type = (String) map.get("type");
-        Integer id = map.get("id") instanceof Number ? ((Number) map.get("id")).intValue() : null;
-        Integer code = map.get("code") instanceof Number ? ((Number) map.get("code")).intValue() : null;
-        String message = (String) map.get("message");
-        String action = (String) map.get("action");
-        Map<String, Object> extraParams = (Map<String, Object>) map.get("extra_params");
-        
+
+        // Push callbacks may arrive either as a flat message map or wrapped as:
+        // { target: "...", requestId: "...", data: { type, id, code, message, action, extraParams } }
+        Map<String, Object> dataMap = map;
+        Object nestedData = map.get("data");
+        if (nestedData instanceof Map) {
+            dataMap = (Map<String, Object>) nestedData;
+        }
+
+        String type = dataMap.get("type") instanceof String ? (String) dataMap.get("type") : null;
+        Integer id = dataMap.get("id") instanceof Number ? ((Number) dataMap.get("id")).intValue() : null;
+        Integer code = dataMap.get("code") instanceof Number ? ((Number) dataMap.get("code")).intValue() : null;
+        String message = dataMap.get("message") instanceof String ? (String) dataMap.get("message") : null;
+        String action = dataMap.get("action") instanceof String ? (String) dataMap.get("action") : null;
+
+        Map<String, Object> extraParams = new HashMap<>();
+        Object snakeCaseExtra = dataMap.get("extra_params");
+        Object camelCaseExtra = dataMap.get("extraParams");
+        if (snakeCaseExtra instanceof Map) {
+            extraParams.putAll((Map<String, Object>) snakeCaseExtra);
+        } else if (camelCaseExtra instanceof Map) {
+            extraParams.putAll((Map<String, Object>) camelCaseExtra);
+        }
+
         return new BrowserNotifyMessage(type, id, code, message, action, extraParams);
     }
 
