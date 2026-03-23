@@ -20,6 +20,7 @@ class TestComputer:
         self.session = Mock()
         self.session.call_mcp_tool = AsyncMock()
         # Default to no link_url so screenshot() uses system_screenshot in unit tests.
+        self.session._get_link_url = Mock(return_value="")
         self.session.get_link_url = Mock(return_value="")
         self.computer = AsyncComputer(self.session)
 
@@ -393,7 +394,7 @@ class TestComputer:
     async def test_screenshot_fails_when_link_url_present(self):
         """Test screenshot() fails and suggests beta_take_screenshot() when link_url is present."""
         # Arrange
-        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session._get_link_url = Mock(return_value="https://dummy-link-url")
         self.session.call_mcp_tool = AsyncMock()
 
         # Act
@@ -414,7 +415,7 @@ class TestComputer:
     async def test_take_screenshot_success_with_jpg(self):
         """Test successful take_screenshot with jpg format (normalized to jpeg)."""
         # Arrange
-        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session._get_link_url = Mock(return_value="https://dummy-link-url")
         payload = b"\xff\xd8\xff" + b"hello-image-bytes"
         import base64
         import json
@@ -456,7 +457,7 @@ class TestComputer:
     async def test_take_screenshot_strips_prefix_before_magic(self):
         """Test take_screenshot rejects non-JSON payloads."""
         # Arrange
-        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session._get_link_url = Mock(return_value="https://dummy-link-url")
         payload = b"\xff\xd8\xff" + b"rest"
         import base64
 
@@ -473,7 +474,7 @@ class TestComputer:
     async def test_take_screenshot_accepts_mode_enum(self):
         """Test beta_take_screenshot works with png."""
         # Arrange
-        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session._get_link_url = Mock(return_value="https://dummy-link-url")
         payload = b"\x89PNG\r\n\x1a\n" + b"x"
         import base64
         import json
@@ -505,7 +506,7 @@ class TestComputer:
     @pytest.mark.asyncio
     async def test_take_screenshot_rejects_json_payload(self):
         """Test beta_take_screenshot accepts JSON payloads."""
-        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session._get_link_url = Mock(return_value="https://dummy-link-url")
         import base64
         import json
 
@@ -537,7 +538,7 @@ class TestComputer:
     @pytest.mark.asyncio
     async def test_take_screenshot_invalid_format_raises(self):
         """Test take_screenshot rejects invalid format."""
-        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session._get_link_url = Mock(return_value="https://dummy-link-url")
         with pytest.raises(ValueError, match="Invalid format"):
             await self.computer.beta_take_screenshot(format="webp")
 
@@ -545,7 +546,7 @@ class TestComputer:
     async def test_take_screenshot_mcp_failure_raises_agentbayerror(self):
         """Test take_screenshot raises AgentBayError when MCP tool fails."""
         # Arrange
-        self.session.get_link_url = Mock(return_value="https://dummy-link-url")
+        self.session._get_link_url = Mock(return_value="https://dummy-link-url")
         mock_result = Mock()
         mock_result.success = False
         mock_result.request_id = "test-req"

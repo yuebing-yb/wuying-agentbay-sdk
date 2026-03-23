@@ -471,11 +471,15 @@ func (s *Session) GetEnableBrowserReplay() bool {
 }
 
 // GetToken returns the token for LinkUrl-based direct tool calls.
+//
+// Deprecated: Internal SDK use only. Will be removed in a future version.
 func (s *Session) GetToken() string {
 	return s.Token
 }
 
 // GetLinkUrl returns the LinkUrl for LinkUrl-based direct tool calls.
+//
+// Deprecated: Internal SDK use only. Will be removed in a future version.
 func (s *Session) GetLinkUrl() string {
 	return s.LinkUrl
 }
@@ -1317,7 +1321,7 @@ func (s *Session) CallMcpTool(toolName string, args interface{}) (*models.McpToo
 	// Prefer LinkUrl-based direct tool call when LinkUrl/Token are present.
 	// LinkUrl route requires explicit server name. If it's not available,
 	// fall back to API-based call to let backend resolve the server.
-	if s.GetLinkUrl() != "" && s.GetToken() != "" && serverName != "" {
+	if s.LinkUrl != "" && s.Token != "" && serverName != "" {
 		return s.callMcpToolLinkUrl(toolName, args, serverName)
 	}
 
@@ -1336,8 +1340,8 @@ func (s *Session) callMcpToolLinkUrl(toolName string, args interface{}, serverNa
 		}, nil
 	}
 
-	linkUrl := s.GetLinkUrl()
-	token := s.GetToken()
+	linkUrl := s.LinkUrl
+	token := s.Token
 	if linkUrl == "" || token == "" {
 		return &models.McpToolResult{
 			Success:      false,

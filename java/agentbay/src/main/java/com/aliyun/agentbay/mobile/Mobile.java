@@ -709,6 +709,7 @@ public class Mobile extends BaseService {
      *
      * @return OperationResult containing the path/URL to the screenshot and error message if any
      */
+    @SuppressWarnings("deprecation")
     public OperationResult screenshot() {
         if (session.getLinkUrl() != null && !session.getLinkUrl().isEmpty()) {
             return new OperationResult(
@@ -770,6 +771,7 @@ public class Mobile extends BaseService {
      * @param format Output image format ("png" or "jpeg")
      * @return ScreenshotBytesResult containing image bytes and error message if any
      */
+    @SuppressWarnings("deprecation")
     public ScreenshotBytesResult betaTakeScreenshot(String format) {
         if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {
             return new ScreenshotBytesResult(

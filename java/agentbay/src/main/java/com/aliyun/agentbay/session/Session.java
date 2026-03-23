@@ -1069,11 +1069,9 @@ public class Session {
     }
 
     /**
-     * Gets the token for LinkUrl tool calls.
-     * This token is used for authentication when calling MCP tools via the LinkUrl route.
-     * 
-     * @return The authentication token
+     * @deprecated Internal SDK use only. Will be removed in a future version.
      */
+    @Deprecated
     public String getToken() {
         return token;
     }
@@ -1089,11 +1087,9 @@ public class Session {
     }
 
     /**
-     * Gets the LinkUrl for direct tool calls.
-     * This URL is used for calling MCP tools via the LinkUrl route in VPC environments.
-     * 
-     * @return The LinkUrl, or empty string if not set
+     * @deprecated Internal SDK use only. Will be removed in a future version.
      */
+    @Deprecated
     public String getLinkUrl() {
         return linkUrl == null ? "" : linkUrl;
     }

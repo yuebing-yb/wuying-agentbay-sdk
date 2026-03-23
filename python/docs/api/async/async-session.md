@@ -94,10 +94,24 @@ Alias of file_system.
 def get_token() -> str
 ```
 
+.. deprecated
+
+```python
+Internal SDK use only. Will be removed in a future version.
+
+```
+
 ### get_link_url
 
 ```python
 def get_link_url() -> str
+```
+
+.. deprecated
+
+```python
+Internal SDK use only. Will be removed in a future version.
+
 ```
 
 ### getToken
@@ -106,10 +120,24 @@ def get_link_url() -> str
 def getToken() -> str
 ```
 
+.. deprecated
+
+```python
+Internal SDK use only. Will be removed in a future version.
+
+```
+
 ### getLinkUrl
 
 ```python
 def getLinkUrl() -> str
+```
+
+.. deprecated
+
+```python
+Internal SDK use only. Will be removed in a future version.
+
 ```
 
 ### get_status

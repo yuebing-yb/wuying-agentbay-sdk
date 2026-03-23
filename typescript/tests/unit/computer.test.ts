@@ -14,7 +14,7 @@ import { Session } from "../../src/session";
 interface MockSession {
   callMcpTool: jest.Mock;
   getAPIKey: () => string;
-  getLinkUrl: jest.Mock;
+  linkUrl: string;
   sessionId: string;
 }
 
@@ -26,7 +26,7 @@ describe("Computer", () => {
     mockSession = {
       callMcpTool: jest.fn(),
       getAPIKey: () => "test-api-key",
-      getLinkUrl: jest.fn(() => ""),
+      linkUrl: "",
       sessionId: "test-session-id",
     };
     computer = new Computer(mockSession as any);
@@ -329,7 +329,7 @@ describe("Computer", () => {
   describe("Screen Operations", () => {
     test("betaTakeScreenshot should call MCP tool and return JPEG bytes", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      mockSession.linkUrl = "https://dummy-link-url";
       const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
       const payload = Buffer.concat([
         jpgHeader,
@@ -369,7 +369,7 @@ describe("Computer", () => {
 
     test("betaTakeScreenshot should reject non-JSON payloads", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      mockSession.linkUrl = "https://dummy-link-url";
       const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
       const payload = Buffer.concat([
         jpgHeader,

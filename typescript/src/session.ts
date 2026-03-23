@@ -341,10 +341,16 @@ export class Session {
     return this.agentBay.getAPIKey();
   }
 
+  /**
+   * @deprecated Internal SDK use only. Will be removed in a future version.
+   */
   getToken(): string {
     return this.token;
   }
 
+  /**
+   * @deprecated Internal SDK use only. Will be removed in a future version.
+   */
   getLinkUrl(): string {
     return this.linkUrl;
   }

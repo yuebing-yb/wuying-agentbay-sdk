@@ -59,7 +59,7 @@ interface ComputerSession {
   sessionId: string;
   getAPIKey(): string;
   getSessionId(): string;
-  getLinkUrl(): string;
+  linkUrl: string;
 }
 
 export class Computer {
@@ -743,7 +743,7 @@ export class Computer {
    * ```
    */
   async screenshot(): Promise<ScreenshotResult> {
-    if (this.session.getLinkUrl()) {
+    if (this.session.linkUrl) {
       return {
         success: false,
         requestId: "",
@@ -803,7 +803,7 @@ export class Computer {
    */
   async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
     const fmt = Computer.normalizeImageFormat(format, "png");
-    if (!this.session.getLinkUrl()) {
+    if (!this.session.linkUrl) {
       return {
         success: false,
         requestId: "",

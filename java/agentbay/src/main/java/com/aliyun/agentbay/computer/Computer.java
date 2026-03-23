@@ -1044,6 +1044,7 @@ public class Computer extends BaseService {
      * 
      * @see #getScreenSize()
      */
+    @SuppressWarnings("deprecation")
     public OperationResult screenshot() {
         if (session.getLinkUrl() != null && !session.getLinkUrl().isEmpty()) {
             return new OperationResult(
@@ -1101,6 +1102,7 @@ public class Computer extends BaseService {
      *   <li>"jpeg" (or "jpg")</li>
      * </ul>
      */
+    @SuppressWarnings("deprecation")
     public ScreenshotBytesResult betaTakeScreenshot(String format) {
         String fmt = normalizeImageFormat(format, "png");
         if (session.getLinkUrl() == null || session.getLinkUrl().isEmpty()) {

@@ -82,7 +82,7 @@ interface MobileSession {
   getAgentBay(): any;
   imageId?: string;
   getLink(protocolType?: string, port?: number, options?: string): Promise<any>;
-  getLinkUrl(): string;
+  linkUrl: string;
 }
 
 /**
@@ -839,7 +839,7 @@ export class Mobile {
    * ```
    */
   async screenshot(): Promise<ScreenshotResult> {
-    if (this.session.getLinkUrl()) {
+    if (this.session.linkUrl) {
       return {
         success: false,
         requestId: "",
@@ -890,7 +890,7 @@ export class Mobile {
    */
   async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
     const formatNorm = normalizeImageFormat(format, "png");
-    if (!this.session.getLinkUrl()) {
+    if (!this.session.linkUrl) {
       return {
         success: false,
         requestId: "",

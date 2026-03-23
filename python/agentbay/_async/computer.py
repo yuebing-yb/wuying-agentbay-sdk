@@ -672,7 +672,7 @@ class AsyncComputer(AsyncBaseService):
         """
         link_url = ""
         try:
-            link_url = self.session.get_link_url() or ""
+            link_url = self.session._get_link_url() or ""
         except Exception:
             link_url = getattr(self.session, "link_url", "") or ""
         if link_url:
@@ -740,7 +740,7 @@ class AsyncComputer(AsyncBaseService):
         """
         link_url = ""
         try:
-            link_url = self.session.get_link_url() or ""
+            link_url = self.session._get_link_url() or ""
         except Exception:
             link_url = getattr(self.session, "link_url", "") or ""
         if not link_url:

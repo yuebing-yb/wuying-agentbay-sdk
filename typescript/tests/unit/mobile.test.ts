@@ -9,7 +9,7 @@ import { Mobile } from "../../src/mobile/mobile";
 interface MockSession {
   callMcpTool: jest.Mock;
   getAPIKey: () => string;
-  getLinkUrl: jest.Mock;
+  linkUrl: string;
   sessionId: string;
 }
 
@@ -21,7 +21,7 @@ describe("Mobile", () => {
     mockSession = {
       callMcpTool: jest.fn(),
       getAPIKey: () => "test-api-key",
-      getLinkUrl: jest.fn(() => ""),
+      linkUrl: "",
       sessionId: "test-session-id",
     };
     mobile = new Mobile(mockSession as any);
@@ -359,7 +359,7 @@ describe("Mobile", () => {
 
     test("betaTakeScreenshot should call MCP tool and return PNG bytes", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      mockSession.linkUrl = "https://dummy-link-url";
       const pngHeader = Buffer.from([
         0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
       ]);
@@ -400,7 +400,7 @@ describe("Mobile", () => {
 
     test("betaTakeScreenshot should support jpeg format", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      mockSession.linkUrl = "https://dummy-link-url";
       const jpgHeader = Buffer.from([0xff, 0xd8, 0xff]);
       const payload = Buffer.concat([jpgHeader, Buffer.from("test")]).toString(
         "base64"
@@ -439,7 +439,7 @@ describe("Mobile", () => {
 
     test("betaTakeScreenshot should accept JSON payloads", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      mockSession.linkUrl = "https://dummy-link-url";
       const pngHeader = Buffer.from([
         0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
       ]);
@@ -474,7 +474,7 @@ describe("Mobile", () => {
 
     test("betaTakeScreenshot should reject non-JSON payloads", async () => {
       // Arrange
-      mockSession.getLinkUrl.mockReturnValue("https://dummy-link-url");
+      mockSession.linkUrl = "https://dummy-link-url";
       const pngHeader = Buffer.from([
         0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
       ]);

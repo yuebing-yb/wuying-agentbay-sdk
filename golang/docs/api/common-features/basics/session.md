@@ -281,14 +281,6 @@ port := int32(30100)
 linkResult, _ := result.Session.GetLink(nil, &port, nil)
 ```
 
-### GetLinkUrl
-
-```go
-func (s *Session) GetLinkUrl() string
-```
-
-GetLinkUrl returns the LinkUrl for LinkUrl-based direct tool calls.
-
 ### GetMetrics
 
 ```go
@@ -315,14 +307,6 @@ func (s *Session) GetStreamingWsClient() (WsStreamingClient, error)
 ```
 
 GetStreamingWsClient returns a WS streaming client for this session.
-
-### GetToken
-
-```go
-func (s *Session) GetToken() string
-```
-
-GetToken returns the token for LinkUrl-based direct tool calls.
 
 ### GetWsClient
 

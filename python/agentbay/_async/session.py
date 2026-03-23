@@ -226,15 +226,59 @@ class AsyncSession:
         return self.link_url
 
     def get_token(self) -> str:
+        """
+        .. deprecated::
+            Internal SDK use only. Will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "get_token() is deprecated and will be removed in a future version. "
+            "This method is for internal SDK use only.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_token()
 
     def get_link_url(self) -> str:
+        """
+        .. deprecated::
+            Internal SDK use only. Will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "get_link_url() is deprecated and will be removed in a future version. "
+            "This method is for internal SDK use only.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_link_url()
 
     def getToken(self) -> str:
+        """
+        .. deprecated::
+            Internal SDK use only. Will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "getToken() is deprecated and will be removed in a future version. "
+            "This method is for internal SDK use only.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_token()
 
     def getLinkUrl(self) -> str:
+        """
+        .. deprecated::
+            Internal SDK use only. Will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "getLinkUrl() is deprecated and will be removed in a future version. "
+            "This method is for internal SDK use only.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_link_url()
 
     async def get_status(self) -> "SessionStatusResult":

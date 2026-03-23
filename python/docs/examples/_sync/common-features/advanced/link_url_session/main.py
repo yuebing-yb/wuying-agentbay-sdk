@@ -26,8 +26,9 @@ def main() -> None:
     session = create_result.session
     try:
         print(f"session_id={session.session_id}")
-        print(f"token={session.get_token()}")
-        print(f"link_url={session.get_link_url()}")
+        # NOTE: get_token() and get_link_url() are deprecated (internal SDK use only)
+        print(f"token={session._get_token()}")
+        print(f"link_url={session._get_link_url()}")
 
         cmd = session.command.execute_command("echo hello-from-link-url-session")
         if not cmd.success:
