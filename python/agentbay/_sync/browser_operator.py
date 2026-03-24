@@ -259,7 +259,7 @@ class BrowserOperator(BaseService):
             raise BrowserError(error_msg)
 
         task_id = json.loads(response.data)["task_id"]
-        poll_interval_sec = 5.0
+        poll_interval_sec = 3.0
         start_ts = time.monotonic()
         client_timeout: Optional[int] = None
         if isinstance(action_input, ActOptions):
@@ -453,7 +453,7 @@ class BrowserOperator(BaseService):
         task_id = task_info["task_id"]
 
         client_timeout: Optional[int] = options.timeout
-        poll_interval_sec = 5.0
+        poll_interval_sec = 3.0
         start_ts = time.monotonic()
 
         while True:
@@ -636,7 +636,7 @@ class BrowserOperator(BaseService):
 
         task_id = json.loads(response.data)["task_id"]
         client_timeout: Optional[int] = options.timeout
-        poll_interval_sec = 8.0
+        poll_interval_sec = 3.0
         start_ts = time.monotonic()
 
         while True:

@@ -341,7 +341,8 @@ public class BrowserOperatorAsyncIntegrationTest {
                 extractOptions.setUseTextExtract(true);
                 extractOptions.setUseVision(false);
                 extractOptions.setSelector("body");
-                extractOptions.setDomSettleTimeoutMs(2000);
+                // timeout in seconds
+                extractOptions.setTimeout(20);
                 BrowserOperator.ExtractResultTuple<ProductInfo> extractResult =
                     operator.extractAsync(extractOptions, page);
 
@@ -373,8 +374,8 @@ public class BrowserOperatorAsyncIntegrationTest {
                 Page page = context.newPage();
                 BrowserOperator operator = session.getBrowser().getOperator();
                 ActOptions options = new ActOptions("goto('https://httpbin.org/user-agent')");
-                options.setTimeoutMS(30000);
-                options.setDomSettleTimeoutMs(3000);
+                // timeout in seconds
+                options.setTimeout(30);
 
                 ActResult result = operator.actAsync(options, page);
 

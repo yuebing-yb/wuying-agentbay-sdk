@@ -328,3 +328,151 @@ func TestBrowser_VPCMode_Integration(t *testing.T) {
 	assert.Contains(t, endpointURL, "ws://")
 	t.Logf("VPC Browser endpoint URL: %s", endpointURL)
 }
+
+// ----- BrowserOperator integration tests -----
+
+func TestBrowserOperator_HasOperator_Integration(t *testing.T) {
+	apiKey := os.Getenv("AGENTBAY_API_KEY")
+	if apiKey == "" {
+		t.Skip("Skipping integration test: AGENTBAY_API_KEY not set")
+	}
+
+	agentBay, err := agentbay.NewAgentBay(apiKey)
+	require.NoError(t, err)
+
+	params := &agentbay.CreateSessionParams{ImageId: "browser_latest"}
+	sessionResult, err := agentBay.Create(params)
+	require.NoError(t, err)
+	require.True(t, sessionResult.Success)
+	session := sessionResult.Session
+	defer agentBay.Delete(session, false) //nolint:errcheck
+
+	assert.NotNil(t, session.Browser)
+	assert.NotNil(t, session.Browser.Operator)
+}
+
+func TestBrowserOperator_Navigate_Integration(t *testing.T) {
+	apiKey := os.Getenv("AGENTBAY_API_KEY")
+	if apiKey == "" {
+		t.Skip("Skipping integration test: AGENTBAY_API_KEY not set")
+	}
+
+	agentBay, err := agentbay.NewAgentBay(apiKey)
+	require.NoError(t, err)
+
+	params := &agentbay.CreateSessionParams{ImageId: "browser_latest"}
+	sessionResult, err := agentBay.Create(params)
+	require.NoError(t, err)
+	require.True(t, sessionResult.Success)
+	session := sessionResult.Session
+	defer agentBay.Delete(session, false) //nolint:errcheck
+
+	_, err = session.Browser.Initialize(browser.NewBrowserOption())
+	require.NoError(t, err)
+
+	_, err = session.Browser.Operator.Navigate("https://example.com")
+	if err != nil {
+		t.Logf("Navigate might fail without real page context: %v", err)
+	}
+}
+
+func TestBrowserOperator_Act_Integration(t *testing.T) {
+	apiKey := os.Getenv("AGENTBAY_API_KEY")
+	if apiKey == "" {
+		t.Skip("Skipping integration test: AGENTBAY_API_KEY not set")
+	}
+
+	agentBay, err := agentbay.NewAgentBay(apiKey)
+	require.NoError(t, err)
+
+	params := &agentbay.CreateSessionParams{ImageId: "browser_latest"}
+	sessionResult, err := agentBay.Create(params)
+	require.NoError(t, err)
+	require.True(t, sessionResult.Success)
+	session := sessionResult.Session
+	defer agentBay.Delete(session, false) //nolint:errcheck
+
+	_, err = session.Browser.Initialize(browser.NewBrowserOption())
+	require.NoError(t, err)
+
+	timeout := 30
+	result, err := session.Browser.Operator.Act(&browser.ActOptions{
+		Action:  "Click search button",
+		Timeout: &timeout,
+	})
+	if err != nil {
+		t.Logf("Act might fail without real page context: %v", err)
+		return
+	}
+	assert.NotNil(t, result)
+	t.Logf("Act result: success=%v message=%s", result.Success, result.Message)
+}
+
+func TestBrowserOperator_Observe_Integration(t *testing.T) {
+	apiKey := os.Getenv("AGENTBAY_API_KEY")
+	if apiKey == "" {
+		t.Skip("Skipping integration test: AGENTBAY_API_KEY not set")
+	}
+
+	agentBay, err := agentbay.NewAgentBay(apiKey)
+	require.NoError(t, err)
+
+	params := &agentbay.CreateSessionParams{ImageId: "browser_latest"}
+	sessionResult, err := agentBay.Create(params)
+	require.NoError(t, err)
+	require.True(t, sessionResult.Success)
+	session := sessionResult.Session
+	defer agentBay.Delete(session, false) //nolint:errcheck
+
+	_, err = session.Browser.Initialize(browser.NewBrowserOption())
+	require.NoError(t, err)
+
+	timeout := 30
+	success, results, err := session.Browser.Operator.Observe(&browser.ObserveOptions{
+		Instruction: "Find the search button",
+		Timeout:     &timeout,
+	})
+	if err != nil {
+		t.Logf("Observe might fail without real page context: %v", err)
+		return
+	}
+	t.Logf("Observe success=%v results count=%d", success, len(results))
+}
+
+func TestBrowserOperator_Extract_Integration(t *testing.T) {
+	apiKey := os.Getenv("AGENTBAY_API_KEY")
+	if apiKey == "" {
+		t.Skip("Skipping integration test: AGENTBAY_API_KEY not set")
+	}
+
+	agentBay, err := agentbay.NewAgentBay(apiKey)
+	require.NoError(t, err)
+
+	params := &agentbay.CreateSessionParams{ImageId: "browser_latest"}
+	sessionResult, err := agentBay.Create(params)
+	require.NoError(t, err)
+	require.True(t, sessionResult.Success)
+	session := sessionResult.Session
+	defer agentBay.Delete(session, false) //nolint:errcheck
+
+	_, err = session.Browser.Initialize(browser.NewBrowserOption())
+	require.NoError(t, err)
+
+	timeout := 30
+	schema := map[string]interface{}{
+		"type": "object",
+		"properties": map[string]interface{}{
+			"title": map[string]interface{}{"type": "string"},
+		},
+	}
+	success, data, err := session.Browser.Operator.Extract(&browser.ExtractOptions{
+		Instruction: "Extract the page title",
+		Schema:      schema,
+		Timeout:     &timeout,
+	})
+	if err != nil {
+		t.Logf("Extract might fail without real page context: %v", err)
+		return
+	}
+	t.Logf("Extract success=%v data=%v", success, data)
+}

@@ -283,7 +283,7 @@ def test_extract_success(browser_session):
         page.goto("http://www.baidu.com")
         assert page.title() is not None
 
-        result, obj = browser.agent.extract(
+        result, obj = browser.operator.extract(
             ExtractOptions(instruction="Extract the title", schema=DummySchema), page
         )
         print(f"result = {result}")

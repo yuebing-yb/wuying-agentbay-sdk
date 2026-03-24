@@ -218,8 +218,8 @@ ok, items = await operator.observe(
 ```python
 # Options
 class ActOptions:
-    def __init__(self, action: str, timeoutMS: int | None = None, iframes: bool | None = None,
-                 dom_settle_timeout_ms: int | None = None, variables: dict[str, str] | None = None)
+    def __init__(self, action: str, timeout: int | None = None,
+                 variables: dict[str, str] | None = None, use_vision: bool | None = None)
 
 # Result
 class ActResult:

@@ -297,9 +297,7 @@ public class BrowserAgent extends BaseService {
             ActOptions options = (ActOptions) actionInput;
             args.put("action", options.getAction());
             if (options.getVariables() != null) args.put("variables", options.getVariables());
-            if (options.getTimeoutMS() != null) args.put("timeout_ms", options.getTimeoutMS());
-            if (options.getIframes() != null) args.put("iframes", options.getIframes());
-            if (options.getDomSettleTimeoutMs() != null) args.put("dom_settle_timeout_ms", options.getDomSettleTimeoutMs());
+            if (options.getTimeout() != null) args.put("timeout", options.getTimeout());
             if (options.getUseVision() != null) args.put("use_vision", options.getUseVision());
             taskName = options.getAction();
         } else if (actionInput instanceof ObserveResult) {
@@ -342,7 +340,7 @@ public class BrowserAgent extends BaseService {
             // Task polling loop
             int maxRetries = 30;
             while (maxRetries > 0) {
-                Thread.sleep(5000); // 5 seconds
+                Thread.sleep(3000); // 3 seconds
 
                 Map<String, Object> params = new HashMap<>();
                 params.put("task_id", taskId);

@@ -14,12 +14,14 @@ import java.util.Map;
 public class ExtractOptions<T> {
     private String instruction;
     private Class<T> schema;
+    /** Alternative to schema class: provide raw JSON schema string directly. Java-only convenience field. */
     private String schemaJson;
     private Boolean useTextExtract;
-    private String selector;
-    private Boolean iframe;
-    private Integer domSettleTimeoutMs;
     private Boolean useVision;
+    private String selector;
+    /** Timeout in seconds for the extract operation. */
+    private Integer timeout;
+    private Integer maxPage;
 
     public ExtractOptions(String instruction, Class<T> schema) {
         this.instruction = instruction;
@@ -31,15 +33,15 @@ public class ExtractOptions<T> {
         this.schemaJson = schemaJson;
     }
 
-    public ExtractOptions(String instruction, Class<T> schema, Boolean useTextExtract, String selector,
-                         Boolean iframe, Integer domSettleTimeoutMs, Boolean useVision) {
+    public ExtractOptions(String instruction, Class<T> schema, Boolean useTextExtract, Boolean useVision,
+                         String selector, Integer timeout, Integer maxPage) {
         this.instruction = instruction;
         this.schema = schema;
         this.useTextExtract = useTextExtract;
-        this.selector = selector;
-        this.iframe = iframe;
-        this.domSettleTimeoutMs = domSettleTimeoutMs;
         this.useVision = useVision;
+        this.selector = selector;
+        this.timeout = timeout;
+        this.maxPage = maxPage;
     }
 
     public Map<String, Object> toMap() {
@@ -61,10 +63,10 @@ public class ExtractOptions<T> {
         }
 
         if (useTextExtract != null) map.put("use_text_extract", useTextExtract);
-        if (selector != null) map.put("selector", selector);
-        if (iframe != null) map.put("iframe", iframe);
-        if (domSettleTimeoutMs != null) map.put("dom_settle_timeout_ms", domSettleTimeoutMs);
         if (useVision != null) map.put("use_vision", useVision);
+        if (selector != null) map.put("selector", selector);
+        if (timeout != null) map.put("timeout", timeout);
+        if (maxPage != null) map.put("max_page", maxPage);
         return map;
     }
 
@@ -81,15 +83,15 @@ public class ExtractOptions<T> {
     public Boolean getUseTextExtract() { return useTextExtract; }
     public void setUseTextExtract(Boolean useTextExtract) { this.useTextExtract = useTextExtract; }
 
+    public Boolean getUseVision() { return useVision; }
+    public void setUseVision(Boolean useVision) { this.useVision = useVision; }
+
     public String getSelector() { return selector; }
     public void setSelector(String selector) { this.selector = selector; }
 
-    public Boolean getIframe() { return iframe; }
-    public void setIframe(Boolean iframe) { this.iframe = iframe; }
+    public Integer getTimeout() { return timeout; }
+    public void setTimeout(Integer timeout) { this.timeout = timeout; }
 
-    public Integer getDomSettleTimeoutMs() { return domSettleTimeoutMs; }
-    public void setDomSettleTimeoutMs(Integer domSettleTimeoutMs) { this.domSettleTimeoutMs = domSettleTimeoutMs; }
-
-    public Boolean getUseVision() { return useVision; }
-    public void setUseVision(Boolean useVision) { this.useVision = useVision; }
+    public Integer getMaxPage() { return maxPage; }
+    public void setMaxPage(Integer maxPage) { this.maxPage = maxPage; }
 }

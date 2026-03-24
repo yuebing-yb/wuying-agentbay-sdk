@@ -220,7 +220,7 @@ export class BrowserOperator {
     const noActionMsg = "No actions have been executed.";
 
     while (true) {
-      await this._delay(5000);
+      await this._delay(3000);
       const pollResp = await this._callMcpTool("page_use_get_act_result", {
         task_id,
       });
@@ -358,7 +358,7 @@ export class BrowserOperator {
     const startTS = Date.now();
 
     while (true) {
-      await this._delay(5000);
+      await this._delay(3000);
       const pollResp = await this._callMcpTool("page_use_get_observe_result", {
         task_id,
       });
@@ -490,7 +490,7 @@ export class BrowserOperator {
     const startTS = Date.now();
 
     while (true) {
-      await this._delay(8000);
+      await this._delay(3000);
 
       const pollResp = await this._callMcpTool("page_use_get_extract_result", {
         task_id,

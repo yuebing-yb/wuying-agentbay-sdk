@@ -306,9 +306,7 @@ public class BrowserOperator extends BaseService {
             ActOptions options = (ActOptions) actionInput;
             args.put("action", options.getAction());
             if (options.getVariables() != null) args.put("variables", options.getVariables());
-            if (options.getTimeoutMS() != null) args.put("timeout_ms", options.getTimeoutMS());
-            if (options.getIframes() != null) args.put("iframes", options.getIframes());
-            if (options.getDomSettleTimeoutMs() != null) args.put("dom_settle_timeout_ms", options.getDomSettleTimeoutMs());
+            if (options.getTimeout() != null) args.put("timeout", options.getTimeout());
             if (options.getUseVision() != null) args.put("use_vision", options.getUseVision());
             taskName = options.getAction();
         } else if (actionInput instanceof ObserveResult) {
@@ -351,7 +349,7 @@ public class BrowserOperator extends BaseService {
             // Task polling loop
             int maxRetries = 30;
             while (maxRetries > 0) {
-                Thread.sleep(5000); // 5 seconds
+                Thread.sleep(3000); // 3 seconds
 
                 Map<String, Object> params = new HashMap<>();
                 params.put("task_id", taskId);
@@ -622,7 +620,7 @@ public class BrowserOperator extends BaseService {
             // Task polling loop
             int maxRetries = 20;
             while (maxRetries > 0) {
-                Thread.sleep(8000); // 8 seconds
+                Thread.sleep(3000); // 3 seconds
 
                 Map<String, Object> extractParams = new HashMap<>();
                 extractParams.put("task_id", taskId);
@@ -660,6 +658,92 @@ public class BrowserOperator extends BaseService {
 
         public boolean isSuccess() { return success; }
         public T getData() { return data; }
+    }
+
+   /**
+     * Observe elements or state on a web page asynchronously - matches Python observe (which uses observe_async internally).
+     * Uses asynchronous execution with task polling.
+     *
+     * @param options Options to configure the observation behavior
+     * @param page Playwright page object (null to use currently focused page)
+     * @return ObserveResultTuple containing success status and list of observation results
+     * @throws BrowserException if browser is not initialized or observation fails
+     */
+    public ObserveResultTuple observeAsync(ObserveOptions options, Page page) throws BrowserException {
+        if (!browser.isInitialized()) {
+            throw new BrowserException("Browser is not initialized");
+        }
+
+        try {
+            PageContextIndex indices = getPageAndContextIndex(page);
+            return executeObserveAsync(options, indices.contextIndex, indices.pageIndex);
+        } catch (Exception e) {
+            throw new BrowserException("Failed to observe async: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Observe elements or state on a web page asynchronously without explicit Playwright Page.
+     *
+     * @param options Options to configure the observation behavior
+     * @return ObserveResultTuple containing success status and list of observation results
+     * @throws BrowserException if browser is not initialized or observation fails
+     */
+    public ObserveResultTuple observeAsync(ObserveOptions options) throws BrowserException {
+        return observeAsync(options, null);
+    }
+
+    /**
+     * Execute observe with async task polling - matches Python _execute_observe.
+     *
+     * @param options ObserveOptions containing instruction and parameters
+     * @param contextId Browser context ID
+     * @param pageId Page ID
+     * @return ObserveResultTuple containing success status and results
+     * @throws BrowserException if observation fails
+     */
+    private ObserveResultTuple executeObserveAsync(ObserveOptions options, int contextId, String pageId) throws BrowserException {
+        Map<String, Object> args = new HashMap<>();
+        args.put("context_id", contextId);
+        if (pageId != null) args.put("page_id", pageId);
+        args.putAll(options.toMap());
+        args.values().removeIf(java.util.Objects::isNull);
+
+        OperationResult response = callMcpToolTimeout("page_use_observe_async", args);
+        if (!response.isSuccess()) {
+            throw new BrowserException("Failed to start observe task: " + response.getErrorMessage());
+        }
+
+        try {
+            Map<String, Object> responseData = parseJsonResponse(response.getData());
+            String taskId = (String) responseData.get("task_id");
+            if (taskId == null) {
+                throw new BrowserException("No task_id in observe response: " + responseData);
+            }
+
+            // Task polling loop
+            int maxRetries = 100;
+            while (maxRetries > 0) {
+                Thread.sleep(3000); // 3 seconds
+
+                Map<String, Object> params = new HashMap<>();
+                params.put("task_id", taskId);
+                OperationResult result = callMcpToolTimeout("page_use_get_observe_result", params);
+
+                if (result.isSuccess() && result.getData() != null) {
+                    return parseObserveResult(result);
+                }
+                maxRetries--;
+            }
+            throw new BrowserException("Task " + taskId + ": Observe timed out");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BrowserException("Observe task interrupted: " + e.getMessage());
+        } catch (BrowserException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BrowserException("Failed to parse observe response: " + e.getMessage());
+        }
     }
 
     /**

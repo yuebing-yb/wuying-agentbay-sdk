@@ -574,14 +574,17 @@ type Browser struct {
 	option               *BrowserOption
 	userCallback         BrowserCallback
 	wsCallbackRegistered bool
+	Operator             *BrowserOperator
 }
 
 // NewBrowser creates a new Browser instance
 func NewBrowser(session SessionInterface) *Browser {
-	return &Browser{
+	b := &Browser{
 		session:     session,
 		initialized: false,
 	}
+	b.Operator = NewBrowserOperator(session, b)
+	return b
 }
 
 // IsInitialized returns true if the browser was initialized, false otherwise

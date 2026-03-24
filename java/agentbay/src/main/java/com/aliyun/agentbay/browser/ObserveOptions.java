@@ -8,27 +8,28 @@ import java.util.Map;
  */
 public class ObserveOptions {
     private String instruction;
-    private Boolean iframes;
-    private Integer domSettleTimeoutMs;
     private Boolean useVision;
+    private String selector;
+    /** Timeout in seconds for the observe operation. */
+    private Integer timeout;
 
     public ObserveOptions(String instruction) {
         this.instruction = instruction;
     }
 
-    public ObserveOptions(String instruction, Boolean iframes, Integer domSettleTimeoutMs, Boolean useVision) {
+    public ObserveOptions(String instruction, Boolean useVision, String selector, Integer timeout) {
         this.instruction = instruction;
-        this.iframes = iframes;
-        this.domSettleTimeoutMs = domSettleTimeoutMs;
         this.useVision = useVision;
+        this.selector = selector;
+        this.timeout = timeout;
     }
 
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
         map.put("instruction", instruction);
-        if (iframes != null) map.put("iframes", iframes);
-        if (domSettleTimeoutMs != null) map.put("dom_settle_timeout_ms", domSettleTimeoutMs);
         if (useVision != null) map.put("use_vision", useVision);
+        if (selector != null) map.put("selector", selector);
+        if (timeout != null) map.put("timeout", timeout);
         return map;
     }
 
@@ -36,12 +37,12 @@ public class ObserveOptions {
     public String getInstruction() { return instruction; }
     public void setInstruction(String instruction) { this.instruction = instruction; }
 
-    public Boolean getIframes() { return iframes; }
-    public void setIframes(Boolean iframes) { this.iframes = iframes; }
-
-    public Integer getDomSettleTimeoutMs() { return domSettleTimeoutMs; }
-    public void setDomSettleTimeoutMs(Integer domSettleTimeoutMs) { this.domSettleTimeoutMs = domSettleTimeoutMs; }
-
     public Boolean getUseVision() { return useVision; }
     public void setUseVision(Boolean useVision) { this.useVision = useVision; }
+
+    public String getSelector() { return selector; }
+    public void setSelector(String selector) { this.selector = selector; }
+
+    public Integer getTimeout() { return timeout; }
+    public void setTimeout(Integer timeout) { this.timeout = timeout; }
 }

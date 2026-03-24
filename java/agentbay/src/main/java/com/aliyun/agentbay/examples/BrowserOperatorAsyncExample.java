@@ -113,7 +113,8 @@ public class BrowserOperatorAsyncExample {
                 System.out.println("   Navigating to 2048 game using actAsync...");
 
                 ActOptions navOptions = new ActOptions("goto('https://ovolve.github.io/2048-AI/')");
-                navOptions.setTimeoutMS(60000);
+                // timeout in seconds
+                navOptions.setTimeout(60);
 
                 ActResult navResult = operator.actAsync(navOptions, page);
                 System.out.println("   Navigation result: " +

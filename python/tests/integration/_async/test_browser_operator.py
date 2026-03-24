@@ -281,7 +281,7 @@ async def test_extract_success(browser_session):
         await page.goto("http://www.baidu.com")
         assert await page.title() is not None
 
-        result, obj = await browser.agent.extract(
+        result, obj = await browser.operator.extract(
             ExtractOptions(instruction="Extract the title", schema=DummySchema), page
         )
         print(f"result = {result}")
