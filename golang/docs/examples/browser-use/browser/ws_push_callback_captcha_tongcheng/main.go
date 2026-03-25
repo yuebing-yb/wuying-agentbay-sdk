@@ -1,3 +1,4 @@
+// ci-skip: requires local Playwright driver
 package main
 
 import (

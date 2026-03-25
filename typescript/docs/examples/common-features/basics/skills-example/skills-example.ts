@@ -1,4 +1,4 @@
-import { AgentBay, CreateSessionParams, log, logError } from 'wuying-agentbay-sdk';
+import { AgentBay, CreateSessionParams, CreateSessionParamsClass, log, logError } from 'wuying-agentbay-sdk';
 
 async function main() {
   const apiKey = process.env.AGENTBAY_API_KEY || 'akm-xxx';
@@ -28,7 +28,7 @@ async function main() {
 
     // 3. Create session with skills loaded
     log('\nCreating session with skills...');
-    const params = new CreateSessionParams({
+    const params = new CreateSessionParamsClass({
       loadSkills: true,
     });
     const result = await agentBay.create(params);

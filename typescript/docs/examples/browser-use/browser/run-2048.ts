@@ -1,3 +1,4 @@
+// ci-skip: long running / infinite loop
 /**
  * Example demonstrating AIBrowser capabilities with AgentBay SDK.
  * This example shows how to use PageUseAgent to run 2048 game, including:

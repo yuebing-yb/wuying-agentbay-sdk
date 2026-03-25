@@ -28,7 +28,7 @@ async function main(): Promise<void> {
     const wsClient = await session.getWsClient();
     const pushPromise = new Promise<void>((resolve, reject) => {
       const t = setTimeout(() => reject(new Error("timeout waiting for WS push")), 180000);
-      wsClient.registerCallback("wuying_cdp_mcp_server", (payload) => {
+      wsClient.registerCallback("wuying_cdp_mcp_server", (payload: Record<string, unknown>) => {
         clearTimeout(t);
         process.stdout.write(`WS PUSH: ${JSON.stringify(payload)}\n`);
         resolve();

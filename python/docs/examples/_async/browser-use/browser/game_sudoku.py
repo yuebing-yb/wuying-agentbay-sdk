@@ -5,6 +5,8 @@
 重点：复杂结构提取；输入框填写
 """
 
+# ci-skip: long running / infinite loop
+
 import os
 import asyncio
 from typing import List, Optional, Tuple

@@ -1,3 +1,4 @@
+// ci-skip: requires interactive user input
 /**
  * Example demonstrating wuying-call-for-user message handling with AgentBay SDK.
  *

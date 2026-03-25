@@ -180,8 +180,8 @@ async function main() {
         const closeButtonCount = await closeButton.count();
         if (closeButtonCount > 0) {
           try {
-            await closeButton.first.waitFor({ state: "visible", timeout: 3000 });
-            await closeButton.first.click({ timeout: 3000 });
+            await closeButton.first().waitFor({ state: "visible", timeout: 3000 });
+            await closeButton.first().click({ timeout: 3000 });
             console.log("✅ Close button clicked");
             try {
               await mask.waitFor({ state: "hidden", timeout: 3000 });
@@ -207,7 +207,7 @@ async function main() {
     const hotelLink = page.locator("a#top_hotel, a.hotel_at.atop_hotel");
     const hotelLinkCount = await hotelLink.count();
     if (hotelLinkCount > 0) {
-      await hotelLink.first.click();
+      await hotelLink.first().click();
       await new Promise(resolve => setTimeout(resolve, 1000));
     } else {
       console.log('⚠️ "Hotel" link not found, continuing');
@@ -262,7 +262,7 @@ async function main() {
     let clicked = false;
     if (detailCount > 0) {
       try {
-        const firstButton = detailButton.first;
+        const firstButton = detailButton.first();
         await firstButton.waitFor({ state: "visible", timeout: 5000 });
         await firstButton.scrollIntoViewIfNeeded();
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -314,7 +314,7 @@ async function main() {
 
     // Click first "Book" button
     console.log('🔍 Looking for "Book" button...');
-    const bookingButton = page.locator('div.btn-top:has-text("预订")').first;
+    const bookingButton = page.locator('div.btn-top:has-text("预订")').first();
     const bookingCount = await bookingButton.count();
     if (bookingCount > 0) {
       try {

@@ -5,6 +5,8 @@
 重点：提取与策略结合；按键动作
 """
 
+# ci-skip: long running / infinite loop
+
 import os
 import asyncio
 from typing import List, Literal, Optional, Tuple, Deque

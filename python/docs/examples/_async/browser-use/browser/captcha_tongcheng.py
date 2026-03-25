@@ -7,6 +7,8 @@ This example shows how to use AIBrowser to solve captcha automatically, includin
 - We will encounter a captcha and we will solve it automatically.
 """
 
+# ci-skip: unstable external captcha dependency
+
 import os
 import time
 import asyncio

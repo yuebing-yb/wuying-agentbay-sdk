@@ -1,3 +1,4 @@
+// ci-skip: unstable external captcha dependency
 /**
  * Example demonstrating AIBrowser capabilities with AgentBay SDK.
  * This example shows how to use AIBrowser to solve captcha automatically, including:

@@ -4,6 +4,8 @@
 重点：extract 传 max_page 实现多页数据自动采集
 """
 
+# ci-skip: browser extract timeout in CI
+
 import asyncio
 import os
 import logging

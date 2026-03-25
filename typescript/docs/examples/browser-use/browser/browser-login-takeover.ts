@@ -140,13 +140,13 @@ async function runPostLoginFlow(page: Page): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, 1000));
 
   try {
-    const firstCard = page.locator("div.plugin_goodsCardWrapper").first;
+    const firstCard = page.locator("div.plugin_goodsCardWrapper").first();
     await firstCard.waitFor({ state: "visible", timeout: 8000 });
     await firstCard.scrollIntoViewIfNeeded();
     await firstCard.locator("button._addCart_d0rf6_71").click({ timeout: 5000, force: true });
     console.log("✅ Clicked add to cart");
     await new Promise(resolve => setTimeout(resolve, 3000));
-    const cartLink = page.locator("li#Cart a.Cart").first;
+    const cartLink = page.locator("li#Cart a.Cart").first();
     await cartLink.scrollIntoViewIfNeeded();
     await cartLink.click({ timeout: 5000, force: true });
     console.log("✅ Clicked cart");

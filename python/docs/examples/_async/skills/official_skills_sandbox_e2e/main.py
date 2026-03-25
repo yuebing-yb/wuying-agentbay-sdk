@@ -16,7 +16,7 @@ from agentbay import AsyncAgentBay
 from agentbay._common.params.session_params import CreateSessionParams
 
 
-DEFAULT_IMAGE_ID = "imgc-0ab5ta4n50mtv1sut"
+DEFAULT_IMAGE_ID = "linux_latest"
 SKILLS_ROOT = "/home/wuying/skills"
 
 

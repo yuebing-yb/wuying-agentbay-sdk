@@ -14,22 +14,42 @@ RESET = '\033[0m'
 # Report file path
 REPORT_FILE = "example_check_report.md"
 
-# List of examples to skip (relative path from project root or filename)
-SKIP_EXAMPLES = [
-    # Interactive examples requiring user input
-    "typescript/docs/examples/browser-use/browser/call_for_user_jd.ts",
-    "python/docs/examples/_async/browser-use/browser/call_for_user_jd.py",
-    
-    # Long running examples / Infinite loops
-    "typescript/docs/examples/browser-use/browser/run-2048.ts",
-    "python/docs/examples/_async/browser-use/browser/game_2048.py",
-    "typescript/docs/examples/browser-use/browser/run-sudoku.ts",
-    "python/docs/examples/_async/browser-use/browser/game_sudoku.py",
-    
-    # Examples with unstable external dependencies (Captchas, 3rd party sites)
-    "typescript/docs/examples/browser-use/browser/captcha_tongcheng.ts",
-    "python/docs/examples/_async/browser-use/browser/captcha_tongcheng.py",
-]
+# CI skip marker pattern: matches "# ci-skip", "// ci-skip", "# ci-skip: reason", etc.
+CI_SKIP_MARKER = "ci-skip"
+
+
+def check_file_ci_skip(file_path: str) -> Optional[str]:
+    """Check if a file contains a ci-skip marker in the first 10 lines.
+
+    Supports:
+      - Python:     # ci-skip  or  # ci-skip: <reason>
+      - TypeScript: // ci-skip or  // ci-skip: <reason>
+      - Go:         // ci-skip or  // ci-skip: <reason>
+
+    Returns the skip reason string if found, None otherwise.
+    """
+    try:
+        with open(file_path, "r", encoding="utf-8") as fh:
+            for line_number, line in enumerate(fh):
+                if line_number >= 10:
+                    break
+                stripped = line.strip()
+                # Remove comment prefix
+                comment_body = None
+                if stripped.startswith("//"):
+                    comment_body = stripped[2:].strip()
+                elif stripped.startswith("#") and not stripped.startswith("#!"):
+                    comment_body = stripped[1:].strip()
+                if comment_body is None:
+                    continue
+                if comment_body == CI_SKIP_MARKER:
+                    return "ci-skip (no reason given)"
+                if comment_body.startswith(CI_SKIP_MARKER + ":"):
+                    reason = comment_body[len(CI_SKIP_MARKER) + 1:].strip()
+                    return reason if reason else "ci-skip (no reason given)"
+    except Exception:
+        pass
+    return None
 
 def print_success(msg):
     print(f"{GREEN}{msg}{RESET}")
@@ -289,12 +309,13 @@ def check_python_examples(project_root: str, limit: int = 0) -> bool:
     for i, file_path in enumerate(files):
         rel_path = os.path.relpath(file_path, project_root)
         
-        if any(skip in rel_path for skip in SKIP_EXAMPLES):
-            print(f"Skipping ({i+1}/{len(files)}): {rel_path} (in skip list)")
+        skip_reason = check_file_ci_skip(file_path)
+        if skip_reason:
+            print(f"Skipping ({i+1}/{len(files)}): {rel_path} (ci-skip: {skip_reason})")
             continue
 
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
-        
+
         # Set AGENTBAY_LOG_LEVEL to ERROR to reduce noise unless we're debugging a failure
         env_with_log = env.copy()
         env_with_log["AGENTBAY_LOG_LEVEL"] = "ERROR"
@@ -357,12 +378,14 @@ def check_golang_examples(project_root: str, limit: int = 0) -> bool:
     for i, dir_path in enumerate(sorted_dirs):
         rel_path = os.path.relpath(dir_path, project_root)
         
-        if any(skip in rel_path for skip in SKIP_EXAMPLES):
-            print(f"Skipping ({i+1}/{len(sorted_dirs)}): {rel_path} (in skip list)")
+        main_go_path = os.path.join(dir_path, "main.go")
+        skip_reason = check_file_ci_skip(main_go_path)
+        if skip_reason:
+            print(f"Skipping ({i+1}/{len(sorted_dirs)}): {rel_path} (ci-skip: {skip_reason})")
             continue
 
         print(f"Running ({i+1}/{len(sorted_dirs)}): {rel_path} ... ", end="", flush=True)
-        
+
         result = run_command(["go", "run", "."], cwd=dir_path, timeout=600)
         
         success = result["returncode"] == 0 and not result["timed_out"]
@@ -382,8 +405,6 @@ def check_golang_examples(project_root: str, limit: int = 0) -> bool:
                 print(f"{YELLOW}Stdout (no stderr):{RESET}")
                 print(result['stdout'].strip())
                 
-            # Identify main.go for analysis
-            main_go_path = os.path.join(dir_path, "main.go")
             analysis = analyze_failure(main_go_path, output, result['duration'])
         
         results.append({
@@ -429,12 +450,13 @@ def check_typescript_examples(project_root: str, limit: int = 0) -> bool:
     for i, file_path in enumerate(files):
         rel_path = os.path.relpath(file_path, project_root)
         
-        if any(skip in rel_path for skip in SKIP_EXAMPLES):
-            print(f"Skipping ({i+1}/{len(files)}): {rel_path} (in skip list)")
+        skip_reason = check_file_ci_skip(file_path)
+        if skip_reason:
+            print(f"Skipping ({i+1}/{len(files)}): {rel_path} (ci-skip: {skip_reason})")
             continue
 
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
-        
+
         cmd = ts_node_cmd + [file_path]
         result = run_command(cmd, cwd=typescript_root, env=env, timeout=600)
         
