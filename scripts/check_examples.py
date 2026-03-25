@@ -1,3 +1,15 @@
+"""
+Example code inspection script for CI.
+
+Scans and runs SDK examples across Python, TypeScript, and Golang.
+Files can be excluded from CI by adding a ci-skip marker in the first 10 lines:
+  Python:     # ci-skip: <reason>
+  TypeScript: // ci-skip: <reason>
+  Golang:     // ci-skip: <reason>
+
+See .aoneci/README.md for the full CI testing strategy and skip categories.
+"""
+
 import argparse
 import os
 import subprocess
