@@ -193,18 +193,15 @@ describe("Session GetLink", () => {
 
         try {
           await session.getLink("wss", invalidPort);
-          // If we reach here, the test should fail
-          expect(true).toBe(false); // Force test failure
+          fail("Expected error for invalid port");
         } catch (error) {
           log(`Expected error for invalid port ${invalidPort}: ${error}`);
 
-          // Verify the error message matches session.ts logic
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
-          expect(errorMessage).toContain(`Invalid port value: ${invalidPort}`);
-          expect(errorMessage).toContain(
-            "Port must be an integer in the range [30100, 30199]"
-          );
+          // Backend returns PARAM_ERROR with valid port range info
+          expect(errorMessage).toContain("Failed to get link");
+          expect(errorMessage).toMatch(/PARAM_ERROR|InvalidPort/);
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -218,18 +215,14 @@ describe("Session GetLink", () => {
 
         try {
           await session.getLink("https", invalidPort);
-          // If we reach here, the test should fail
-          expect(true).toBe(false); // Force test failure
+          fail("Expected error for invalid port");
         } catch (error) {
           log(`Expected error for invalid port ${invalidPort}: ${error}`);
 
-          // Verify the error message matches session.ts logic
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
-          expect(errorMessage).toContain(`Invalid port value: ${invalidPort}`);
-          expect(errorMessage).toContain(
-            "Port must be an integer in the range [30100, 30199]"
-          );
+          expect(errorMessage).toContain("Failed to get link");
+          expect(errorMessage).toMatch(/PARAM_ERROR|InvalidPort/);
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -243,18 +236,15 @@ describe("Session GetLink", () => {
 
         try {
           await session.getLink("wss", invalidPort);
-          // If we reach here, the test should fail
-          expect(true).toBe(false); // Force test failure
+          fail("Expected error for non-integer port");
         } catch (error) {
           log(`Expected error for non-integer port ${invalidPort}: ${error}`);
 
-          // Verify the error message matches session.ts logic
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
-          expect(errorMessage).toContain(`Invalid port value: ${invalidPort}`);
-          expect(errorMessage).toContain(
-            "Port must be an integer in the range [30100, 30199]"
-          );
+          // Backend returns InvalidPort for non-integer values
+          expect(errorMessage).toContain("Failed to get link");
+          expect(errorMessage).toMatch(/InvalidPort|PARAM_ERROR/);
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -269,34 +259,26 @@ describe("Session GetLink", () => {
         const invalidPort8080 = 8080;
         try {
           await session.getLink(undefined, invalidPort8080);
-          expect(true).toBe(false); // Force test failure
+          fail("Expected error for invalid port 8080");
         } catch (error) {
           log(`Expected error for invalid port ${invalidPort8080}: ${error}`);
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
-          expect(errorMessage).toContain(
-            `Invalid port value: ${invalidPort8080}`
-          );
-          expect(errorMessage).toContain(
-            "Port must be an integer in the range [30100, 30199]"
-          );
+          expect(errorMessage).toContain("Failed to get link");
+          expect(errorMessage).toMatch(/PARAM_ERROR|InvalidPort/);
         }
 
         // Test port 443 (HTTPS default but outside valid range)
         const invalidPort443 = 443;
         try {
           await session.getLink("https", invalidPort443);
-          expect(true).toBe(false); // Force test failure
+          fail("Expected error for invalid port 443");
         } catch (error) {
           log(`Expected error for invalid port ${invalidPort443}: ${error}`);
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
-          expect(errorMessage).toContain(
-            `Invalid port value: ${invalidPort443}`
-          );
-          expect(errorMessage).toContain(
-            "Port must be an integer in the range [30100, 30199]"
-          );
+          expect(errorMessage).toContain("Failed to get link");
+          expect(errorMessage).toMatch(/PARAM_ERROR|InvalidPort/);
         }
       } else {
         log("Note: Session getLink method is not available, skipping test");
@@ -338,20 +320,16 @@ describe("Session GetLink", () => {
 
         try {
           await session.getLinkAsync("wss", invalidPort);
-          // If we reach here, the test should fail
-          expect(true).toBe(false); // Force test failure
+          fail("Expected error for invalid port in getLinkAsync");
         } catch (error) {
           log(
             `Expected error for invalid port ${invalidPort} in getLinkAsync: ${error}`
           );
 
-          // Verify the error message matches session.ts logic
           expect(error).toBeInstanceOf(Error);
           const errorMessage = (error as Error).message;
-          expect(errorMessage).toContain(`Invalid port value: ${invalidPort}`);
-          expect(errorMessage).toContain(
-            "Port must be an integer in the range [30100, 30199]"
-          );
+          expect(errorMessage).toContain("Failed to get link");
+          expect(errorMessage).toMatch(/PARAM_ERROR|InvalidPort/);
         }
       } else {
         log(

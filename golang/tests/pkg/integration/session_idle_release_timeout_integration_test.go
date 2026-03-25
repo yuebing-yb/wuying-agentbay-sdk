@@ -33,7 +33,7 @@ func TestSessionIdleReleaseTimeoutIntegration(t *testing.T) {
 
 	idleReleaseTimeoutSeconds := int32(60)
 	maxOverSeconds := int32(60)
-	imageID := "computer-use-ubuntu-2204-regionGW"
+	imageID := "linux_latest"
 
 	params := agentbay.NewCreateSessionParams().
 		WithImageId(imageID).

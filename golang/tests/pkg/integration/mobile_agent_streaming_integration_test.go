@@ -22,7 +22,7 @@ func TestMobileAgentStreaming_TypedCallbacks(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	params := agentbay.NewCreateSessionParams().WithImageId("imgc-0ab5takhnmlvhx9gp")
+	params := agentbay.NewCreateSessionParams().WithImageId("mobile_latest")
 	sessionResult, err := client.Create(params)
 	if err != nil {
 		t.Fatalf("Failed to create session: %v", err)

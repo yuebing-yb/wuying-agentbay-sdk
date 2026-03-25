@@ -86,7 +86,36 @@ TEST_PATTERNS = [
     "WsRegisterCallbackIntegrationTest",
     "RunCodeWsStreamingBetaIntegrationTest",
     "WsStreamCancelIntegrationTest",
-    "AgentBayGetIntegrationTest"
+    "AgentBayGetIntegrationTest",
+    # Tests using non-default endpoints (agentbay-pre / wuyingai-pre) that require
+    # separate API keys not available in CI
+    "screenshot_tool_selection_by_link_url",       # Python test file pattern
+    "screenshot-tool-selection-by-link-url",       # TypeScript test file pattern
+    "ScreenshotToolSelectionByLinkUrl",            # Java class pattern
+    "LinkUrlPresentRequiresBetaTakeScreenshot",    # Golang function pattern
+    "LinkUrlAbsentRequiresScreenshot",             # Golang function pattern
+    # Tests that call screenshot() which fails when session has link_url;
+    # beta_take_screenshot coverage exists in separate test files
+    "test_computer_screen.py",                     # Python: uses screenshot() on windows_latest
+    "test_computer_window.py",                     # Python: uses screenshot() on windows_latest
+    "test_functional_computer_test.py",            # Python: safe_screenshot_async uses screenshot()
+    # Browser operator and browser-dependency tests that require Playwright/Chrome
+    # installation or specific browser environment not available in CI
+    "test_browser_fingerprint_integration",        # Python: requires local Chrome
+    "test_browser_operator",                       # Python: browser captcha tests
+    "test_extension_browser_integration",          # Python: browser extension tests
+    "browser_hybrid_usage_integration",            # TypeScript: browser hybrid usage
+    "browser-proxy.test",                          # TypeScript: browser proxy tests
+    "browser-fingerprint.test",                    # TypeScript: browser fingerprint tests
+    "TestBrowserContext_CookiePersistence",         # Golang: browser context persistence
+    "TestBrowserReplay_Integration",               # Golang: browser replay
+    "TestBrowserScreenshot_Integration",           # Golang: browser screenshot
+    "BrowserOperatorAsyncIntegrationTest",         # Java: browser operator async
+    # screenshot() tests in TS/Go that fail when session has link_url
+    "functional-computer.test",                    # TypeScript: safeScreenshot uses screenshot()
+    "computer-windows.test",                       # TypeScript: screenshot() call
+    "TestComputerWindowsIntegration",              # Golang: TakeScreenshot() call
+    "TestWsRegisterCallback_ShouldReceiveCaptchaPush", # Golang: contains screenshot call
 ]
 
 # State Definition

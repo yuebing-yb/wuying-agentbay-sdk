@@ -21,7 +21,7 @@ func TestAgentBayGetAPI(t *testing.T) {
 	}
 
 	fmt.Println("Creating a new session for Get API testing...")
-	params := agentbay.NewCreateSessionParams().WithImageId("imgc-0a9mg1h4et0z42hv5")
+	params := agentbay.NewCreateSessionParams().WithImageId("linux_latest")
 	createResult, err := client.Create(params)
 	if err != nil {
 		t.Fatalf("Failed to create session: %v", err)
