@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""
+AgentBay SDK — Context File Transfer Example
+
+This example demonstrates how to use the ContextFileTransfer utility class
+to upload and download files/directories to/from AgentBay Context storage,
+without needing an active Session.
+
+Features demonstrated:
+  1. Upload a single file (from bytes)
+  2. Upload a single file (from file stream)
+  3. Download a single file (returns string)
+  4. Upload an entire local directory
+  5. Download an entire directory to local
+  6. Content verification
+
+Prerequisites:
+  - Set AGENTBAY_API_KEY environment variable
+  - pip install agentbay requests
+"""
+
+import asyncio
+import json
+import os
+import shutil
+import tempfile
+import time
+
+from agentbay import AsyncAgentBay
+from context_file_transfer import ContextFileTransfer
+
+
+async def main():
+    print("=" * 70)
+    print("AgentBay SDK — Context File Transfer Example")
+    print("=" * 70)
+
+    agent_bay = AsyncAgentBay()
+    transfer = ContextFileTransfer(agent_bay)
+
+    context_name = f"file-transfer-demo-{int(time.time())}"
+    temp_dir = None
+    download_dir = None
+    context = None
+
+    try:
+        # ── Step 1: Create a Context ─────────────────────────────────────
+        print("\n[Step 1] Creating context...")
+        ctx_result = await agent_bay.context.get(context_name, create=True)
+        assert ctx_result.success, f"Failed to create context: {ctx_result.error_message}"
+        context_id = ctx_result.context_id
+        context = ctx_result.context
+        print(f"  Context created: {context.name} ({context_id})")
+
+        # ── Step 2: Upload file from bytes ───────────────────────────────
+        print("\n[Step 2] Uploading file from bytes...")
+        result = await transfer.upload_file(
+            context_id, "/hello.txt", b"Hello from AgentBay!"
+        )
+        print(f"  Upload result: {'success' if result.success else 'failed: ' + result.error_message}")
+
+        # ── Step 3: Upload file from bytes (JSON) ────────────────────────
+        print("\n[Step 3] Uploading JSON data...")
+        config_data = {
+            "app_name": "Context File Transfer Demo",
+            "version": "1.0.0",
+            "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        json_bytes = json.dumps(config_data, indent=2).encode("utf-8")
+        result = await transfer.upload_file(
+            context_id,
+            "/data/app.json",
+            json_bytes,
+        )
+        print(f"  Upload result: {'success' if result.success else 'failed: ' + result.error_message}")
+
+        # ── Step 4: Download single file ─────────────────────────────────
+        print("\n[Step 4] Downloading files...")
+        content = await transfer.download_file(context_id, "/hello.txt")
+        print(f"  Downloaded /hello.txt: {content!r}")
+
+        content = await transfer.download_file(context_id, "/data/app.json")
+        parsed = json.loads(content)
+        print(f"  Downloaded /data/app.json: app_name={parsed['app_name']}, version={parsed['version']}")
+
+        # ── Step 5: Upload a directory ───────────────────────────────────
+        print("\n[Step 5] Uploading local directory...")
+        temp_dir = tempfile.mkdtemp(prefix="ctx_demo_upload_")
+
+        with open(os.path.join(temp_dir, "readme.txt"), "w") as f:
+            f.write("This is the project readme.\n")
+
+        src_dir = os.path.join(temp_dir, "src")
+        os.makedirs(src_dir)
+        with open(os.path.join(src_dir, "main.py"), "w") as f:
+            f.write('print("Hello from the project!")\n')
+        with open(os.path.join(src_dir, "utils.py"), "w") as f:
+            f.write('def greet(name):\n    return f"Hello, {name}!"\n')
+
+        result = await transfer.upload_directory(
+            context_id, "/project", temp_dir
+        )
+        stats = result.data
+        print(f"  Upload directory result: {'success' if result.success else 'failed: ' + result.error_message}")
+        print(f"  Files: {stats['succeeded']}/{stats['total']} uploaded")
+
+        # ── Step 6: Download a directory ─────────────────────────────────
+        print("\n[Step 6] Downloading directory from context...")
+        download_dir = tempfile.mkdtemp(prefix="ctx_demo_download_")
+        result = await transfer.download_directory(
+            context_id, "/project", download_dir
+        )
+        stats = result.data
+        print(f"  Download directory result: {'success' if result.success else 'failed: ' + result.error_message}")
+        print(f"  Files: {stats['succeeded']}/{stats['total']} downloaded")
+
+        # ── Step 7: Verify downloaded content ────────────────────────────
+        print("\n[Step 7] Verifying downloaded content...")
+        verified = 0
+        for root, _dirs, files in os.walk(download_dir):
+            for fname in files:
+                local_downloaded = os.path.join(root, fname)
+                rel = os.path.relpath(local_downloaded, download_dir)
+                original = os.path.join(temp_dir, rel)
+                if os.path.exists(original):
+                    with open(original) as f1, open(local_downloaded) as f2:
+                        if f1.read() == f2.read():
+                            verified += 1
+                            print(f"  Verified: {rel}")
+                        else:
+                            print(f"  MISMATCH: {rel}")
+                else:
+                    print(f"  No original for: {rel}")
+        print(f"  {verified} files verified")
+
+        print("\n" + "=" * 70)
+        print("All steps completed successfully!")
+        print("=" * 70)
+
+    except Exception as e:
+        print(f"\nError: {e}")
+        import traceback
+        traceback.print_exc()
+
+    finally:
+        # Cleanup
+        if context:
+            print("\n[Cleanup] Deleting context...")
+            await agent_bay.context.delete(context)
+            print("  Context deleted")
+
+        for d in [temp_dir, download_dir]:
+            if d and os.path.exists(d):
+                shutil.rmtree(d)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
