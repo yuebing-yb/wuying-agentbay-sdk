@@ -2,7 +2,7 @@
 Example code inspection script for CI.
 
 Scans and runs SDK examples across Python, TypeScript, and Golang.
-Files can be excluded from CI by adding a ci-skip marker in the first 10 lines:
+Files can be excluded from CI by adding a ci-skip marker in the first 20 lines:
   Python:     # ci-skip: <reason>
   TypeScript: // ci-skip: <reason>
   Golang:     // ci-skip: <reason>
@@ -31,7 +31,7 @@ CI_SKIP_MARKER = "ci-skip"
 
 
 def check_file_ci_skip(file_path: str) -> Optional[str]:
-    """Check if a file contains a ci-skip marker in the first 10 lines.
+    """Check if a file contains a ci-skip marker in the first 20 lines.
 
     Supports:
       - Python:     # ci-skip  or  # ci-skip: <reason>
@@ -43,7 +43,7 @@ def check_file_ci_skip(file_path: str) -> Optional[str]:
     try:
         with open(file_path, "r", encoding="utf-8") as fh:
             for line_number, line in enumerate(fh):
-                if line_number >= 10:
+                if line_number >= 20:
                     break
                 stripped = line.strip()
                 # Remove comment prefix

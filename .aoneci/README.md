@@ -31,7 +31,7 @@ Mark a file with `ci-skip` if it falls into any of these categories:
 
 ### How to Mark a File for CI Skip
 
-Add a `ci-skip` comment in the **first 10 lines** of the file:
+Add a `ci-skip` comment in the **first 20 lines** of the file:
 
 **Python:**
 ```python
@@ -54,7 +54,7 @@ The reason is optional but strongly recommended for clarity.
 
 ### How It Works
 
-The `scripts/check_examples.py` script scans the first 10 lines of each example file for the `ci-skip` marker before execution. If found, the file is skipped with the reason printed in the CI log.
+The `scripts/check_examples.py` script scans the first 20 lines of each example file for the `ci-skip` marker before execution. If found, the file is skipped with the reason printed in the CI log.
 
 ### Adding a New Example
 
@@ -62,5 +62,5 @@ When adding a new example to the SDK:
 
 1. **Ensure it can run in CI** — no user interaction, completes within 10 minutes, no hard-coded credentials
 2. **Use standard image IDs** — `browser_latest`, `mobile_latest`, `linux_latest` (not hard-coded `imgc-*` IDs)
-3. **If it cannot run in CI** — add a `ci-skip: <reason>` comment in the first 10 lines
+3. **If it cannot run in CI** — add a `ci-skip: <reason>` comment in the first 20 lines
 4. **Test locally first** — run `python scripts/check_examples.py --lang <language>` to verify
