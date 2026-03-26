@@ -36,7 +36,7 @@ def example_typed_callbacks():
 
     try:
         session_result = client.create(
-            CreateSessionParams(image_id="imgc-0ab5takhnmlvhx9gp")
+            CreateSessionParams(image_id="mobile_latest")
         )
         session = session_result.session
         logger.info(f"Session created: {session.session_id}")

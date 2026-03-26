@@ -9,6 +9,8 @@ import time
 重点：提取与策略结合；按键动作
 """
 
+# ci-skip: long running / infinite loop
+
 import os
 from typing import List, Literal, Optional, Tuple, Deque
 from collections import deque

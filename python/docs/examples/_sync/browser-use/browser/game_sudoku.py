@@ -9,6 +9,8 @@ import time
 重点：复杂结构提取；输入框填写
 """
 
+# ci-skip: long running / infinite loop
+
 import os
 from typing import List, Optional, Tuple
 

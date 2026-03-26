@@ -29,6 +29,8 @@ This example demonstrates:
 - Taking screenshots for debugging purposes
 """
 
+# ci-skip: requires interactive user input
+
 import os
 import time
 import base64

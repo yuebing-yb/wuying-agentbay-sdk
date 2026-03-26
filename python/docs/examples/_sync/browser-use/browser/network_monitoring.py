@@ -11,6 +11,8 @@ This example demonstrates:
 4. Performance analysis
 """
 
+# ci-skip: browser extract timeout in CI
+
 import os
 import sys
 
