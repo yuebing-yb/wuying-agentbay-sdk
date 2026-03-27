@@ -102,6 +102,30 @@ async def test_session_delete_is_idempotent(agent_bay):
 
 
 @pytest.mark.asyncio
+async def test_enable_browser_replay_default_none(agent_bay):
+    """Test that enableBrowserReplay defaults to None when not explicitly set.
+
+    When enable_browser_replay is not specified in CreateSessionParams,
+    the session's enableBrowserReplay should be None, meaning the server
+    decides the default behavior.
+    """
+    # Create session without setting enable_browser_replay
+    result = await agent_bay.create()
+    assert result.success, f"Failed to create session: {result.error_message}"
+    session = result.session
+
+    try:
+        # enableBrowserReplay should be None (server default), not False
+        print(f"Session {session.session_id} enableBrowserReplay = {session.enableBrowserReplay}")
+        assert session.enableBrowserReplay is None, (
+            f"Expected enableBrowserReplay to be None (server default), "
+            f"but got {session.enableBrowserReplay!r}"
+        )
+    finally:
+        session.delete()
+
+
+@pytest.mark.asyncio
 async def test_session_operations_after_delete_fail(agent_bay):
     """Test that operations on deleted session fail appropriately."""
     result = await agent_bay.create()

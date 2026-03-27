@@ -119,7 +119,9 @@ class AgentBayLogger:
 
         Args:
             level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            log_file: Path to log file (optional)
+            log_file: Path to log file (optional). If not specified, the default path
+                is determined by: 1) AGENTBAY_LOG_FILE env var, 2) current working directory,
+                3) system temp directory as fallback.
             enable_console: Whether to enable console logging
             enable_file: Whether to enable file logging
             rotation: Log file rotation size (deprecated, use max_file_size)
@@ -227,11 +229,25 @@ class AgentBayLogger:
                     Path(log_file) if isinstance(log_file, str) else log_file
                 )
             else:
-                # Default log file path in python/ directory
-                current_dir = Path(
-                    __file__
-                ).parent.parent  # Go up from agentbay/ to python/
-                cls._log_file = current_dir / "agentbay.log"
+                # Allow override via environment variable
+                env_log_file = os.getenv("AGENTBAY_LOG_FILE")
+                if env_log_file:
+                    cls._log_file = Path(env_log_file)
+                else:
+                    # Default: write to current working directory.
+                    # Avoid writing into site-packages when installed as a pip package.
+                    cwd_log = Path.cwd() / "agentbay.log"
+                    try:
+                        cwd_log.parent.mkdir(parents=True, exist_ok=True)
+                        # Test if the directory is writable
+                        test_file = cwd_log.parent / ".agentbay_write_test"
+                        test_file.touch()
+                        test_file.unlink()
+                        cls._log_file = cwd_log
+                    except (OSError, PermissionError):
+                        # Fallback to temp directory if cwd is not writable
+                        import tempfile
+                        cls._log_file = Path(tempfile.gettempdir()) / "agentbay.log"
 
             cls._log_file.parent.mkdir(parents=True, exist_ok=True)
 
