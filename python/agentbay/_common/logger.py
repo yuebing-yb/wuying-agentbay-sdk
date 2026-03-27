@@ -260,6 +260,7 @@ class AgentBayLogger:
                 retention=retention,
                 backtrace=True,
                 diagnose=True,
+                enqueue=True,
             )
 
         cls._initialized = True
@@ -540,32 +541,32 @@ def _log_api_response_with_details(
     if _is_sls_format():
         status_prefix = "API Response" if success else "API Response Failed"
         msg = f"{status_prefix}: {api_name}"
-        
+
         parts = []
         if request_id:
             parts.append(f"RequestId={request_id}")
-        
+
         if key_fields:
             for key, value in key_fields.items():
                 masked_value = _mask_sensitive_data({key: value}).get(key)
                 parts.append(f"{key}={masked_value}")
-        
+
         if parts:
             msg += ", " + ", ".join(parts)
-            
+
         if success:
             log.opt(depth=1).info(msg)
         else:
             log.opt(depth=1).error(msg)
-            
+
         if full_response:
              full_response = _truncate_string_for_log(_mask_sensitive_data_string(full_response), 2000)
              # In SLS format, full response might still be useful but maybe on same line or debug
-             # Requirement says "all API Response logs on one line". 
+             # Requirement says "all API Response logs on one line".
              # Full response is usually large json, putting it on INFO line might be too much.
              # But if it's debug, it's fine.
-             # Let's keep full response as debug log, potentially another line, 
-             # because "one line" usually refers to the main info log. 
+             # Let's keep full response as debug log, potentially another line,
+             # because "one line" usually refers to the main info log.
              # If user wants EVERYTHING on one line including full body, that's json logging.
              # The user complaint was "dispersed" meaning the key info was on multiple lines.
              log.opt(depth=1).debug(f"Full Response: {full_response}")
