@@ -228,7 +228,7 @@ export class Session {
   private _wsClient: WsClient | null = null;
 
   // Recording functionality
-  public enableBrowserReplay = false; // Whether browser recording is enabled for this session
+  public enableBrowserReplay?: boolean; // Whether browser recording is enabled for this session (undefined = server default)
 
   // File, command, code, and oss handlers (matching Python naming)
   public fileSystem: FileSystem; // file_system in Python

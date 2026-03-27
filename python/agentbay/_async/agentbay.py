@@ -149,7 +149,8 @@ class AsyncAgentBay:
         upload_policy = UploadPolicy(auto_upload=browser_context.auto_upload)
         recycle_policy = RecyclePolicy.default()
 
-        sync_mode = getattr(browser_context, "sync_mode", None) or BrowserSyncMode.STANDARD
+        sync_mode = getattr(browser_context, "sync_mode",
+                            None) or BrowserSyncMode.STANDARD
 
         if sync_mode == BrowserSyncMode.MINIMAL:
             white_lists = [
@@ -170,24 +171,32 @@ class AsyncAgentBay:
                 WhiteList(path="/Default/Session Storage", exclude_paths=[]),
                 # Saved passwords and form autofill
                 WhiteList(path="/Default/Login Data", exclude_paths=[]),
-                WhiteList(path="/Default/Login Data-journal", exclude_paths=[]),
-                WhiteList(path="/Default/Login Data For Account", exclude_paths=[]),
-                WhiteList(path="/Default/Login Data For Account-journal", exclude_paths=[]),
+                WhiteList(path="/Default/Login Data-journal",
+                          exclude_paths=[]),
+                WhiteList(path="/Default/Login Data For Account",
+                          exclude_paths=[]),
+                WhiteList(
+                    path="/Default/Login Data For Account-journal", exclude_paths=[]),
                 WhiteList(path="/Default/Web Data", exclude_paths=[]),
                 WhiteList(path="/Default/Web Data-journal", exclude_paths=[]),
                 # Browser settings and permission consistency
                 WhiteList(path="/Default/Preferences", exclude_paths=[]),
-                WhiteList(path="/Default/Secure Preferences", exclude_paths=[]),
+                WhiteList(path="/Default/Secure Preferences",
+                          exclude_paths=[]),
                 # Network behavior consistency (HSTS / QUIC)
                 WhiteList(path="/Default/TransportSecurity", exclude_paths=[]),
-                WhiteList(path="/Default/Network Persistent State", exclude_paths=[]),
+                WhiteList(path="/Default/Network Persistent State",
+                          exclude_paths=[]),
                 # Rendering fingerprint stability
                 WhiteList(path="/Default/GPUCache", exclude_paths=[]),
                 # Cross-domain password matching
-                WhiteList(path="/Default/Affiliation Database", exclude_paths=[]),
-                WhiteList(path="/Default/Affiliation Database-journal", exclude_paths=[]),
+                WhiteList(path="/Default/Affiliation Database",
+                          exclude_paths=[]),
+                WhiteList(path="/Default/Affiliation Database-journal",
+                          exclude_paths=[]),
             ]
-            _logger.info("Browser sync: STANDARD mode (login state + anti-risk-control)")
+            _logger.info(
+                "Browser sync: STANDARD mode (login state + anti-risk-control)")
 
         sync_policy = SyncPolicy(
             upload_policy=upload_policy,
@@ -251,7 +260,8 @@ class AsyncAgentBay:
             tools.append(
                 McpTool(
                     name=item.get("name", "") or item.get("Name", "") or "",
-                    server=item.get("server", "") or item.get("serverName", "") or item.get("Server", "") or "",
+                    server=item.get("server", "") or item.get(
+                        "serverName", "") or item.get("Server", "") or "",
                 )
             )
         return tools
@@ -308,8 +318,8 @@ class AsyncAgentBay:
         elif "wsUrl" in response_data and response_data.get("wsUrl") is not None:
             session.ws_url = str(response_data.get("wsUrl") or "")
 
-        # Set browser recording state (default to True if not explicitly set to False)
-        session.enableBrowserReplay = params.enable_browser_replay if params.enable_browser_replay is not None else True
+        # Set browser recording state (None = server-side default)
+        session.enableBrowserReplay = params.enable_browser_replay
 
         # Store image_id used for this session
         setattr(session, "image_id", params.image_id)
@@ -348,7 +358,8 @@ class AsyncAgentBay:
                 If empty set, return immediately. Otherwise, only wait for the specified
                 context IDs to reach terminal status (Success/Failed).
         """
-        _log_operation_start("Context synchronization", "Waiting for completion")
+        _log_operation_start("Context synchronization",
+                             "Waiting for completion")
 
         if wait_context_ids is not None and len(wait_context_ids) == 0:
             _log_operation_success("Context synchronization")
@@ -367,9 +378,11 @@ class AsyncAgentBay:
             try:
                 info_result = await session.context.info()
             except Exception as e:
-                _logger.error(f"Error getting context info on attempt {retry+1}: {e}")
+                _logger.error(
+                    f"Error getting context info on attempt {retry+1}: {e}")
                 await asyncio.sleep(current_interval)
-                current_interval = min(current_interval * backoff_factor, max_interval)
+                current_interval = min(
+                    current_interval * backoff_factor, max_interval)
                 continue
 
             if wait_context_ids is None:
@@ -394,7 +407,8 @@ class AsyncAgentBay:
 
                 if all_completed or not info_result.context_status_data:
                     if has_failure:
-                        _log_warning("Context synchronization completed with failures")
+                        _log_warning(
+                            "Context synchronization completed with failures")
                     else:
                         _log_operation_success("Context synchronization")
                     break
@@ -425,7 +439,8 @@ class AsyncAgentBay:
 
                 if all_completed:
                     if has_failure:
-                        _log_warning("Context synchronization completed with failures")
+                        _log_warning(
+                            "Context synchronization completed with failures")
                     else:
                         _log_operation_success("Context synchronization")
                     break
@@ -436,7 +451,8 @@ class AsyncAgentBay:
             await asyncio.sleep(current_interval)
 
             # Exponential backoff: increase interval for next retry, capped at max_interval
-            current_interval = min(current_interval * backoff_factor, max_interval)
+            current_interval = min(
+                current_interval * backoff_factor, max_interval)
 
     async def _wait_for_mobile_simulate(
         self,
@@ -455,7 +471,8 @@ class AsyncAgentBay:
         _logger.info("⏳ Mobile simulate: Waiting for completion")
 
         if not hasattr(session, "mobile"):
-            _logger.info("Mobile module not found in session, skipping mobile simulate")
+            _logger.info(
+                "Mobile module not found in session, skipping mobile simulate")
             return
         if not hasattr(session, "command"):
             _logger.info(
@@ -463,7 +480,8 @@ class AsyncAgentBay:
             )
             return
         if not mobile_sim_path:
-            _logger.info("Mobile simulate path is empty, skipping mobile simulate")
+            _logger.info(
+                "Mobile simulate path is empty, skipping mobile simulate")
             return
 
         try:
@@ -581,17 +599,20 @@ class AsyncAgentBay:
                         )
                         params.context_syncs.append(mobile_sim_context_sync)
 
-            request = CreateMcpSessionRequest(authorization=f"Bearer {self.api_key}")
+            request = CreateMcpSessionRequest(
+                authorization=f"Bearer {self.api_key}")
 
-            # browser replay is enabled by default, so if enable_browser_replay is explicitly False, set enable_record to False
-            # Only set enable_record when explicitly False, not when None (which means use default behavior)
-            if hasattr(params, "enable_browser_replay") and params.enable_browser_replay is False:
-                request.enable_record = False
-                _logger.info(f"enable_browser_replay is False, setting enable_record to False")
+            # Only set enable_record when user explicitly sets enable_browser_replay
+            # When None (not set), don't send the field - let server decide the default
+            if hasattr(params, "enable_browser_replay") and params.enable_browser_replay is not None:
+                request.enable_record = params.enable_browser_replay
+                _logger.info(
+                    f"enable_browser_replay is {params.enable_browser_replay}, setting enable_record to {params.enable_browser_replay}")
 
             # Add SDK stats for tracking
             framework = (
-                params.framework if params and hasattr(params, "framework") else ""
+                params.framework if params and hasattr(
+                    params, "framework") else ""
             )
             sdk_stats_json = f'{{"source":"sdk","sdk_language":"python","sdk_version":"{__version__}","is_release":{str(__is_release__).lower()},"framework":"{framework}"}}'
             request.sdk_stats = sdk_stats_json
@@ -756,7 +777,8 @@ class AsyncAgentBay:
             # Log API response with key details
             resource_url = data.get("ResourceUrl", "")
             app_instance_id = data.get("AppInstanceId", "") or ""
-            key_fields = {"session_id": session_id, "resource_url": resource_url}
+            key_fields = {"session_id": session_id,
+                          "resource_url": resource_url}
             if app_instance_id:
                 key_fields["AppInstanceId"] = app_instance_id
             _log_api_response_with_details(
@@ -792,7 +814,8 @@ class AsyncAgentBay:
             ):
                 if wait_context_ids is None:
                     wait_context_ids = set()
-                wait_context_ids.add(params.extra_configs.mobile.simulate_config.simulated_context_id)
+                wait_context_ids.add(
+                    params.extra_configs.mobile.simulate_config.simulated_context_id)
 
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
@@ -964,7 +987,8 @@ class AsyncAgentBay:
 
             # Check for errors in the response
             if isinstance(body, dict) and body.get("Success") is False:
-                error_message = body.get("Message", body.get("Code", "Unknown error"))
+                error_message = body.get(
+                    "Message", body.get("Code", "Unknown error"))
                 return SessionListResult(
                     request_id=request_id,
                     success=False,
@@ -994,7 +1018,8 @@ class AsyncAgentBay:
 
             # Extract session data
             response_data = body.get("Data")
-            _logger.info(f"  ✓ ListSession API call async successful{response_data}")
+            _logger.info(
+                f"  ✓ ListSession API call async successful{response_data}")
             # Handle both list and dict responses
             if isinstance(response_data, list):
                 # Data is a list of session objects
@@ -1126,17 +1151,20 @@ class AsyncAgentBay:
                 data = None
                 if body.get("Data"):
                     data_dict = body.get("Data", {})
-                    _logger.info(f"  ✓ GetSession API call async successful{data_dict}")
+                    _logger.info(
+                        f"  ✓ GetSession API call async successful{data_dict}")
                     data = GetSessionData(
                         app_instance_id=data_dict.get("AppInstanceId", ""),
                         resource_id=data_dict.get("ResourceId", ""),
                         session_id=data_dict.get("SessionId", ""),
                         success=data_dict.get("Success", False),
                         http_port=data_dict.get("HttpPort", ""),
-                        network_interface_ip=data_dict.get("NetworkInterfaceIp", ""),
+                        network_interface_ip=data_dict.get(
+                            "NetworkInterfaceIp", ""),
                         token=data_dict.get("Token", ""),
                         link_url=data_dict.get("LinkUrl", "") or "",
-                        ws_url=data_dict.get("WsUrl", "") or data_dict.get("wsUrl", "") or "",
+                        ws_url=data_dict.get("WsUrl", "") or data_dict.get(
+                            "wsUrl", "") or "",
                         vpc_resource=data_dict.get("VpcResource", False),
                         resource_url=data_dict.get("ResourceUrl", ""),
                         status=data_dict.get("Status", ""),
@@ -1238,9 +1266,11 @@ class AsyncAgentBay:
         # Set ResourceUrl from GetSession response
         if get_result.data:
             session.resource_url = get_result.data.resource_url
-            session.mcpTools = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list)
+            session.mcpTools = self._parse_tool_list_to_mcp_tools(
+                get_result.data.tool_list)
             session.token = str(get_result.data.token or "")
-            session.link_url = str(getattr(get_result.data, "link_url", "") or "")
+            session.link_url = str(
+                getattr(get_result.data, "link_url", "") or "")
             session.ws_url = str(getattr(get_result.data, "ws_url", "") or "")
 
         return SessionResult(
@@ -1284,4 +1314,3 @@ class AsyncAgentBay:
                 success=False,
                 error_message=f"Failed to resume session {session.session_id}: {e}",
             )
-

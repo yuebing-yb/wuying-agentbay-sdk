@@ -208,7 +208,7 @@ describe("Session Parameters", () => {
       expect(mockAgentBay.create.calledOnceWith(options)).toBe(true);
     });
 
-    it("should default enableBrowserReplay to true when not specified", async () => {
+    it("should default enableBrowserReplay to undefined when not specified", async () => {
       const options = {
         labels: { session_type: "standard" },
         imageId: "linux_latest",
@@ -258,7 +258,7 @@ describe("Session Parameters", () => {
   });
 
   describe("CreateSessionParams class enableBrowserReplay functionality", () => {
-    it("should have enableBrowserReplay field with default true value", () => {
+    it("should have enableBrowserReplay field with default undefined value", () => {
       const params: CreateSessionParams = {
         enableBrowserReplay: true,
       };
@@ -295,10 +295,10 @@ describe("Session Parameters", () => {
   });
 
   describe("Session enableBrowserReplay field", () => {
-    it("should have enableBrowserReplay field with default false value", () => {
+    it("should have enableBrowserReplay field with default undefined value", () => {
       const session = new Session(mockAgentBay, "test-session-id");
 
-      expect(session.enableBrowserReplay).toBe(false);
+      expect(session.enableBrowserReplay).toBeUndefined();
     });
 
     it("should allow setting enableBrowserReplay field", () => {

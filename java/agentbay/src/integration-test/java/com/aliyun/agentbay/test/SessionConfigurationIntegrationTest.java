@@ -245,7 +245,7 @@ public class SessionConfigurationIntegrationTest {
     public void testEnableBrowserReplayDefault() throws Exception {
         System.out.println("\n=== Test: Enable Browser Replay Default Behavior ===");
         
-        // When enable_browser_replay is null, browser replay should be enabled by default
+        // When enable_browser_replay is null, server-side default behavior applies
         CreateSessionParams params = new CreateSessionParams();
         params.setImageId("browser_latest");
         // Don't set enableBrowserReplay (null by default)
@@ -256,8 +256,8 @@ public class SessionConfigurationIntegrationTest {
         assertTrue(result.isSuccess());
         session = result.getSession();
         
-        System.out.println("✅ Session created with default browser replay (enabled)");
-        System.out.println("   Note: Browser replay is enabled by default when not specified");
+        System.out.println("✅ Session created with server-side default browser replay");
+        System.out.println("   Note: Browser replay default is determined by server when not specified");
     }
 }
 

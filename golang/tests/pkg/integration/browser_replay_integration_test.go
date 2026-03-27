@@ -78,7 +78,8 @@ func TestBrowserReplay_Integration(t *testing.T) {
 	fmt.Println("=== End Session Info Details ===")
 
 	// Verify EnableBrowserReplay is set
-	assert.True(t, session.EnableBrowserReplay, "EnableBrowserReplay should be true")
+	assert.NotNil(t, session.EnableBrowserReplay, "EnableBrowserReplay should not be nil")
+	assert.True(t, *session.EnableBrowserReplay, "EnableBrowserReplay should be true")
 
 	// Test browser operations with recording enabled
 	t.Run("Browser record operations", func(t *testing.T) {

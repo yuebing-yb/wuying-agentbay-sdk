@@ -137,7 +137,8 @@ class Session:
 
         # Recording functionality
         self.enableBrowserReplay = (
-            True  # Whether browser recording is enabled for this session
+            # Whether browser recording is enabled for this session (None = server default)
+            None
         )
 
         # MCP tool list returned by backend for this session
@@ -389,7 +390,8 @@ class Session:
         This method calls the RefreshSessionIdleTime API.
         """
         try:
-            _log_api_call("RefreshSessionIdleTime", f"SessionId={self.session_id}")
+            _log_api_call("RefreshSessionIdleTime",
+                          f"SessionId={self.session_id}")
             request = RefreshSessionIdleTimeRequest(
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
@@ -398,7 +400,8 @@ class Session:
             request_id = extract_request_id(response)
 
             response_map = response.to_map() if response is not None else {}
-            body = response_map.get("body", {}) if isinstance(response_map, dict) else {}
+            body = response_map.get("body", {}) if isinstance(
+                response_map, dict) else {}
 
             success = bool(body.get("Success", False))
             if not request_id:
@@ -407,12 +410,14 @@ class Session:
             if not success:
                 code = body.get("Code", "") or ""
                 message = body.get("Message", "") or ""
-                error_message = f"[{code}] {message or 'Unknown error'}" if code else (message or "Unknown error")
+                error_message = f"[{code}] {message or 'Unknown error'}" if code else (
+                    message or "Unknown error")
                 _log_api_response_with_details(
                     api_name="RefreshSessionIdleTime",
                     request_id=request_id,
                     success=False,
-                    full_response=json.dumps(body, ensure_ascii=False, indent=2)
+                    full_response=json.dumps(
+                        body, ensure_ascii=False, indent=2)
                     if isinstance(body, dict)
                     else str(body),
                 )
@@ -430,7 +435,8 @@ class Session:
             )
             return OperationResult(request_id=request_id, success=True)
         except Exception as e:
-            _log_operation_error("RefreshSessionIdleTime", str(e), exc_info=True)
+            _log_operation_error("RefreshSessionIdleTime",
+                                 str(e), exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -511,7 +517,8 @@ class Session:
                     api_name="DeleteSessionAsync",
                     request_id=request_id,
                     success=False,
-                    full_response=json.dumps(body, ensure_ascii=False, indent=2),
+                    full_response=json.dumps(
+                        body, ensure_ascii=False, indent=2),
                 )
                 return DeleteResult(
                     request_id=request_id,
@@ -520,7 +527,8 @@ class Session:
                 )
 
             # Poll for session deletion status
-            _logger.info(f"🔄 Waiting for session {self.session_id} to be deleted...")
+            _logger.info(
+                f"🔄 Waiting for session {self.session_id} to be deleted...")
             poll_timeout = 300.0  # 5 minutes timeout
             poll_interval = 1.0  # Poll every 1 second
             poll_start_time = time.time()
@@ -544,7 +552,8 @@ class Session:
                 if not session_result.success:
                     error_code = getattr(session_result, "code", "") or ""
                     error_message = session_result.error_message or ""
-                    http_status_code = getattr(session_result, "http_status_code", 0) or 0
+                    http_status_code = getattr(
+                        session_result, "http_status_code", 0) or 0
 
                     # Check for InvalidMcpSession.NotFound, 400 with "not found", or error_message containing "not found"
                     is_not_found = (
@@ -559,11 +568,13 @@ class Session:
 
                     if is_not_found:
                         # Session is deleted
-                        _logger.info(f"✅ Session {self.session_id} successfully deleted (NotFound)")
+                        _logger.info(
+                            f"✅ Session {self.session_id} successfully deleted (NotFound)")
                         break
                     else:
                         # Other error, continue polling
-                        _logger.debug(f"⚠️  Get session error (will retry): {error_message}")
+                        _logger.debug(
+                            f"⚠️  Get session error (will retry): {error_message}")
                         # Continue to next poll iteration
 
                 # Check session status if we got valid data
@@ -571,7 +582,8 @@ class Session:
                     status = session_result.status
                     _logger.debug(f"📊 Session status: {status}")
                     if status == "FINISH":
-                        _logger.info(f"✅ Session {self.session_id} successfully deleted")
+                        _logger.info(
+                            f"✅ Session {self.session_id} successfully deleted")
                         break
 
                 # Wait before next poll
@@ -694,13 +706,15 @@ class Session:
                 api_name="SetLabel",
                 request_id=request_id,
                 success=True,
-                key_fields={"session_id": self.session_id, "labels_count": len(labels)},
+                key_fields={"session_id": self.session_id,
+                            "labels_count": len(labels)},
             )
 
             return OperationResult(request_id=request_id, success=True)
 
         except Exception as e:
-            _logger.exception(f"❌ Failed to set labels for session {self.session_id}")
+            _logger.exception(
+                f"❌ Failed to set labels for session {self.session_id}")
             raise SessionError(
                 f"Failed to set labels for session {self.session_id}: {e}"
             )
@@ -736,13 +750,15 @@ class Session:
                 api_name="GetLabel",
                 request_id=request_id,
                 success=True,
-                key_fields={"session_id": self.session_id, "labels_count": len(labels)},
+                key_fields={"session_id": self.session_id,
+                            "labels_count": len(labels)},
             )
 
             return OperationResult(request_id=request_id, success=True, data=labels)
 
         except Exception as e:
-            _logger.exception(f"❌ Failed to get labels for session {self.session_id}")
+            _logger.exception(
+                f"❌ Failed to get labels for session {self.session_id}")
             raise SessionError(
                 f"Failed to get labels for session {self.session_id}: {e}"
             )
@@ -916,7 +932,8 @@ class Session:
         except SessionError:
             raise
         except Exception as e:
-            _logger.error(f"❌ Failed to get link for session {self.session_id}: {e}")
+            _logger.error(
+                f"❌ Failed to get link for session {self.session_id}: {e}")
             raise SessionError(f"Failed to get link: {e}")
 
     def list_mcp_tools(self, image_id: Optional[str] = None):
@@ -1087,7 +1104,8 @@ class Session:
                     api_name="CallMcpTool(LinkUrl) Response",
                     request_id=request_id,
                     success=False,
-                    key_fields={"http_status": resp.status_code, "tool_name": tool_name},
+                    key_fields={"http_status": resp.status_code,
+                                "tool_name": tool_name},
                     full_response=resp.text,
                 )
                 return McpToolResult(
@@ -1136,11 +1154,13 @@ class Session:
                 if isinstance(first, str):
                     text_content = first
                 elif isinstance(first, dict):
-                    text_content = first.get("text") or first.get("blob") or first.get("data") or ""
+                    text_content = first.get("text") or first.get(
+                        "blob") or first.get("data") or ""
 
             response_preview = ""
             if text_content:
-                response_preview = _truncate_string_for_log(str(text_content), 2000)
+                response_preview = _truncate_string_for_log(
+                    str(text_content), 2000)
 
             key_fields = {
                 "tool_name": tool_name,
@@ -1247,8 +1267,10 @@ class Session:
                     raw,
                     ["tx_rate_kbyte_per_s", "tx_rate_kbps", "tx_rate_KBps"],
                 ),
-                rx_used_kbyte=_float_from_first_key(raw, ["rx_used_kbyte", "rx_used_kb", "rx_used_KB"]),
-                tx_used_kbyte=_float_from_first_key(raw, ["tx_used_kbyte", "tx_used_kb", "tx_used_KB"]),
+                rx_used_kbyte=_float_from_first_key(
+                    raw, ["rx_used_kbyte", "rx_used_kb", "rx_used_KB"]),
+                tx_used_kbyte=_float_from_first_key(
+                    raw, ["tx_used_kbyte", "tx_used_kb", "tx_used_KB"]),
                 timestamp=str(raw.get("timestamp", "") or ""),
             )
             return SessionMetricsResult(
@@ -1393,7 +1415,8 @@ class Session:
             )
 
         except Exception as e:
-            _log_operation_error("CallMcpTool", f"API request failed: {e}", True)
+            _log_operation_error(
+                "CallMcpTool", f"API request failed: {e}", True)
             return McpToolResult(
                 request_id="",
                 success=False,
@@ -1459,20 +1482,24 @@ class Session:
                     error_message=error_message,
                 )
 
-            _logger.info(f"Pause request sent for session {self.session_id}, waiting for PAUSED state")
+            _logger.info(
+                f"Pause request sent for session {self.session_id}, waiting for PAUSED state")
 
             # Poll session status
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
-                    session_result = self.agent_bay._get_session(self.session_id)
+                    session_result = self.agent_bay._get_session(
+                        self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         poll_request_id = session_result.request_id
-                        _logger.info(f"Polling session status: {status}, request_id: {poll_request_id}")
+                        _logger.info(
+                            f"Polling session status: {status}, request_id: {poll_request_id}")
 
                         if status == "PAUSED":
-                            _log_operation_success("beta_pause", f"Session {self.session_id} paused successfully")
+                            _log_operation_success(
+                                "beta_pause", f"Session {self.session_id} paused successfully")
                             return SessionPauseResult(
                                 request_id=request_id,
                                 success=True,
@@ -1480,9 +1507,11 @@ class Session:
                             )
 
                         if status == "PAUSING":
-                            _logger.debug("Session is pausing, continue polling")
+                            _logger.debug(
+                                "Session is pausing, continue polling")
                         else:
-                            _log_operation_error("beta_pause", f"Session in unexpected state: {status}")
+                            _log_operation_error(
+                                "beta_pause", f"Session in unexpected state: {status}")
                             return SessionPauseResult(
                                 request_id=request_id,
                                 success=False,
@@ -1494,7 +1523,8 @@ class Session:
 
                 time.sleep(poll_interval)
 
-            _log_operation_error("beta_pause", f"Timeout waiting for session {self.session_id} after {timeout}s")
+            _log_operation_error(
+                "beta_pause", f"Timeout waiting for session {self.session_id} after {timeout}s")
             return SessionPauseResult(
                 success=False,
                 status="",
@@ -1563,20 +1593,24 @@ class Session:
                     error_message=error_message,
                 )
 
-            _logger.info(f"Resume request sent for session {self.session_id}, waiting for RUNNING state")
+            _logger.info(
+                f"Resume request sent for session {self.session_id}, waiting for RUNNING state")
 
             # Poll session status
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
-                    session_result = self.agent_bay._get_session(self.session_id)
+                    session_result = self.agent_bay._get_session(
+                        self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         poll_request_id = session_result.request_id
-                        _logger.info(f"Polling session status: {status}, request_id: {poll_request_id}")
+                        _logger.info(
+                            f"Polling session status: {status}, request_id: {poll_request_id}")
 
                         if status == "RUNNING":
-                            _log_operation_success("beta_resume", f"Session {self.session_id} resumed successfully")
+                            _log_operation_success(
+                                "beta_resume", f"Session {self.session_id} resumed successfully")
                             return SessionResumeResult(
                                 request_id=request_id,
                                 success=True,
@@ -1584,9 +1618,11 @@ class Session:
                             )
 
                         if status == "RESUMING":
-                            _logger.debug("Session is resuming, continue polling")
+                            _logger.debug(
+                                "Session is resuming, continue polling")
                         else:
-                            _log_operation_error("beta_resume", f"Session in unexpected state: {status}")
+                            _log_operation_error(
+                                "beta_resume", f"Session in unexpected state: {status}")
                             return SessionResumeResult(
                                 request_id=request_id,
                                 success=False,
@@ -1598,7 +1634,8 @@ class Session:
 
                 time.sleep(poll_interval)
 
-            _log_operation_error("beta_resume", f"Timeout waiting for session {self.session_id}")
+            _log_operation_error(
+                "beta_resume", f"Timeout waiting for session {self.session_id}")
             return SessionResumeResult(
                 request_id="",
                 success=False,

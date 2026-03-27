@@ -3716,9 +3716,10 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		Authorization: tea.String("Bearer " + a.APIKey),
 	}
 
-	// browser replay is enabled by default, so if enable_browser_replay is False, set enable_record to False
-	if !params.EnableBrowserReplay {
-		createSessionRequest.EnableRecord = tea.Bool(false)
+	// Only set enable_record when user explicitly sets enable_browser_replay
+	// When nil (not set), don't send the field - let server decide the default
+	if params.EnableBrowserReplay != nil {
+		createSessionRequest.EnableRecord = params.EnableBrowserReplay
 	}
 
 	// Add SDK stats for tracking
@@ -10234,8 +10235,8 @@ class AsyncAgentBay:
         elif "wsUrl" in response_data and response_data.get("wsUrl") is not None:
             session.ws_url = str(response_data.get("wsUrl") or "")
 
-        # Set browser recording state (default to True if not explicitly set to False)
-        session.enableBrowserReplay = params.enable_browser_replay if params.enable_browser_replay is not None else True
+        # Set browser recording state (None = server-side default)
+        session.enableBrowserReplay = params.enable_browser_replay
 
         # Store image_id used for this session
         setattr(session, "image_id", params.image_id)
@@ -19844,9 +19845,10 @@ export class AgentBay {
         authorization: "Bearer " + this.apiKey,
       });
 
-      // browser replay is enabled by default, so if enableBrowserReplay is False, set enableRecord to False
-      if (paramsCopy.enableBrowserReplay === false) {
-        request.enableRecord = false;
+      // Only set enable_record when user explicitly sets enable_browser_replay
+      // When undefined (not set), don't send the field - let server decide the default
+      if (paramsCopy.enableBrowserReplay !== undefined) {
+        request.enableRecord = paramsCopy.enableBrowserReplay;
       }
 
       // Add SDK stats for tracking

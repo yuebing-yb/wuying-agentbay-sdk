@@ -371,8 +371,8 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
   /** Beta network ID to bind this session to. */
   public betaNetworkId?: string;
 
-  /** Whether to enable browser session recording. */
-  public enableBrowserReplay: boolean;
+  /** Whether to enable browser session recording. When undefined, server-side default applies. */
+  public enableBrowserReplay?: boolean;
 
   /** Additional configuration options. */
   public extraConfigs?: ExtraConfigs;
@@ -410,10 +410,8 @@ export class CreateSessionParams implements CreateSessionParamsInterface {
     this.mcpPolicyId = params?.mcpPolicyId ? params.mcpPolicyId : "";
     this.policyId = params?.policyId ? params.policyId : "";
     this.betaNetworkId = params?.betaNetworkId;
-    // Default to true like Python version
-    this.enableBrowserReplay = params?.enableBrowserReplay
-      ? params.enableBrowserReplay
-      : true;
+    // When not set, leave as undefined - let server decide the default
+    this.enableBrowserReplay = params?.enableBrowserReplay;
     this.extraConfigs = params?.extraConfigs;
     this.framework = params?.framework || "";
 

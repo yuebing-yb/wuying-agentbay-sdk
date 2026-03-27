@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * AgentBay represents the main client for interacting with the AgentBay cloud runtime
  * environment.
- * 
+ *
  * <p>This class provides the entry point for creating and managing sessions in the
  * AgentBay cloud environment. It handles authentication, session lifecycle management,
  * and provides access to various services including context management, mobile simulation,
@@ -105,10 +105,10 @@ public class AgentBay {
 
     /**
      * Internal method to get session information by session ID.
-     * 
+     *
      * This method calls the GetSession API and returns raw session data without creating a Session object.
      * This method is public to allow access from Session class for polling operations.
-     * 
+     *
      * @param sessionId The ID of the session to retrieve
      * @return GetSessionResult containing session information
      */
@@ -384,7 +384,7 @@ public class AgentBay {
                     UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
                     30
                 );
-    
+
                 // Build whitelist based on sync mode
                 List<WhiteList> whiteLists = new ArrayList<>();
                 BrowserSyncMode syncMode = browserContext.getSyncMode();
@@ -494,10 +494,10 @@ public class AgentBay {
                 }
             }
 
-            // Set enable_browser_replay if explicitly set to false
-            // Browser replay is enabled by default, so only set when explicitly False
-            if (params.getEnableBrowserReplay() != null && !params.getEnableBrowserReplay()) {
-                request.setEnableRecord(false);
+            // Set enable_record when user explicitly sets enable_browser_replay
+            // When null (not set), don't send the field - let server decide the default
+            if (params.getEnableBrowserReplay() != null) {
+                request.setEnableRecord(params.getEnableBrowserReplay());
             }
 
             // Note: ExtraConfigs is handled automatically by MobileExtraConfig during session creation
@@ -581,8 +581,8 @@ public class AgentBay {
                 session.setImageId(params.getImageId());
             }
 
-            // Set browser recording state (default to True if not explicitly set to False)
-            session.setEnableBrowserReplay(params.getEnableBrowserReplay() != null ? params.getEnableBrowserReplay() : true);
+            // Set browser recording state (pass through user's explicit setting, or null for server default)
+            session.setEnableBrowserReplay(params.getEnableBrowserReplay());
 
             // LinkUrl/token may be returned by the server for direct tool calls.
             if (response.getBody().getData() != null) {
@@ -1024,16 +1024,16 @@ public class AgentBay {
 
     /**
      * Pause a session (beta feature), putting it into a dormant state.
-     * 
+     *
      * This is a convenience method that delegates to the session's betaPause method.
-     * 
+     *
      * @param session The session to pause
      * @param timeout Maximum time to wait for pause completion in seconds (default: 600)
      * @param pollInterval Interval between status checks in seconds (default: 2.0)
      * @return SessionPauseResult containing the pause operation result
      * @throws AgentBayException if the API call fails
      */
-    public SessionPauseResult betaPause(Session session, int timeout, double pollInterval) 
+    public SessionPauseResult betaPause(Session session, int timeout, double pollInterval)
             throws AgentBayException {
         try {
             return session.betaPause(timeout, pollInterval);
@@ -1044,9 +1044,9 @@ public class AgentBay {
 
     /**
      * Pause a session with default parameters (beta feature).
-     * 
+     *
      * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
-     * 
+     *
      * @param session The session to pause
      * @return SessionPauseResult containing the pause operation result
      * @throws AgentBayException if the API call fails
@@ -1057,16 +1057,16 @@ public class AgentBay {
 
     /**
      * Resume a paused session and wait until it enters RUNNING state (beta feature).
-     * 
+     *
      * This is a convenience method that delegates to the session's betaResume method.
-     * 
+     *
      * @param session The session to resume
      * @param timeout Maximum time to wait for resume completion in seconds (default: 600)
      * @param pollInterval Interval between status checks in seconds (default: 2.0)
      * @return SessionResumeResult containing the resume operation result
      * @throws AgentBayException if the API call fails
      */
-    public SessionResumeResult betaResume(Session session, int timeout, double pollInterval) 
+    public SessionResumeResult betaResume(Session session, int timeout, double pollInterval)
             throws AgentBayException {
         try {
             return session.betaResume(timeout, pollInterval);
@@ -1077,9 +1077,9 @@ public class AgentBay {
 
     /**
      * Resume a paused session with default parameters (beta feature).
-     * 
+     *
      * Uses default timeout of 600 seconds and poll interval of 2.0 seconds.
-     * 
+     *
      * @param session The session to resume
      * @return SessionResumeResult containing the resume operation result
      * @throws AgentBayException if the API call fails

@@ -137,7 +137,7 @@ type Session struct {
 	linkHttpClient *http.Client
 
 	// Browser replay enabled flag
-	EnableBrowserReplay bool
+	EnableBrowserReplay *bool
 
 	// File, command and code handlers
 	FileSystem *filesystem.FileSystem
@@ -466,7 +466,8 @@ func (s *Session) GetSessionID() string {
 }
 
 // GetEnableBrowserReplay returns whether browser replay is enabled for this session.
-func (s *Session) GetEnableBrowserReplay() bool {
+// Returns nil if not explicitly set (server default applies).
+func (s *Session) GetEnableBrowserReplay() *bool {
 	return s.EnableBrowserReplay
 }
 

@@ -309,7 +309,7 @@ class CreateSessionParams:
             configurations that define how contexts should be synchronized and mounted.
         browser_context (Optional[BrowserContext]): Optional configuration for browser data synchronization.
         policy_id (Optional[str]): Policy id to apply when creating the session.
-        enable_browser_replay (Optional[bool]): Whether to enable browser recording for the session. It is enabled by default, so if enable_browser_replay is False, set enable_record to False
+        enable_browser_replay (Optional[bool]): Whether to enable browser recording for the session. When not set (None), the server-side default behavior applies. Set to True to enable, False to disable
         extra_configs (Optional[ExtraConfigs]): Advanced configuration parameters for mobile environments.
         framework (Optional[str]): Framework name for tracking (e.g., "langchain"). Defaults to empty string (direct call).
         beta_network_id (Optional[str]): Beta network ID to bind this session to.
@@ -352,7 +352,7 @@ class CreateSessionParams:
             beta_network_id (Optional[str], optional): Beta network ID to bind this session to.
                 Defaults to None.
             enable_browser_replay (Optional[bool], optional): Whether to enable browser recording for the session.
-                Defaults to False.
+                When not set, server-side default behavior applies. Set to True to enable, False to disable.
             extra_configs (Optional[ExtraConfigs], optional): Advanced configuration parameters for mobile environments.
                 Defaults to None.
             framework (Optional[str], optional): Framework name for tracking (e.g., "langchain").
@@ -362,7 +362,8 @@ class CreateSessionParams:
         self.image_id = image_id
         if idle_release_timeout is not None:
             if not isinstance(idle_release_timeout, int):
-                raise ValueError("idle_release_timeout must be an int (seconds)")
+                raise ValueError(
+                    "idle_release_timeout must be an int (seconds)")
             if idle_release_timeout <= 0:
                 raise ValueError("idle_release_timeout must be > 0 (seconds)")
         self.idle_release_timeout = idle_release_timeout
@@ -386,8 +387,8 @@ class CreateSessionParams:
         self.browser_context = browser_context
         self.policy_id = policy_id
         self.beta_network_id = beta_network_id
-        # Default to True if not provided (browser replay is enabled by default)
-        self.enable_browser_replay = enable_browser_replay if enable_browser_replay is not None else True
+        # Keep None if not provided - server-side default behavior applies
+        self.enable_browser_replay = enable_browser_replay
         self.extra_configs = extra_configs
         self.framework = framework or ""
         self.load_skills = load_skills

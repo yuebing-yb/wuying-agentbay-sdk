@@ -312,9 +312,10 @@ export class AgentBay {
         authorization: "Bearer " + this.apiKey,
       });
 
-      // browser replay is enabled by default, so if enableBrowserReplay is False, set enableRecord to False
-      if (paramsCopy.enableBrowserReplay === false) {
-        request.enableRecord = false;
+      // Only set enable_record when user explicitly sets enable_browser_replay
+      // When undefined (not set), don't send the field - let server decide the default
+      if (paramsCopy.enableBrowserReplay !== undefined) {
+        request.enableRecord = paramsCopy.enableBrowserReplay;
       }
 
       // Add SDK stats for tracking
@@ -617,7 +618,7 @@ export class AgentBay {
       session.mcpTools = this.parseToolListToMcpTools(data.toolList);
 
       // Set browser recording state
-      session.enableBrowserReplay = paramsCopy.enableBrowserReplay || false;
+      session.enableBrowserReplay = paramsCopy.enableBrowserReplay;
 
       // Store imageId used for this session
       (session as any).imageId = paramsCopy.imageId;
@@ -1413,9 +1414,7 @@ export class AgentBay {
       // Use any type for JSON.parse result since params could be either interface or class instance
       const copied = JSON.parse(JSON.stringify(params)) as any;
       result = copied as CreateSessionParamsInterface;
-      if (!result.enableBrowserReplay || !("enableBrowserReplay" in result)) {
-        result.enableBrowserReplay = true;
-      }
+      // Don't set enableBrowserReplay default - leave as-is so server decides
       const allContextSyncs = params?.contextSync
         ? [...params.contextSync]
         : [];

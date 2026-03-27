@@ -218,9 +218,10 @@ func (a *AgentBay) Create(params *CreateSessionParams) (*SessionResult, error) {
 		Authorization: tea.String("Bearer " + a.APIKey),
 	}
 
-	// browser replay is enabled by default, so if enable_browser_replay is False, set enable_record to False
-	if !params.EnableBrowserReplay {
-		createSessionRequest.EnableRecord = tea.Bool(false)
+	// Only set enable_record when user explicitly sets enable_browser_replay
+	// When nil (not set), don't send the field - let server decide the default
+	if params.EnableBrowserReplay != nil {
+		createSessionRequest.EnableRecord = params.EnableBrowserReplay
 	}
 
 	// Add SDK stats for tracking

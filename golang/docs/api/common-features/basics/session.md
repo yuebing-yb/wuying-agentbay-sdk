@@ -32,8 +32,8 @@ type Session struct {
 	// Shared HTTP client for LinkUrl calls (lazy initialized)
 	linkHttpClient	*http.Client
 
-	// Browser replay enabled flag
-	EnableBrowserReplay	bool
+	// Browser replay enabled flag (nil = server default)
+	EnableBrowserReplay	*bool
 
 	// File, command and code handlers
 	FileSystem	*filesystem.FileSystem
@@ -216,10 +216,11 @@ GetBrowser returns the Browser instance for this session.
 ### GetEnableBrowserReplay
 
 ```go
-func (s *Session) GetEnableBrowserReplay() bool
+func (s *Session) GetEnableBrowserReplay() *bool
 ```
 
 GetEnableBrowserReplay returns whether browser replay is enabled for this session.
+Returns nil if not explicitly set (server default applies).
 
 ### GetLabels
 

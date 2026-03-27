@@ -181,7 +181,7 @@ page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("/tmp/screenshot.
 // Enable browser recording
 CreateSessionParams params = new CreateSessionParams();
 params.setImageId("browser_latest");
-params.setEnableBrowserReplay(true);  // Default is true
+params.setEnableBrowserReplay(true);  // Explicitly enable recording (server-side default when not set)
 
 Session session = agentBay.create(params).getSession();
 // All browser actions will be recorded

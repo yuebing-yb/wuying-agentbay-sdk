@@ -40,7 +40,8 @@ type CreateSessionParams struct {
 	Framework	string
 
 	// EnableBrowserReplay specifies whether to enable browser recording for this session.
-	EnableBrowserReplay	bool
+	// When nil (not set), server-side default behavior applies.
+	EnableBrowserReplay	*bool
 
 	// BrowserContext specifies persistent browser context configuration for this session.
 	// When set, the session will be bound to the given cloud context and browser state will

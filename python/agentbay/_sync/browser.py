@@ -96,8 +96,8 @@ class Browser(BaseService):
         try:
             browser_option_dict = option._to_map()
 
-            # Set enableRecord based on session.enableBrowserReplay
-            if hasattr(self.session, "enableBrowserReplay"):
+            # Set enableRecord based on session.enableBrowserReplay (only when explicitly set)
+            if hasattr(self.session, "enableBrowserReplay") and self.session.enableBrowserReplay is not None:
                 browser_option_dict["enableRecord"] = self.session.enableBrowserReplay
 
             request = InitBrowserRequest(
