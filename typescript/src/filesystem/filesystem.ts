@@ -313,6 +313,14 @@ export class FileSystem {
   }
 
   /**
+   * Check if the current session uses LinkUrl (HTTP) channel.
+   * When using LinkUrl, chunking is not needed as HTTP has no message size limit.
+   */
+  private isUsingLinkUrl(): boolean {
+    return !!(this.session.linkUrl && this.session.token);
+  }
+
+  /**
    * Deletes a file at the specified path.
    * Corresponds to Python's delete_file() method
    *
@@ -1147,6 +1155,12 @@ export class FileSystem {
     const format = opts?.format || "text";
     const chunkSize = DEFAULT_CHUNK_SIZE;
     try {
+      // HTTP (LinkUrl) channel: read entire file in a single call, no chunking needed
+      if (this.isUsingLinkUrl()) {
+        const formatType = format === 'bytes' ? 'binary' : 'text';
+        return await this.readFileChunk(path, 0, 0, formatType);
+      }
+
       // First get the file info
       const fileInfoResult = await this.getFileInfo(path);
 
@@ -1422,6 +1436,15 @@ export class FileSystem {
   ): Promise<BoolResult> {
     const chunkSize = DEFAULT_CHUNK_SIZE;
     try {
+      // HTTP (LinkUrl) channel: write entire content in a single call, no chunking needed
+      if (this.isUsingLinkUrl()) {
+        try {
+          return await this.writeFileChunk(path, content, mode);
+        } catch (error) {
+          return { requestId: '', success: false, errorMessage: `Failed to write file: ${error}` };
+        }
+      }
+
       const contentLen = content.length;
 
       // If content is small enough, use the regular writeFileChunk method

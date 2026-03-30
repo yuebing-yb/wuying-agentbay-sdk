@@ -162,6 +162,19 @@ type FileSystem struct {
 	fileTransferOnce sync.Once
 }
 
+// isUsingLinkUrl checks if the session is using HTTP (LinkUrl) channel.
+// Returns true if both GetLinkUrl() and GetToken() return non-empty values.
+func (fs *FileSystem) isUsingLinkUrl() bool {
+	type linkUrlProvider interface {
+		GetLinkUrl() string
+		GetToken() string
+	}
+	if s, ok := fs.Session.(linkUrlProvider); ok {
+		return s.GetLinkUrl() != "" && s.GetToken() != ""
+	}
+	return false
+}
+
 // FileInfo represents file or directory information
 type FileInfo struct {
 	Name        string `json:"name"`
@@ -957,6 +970,11 @@ func (fs *FileSystem) ReadFileWithFormat(path string, format string) (*FileReadR
 		format = "text"
 	}
 
+	// HTTP (LinkUrl) channel: read entire file in a single call, no chunking needed
+	if fs.isUsingLinkUrl() {
+		return fs.readFileChunk(path, format)
+	}
+
 	chunkSize := ChunkSize
 
 	// First get the file size - call MCP directly to get RequestID even on failure
@@ -1204,6 +1222,11 @@ func (fs *FileSystem) ReadFileBinary(path string) (*BinaryFileReadResult, error)
 //	defer result.Session.Delete()
 //	writeResult, _ := result.Session.FileSystem.WriteFile("/tmp/test.txt", "Hello", "overwrite")
 func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteResult, error) {
+	// HTTP (LinkUrl) channel: write entire content in a single call, no chunking needed
+	if fs.isUsingLinkUrl() {
+		return fs.writeFileChunk(path, content, mode)
+	}
+
 	chunkSize := ChunkSize
 	contentLen := len(content)
 

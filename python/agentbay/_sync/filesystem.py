@@ -677,6 +677,19 @@ class FileSystem(BaseService):
             file_transfer._ensure_context_id()
         return file_transfer._context_path
 
+    def _is_using_link_url(self) -> bool:
+        """Check if the current session uses LinkUrl (HTTP) channel.
+
+        When using LinkUrl, chunking is not needed as HTTP has no message size
+        limit. Returns False when the session uses MQTT channel, which requires
+        chunking due to the 63 KB message size constraint.
+        """
+        get_link_url = getattr(self.session, "_get_link_url", None)
+        get_token = getattr(self.session, "_get_token", None)
+        if get_link_url is None or get_token is None:
+            return False
+        return bool(get_link_url()) and bool(get_token())
+
     # Default chunk size is 50KB (kept for backward compatibility, not used in write_file)
     DEFAULT_CHUNK_SIZE = 50 * 1024
 
@@ -1521,9 +1534,15 @@ class FileSystem(BaseService):
         See Also:
             FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
         """
-        chunk_size = self.DEFAULT_CHUNK_SIZE
-
         try:
+            # HTTP (LinkUrl) channel: read entire file in a single call, no chunking needed
+            if self._is_using_link_url():
+                format_type = "binary" if format == "bytes" else "text"
+                return self._read_file_chunk(path, 0, 0, format_type=format_type)
+
+            # MQTT channel: use chunked reading (original logic)
+            chunk_size = self.DEFAULT_CHUNK_SIZE
+
             # Get file info to check size
             file_info_result = self.get_file_info(path)
             if not file_info_result.success:
@@ -1711,6 +1730,19 @@ class FileSystem(BaseService):
         See Also:
             FileSystem.read_file, FileSystem.create_directory, FileSystem.edit_file
         """
+        # HTTP (LinkUrl) channel: write entire content in a single call, no chunking needed
+        if self._is_using_link_url():
+            try:
+                return self._write_file_chunk(path, content, mode)
+            except FileError as e:
+                return BoolResult(request_id="", success=False, error_message=str(e))
+            except Exception as e:
+                return BoolResult(
+                    request_id="", success=False,
+                    error_message=f"Failed to write file: {e}",
+                )
+
+        # MQTT channel: use chunked writing (original logic)
         # Use pre-calculated safe chunk size based on first-principles analysis
         max_content_bytes = self.MAX_CONTENT_BYTES
 

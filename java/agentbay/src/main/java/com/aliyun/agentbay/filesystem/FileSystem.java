@@ -240,6 +240,15 @@ public class FileSystem extends BaseService {
     }
 
     /**
+     * Check if the current session uses LinkUrl (HTTP) channel.
+     * When using LinkUrl, chunking is not needed as HTTP has no message size limit.
+     */
+    private boolean isUsingLinkUrl() {
+        return session.getLinkUrl() != null && !session.getLinkUrl().isEmpty()
+            && session.getToken() != null && !session.getToken().isEmpty();
+    }
+
+    /**
      * Write content to a file. Automatically handles large files by chunking.
      * 
      * <p>Similar to Python's write_file method.</p>
@@ -251,6 +260,11 @@ public class FileSystem extends BaseService {
      * @return BoolResult containing success status and error message if any
      */
     public BoolResult writeFile(String path, String content, String mode, boolean createParentDir) {
+        // HTTP (LinkUrl) channel: write entire content in a single call, no chunking needed
+        if (isUsingLinkUrl()) {
+            return writeFileChunk(path, content, mode, createParentDir);
+        }
+
         int contentLength = content.getBytes().length;
         int chunkSize = DEFAULT_CHUNK_SIZE;
         // If the content length is less than the chunk size, write it directly

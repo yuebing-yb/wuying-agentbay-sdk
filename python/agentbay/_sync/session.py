@@ -1489,8 +1489,7 @@ class Session:
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
-                    session_result = self.agent_bay._get_session(
-                        self.session_id)
+                    session_result = self.agent_bay._get_session(self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         poll_request_id = session_result.request_id
@@ -1600,8 +1599,7 @@ class Session:
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
-                    session_result = self.agent_bay._get_session(
-                        self.session_id)
+                    session_result = self.agent_bay._get_session(self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         poll_request_id = session_result.request_id
