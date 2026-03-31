@@ -332,7 +332,7 @@ class ContextManager:
         path: Optional[str] = None,
         mode: Optional[str] = None,
         max_retries: int = 150,
-        retry_interval: int = 1500,
+        retry_interval: int = 500,
     ) -> ContextSyncResult:
         """
         Synchronize a context with the session asynchronously.
@@ -344,7 +344,8 @@ class ContextManager:
                   paths are acceptable)
             mode: Optional synchronization mode (e.g., "upload", "download")
             max_retries: Maximum number of retries for polling completion status (default: 150)
-            retry_interval: Milliseconds to wait between retries (default: 1500)
+            retry_interval: Initial interval in milliseconds for exponential backoff
+                polling (default: 500). Interval grows by factor 1.1 up to 5000ms.
 
         Returns:
             ContextSyncResult: Result object containing success status and request ID
@@ -451,32 +452,33 @@ class ContextManager:
         context_id: Optional[str] = None,
         path: Optional[str] = None,
         max_retries: int = 150,
-        retry_interval: int = 1500,
+        retry_interval: int = 500,
     ) -> bool:
         """
-        Async version of polling for sync completion.
+        Async version of polling for sync completion with exponential backoff.
 
         Args:
             context_id: ID of the context to check
             path: Path to check
             max_retries: Maximum number of retries
-            retry_interval: Milliseconds to wait between retries
+            retry_interval: Initial interval in milliseconds for exponential backoff
 
         Returns:
             bool: True if sync completed successfully, False otherwise
         """
+        max_interval = 5.0
+        backoff_factor = 1.1
+        current_interval = retry_interval / 1000.0
+
         for retry in range(max_retries):
             try:
-                # Get context status data
                 info_result = self.info(context_id=context_id, path=path)
 
-                # Check if all sync tasks are completed
                 all_completed = True
                 has_failure = False
                 has_sync_tasks = False
 
                 for item in info_result.context_status_data:
-                    # We only care about sync tasks (upload/download)
                     if item.task_type not in ["upload", "download"]:
                         continue
 
@@ -496,7 +498,6 @@ class ContextManager:
                         )
 
                 if all_completed or not has_sync_tasks:
-                    # All tasks completed or no sync tasks found
                     if has_failure:
                         _logger.warning("Context sync completed with failures")
                         return False
@@ -508,16 +509,18 @@ class ContextManager:
                         return True
 
                 _logger.info(
-                    f"⏳ Waiting for context sync to complete, attempt {retry+1}/{max_retries}"
+                    f"⏳ Waiting for context sync to complete, attempt {retry+1}/{max_retries}, "
+                    f"next interval: {current_interval:.2f}s"
                 )
-                time.sleep(retry_interval / 1000.0)
+                time.sleep(current_interval)
+                current_interval = min(current_interval * backoff_factor, max_interval)
 
             except Exception as e:
                 _logger.error(
                     f"❌ Error checking context status on attempt {retry+1}: {e}"
                 )
-                time.sleep(retry_interval / 1000.0)
+                time.sleep(current_interval)
+                current_interval = min(current_interval * backoff_factor, max_interval)
 
-        # If we've exhausted all retries, return failure
         _logger.error(f"❌ Context sync polling timed out after {max_retries} attempts")
         return False
