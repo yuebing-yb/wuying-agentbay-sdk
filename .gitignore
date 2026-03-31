@@ -34,6 +34,7 @@ venv_*/
 !venv_cookbook_test/
 *.log
 .aone_copilot/
+.qoder/
 
 # TypeScript
 node_modules/

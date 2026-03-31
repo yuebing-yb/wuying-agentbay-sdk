@@ -23,6 +23,7 @@ import {
   newContextManager,
 } from "./context-manager";
 import { FileSystem } from "./filesystem";
+import { Git } from "./git";
 import { Mobile } from "./mobile";
 import { Oss } from "./oss";
 import { WsClient } from "./_internal/ws-client";
@@ -246,6 +247,9 @@ export class Session {
   // Browser for web automation
   public browser: Browser;
 
+  // Git operations
+  public git: Git;
+
   // Context management (matching Go version)
   public context: ContextManager;
 
@@ -277,6 +281,9 @@ export class Session {
 
     // Initialize Browser
     this.browser = new Browser(this);
+
+    // Initialize Git
+    this.git = new Git(this);
 
     // Initialize context manager (matching Go version)
     this.context = newContextManager(this);
