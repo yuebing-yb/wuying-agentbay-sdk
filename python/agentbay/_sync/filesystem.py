@@ -2048,11 +2048,15 @@ class FileSystem(BaseService):
         """
         Watch a directory for file changes and call the callback function when changes occur.
 
+        Uses WebSocket push notifications for near-real-time delivery when available,
+        with automatic fallback to HTTP polling.
+
         Args:
             path: The directory path to monitor for file changes.
             callback: Callback function that will be called with a list of FileChangeEvent
                 objects when changes are detected.
-            interval: Polling interval in seconds. Defaults to 0.5.
+            interval: Polling interval in seconds (default 0.5). Deprecated in WS push mode
+                where events are delivered in real time; retained for backward compatibility.
             stop_event: Optional threading.Event to stop the monitoring. If not provided,
                 a new Event will be created and returned via the thread object.
 
@@ -2094,6 +2098,18 @@ class FileSystem(BaseService):
                     break
             except Exception:
                 pass
+
+        # Detect WS push availability: requires ws_url, a session token,
+        # a resolved MCP server name, and a running async event loop (the
+        # sync SDK falls back to polling because the monitor thread uses
+        # ``run_coroutine_threadsafe`` to schedule WS operations on the
+        # caller's event loop).
+        ws_url = getattr(self.session, "ws_url", "") or ""
+        try:
+            main_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            main_loop = None
+        use_ws_push = bool(ws_url and token and server_name and main_loop)
 
         def _poll_file_change():
             """Fetch file changes using a synchronous HTTP call so the
@@ -2208,9 +2224,13 @@ class FileSystem(BaseService):
 
         ready_event = threading.Event()
 
-        def _monitor_directory_sync():
-            """Synchronous monitor function that runs in a background thread."""
-            _logger.info(f"Starting directory monitoring for: {path}")
+        # Create stop event if not provided
+        if stop_event is None:
+            stop_event = threading.Event()
+
+        def _monitor_polling():
+            """HTTP polling monitor (original implementation, also used as fallback)."""
+            _logger.info(f"Starting polling directory monitoring for: {path}")
             _logger.info(f"Polling interval: {interval} seconds")
             baseline_established = False
 
@@ -2275,15 +2295,242 @@ class FileSystem(BaseService):
                         break
                     stop_event.wait(interval)
 
-            _logger.info(f"Stopped monitoring directory: {path}")
+            _logger.info(f"Stopped polling monitoring for: {path}")
 
-        # Create stop event if not provided
-        if stop_event is None:
-            stop_event = threading.Event()
+        def _monitor_ws_push():
+            """WS push monitor sharing the session's WsClient.
+
+            Uses a two-phase startup to avoid deadlock:
+
+            Phase 1 (before ``ready_event``):
+              Synchronous HTTP baseline poll — no event-loop dependency,
+              so the caller's ``ready_event.wait()`` can return quickly.
+
+            Phase 2 (after ``ready_event``):
+              The main event loop is now free.  Use
+              ``run_coroutine_threadsafe`` to obtain the session's
+              shared WsClient, register callbacks, and subscribe.
+              A catch-up poll fills the gap between the two phases.
+            """
+            _logger.info(f"Starting WS push monitoring for: {path}")
+
+            def _run_async(coro, timeout=30):
+                """Bridge async coroutine to the caller's event loop."""
+                future = asyncio.run_coroutine_threadsafe(coro, main_loop)
+                return future.result(timeout=timeout)
+
+            # ── Phase 1: HTTP baseline (sync, no event-loop dependency) ──
+            _poll_file_change()
+            ready_event.set()
+            _logger.info(f"WS push: baseline established via HTTP for: {path}")
+
+            # ── Phase 2: Attach to session's shared WsClient ──
+            ws_client = None
+            unsubscribe_push = None
+            subscription_active = False
+
+            try:
+                ws_client = _run_async(fs_self.session._get_ws_client())
+
+                def _on_push(payload):
+                    data = payload.get("data", {})
+                    if data.get("eventType") != "file_change":
+                        return
+                    push_path = data.get("path")
+                    if push_path != path:
+                        return
+                    events_raw = data.get("events", [])
+                    events = []
+                    for ed in events_raw:
+                        if isinstance(ed, dict):
+                            events.append(FileChangeEvent._from_dict(ed))
+                    if events:
+                        _logger.info(
+                            f"WS push: {len(events)} file changes for {path}"
+                        )
+                        try:
+                            callback(events)
+                        except Exception as e:
+                            _logger.error(f"Error in watch callback: {e}")
+
+                unsubscribe_push = ws_client.register_callback(
+                    server_name, _on_push
+                )
+
+                # Reconnection handler — runs on the main event loop
+                # thread (fired by the WsClient recv loop), so
+                # ``ensure_future`` schedules on the correct loop.
+                def _on_state_change(state, _reason):
+                    if str(state) != "OPEN":
+                        return
+                    if not subscription_active or stop_event.is_set():
+                        return
+
+                    def _catch_up_and_resubscribe():
+                        try:
+                            poll_result = _poll_file_change
+                            if poll_result.success and poll_result.events:
+                                try:
+                                    callback(poll_result.events)
+                                except Exception as e:
+                                    _logger.error(
+                                        f"Catch-up callback error: {e}"
+                                    )
+                            h = ws_client.call_stream(
+                                target=server_name,
+                                data={
+                                    "method": "subscribe_file_change",
+                                    "params": {"path": path},
+                                },
+                                on_event=None,
+                                on_end=None,
+                                on_error=None,
+                            )
+                            h.wait_end_with_timeout(timeout=10)
+                            _logger.info(
+                                f"Resubscribed after reconnect for: {path}"
+                            )
+                        except Exception as e:
+                            _logger.error(
+                                f"Catch-up/resubscribe failed: {e}"
+                            )
+
+                    asyncio.ensure_future(_catch_up_and_resubscribe())
+
+                ws_client.on_connection_state_change(_on_state_change)
+
+                # Subscribe via the shared WsClient
+                def _do_subscribe():
+                    handle = ws_client.call_stream(
+                        target=server_name,
+                        data={
+                            "method": "subscribe_file_change",
+                            "params": {"path": path},
+                        },
+                        on_event=None,
+                        on_end=None,
+                        on_error=None,
+                    )
+                    handle.wait_end_with_timeout(timeout=15)
+
+                _run_async(_do_subscribe())
+                subscription_active = True
+
+                # Catch-up poll: fill the gap between Phase 1 baseline
+                # and Phase 2 subscribe completion.
+                catchup = _poll_file_change()
+                if catchup.success and catchup.events:
+                    try:
+                        callback(catchup.events)
+                    except Exception as e:
+                        _logger.error(f"Catch-up callback error: {e}")
+
+                _logger.info(f"WS push monitoring active for: {path}")
+
+                while not stop_event.is_set():
+                    if (
+                        hasattr(fs_self.session, "_is_expired")
+                        and fs_self.session._is_expired()
+                    ):
+                        _logger.warning(
+                            f"Session expired, stopping WS monitoring "
+                            f"for: {path}"
+                        )
+                        stop_event.set()
+                        break
+                    stop_event.wait(1.0)
+
+            except Exception as e:
+                _logger.warning(
+                    f"WS push subscribe failed: {e}. "
+                    f"Falling back to polling."
+                )
+                if unsubscribe_push:
+                    try:
+                        unsubscribe_push()
+                    except Exception:
+                        pass
+                _monitor_polling_after_baseline()
+                return
+
+            # Normal cleanup
+            subscription_active = False
+            if unsubscribe_push:
+                try:
+                    unsubscribe_push()
+                except Exception:
+                    pass
+            if ws_client is not None:
+                try:
+                    _run_async(
+                        ws_client.send_message(
+                            target=server_name,
+                            data={
+                                "method": "unsubscribe_file_change",
+                                "params": {"path": path},
+                            },
+                        ),
+                        timeout=5,
+                    )
+                except Exception:
+                    pass
+            _logger.info(f"Stopped WS push monitoring for: {path}")
+
+        def _monitor_polling_after_baseline():
+            """Polling fallback when WS subscribe fails.
+
+            Unlike ``_monitor_polling``, this skips the initial baseline
+            poll because it was already performed in Phase 1 of the WS
+            startup.
+            """
+            _logger.info(
+                f"Polling fallback (baseline pre-established) for: {path}"
+            )
+            while not stop_event.is_set():
+                try:
+                    if (
+                        hasattr(fs_self.session, "_is_expired")
+                        and fs_self.session._is_expired()
+                    ):
+                        _logger.warning(
+                            f"Session expired, stopping monitoring for: {path}"
+                        )
+                        stop_event.set()
+                        break
+                    result = _poll_file_change()
+                    if result.success and result.events:
+                        _logger.info(
+                            f"Detected {len(result.events)} file changes:"
+                        )
+                        try:
+                            callback(result.events)
+                        except Exception as e:
+                            _logger.error(f"Error in callback: {e}")
+                    elif not result.success:
+                        error_msg = result.error_message or ""
+                        if "session" in error_msg.lower() and (
+                            "expired" in error_msg.lower()
+                            or "invalid" in error_msg.lower()
+                        ):
+                            stop_event.set()
+                            break
+                    stop_event.wait(interval)
+                except Exception as e:
+                    _logger.error(f"Polling error: {e}")
+                    stop_event.wait(interval)
+            _logger.info(f"Stopped polling for: {path}")
+
+        # Choose monitoring mode
+        if use_ws_push:
+            thread_target = _monitor_ws_push
+            thread_name = f"DirectoryWatcher-WS-{path.replace('/', '_')}"
+        else:
+            thread_target = _monitor_polling
+            thread_name = f"DirectoryWatcher-{path.replace('/', '_')}"
 
         monitor_thread = threading.Thread(
-            target=_monitor_directory_sync,
-            name=f"DirectoryWatcher-{path.replace('/', '_')}",
+            target=thread_target,
+            name=thread_name,
             daemon=True,
         )
 
