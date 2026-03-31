@@ -494,7 +494,9 @@ session.delete()
 
 **Notes**:
 
-- Automatically handles large files by reading in chunks (default 50KB per chunk)
+- For MQTT channel: automatically handles large files by reading in chunks (default 50KB per chunk)
+- For HTTP LinkUrl channel: reads the entire file in a single call without chunking,
+as HTTP has no message size limit
 - Returns empty string/bytes for empty files
 - Returns error if path is a directory
 - Binary files are returned as bytes (backend uses base64 encoding internally)
@@ -556,8 +558,10 @@ session.delete()
 
 **Notes**:
 
-- Automatically handles large files by writing in chunks
-- Chunks are split by byte size to ensure MQTT compatibility (63KB limit)
+- For MQTT channel: automatically handles large files by writing in chunks,
+split by byte size to ensure MQTT compatibility (63KB limit)
+- For HTTP LinkUrl channel: writes the entire content in a single call without
+chunking, as HTTP has no message size limit
 - Creates parent directories if they don't exist
 - In "overwrite" mode, replaces the entire file content
 - In "append" mode, adds content to the end of the file

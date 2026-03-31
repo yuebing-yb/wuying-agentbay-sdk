@@ -624,8 +624,8 @@ Read is an alias of ReadFile.
 func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error)
 ```
 
-ReadFile reads the contents of a file. Automatically handles large files by chunking. ReadFile reads
-the entire content of a file in text format (default).
+ReadFile reads the contents of a file. For MQTT channel, automatically handles large files by
+chunking. For HTTP LinkUrl channel, reads the entire file in a single call without chunking.
 
 Parameters:
   - path: Absolute path to the file to read
@@ -636,8 +636,10 @@ Returns:
 
 Behavior:
 
-- Automatically handles large files by reading in 50KB chunks - Returns empty string for empty files
-- Fails if path is a directory or doesn't exist
+  - For MQTT channel: automatically handles large files by reading in 50KB chunks
+  - For HTTP LinkUrl channel: reads the entire file in a single call without chunking
+  - Returns empty string for empty files
+  - Fails if path is a directory or doesn't exist
 
 **Example:**
 
@@ -847,8 +849,8 @@ Write is an alias of WriteFile.
 func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteResult, error)
 ```
 
-WriteFile writes content to a file. Automatically handles large files by chunking. WriteFile writes
-content to a file.
+WriteFile writes content to a file. For MQTT channel, automatically handles large files by chunking.
+For HTTP LinkUrl channel, writes the entire content in a single call without chunking.
 
 Parameters:
   - path: Absolute path to the file to write
@@ -861,9 +863,11 @@ Returns:
 
 Behavior:
 
-- Automatically handles large content by writing in 50KB chunks - Creates parent directories if they
-don't exist - "overwrite" mode replaces existing file content - "append" mode adds to existing file
-content
+  - For MQTT channel: automatically handles large content by writing in 50KB chunks
+  - For HTTP LinkUrl channel: writes the entire content in a single call without chunking
+  - Creates parent directories if they don't exist
+  - "overwrite" mode replaces existing file content
+  - "append" mode adds to existing file content
 
 **Example:**
 

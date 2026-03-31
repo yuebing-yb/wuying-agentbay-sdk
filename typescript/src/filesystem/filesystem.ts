@@ -1045,7 +1045,8 @@ export class FileSystem {
   }
 
   /**
-   * Reads the contents of a file. Automatically handles large files by chunking.
+   * Reads the contents of a file. For MQTT channel, automatically handles large files by chunking.
+   * For HTTP LinkUrl channel, reads the entire file in a single call without chunking.
    *
    * @param path - Path to the file to read.
    * @returns FileContentResult with complete file content and requestId
@@ -1139,7 +1140,8 @@ export class FileSystem {
    *
    * @remarks
    * **Behavior:**
-   * - Automatically handles large files by reading in 60KB chunks
+   * - For MQTT channel: automatically handles large files by reading in 60KB chunks
+   * - For HTTP LinkUrl channel: reads the entire file in a single call without chunking
    * - Returns empty Uint8Array for empty files
    * - Fails if path is a directory or doesn't exist
    * - Content is returned as Uint8Array (backend uses base64 encoding internally)
@@ -1374,7 +1376,8 @@ export class FileSystem {
   }
 
   /**
-   * Writes content to a file. Automatically handles large files by chunking.
+   * Writes content to a file. For MQTT channel, automatically handles large files by chunking.
+   * For HTTP LinkUrl channel, writes the entire content in a single call without chunking.
    *
    * @param path - Path to the file to write.
    * @param content - Content to write to the file.
@@ -1422,7 +1425,8 @@ export class FileSystem {
    *
    * @remarks
    * **Behavior:**
-   * - Automatically handles large files by writing in 60KB chunks
+   * - For MQTT channel: automatically handles large files by writing in 60KB chunks
+   * - For HTTP LinkUrl channel: writes the entire content in a single call without chunking
    * - Creates parent directories if they don't exist
    * - "overwrite" mode replaces existing file content
    * - "append" mode adds content to the end of the file

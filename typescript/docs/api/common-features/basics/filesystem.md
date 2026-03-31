@@ -451,7 +451,8 @@ if (result.success) {
 **`Remarks`**
 
 **Behavior:**
-- Automatically handles large files by reading in 60KB chunks
+- For MQTT channel: automatically handles large files by reading in 60KB chunks
+- For HTTP LinkUrl channel: reads the entire file in a single call without chunking
 - Returns empty Uint8Array for empty files
 - Fails if path is a directory or doesn't exist
 - Content is returned as Uint8Array (backend uses base64 encoding internally)
@@ -725,7 +726,8 @@ if (result.success) {
 **`Remarks`**
 
 **Behavior:**
-- Automatically handles large files by writing in 60KB chunks
+- For MQTT channel: automatically handles large files by writing in 60KB chunks
+- For HTTP LinkUrl channel: writes the entire content in a single call without chunking
 - Creates parent directories if they don't exist
 - "overwrite" mode replaces existing file content
 - "append" mode adds content to the end of the file

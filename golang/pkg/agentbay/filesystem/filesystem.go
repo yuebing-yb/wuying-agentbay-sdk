@@ -908,8 +908,9 @@ func (fs *FileSystem) writeFileChunk(path, content string, mode string) (*FileWr
 // ChunkSize is the default size of chunks for large file operations (50KB)
 const ChunkSize = 50 * 1024
 
-// ReadFile reads the contents of a file. Automatically handles large files by chunking.
-// ReadFile reads the entire content of a file in text format (default).
+// ReadFile reads the contents of a file.
+// For MQTT channel, automatically handles large files by chunking.
+// For HTTP LinkUrl channel, reads the entire file in a single call without chunking.
 //
 // Parameters:
 //   - path: Absolute path to the file to read
@@ -920,9 +921,10 @@ const ChunkSize = 50 * 1024
 //
 // Behavior:
 //
-// - Automatically handles large files by reading in 50KB chunks
-// - Returns empty string for empty files
-// - Fails if path is a directory or doesn't exist
+//   - For MQTT channel: automatically handles large files by reading in 50KB chunks
+//   - For HTTP LinkUrl channel: reads the entire file in a single call without chunking
+//   - Returns empty string for empty files
+//   - Fails if path is a directory or doesn't exist
 //
 // Example:
 //
@@ -936,6 +938,8 @@ func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
 }
 
 // ReadFileWithFormat reads the contents of a file with specified format.
+// For MQTT channel, automatically handles large files by chunking.
+// For HTTP LinkUrl channel, reads the entire file in a single call without chunking.
 //
 // Parameters:
 //   - path: Absolute path to the file to read
@@ -948,10 +952,11 @@ func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error) {
 //
 // Behavior:
 //
-// - Automatically handles large files by reading in 50KB chunks
-// - Returns empty string/bytes for empty files
-// - Fails if path is a directory or doesn't exist
-// - Binary files are returned as []byte (backend uses base64 encoding internally)
+//   - For MQTT channel: automatically handles large files by reading in 50KB chunks
+//   - For HTTP LinkUrl channel: reads the entire file in a single call without chunking
+//   - Returns empty string/bytes for empty files
+//   - Fails if path is a directory or doesn't exist
+//   - Binary files are returned as []byte (backend uses base64 encoding internally)
 //
 // Example:
 //
@@ -1196,8 +1201,9 @@ func (fs *FileSystem) ReadFileBinary(path string) (*BinaryFileReadResult, error)
 	return result, err
 }
 
-// WriteFile writes content to a file. Automatically handles large files by chunking.
 // WriteFile writes content to a file.
+// For MQTT channel, automatically handles large files by chunking.
+// For HTTP LinkUrl channel, writes the entire content in a single call without chunking.
 //
 // Parameters:
 //   - path: Absolute path to the file to write
@@ -1210,10 +1216,11 @@ func (fs *FileSystem) ReadFileBinary(path string) (*BinaryFileReadResult, error)
 //
 // Behavior:
 //
-// - Automatically handles large content by writing in 50KB chunks
-// - Creates parent directories if they don't exist
-// - "overwrite" mode replaces existing file content
-// - "append" mode adds to existing file content
+//   - For MQTT channel: automatically handles large content by writing in 50KB chunks
+//   - For HTTP LinkUrl channel: writes the entire content in a single call without chunking
+//   - Creates parent directories if they don't exist
+//   - "overwrite" mode replaces existing file content
+//   - "append" mode adds to existing file content
 //
 // Example:
 //

@@ -211,7 +211,9 @@ public BoolResult writeFile(String path, String content)
 public BoolResult writeFile(String path, String content, String mode)
 ```
 
-Write content to a file. Automatically handles large files by chunking.
+Write content to a file.
+For MQTT channel, automatically handles large files by chunking.
+For HTTP LinkUrl channel, writes the entire content in a single call without chunking.
 
 <p>Similar to Python's write_file method.</p>
 
