@@ -17336,7 +17336,7 @@ FILE: python/pyproject.toml
 ================================================
 [tool.poetry]
 name = "wuying-agentbay-sdk"
-version = "0.18.0"
+version = "0.18.1"
 description = "Python SDK for interacting with the Wuying AgentBay cloud runtime environment"
 readme = ["README.md", "CHANGELOG.md"]
 packages = [{include = "agentbay"}]
