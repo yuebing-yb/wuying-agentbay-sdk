@@ -222,7 +222,7 @@ Parameters for creating a new session in the AgentBay cloud environment.
   configurations that define how contexts should be synchronized and mounted.
 - `browser_context` _Optional[BrowserContext]_ - Optional configuration for browser data synchronization.
 - `policy_id` _Optional[str]_ - Policy id to apply when creating the session.
-- `enable_browser_replay` _Optional[bool]_ - Whether to enable browser recording for the session. When not set (None), server-side default behavior applies. Set to True to enable, False to disable
+- `enable_browser_replay` _Optional[bool]_ - Whether to enable browser recording for the session. When not set (None), the server-side default behavior applies. Set to True to enable, False to disable
 - `extra_configs` _Optional[ExtraConfigs]_ - Advanced configuration parameters for mobile environments.
 - `framework` _Optional[str]_ - Framework name for tracking (e.g., "langchain"). Defaults to empty string (direct call).
 - `beta_network_id` _Optional[str]_ - Beta network ID to bind this session to.
@@ -266,7 +266,7 @@ Initialize CreateSessionParams.
 - `beta_network_id` _Optional[str], optional_ - Beta network ID to bind this session to.
   Defaults to None.
 - `enable_browser_replay` _Optional[bool], optional_ - Whether to enable browser recording for the session.
-  Defaults to False.
+  When not set, server-side default behavior applies. Set to True to enable, False to disable.
 - `extra_configs` _Optional[ExtraConfigs], optional_ - Advanced configuration parameters for mobile environments.
   Defaults to None.
 - `framework` _Optional[str], optional_ - Framework name for tracking (e.g., "langchain").

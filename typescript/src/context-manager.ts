@@ -237,7 +237,7 @@ export class ContextManager {
    * @param mode - Optional synchronization mode (e.g., "upload", "download")
    * @param callback - Optional callback function. If provided, runs in background and calls callback when complete
    * @param maxRetries - Maximum number of retries for polling completion status (default: 150)
-   * @param retryInterval - Milliseconds to wait between retries (default: 1500)
+   * @param retryInterval - Initial interval in milliseconds for exponential backoff polling (default: 500). Interval grows by factor 1.1 up to 5000ms.
    * @returns Promise resolving to ContextSyncResult with success status and request ID
    * @throws Error if the API call fails
    * @throws Error if `contextId` or `path` is provided without the other parameter.

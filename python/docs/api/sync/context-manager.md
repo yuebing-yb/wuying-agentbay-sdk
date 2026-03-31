@@ -116,7 +116,7 @@ def sync(context_id: Optional[str] = None,
          path: Optional[str] = None,
          mode: Optional[str] = None,
          max_retries: int = 150,
-         retry_interval: int = 1500) -> ContextSyncResult
+         retry_interval: int = 500) -> ContextSyncResult
 ```
 
 Synchronize a context with the session asynchronously.
@@ -129,7 +129,8 @@ Synchronize a context with the session asynchronously.
   paths are acceptable)
     mode: Optional synchronization mode (e.g., "upload", "download")
     max_retries: Maximum number of retries for polling completion status (default: 150)
-    retry_interval: Milliseconds to wait between retries (default: 1500)
+    retry_interval: Initial interval in milliseconds for exponential backoff
+  polling (default: 500). Interval grows by factor 1.1 up to 5000ms.
   
 
 **Returns**:

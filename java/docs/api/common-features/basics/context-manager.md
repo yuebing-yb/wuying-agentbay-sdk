@@ -71,7 +71,7 @@ Returns immediately and calls the callback when sync completes.
 - `mode` (String): Optional synchronization mode (e.g., "upload", "download")
 - `callback` (Consumer<Boolean>): Callback function that receives success status (true if successful, false otherwise)
 - `maxRetries` (int): Maximum number of retries for polling completion status (default: 150)
-- `retryInterval` (int): Milliseconds to wait between retries (default: 1500)
+- `retryInterval` (int): Initial interval in milliseconds for exponential backoff polling (default: 500)
 
 **Returns:**
 - `ContextSyncResult`: ContextSyncResult indicating initial sync trigger success/failure
@@ -97,7 +97,7 @@ Sync context data with optional parameters and wait for completion
 - `path` (String): Path (optional)
 - `mode` (String): Sync mode (optional)
 - `maxRetries` (int): Maximum number of retries for polling completion status (default: 150)
-- `retryInterval` (int): Milliseconds to wait between retries (default: 2000)
+- `retryInterval` (int): Initial interval in milliseconds for exponential backoff polling (default: 500)
 
 **Returns:**
 - `ContextSyncResult`: ContextSyncResult indicating success/failure after waiting for completion

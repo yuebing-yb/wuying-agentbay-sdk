@@ -154,7 +154,7 @@ func (cm *ContextManager) SyncWithCallback(
 - `mode`: Optional sync mode (upload/download)
 - `callback`: Callback function for async mode (nil for sync mode)
 - `maxRetries`: Maximum number of polling attempts (default: 150)
-- `retryInterval`: Interval between polls in milliseconds (default: 1500)
+- `retryInterval`: Initial interval in milliseconds for exponential backoff polling (default: 500)
 
 **Returns:**
 

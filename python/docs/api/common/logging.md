@@ -38,7 +38,9 @@ Set force_reinit=False to keep an existing configuration.
 **Arguments**:
 
     level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    log_file: Path to log file (optional)
+    log_file: Path to log file (optional). If not specified, the default path
+  is determined by: 1) AGENTBAY_LOG_FILE env var, 2) current working directory,
+  3) system temp directory as fallback.
     enable_console: Whether to enable console logging
     enable_file: Whether to enable file logging
     rotation: Log file rotation size (deprecated, use max_file_size)

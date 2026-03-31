@@ -191,10 +191,14 @@ Returns paginated list of sessions filtered by labels.
 ### delete
 
 ```java
+public DeleteResult delete(Session session)
+```
+
+```java
 public DeleteResult delete(Session session, boolean syncContext)
 ```
 
-Delete a session
+Delete a session with optional context synchronization.
 
 **Parameters:**
 - `session` (Session): The session to delete

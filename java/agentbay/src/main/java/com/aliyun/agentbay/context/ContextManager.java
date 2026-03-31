@@ -232,7 +232,7 @@ public class ContextManager {
      * @param contextId ID of the context to check
      * @param path Path to check
      * @param maxRetries Maximum number of retries
-     * @param retryInterval Milliseconds to wait between retries
+     * @param retryInterval Initial interval in milliseconds for exponential backoff polling
      */
     private void pollForCompletion(Consumer<Boolean> callback, String contextId, String path,
                                    int maxRetries, int retryInterval) {

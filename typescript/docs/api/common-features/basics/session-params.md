@@ -23,6 +23,7 @@ in the AgentBay cloud environment.
 
 - `betaNetworkId`
 - `browserContext`
+- `enableBrowserReplay`
 - `extraConfigs`
 - `imageId`
 - `isVpc`
@@ -35,7 +36,6 @@ in the AgentBay cloud environment.
 
 ```typescript
 contextSync: [`ContextSync`](context-sync.md)[]
-enableBrowserReplay: `boolean`
 framework: `string`
 idleReleaseTimeout: `number`
 labels: `Record`<`string`, `string`>
@@ -71,6 +71,12 @@ ___
 `CreateSessionParamsInterface`.`contextSync`
 
 ___
+
+### enableBrowserReplay
+
+• `Optional` **enableBrowserReplay**: `boolean`
+
+Whether to enable browser session recording. When undefined, server-side default applies.
 
 #### Implementation of
 

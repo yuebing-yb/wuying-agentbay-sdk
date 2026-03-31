@@ -377,12 +377,6 @@ Set the resource URL for accessing the session
 public String getToken()
 ```
 
-Gets the token for LinkUrl tool calls.
-This token is used for authentication when calling MCP tools via the LinkUrl route.
-
-**Returns:**
-- `String`: The authentication token
-
 ### setToken
 
 ```java
@@ -400,12 +394,6 @@ This token is used for authentication when calling MCP tools via the LinkUrl rou
 ```java
 public String getLinkUrl()
 ```
-
-Gets the LinkUrl for direct tool calls.
-This URL is used for calling MCP tools via the LinkUrl route in VPC environments.
-
-**Returns:**
-- `String`: The LinkUrl, or empty string if not set
 
 ### setLinkUrl
 
@@ -484,24 +472,25 @@ This method generates a connection URL that can be used to access the session vi
 ### delete
 
 ```java
-public com.aliyun.agentbay.model.DeleteResult delete()
+public DeleteResult delete()
 ```
 
 ```java
-public com.aliyun.agentbay.model.DeleteResult delete(boolean syncContext)
+public DeleteResult delete(boolean syncContext)
 ```
 
 Deletes this session with optional context synchronization.
 
-This method releases the cloud resources associated with this session.
-If syncContext is true, it will first synchronize the context (upload files)
-before deleting the session, waiting for all uploads to complete.
+<p>This method uses the DeleteSessionAsync API to release cloud resources.
+If syncContext is true, it will first synchronize the context (trigger file uploads)
+before deleting the session. After initiating deletion, it polls the session status
+until the session is confirmed deleted (NotFound or FINISH) or timeout.</p>
 
 **Parameters:**
 - `syncContext` (boolean): Whether to synchronize context before deletion
 
 **Returns:**
-- `com.aliyun.agentbay.model.DeleteResult`: DeleteResult containing the deletion result
+- `DeleteResult`: DeleteResult containing the deletion result
 
 ### setLabels
 

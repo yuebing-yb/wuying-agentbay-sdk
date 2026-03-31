@@ -786,7 +786,7 @@ agent_bay.delete(session, sync_context=True)  # Triggers sync and polls until do
 | Method | Waits for completion | Best For | Notes |
 |--------|----------------------|----------|-------|
 | Auto-upload only | No | Quick operations | Next session may briefly miss latest changes |
-| `session.context.sync()` | Yes | Large files, many files | Polls for completion (default 150 × 1.5s; adjustable via args) |
+| `session.context.sync()` | Yes | Large files, many files | Polls with exponential backoff (initial 0.5s, max 5s, up to 150 retries; adjustable via args) |
 | `delete(sync_context=True)` | Yes | Standard workflows | SDK triggers `sync()` then deletes after sync completes |
 
 **Recommendation:** Use manual `sync()` or `delete(sync_context=True)` when you need immediate consistency, especially with large or numerous files.

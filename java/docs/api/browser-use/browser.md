@@ -451,6 +451,29 @@ Uses asynchronous execution with task polling for complex extraction operations
 **Throws:**
 - `BrowserException`: if browser is not initialized or extraction fails
 
+### observeAsync
+
+```java
+public ObserveResultTuple observeAsync(ObserveOptions options, Page page) throws BrowserException
+```
+
+```java
+public ObserveResultTuple observeAsync(ObserveOptions options) throws BrowserException
+```
+
+Observe elements or state on a web page asynchronously - matches Python observe (which uses observe_async internally).
+Uses asynchronous execution with task polling.
+
+**Parameters:**
+- `options` (ObserveOptions): Options to configure the observation behavior
+- `page` (Page): Playwright page object (null to use currently focused page)
+
+**Returns:**
+- `ObserveResultTuple`: ObserveResultTuple containing success status and list of observation results
+
+**Throws:**
+- `BrowserException`: if browser is not initialized or observation fails
+
 ### navigateTo
 
 ```java
