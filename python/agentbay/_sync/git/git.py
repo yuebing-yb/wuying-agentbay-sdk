@@ -52,19 +52,19 @@ _VALID_RESET_MODES = {"soft", "mixed", "hard", "merge", "keep"}
 
 
 class SyncGit(BaseService):
-    """Handles git operations in the AgentBay cloud environment.
+    """
+    Manage git operations in the AgentBay cloud environment.
 
-    This module provides a high-level interface for git operations by executing
-    git commands on the remote session via the Command module. All commands are
-    executed with GIT_TERMINAL_PROMPT=0 to prevent interactive prompts.
+    Provides a high-level interface for common git workflows (clone, commit,
+    branch, config, etc.) by executing git commands on the remote session via
+    the Command module. All commands run with ``GIT_TERMINAL_PROMPT=0`` to
+    prevent interactive credential prompts.
 
-    Example::
-
+    Example:
         agent_bay = AgentBay(api_key="your_api_key")
         result = agent_bay.create()
         session = result.session
 
-        # Clone a public repository
         clone_result = session.git.clone(
             "https://github.com/user/repo.git",
             branch="main",
@@ -83,25 +83,35 @@ class SyncGit(BaseService):
 
     @staticmethod
     def _shell_escape(arg: str) -> str:
-        """Escape a string argument for safe use in a Linux shell command.
+        """
+        Escape a string for safe use in a shell command.
 
-        Uses single-quote wrapping with proper escaping of embedded single quotes.
+        Wraps the argument in single quotes and escapes any embedded
+        single quotes.
 
-        :param arg: The argument to escape
-        :return: The shell-escaped argument
+        Args:
+            arg: The argument to escape.
+
+        Returns:
+            The shell-escaped argument string.
         """
         return "'" + arg.replace("'", "'\\''") + "'"
 
     def _build_git_command(
         self, args: List[str], repo_path: Optional[str] = None
     ) -> str:
-        """Build a complete git command string with optional -C (repo path) prefix.
+        """
+        Build a complete git command string.
 
-        All arguments are shell-escaped for safe execution.
+        All arguments are shell-escaped for safe execution. When *repo_path*
+        is given, ``git -C <path>`` is prepended.
 
-        :param args: Array of git sub-command arguments
-        :param repo_path: Optional repository path; if provided, git -C <path> is prepended
-        :return: The complete shell command string
+        Args:
+            args: Git sub-command arguments.
+            repo_path: Optional repository path (adds ``-C`` prefix).
+
+        Returns:
+            The complete shell command string.
         """
         parts = ["git"]
         if repo_path:
@@ -111,19 +121,27 @@ class SyncGit(BaseService):
 
     @staticmethod
     def _get_stdout(result: CommandResult) -> str:
-        """Extract stdout content from a CommandResult.
+        """
+        Extract stdout content from a CommandResult.
 
-        :param result: The CommandResult to extract from
-        :return: The stdout string, never None
+        Args:
+            result: The CommandResult to extract from.
+
+        Returns:
+            The stdout string (empty string if absent).
         """
         return result.stdout or result.output or ""
 
     @staticmethod
     def _get_stderr(result: CommandResult) -> str:
-        """Extract stderr content from a CommandResult.
+        """
+        Extract stderr content from a CommandResult.
 
-        :param result: The CommandResult to extract from
-        :return: The stderr string, never None
+        Args:
+            result: The CommandResult to extract from.
+
+        Returns:
+            The stderr string (empty string if absent).
         """
         return result.stderr or result.error_message or ""
 
@@ -133,14 +151,18 @@ class SyncGit(BaseService):
         repo_path: Optional[str] = None,
         timeout_ms: Optional[int] = None,
     ) -> CommandResult:
-        """Execute a standard git command via the Command module.
+        """
+        Execute a standard git command via the Command module.
 
-        Automatically merges _DEFAULT_GIT_ENV into the environment.
+        Automatically merges ``_DEFAULT_GIT_ENV`` into the environment.
 
-        :param args: Array of git sub-command arguments
-        :param repo_path: Optional repository path for git -C
-        :param timeout_ms: Optional timeout in milliseconds
-        :return: The CommandResult from executing the git command
+        Args:
+            args: Git sub-command arguments.
+            repo_path: Optional repository path for ``git -C``.
+            timeout_ms: Optional timeout in milliseconds.
+
+        Returns:
+            The CommandResult from executing the git command.
         """
         cmd = self._build_git_command(args, repo_path)
         return self.session.command.execute_command(
@@ -150,11 +172,15 @@ class SyncGit(BaseService):
         )
 
     def _run_shell(self, cmd: str, timeout_ms: Optional[int] = None) -> CommandResult:
-        """Execute a raw shell command with git environment variables.
+        """
+        Execute a raw shell command with git environment variables.
 
-        :param cmd: The raw shell command string
-        :param timeout_ms: Optional timeout in milliseconds
-        :return: The CommandResult from executing the shell command
+        Args:
+            cmd: The raw shell command string.
+            timeout_ms: Optional timeout in milliseconds.
+
+        Returns:
+            The CommandResult from executing the shell command.
         """
         return self.session.command.execute_command(
             cmd,
@@ -163,11 +189,13 @@ class SyncGit(BaseService):
         )
 
     def _ensure_git_available(self) -> None:
-        """Check whether git is available on the remote environment.
+        """
+        Check whether git is available on the remote environment.
 
         The result is cached after the first successful check.
 
-        :raises GitNotFoundError: if git is not installed
+        Raises:
+            GitNotFoundError: If git is not installed or not reachable.
         """
         if self._git_available is True:
             return
@@ -188,11 +216,15 @@ class SyncGit(BaseService):
         _logger.info("Git is available on the remote environment")
 
     def _classify_error(self, operation: str, result: CommandResult) -> GitError:
-        """Classify a failed git command result into a specific error type.
+        """
+        Classify a failed git command result into a specific error type.
 
-        :param operation: The git operation name (e.g., 'clone', 'pull')
-        :param result: The failed CommandResult
-        :return: A specific GitError subclass instance
+        Args:
+            operation: The git operation name (e.g., ``'clone'``, ``'pull'``).
+            result: The failed CommandResult.
+
+        Returns:
+            A specific GitError subclass instance.
         """
         raw_stderr = self._get_stderr(result)
         stderr = raw_stderr.lower()
@@ -253,10 +285,14 @@ class SyncGit(BaseService):
 
     @staticmethod
     def _derive_repo_dir_from_url(url: str) -> str:
-        """Derive the target directory name from a git repository URL.
+        """
+        Derive the target directory name from a git repository URL.
 
-        :param url: The git repository URL
-        :return: The derived directory name
+        Args:
+            url: The git repository URL.
+
+        Returns:
+            The derived directory name.
         """
         # Remove trailing slashes
         cleaned = url.rstrip("/")
@@ -275,11 +311,15 @@ class SyncGit(BaseService):
 
     @staticmethod
     def _derive_status(index_status: str, work_tree_status: str) -> str:
-        """Derive a normalized status label from porcelain status characters.
+        """
+        Derive a normalized status label from porcelain status characters.
 
-        :param index_status: Index status character
-        :param work_tree_status: Working tree status character
-        :return: Normalized status label
+        Args:
+            index_status: Index status character.
+            work_tree_status: Working tree status character.
+
+        Returns:
+            Normalized status label (e.g., ``'modified'``, ``'added'``).
         """
         combined = index_status + work_tree_status
         if "U" in combined:
@@ -302,10 +342,14 @@ class SyncGit(BaseService):
 
     @staticmethod
     def _parse_git_status(output: str) -> GitStatusResult:
-        """Parse the output of ``git status --porcelain=1 -b`` into a structured result.
+        """
+        Parse ``git status --porcelain=1 -b`` output into a structured result.
 
-        :param output: Raw stdout from git status
-        :return: Parsed GitStatusResult
+        Args:
+            output: Raw stdout from ``git status``.
+
+        Returns:
+            Parsed GitStatusResult with branch info and file statuses.
         """
         lines = [line for line in output.split("\n") if line.strip()]
         current_branch: Optional[str] = None
@@ -406,12 +450,17 @@ class SyncGit(BaseService):
 
     @staticmethod
     def _parse_git_log(output: str) -> GitLogResult:
-        """Parse the output of ``git log --format=...`` into a structured result.
+        """
+        Parse ``git log --format=...`` output into a structured result.
 
-        Uses \\x00 (NUL) as record separator and \\x01 (SOH) as field separator.
+        Uses ``\\x00`` (NUL) as record separator and ``\\x01`` (SOH) as
+        field separator.
 
-        :param output: Raw stdout from git log
-        :return: Parsed GitLogResult
+        Args:
+            output: Raw stdout from ``git log``.
+
+        Returns:
+            Parsed GitLogResult containing commit entries.
         """
         entries: List[GitLogEntry] = []
         records = [r for r in output.split("\x00") if r.strip()]
@@ -434,10 +483,14 @@ class SyncGit(BaseService):
 
     @staticmethod
     def _parse_git_branches(output: str) -> GitBranchListResult:
-        """Parse the output of ``git branch --format=%(refname:short)\\t%(HEAD)``.
+        """
+        Parse ``git branch --format=...`` output into a structured result.
 
-        :param output: Raw stdout from git branch
-        :return: Parsed GitBranchListResult
+        Args:
+            output: Raw stdout from ``git branch``.
+
+        Returns:
+            Parsed GitBranchListResult with branch info.
         """
         lines = [line for line in output.split("\n") if line.strip()]
         branches: List[GitBranchInfo] = []
@@ -473,20 +526,34 @@ class SyncGit(BaseService):
         depth: Optional[int] = None,
         timeout_ms: Optional[int] = None,
     ) -> GitCloneResult:
-        """Clone a git repository into the remote session environment.
+        """
+        Clone a git repository into the remote session environment.
 
-        Currently supports public repositories only. Authentication support
-        will be added in a future phase.
+        Supports public repositories. When *branch* is specified,
+        ``--single-branch`` is automatically added.
 
-        :param url: The repository URL to clone (HTTPS or SSH)
-        :param path: Target directory path. If not specified, derived from the URL.
-        :param branch: Branch to clone. When specified, --single-branch is added.
-        :param depth: Create a shallow clone with the specified number of commits.
-        :param timeout_ms: Timeout in milliseconds. Defaults to 300000 (5 minutes).
-        :return: GitCloneResult with the cloned repository path
-        :raises GitNotFoundError: if git is not installed
-        :raises GitAuthError: if authentication fails
-        :raises GitError: for other git errors
+        Args:
+            url: The repository URL to clone (HTTPS or SSH).
+            path: Target directory path. If omitted, derived from the URL.
+            branch: Branch to clone (adds ``--single-branch``).
+            depth: Create a shallow clone with the given number of commits.
+            timeout_ms: Timeout in milliseconds (default: 300 000, i.e. 5 min).
+
+        Returns:
+            GitCloneResult with the cloned repository path.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitAuthError: If authentication fails.
+            GitError: For other git errors.
+
+        Example:
+            result = session.git.clone(
+                "https://github.com/user/repo.git",
+                branch="main",
+                depth=1,
+            )
+            print(result.path)
         """
         self._ensure_git_available()
 
@@ -521,15 +588,25 @@ class SyncGit(BaseService):
         bare: bool = False,
         timeout_ms: Optional[int] = None,
     ) -> GitInitResult:
-        """Initialize a new git repository in the remote session environment.
+        """
+        Initialize a new git repository in the remote session environment.
 
-        :param path: The directory path to initialize as a git repository
-        :param initial_branch: Name of the initial branch (e.g., "main")
-        :param bare: Create a bare repository
-        :param timeout_ms: Timeout in milliseconds
-        :return: GitInitResult with the initialized repository path
-        :raises GitNotFoundError: if git is not installed
-        :raises GitError: for other git errors
+        Args:
+            path: Directory path to initialize as a git repository.
+            initial_branch: Name of the initial branch (e.g., ``"main"``).
+            bare: If True, create a bare repository.
+            timeout_ms: Timeout in milliseconds.
+
+        Returns:
+            GitInitResult with the initialized repository path.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitError: For other git errors.
+
+        Example:
+            result = session.git.init("/home/user/project", initial_branch="main")
+            print(result.path)
         """
         self._ensure_git_available()
 
@@ -559,18 +636,26 @@ class SyncGit(BaseService):
         stage_all: bool = True,
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Add files to the git staging area.
+        """
+        Add files to the git staging area.
 
-        By default (when no files are specified and ``stage_all`` is True),
-        stages all changes using ``git add -A``.
+        By default (no *files* specified and *stage_all* is ``True``), stages
+        all changes using ``git add -A``.
 
-        :param repo_path: The repository path
-        :param files: Specific files to add
-        :param stage_all: When True and no files specified, use ``git add -A``
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            files: Specific files to add. Overrides *stage_all*.
+            stage_all: Use ``git add -A`` when no files specified (default: True).
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.add("/home/user/project")
+            session.git.add("/home/user/project", files=["README.md"])
         """
         self._ensure_git_available()
 
@@ -598,21 +683,32 @@ class SyncGit(BaseService):
         allow_empty: bool = False,
         timeout_ms: Optional[int] = None,
     ) -> GitCommitResult:
-        """Create a git commit with the staged changes.
+        """
+        Create a git commit with the staged changes.
 
-        Author information can be provided via ``author_name`` and ``author_email``,
-        which are applied as temporary ``-c`` configuration (not persisted to git config).
+        Author information, when provided, is applied as temporary ``-c``
+        configuration and is **not** persisted to git config.
 
-        :param repo_path: The repository path
-        :param message: The commit message
-        :param author_name: Author name (temporary, not persisted)
-        :param author_email: Author email (temporary, not persisted)
-        :param allow_empty: Allow creating a commit with no changes
-        :param timeout_ms: Timeout in milliseconds
-        :return: GitCommitResult with the commit hash
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            message: The commit message.
+            author_name: Author name (temporary, not persisted).
+            author_email: Author email (temporary, not persisted).
+            allow_empty: Allow creating a commit with no changes.
+            timeout_ms: Timeout in milliseconds.
+
+        Returns:
+            GitCommitResult containing the commit hash.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.add("/home/user/project")
+            result = session.git.commit("/home/user/project", "Initial commit")
+            print(result.commit_hash)
         """
         self._ensure_git_available()
 
@@ -647,16 +743,27 @@ class SyncGit(BaseService):
         *,
         timeout_ms: Optional[int] = None,
     ) -> GitStatusResult:
-        """Get the status of the working tree and staging area.
+        """
+        Get the status of the working tree and staging area.
 
-        Returns a structured result parsed from ``git status --porcelain=1 -b``.
+        Returns a structured result parsed from
+        ``git status --porcelain=1 -b``.
 
-        :param repo_path: The repository path
-        :param timeout_ms: Timeout in milliseconds
-        :return: GitStatusResult with branch info and file statuses
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            timeout_ms: Timeout in milliseconds.
+
+        Returns:
+            GitStatusResult with branch info and file statuses.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            status = session.git.status("/home/user/project")
+            print(status.current_branch, status.is_clean)
         """
         self._ensure_git_available()
 
@@ -678,15 +785,26 @@ class SyncGit(BaseService):
         max_count: Optional[int] = None,
         timeout_ms: Optional[int] = None,
     ) -> GitLogResult:
-        """Get the commit history of the repository.
+        """
+        Get the commit history of the repository.
 
-        :param repo_path: The repository path
-        :param max_count: Maximum number of log entries to return
-        :param timeout_ms: Timeout in milliseconds
-        :return: GitLogResult with commit entries
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            max_count: Maximum number of log entries to return.
+            timeout_ms: Timeout in milliseconds.
+
+        Returns:
+            GitLogResult with structured commit entries.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            log = session.git.log("/home/user/project", max_count=5)
+            for entry in log.entries:
+                print(entry.short_hash, entry.message)
         """
         self._ensure_git_available()
 
@@ -711,14 +829,24 @@ class SyncGit(BaseService):
         *,
         timeout_ms: Optional[int] = None,
     ) -> GitBranchListResult:
-        """List all local branches in the repository.
+        """
+        List all local branches in the repository.
 
-        :param repo_path: The repository path
-        :param timeout_ms: Timeout in milliseconds
-        :return: GitBranchListResult with branch info
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            timeout_ms: Timeout in milliseconds.
+
+        Returns:
+            GitBranchListResult with branch info and current branch.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            branches = session.git.list_branches("/home/user/project")
+            print(branches.current)
         """
         self._ensure_git_available()
 
@@ -743,18 +871,25 @@ class SyncGit(BaseService):
         checkout: bool = True,
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Create a new branch in the repository.
+        """
+        Create a new branch in the repository.
 
-        By default, also checks out the new branch (using ``git checkout -b``).
-        Set ``checkout=False`` to create without switching.
+        By default the new branch is also checked out (``git checkout -b``).
+        Set *checkout* to ``False`` to create without switching.
 
-        :param repo_path: The repository path
-        :param branch: The name of the new branch
-        :param checkout: Whether to checkout the new branch (default True)
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            branch: The name of the new branch.
+            checkout: Whether to checkout the new branch (default: True).
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.create_branch("/home/user/project", "feature-x")
         """
         self._ensure_git_available()
 
@@ -775,14 +910,21 @@ class SyncGit(BaseService):
         *,
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Switch to an existing branch.
+        """
+        Switch to an existing branch.
 
-        :param repo_path: The repository path
-        :param branch: The branch name to switch to
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            branch: The branch name to switch to.
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.checkout_branch("/home/user/project", "main")
         """
         self._ensure_git_available()
 
@@ -801,15 +943,22 @@ class SyncGit(BaseService):
         force: bool = False,
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Delete a local branch.
+        """
+        Delete a local branch.
 
-        :param repo_path: The repository path
-        :param branch: The branch name to delete
-        :param force: Force delete the branch (-D instead of -d)
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            branch: The branch name to delete.
+            force: Force delete (``-D`` instead of ``-d``).
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.delete_branch("/home/user/project", "old-branch")
         """
         self._ensure_git_available()
 
@@ -831,17 +980,30 @@ class SyncGit(BaseService):
         overwrite: bool = False,
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Add a remote repository.
+        """
+        Add a remote repository.
 
-        :param repo_path: The repository path
-        :param name: The remote name (e.g., "origin")
-        :param url: The remote URL
-        :param fetch: Fetch from the remote immediately after adding
-        :param overwrite: If the remote already exists, update its URL
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        When *overwrite* is ``True``, the remote URL is updated if the remote
+        already exists (idempotent behaviour).
+
+        Args:
+            repo_path: The repository path.
+            name: The remote name (e.g., ``"origin"``).
+            url: The remote URL.
+            fetch: Fetch from the remote immediately after adding.
+            overwrite: Update the URL if the remote already exists.
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.remote_add(
+                "/home/user/project", "origin",
+                "https://github.com/user/repo.git",
+            )
         """
         self._ensure_git_available()
 
@@ -875,14 +1037,24 @@ class SyncGit(BaseService):
         *,
         timeout_ms: Optional[int] = None,
     ) -> Optional[str]:
-        """Get the URL of a remote repository.
+        """
+        Get the URL of a remote repository.
 
-        :param repo_path: The repository path
-        :param name: The remote name (e.g., "origin")
-        :param timeout_ms: Timeout in milliseconds
-        :return: The remote URL, or None if the remote does not exist
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
+        Args:
+            repo_path: The repository path.
+            name: The remote name (e.g., ``"origin"``).
+            timeout_ms: Timeout in milliseconds.
+
+        Returns:
+            The remote URL, or ``None`` if the remote does not exist.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+
+        Example:
+            url = session.git.remote_get("/home/user/project", "origin")
+            print(url)
         """
         self._ensure_git_available()
 
@@ -906,17 +1078,25 @@ class SyncGit(BaseService):
         paths: Optional[List[str]] = None,
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Reset the repository to a specific state.
+        """
+        Reset the repository to a specific state.
 
-        :param repo_path: The repository path
-        :param mode: Reset mode ("soft", "mixed", "hard", "merge", "keep")
-        :param target: Target commit/branch/ref. Defaults to HEAD.
-        :param paths: Specific file paths to reset
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
-        :raises ValueError: if mode is not a valid reset mode
+        Args:
+            repo_path: The repository path.
+            mode: Reset mode (``"soft"``, ``"mixed"``, ``"hard"``,
+                ``"merge"``, or ``"keep"``).
+            target: Target commit / branch / ref (defaults to HEAD).
+            paths: Specific file paths to reset.
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            ValueError: If *mode* is not a valid reset mode.
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.reset("/home/user/project", mode="hard", target="HEAD~1")
         """
         if mode and mode not in _VALID_RESET_MODES:
             raise ValueError(
@@ -947,17 +1127,26 @@ class SyncGit(BaseService):
         source: Optional[str] = None,
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Restore files from the index or working tree.
+        """
+        Restore files from the index or working tree.
 
-        :param repo_path: The repository path
-        :param paths: File paths to restore. Use ['.'] to restore all files.
-        :param staged: Restore the index/staging area (--staged)
-        :param worktree: Restore the working tree (--worktree). Defaults to True when staged is False.
-        :param source: Restore from a specific commit/branch/ref (--source)
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            paths: File paths to restore. Use ``["."]`` to restore all files.
+            staged: Restore the index / staging area (``--staged``).
+            worktree: Restore the working tree (``--worktree``).
+                Defaults to ``True`` when *staged* is ``False``.
+            source: Restore from a specific commit / branch / ref
+                (``--source``).
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.restore("/home/user/project", ["file.txt"])
         """
         self._ensure_git_available()
 
@@ -985,15 +1174,22 @@ class SyncGit(BaseService):
         branch: Optional[str] = None,
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Pull changes from a remote repository.
+        """
+        Pull changes from a remote repository.
 
-        :param repo_path: The repository path
-        :param remote: Remote name (e.g., "origin")
-        :param branch: Branch name to pull
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
-        :raises GitError: for other git errors
+        Args:
+            repo_path: The repository path.
+            remote: Remote name (e.g., ``"origin"``).
+            branch: Branch name to pull.
+            timeout_ms: Timeout in milliseconds (default: 120 000, i.e. 2 min).
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+            GitError: For other git errors.
+
+        Example:
+            session.git.pull("/home/user/project", remote="origin", branch="main")
         """
         self._ensure_git_available()
 
@@ -1018,15 +1214,25 @@ class SyncGit(BaseService):
         scope: str = "global",
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Configure git user information.
+        """
+        Configure git user name and email.
 
-        :param repo_path: The repository path
-        :param name: The user name
-        :param email: The user email
-        :param scope: Configuration scope ("global" or "local"). Defaults to "global".
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
+        Args:
+            repo_path: The repository path.
+            name: The user name.
+            email: The user email.
+            scope: Configuration scope (``"global"`` or ``"local"``,
+                default: ``"global"``).
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+
+        Example:
+            session.git.configure_user(
+                "/home/user/project", "Alice", "alice@example.com",
+            )
         """
         self._ensure_git_available()
 
@@ -1054,15 +1260,23 @@ class SyncGit(BaseService):
         scope: str = "global",
         timeout_ms: Optional[int] = None,
     ) -> None:
-        """Set a git configuration value.
+        """
+        Set a git configuration value.
 
-        :param repo_path: The repository path
-        :param key: The configuration key
-        :param value: The configuration value
-        :param scope: Configuration scope ("global" or "local"). Defaults to "global".
-        :param timeout_ms: Timeout in milliseconds
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
+        Args:
+            repo_path: The repository path.
+            key: The configuration key (e.g., ``"core.autocrlf"``).
+            value: The configuration value.
+            scope: Configuration scope (``"global"`` or ``"local"``,
+                default: ``"global"``).
+            timeout_ms: Timeout in milliseconds.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+
+        Example:
+            session.git.set_config("/home/user/project", "core.autocrlf", "false")
         """
         self._ensure_git_available()
 
@@ -1081,15 +1295,26 @@ class SyncGit(BaseService):
         scope: str = "global",
         timeout_ms: Optional[int] = None,
     ) -> Optional[str]:
-        """Get a git configuration value.
+        """
+        Get a git configuration value.
 
-        :param repo_path: The repository path
-        :param key: The configuration key
-        :param scope: Configuration scope ("global" or "local"). Defaults to "global".
-        :param timeout_ms: Timeout in milliseconds
-        :return: The configuration value, or None if not found
-        :raises GitNotFoundError: if git is not installed
-        :raises GitNotARepoError: if the path is not a git repository
+        Args:
+            repo_path: The repository path.
+            key: The configuration key (e.g., ``"user.name"``).
+            scope: Configuration scope (``"global"`` or ``"local"``,
+                default: ``"global"``).
+            timeout_ms: Timeout in milliseconds.
+
+        Returns:
+            The configuration value, or ``None`` if the key is not found.
+
+        Raises:
+            GitNotFoundError: If git is not installed.
+            GitNotARepoError: If the path is not a git repository.
+
+        Example:
+            name = session.git.get_config("/home/user/project", "user.name")
+            print(name)
         """
         self._ensure_git_available()
 

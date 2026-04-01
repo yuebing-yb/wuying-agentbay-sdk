@@ -386,7 +386,7 @@ describe("Git module", () => {
       // Check git --version call
       const versionCall = executeCommandMock.mock.calls[0];
       const envs = versionCall[3] as Record<string, string>;
-      expect(envs).toEqual({ GIT_TERMINAL_PROMPT: "0" });
+      expect(envs).toEqual({ GIT_TERMINAL_PROMPT: "0", LC_ALL: "C" });
     });
 
     it("should pass GIT_TERMINAL_PROMPT=0 for clone command", async () => {
@@ -403,7 +403,7 @@ describe("Git module", () => {
       // Check clone call
       const cloneCall = executeCommandMock.mock.calls[1];
       const envs = cloneCall[3] as Record<string, string>;
-      expect(envs).toEqual({ GIT_TERMINAL_PROMPT: "0" });
+      expect(envs).toEqual({ GIT_TERMINAL_PROMPT: "0", LC_ALL: "C" });
     });
   });
 
@@ -1267,7 +1267,7 @@ describe("Git module", () => {
 
       const call = executeCommandMock.mock.calls[1];
       const cmd = call[0] as string;
-      expect(cmd).toBe("git -C '/home/user/repo' 'remote' 'get-url' 'origin' || true");
+      expect(cmd).toBe("git -C '/home/user/repo' 'remote' 'get-url' 'origin'");
     });
 
     it("should return URL when remote exists", async () => {
@@ -1282,13 +1282,13 @@ describe("Git module", () => {
 
     it("should return undefined when remote does not exist", async () => {
       const { git, executeCommandMock } = createGitWithVersion();
-      executeCommandMock.mockResolvedValueOnce(successResult({ stdout: "" }));
+      executeCommandMock.mockResolvedValueOnce(failureResult({ stderr: "fatal: No such remote 'nonexistent'" }));
 
       const url = await git.remoteGet("/home/user/repo", "nonexistent");
       expect(url).toBeUndefined();
     });
 
-    it("should use runShell for remoteGet", async () => {
+    it("should use runGit (not runShell) for remoteGet", async () => {
       const { git, executeCommandMock } = createGitWithVersion();
       executeCommandMock.mockResolvedValueOnce(successResult());
 
@@ -1296,7 +1296,14 @@ describe("Git module", () => {
 
       const call = executeCommandMock.mock.calls[1];
       const cmd = call[0] as string;
-      expect(cmd).toContain("|| true");
+      expect(cmd).not.toContain("|| true");
+    });
+
+    it("should throw on non-remote errors", async () => {
+      const { git, executeCommandMock } = createGitWithVersion();
+      executeCommandMock.mockResolvedValueOnce(failureResult({ stderr: "fatal: not a git repository" }));
+
+      await expect(git.remoteGet("/home/user/repo", "origin")).rejects.toThrow();
     });
   });
 
@@ -1507,8 +1514,8 @@ describe("Git module", () => {
       const nameCmd = nameCall[0] as string;
       const emailCmd = emailCall[0] as string;
 
-      expect(nameCmd).toBe("git -C '/home/user/repo' 'config' 'user.name' 'Agent'");
-      expect(emailCmd).toBe("git -C '/home/user/repo' 'config' 'user.email' 'agent@example.com'");
+      expect(nameCmd).toBe("git -C '/home/user/repo' 'config' '--global' 'user.name' 'Agent'");
+      expect(emailCmd).toBe("git -C '/home/user/repo' 'config' '--global' 'user.email' 'agent@example.com'");
     });
 
     it("should set local user config when scope is local", async () => {
@@ -1550,7 +1557,7 @@ describe("Git module", () => {
 
       const call = executeCommandMock.mock.calls[1];
       const cmd = call[0] as string;
-      expect(cmd).toBe("git -C '/home/user/repo' 'config' 'pull.rebase' 'true'");
+      expect(cmd).toBe("git -C '/home/user/repo' 'config' '--global' 'pull.rebase' 'true'");
     });
 
     it("should set local config when scope is local", async () => {
@@ -1572,7 +1579,7 @@ describe("Git module", () => {
 
       const call = executeCommandMock.mock.calls[1];
       const cmd = call[0] as string;
-      expect(cmd).toBe("git -C '/home/user/repo' 'config' 'user.name' 'John Doe'");
+      expect(cmd).toBe("git -C '/home/user/repo' 'config' '--global' 'user.name' 'John Doe'");
     });
   });
 
@@ -1708,14 +1715,14 @@ describe("Git module", () => {
       expect(value).toBe("Agent");
     });
 
-    it("should handle multi-line stdout (take first line)", async () => {
+    it("should return full trimmed output for multi-line stdout", async () => {
       const { git, executeCommandMock } = createGitWithVersion();
       executeCommandMock.mockResolvedValueOnce(successResult({
         stdout: "Agent\nSome other output\n",
       }));
 
       const value = await git.getConfig("/home/user/repo", "user.name");
-      expect(value).toBe("Agent");
+      expect(value).toBe("Agent\nSome other output");
     });
   });
 

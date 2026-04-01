@@ -351,4 +351,5 @@ jobs:
 
     - name: Run unit tests
       working-directory: ./golang
-      run: go test -race -v ./tests/pkg/unit/...
+      run: |
+        go test -race -v ./tests/pkg/unit/... ./pkg/agentbay/...

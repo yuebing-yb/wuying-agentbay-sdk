@@ -211,9 +211,10 @@ func TestGit_Init_Basic(t *testing.T) {
 	
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
+	// Path should be an argument to init, NOT used with -C
+	assert.NotContains(t, capturedCmd, "-C")
 	assert.Contains(t, capturedCmd, "'init'")
+	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
 	assert.Equal(t, "/tmp/testrepo", result.Path)
 }
 
@@ -227,11 +228,11 @@ func TestGit_Init_WithBranch(t *testing.T) {
 	
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
+	assert.NotContains(t, capturedCmd, "-C")
 	assert.Contains(t, capturedCmd, "'init'")
 	assert.Contains(t, capturedCmd, "'--initial-branch'")
 	assert.Contains(t, capturedCmd, "'main'")
+	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
 }
 
 func TestGit_Init_WithBare(t *testing.T) {
@@ -244,10 +245,10 @@ func TestGit_Init_WithBare(t *testing.T) {
 	
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
+	assert.NotContains(t, capturedCmd, "-C")
 	assert.Contains(t, capturedCmd, "'init'")
 	assert.Contains(t, capturedCmd, "'--bare'")
+	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
 }
 
 // ============================================================================
@@ -266,6 +267,7 @@ func TestGit_Add_WithPaths(t *testing.T) {
 	assert.Contains(t, capturedCmd, "-C")
 	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
 	assert.Contains(t, capturedCmd, "'add'")
+	assert.Contains(t, capturedCmd, "'--'")
 	assert.Contains(t, capturedCmd, "'file1.txt'")
 	assert.Contains(t, capturedCmd, "'file2.txt'")
 }
@@ -285,19 +287,21 @@ func TestGit_Add_WithAll(t *testing.T) {
 	assert.Contains(t, capturedCmd, "'--all'")
 }
 
-func TestGit_Add_NoPaths_Error(t *testing.T) {
+func TestGit_Add_NoPaths_DefaultStageAll(t *testing.T) {
+	var capturedCmd string
 	g := createMockGit(t, func(cmd string) {
-		t.Error("Should not call command when no paths provided")
+		capturedCmd = cmd
 	})
 	
 	err := g.Add("/tmp/testrepo")
 	
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "requires at least one path")
+	assert.NoError(t, err)
+	assert.Contains(t, capturedCmd, "'add'")
+	assert.Contains(t, capturedCmd, "'-A'")
 }
 
 // ============================================================================
-// Commit Command Tests (4 tests)
+// Commit Command Tests (3 tests)
 // ============================================================================
 
 func TestGit_Commit_Basic(t *testing.T) {
@@ -357,24 +361,6 @@ func TestGit_Commit_WithAuthorNameAndEmail(t *testing.T) {
 	assert.Contains(t, capturedCmd, "'commit'")
 	assert.Contains(t, capturedCmd, "'-m'")
 	assert.Contains(t, capturedCmd, "'Test commit'")
-}
-
-func TestGit_Commit_WithSkipHooks(t *testing.T) {
-	var capturedCmd string
-	g := createMockGit(t, func(cmd string) {
-		capturedCmd = cmd
-	})
-	
-	result, err := g.Commit("/tmp/testrepo", "Skip hooks commit", git.WithCommitSkipHooks())
-	
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
-	assert.Contains(t, capturedCmd, "'commit'")
-	assert.Contains(t, capturedCmd, "'--no-verify'")
-	assert.Contains(t, capturedCmd, "'-m'")
-	assert.Contains(t, capturedCmd, "'Skip hooks commit'")
 }
 
 // ============================================================================
@@ -569,21 +555,6 @@ func TestGit_Pull_Basic(t *testing.T) {
 	assert.Contains(t, capturedCmd, "'pull'")
 }
 
-func TestGit_Pull_WithRebase(t *testing.T) {
-	var capturedCmd string
-	g := createMockGit(t, func(cmd string) {
-		capturedCmd = cmd
-	})
-	
-	err := g.Pull("/tmp/testrepo", git.WithPullRebase())
-	
-	assert.NoError(t, err)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
-	assert.Contains(t, capturedCmd, "'pull'")
-	assert.Contains(t, capturedCmd, "'--rebase'")
-}
-
 // ============================================================================
 // RemoteAdd Command Tests (2 tests)
 // ============================================================================
@@ -658,23 +629,7 @@ func TestGit_Checkout_Basic(t *testing.T) {
 	assert.Contains(t, capturedCmd, "'main'")
 }
 
-func TestGit_Checkout_WithForce(t *testing.T) {
-	var capturedCmd string
-	g := createMockGit(t, func(cmd string) {
-		capturedCmd = cmd
-	})
-	
-	err := g.CheckoutBranch("/tmp/testrepo", "main", git.WithCheckoutForce())
-	
-	assert.NoError(t, err)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
-	assert.Contains(t, capturedCmd, "'checkout'")
-	assert.Contains(t, capturedCmd, "'-f'")
-	assert.Contains(t, capturedCmd, "'main'")
-}
-
-// ==================== Log Tests ====================
+// ==================== Log Tests ======================================
 
 func TestGit_Log_Basic(t *testing.T) {
 	var capturedCmd string
@@ -719,6 +674,9 @@ func TestGit_Restore_Basic(t *testing.T) {
 	assert.Contains(t, capturedCmd, "-C")
 	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
 	assert.Contains(t, capturedCmd, "'restore'")
+	// Default: should have --worktree when neither staged nor worktree is set
+	assert.Contains(t, capturedCmd, "'--worktree'")
+	assert.Contains(t, capturedCmd, "'--'")
 	assert.Contains(t, capturedCmd, "'file.txt'")
 }
 
@@ -733,7 +691,10 @@ func TestGit_Restore_Staged(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, capturedCmd, "'restore'")
 	assert.Contains(t, capturedCmd, "'--staged'")
+	assert.Contains(t, capturedCmd, "'--'")
 	assert.Contains(t, capturedCmd, "'file.txt'")
+	// When staged is set, --worktree should NOT be present
+	assert.NotContains(t, capturedCmd, "'--worktree'")
 }
 
 func TestGit_Restore_NoPaths_Error(t *testing.T) {
@@ -758,11 +719,11 @@ func TestGit_RemoteGet_Basic(t *testing.T) {
 	_, err := g.RemoteGet("/tmp/testrepo", "origin")
 	
 	assert.NoError(t, err)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
+	// Uses direct runGit (no || true)
 	assert.Contains(t, capturedCmd, "'remote'")
 	assert.Contains(t, capturedCmd, "'get-url'")
 	assert.Contains(t, capturedCmd, "'origin'")
+	assert.NotContains(t, capturedCmd, "|| true")
 }
 
 // ==================== GetConfig Tests ====================
@@ -776,30 +737,60 @@ func TestGit_GetConfig_Basic(t *testing.T) {
 	_, err := g.GetConfig("/tmp/testrepo", "user.name")
 	
 	assert.NoError(t, err)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
+	// Uses direct runGit (no || true)
 	assert.Contains(t, capturedCmd, "'config'")
 	assert.Contains(t, capturedCmd, "'--global'")
 	assert.Contains(t, capturedCmd, "'--get'")
 	assert.Contains(t, capturedCmd, "'user.name'")
+	assert.NotContains(t, capturedCmd, "|| true")
 }
 
 // ==================== CreateBranch Force+Checkout Tests ====================
 
-func TestGit_CreateBranch_WithForceCheckout(t *testing.T) {
+func TestGit_CreateBranch_DefaultUsesSmallB(t *testing.T) {
 	var capturedCmd string
 	g := createMockGit(t, func(cmd string) {
 		capturedCmd = cmd
 	})
 	
-	err := g.CreateBranch("/tmp/testrepo", "feature", git.WithBranchCreateForce())
+	err := g.CreateBranch("/tmp/testrepo", "feature")
 	
 	assert.NoError(t, err)
-	assert.Contains(t, capturedCmd, "-C")
-	assert.Contains(t, capturedCmd, "'/tmp/testrepo'")
 	assert.Contains(t, capturedCmd, "'checkout'")
-	assert.Contains(t, capturedCmd, "'-B'") // uppercase B for force
+	assert.Contains(t, capturedCmd, "'-b'")
 	assert.Contains(t, capturedCmd, "'feature'")
+	// Should NOT contain -B (force) since WithBranchCreateForce is removed
+	assert.NotContains(t, capturedCmd, "'-B'")
+}
+
+func TestGit_Reset_WithPaths(t *testing.T) {
+	var capturedCmd string
+	g := createMockGit(t, func(cmd string) {
+		capturedCmd = cmd
+	})
+	
+	err := g.Reset("/tmp/testrepo", git.WithResetPaths([]string{"file1.txt", "file2.txt"}))
+	
+	assert.NoError(t, err)
+	assert.Contains(t, capturedCmd, "'reset'")
+	assert.Contains(t, capturedCmd, "'--'")
+	assert.Contains(t, capturedCmd, "'file1.txt'")
+	assert.Contains(t, capturedCmd, "'file2.txt'")
+}
+
+func TestGit_Restore_DefaultWorktree(t *testing.T) {
+	var capturedCmd string
+	g := createMockGit(t, func(cmd string) {
+		capturedCmd = cmd
+	})
+	
+	err := g.Restore("/tmp/testrepo", []string{"file.txt"})
+	
+	assert.NoError(t, err)
+	assert.Contains(t, capturedCmd, "'restore'")
+	assert.Contains(t, capturedCmd, "'--worktree'")
+	assert.Contains(t, capturedCmd, "'--'")
+	assert.Contains(t, capturedCmd, "'file.txt'")
 }
 
 // ==================== Error Path Tests ====================

@@ -132,7 +132,28 @@ public class GitTest {
         assertEquals("repo", result);
     }
 
-    // ==================== deriveStatus Tests ====================
+    @Test
+    public void testDeriveRepoDirFromUrlTrailingSlash() throws Exception {
+        String result = (String) invokePrivate("deriveRepoDirFromUrl",
+                new Class[]{String.class}, "https://github.com/user/repo.git/");
+        assertEquals("repo", result);
+    }
+
+    @Test
+    public void testDeriveRepoDirFromUrlSSHColon() throws Exception {
+        String result = (String) invokePrivate("deriveRepoDirFromUrl",
+                new Class[]{String.class}, "git@github.com:user/repo.git");
+        assertEquals("repo", result);
+    }
+
+    @Test
+    public void testDeriveRepoDirFromUrlEncoded() throws Exception {
+        String result = (String) invokePrivate("deriveRepoDirFromUrl",
+                new Class[]{String.class}, "https://github.com/user/my%20repo.git");
+        assertEquals("my repo", result);
+    }
+
+    // ==================== deriveStatus Tests ======================================
 
     @Test
     public void testDeriveStatusConflict() throws Exception {
@@ -216,6 +237,14 @@ public class GitTest {
         // U should take priority over other statuses
         String result = (String) invokePrivate("deriveStatus",
                 new Class[]{String.class, String.class}, "U", "M");
+        assertEquals("conflict", result);
+    }
+
+    @Test
+    public void testDeriveStatusConflictAA() throws Exception {
+        // Both added = conflict (AA)
+        String result = (String) invokePrivate("deriveStatus",
+                new Class[]{String.class, String.class}, "A", "A");
         assertEquals("conflict", result);
     }
 
@@ -551,11 +580,60 @@ public class GitTest {
 
     @Test
     public void testClassifyErrorConflict() throws Exception {
-        // conflict in stdout
-        CommandResult cmdResult = new CommandResult("", false, "", "", 1, "conflict detected", "", "");
+        // CONFLICT in stderr (uppercase, as real git outputs)
+        CommandResult cmdResult = new CommandResult("", false, "", "", 1, "", "CONFLICT (content): Merge conflict in file.txt", "");
         GitError error = (GitError) invokePrivate("classifyError",
                 new Class[]{String.class, CommandResult.class}, "merge", cmdResult);
         assertTrue(error instanceof GitConflictError);
+    }
+
+    @Test
+    public void testClassifyErrorMergeConflict() throws Exception {
+        // "merge conflict" keyword in stderr (lowercase)
+        CommandResult cmdResult = new CommandResult("", false, "", "", 1, "", "merge conflict in file.txt", "");
+        GitError error = (GitError) invokePrivate("classifyError",
+                new Class[]{String.class, CommandResult.class}, "merge", cmdResult);
+        assertTrue(error instanceof GitConflictError);
+    }
+
+    @Test
+    public void testClassifyErrorAutomaticMergeFailed() throws Exception {
+        CommandResult cmdResult = new CommandResult("", false, "", "", 1, "", "automatic merge failed; fix conflicts", "");
+        GitError error = (GitError) invokePrivate("classifyError",
+                new Class[]{String.class, CommandResult.class}, "merge", cmdResult);
+        assertTrue(error instanceof GitConflictError);
+    }
+
+    @Test
+    public void testClassifyErrorAuthorizationFailed() throws Exception {
+        CommandResult cmdResult = new CommandResult("", false, "", "", 1, "", "authorization failed", "");
+        GitError error = (GitError) invokePrivate("classifyError",
+                new Class[]{String.class, CommandResult.class}, "push", cmdResult);
+        assertTrue(error instanceof GitAuthError);
+    }
+
+    @Test
+    public void testClassifyErrorAccessDenied() throws Exception {
+        CommandResult cmdResult = new CommandResult("", false, "", "", 1, "", "access denied", "");
+        GitError error = (GitError) invokePrivate("classifyError",
+                new Class[]{String.class, CommandResult.class}, "push", cmdResult);
+        assertTrue(error instanceof GitAuthError);
+    }
+
+    @Test
+    public void testClassifyErrorHTTP403() throws Exception {
+        CommandResult cmdResult = new CommandResult("", false, "", "", 1, "", "The requested URL returned error: 403", "");
+        GitError error = (GitError) invokePrivate("classifyError",
+                new Class[]{String.class, CommandResult.class}, "push", cmdResult);
+        assertTrue(error instanceof GitAuthError);
+    }
+
+    @Test
+    public void testClassifyErrorGitNotFoundByKeyword() throws Exception {
+        CommandResult cmdResult = new CommandResult("", false, "", "", 1, "", "command not found", "");
+        GitError error = (GitError) invokePrivate("classifyError",
+                new Class[]{String.class, CommandResult.class}, "status", cmdResult);
+        assertTrue(error instanceof GitNotFoundError);
     }
 
     @Test

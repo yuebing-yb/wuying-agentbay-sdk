@@ -12,6 +12,30 @@ The Browser module provides comprehensive browser automation capabilities includ
 
 - Requires `browser_latest` image for browser automation features
 
+## Type ActOptions
+
+```go
+type ActOptions struct {
+	Action		string			// The action to perform
+	Variables	map[string]string	// Optional variables for the action
+	UseVision	*bool			// Whether to use vision-based capabilities
+	Timeout		*int			// Timeout in seconds
+}
+```
+
+ActOptions represents options for configuring the act method.
+
+## Type ActResult
+
+```go
+type ActResult struct {
+	Success	bool
+	Message	string
+}
+```
+
+ActResult represents the result of the act method.
+
 ## Type Browser
 
 ```go
@@ -22,6 +46,7 @@ type Browser struct {
 	option			*BrowserOption
 	userCallback		BrowserCallback
 	wsCallbackRegistered	bool
+	Operator		*BrowserOperator
 }
 ```
 
@@ -423,6 +448,137 @@ func NewBrowserNotifyMessage(msgType *string, id *int, code *int, message *strin
 
 NewBrowserNotifyMessage creates a new BrowserNotifyMessage
 
+## Type BrowserOperator
+
+```go
+type BrowserOperator struct {
+	session	SessionInterface
+	browser	*Browser
+}
+```
+
+BrowserOperator handles browser automation via MCP tools. It provides act, observe, extract and
+other operations without requiring a direct Playwright connection.
+
+> **⚠️ Note**: Currently, for agent services (including ComputerUseAgent, BrowserUseAgent,
+and MobileUseAgent), > we do not provide services for overseas users registered with
+**alibabacloud.com**.
+
+### Methods
+
+### Act
+
+```go
+func (o *BrowserOperator) Act(options *ActOptions) (*ActResult, error)
+```
+
+Act performs an action on the current web page using async task polling (3s interval). The default
+timeout is 300 seconds if not specified in options.
+
+**Example:**
+
+```go
+result, err := session.Browser.Operator.Act(&browser.ActOptions{
+    Action: "click the login button",
+})
+```
+
+### Close
+
+```go
+func (o *BrowserOperator) Close() (bool, error)
+```
+
+Close closes the remote browser operator session.
+
+**Example:**
+
+```go
+ok, err := session.Browser.Operator.Close()
+```
+
+### Extract
+
+```go
+func (o *BrowserOperator) Extract(options *ExtractOptions) (bool, map[string]interface{}, error)
+```
+
+Extract extracts structured data from the current web page using async task polling (3s
+interval). The Schema field should be a map representing a JSON schema. The returned data is a
+map[string]interface{} that can be further decoded by the caller. The default timeout is 300 seconds
+if not specified in options.
+
+**Example:**
+
+```go
+schema := map[string]interface{}{
+    "type": "object",
+    "properties": map[string]interface{}{
+        "title": map[string]interface{}{"type": "string"},
+    },
+}
+ok, data, err := session.Browser.Operator.Extract(&browser.ExtractOptions{
+    Instruction: "extract the page title",
+    Schema:      schema,
+})
+```
+
+### Navigate
+
+```go
+func (o *BrowserOperator) Navigate(url string) (string, error)
+```
+
+Navigate navigates the browser to the given URL.
+
+**Example:**
+
+```go
+result, err := session.Browser.Operator.Navigate("https://example.com")
+```
+
+### Observe
+
+```go
+func (o *BrowserOperator) Observe(options *ObserveOptions) (bool, []ObserveResult, error)
+```
+
+Observe observes elements or state on the current web page using async task polling (3s interval).
+The default timeout is 300 seconds if not specified in options.
+
+**Example:**
+
+```go
+ok, results, err := session.Browser.Operator.Observe(&browser.ObserveOptions{
+    Instruction: "find all clickable buttons",
+})
+```
+
+### Screenshot
+
+```go
+func (o *BrowserOperator) Screenshot(fullPage bool, quality int, clip map[string]float64, timeout *int) (string, error)
+```
+
+Screenshot takes a screenshot of the current page via MCP tool. Returns a base64 encoded data URL of
+the screenshot.
+
+**Example:**
+
+```go
+data, err := session.Browser.Operator.Screenshot(true, 80, nil, nil)
+```
+
+### Related Functions
+
+### NewBrowserOperator
+
+```go
+func NewBrowserOperator(session SessionInterface, browser *Browser) *BrowserOperator
+```
+
+NewBrowserOperator creates a new BrowserOperator instance.
+
 ## Type BrowserOption
 
 ```go
@@ -602,6 +758,22 @@ type BrowserViewport struct {
 
 BrowserViewport represents browser viewport options
 
+## Type ExtractOptions
+
+```go
+type ExtractOptions struct {
+	Instruction	string			// The extraction instruction
+	Schema		map[string]interface{}	// JSON schema for the extraction
+	UseTextExtract	*bool			// Whether to use text-based extraction
+	UseVision	*bool			// Whether to use vision-based capabilities
+	Selector	*string			// Optional CSS selector
+	Timeout		*int			// Timeout in seconds
+	MaxPage		*int			// Maximum number of pages to process
+}
+```
+
+ExtractOptions represents options for configuring the extract method.
+
 ## Type LinkResult
 
 ```go
@@ -625,6 +797,32 @@ type McpToolResult struct {
 ```
 
 McpToolResult represents the result of CallMcpTool call
+
+## Type ObserveOptions
+
+```go
+type ObserveOptions struct {
+	Instruction	string	// The observation instruction
+	UseVision	*bool	// Whether to use vision-based capabilities
+	Selector	*string	// Optional CSS selector
+	Timeout		*int	// Timeout in seconds
+}
+```
+
+ObserveOptions represents options for configuring the observe method.
+
+## Type ObserveResult
+
+```go
+type ObserveResult struct {
+	Selector	string
+	Description	string
+	Method		string
+	Arguments	map[string]interface{}
+}
+```
+
+ObserveResult represents a single observation result.
 
 ## Type ScreenshotOptions
 

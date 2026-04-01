@@ -20,6 +20,7 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/computer"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/filesystem"
+	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/git"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/internal"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/mobile"
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/models"
@@ -144,6 +145,9 @@ type Session struct {
 	Command    *command.Command
 	Code       *code.Code
 	Oss        *oss.OSSManager
+
+	// Git for version control
+	Git *git.Git
 
 	// Platform-specific automation modules
 	Computer *computer.Computer
@@ -363,6 +367,9 @@ func NewSession(agentBay *AgentBay, sessionID string) *Session {
 	session.Command = command.NewCommand(session)
 	session.Code = code.NewCode(session)
 	session.Oss = oss.NewOss(session)
+
+	// Initialize Git
+	session.Git = git.NewGit(session.Command)
 
 	// Initialize Browser
 	session.Browser = browser.NewBrowser(session)

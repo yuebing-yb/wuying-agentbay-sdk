@@ -36,7 +36,7 @@ public class GitIntegrationTest {
         agentBay = new AgentBay(apiKey);
         System.out.println("Creating a new session for Git integration testing...");
         CreateSessionParams params = new CreateSessionParams();
-        params.setImageId("linux_latest");
+        params.setImageId("code-space-debian-12");
         SessionResult result = agentBay.create(params);
 
         if (!result.isSuccess()) {

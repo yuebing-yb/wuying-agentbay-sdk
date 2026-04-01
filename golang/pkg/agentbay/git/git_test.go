@@ -67,6 +67,16 @@ func TestDeriveRepoDirFromURL_URLEncoded(t *testing.T) {
 	assert.Equal(t, "my repo", result)
 }
 
+func TestDeriveRepoDirFromURL_SSH_Colon(t *testing.T) {
+	result := deriveRepoDirFromURL("git@github.com:user/my-repo.git")
+	assert.Equal(t, "my-repo", result)
+}
+
+func TestDeriveRepoDirFromURL_SSH_NoSlash(t *testing.T) {
+	result := deriveRepoDirFromURL("git@github.com:my-repo.git")
+	assert.Equal(t, "my-repo", result)
+}
+
 // ==================== deriveStatus Tests ====================
 
 func TestDeriveStatus_Untracked(t *testing.T) {
@@ -222,6 +232,14 @@ func TestParseGitStatus_NoCommitsYet(t *testing.T) {
 	assert.Equal(t, "main", result.CurrentBranch)
 }
 
+func TestParseGitStatus_InitialCommitOn(t *testing.T) {
+	// Older Git versions use "Initial commit on" instead of "No commits yet on"
+	output := "## Initial commit on main"
+	result := parseGitStatus(output)
+	assert.NotNil(t, result)
+	assert.Equal(t, "main", result.CurrentBranch)
+}
+
 // ==================== parseGitBranches Tests ====================
 
 func TestParseGitBranches_SingleBranch(t *testing.T) {
@@ -291,4 +309,37 @@ func TestParseGitLog_ShortHashFallback(t *testing.T) {
 	result := parseGitLog(output)
 	assert.Equal(t, 1, len(result.Entries))
 	assert.Equal(t, "abcdef1", result.Entries[0].ShortHash)
+}
+
+// ==================== commitHashPattern Tests ====================
+
+func TestCommitHashPattern_RootCommit(t *testing.T) {
+	// Root commit format: [main (root-commit) abc1234] Initial commit
+	output := "[main (root-commit) abc1234] Initial commit"
+	matches := commitHashPattern.FindStringSubmatch(output)
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "abc1234", matches[1])
+}
+
+func TestCommitHashPattern_NormalCommit(t *testing.T) {
+	// Normal commit format: [main abc1234] Second commit
+	output := "[main abc1234] Second commit"
+	matches := commitHashPattern.FindStringSubmatch(output)
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "abc1234", matches[1])
+}
+
+func TestCommitHashPattern_BranchWithSlash(t *testing.T) {
+	// Branch with slash: [feature/login abc1234] Add login
+	output := "[feature/login abc1234] Add login"
+	matches := commitHashPattern.FindStringSubmatch(output)
+	assert.Equal(t, 2, len(matches))
+	assert.Equal(t, "abc1234", matches[1])
+}
+
+func TestCommitHashPattern_NoMatch(t *testing.T) {
+	// No match case
+	output := "nothing here"
+	matches := commitHashPattern.FindStringSubmatch(output)
+	assert.Nil(t, matches)
 }

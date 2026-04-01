@@ -97,25 +97,61 @@ func TestClassifyError_AutomaticMergeFailed(t *testing.T) {
 	assert.True(t, ok, "expected GitConflictError, got %T", err)
 }
 
-func TestClassifyError_GitNotFound(t *testing.T) {
-	// Note: classifyError does NOT detect git-not-found errors.
-	// GitNotFoundError is only raised by ensureGitAvailable().
-	// classifyError treats "command not found" as a generic GitError.
+func TestClassifyError_GitNotFound_ExitCode127(t *testing.T) {
+	// exit code 127 = "command not found" in shell, now correctly classified as GitNotFoundError
 	result := &command.CommandResult{
 		Success:  false,
 		ExitCode: 127,
 		Stderr:   "sh: git: command not found",
 	}
 	err := classifyError("status", result)
-	_, ok := err.(*GitError)
-	assert.True(t, ok, "expected GitError, got %T", err)
-	// Should NOT be a specialized error type
-	_, isAuth := err.(*GitAuthError)
-	_, isNotRepo := err.(*GitNotARepoError)
-	_, isConflict := err.(*GitConflictError)
-	assert.False(t, isAuth)
-	assert.False(t, isNotRepo)
-	assert.False(t, isConflict)
+	_, ok := err.(*GitNotFoundError)
+	assert.True(t, ok, "expected GitNotFoundError, got %T", err)
+}
+
+func TestClassifyError_GitNotFound_CommandNotFound(t *testing.T) {
+	// "command not found" message → GitNotFoundError
+	result := &command.CommandResult{
+		Success:  false,
+		ExitCode: 1,
+		Stderr:   "bash: git: command not found",
+	}
+	err := classifyError("status", result)
+	_, ok := err.(*GitNotFoundError)
+	assert.True(t, ok, "expected GitNotFoundError, got %T", err)
+}
+
+func TestClassifyError_AuthorizationFailed(t *testing.T) {
+	result := &command.CommandResult{
+		Success:  false,
+		ExitCode: 128,
+		Stderr:   "fatal: Authorization failed for 'https://github.com/user/repo.git'",
+	}
+	err := classifyError("push", result)
+	_, ok := err.(*GitAuthError)
+	assert.True(t, ok, "expected GitAuthError, got %T", err)
+}
+
+func TestClassifyError_AccessDenied(t *testing.T) {
+	result := &command.CommandResult{
+		Success:  false,
+		ExitCode: 128,
+		Stderr:   "ERROR: access denied or repository not exported: /user/repo.git",
+	}
+	err := classifyError("clone", result)
+	_, ok := err.(*GitAuthError)
+	assert.True(t, ok, "expected GitAuthError, got %T", err)
+}
+
+func TestClassifyError_HTTP403(t *testing.T) {
+	result := &command.CommandResult{
+		Success:  false,
+		ExitCode: 128,
+		Stderr:   "fatal: repository 'https://github.com/user/repo.git/' not found\nerror: 403",
+	}
+	err := classifyError("push", result)
+	_, ok := err.(*GitAuthError)
+	assert.True(t, ok, "expected GitAuthError, got %T", err)
 }
 
 func TestClassifyError_GenericError(t *testing.T) {

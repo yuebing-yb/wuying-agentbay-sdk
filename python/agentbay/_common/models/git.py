@@ -3,29 +3,48 @@ from typing import List, Optional
 
 @dataclass
 class GitCloneResult:
-    """Result of a successful git clone operation."""
+    """
+    Result of a successful git clone operation.
+
+    Attributes:
+        path: The local path where the repository was cloned.
+    """
     path: str
 
 @dataclass
 class GitInitResult:
-    """Result of a successful git init operation."""
+    """
+    Result of a successful git init operation.
+
+    Attributes:
+        path: The local path where the repository was initialized.
+    """
     path: str
 
 @dataclass
 class GitCommitResult:
-    """Result of a successful git commit operation."""
+    """
+    Result of a successful git commit operation.
+
+    Attributes:
+        commit_hash: The short hash of the created commit, or ``None``
+            if it could not be parsed.
+    """
     commit_hash: Optional[str] = None
 
 @dataclass
 class GitFileStatus:
-    """Parsed git status entry for a file.
+    """
+    Parsed git status entry for a single file.
 
-    :param path: Path relative to the repository root
-    :param status: Normalized status string (e.g. "modified", "added", "deleted", "renamed", "untracked", "conflict")
-    :param index_status: Index status character from porcelain output
-    :param work_tree_status: Working tree status character from porcelain output
-    :param staged: Whether the change is staged
-    :param renamed_from: Original path when the file was renamed
+    Attributes:
+        path: Path relative to the repository root.
+        status: Normalized status string (e.g., ``"modified"``, ``"added"``,
+            ``"deleted"``, ``"renamed"``, ``"untracked"``, ``"conflict"``).
+        index_status: Index status character from porcelain output.
+        work_tree_status: Working tree status character from porcelain output.
+        staged: Whether the change is staged.
+        renamed_from: Original path when the file was renamed.
     """
     path: str
     status: str
@@ -36,14 +55,16 @@ class GitFileStatus:
 
 @dataclass
 class GitStatusResult:
-    """Parsed git repository status (E2B-aligned).
+    """
+    Parsed git repository status.
 
-    :param current_branch: Current branch name, if available
-    :param upstream: Upstream branch name, if available
-    :param ahead: Number of commits the branch is ahead of upstream
-    :param behind: Number of commits the branch is behind upstream
-    :param detached: Whether HEAD is detached
-    :param files: List of file status entries
+    Attributes:
+        current_branch: Current branch name, if available.
+        upstream: Upstream tracking branch name, if available.
+        ahead: Number of commits the branch is ahead of upstream.
+        behind: Number of commits the branch is behind upstream.
+        detached: Whether HEAD is in detached state.
+        files: List of file status entries.
     """
     current_branch: Optional[str] = None
     upstream: Optional[str] = None
@@ -104,7 +125,17 @@ class GitStatusResult:
 
 @dataclass
 class GitLogEntry:
-    """A single entry in the git log."""
+    """
+    A single entry in the git log.
+
+    Attributes:
+        hash: Full commit hash.
+        short_hash: Abbreviated commit hash.
+        author_name: Author name.
+        author_email: Author email.
+        date: Commit date in ISO 8601 format.
+        message: Commit subject line.
+    """
     hash: str
     short_hash: str
     author_name: str
@@ -114,17 +145,34 @@ class GitLogEntry:
 
 @dataclass
 class GitLogResult:
-    """Result of a git log operation."""
+    """
+    Result of a git log operation.
+
+    Attributes:
+        entries: List of GitLogEntry objects.
+    """
     entries: List[GitLogEntry] = field(default_factory=list)
 
 @dataclass
 class GitBranchInfo:
-    """Information about a single branch."""
+    """
+    Information about a single git branch.
+
+    Attributes:
+        name: Branch name.
+        is_current: Whether this branch is currently checked out.
+    """
     name: str
     is_current: bool
 
 @dataclass
 class GitBranchListResult:
-    """Result of listing branches."""
+    """
+    Result of listing git branches.
+
+    Attributes:
+        branches: List of GitBranchInfo objects.
+        current: Name of the currently checked-out branch.
+    """
     branches: List[GitBranchInfo] = field(default_factory=list)
     current: str = ""

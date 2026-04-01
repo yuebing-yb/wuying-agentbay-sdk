@@ -41,6 +41,7 @@ import {
  */
 const DEFAULT_GIT_ENV: Record<string, string> = {
   GIT_TERMINAL_PROMPT: "0",
+  LC_ALL: "C",
 };
 
 /**
@@ -54,23 +55,27 @@ const DEFAULT_GIT_TIMEOUT_MS = 30000;
 const DEFAULT_CLONE_TIMEOUT_MS = 300000;
 
 /**
- * Handles git operations in the AgentBay cloud environment.
+ * Default timeout for git pull operations in milliseconds (2 minutes).
+ */
+const DEFAULT_PULL_TIMEOUT_MS = 120000;
+
+/**
+ * Provides high-level git operations in the AgentBay cloud environment.
  *
- * This module provides a high-level interface for git operations by executing
- * git commands on the remote session via the Command module. All commands are
- * executed with GIT_TERMINAL_PROMPT=0 to prevent interactive prompts.
+ * This module wraps git CLI commands and executes them on the remote session
+ * via the Command module. All commands run with `GIT_TERMINAL_PROMPT=0` to
+ * prevent interactive credential prompts, and `LC_ALL=C` to ensure consistent
+ * English output for reliable parsing. Supports repository management, branch
+ * operations, staging, committing, and configuration.
  *
  * @example
  * ```typescript
- * const agentBay = new AgentBay({ apiKey: 'your_api_key' });
+ * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
  * const result = await agentBay.create();
- * if (result.success && result.session) {
- *   // Clone a public repository
- *   const cloneResult = await result.session.git.clone(
- *     'https://github.com/user/repo.git',
- *     { branch: 'main', depth: 1 }
- *   );
+ * if (result.success) {
+ *   const cloneResult = await result.session.git.clone('https://github.com/user/repo.git');
  *   console.log('Cloned to:', cloneResult.path);
+ *   await result.session.delete();
  * }
  * ```
  */
@@ -250,9 +255,9 @@ export class Git {
 
     // Merge/rebase conflicts
     if (
-      stderr.includes("conflict") ||
+      rawStderr.includes("CONFLICT") ||
       stderr.includes("merge conflict") ||
-      stderr.includes("rebase conflict")
+      stderr.includes("automatic merge failed")
     ) {
       return new GitConflictError(
         `Git ${operation} failed: merge conflict. ${rawStderr}`,
@@ -322,30 +327,29 @@ export class Git {
   /**
    * Clone a git repository into the remote session environment.
    *
-   * Currently supports public repositories only. Authentication support
-   * (dangerouslyAuthenticate, inline credentials, dangerouslyStoreCredentials)
-   * will be added in a future phase.
+   * Clones a repository from the given URL into the remote session. When a
+   * branch is specified, `--single-branch` is automatically added to reduce
+   * data transfer. The target directory is derived from the URL if not
+   * explicitly provided via `opts.path`. Currently supports public
+   * repositories only; authentication support will be added in a future phase.
    *
    * @param url - The repository URL to clone (HTTPS or SSH)
-   * @param opts - Optional clone settings
-   * @returns Promise resolving to GitCloneResult with the cloned repository path
+   * @param opts - Optional clone settings (path, branch, depth, timeoutMs)
+   * @returns Promise resolving to {@link GitCloneResult} with the cloned repository path
    *
-   * @throws GitNotFoundError if git is not installed on the remote environment
-   * @throws GitAuthError if authentication fails (e.g., private repo without credentials)
-   * @throws GitError for other git errors
+   * @throws {GitNotFoundError} When git is not installed on the remote environment
+   * @throws {GitAuthError} When authentication fails (e.g., private repo without credentials)
+   * @throws {GitError} When the clone operation fails for other reasons
    *
    * @example
    * ```typescript
-   * // Clone with defaults
-   * const result = await session.git.clone('https://github.com/user/repo.git');
-   * console.log(result.path); // "repo"
-   *
-   * // Clone a specific branch with shallow depth
-   * const result = await session.git.clone('https://github.com/user/repo.git', {
-   *   branch: 'develop',
-   *   depth: 1,
-   *   path: '/home/user/my-project',
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const cloneResult = await result.session.git.clone('https://github.com/user/repo.git');
+   *   console.log('Cloned to:', cloneResult.path);
+   *   await result.session.delete();
+   * }
    * ```
    */
   async clone(url: string, opts?: GitCloneOpts): Promise<GitCloneResult> {
@@ -382,19 +386,26 @@ export class Git {
   /**
    * Initialize a new git repository in the remote session environment.
    *
-   * @param path - The directory path to initialize as a git repository
-   * @param opts - Optional init settings
-   * @returns Promise resolving to GitInitResult with the initialized repository path
+   * Creates an empty git repository at the specified path. Optionally sets the
+   * initial branch name (requires git >= 2.28) and supports creating bare
+   * repositories for server-side use.
    *
-   * @throws GitNotFoundError if git is not installed on the remote environment
-   * @throws GitError for other git errors
+   * @param path - The directory path to initialize as a git repository
+   * @param opts - Optional init settings (initialBranch, bare, timeoutMs)
+   * @returns Promise resolving to {@link GitInitResult} with the initialized repository path
+   *
+   * @throws {GitNotFoundError} When git is not installed on the remote environment
+   * @throws {GitError} When the init operation fails
    *
    * @example
    * ```typescript
-   * // Initialize with default branch "main"
-   * const result = await session.git.init('/home/user/my-project', {
-   *   initialBranch: 'main',
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const initResult = await result.session.git.init('/home/user/my-project');
+   *   console.log('Initialized at:', initResult.path);
+   *   await result.session.delete();
+   * }
    * ```
    */
   async init(path: string, opts?: GitInitOpts): Promise<GitInitResult> {
@@ -426,25 +437,26 @@ export class Git {
   /**
    * Add files to the git staging area.
    *
-   * By default (when no files are specified and `all` is not false),
-   * stages all changes using `git add -A`.
+   * By default (when no files are specified and `all` is not explicitly false),
+   * stages all changes using `git add -A`. Specific files can be staged by
+   * providing them in `opts.files`. A `--` separator is automatically inserted
+   * before file paths to prevent them from being interpreted as options.
    *
    * @param repoPath - The repository path
-   * @param opts - Optional add settings
+   * @param opts - Optional add settings (files, all, timeoutMs)
    *
-   * @throws GitNotFoundError if git is not installed
-   * @throws GitNotARepoError if the path is not a git repository
-   * @throws GitError for other git errors
+   * @throws {GitNotFoundError} When git is not installed
+   * @throws {GitNotARepoError} When the path is not a git repository
+   * @throws {GitError} When the add operation fails
    *
    * @example
    * ```typescript
-   * // Stage all changes
-   * await session.git.add('/home/user/my-project');
-   *
-   * // Stage specific files
-   * await session.git.add('/home/user/my-project', {
-   *   files: ['src/index.ts', 'README.md'],
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.add('/home/user/my-project');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async add(repoPath: string, opts?: GitAddOpts): Promise<void> {
@@ -489,11 +501,13 @@ export class Git {
    *
    * @example
    * ```typescript
-   * const result = await session.git.commit('/home/user/my-project', 'Initial commit', {
-   *   authorName: 'Agent',
-   *   authorEmail: 'agent@example.com',
-   * });
-   * console.log('Commit hash:', result.commitHash);
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const commitResult = await result.session.git.commit('/home/user/my-project', 'Initial commit');
+   *   console.log('Commit hash:', commitResult.commitHash);
+   *   await result.session.delete();
+   * }
    * ```
    */
   async commit(
@@ -552,11 +566,13 @@ export class Git {
    *
    * @example
    * ```typescript
-   * const status = await session.git.status('/home/user/my-project');
-   * console.log('Branch:', status.branch);
-   * console.log('Clean:', status.isClean);
-   * for (const file of status.files) {
-   *   console.log(`${file.indexStatus}${file.workTreeStatus} ${file.path}`);
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const status = await result.session.git.status('/home/user/my-project');
+   *   console.log('Branch:', status.branch);
+   *   console.log('Clean:', status.isClean);
+   *   await result.session.delete();
    * }
    * ```
    */
@@ -594,9 +610,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * const log = await session.git.log('/home/user/my-project', { maxCount: 10 });
-   * for (const entry of log.entries) {
-   *   console.log(`${entry.shortHash} ${entry.message} (${entry.authorName})`);
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const log = await result.session.git.log('/home/user/my-project');
+   *   console.log('Total commits:', log.entries.length);
+   *   await result.session.delete();
    * }
    * ```
    */
@@ -635,10 +654,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * const result = await session.git.listBranches('/home/user/my-project');
-   * console.log('Current branch:', result.current);
-   * for (const branch of result.branches) {
-   *   console.log(`${branch.isCurrent ? '*' : ' '} ${branch.name}`);
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const branches = await result.session.git.listBranches('/home/user/my-project');
+   *   console.log('Current branch:', branches.current);
+   *   await result.session.delete();
    * }
    * ```
    */
@@ -679,13 +700,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Create and switch to new branch
-   * await session.git.createBranch('/home/user/my-project', 'feature/new-feature');
-   *
-   * // Create without switching
-   * await session.git.createBranch('/home/user/my-project', 'feature/new-feature', {
-   *   checkout: false,
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.createBranch('/home/user/my-project', 'feature/new-feature');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async createBranch(
@@ -727,7 +747,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * await session.git.checkoutBranch('/home/user/my-project', 'main');
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.checkoutBranch('/home/user/my-project', 'main');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async checkoutBranch(
@@ -764,18 +789,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Add a remote
-   * await session.git.remoteAdd('/home/user/my-project', 'origin', 'https://github.com/user/repo.git');
-   *
-   * // Add with fetch
-   * await session.git.remoteAdd('/home/user/my-project', 'origin', 'https://github.com/user/repo.git', {
-   *   fetch: true,
-   * });
-   *
-   * // Add with overwrite (update URL if remote exists)
-   * await session.git.remoteAdd('/home/user/my-project', 'origin', 'https://github.com/user/repo.git', {
-   *   overwrite: true,
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.remoteAdd('/home/user/my-project', 'origin', 'https://github.com/user/repo.git');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async remoteAdd(
@@ -826,8 +845,13 @@ export class Git {
    *
    * @example
    * ```typescript
-   * const url = await session.git.remoteGet('/home/user/my-project', 'origin');
-   * console.log('Remote URL:', url);
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const url = await result.session.git.remoteGet('/home/user/my-project', 'origin');
+   *   console.log('Remote URL:', url);
+   *   await result.session.delete();
+   * }
    * ```
    */
   async remoteGet(
@@ -837,10 +861,18 @@ export class Git {
   ): Promise<string | undefined> {
     await this.ensureGitAvailable();
 
-    // Use || true to prevent command failure when remote doesn't exist
-    const cmd = `${this.buildGitCommand(["remote", "get-url", name], repoPath)} || true`;
-    const result = await this.runShell(cmd, { timeoutMs: opts?.timeoutMs });
-    // Only use stdout - stderr contains error messages when remote doesn't exist
+    const result = await this.runGit(
+      ["remote", "get-url", name],
+      repoPath,
+      { timeoutMs: opts?.timeoutMs }
+    );
+    if (!result.success) {
+      const stderr = (result.stderr || "").toLowerCase();
+      if (stderr.includes("no such remote")) {
+        return undefined;
+      }
+      throw this.classifyError("remote get", result);
+    }
     const trimmed = (result.stdout || "").trim();
     return trimmed.length > 0 ? trimmed : undefined;
   }
@@ -861,20 +893,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Reset to HEAD (default: mixed mode)
-   * await session.git.reset('/home/user/my-project');
-   *
-   * // Soft reset (keep changes in staging area)
-   * await session.git.reset('/home/user/my-project', { mode: 'soft' });
-   *
-   * // Hard reset (discard all changes)
-   * await session.git.reset('/home/user/my-project', { mode: 'hard' });
-   *
-   * // Reset to specific commit
-   * await session.git.reset('/home/user/my-project', { target: 'HEAD~1' });
-   *
-   * // Reset specific files
-   * await session.git.reset('/home/user/my-project', { paths: ['src/index.ts'] });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.reset('/home/user/my-project');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async reset(repoPath: string, opts?: GitResetOpts): Promise<void> {
@@ -908,23 +932,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Restore working tree (default)
-   * await session.git.restore('/home/user/my-project', { paths: ['src/index.ts'] });
-   *
-   * // Unstage files (restore index)
-   * await session.git.restore('/home/user/my-project', {
-   *   paths: ['src/index.ts'],
-   *   staged: true,
-   * });
-   *
-   * // Restore from specific commit
-   * await session.git.restore('/home/user/my-project', {
-   *   paths: ['src/index.ts'],
-   *   source: 'HEAD~1',
-   * });
-   *
-   * // Restore all files
-   * await session.git.restore('/home/user/my-project', { paths: ['.'] });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.restore('/home/user/my-project', { paths: ['src/index.ts'] });
+   *   await result.session.delete();
+   * }
    * ```
    */
   async restore(repoPath: string, opts: GitRestoreOpts): Promise<void> {
@@ -962,14 +975,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Pull from default upstream
-   * await session.git.pull('/home/user/my-project');
-   *
-   * // Pull from specific remote and branch
-   * await session.git.pull('/home/user/my-project', {
-   *   remote: 'origin',
-   *   branch: 'main',
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.pull('/home/user/my-project');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async pull(repoPath: string, opts?: GitPullOpts): Promise<void> {
@@ -980,7 +991,9 @@ export class Git {
     if (remote) args.push(remote);
     if (branch) args.push(branch);
 
-    const result = await this.runGit(args, repoPath, { timeoutMs });
+    const result = await this.runGit(args, repoPath, {
+      timeoutMs: timeoutMs ?? DEFAULT_PULL_TIMEOUT_MS,
+    });
     if (!result.success) {
       throw this.classifyError("pull", result);
     }
@@ -1003,13 +1016,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Set global user config
-   * await session.git.configureUser('/home/user/my-project', 'Agent', 'agent@example.com');
-   *
-   * // Set local user config
-   * await session.git.configureUser('/home/user/my-project', 'Agent', 'agent@example.com', {
-   *   scope: 'local',
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.configureUser('/home/user/my-project', 'Agent', 'agent@example.com');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async configureUser(
@@ -1048,13 +1060,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Set global config
-   * await session.git.setConfig('/home/user/my-project', 'pull.rebase', 'true');
-   *
-   * // Set local config
-   * await session.git.setConfig('/home/user/my-project', 'core.autocrlf', 'true', {
-   *   scope: 'local',
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.setConfig('/home/user/my-project', 'pull.rebase', 'true');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async setConfig(
@@ -1090,14 +1101,13 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Get global config
-   * const name = await session.git.getConfig('/home/user/my-project', 'user.name');
-   * console.log('User name:', name);
-   *
-   * // Get local config
-   * const rebase = await session.git.getConfig('/home/user/my-project', 'pull.rebase', {
-   *   scope: 'local',
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   const name = await result.session.git.getConfig('/home/user/my-project', 'user.name');
+   *   console.log('User name:', name);
+   *   await result.session.delete();
+   * }
    * ```
    */
   async getConfig(
@@ -1113,10 +1123,18 @@ export class Git {
     args.push(scope === "local" ? "--local" : "--global");
     args.push("--get", key);
 
-    // Use runShell + || true to prevent error when key doesn't exist
-    const cmd = `${this.buildGitCommand(args, repoPath)} || true`;
-    const result = await this.runShell(cmd, { timeoutMs });
-    // Only use stdout - stderr may contain error messages when key doesn't exist
+    const result = await this.runGit(args, repoPath, { timeoutMs });
+    if (!result.success) {
+      const rawStderr = (result.stderr || "").trim().toLowerCase();
+      // exit code 1 with empty/missing stderr means key does not exist
+      if (
+        result.exitCode === 1 &&
+        (rawStderr.length === 0 || rawStderr.includes("key does not contain"))
+      ) {
+        return undefined;
+      }
+      throw this.classifyError("get config", result);
+    }
     const trimmed = (result.stdout || "").trim();
     return trimmed.length > 0 ? trimmed : undefined;
   }
@@ -1134,13 +1152,12 @@ export class Git {
    *
    * @example
    * ```typescript
-   * // Safe delete (fails if not fully merged)
-   * await session.git.deleteBranch('/home/user/my-project', 'feature/old');
-   *
-   * // Force delete
-   * await session.git.deleteBranch('/home/user/my-project', 'feature/old', {
-   *   force: true,
-   * });
+   * const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY });
+   * const result = await agentBay.create();
+   * if (result.success) {
+   *   await result.session.git.deleteBranch('/home/user/my-project', 'feature/old');
+   *   await result.session.delete();
+   * }
    * ```
    */
   async deleteBranch(
@@ -1294,7 +1311,7 @@ export class Git {
     const stagedCount = files.filter(f => f.staged).length;
     const untrackedCount = files.filter(f => f.status === 'untracked').length;
     const conflictCount = files.filter(f => f.status === 'conflict').length;
-    const unstagedCount = totalCount - stagedCount;
+    const unstagedCount = files.filter(f => !f.staged && f.status !== 'untracked').length;
     const hasChanges = totalCount > 0;
     const hasStaged = stagedCount > 0;
     const hasUntracked = untrackedCount > 0;

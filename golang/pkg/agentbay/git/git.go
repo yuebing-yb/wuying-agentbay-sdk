@@ -2,7 +2,6 @@ package git
 
 import (
 	"fmt"
-	"log"
 	neturl "net/url"
 	"regexp"
 	"strconv"
@@ -12,14 +11,17 @@ import (
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay/command"
 )
 
-var defaultGitEnv = map[string]string{"GIT_TERMINAL_PROMPT": "0"}
+var defaultGitEnv = map[string]string{
+	"GIT_TERMINAL_PROMPT": "0",
+	"LC_ALL":              "C",
+}
 
 // Pre-compiled regex patterns (avoid recompiling on each call)
 var (
 	branchInfoPattern = regexp.MustCompile(`## ([^\s.]+)(?:\.\.\.([^\s]+))?(?: \[(.+)\])?`)
 	aheadPattern      = regexp.MustCompile(`ahead (\d+)`)
 	behindPattern     = regexp.MustCompile(`behind (\d+)`)
-	commitHashPattern = regexp.MustCompile(`\[(?:[\w/]+ )?([a-f0-9]+)\]`)
+	commitHashPattern = regexp.MustCompile(`\[[\w/.-]+(?:\s+\([^)]+\))?\s+([a-f0-9]+)\]`)
 )
 
 const (
@@ -27,9 +29,15 @@ const (
 	defaultGitTimeoutMs = 30000
 	// defaultCloneTimeoutMs is the default timeout for clone operations (5 minutes, as clone may download large repos)
 	defaultCloneTimeoutMs = 300000
+	// defaultPullTimeoutMs is the default timeout for pull/push operations (2 minutes, as network operations may be slow)
+	defaultPullTimeoutMs = 120000
 )
 
 // Git handles git operations in the AgentBay cloud environment.
+//
+// This struct provides methods for common git operations such as clone, init,
+// add, commit, push, pull, branch management, and more. It executes git commands
+// in the remote session environment and handles errors appropriately.
 type Git struct {
 	command  *command.Command
 	gitOnce  sync.Once
@@ -37,6 +45,12 @@ type Git struct {
 }
 
 // NewGit creates a new Git instance.
+//
+// Parameters:
+//   - cmd: The command executor to use for running git commands
+//
+// Returns:
+//   - *Git: A new Git instance ready to perform git operations
 func NewGit(cmd *command.Command) *Git {
 	return &Git{command: cmd}
 }
@@ -103,12 +117,28 @@ func classifyError(operation string, result *command.CommandResult) error {
 	}
 	
 	stderr := strings.ToLower(result.Stderr)
+
+	// Check for git not found (exit code 127 = command not found)
+	if result.ExitCode == 127 ||
+		strings.Contains(stderr, "command not found") ||
+		strings.Contains(stderr, "git: not found") {
+		return &GitNotFoundError{
+			GitError: GitError{
+				Message:  fmt.Sprintf("git is not installed or not found in PATH during %s", operation),
+				ExitCode: result.ExitCode,
+				Stderr:   result.Stderr,
+			},
+		}
+	}
 	
 	// Check for authentication errors
 	if strings.Contains(stderr, "authentication") || 
 	   strings.Contains(stderr, "permission denied") ||
 	   strings.Contains(stderr, "could not read username") ||
-	   strings.Contains(stderr, "invalid credentials") {
+	   strings.Contains(stderr, "invalid credentials") ||
+	   strings.Contains(stderr, "authorization failed") ||
+	   strings.Contains(stderr, "access denied") ||
+	   strings.Contains(stderr, "403") {
 		return &GitAuthError{
 			GitError: GitError{
 				Message:  fmt.Sprintf("git authentication failed for %s", operation),
@@ -160,9 +190,15 @@ func deriveRepoDirFromURL(rawURL string) string {
 	if decoded, err := neturl.PathUnescape(rawURL); err == nil {
 		rawURL = decoded
 	}
-	parts := strings.Split(rawURL, "/")
-	if len(parts) > 0 {
-		return parts[len(parts)-1]
+	// Handle both / and : separators (SSH URLs use git@host:user/repo format)
+	lastSlash := strings.LastIndex(rawURL, "/")
+	lastColon := strings.LastIndex(rawURL, ":")
+	sep := lastSlash
+	if lastColon > sep {
+		sep = lastColon
+	}
+	if sep >= 0 && sep < len(rawURL)-1 {
+		return rawURL[sep+1:]
 	}
 	return "repo"
 }
@@ -172,7 +208,7 @@ func deriveStatus(indexStatus, workTreeStatus string) string {
 	switch {
 	case indexStatus == "?" && workTreeStatus == "?":
 		return "untracked"
-	case indexStatus == "U" || workTreeStatus == "U" || indexStatus == "A" && workTreeStatus == "A":
+	case indexStatus == "U" || workTreeStatus == "U" || (indexStatus == "A" && workTreeStatus == "A"):
 		return "conflict"
 	case indexStatus == "R":
 		return "renamed"
@@ -209,6 +245,11 @@ func parseGitStatus(output string) *GitStatusResult {
 			// Handle "## No commits yet on <branch>" format
 			if strings.HasPrefix(line, "## No commits yet on ") {
 				result.CurrentBranch = strings.TrimPrefix(line, "## No commits yet on ")
+				continue
+			}
+			// Handle "## Initial commit on <branch>" format (older Git versions)
+			if strings.HasPrefix(line, "## Initial commit on ") {
+				result.CurrentBranch = strings.TrimPrefix(line, "## Initial commit on ")
 				continue
 			}
 			matches := branchInfoPattern.FindStringSubmatch(line)
@@ -480,7 +521,8 @@ func (g *Git) Init(path string, opts ...InitOption) (*GitInitResult, error) {
 		args = append(args, "--bare")
 	}
 	
-	result, err := g.runGit(args, path, options.timeoutMs)
+	args = append(args, path)
+	result, err := g.runGit(args, "", options.timeoutMs)
 	if err != nil {
 		return nil, err
 	}
@@ -497,15 +539,22 @@ func (g *Git) Init(path string, opts ...InitOption) (*GitInitResult, error) {
 type addOptions struct {
 	paths     []string
 	all       bool
-	update    bool
-	force     bool
 	timeoutMs int
 }
 
 // AddOption configures the Add operation.
+//
+// Parameters:
+//   - opts: pointer to addOptions struct to configure
 type AddOption func(*addOptions)
 
 // WithAddPaths sets the paths to add.
+//
+// Parameters:
+//   - paths: list of file paths to stage
+//
+// Returns:
+//   - AddOption: functional option to configure Add operation
 func WithAddPaths(paths []string) AddOption {
 	return func(opts *addOptions) {
 		opts.paths = paths
@@ -513,27 +562,22 @@ func WithAddPaths(paths []string) AddOption {
 }
 
 // WithAddAll adds all files.
+//
+// Returns:
+//   - AddOption: functional option to configure Add operation
 func WithAddAll() AddOption {
 	return func(opts *addOptions) {
 		opts.all = true
 	}
 }
 
-// WithAddUpdate adds only updated files.
-func WithAddUpdate() AddOption {
-	return func(opts *addOptions) {
-		opts.update = true
-	}
-}
-
-// WithAddForce forces adding.
-func WithAddForce() AddOption {
-	return func(opts *addOptions) {
-		opts.force = true
-	}
-}
-
 // WithAddTimeout sets the timeout for add operation.
+//
+// Parameters:
+//   - timeoutMs: timeout in milliseconds
+//
+// Returns:
+//   - AddOption: functional option to configure Add operation
 func WithAddTimeout(timeoutMs int) AddOption {
 	return func(opts *addOptions) {
 		opts.timeoutMs = timeoutMs
@@ -541,6 +585,19 @@ func WithAddTimeout(timeoutMs int) AddOption {
 }
 
 // Add adds files to the staging area.
+//
+// Parameters:
+//   - repoPath: absolute path to the git repository
+//   - opts: optional configuration functions for the Add operation
+//
+// Returns:
+//   - error: returns an error if the operation fails, nil otherwise
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.Add("/home/user/my-project")
 func (g *Git) Add(repoPath string, opts ...AddOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
@@ -553,22 +610,17 @@ func (g *Git) Add(repoPath string, opts ...AddOption) error {
 		opt(options)
 	}
 	
-	// Validate: at least one path or --all/--update must be specified
-	if !options.all && !options.update && len(options.paths) == 0 {
-		return fmt.Errorf("git add requires at least one path, or use WithAddAll()/WithAddUpdate()")
-	}
-	
 	args := []string{"add"}
-	if options.all {
+	if len(options.paths) > 0 {
+		// Specific files take priority (matches TypeScript behavior)
+		args = append(args, "--")
+		args = append(args, options.paths...)
+	} else if options.all {
 		args = append(args, "--all")
+	} else {
+		// Default: stage all changes (matches TypeScript/E2B behavior)
+		args = append(args, "-A")
 	}
-	if options.update {
-		args = append(args, "--update")
-	}
-	if options.force {
-		args = append(args, "--force")
-	}
-	args = append(args, options.paths...)
 	
 	result, err := g.runGit(args, repoPath, options.timeoutMs)
 	if err != nil {
@@ -588,37 +640,33 @@ type commitOptions struct {
 	message     string
 	authorName  string
 	authorEmail string
-	amend       bool
 	allowEmpty  bool
-	skipHooks   bool
 	timeoutMs   int
 }
 
 // CommitOption configures the Commit operation.
+//
+// Parameters:
+//   - opts: pointer to commitOptions struct to configure
 type CommitOption func(*commitOptions)
 
-// WithCommitAmend amends the previous commit.
-func WithCommitAmend() CommitOption {
-	return func(opts *commitOptions) {
-		opts.amend = true
-	}
-}
-
 // WithCommitAllowEmpty allows empty commits.
+//
+// Returns:
+//   - CommitOption: functional option to configure Commit operation
 func WithCommitAllowEmpty() CommitOption {
 	return func(opts *commitOptions) {
 		opts.allowEmpty = true
 	}
 }
 
-// WithCommitSkipHooks skips pre-commit and commit-msg hooks.
-func WithCommitSkipHooks() CommitOption {
-	return func(opts *commitOptions) {
-		opts.skipHooks = true
-	}
-}
-
 // WithCommitAuthorName sets the author name for the commit (via git -c user.name=...).
+//
+// Parameters:
+//   - name: author name for the commit
+//
+// Returns:
+//   - CommitOption: functional option to configure Commit operation
 func WithCommitAuthorName(name string) CommitOption {
 	return func(opts *commitOptions) {
 		opts.authorName = name
@@ -626,6 +674,12 @@ func WithCommitAuthorName(name string) CommitOption {
 }
 
 // WithCommitAuthorEmail sets the author email for the commit (via git -c user.email=...).
+//
+// Parameters:
+//   - email: author email for the commit
+//
+// Returns:
+//   - CommitOption: functional option to configure Commit operation
 func WithCommitAuthorEmail(email string) CommitOption {
 	return func(opts *commitOptions) {
 		opts.authorEmail = email
@@ -633,6 +687,12 @@ func WithCommitAuthorEmail(email string) CommitOption {
 }
 
 // WithCommitTimeout sets the timeout for commit operation.
+//
+// Parameters:
+//   - timeoutMs: timeout in milliseconds
+//
+// Returns:
+//   - CommitOption: functional option to configure Commit operation
 func WithCommitTimeout(timeoutMs int) CommitOption {
 	return func(opts *commitOptions) {
 		opts.timeoutMs = timeoutMs
@@ -640,6 +700,21 @@ func WithCommitTimeout(timeoutMs int) CommitOption {
 }
 
 // Commit creates a new commit.
+//
+// Parameters:
+//   - repoPath: absolute path to the git repository
+//   - message: commit message
+//   - opts: optional configuration functions for the Commit operation
+//
+// Returns:
+//   - *GitCommitResult: result containing the commit hash
+//   - error: returns an error if the operation fails, nil otherwise
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	commitResult, _ := result.Session.Git.Commit("/home/user/my-project", "Initial commit")
 func (g *Git) Commit(repoPath string, message string, opts ...CommitOption) (*GitCommitResult, error) {
 	if err := g.ensureGitAvailable(); err != nil {
 		return nil, err
@@ -668,14 +743,8 @@ func (g *Git) Commit(repoPath string, message string, opts ...CommitOption) (*Gi
 	}
 	
 	subArgs := []string{"commit"}
-	if options.amend {
-		subArgs = append(subArgs, "--amend")
-	}
 	if options.allowEmpty {
 		subArgs = append(subArgs, "--allow-empty")
-	}
-	if options.skipHooks {
-		subArgs = append(subArgs, "--no-verify")
 	}
 	subArgs = append(subArgs, "-m", options.message)
 	for _, arg := range subArgs {
@@ -699,7 +768,6 @@ func (g *Git) Commit(repoPath string, message string, opts ...CommitOption) (*Gi
 	}
 	
 	// Fallback: get the latest commit hash (this should rarely happen)
-	log.Printf("[WARNING] git commit succeeded but could not parse commit hash from output, falling back to rev-parse HEAD")
 	hashResult, err := g.runGit([]string{"rev-parse", "HEAD"}, repoPath, 5000)
 	if err == nil && hashResult.Success {
 		return &GitCommitResult{CommitHash: strings.TrimSpace(hashResult.Stdout)}, nil
@@ -715,9 +783,18 @@ type statusOptions struct {
 }
 
 // StatusOption configures the Status operation.
+//
+// Parameters:
+//   - opts: pointer to statusOptions struct to configure
 type StatusOption func(*statusOptions)
 
 // WithStatusTimeout sets the timeout for status operation.
+//
+// Parameters:
+//   - timeoutMs: timeout in milliseconds
+//
+// Returns:
+//   - StatusOption: functional option to configure Status operation
 func WithStatusTimeout(timeoutMs int) StatusOption {
 	return func(opts *statusOptions) {
 		opts.timeoutMs = timeoutMs
@@ -725,6 +802,20 @@ func WithStatusTimeout(timeoutMs int) StatusOption {
 }
 
 // Status shows the working tree status.
+//
+// Parameters:
+//   - repoPath: absolute path to the git repository
+//   - opts: optional configuration functions for the Status operation
+//
+// Returns:
+//   - *GitStatusResult: result containing branch, staged, unstaged, and untracked files
+//   - error: returns an error if the operation fails, nil otherwise
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	statusResult, _ := result.Session.Git.Status("/home/user/my-project")
 func (g *Git) Status(repoPath string, opts ...StatusOption) (*GitStatusResult, error) {
 	if err := g.ensureGitAvailable(); err != nil {
 		return nil, err
@@ -758,9 +849,18 @@ type logOptions struct {
 }
 
 // LogOption configures the Log operation.
+//
+// Parameters:
+//   - opts: pointer to logOptions struct to configure
 type LogOption func(*logOptions)
 
 // WithLogMaxCount sets the maximum number of commits.
+//
+// Parameters:
+//   - count: maximum number of commits to return
+//
+// Returns:
+//   - LogOption: functional option to configure Log operation
 func WithLogMaxCount(count int) LogOption {
 	return func(opts *logOptions) {
 		opts.maxCount = count
@@ -768,6 +868,12 @@ func WithLogMaxCount(count int) LogOption {
 }
 
 // WithLogTimeout sets the timeout for log operation.
+//
+// Parameters:
+//   - timeoutMs: timeout in milliseconds
+//
+// Returns:
+//   - LogOption: functional option to configure Log operation
 func WithLogTimeout(timeoutMs int) LogOption {
 	return func(opts *logOptions) {
 		opts.timeoutMs = timeoutMs
@@ -775,6 +881,20 @@ func WithLogTimeout(timeoutMs int) LogOption {
 }
 
 // Log shows the commit log.
+//
+// Parameters:
+//   - repoPath: absolute path to the git repository
+//   - opts: optional configuration functions for the Log operation
+//
+// Returns:
+//   - *GitLogResult: result containing list of commits with hash, author, date, and message
+//   - error: returns an error if the operation fails, nil otherwise
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	logResult, _ := result.Session.Git.Log("/home/user/my-project", git.WithLogMaxCount(10))
 func (g *Git) Log(repoPath string, opts ...LogOption) (*GitLogResult, error) {
 	if err := g.ensureGitAvailable(); err != nil {
 		return nil, err
@@ -830,7 +950,21 @@ func WithBranchListTimeout(timeoutMs int) BranchListOption {
 	}
 }
 
-// ListBranches lists all branches.
+// ListBranches lists all branches in the repository.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - *GitBranchListResult: list of branches with HEAD indicator
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	branches, _ := result.Session.Git.ListBranches("/home/user/my-project")
 func (g *Git) ListBranches(repoPath string, opts ...BranchListOption) (*GitBranchListResult, error) {
 	if err := g.ensureGitAvailable(); err != nil {
 		return nil, err
@@ -864,20 +998,12 @@ func (g *Git) ListBranches(repoPath string, opts ...BranchListOption) (*GitBranc
 // ==================== Functional Options for CreateBranch ====================
 
 type branchCreateOptions struct {
-	force     bool
 	checkout  bool
 	timeoutMs int
 }
 
 // BranchCreateOption configures the CreateBranch operation.
 type BranchCreateOption func(*branchCreateOptions)
-
-// WithBranchCreateForce forces branch creation.
-func WithBranchCreateForce() BranchCreateOption {
-	return func(opts *branchCreateOptions) {
-		opts.force = true
-	}
-}
 
 // WithBranchCreateCheckout sets whether to checkout the new branch after creation.
 // Default is true (creates and switches to the new branch using "checkout -b").
@@ -895,7 +1021,21 @@ func WithBranchCreateTimeout(timeoutMs int) BranchCreateOption {
 	}
 }
 
-// CreateBranch creates a new branch.
+// CreateBranch creates a new branch in the repository.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - branch: name of the branch to create
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.CreateBranch("/home/user/my-project", "feature/new")
 func (g *Git) CreateBranch(repoPath string, branch string, opts ...BranchCreateOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
@@ -912,18 +1052,10 @@ func (g *Git) CreateBranch(repoPath string, branch string, opts ...BranchCreateO
 	var args []string
 	if options.checkout {
 		// Create and switch to the new branch (default behavior, matches TS/Python)
-		flag := "-b"
-		if options.force {
-			flag = "-B" // Force create: overwrite existing branch
-		}
-		args = []string{"checkout", flag, branch}
+		args = []string{"checkout", "-b", branch}
 	} else {
 		// Only create the branch without switching
-		args = []string{"branch"}
-		if options.force {
-			args = append(args, "-f")
-		}
-		args = append(args, branch)
+		args = []string{"branch", branch}
 	}
 	
 	result, err := g.runGit(args, repoPath, options.timeoutMs)
@@ -941,19 +1073,11 @@ func (g *Git) CreateBranch(repoPath string, branch string, opts ...BranchCreateO
 // ==================== Functional Options for Checkout ====================
 
 type checkoutOptions struct {
-	force     bool
 	timeoutMs int
 }
 
 // CheckoutOption configures the Checkout operation.
 type CheckoutOption func(*checkoutOptions)
-
-// WithCheckoutForce forces checkout.
-func WithCheckoutForce() CheckoutOption {
-	return func(opts *checkoutOptions) {
-		opts.force = true
-	}
-}
 
 // WithCheckoutTimeout sets the timeout for checkout operation.
 func WithCheckoutTimeout(timeoutMs int) CheckoutOption {
@@ -962,7 +1086,21 @@ func WithCheckoutTimeout(timeoutMs int) CheckoutOption {
 	}
 }
 
-// CheckoutBranch switches to a branch.
+// CheckoutBranch switches to the specified branch.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - branch: name of the branch to switch to
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.CheckoutBranch("/home/user/my-project", "main")
 func (g *Git) CheckoutBranch(repoPath string, branch string, opts ...CheckoutOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
@@ -975,11 +1113,7 @@ func (g *Git) CheckoutBranch(repoPath string, branch string, opts ...CheckoutOpt
 		opt(options)
 	}
 	
-	args := []string{"checkout"}
-	if options.force {
-		args = append(args, "-f")
-	}
-	args = append(args, branch)
+	args := []string{"checkout", branch}
 	
 	result, err := g.runGit(args, repoPath, options.timeoutMs)
 	if err != nil {
@@ -1003,7 +1137,7 @@ type branchDeleteOptions struct {
 // BranchDeleteOption configures the DeleteBranch operation.
 type BranchDeleteOption func(*branchDeleteOptions)
 
-// WithBranchDeleteForce forces branch deletion.
+// WithBranchDeleteForce forces branch deletion even if unmerged.
 func WithBranchDeleteForce() BranchDeleteOption {
 	return func(opts *branchDeleteOptions) {
 		opts.force = true
@@ -1017,7 +1151,21 @@ func WithBranchDeleteTimeout(timeoutMs int) BranchDeleteOption {
 	}
 }
 
-// DeleteBranch deletes a branch.
+// DeleteBranch deletes a branch from the repository.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - branch: name of the branch to delete
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.DeleteBranch("/home/user/my-project", "feature/old")
 func (g *Git) DeleteBranch(repoPath string, branch string, opts ...BranchDeleteOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
@@ -1084,7 +1232,22 @@ func WithRemoteAddTimeout(timeoutMs int) RemoteAddOption {
 	}
 }
 
-// RemoteAdd adds a remote repository.
+// RemoteAdd adds a remote repository to the local repository.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - name: name of the remote (e.g., "origin")
+//   - url: URL of the remote repository
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.RemoteAdd("/home/user/my-project", "origin", "https://github.com/user/repo.git")
 func (g *Git) RemoteAdd(repoPath string, name string, url string, opts ...RemoteAddOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
@@ -1150,6 +1313,23 @@ func WithRemoteGetTimeout(timeoutMs int) RemoteGetOption {
 }
 
 // RemoteGet gets the URL of a remote repository.
+// Returns empty string (not error) if the remote does not exist.
+// Other errors (e.g. not a git repository) are returned as-is.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - name: name of the remote
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - string: URL of the remote repository, or empty string if not found
+//   - error: error if the operation fails (excluding "not found" case)
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	url, _ := result.Session.Git.RemoteGet("/home/user/my-project", "origin")
 func (g *Git) RemoteGet(repoPath string, name string, opts ...RemoteGetOption) (string, error) {
 	if err := g.ensureGitAvailable(); err != nil {
 		return "", err
@@ -1170,7 +1350,11 @@ func (g *Git) RemoteGet(repoPath string, name string, opts ...RemoteGetOption) (
 	}
 	
 	if !result.Success {
-		return "", classifyError("remote", result)
+		stderr := strings.ToLower(result.Stderr)
+		if strings.Contains(stderr, "no such remote") {
+			return "", nil
+		}
+		return "", classifyError("remote_get", result)
 	}
 	
 	return strings.TrimSpace(result.Stdout), nil
@@ -1181,27 +1365,28 @@ func (g *Git) RemoteGet(repoPath string, name string, opts ...RemoteGetOption) (
 type resetOptions struct {
 	mode      string // soft, mixed, hard
 	commit    string
+	paths     []string
 	timeoutMs int
 }
 
 // ResetOption configures the Reset operation.
 type ResetOption func(*resetOptions)
 
-// WithResetSoft performs a soft reset.
+// WithResetSoft performs a soft reset (keeps changes staged).
 func WithResetSoft() ResetOption {
 	return func(opts *resetOptions) {
 		opts.mode = "soft"
 	}
 }
 
-// WithResetMixed performs a mixed reset (default).
+// WithResetMixed performs a mixed reset (default, unstages changes).
 func WithResetMixed() ResetOption {
 	return func(opts *resetOptions) {
 		opts.mode = "mixed"
 	}
 }
 
-// WithResetHard performs a hard reset.
+// WithResetHard performs a hard reset (discards all changes).
 func WithResetHard() ResetOption {
 	return func(opts *resetOptions) {
 		opts.mode = "hard"
@@ -1215,6 +1400,13 @@ func WithResetCommit(commit string) ResetOption {
 	}
 }
 
+// WithResetPaths sets the paths to reset (for path-specific reset).
+func WithResetPaths(paths []string) ResetOption {
+	return func(opts *resetOptions) {
+		opts.paths = paths
+	}
+}
+
 // WithResetTimeout sets the timeout for reset operation.
 func WithResetTimeout(timeoutMs int) ResetOption {
 	return func(opts *resetOptions) {
@@ -1223,14 +1415,27 @@ func WithResetTimeout(timeoutMs int) ResetOption {
 }
 
 // Reset resets the current HEAD to the specified state.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - opts: optional configuration functions (must specify at least one mode or paths)
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.Reset("/home/user/my-project", git.WithResetHard())
 func (g *Git) Reset(repoPath string, opts ...ResetOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
 	}
 	
 	options := &resetOptions{
-		mode:      "mixed",
-		commit:    "HEAD",
+		mode:      "",
+		commit:    "",
 		timeoutMs: defaultGitTimeoutMs,
 	}
 	for _, opt := range opts {
@@ -1238,10 +1443,27 @@ func (g *Git) Reset(repoPath string, opts ...ResetOption) error {
 	}
 	
 	args := []string{"reset"}
-	if options.mode != "" {
-		args = append(args, "--"+options.mode)
+	if len(options.paths) > 0 {
+		// Pathspec mode: git reset [<commit>] -- <paths>
+		// Mode flags (--soft/--mixed/--hard) are NOT allowed with pathspec.
+		if options.commit != "" {
+			args = append(args, options.commit)
+		}
+		args = append(args, "--")
+		args = append(args, options.paths...)
+	} else {
+		// Tree-ish mode: git reset [--<mode>] [<commit>]
+		mode := options.mode
+		if mode == "" {
+			mode = "mixed"
+		}
+		args = append(args, "--"+mode)
+		commit := options.commit
+		if commit == "" {
+			commit = "HEAD"
+		}
+		args = append(args, commit)
 	}
-	args = append(args, options.commit)
 	
 	result, err := g.runGit(args, repoPath, options.timeoutMs)
 	if err != nil {
@@ -1267,7 +1489,7 @@ type restoreOptions struct {
 // RestoreOption configures the Restore operation.
 type RestoreOption func(*restoreOptions)
 
-// WithRestoreStaged restores staged files.
+// WithRestoreStaged restores staged files to their original state.
 func WithRestoreStaged() RestoreOption {
 	return func(opts *restoreOptions) {
 		opts.staged = true
@@ -1281,7 +1503,7 @@ func WithRestoreWorktree() RestoreOption {
 	}
 }
 
-// WithRestoreSource sets the source tree.
+// WithRestoreSource sets the source tree to restore from.
 func WithRestoreSource(source string) RestoreOption {
 	return func(opts *restoreOptions) {
 		opts.source = source
@@ -1295,7 +1517,21 @@ func WithRestoreTimeout(timeoutMs int) RestoreOption {
 	}
 }
 
-// Restore restores working tree files.
+// Restore restores working tree files to their original state.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - paths: list of file paths to restore (at least one required)
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.Restore("/home/user/my-project", []string{"file.txt"})
 func (g *Git) Restore(repoPath string, paths []string, opts ...RestoreOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
@@ -1313,16 +1549,24 @@ func (g *Git) Restore(repoPath string, paths []string, opts ...RestoreOption) er
 		return fmt.Errorf("git restore requires at least one path")
 	}
 	
-	args := []string{"restore"}
-	if options.staged {
-		args = append(args, "--staged")
+	// Default worktree logic: when neither staged nor worktree is set, default to --worktree
+	resolvedStaged := options.staged
+	resolvedWorktree := options.worktree
+	if !resolvedStaged && !resolvedWorktree {
+		resolvedWorktree = true
 	}
-	if options.worktree {
+	
+	args := []string{"restore"}
+	if resolvedWorktree {
 		args = append(args, "--worktree")
+	}
+	if resolvedStaged {
+		args = append(args, "--staged")
 	}
 	if options.source != "" {
 		args = append(args, "--source", options.source)
 	}
+	args = append(args, "--")
 	args = append(args, paths...)
 	
 	result, err := g.runGit(args, repoPath, options.timeoutMs)
@@ -1342,7 +1586,6 @@ func (g *Git) Restore(repoPath string, paths []string, opts ...RestoreOption) er
 type pullOptions struct {
 	remote    string
 	branch    string
-	rebase    bool
 	timeoutMs int
 }
 
@@ -1363,13 +1606,6 @@ func WithPullBranch(branch string) PullOption {
 	}
 }
 
-// WithPullRebase uses rebase instead of merge.
-func WithPullRebase() PullOption {
-	return func(opts *pullOptions) {
-		opts.rebase = true
-	}
-}
-
 // WithPullTimeout sets the timeout for pull operation.
 func WithPullTimeout(timeoutMs int) PullOption {
 	return func(opts *pullOptions) {
@@ -1378,22 +1614,32 @@ func WithPullTimeout(timeoutMs int) PullOption {
 }
 
 // Pull fetches from and integrates with another repository.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.Pull("/home/user/my-project")
 func (g *Git) Pull(repoPath string, opts ...PullOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
 	}
 	
 	options := &pullOptions{
-		timeoutMs: defaultGitTimeoutMs,
+		timeoutMs: defaultPullTimeoutMs,
 	}
 	for _, opt := range opts {
 		opt(options)
 	}
 	
 	args := []string{"pull"}
-	if options.rebase {
-		args = append(args, "--rebase")
-	}
 	if options.remote != "" {
 		args = append(args, options.remote)
 		if options.branch != "" {
@@ -1416,31 +1662,24 @@ func (g *Git) Pull(repoPath string, opts ...PullOption) error {
 // ==================== Functional Options for Config ====================
 
 type configOptions struct {
-	scope     string // local, global, system
+	scope     string // local, global
 	timeoutMs int
 }
 
 // ConfigOption configures the Config operation.
 type ConfigOption func(*configOptions)
 
-// WithConfigLocal sets local scope.
+// WithConfigLocal sets configuration scope to local (repository-specific).
 func WithConfigLocal() ConfigOption {
 	return func(opts *configOptions) {
 		opts.scope = "local"
 	}
 }
 
-// WithConfigGlobal sets global scope.
+// WithConfigGlobal sets configuration scope to global (user-specific).
 func WithConfigGlobal() ConfigOption {
 	return func(opts *configOptions) {
 		opts.scope = "global"
-	}
-}
-
-// WithConfigSystem sets system scope.
-func WithConfigSystem() ConfigOption {
-	return func(opts *configOptions) {
-		opts.scope = "system"
 	}
 }
 
@@ -1451,7 +1690,22 @@ func WithConfigTimeout(timeoutMs int) ConfigOption {
 	}
 }
 
-// ConfigureUser configures user name and email.
+// ConfigureUser configures user name and email for the repository.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - name: user name to configure
+//   - email: user email to configure
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.ConfigureUser("/home/user/my-project", "Agent", "agent@example.com")
 func (g *Git) ConfigureUser(repoPath string, name string, email string, opts ...ConfigOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
@@ -1498,7 +1752,22 @@ func (g *Git) ConfigureUser(repoPath string, name string, email string, opts ...
 	return nil
 }
 
-// SetConfig sets a configuration value.
+// SetConfig sets a configuration value in the repository.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - key: configuration key (e.g., "user.name", "core.autocrlf")
+//   - value: configuration value
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - error: error if the operation fails
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	_ = result.Session.Git.SetConfig("/home/user/my-project", "core.autocrlf", "true")
 func (g *Git) SetConfig(repoPath string, key string, value string, opts ...ConfigOption) error {
 	if err := g.ensureGitAvailable(); err != nil {
 		return err
@@ -1530,7 +1799,24 @@ func (g *Git) SetConfig(repoPath string, key string, value string, opts ...Confi
 	return nil
 }
 
-// GetConfig gets a configuration value.
+// GetConfig gets a configuration value from the repository.
+// Returns empty string (not error) if the key does not exist (exit code 1, empty stderr).
+// Other errors (e.g. not a git repository) are returned as-is.
+//
+// Parameters:
+//   - repoPath: path to the git repository
+//   - key: configuration key to retrieve
+//   - opts: optional configuration functions
+//
+// Returns:
+//   - string: configuration value, or empty string if not found
+//   - error: error if the operation fails (excluding "not found" case)
+//
+// Example:
+//	client, _ := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"), nil)
+//	result, _ := client.Create(nil)
+//	defer result.Session.Delete()
+//	value, _ := result.Session.Git.GetConfig("/home/user/my-project", "user.name")
 func (g *Git) GetConfig(repoPath string, key string, opts ...ConfigOption) (string, error) {
 	if err := g.ensureGitAvailable(); err != nil {
 		return "", err
@@ -1556,7 +1842,11 @@ func (g *Git) GetConfig(repoPath string, key string, opts ...ConfigOption) (stri
 	}
 	
 	if !result.Success {
-		return "", classifyError("config", result)
+		stderr := strings.TrimSpace(strings.ToLower(result.Stderr))
+		if result.ExitCode == 1 && (stderr == "" || strings.Contains(stderr, "key does not contain")) {
+			return "", nil
+		}
+		return "", classifyError("get_config", result)
 	}
 	
 	return strings.TrimSpace(result.Stdout), nil

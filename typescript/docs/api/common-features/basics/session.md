@@ -21,6 +21,7 @@ Represents a session in the AgentBay cloud environment.
 
 ### Properties
 
+- [enableBrowserReplay](#enablebrowserreplay)
 
 ### Accessors
 
@@ -53,8 +54,8 @@ code: [`Code`](../../codespace/code.md)
 command: [`Command`](command.md)
 computer: [`Computer`](../../computer-use/computer.md)
 context: [`ContextManager`](context-manager.md)
-enableBrowserReplay: `boolean` = `false`
 fileSystem: [`FileSystem`](filesystem.md)
+git: ``Git``
 linkUrl: `string` = `""`
 mcpTools: `McpTool`[] = `[]`
 mobile: [`Mobile`](../../mobile-use/mobile.md)
@@ -65,6 +66,12 @@ token: `string` = `""`
 wsUrl: `string` = `""`
 ```
 
+
+### enableBrowserReplay
+
+• `Optional` **enableBrowserReplay**: `boolean`
+
+___
 
 ## Accessors
 

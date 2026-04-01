@@ -32,7 +32,7 @@ type Session struct {
 	// Shared HTTP client for LinkUrl calls (lazy initialized)
 	linkHttpClient	*http.Client
 
-	// Browser replay enabled flag (nil = server default)
+	// Browser replay enabled flag
 	EnableBrowserReplay	*bool
 
 	// File, command and code handlers
@@ -40,6 +40,9 @@ type Session struct {
 	Command		*command.Command
 	Code		*code.Code
 	Oss		*oss.OSSManager
+
+	// Git for version control
+	Git	*git.Git
 
 	// Platform-specific automation modules
 	Computer	*computer.Computer
@@ -219,8 +222,8 @@ GetBrowser returns the Browser instance for this session.
 func (s *Session) GetEnableBrowserReplay() *bool
 ```
 
-GetEnableBrowserReplay returns whether browser replay is enabled for this session.
-Returns nil if not explicitly set (server default applies).
+GetEnableBrowserReplay returns whether browser replay is enabled for this session. Returns nil if
+not explicitly set (server default applies).
 
 ### GetLabels
 
@@ -489,7 +492,8 @@ type CreateSessionParams struct {
 	Framework	string
 
 	// EnableBrowserReplay specifies whether to enable browser recording for this session.
-	EnableBrowserReplay	bool
+	// When nil (not set), server-side default behavior applies.
+	EnableBrowserReplay	*bool
 
 	// BrowserContext specifies persistent browser context configuration for this session.
 	// When set, the session will be bound to the given cloud context and browser state will
