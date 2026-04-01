@@ -53,6 +53,58 @@ public class FileSystemWatchIntegrationTest {
     }
 
     @Test
+    public void testWatchDirectoryNoEventsAfterStop() throws Exception {
+        String testDir = "/tmp/watch_stop_test_java_" + System.currentTimeMillis();
+
+        System.out.println("=== Testing no events after stop ===");
+
+        System.out.println("1. Creating test directory...");
+        BoolResult mkdirResult = fs.createDirectory(testDir);
+        assertTrue("Directory creation should succeed", mkdirResult.isSuccess());
+
+        List<FileChangeEvent> allEvents = Collections.synchronizedList(new ArrayList<>());
+        AtomicBoolean stop = new AtomicBoolean(false);
+
+        FileSystem.WatchHandle handle = fs.watchDirectory(
+            testDir,
+            events -> {
+                System.out.printf("🔔 Callback triggered with %d events%n", events.size());
+                allEvents.addAll(events);
+            },
+            stop
+        );
+
+        assertTrue("Ready should be signaled within 30s", handle.awaitReady(30, TimeUnit.SECONDS));
+        System.out.println("✅ Monitoring started");
+
+        System.out.println("\n2. Creating a file (should trigger events)...");
+        BoolResult writeResult = fs.writeFile(testDir + "/before_stop.txt", "before stop");
+        assertTrue("Write should succeed", writeResult.isSuccess());
+        Thread.sleep(3000);
+
+        int eventsBeforeStop = allEvents.size();
+        System.out.printf("Events before stop: %d%n", eventsBeforeStop);
+        assertTrue("Should detect at least 1 event before stop", eventsBeforeStop > 0);
+
+        System.out.println("\n3. Stopping directory monitoring...");
+        stop.set(true);
+        handle.join(10_000);
+        System.out.println("✅ Monitoring stopped");
+
+        System.out.println("\n4. Creating a file AFTER stop (should NOT trigger events)...");
+        BoolResult writeAfter = fs.writeFile(testDir + "/after_stop.txt", "after stop");
+        assertTrue("Write should succeed", writeAfter.isSuccess());
+        Thread.sleep(3000);
+
+        int eventsAfterStop = allEvents.size();
+        int newEvents = eventsAfterStop - eventsBeforeStop;
+        System.out.printf("Events after stop: %d, new: %d%n", eventsAfterStop, newEvents);
+
+        assertEquals("Should have 0 new events after stop", 0, newEvents);
+        System.out.println("✅ No events after stop — negative verification passed!");
+    }
+
+    @Test
     public void testWatchDirectoryDetectsEvents() throws Exception {
         String watchDir = "/tmp/watch_test_java_integration";
 

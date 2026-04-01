@@ -47,6 +47,79 @@ describe("FileSystem Watch Directory Integration Tests", () => {
     }
   });
 
+  it("should NOT trigger callbacks after watch is stopped", async () => {
+    const apiKey = getTestApiKey();
+    if (!apiKey) {
+      log("Skipping test: AGENTBAY_API_KEY not set");
+      return;
+    }
+
+    const testDir = `/tmp/watch_stop_test_ts_${Date.now()}`;
+
+    log(`\n1. Creating test directory: ${testDir}`);
+    const createDirResult = await session.fileSystem.createDirectory(testDir);
+    expect(createDirResult.success).toBe(true);
+
+    const detectedEvents: FileChangeEvent[] = [];
+    const fileChangeCallback = (events: FileChangeEvent[]) => {
+      detectedEvents.push(...events);
+      log(`🔔 Callback triggered with ${events.length} events`);
+    };
+
+    let shouldStop = false;
+    const stopSignal = {
+      get aborted() { return shouldStop; },
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+      onabort: null,
+      reason: undefined,
+      throwIfAborted: () => {},
+    } as AbortSignal;
+
+    log("\n2. Starting directory monitoring...");
+    const { monitoring, ready } = session.fileSystem.watchDirectory(
+      testDir,
+      fileChangeCallback,
+      500,
+      stopSignal,
+    );
+    await ready;
+    log("✅ Monitoring started");
+
+    log("\n3. Creating a file (should trigger events)...");
+    const writeResult = await session.fileSystem.writeFile(
+      `${testDir}/before_stop.txt`,
+      "before stop"
+    );
+    expect(writeResult.success).toBe(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const eventsBeforeStop = detectedEvents.length;
+    log(`Events before stop: ${eventsBeforeStop}`);
+    expect(eventsBeforeStop).toBeGreaterThan(0);
+
+    log("\n4. Stopping directory monitoring...");
+    shouldStop = true;
+    await monitoring;
+    log("✅ Monitoring stopped");
+
+    log("\n5. Creating a file AFTER stop (should NOT trigger events)...");
+    const writeAfter = await session.fileSystem.writeFile(
+      `${testDir}/after_stop.txt`,
+      "after stop"
+    );
+    expect(writeAfter.success).toBe(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const eventsAfterStop = detectedEvents.length;
+    const newEvents = eventsAfterStop - eventsBeforeStop;
+    log(`Events after stop: ${eventsAfterStop}, new: ${newEvents}`);
+
+    expect(newEvents).toBe(0);
+    log("✅ No events after stop — negative verification passed!");
+  });
+
   it("should detect exactly 5 events from 3 writeFile operations", async () => {
     const apiKey = getTestApiKey();
     if (!apiKey) {
