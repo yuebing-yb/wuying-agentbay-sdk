@@ -2100,16 +2100,15 @@ class FileSystem(BaseService):
                 pass
 
         # Detect WS push availability: requires ws_url, a session token,
-        # a resolved MCP server name, and a running async event loop (the
-        # sync SDK falls back to polling because the monitor thread uses
-        # ``run_coroutine_threadsafe`` to schedule WS operations on the
-        # caller's event loop).
+        # and a resolved MCP server name.  The monitor thread bridges
+        # WS calls via ``_call_ws`` which auto-detects whether the
+        # result is a coroutine (async SDK) or a direct value (sync SDK).
         ws_url = getattr(self.session, "ws_url", "") or ""
         try:
             main_loop = asyncio.get_running_loop()
         except RuntimeError:
             main_loop = None
-        use_ws_push = bool(ws_url and token and server_name and main_loop)
+        use_ws_push = bool(ws_url and token and server_name)
 
         def _poll_file_change():
             """Fetch file changes using a synchronous HTTP call so the
@@ -2307,17 +2306,33 @@ class FileSystem(BaseService):
               so the caller's ``ready_event.wait()`` can return quickly.
 
             Phase 2 (after ``ready_event``):
-              The main event loop is now free.  Use
-              ``run_coroutine_threadsafe`` to obtain the session's
-              shared WsClient, register callbacks, and subscribe.
-              A catch-up poll fills the gap between the two phases.
+              Obtain the session's shared WsClient, register callbacks,
+              and subscribe.  Uses ``_call_ws`` to bridge method calls
+              that may be coroutines (async SDK) or direct values
+              (sync SDK).  A catch-up poll fills the gap between the
+              two phases.
             """
             _logger.info(f"Starting WS push monitoring for: {path}")
 
-            def _run_async(coro, timeout=30):
-                """Bridge async coroutine to the caller's event loop."""
-                future = asyncio.run_coroutine_threadsafe(coro, main_loop)
-                return future.result(timeout=timeout)
+            def _call_ws(result_or_coro, timeout=30):
+                """Bridge WS method calls for both async and sync SDKs.
+
+                In the async SDK, WsClient methods return coroutines
+                that must be scheduled on the caller's event loop.
+                In the sync SDK (after unasync conversion), the same
+                methods return direct values that are passed through.
+                """
+                if asyncio.iscoroutine(result_or_coro):
+                    if main_loop is None:
+                        raise RuntimeError(
+                            "WS method returned a coroutine but no "
+                            "event loop is available"
+                        )
+                    future = asyncio.run_coroutine_threadsafe(
+                        result_or_coro, main_loop
+                    )
+                    return future.result(timeout=timeout)
+                return result_or_coro
 
             # ── Phase 1: HTTP baseline (sync, no event-loop dependency) ──
             _poll_file_change()
@@ -2331,7 +2346,7 @@ class FileSystem(BaseService):
             subscription_active = False
 
             try:
-                ws_client = _run_async(fs_self.session._get_ws_client())
+                ws_client = _call_ws(fs_self.session._get_ws_client())
 
                 def _on_push(payload):
                     data = payload.get("data", {})
@@ -2358,10 +2373,6 @@ class FileSystem(BaseService):
                     server_name, _on_push
                 )
 
-                # Reconnection handler — dispatches catch-up + resubscribe
-                # in a worker thread to avoid blocking the WsClient
-                # callback.  The worker uses ``_run_async`` to bridge
-                # back to the event loop for WS operations.
                 def _on_state_change(state, _reason):
                     if str(state) != "OPEN":
                         return
@@ -2379,20 +2390,17 @@ class FileSystem(BaseService):
                                         f"Catch-up callback error: {e}"
                                     )
 
-                            def _resubscribe():
-                                h = ws_client.call_stream(
-                                    target=server_name,
-                                    data={
-                                        "method": "subscribe_file_change",
-                                        "params": {"path": path},
-                                    },
-                                    on_event=None,
-                                    on_end=None,
-                                    on_error=None,
-                                )
-                                h.wait_end_with_timeout(timeout=10)
-
-                            _run_async(_resubscribe())
+                            h = _call_ws(ws_client.call_stream(
+                                target=server_name,
+                                data={
+                                    "method": "subscribe_file_change",
+                                    "params": {"path": path},
+                                },
+                                on_event=None,
+                                on_end=None,
+                                on_error=None,
+                            ))
+                            _call_ws(h.wait_end_with_timeout(timeout=10))
                             _logger.info(
                                 f"Resubscribed after reconnect for: {path}"
                             )
@@ -2410,20 +2418,17 @@ class FileSystem(BaseService):
                 )
 
                 # Subscribe via the shared WsClient
-                def _do_subscribe():
-                    handle = ws_client.call_stream(
-                        target=server_name,
-                        data={
-                            "method": "subscribe_file_change",
-                            "params": {"path": path},
-                        },
-                        on_event=None,
-                        on_end=None,
-                        on_error=None,
-                    )
-                    handle.wait_end_with_timeout(timeout=15)
-
-                _run_async(_do_subscribe())
+                handle = _call_ws(ws_client.call_stream(
+                    target=server_name,
+                    data={
+                        "method": "subscribe_file_change",
+                        "params": {"path": path},
+                    },
+                    on_event=None,
+                    on_end=None,
+                    on_error=None,
+                ))
+                _call_ws(handle.wait_end_with_timeout(timeout=15))
                 subscription_active = True
 
                 # Catch-up poll: fill the gap between Phase 1 baseline
@@ -2482,7 +2487,7 @@ class FileSystem(BaseService):
                     pass
             if ws_client is not None:
                 try:
-                    _run_async(
+                    _call_ws(
                         ws_client.send_message(
                             target=server_name,
                             data={
