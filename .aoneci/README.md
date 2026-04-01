@@ -6,9 +6,8 @@ This directory contains CI pipeline configurations for the wuying-agentbay-sdk p
 
 | Pipeline | File | Purpose |
 |----------|------|---------|
-| Example Check | `example-check.yaml` | Validates all SDK example code across Python/TypeScript/Golang |
-| Integration Test | `smart-integration-test.yaml` | Runs all integration tests against real backend (blacklist mode) |
-| CI Stable Test | `ci-stable-integration-test.yaml` | Runs only `ci-stable` marked integration tests (whitelist mode) |
+| Example Check | `example-check.yaml` | Validates `ci-stable` marked SDK examples across Python/TypeScript/Golang |
+| Integration Test | `smart-integration-test.yaml` | Runs integration tests (supports both blacklist and `ci-stable` whitelist mode) |
 | Build & Publish | `test-build-publish.yaml` | Build, test, and publish SDK packages |
 | Unit Tests | `unit-tests-only.yml` | Runs unit tests only |
 | Pipeline CI | `pipeline-ci.yml` | General CI pipeline |
@@ -72,7 +71,7 @@ In addition to the blacklist approach (`ci-skip`), both integration tests and ex
 
 ### How `ci-stable` Works
 
-The `ci-stable-integration-test.yaml` pipeline runs daily and **only executes tests and examples marked with `ci-stable`**. This guarantees a stable regression detection baseline that grows over time.
+When `ci_stable` parameter is enabled (default: `true`), the `smart-integration-test.yaml` pipeline **only executes tests and examples marked with `ci-stable`**. This guarantees a stable regression detection baseline that grows over time.
 
 The `ci-stable` marker is used by both:
 - `scripts/smart_test_runner.py --ci-stable` for integration tests
