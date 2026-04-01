@@ -221,14 +221,14 @@ from agentbay import ContextSync
 
 # Create persistent storage
 context = agent_bay.context.get("my-project", create=True).context
-context_sync = ContextSync.new(context.id, "/persistent")
+context_sync = ContextSync.new(context.id, "/home/wuying")
 
 # Create session with persistent data
 params = CreateSessionParams(context_syncs=[context_sync])
 session = agent_bay.create(params).session
 
 # This data will be SAVED across sessions
-session.file_system.write_file("/persistent/important.txt", "This will persist")
+session.file_system.write_file("/home/wuying/important.txt", "This will persist")
 ```
 
 **Critical Rule**: If you need to keep data, you MUST use Context. Otherwise, it will be lost forever when the session ends.
