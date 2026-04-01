@@ -55,7 +55,7 @@ command: [`Command`](command.md)
 computer: [`Computer`](../../computer-use/computer.md)
 context: [`ContextManager`](context-manager.md)
 fileSystem: [`FileSystem`](filesystem.md)
-git: ``Git``
+git: [`Git`](../advanced/git.md)
 linkUrl: `string` = `""`
 mcpTools: `McpTool`[] = `[]`
 mobile: [`Mobile`](../../mobile-use/mobile.md)

@@ -45,6 +45,7 @@ All synchronous API classes are in the `sync/` directory:
 - [BrowserFingerprint](sync/fingerprint.md) - `agentbay.fingerprint`
 - [MobileSimulate](sync/mobile-simulate.md) - `agentbay.mobile_simulate`
 - [SessionParams](sync/session-params.md) - `agentbay.agentbay._common.params.session_params`
+- [Git](sync/git.md) - `agentbay.git.git`
 
 ## Asynchronous API
 
@@ -68,6 +69,7 @@ All asynchronous API classes are in the `async/` directory:
 - [AsyncBrowserFingerprint](async/async-fingerprint.md) - `agentbay.fingerprint`
 - [AsyncMobileSimulate](async/async-mobile-simulate.md) - `agentbay.mobile_simulate`
 - [AsyncSessionParams](async/async-session-params.md) - `agentbay.agentbay._common.params.session_params`
+- [AsyncGit](async/async-git.md) - `agentbay.git.git`
 
 ## Common Classes
 

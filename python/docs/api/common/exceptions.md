@@ -148,6 +148,104 @@ Raised when context clearing operation times out.
 def __init__(self, message="Context clearing operation timed out", *args, **kwargs)
 ```
 
+## GitError
+
+```python
+class GitError(AgentBayError)
+```
+
+Base exception for all git operations.
+
+**Attributes**:
+
+    exit_code: The exit code returned by the git command.
+    stderr: The stderr output from the git command.
+
+### __init__
+
+```python
+def __init__(self, message="Git operation error",
+             exit_code=1,
+             stderr="",
+             *args,
+             **kwargs)
+```
+
+## GitAuthError
+
+```python
+class GitAuthError(GitError)
+```
+
+Raised when git authentication fails.
+
+Common causes include invalid credentials, missing access tokens,
+or insufficient repository permissions.
+
+### __init__
+
+```python
+def __init__(self, message="Git authentication error",
+             exit_code=1,
+             stderr="",
+             *args,
+             **kwargs)
+```
+
+## GitNotFoundError
+
+```python
+class GitNotFoundError(GitError)
+```
+
+Raised when git is not installed or not found on the remote environment.
+
+### __init__
+
+```python
+def __init__(self, message="Git not found",
+             exit_code=127,
+             stderr="",
+             *args,
+             **kwargs)
+```
+
+## GitConflictError
+
+```python
+class GitConflictError(GitError)
+```
+
+Raised when a git merge or rebase conflict occurs.
+
+### __init__
+
+```python
+def __init__(self, message="Git merge conflict",
+             exit_code=1,
+             stderr="",
+             *args,
+             **kwargs)
+```
+
+## GitNotARepoError
+
+```python
+class GitNotARepoError(GitError)
+```
+
+Raised when the target directory is not a git repository.
+
+### __init__
+
+```python
+def __init__(self, message="Not a git repository",
+             exit_code=128,
+             stderr="",
+             *args,
+             **kwargs)
+```
+
 ## See Also
 
 - [Synchronous vs Asynchronous API](../../../docs/guides/async-programming/sync-vs-async.md)

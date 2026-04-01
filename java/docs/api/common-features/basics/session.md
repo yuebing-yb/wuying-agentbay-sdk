@@ -66,6 +66,17 @@ Get the session ID.
 **Returns:**
 - `String`: The unique identifier for this session
 
+### getGit
+
+```java
+public Git getGit()
+```
+
+Get the Git service for this session.
+
+**Returns:**
+- `Git`: The Git service instance
+
 ### keepAlive
 
 ```java

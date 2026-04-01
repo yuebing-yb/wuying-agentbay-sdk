@@ -324,6 +324,13 @@ var mappings = []docMapping{
 			"NewMobileSimulateService",
 		},
 	},
+	{
+		Target:          "common-features/advanced/git.md",
+		Title:           "Git",
+		PackagePath:     "pkg/agentbay/git",
+		IncludeAllTypes: true,
+		IncludeAllFuncs: true,
+	},
 }
 
 var packageCache = map[string]*packageDoc{}

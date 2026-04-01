@@ -194,7 +194,7 @@ public Boolean getEnableBrowserReplay()
 Get whether browser replay recording is enabled.
 
 **Returns:**
-- `Boolean`: true if enabled, false if disabled, null if not set (defaults to true)
+- `Boolean`: true if enabled, false if disabled, null if not set
 
 ### setEnableBrowserReplay
 
