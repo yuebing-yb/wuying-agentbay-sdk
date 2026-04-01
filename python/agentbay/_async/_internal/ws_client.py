@@ -138,8 +138,16 @@ class WsClient:
         self._state: WsConnectionState = WsConnectionState.CLOSED
         self._closed_explicitly = False
 
-    def on_connection_state_change(self, listener: ConnectionStateListener) -> None:
+    def on_connection_state_change(self, listener: ConnectionStateListener) -> Callable[[], None]:
         self._state_listeners.append(listener)
+
+        def _unsubscribe() -> None:
+            try:
+                self._state_listeners.remove(listener)
+            except ValueError:
+                pass
+
+        return _unsubscribe
 
     async def connect(self) -> None:
         """

@@ -1,5 +1,6 @@
 package com.aliyun.agentbay.filesystem;
 
+import com.aliyun.agentbay._internal.WsClient;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.exception.FileException;
 import com.aliyun.agentbay.model.*;
@@ -7,13 +8,19 @@ import com.aliyun.agentbay.service.BaseService;
 import com.aliyun.agentbay.session.Session;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Handles file operations in the AgentBay cloud environment.
  *
  */
 public class FileSystem extends BaseService {
+    private static final Logger logger = LoggerFactory.getLogger(FileSystem.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String SERVER_FILESYSTEM = "wuying_filesystem";
     private static final String SERVER_SHELL = "wuying_shell";
@@ -1040,5 +1047,403 @@ public class FileSystem extends BaseService {
      */
     public com.aliyun.agentbay.model.DirectoryListResult ls(String path) {
         return listDirectory(path);
+    }
+
+    // ── File Change Monitoring ──
+
+    /**
+     * Parse raw JSON data from get_file_change into FileChangeEvent list.
+     */
+    private List<FileChangeEvent> parseFileChangeData(String rawData) {
+        List<FileChangeEvent> events = new ArrayList<>();
+        if (rawData == null || rawData.isEmpty() || "{}".equals(rawData) || "[]".equals(rawData)) {
+            return events;
+        }
+        try {
+            // Try MCP wrapper: {"content":[{"text":"..."}]}
+            Map<String, Object> wrapper = objectMapper.readValue(rawData, Map.class);
+            Object content = wrapper.get("content");
+            if (content instanceof List) {
+                List<?> contentList = (List<?>) content;
+                if (!contentList.isEmpty()) {
+                    Object first = contentList.get(0);
+                    if (first instanceof Map) {
+                        Object text = ((Map<?, ?>) first).get("text");
+                        if (text instanceof String) {
+                            return parseFileChangeData((String) text);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        try {
+            // Try array
+            List<Map<String, Object>> array = objectMapper.readValue(
+                rawData, new TypeReference<List<Map<String, Object>>>() {});
+            for (Map<String, Object> dict : array) {
+                if (dict != null && !dict.isEmpty()) {
+                    FileChangeEvent e = FileChangeEvent.fromDict(dict);
+                    if (!e.getEventType().isEmpty() || !e.getPath().isEmpty()) {
+                        events.add(e);
+                    }
+                }
+            }
+            return events;
+        } catch (Exception ignored) {
+        }
+
+        try {
+            // Try single object
+            Map<String, Object> dict = objectMapper.readValue(rawData, Map.class);
+            if (dict != null && !dict.isEmpty()) {
+                FileChangeEvent e = FileChangeEvent.fromDict(dict);
+                if (!e.getEventType().isEmpty() || !e.getPath().isEmpty()) {
+                    events.add(e);
+                }
+            }
+            return events;
+        } catch (Exception ignored) {
+        }
+
+        return events;
+    }
+
+    /**
+     * Get file change information for the specified directory path.
+     *
+     * @param path Absolute path to the directory to monitor
+     * @return FileChangeResult containing detected file changes
+     */
+    public FileChangeResult getFileChange(String path) {
+        Map<String, Object> args = new HashMap<>();
+        args.put("path", path);
+
+        try {
+            OperationResult result = callFilesystemTool("get_file_change", args);
+            if (result.isSuccess()) {
+                List<FileChangeEvent> events = parseFileChangeData(result.getData());
+                return new FileChangeResult(result.getRequestId(), true, events, result.getData(), "");
+            } else {
+                return new FileChangeResult(
+                    result.getRequestId(), false, null, result.getData(),
+                    result.getErrorMessage() != null ? result.getErrorMessage() : "get_file_change failed");
+            }
+        } catch (Exception e) {
+            return new FileChangeResult("", false, null, "", "Failed to get file change: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Result handle for a running directory watch operation.
+     */
+    public static class WatchHandle {
+        private final Thread thread;
+        private final CountDownLatch ready;
+
+        WatchHandle(Thread thread, CountDownLatch ready) {
+            this.thread = thread;
+            this.ready = ready;
+        }
+
+        /**
+         * Block until the baseline is established.
+         */
+        public void awaitReady() throws InterruptedException {
+            ready.await();
+        }
+
+        /**
+         * Block until the baseline is established, with timeout.
+         */
+        public boolean awaitReady(long timeout, TimeUnit unit) throws InterruptedException {
+            return ready.await(timeout, unit);
+        }
+
+        /**
+         * Block until the monitoring thread finishes.
+         */
+        public void join() throws InterruptedException {
+            thread.join();
+        }
+
+        /**
+         * Block until the monitoring thread finishes, with timeout.
+         */
+        public void join(long millis) throws InterruptedException {
+            thread.join(millis);
+        }
+    }
+
+    /**
+     * Callback interface for file change events.
+     */
+    @FunctionalInterface
+    public interface FileChangeCallback {
+        void onFileChange(List<FileChangeEvent> events);
+    }
+
+    /**
+     * Watch a directory for file changes.
+     *
+     * When the session provides a WebSocket connection, uses real-time push
+     * notifications for near-instant event delivery. Falls back to HTTP
+     * polling when WebSocket is unavailable.
+     *
+     * @param path     Absolute path to the directory to watch
+     * @param callback Called when changes are detected
+     * @param intervalMs Polling interval in milliseconds (deprecated in push mode)
+     * @param stop     AtomicBoolean; set to true to stop watching
+     * @return WatchHandle for waiting on readiness and thread join
+     */
+    public WatchHandle watchDirectory(
+        String path,
+        FileChangeCallback callback,
+        long intervalMs,
+        AtomicBoolean stop
+    ) {
+        CountDownLatch ready = new CountDownLatch(1);
+
+        boolean useWsPush = false;
+        String serverName = "";
+        String wsUrl = session.getWsUrl();
+        String token = session.getToken();
+        serverName = session.getMcpServerForTool("get_file_change");
+        if (wsUrl != null && !wsUrl.isEmpty()
+            && token != null && !token.isEmpty()
+            && serverName != null && !serverName.isEmpty()) {
+            useWsPush = true;
+        }
+
+        final boolean finalUseWsPush = useWsPush;
+        final String finalServerName = serverName;
+
+        Thread thread = new Thread(() -> {
+            if (finalUseWsPush) {
+                monitorWsPush(path, callback, intervalMs, stop, ready, finalServerName);
+            } else {
+                monitorPolling(path, callback, intervalMs, stop, ready);
+            }
+        }, "FileWatch-" + path.replace('/', '_'));
+        thread.setDaemon(true);
+        thread.start();
+
+        return new WatchHandle(thread, ready);
+    }
+
+    /**
+     * Watch a directory with default 500ms polling interval.
+     */
+    public WatchHandle watchDirectory(
+        String path,
+        FileChangeCallback callback,
+        AtomicBoolean stop
+    ) {
+        return watchDirectory(path, callback, 500, stop);
+    }
+
+    private void monitorPolling(
+        String path,
+        FileChangeCallback callback,
+        long intervalMs,
+        AtomicBoolean stop,
+        CountDownLatch ready
+    ) {
+        logger.info("Starting polling monitoring for: {}", path);
+
+        // Baseline
+        getFileChange(path);
+        ready.countDown();
+
+        pollingLoop(path, callback, intervalMs, stop);
+    }
+
+    private void pollingLoop(
+        String path,
+        FileChangeCallback callback,
+        long intervalMs,
+        AtomicBoolean stop
+    ) {
+        while (!stop.get()) {
+            try {
+                Thread.sleep(intervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+            if (stop.get()) break;
+
+            FileChangeResult result = getFileChange(path);
+            if (!result.isSuccess()) {
+                String err = result.getErrorMessage();
+                if (err != null && err.toLowerCase().contains("session")
+                    && (err.toLowerCase().contains("expired") || err.toLowerCase().contains("not found"))) {
+                    logger.warn("Session expired, stopping polling for: {}", path);
+                    break;
+                }
+                continue;
+            }
+            if (!result.getEvents().isEmpty()) {
+                logger.info("Detected {} file changes", result.getEvents().size());
+                try {
+                    callback.onFileChange(result.getEvents());
+                } catch (Exception e) {
+                    logger.error("Error in watch callback: {}", e.getMessage());
+                }
+            }
+        }
+        logger.info("Stopped polling monitoring for: {}", path);
+    }
+
+    private void monitorWsPush(
+        String path,
+        FileChangeCallback callback,
+        long intervalMs,
+        AtomicBoolean stop,
+        CountDownLatch ready,
+        String serverName
+    ) {
+        logger.info("Starting WS push monitoring for: {}", path);
+
+        // Phase 1: HTTP baseline
+        getFileChange(path);
+        ready.countDown();
+        logger.info("WS push: baseline established via HTTP for: {}", path);
+
+        // Phase 2: Attach to session's shared WsClient
+        Runnable unsubscribePush = null;
+        Runnable unsubscribeState = null;
+        final AtomicBoolean subscriptionActive = new AtomicBoolean(false);
+
+        WsClient wsClient;
+        try {
+            wsClient = session.getWsClient();
+            wsClient.connect().get(15, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.warn("WS push: failed to get WsClient: {}. Falling back to polling.", e.getMessage());
+            pollingLoop(path, callback, intervalMs, stop);
+            return;
+        }
+
+        // Push callback
+        WsClient.PushCallback onPush = payload -> {
+            Object dataObj = payload.get("data");
+            if (!(dataObj instanceof Map)) return;
+            Map<String, Object> data = (Map<String, Object>) dataObj;
+            if (!"file_change".equals(data.get("eventType"))) return;
+            if (!path.equals(data.get("path"))) return;
+
+            Object eventsRaw = data.get("events");
+            if (!(eventsRaw instanceof List)) return;
+            List<FileChangeEvent> events = new ArrayList<>();
+            for (Object item : (List<?>) eventsRaw) {
+                if (item instanceof Map) {
+                    events.add(FileChangeEvent.fromDict((Map<String, Object>) item));
+                }
+            }
+            if (!events.isEmpty()) {
+                logger.info("WS push: {} file changes for {}", events.size(), path);
+                try {
+                    callback.onFileChange(events);
+                } catch (Exception e) {
+                    logger.error("Error in watch callback: {}", e.getMessage());
+                }
+            }
+        };
+
+        unsubscribePush = wsClient.registerCallback(serverName, onPush);
+
+        // Reconnection handler
+        final WsClient finalWsClient = wsClient;
+        unsubscribeState = wsClient.onConnectionStateChange((state, reason) -> {
+            if (state != WsClient.ConnectionState.OPEN) return;
+            if (!subscriptionActive.get() || stop.get()) return;
+
+            logger.info("WS reconnected, catch-up polling for: {}", path);
+            FileChangeResult catchUp = getFileChange(path);
+            if (catchUp.isSuccess() && !catchUp.getEvents().isEmpty()) {
+                try {
+                    callback.onFileChange(catchUp.getEvents());
+                } catch (Exception e) {
+                    logger.error("Catch-up callback error: {}", e.getMessage());
+                }
+            }
+
+            // Re-subscribe
+            try {
+                Map<String, Object> subData = new HashMap<>();
+                subData.put("method", "subscribe_file_change");
+                Map<String, Object> params = new HashMap<>();
+                params.put("path", path);
+                subData.put("params", params);
+
+                WsClient.StreamHandle handle = finalWsClient.callStream(
+                    serverName, subData, null, null, null
+                ).get(10, TimeUnit.SECONDS);
+                handle.waitEnd().get(10, TimeUnit.SECONDS);
+                logger.info("Resubscribed after reconnect for: {}", path);
+            } catch (Exception e) {
+                logger.error("Re-subscribe failed: {}", e.getMessage());
+            }
+        });
+
+        // Subscribe via WsClient
+        try {
+            Map<String, Object> subData = new HashMap<>();
+            subData.put("method", "subscribe_file_change");
+            Map<String, Object> params = new HashMap<>();
+            params.put("path", path);
+            subData.put("params", params);
+
+            WsClient.StreamHandle handle = wsClient.callStream(
+                serverName, subData, null, null, null
+            ).get(15, TimeUnit.SECONDS);
+            handle.waitEnd().get(15, TimeUnit.SECONDS);
+            subscriptionActive.set(true);
+        } catch (Exception e) {
+            logger.warn("WS push subscribe failed: {}. Falling back to polling.", e.getMessage());
+            if (unsubscribePush != null) { try { unsubscribePush.run(); } catch (Exception ignored) {} }
+            if (unsubscribeState != null) { try { unsubscribeState.run(); } catch (Exception ignored) {} }
+            pollingLoop(path, callback, intervalMs, stop);
+            return;
+        }
+
+        // Catch-up poll: fill gap between baseline and subscribe
+        FileChangeResult catchup = getFileChange(path);
+        if (catchup.isSuccess() && !catchup.getEvents().isEmpty()) {
+            try {
+                callback.onFileChange(catchup.getEvents());
+            } catch (Exception e) {
+                logger.error("Catch-up callback error: {}", e.getMessage());
+            }
+        }
+
+        logger.info("WS push monitoring active for: {}", path);
+
+        // Wait loop
+        while (!stop.get()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        // Cleanup
+        subscriptionActive.set(false);
+        if (unsubscribePush != null) { try { unsubscribePush.run(); } catch (Exception ignored) {} }
+        if (unsubscribeState != null) { try { unsubscribeState.run(); } catch (Exception ignored) {} }
+        try {
+            Map<String, Object> unsubData = new HashMap<>();
+            unsubData.put("method", "unsubscribe_file_change");
+            Map<String, Object> params = new HashMap<>();
+            params.put("path", path);
+            unsubData.put("params", params);
+            wsClient.sendMessage(serverName, unsubData);
+        } catch (Exception ignored) {
+        }
+        logger.info("Stopped WS push monitoring for: {}", path);
     }
 }

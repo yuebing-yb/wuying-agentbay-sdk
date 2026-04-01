@@ -797,10 +797,17 @@ func (fs *FileSystem) WatchDirectory(
 WatchDirectory watches a directory for file changes and calls the callback function when changes
 occur.
 
+When the session provides a WebSocket connection, WatchDirectory uses real-time push notifications
+(subscribe_file_change) for near-instant event delivery. If WebSocket is unavailable or the
+subscription fails, it transparently falls back to HTTP polling.
+
+The interval parameter is used only for the polling fallback and is deprecated when running in push
+mode.
+
 Parameters:
   - path: Absolute path to the directory to watch
   - callback: Function called when changes are detected, receives array of FileChangeEvent
-  - interval: Polling interval (e.g., 1*time.Second for 1 second)
+  - interval: Polling interval (deprecated in push mode; e.g., 1*time.Second)
   - stopCh: Channel to signal when to stop watching
 
 Returns:
@@ -1183,6 +1190,19 @@ Fields:
   - BytesSent: Number of bytes uploaded
   - Path: Remote path where the file was uploaded
   - Error: Error message if the upload failed
+
+## Type wsProvider
+
+```go
+type wsProvider interface {
+	GetWsUrl() string
+	GetToken() string
+	GetWsClient() (interface{}, error)
+	GetMcpServerForTool(toolName string) string
+}
+```
+
+wsProvider is an optional interface implemented by sessions that support WebSocket.
 
 ## Related Resources
 

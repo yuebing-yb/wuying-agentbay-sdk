@@ -611,7 +611,10 @@ ___
 
 ▸ **watchDirectory**(`path`, `callback`, `interval?`, `signal?`): `Object`
 
-Watch a directory for file changes and call the callback function when changes occur
+Watch a directory for file changes and call the callback function when changes occur.
+
+Uses WebSocket push notifications for near-real-time delivery when available,
+with automatic fallback to HTTP polling.
 
 #### Parameters
 
@@ -619,14 +622,15 @@ Watch a directory for file changes and call the callback function when changes o
 | :------ | :------ | :------ | :------ |
 | `path` | `string` | `undefined` | Directory path to monitor |
 | `callback` | (`events`: ``FileChangeEvent``[]) => `void` | `undefined` | Function called when changes are detected |
-| `interval` | `number` | `500` | Polling interval in milliseconds (default: 500, minimum: 100) |
+| `interval` | `number` | `500` | Polling interval in milliseconds (default: 500). Deprecated in WS push mode where events are delivered in real time; retained for backward compatibility. |
 | `signal?` | `AbortSignal` | `undefined` | Signal to abort the monitoring |
 
 #### Returns
 
 `Object`
 
-Promise that resolves when monitoring stops
+Object with `monitoring` promise (resolves when stopped) and `ready` promise
+  (resolves when baseline is established)
 
 | Name | Type |
 | :------ | :------ |

@@ -3,6 +3,8 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"math"
+	"math/rand"
 	"net/http"
 	"sync"
 	"time"
@@ -17,6 +19,19 @@ type OnError func(invocationID string, err error)
 type DebugLogger func(message string)
 
 type PushCallback = func(payload map[string]interface{})
+
+// WsConnectionState represents the connection state of a WsClient.
+type WsConnectionState string
+
+const (
+	WsStateOpen         WsConnectionState = "OPEN"
+	WsStateClosed       WsConnectionState = "CLOSED"
+	WsStateReconnecting WsConnectionState = "RECONNECTING"
+	WsStateError        WsConnectionState = "ERROR"
+)
+
+// ConnectionStateListener is called whenever the WsClient connection state changes.
+type ConnectionStateListener func(state WsConnectionState, reason string)
 
 type endResult struct {
 	data map[string]interface{}
@@ -52,6 +67,24 @@ type WsClient struct {
 	closedCh  chan struct{}
 	callbacks map[string]map[string]PushCallback
 	nextCbID  uint64
+
+	state          WsConnectionState
+	stateListeners []stateListenerEntry
+	nextListenerID uint64
+
+	closedExplicitly bool
+	reconnecting     bool
+	reconnectTimer   *time.Timer
+
+	heartbeatIntervalMs    int
+	reconnectInitialDelayMs int
+	reconnectMaxDelayMs    int
+	heartbeatStop          chan struct{}
+}
+
+type stateListenerEntry struct {
+	id       uint64
+	listener ConnectionStateListener
 }
 
 type pendingStream struct {
@@ -134,7 +167,207 @@ func NewWsClient(wsURL string, token string, logger DebugLogger) *WsClient {
 		pending:   make(map[string]*pendingStream),
 		closedCh:  make(chan struct{}),
 		callbacks: make(map[string]map[string]PushCallback),
+		state:     WsStateClosed,
+
+		heartbeatIntervalMs:     20000,
+		reconnectInitialDelayMs: 1000,
+		reconnectMaxDelayMs:     30000,
 	}
+}
+
+// OnConnectionStateChange registers a listener that is invoked when the
+// connection state changes.  Returns an unsubscribe function.
+func (c *WsClient) OnConnectionStateChange(listener ConnectionStateListener) func() {
+	c.mu.Lock()
+	c.nextListenerID++
+	id := c.nextListenerID
+	c.stateListeners = append(c.stateListeners, stateListenerEntry{id: id, listener: listener})
+	c.mu.Unlock()
+
+	return func() {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		for i, entry := range c.stateListeners {
+			if entry.id == id {
+				c.stateListeners = append(c.stateListeners[:i], c.stateListeners[i+1:]...)
+				break
+			}
+		}
+	}
+}
+
+func (c *WsClient) setState(state WsConnectionState, reason string) {
+	c.mu.Lock()
+	if c.state == state {
+		c.mu.Unlock()
+		return
+	}
+	c.state = state
+	listeners := make([]ConnectionStateListener, len(c.stateListeners))
+	for i, entry := range c.stateListeners {
+		listeners[i] = entry.listener
+	}
+	c.mu.Unlock()
+
+	if c.logger != nil {
+		c.logger(fmt.Sprintf("WS state → %s: %s", state, reason))
+	}
+	for _, l := range listeners {
+		func() {
+			defer func() {
+				if r := recover(); r != nil && c.logger != nil {
+					c.logger(fmt.Sprintf("WS state listener panic: %v", r))
+				}
+			}()
+			l(state, reason)
+		}()
+	}
+}
+
+func (c *WsClient) startHeartbeat() {
+	c.stopHeartbeat()
+	c.mu.Lock()
+	stop := make(chan struct{})
+	c.heartbeatStop = stop
+	interval := c.heartbeatIntervalMs
+	c.mu.Unlock()
+
+	go func() {
+		ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				c.mu.Lock()
+				conn := c.conn
+				c.mu.Unlock()
+				if conn == nil {
+					return
+				}
+				pingMsg := map[string]interface{}{
+					"type": "ping",
+				}
+				raw, _ := json.Marshal(pingMsg)
+				if err := websocket.Message.Send(conn, string(raw)); err != nil {
+					if c.logger != nil {
+						c.logger(fmt.Sprintf("WS heartbeat send failed: %v", err))
+					}
+				}
+			}
+		}
+	}()
+}
+
+func (c *WsClient) stopHeartbeat() {
+	c.mu.Lock()
+	if c.heartbeatStop != nil {
+		close(c.heartbeatStop)
+		c.heartbeatStop = nil
+	}
+	c.mu.Unlock()
+}
+
+func (c *WsClient) scheduleReconnect() {
+	c.mu.Lock()
+	if c.closedExplicitly || c.reconnecting {
+		c.mu.Unlock()
+		return
+	}
+	c.reconnecting = true
+	initialDelay := c.reconnectInitialDelayMs
+	maxDelay := c.reconnectMaxDelayMs
+	c.mu.Unlock()
+
+	c.setState(WsStateReconnecting, "connection lost")
+	go c.reconnectWithBackoff(initialDelay, maxDelay)
+}
+
+func (c *WsClient) reconnectWithBackoff(initialDelayMs, maxDelayMs int) {
+	attempt := 0
+	for {
+		c.mu.Lock()
+		if c.closedExplicitly {
+			c.reconnecting = false
+			c.mu.Unlock()
+			return
+		}
+		c.mu.Unlock()
+
+		delayMs := float64(initialDelayMs) * math.Pow(2, float64(attempt))
+		if delayMs > float64(maxDelayMs) {
+			delayMs = float64(maxDelayMs)
+		}
+		jitter := delayMs * 0.3 * rand.Float64()
+		delay := time.Duration(delayMs+jitter) * time.Millisecond
+
+		if c.logger != nil {
+			c.logger(fmt.Sprintf("WS reconnect attempt %d in %v", attempt+1, delay))
+		}
+		time.Sleep(delay)
+
+		c.mu.Lock()
+		if c.closedExplicitly {
+			c.reconnecting = false
+			c.mu.Unlock()
+			return
+		}
+		c.mu.Unlock()
+
+		err := c.openConnection()
+		if err == nil {
+			c.mu.Lock()
+			c.reconnecting = false
+			c.mu.Unlock()
+			c.startHeartbeat()
+			c.setState(WsStateOpen, "reconnected")
+			return
+		}
+
+		if c.logger != nil {
+			c.logger(fmt.Sprintf("WS reconnect failed: %v", err))
+		}
+		attempt++
+	}
+}
+
+func (c *WsClient) cancelReconnect() {
+	c.mu.Lock()
+	if c.reconnectTimer != nil {
+		c.reconnectTimer.Stop()
+		c.reconnectTimer = nil
+	}
+	c.mu.Unlock()
+}
+
+// openConnection performs the raw websocket dial and starts recvLoop.
+// It does NOT set state or start heartbeat — callers handle that.
+func (c *WsClient) openConnection() error {
+	cfg, err := websocket.NewConfig(c.wsURL, "http://localhost/")
+	if err != nil {
+		return err
+	}
+	cfg.Header = http.Header{}
+	cfg.Header.Set("X-Access-Token", c.token)
+
+	conn, err := websocket.DialConfig(cfg)
+	if err != nil {
+		return err
+	}
+
+	c.mu.Lock()
+	c.conn = conn
+	// Reset closedCh so that pending streams can use a fresh channel
+	select {
+	case <-c.closedCh:
+		c.closedCh = make(chan struct{})
+	default:
+	}
+	c.mu.Unlock()
+
+	go c.recvLoop()
+	return nil
 }
 
 func (c *WsClient) RegisterCallback(target string, callback PushCallback) func() {
@@ -180,33 +413,27 @@ func (c *WsClient) Connect() error {
 		c.mu.Unlock()
 		return nil
 	}
+	c.closedExplicitly = false
 	c.mu.Unlock()
 
-	cfg, err := websocket.NewConfig(c.wsURL, "http://localhost/")
-	if err != nil {
+	if err := c.openConnection(); err != nil {
+		c.setState(WsStateError, err.Error())
 		return err
 	}
-	cfg.Header = http.Header{}
-	cfg.Header.Set("X-Access-Token", c.token)
-
-	conn, err := websocket.DialConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	c.mu.Lock()
-	c.conn = conn
-	c.mu.Unlock()
-
-	go c.recvLoop()
+	c.startHeartbeat()
+	c.setState(WsStateOpen, "connected")
 	return nil
 }
 
 func (c *WsClient) Close() error {
 	c.mu.Lock()
+	c.closedExplicitly = true
 	conn := c.conn
 	c.conn = nil
 	c.mu.Unlock()
+
+	c.cancelReconnect()
+	c.stopHeartbeat()
 
 	select {
 	case <-c.closedCh:
@@ -218,6 +445,7 @@ func (c *WsClient) Close() error {
 		_ = conn.Close()
 	}
 	c.failAllPending(fmt.Errorf("WS client closed"))
+	c.setState(WsStateClosed, "closed by client")
 	return nil
 }
 
@@ -361,7 +589,24 @@ func (c *WsClient) recvLoop() {
 		var msg map[string]interface{}
 		err := websocket.JSON.Receive(conn, &msg)
 		if err != nil {
-			_ = c.Close()
+			c.mu.Lock()
+			explicit := c.closedExplicitly
+			c.conn = nil
+			c.mu.Unlock()
+
+			c.stopHeartbeat()
+			_ = conn.Close()
+
+			select {
+			case <-c.closedCh:
+			default:
+				close(c.closedCh)
+			}
+			c.failAllPending(fmt.Errorf("WS connection lost: %v", err))
+
+			if !explicit {
+				c.scheduleReconnect()
+			}
 			return
 		}
 		c.handleIncoming(msg)

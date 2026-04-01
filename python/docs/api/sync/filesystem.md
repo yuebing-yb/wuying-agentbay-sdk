@@ -713,12 +713,16 @@ def watch_directory(
 
 Watch a directory for file changes and call the callback function when changes occur.
 
+Uses WebSocket push notifications for near-real-time delivery when available,
+with automatic fallback to HTTP polling.
+
 **Arguments**:
 
     path: The directory path to monitor for file changes.
     callback: Callback function that will be called with a list of FileChangeEvent
   objects when changes are detected.
-    interval: Polling interval in seconds. Defaults to 0.5.
+    interval: Polling interval in seconds (default 0.5). Deprecated in WS push mode
+  where events are delivered in real time; retained for backward compatibility.
     stop_event: Optional threading.Event to stop the monitoring. If not provided,
   a new Event will be created and returned via the thread object.
   

@@ -536,6 +536,79 @@ List directory contents. Alias for listDirectory().
 **Returns:**
 - `com.aliyun.agentbay.model.DirectoryListResult`: DirectoryListResult containing directory entries and error message if any
 
+### getFileChange
+
+```java
+public FileChangeResult getFileChange(String path)
+```
+
+Get file change information for the specified directory path.
+
+**Parameters:**
+- `path` (String): Absolute path to the directory to monitor
+
+**Returns:**
+- `FileChangeResult`: FileChangeResult containing detected file changes
+
+### watchDirectory
+
+```java
+public WatchHandle watchDirectory(String path, FileChangeCallback callback, long intervalMs, AtomicBoolean stop)
+```
+
+```java
+public WatchHandle watchDirectory(String path, FileChangeCallback callback, AtomicBoolean stop)
+```
+
+Watch a directory for file changes.
+
+When the session provides a WebSocket connection, uses real-time push
+notifications for near-instant event delivery. Falls back to HTTP
+polling when WebSocket is unavailable.
+
+**Parameters:**
+- `path` (String): Absolute path to the directory to watch
+- `callback` (FileChangeCallback): Called when changes are detected
+- `intervalMs` (long): Polling interval in milliseconds (deprecated in push mode)
+- `stop` (AtomicBoolean): AtomicBoolean; set to true to stop watching
+
+**Returns:**
+- `WatchHandle`: WatchHandle for waiting on readiness and thread join
+
+## WatchHandle
+
+Result handle for a running directory watch operation.
+
+### Methods
+
+### awaitReady
+
+```java
+public void awaitReady() throws InterruptedException
+```
+
+```java
+public boolean awaitReady(long timeout, TimeUnit unit) throws InterruptedException
+```
+
+Block until the baseline is established, with timeout.
+
+### join
+
+```java
+public void join() throws InterruptedException
+```
+
+```java
+public void join(long millis) throws InterruptedException
+```
+
+Block until the monitoring thread finishes, with timeout.
+
+## FileChangeCallback
+
+Callback interface for file change events.
+
 
 
 ## 🔗 Related Resources

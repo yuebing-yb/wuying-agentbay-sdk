@@ -16,6 +16,19 @@ import { log, logWarn, logInfo, logError } from "../utils/logger";
 // Default chunk size for large file operations (60KB)
 const DEFAULT_CHUNK_SIZE = 60 * 1024;
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`Timeout after ${timeoutMs}ms`)),
+      timeoutMs
+    );
+    promise.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); }
+    );
+  });
+}
+
 /**
  * Represents a single file change event
  */
@@ -1583,13 +1596,18 @@ export class FileSystem {
   }
 
   /**
-   * Watch a directory for file changes and call the callback function when changes occur
+   * Watch a directory for file changes and call the callback function when changes occur.
+   *
+   * Uses WebSocket push notifications for near-real-time delivery when available,
+   * with automatic fallback to HTTP polling.
    *
    * @param path - Directory path to monitor
    * @param callback - Function called when changes are detected
-   * @param interval - Polling interval in milliseconds (default: 500, minimum: 100)
+   * @param interval - Polling interval in milliseconds (default: 500). Deprecated in WS push
+   *   mode where events are delivered in real time; retained for backward compatibility.
    * @param signal - Signal to abort the monitoring
-   * @returns Promise that resolves when monitoring stops
+   * @returns Object with `monitoring` promise (resolves when stopped) and `ready` promise
+   *   (resolves when baseline is established)
    *
    * @example
    * ```typescript
@@ -1614,90 +1632,306 @@ export class FileSystem {
     signal?: AbortSignal
   ): { monitoring: Promise<void>; ready: Promise<void> } {
     logInfo(`Starting directory monitoring for: ${path}`);
-    logInfo(`Polling interval: ${interval} ms`);
 
     let readyResolve!: () => void;
     const ready = new Promise<void>((resolve) => {
       readyResolve = resolve;
     });
 
-    const monitoring = (async () => {
-      // First poll to establish baseline
-      try {
-        await this.getFileChange(path);
-      } catch (error) {
-        logError(`Error establishing baseline: ${error}`);
-      }
-      readyResolve();
+    const serverName = this.session.getMcpServerForTool("get_file_change");
+    const useWsPush = !!(
+      this.session.wsUrl &&
+      this.session.token &&
+      serverName
+    );
 
+    const monitoring = useWsPush
+      ? this.monitorWsPush(path, callback, interval, signal, readyResolve, serverName!)
+      : this.monitorPolling(path, callback, interval, signal, readyResolve);
+
+    return { monitoring, ready };
+  }
+
+  private async monitorPolling(
+    path: string,
+    callback: (events: FileChangeEvent[]) => void,
+    interval: number,
+    signal: AbortSignal | undefined,
+    readyResolve: () => void
+  ): Promise<void> {
+    logInfo(`Starting polling directory monitoring for: ${path}`);
+    logInfo(`Polling interval: ${interval} ms`);
+
+    try {
+      await this.getFileChange(path);
+    } catch (error) {
+      logError(`Error establishing baseline: ${error}`);
+    }
+    readyResolve();
+
+    while (!signal?.aborted) {
+      await new Promise<void>((resolve) => {
+        const timeoutId = setTimeout(resolve, interval);
+        signal?.addEventListener("abort", () => {
+          clearTimeout(timeoutId);
+          resolve();
+        });
+      });
+
+      if (signal?.aborted) break;
+
+      try {
+        if (
+          (this.session as any)._isExpired &&
+          (this.session as any)._isExpired()
+        ) {
+          logInfo(
+            `Session expired, stopping directory monitoring for: ${path}`
+          );
+          break;
+        }
+
+        const result = await this.getFileChange(path);
+
+        if (result.success && result.events.length > 0) {
+          logInfo(`Detected ${result.events.length} file changes:`);
+          for (const event of result.events) {
+            logInfo(`  - ${FileChangeEventHelper.toString(event)}`);
+          }
+          try {
+            callback(result.events);
+          } catch (error) {
+            logError(`Error in callback function: ${error}`);
+          }
+        } else if (!result.success) {
+          const errorMsg = (result.errorMessage || "").toLowerCase();
+          if (
+            errorMsg.includes("session") &&
+            (errorMsg.includes("expired") || errorMsg.includes("invalid"))
+          ) {
+            logInfo(
+              `Session expired, stopping directory monitoring for: ${path}`
+            );
+            break;
+          }
+          logError(`Error monitoring directory: ${result.errorMessage}`);
+        }
+      } catch (error) {
+        logError(`Unexpected error in directory monitoring: ${error}`);
+        const errorStr = String(error).toLowerCase();
+        if (
+          errorStr.includes("session") &&
+          (errorStr.includes("expired") || errorStr.includes("invalid"))
+        ) {
+          logInfo(
+            `Session expired, stopping directory monitoring for: ${path}`
+          );
+          break;
+        }
+      }
+    }
+
+    logInfo(`Stopped polling monitoring for: ${path}`);
+  }
+
+  private async monitorWsPush(
+    path: string,
+    callback: (events: FileChangeEvent[]) => void,
+    interval: number,
+    signal: AbortSignal | undefined,
+    readyResolve: () => void,
+    serverName: string
+  ): Promise<void> {
+    logInfo(`Starting WS push monitoring for: ${path}`);
+    const { WsConnectionState } = await import("../_internal/ws-client");
+
+    // Phase 1: HTTP baseline
+    try {
+      await this.getFileChange(path);
+    } catch (error) {
+      logError(`Error establishing baseline: ${error}`);
+    }
+    readyResolve();
+    logInfo(`WS push: baseline established for: ${path}`);
+
+    // Phase 2: Attach to session's shared WsClient
+    let unsubscribePush: (() => void) | null = null;
+    let unsubscribeState: (() => void) | null = null;
+    let subscriptionActive = false;
+
+    try {
+      const wsClient = await this.session.getWsClient();
+
+      const onPush = (payload: { data: Record<string, any> }) => {
+        const data = payload.data || {};
+        if (data.eventType !== "file_change") return;
+        if (data.path !== path) return;
+        const eventsRaw = data.events || [];
+        const events: FileChangeEvent[] = [];
+        for (const ed of eventsRaw) {
+          if (ed && typeof ed === "object") {
+            events.push(FileChangeEventHelper.fromDict(ed));
+          }
+        }
+        if (events.length > 0) {
+          logInfo(`WS push: ${events.length} file changes for ${path}`);
+          try {
+            callback(events);
+          } catch (error) {
+            logError(`Error in watch callback: ${error}`);
+          }
+        }
+      };
+
+      unsubscribePush = wsClient.registerCallback(serverName, onPush);
+
+      unsubscribeState = wsClient.onConnectionStateChange(
+        (state: string, _reason: string) => {
+          if (state !== WsConnectionState.OPEN) return;
+          if (!subscriptionActive || signal?.aborted) return;
+
+          (async () => {
+            try {
+              const catchUpResult = await this.getFileChange(path);
+              if (catchUpResult.success && catchUpResult.events.length > 0) {
+                try {
+                  callback(catchUpResult.events);
+                } catch (error) {
+                  logError(`Catch-up callback error: ${error}`);
+                }
+              }
+              const handle = await wsClient.callStream({
+                target: serverName,
+                data: {
+                  method: "subscribe_file_change",
+                  params: { path },
+                },
+              });
+              await withTimeout(handle.waitEnd(), 10_000);
+              logInfo(`Resubscribed after reconnect for: ${path}`);
+            } catch (error) {
+              logError(`Catch-up/resubscribe failed: ${error}`);
+            }
+          })();
+        }
+      );
+
+      // Subscribe via WsClient
+      const handle = await wsClient.callStream({
+        target: serverName,
+        data: {
+          method: "subscribe_file_change",
+          params: { path },
+        },
+      });
+      await withTimeout(handle.waitEnd(), 15_000);
+      subscriptionActive = true;
+
+      // Catch-up poll: fill the gap between baseline and subscribe
+      const catchup = await this.getFileChange(path);
+      if (catchup.success && catchup.events.length > 0) {
+        try {
+          callback(catchup.events);
+        } catch (error) {
+          logError(`Catch-up callback error: ${error}`);
+        }
+      }
+
+      logInfo(`WS push monitoring active for: ${path}`);
+
+      // Wait loop
       while (!signal?.aborted) {
-        // Wait before next poll
+        if (
+          (this.session as any)._isExpired &&
+          (this.session as any)._isExpired()
+        ) {
+          logInfo(`Session expired, stopping WS monitoring for: ${path}`);
+          break;
+        }
         await new Promise<void>((resolve) => {
-          const timeoutId = setTimeout(resolve, interval);
+          const timeoutId = setTimeout(resolve, 1000);
           signal?.addEventListener("abort", () => {
             clearTimeout(timeoutId);
             resolve();
           });
         });
+      }
+    } catch (error) {
+      logWarn(
+        `WS push subscribe failed: ${error}. Falling back to polling.`
+      );
+      if (unsubscribePush) {
+        try { unsubscribePush(); } catch (_e) { /* */ }
+      }
+      if (unsubscribeState) {
+        try { unsubscribeState(); } catch (_e) { /* */ }
+      }
+      await this.monitorPollingAfterBaseline(path, callback, interval, signal);
+      return;
+    }
 
-        if (signal?.aborted) break;
+    // Normal cleanup
+    subscriptionActive = false;
+    if (unsubscribePush) {
+      try { unsubscribePush(); } catch (_e) { /* */ }
+    }
+    if (unsubscribeState) {
+      try { unsubscribeState(); } catch (_e) { /* */ }
+    }
+    try {
+      const wsClient = await this.session.getWsClient();
+      await wsClient.sendMessage(serverName, {
+        method: "unsubscribe_file_change",
+        params: { path },
+      });
+    } catch (_e) { /* best effort */ }
+    logInfo(`Stopped WS push monitoring for: ${path}`);
+  }
 
-        try {
-          if (
-            (this.session as any)._isExpired &&
-            (this.session as any)._isExpired()
-          ) {
-            logInfo(
-              `Session expired, stopping directory monitoring for: ${path}`
-            );
-            break;
+  private async monitorPollingAfterBaseline(
+    path: string,
+    callback: (events: FileChangeEvent[]) => void,
+    interval: number,
+    signal: AbortSignal | undefined
+  ): Promise<void> {
+    logInfo(`Polling fallback (baseline pre-established) for: ${path}`);
+    while (!signal?.aborted) {
+      await new Promise<void>((resolve) => {
+        const timeoutId = setTimeout(resolve, interval);
+        signal?.addEventListener("abort", () => {
+          clearTimeout(timeoutId);
+          resolve();
+        });
+      });
+      if (signal?.aborted) break;
+      try {
+        if (
+          (this.session as any)._isExpired &&
+          (this.session as any)._isExpired()
+        ) {
+          break;
+        }
+        const result = await this.getFileChange(path);
+        if (result.success && result.events.length > 0) {
+          try {
+            callback(result.events);
+          } catch (error) {
+            logError(`Error in callback: ${error}`);
           }
-
-          const result = await this.getFileChange(path);
-
-          if (result.success && result.events.length > 0) {
-            logInfo(`Detected ${result.events.length} file changes:`);
-            for (const event of result.events) {
-              logInfo(`  - ${FileChangeEventHelper.toString(event)}`);
-            }
-
-            try {
-              callback(result.events);
-            } catch (error) {
-              logError(`Error in callback function: ${error}`);
-            }
-          } else if (!result.success) {
-            const errorMsg = (result.errorMessage || "").toLowerCase();
-            if (
-              errorMsg.includes("session") &&
-              (errorMsg.includes("expired") || errorMsg.includes("invalid"))
-            ) {
-              logInfo(
-                `Session expired, stopping directory monitoring for: ${path}`
-              );
-              break;
-            }
-            logError(`Error monitoring directory: ${result.errorMessage}`);
-          }
-        } catch (error) {
-          logError(`Unexpected error in directory monitoring: ${error}`);
-          const errorStr = String(error).toLowerCase();
+        } else if (!result.success) {
+          const errorMsg = (result.errorMessage || "").toLowerCase();
           if (
-            errorStr.includes("session") &&
-            (errorStr.includes("expired") || errorStr.includes("invalid"))
+            errorMsg.includes("session") &&
+            (errorMsg.includes("expired") || errorMsg.includes("invalid"))
           ) {
-            logInfo(
-              `Session expired, stopping directory monitoring for: ${path}`
-            );
             break;
           }
         }
+      } catch (error) {
+        logError(`Polling error: ${error}`);
       }
-
-      logInfo(`Stopped monitoring directory: ${path}`);
-    })();
-
-    return { monitoring, ready };
+    }
+    logInfo(`Stopped polling for: ${path}`);
   }
 
   /**

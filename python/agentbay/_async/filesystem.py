@@ -2349,6 +2349,7 @@ class AsyncFileSystem(BaseService):
             # ── Phase 2: Attach to session's shared WsClient ──
             ws_client = None
             unsubscribe_push = None
+            unsubscribe_state_listener = None
             subscription_active = False
 
             try:
@@ -2379,18 +2380,19 @@ class AsyncFileSystem(BaseService):
                     server_name, _on_push
                 )
 
-                # Reconnection handler — runs on the main event loop
-                # thread (fired by the WsClient recv loop), so
-                # ``ensure_future`` schedules on the correct loop.
+                # Reconnection handler — dispatches catch-up + resubscribe
+                # in a worker thread to avoid blocking the WsClient
+                # callback.  The worker uses ``_run_async`` to bridge
+                # back to the event loop for WS operations.
                 def _on_state_change(state, _reason):
                     if str(state) != "OPEN":
                         return
                     if not subscription_active or stop_event.is_set():
                         return
 
-                    async def _catch_up_and_resubscribe():
+                    def _reconnect_worker():
                         try:
-                            poll_result = await asyncio.to_thread(_poll_file_change)
+                            poll_result = _poll_file_change()
                             if poll_result.success and poll_result.events:
                                 try:
                                     callback(poll_result.events)
@@ -2398,17 +2400,21 @@ class AsyncFileSystem(BaseService):
                                     _logger.error(
                                         f"Catch-up callback error: {e}"
                                     )
-                            h = await ws_client.call_stream(
-                                target=server_name,
-                                data={
-                                    "method": "subscribe_file_change",
-                                    "params": {"path": path},
-                                },
-                                on_event=None,
-                                on_end=None,
-                                on_error=None,
-                            )
-                            await h.wait_end_with_timeout(timeout=10)
+
+                            async def _resubscribe():
+                                h = await ws_client.call_stream(
+                                    target=server_name,
+                                    data={
+                                        "method": "subscribe_file_change",
+                                        "params": {"path": path},
+                                    },
+                                    on_event=None,
+                                    on_end=None,
+                                    on_error=None,
+                                )
+                                await h.wait_end_with_timeout(timeout=10)
+
+                            _run_async(_resubscribe())
                             _logger.info(
                                 f"Resubscribed after reconnect for: {path}"
                             )
@@ -2417,9 +2423,13 @@ class AsyncFileSystem(BaseService):
                                 f"Catch-up/resubscribe failed: {e}"
                             )
 
-                    asyncio.ensure_future(_catch_up_and_resubscribe())
+                    threading.Thread(
+                        target=_reconnect_worker, daemon=True
+                    ).start()
 
-                ws_client.on_connection_state_change(_on_state_change)
+                unsubscribe_state_listener = ws_client.on_connection_state_change(
+                    _on_state_change
+                )
 
                 # Subscribe via the shared WsClient
                 async def _do_subscribe():
@@ -2472,6 +2482,11 @@ class AsyncFileSystem(BaseService):
                         unsubscribe_push()
                     except Exception:
                         pass
+                if unsubscribe_state_listener:
+                    try:
+                        unsubscribe_state_listener()
+                    except Exception:
+                        pass
                 _monitor_polling_after_baseline()
                 return
 
@@ -2480,6 +2495,11 @@ class AsyncFileSystem(BaseService):
             if unsubscribe_push:
                 try:
                     unsubscribe_push()
+                except Exception:
+                    pass
+            if unsubscribe_state_listener:
+                try:
+                    unsubscribe_state_listener()
                 except Exception:
                     pass
             if ws_client is not None:

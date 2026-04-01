@@ -1435,12 +1435,29 @@ func (fs *FileSystem) WatchDirectoryWithDefaults(
 	return fs.WatchDirectory(path, callback, 500*time.Millisecond, stopCh)
 }
 
-// WatchDirectory watches a directory for file changes and calls the callback function when changes occur.
+// wsProvider is an optional interface implemented by sessions that support WebSocket.
+type wsProvider interface {
+	GetWsUrl() string
+	GetToken() string
+	GetWsClient() (interface{}, error)
+	GetMcpServerForTool(toolName string) string
+}
+
+// WatchDirectory watches a directory for file changes and calls the callback
+// function when changes occur.
+//
+// When the session provides a WebSocket connection, WatchDirectory uses
+// real-time push notifications (subscribe_file_change) for near-instant
+// event delivery.  If WebSocket is unavailable or the subscription fails,
+// it transparently falls back to HTTP polling.
+//
+// The interval parameter is used only for the polling fallback and is
+// deprecated when running in push mode.
 //
 // Parameters:
 //   - path: Absolute path to the directory to watch
 //   - callback: Function called when changes are detected, receives array of FileChangeEvent
-//   - interval: Polling interval (e.g., 1*time.Second for 1 second)
+//   - interval: Polling interval (deprecated in push mode; e.g., 1*time.Second)
 //   - stopCh: Channel to signal when to stop watching
 //
 // Returns:
@@ -1470,78 +1487,339 @@ func (fs *FileSystem) WatchDirectory(
 	readyCh := make(chan struct{})
 	wg.Add(1)
 
-	go func() {
-		defer wg.Done()
-		if logger, ok := fs.Session.(internal.Logger); ok {
-			logger.LogInfo(fmt.Sprintf("Starting directory monitoring for: %s", path))
-			logger.LogDebug(fmt.Sprintf("Polling interval: %v", interval))
+	useWsPush := false
+	serverName := ""
+	if wp, ok := fs.Session.(wsProvider); ok {
+		wsURL := wp.GetWsUrl()
+		token := wp.GetToken()
+		serverName = wp.GetMcpServerForTool("get_file_change")
+		if wsURL != "" && token != "" && serverName != "" {
+			useWsPush = true
 		}
+	}
 
-		// First poll to establish baseline
+	if useWsPush {
+		go func() {
+			defer wg.Done()
+			fs.monitorWsPush(path, callback, interval, stopCh, readyCh, serverName)
+		}()
+	} else {
+		go func() {
+			defer wg.Done()
+			fs.monitorPolling(path, callback, interval, stopCh, readyCh)
+		}()
+	}
+
+	return &wg, readyCh
+}
+
+func (fs *FileSystem) monitorPolling(
+	path string,
+	callback func([]*FileChangeEvent),
+	interval time.Duration,
+	stopCh <-chan struct{},
+	readyCh chan struct{},
+) {
+	if logger, ok := fs.Session.(internal.Logger); ok {
+		logger.LogInfo(fmt.Sprintf("Starting polling monitoring for: %s", path))
+	}
+
+	select {
+	case <-stopCh:
+		close(readyCh)
+		return
+	default:
+	}
+	_, err := fs.GetFileChange(path)
+	close(readyCh)
+	if err != nil {
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogError(fmt.Sprintf("Error establishing baseline: %v", err))
+		}
+	}
+
+	fs.pollingLoop(path, callback, interval, stopCh)
+}
+
+func (fs *FileSystem) pollingLoop(
+	path string,
+	callback func([]*FileChangeEvent),
+	interval time.Duration,
+	stopCh <-chan struct{},
+) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
 		select {
 		case <-stopCh:
-			close(readyCh)
+			if logger, ok := fs.Session.(internal.Logger); ok {
+				logger.LogInfo(fmt.Sprintf("Stopped polling monitoring for: %s", path))
+			}
+			return
+		case <-ticker.C:
+			result, err := fs.GetFileChange(path)
+			if err != nil {
+				if strings.Contains(err.Error(), "session not found or expired") {
+					if logger, ok := fs.Session.(internal.Logger); ok {
+						logger.LogWarn(fmt.Sprintf("Session expired, stopping directory monitoring: %s", path))
+					}
+					return
+				}
+				if logger, ok := fs.Session.(internal.Logger); ok {
+					logger.LogError(fmt.Sprintf("Error monitoring directory: %v", err))
+				}
+				continue
+			}
+
+			if len(result.Events) > 0 {
+				if logger, ok := fs.Session.(internal.Logger); ok {
+					logger.LogInfo(fmt.Sprintf("Detected %d file changes", len(result.Events)))
+					for _, event := range result.Events {
+						logger.LogDebug(fmt.Sprintf("  - %s", event.String()))
+					}
+				}
+
+				session := fs.Session
+				go func(events []*FileChangeEvent) {
+					defer func() {
+						if r := recover(); r != nil {
+							if logger, ok := session.(internal.Logger); ok {
+								logger.LogError(fmt.Sprintf("Error in callback function: %v", r))
+							}
+						}
+					}()
+					callback(events)
+				}(result.Events)
+			}
+		}
+	}
+}
+
+func (fs *FileSystem) monitorWsPush(
+	path string,
+	callback func([]*FileChangeEvent),
+	interval time.Duration,
+	stopCh <-chan struct{},
+	readyCh chan struct{},
+	serverName string,
+) {
+	if logger, ok := fs.Session.(internal.Logger); ok {
+		logger.LogInfo(fmt.Sprintf("Starting WS push monitoring for: %s", path))
+	}
+
+	// Phase 1: HTTP baseline (no WS dependency)
+	select {
+	case <-stopCh:
+		close(readyCh)
+		return
+	default:
+	}
+	_, err := fs.GetFileChange(path)
+	close(readyCh)
+	if err != nil {
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogError(fmt.Sprintf("Error establishing baseline: %v", err))
+		}
+	}
+	if logger, ok := fs.Session.(internal.Logger); ok {
+		logger.LogInfo(fmt.Sprintf("WS push: baseline established via HTTP for: %s", path))
+	}
+
+	// Phase 2: Attach to session's shared WsClient
+	wp := fs.Session.(wsProvider)
+
+	wsClientRaw, err := wp.GetWsClient()
+	if err != nil {
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogWarn(fmt.Sprintf("WS push: failed to get WsClient: %v. Falling back to polling.", err))
+		}
+		fs.pollingLoop(path, callback, interval, stopCh)
+		return
+	}
+	wsClient, ok := wsClientRaw.(*internal.WsClient)
+	if !ok {
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogWarn("WS push: WsClient type assertion failed. Falling back to polling.")
+		}
+		fs.pollingLoop(path, callback, interval, stopCh)
+		return
+	}
+
+	var unsubscribePush func()
+	var unsubscribeState func()
+	subscriptionActive := false
+
+	// Push callback — filter by path and eventType
+	onPush := func(payload map[string]interface{}) {
+		data, _ := payload["data"].(map[string]interface{})
+		if data == nil {
+			return
+		}
+		if et, _ := data["eventType"].(string); et != "file_change" {
+			return
+		}
+		pushPath, _ := data["path"].(string)
+		if pushPath != path {
+			return
+		}
+		eventsRaw, _ := data["events"].([]interface{})
+		var events []*FileChangeEvent
+		for _, raw := range eventsRaw {
+			if ed, ok := raw.(map[string]interface{}); ok {
+				events = append(events, fileChangeEventFromDict(ed))
+			}
+		}
+		if len(events) > 0 {
+			if logger, ok := fs.Session.(internal.Logger); ok {
+				logger.LogInfo(fmt.Sprintf("WS push: %d file changes for %s", len(events), path))
+			}
+			session := fs.Session
+			go func(evts []*FileChangeEvent) {
+				defer func() {
+					if r := recover(); r != nil {
+						if logger, ok := session.(internal.Logger); ok {
+							logger.LogError(fmt.Sprintf("Error in watch callback: %v", r))
+						}
+					}
+				}()
+				callback(evts)
+			}(events)
+		}
+	}
+
+	unsubscribePush = wsClient.RegisterCallback(serverName, onPush)
+
+	// Reconnection handler
+	unsubscribeState = wsClient.OnConnectionStateChange(func(state internal.WsConnectionState, _reason string) {
+		if state != internal.WsStateOpen {
+			return
+		}
+		if !subscriptionActive {
+			return
+		}
+		select {
+		case <-stopCh:
 			return
 		default:
 		}
-		_, err := fs.GetFileChange(path)
-		close(readyCh)
+
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogInfo(fmt.Sprintf("WS reconnected, catch-up polling for: %s", path))
+		}
+		catchUp, err := fs.GetFileChange(path)
+		if err == nil && len(catchUp.Events) > 0 {
+			session := fs.Session
+			go func(evts []*FileChangeEvent) {
+				defer func() {
+					if r := recover(); r != nil {
+						if logger, ok := session.(internal.Logger); ok {
+							logger.LogError(fmt.Sprintf("Catch-up callback error: %v", r))
+						}
+					}
+				}()
+				callback(evts)
+			}(catchUp.Events)
+		}
+
+		// Re-subscribe
+		handle, err := wsClient.CallStream(
+			serverName,
+			map[string]interface{}{
+				"method": "subscribe_file_change",
+				"params": map[string]interface{}{"path": path},
+			},
+			nil, nil, nil,
+		)
 		if err != nil {
 			if logger, ok := fs.Session.(internal.Logger); ok {
-				logger.LogError(fmt.Sprintf("Error establishing baseline: %v", err))
+				logger.LogError(fmt.Sprintf("Re-subscribe failed: %v", err))
 			}
+			return
 		}
-
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-stopCh:
-				if logger, ok := fs.Session.(internal.Logger); ok {
-					logger.LogInfo(fmt.Sprintf("Stopped monitoring directory: %s", path))
-				}
-				return
-			case <-ticker.C:
-				result, err := fs.GetFileChange(path)
-				if err != nil {
-					if strings.Contains(err.Error(), "session not found or expired") {
-						if logger, ok := fs.Session.(internal.Logger); ok {
-							logger.LogWarn(fmt.Sprintf("Session expired, stopping directory monitoring: %s", path))
-						}
-						return
-					}
-					if logger, ok := fs.Session.(internal.Logger); ok {
-						logger.LogError(fmt.Sprintf("Error monitoring directory: %v", err))
-					}
-					continue
-				}
-
-				if len(result.Events) > 0 {
-					if logger, ok := fs.Session.(internal.Logger); ok {
-						logger.LogInfo(fmt.Sprintf("Detected %d file changes", len(result.Events)))
-						for _, event := range result.Events {
-							logger.LogDebug(fmt.Sprintf("  - %s", event.String()))
-						}
-					}
-
-					session := fs.Session
-					go func(events []*FileChangeEvent) {
-						defer func() {
-							if r := recover(); r != nil {
-								if logger, ok := session.(internal.Logger); ok {
-									logger.LogError(fmt.Sprintf("Error in callback function: %v", r))
-								}
-							}
-						}()
-						callback(events)
-					}(result.Events)
-				}
+		if _, err := handle.WaitEndWithTimeout(10 * time.Second); err != nil {
+			if logger, ok := fs.Session.(internal.Logger); ok {
+				logger.LogError(fmt.Sprintf("Re-subscribe timeout: %v", err))
 			}
+			return
 		}
-	}()
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogInfo(fmt.Sprintf("Resubscribed after reconnect for: %s", path))
+		}
+	})
 
-	return &wg, readyCh
+	// Subscribe via WsClient
+	handle, err := wsClient.CallStream(
+		serverName,
+		map[string]interface{}{
+			"method": "subscribe_file_change",
+			"params": map[string]interface{}{"path": path},
+		},
+		nil, nil, nil,
+	)
+	if err != nil {
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogWarn(fmt.Sprintf("WS push subscribe failed: %v. Falling back to polling.", err))
+		}
+		unsubscribePush()
+		unsubscribeState()
+		fs.pollingLoop(path, callback, interval, stopCh)
+		return
+	}
+	if _, err := handle.WaitEndWithTimeout(15 * time.Second); err != nil {
+		if logger, ok := fs.Session.(internal.Logger); ok {
+			logger.LogWarn(fmt.Sprintf("WS push subscribe timeout: %v. Falling back to polling.", err))
+		}
+		unsubscribePush()
+		unsubscribeState()
+		fs.pollingLoop(path, callback, interval, stopCh)
+		return
+	}
+	subscriptionActive = true
+
+	// Catch-up poll: fill the gap between baseline and subscribe
+	catchup, err := fs.GetFileChange(path)
+	if err == nil && len(catchup.Events) > 0 {
+		session := fs.Session
+		go func(evts []*FileChangeEvent) {
+			defer func() {
+				if r := recover(); r != nil {
+					if logger, ok := session.(internal.Logger); ok {
+						logger.LogError(fmt.Sprintf("Catch-up callback error: %v", r))
+					}
+				}
+			}()
+			callback(evts)
+		}(catchup.Events)
+	}
+
+	if logger, ok := fs.Session.(internal.Logger); ok {
+		logger.LogInfo(fmt.Sprintf("WS push monitoring active for: %s", path))
+	}
+
+	// Wait loop
+	pollTicker := time.NewTicker(1 * time.Second)
+	defer pollTicker.Stop()
+	for {
+		select {
+		case <-stopCh:
+			goto cleanup
+		case <-pollTicker.C:
+		}
+	}
+
+cleanup:
+	subscriptionActive = false
+	unsubscribePush()
+	unsubscribeState()
+	// Best-effort unsubscribe
+	_ = wsClient.SendMessage(serverName, map[string]interface{}{
+		"method": "unsubscribe_file_change",
+		"params": map[string]interface{}{"path": path},
+	})
+	if logger, ok := fs.Session.(internal.Logger); ok {
+		logger.LogInfo(fmt.Sprintf("Stopped WS push monitoring for: %s", path))
+	}
 }
 
 // FileTransferCapableSession extends the base session interface with methods
