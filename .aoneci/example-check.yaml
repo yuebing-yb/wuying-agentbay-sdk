@@ -29,21 +29,16 @@ traits:
         - 187788
         - WB02016330
       content: |
-        ---
-        - **Example Check Report**
-            - @${{git.repo}}
-            - **Branch**: ${{git.branch}}
-            - **Commit**: ${{git.commitId}}
-            - **Changed By**: ${{git.employeeId}}
-                      
         📝 **多语言示例检查报告**
-        
-        📊 **检查结果：** ${{jobs.example-check.outputs.example_summary}}
-        
-        **失败详情：**
-        ${{jobs.example-check.outputs.failed_examples}}
-        
-        💡 请查看CI详情页面获取AI分析和修复建议。
+        - 仓库: ${{git.repo}}
+        - 分支: ${{git.branch}}
+        - 提交: ${{git.commitId}}
+
+        📊 检查结果: ${{jobs.example-check.outputs.example_summary}}
+
+        失败详情: ${{jobs.example-check.outputs.failed_examples}}
+
+        💡 请查看CI详情页面获取详细日志。
 
 jobs:
   example-check:

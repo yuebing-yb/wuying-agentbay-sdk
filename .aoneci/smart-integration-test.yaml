@@ -37,21 +37,16 @@ traits:
         - 187788
         - WB02016330
       content: |
-        ---
-        - **Test Report**
-            - @${{git.repo}}
-            - **Branch**: ${{git.branch}}
-            - **Commit**: ${{git.commitId}}
-            - **Changed By**: ${{git.employeeId}}
-                      
         🤖 **智能集成测试报告**
-        
-        📊 **测试结果：** ${{jobs.smart-integration-test.outputs.test_summary}}
-        
-        **失败测试详情：**
-        ${{jobs.smart-integration-test.outputs.failed_tests}}
-        
-        💡 请查看CI详情页面获取AI分析和修复建议。
+        - 仓库: ${{git.repo}}
+        - 分支: ${{git.branch}}
+        - 提交: ${{git.commitId}}
+
+        📊 测试结果: ${{jobs.smart-integration-test.outputs.test_summary}}
+
+        失败测试详情: ${{jobs.smart-integration-test.outputs.failed_tests}}
+
+        💡 请查看CI详情页面获取详细日志。
 
 jobs:
   smart-integration-test:
