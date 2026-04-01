@@ -117,23 +117,23 @@ jobs:
           if [ "${{params.python}}" == "true" ]; then
             echo "=== Running Python Checks ==="
             set +e
-            python scripts/check_examples.py --lang python
+            python scripts/check_examples.py --lang python --ci-stable
             if [ $? -ne 0 ]; then FAILED=true; fi
             set -e
           fi
-          
+
           if [ "${{params.typescript}}" == "true" ]; then
             echo "=== Running TypeScript Checks ==="
             set +e
-            python scripts/check_examples.py --lang typescript
+            python scripts/check_examples.py --lang typescript --ci-stable
             if [ $? -ne 0 ]; then FAILED=true; fi
             set -e
           fi
-          
+
           if [ "${{params.golang}}" == "true" ]; then
             echo "=== Running Golang Checks ==="
             set +e
-            python scripts/check_examples.py --lang golang
+            python scripts/check_examples.py --lang golang --ci-stable
             if [ $? -ne 0 ]; then FAILED=true; fi
             set -e
           fi
