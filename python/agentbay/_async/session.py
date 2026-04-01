@@ -157,6 +157,10 @@ class AsyncSession:
 
         self.agent = AsyncAgent(self)
 
+        # Initialize Git module
+        from .git.git import AsyncGit
+        self.git = AsyncGit(self)
+
     def _get_link_http_client(self) -> httpx.AsyncClient:
         """Internal: get or create a shared HTTP client for LinkUrl calls."""
         if self._link_http_client is None:

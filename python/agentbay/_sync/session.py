@@ -159,6 +159,10 @@ class Session:
 
         self.agent = Agent(self)
 
+        # Initialize Git module
+        from .git.git import SyncGit
+        self.git = SyncGit(self)
+
     def _get_link_http_client(self) -> httpx.Client:
         """Internal: get or create a shared HTTP client for LinkUrl calls."""
         if self._link_http_client is None:
@@ -1489,8 +1493,7 @@ class Session:
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
-                    session_result = self.agent_bay._get_session(
-                        self.session_id)
+                    session_result = self.agent_bay._get_session(self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         poll_request_id = session_result.request_id
@@ -1600,8 +1603,7 @@ class Session:
             start_time = time.time()
             while time.time() - start_time < timeout:
                 try:
-                    session_result = self.agent_bay._get_session(
-                        self.session_id)
+                    session_result = self.agent_bay._get_session(self.session_id)
                     if session_result.success and session_result.data:
                         status = session_result.data.status
                         poll_request_id = session_result.request_id
