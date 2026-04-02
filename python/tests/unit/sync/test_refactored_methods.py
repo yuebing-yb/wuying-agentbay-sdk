@@ -13,7 +13,7 @@ sys.path.append(
 )
 
 
-class TestAsyncRefactoredMethods(unittest.TestCase):
+class TestSyncRefactoredMethods(unittest.TestCase):
     """Test cases for refactored methods in AgentBay class."""
 
     def setUp(self):

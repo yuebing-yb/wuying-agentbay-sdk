@@ -354,7 +354,6 @@ export interface GitResetOpts {
 export interface GitRestoreOpts {
   /**
    * File paths to restore. Required. Use ['.'] to restore all files.
-   * (paths moved from method parameter to opts, matching E2B)
    */
   paths: string[];
   /**

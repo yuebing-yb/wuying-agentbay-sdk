@@ -807,6 +807,40 @@ def generate_sync():
                     content = re.sub(r'if inspect\.iscoroutine\([^)]+\):', 'if False:  # Sync version - no coroutines', content)
                     content = re.sub(r'pytest\.fail\("([^"]*should return a coroutine[^"]*)"\)', r'assert True  # Sync version - \1', content)
 
+                    # Replace test class names: TestAsync* -> TestSync*
+                    # This handles all test classes like TestAsyncGitHelpers -> TestSyncGitHelpers,
+                    # TestAsyncCommand -> TestSyncCommand, etc.
+                    content = re.sub(r'\bTestAsync(\w+)', r'TestSync\1', content)
+
+                    # Fix duplicate MagicMock imports caused by AsyncMock -> MagicMock replacement
+                    # e.g., "from unittest.mock import MagicMock, MagicMock" -> "from unittest.mock import MagicMock"
+                    content = re.sub(r'\bMagicMock,\s*MagicMock\b', 'MagicMock', content)
+
+                    # Replace descriptive "Async" text in docstrings and comments
+                    # e.g., "AsyncGit module" -> "SyncGit module", "AsyncCommand" -> "SyncCommand"
+                    # Uses negative lookbehind to avoid matching API model names like DeleteSessionAsyncRequest
+                    content = re.sub(
+                        r'(?<!\w)Async(Git|Command|Code|FileSystem|FileTransfer|Session|Browser|Computer|Mobile|Oss|Agent|Network|Context|ContextManager|ContextService|MobileSimulate|MobileSimulateService|BrowserOperator|BetaNetwork|BetaSkills|BaseService|Skills|Extensions|ExtensionsService)\b(?!\w*(?:Request|Response|Body))',
+                        r'Sync\1',
+                        content
+                    )
+
+                    # Replace "Asynchronously" -> "Synchronously" in docstrings/comments
+                    content = content.replace("Asynchronously ", "Synchronously ")
+                    content = content.replace("asynchronously", "synchronously")
+                    content = content.replace("Asynchronous ", "Synchronous ")
+                    content = content.replace("asynchronous ", "synchronous ")
+
+                    # Replace remaining descriptive "Async" in docstrings/comments
+                    # These are generic phrases that should not appear in sync code
+                    content = content.replace("Async version of ", "Sync version of ")
+                    content = content.replace("Async API call", "Sync API call")
+                    content = content.replace("Async call", "Sync call")
+                    content = content.replace("Async stub ", "Sync stub ")
+                    content = content.replace("Async command execution service", "Sync command execution service")
+                    content = content.replace("Async Skills service", "Sync Skills service")
+                    content = content.replace("\"\"\"Async ", "\"\"\"Sync ")
+
                     # Remove unused asyncio import (usage-aware). Run late because earlier
                     # replacements may remove asyncio usages (e.g. filesystem monitor helpers).
                     content = _remove_unused_import_asyncio(content)

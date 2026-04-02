@@ -20,7 +20,7 @@ from agentbay import (
 )
 
 
-class TestAsyncSyncPolicy(unittest.TestCase):
+class TestSyncSyncPolicy(unittest.TestCase):
     """Test SyncPolicy class functionality."""
 
     @pytest.mark.sync
@@ -149,7 +149,7 @@ class TestAsyncSyncPolicy(unittest.TestCase):
         self.assertEqual(result["bwList"]["whiteLists"][0]["excludePaths"], [])
 
 
-class TestAsyncMappingPolicy(unittest.TestCase):
+class TestSyncMappingPolicy(unittest.TestCase):
     """Test MappingPolicy class functionality."""
 
     @pytest.mark.sync
@@ -182,7 +182,7 @@ class TestAsyncMappingPolicy(unittest.TestCase):
         self.assertEqual(result["path"], windows_path)
 
 
-class TestAsyncSyncPolicyWithMappingPolicy(unittest.TestCase):
+class TestSyncSyncPolicyWithMappingPolicy(unittest.TestCase):
     """Test SyncPolicy with MappingPolicy functionality."""
 
     @pytest.mark.sync
@@ -220,7 +220,7 @@ class TestAsyncSyncPolicyWithMappingPolicy(unittest.TestCase):
         self.assertEqual(result["mappingPolicy"]["path"], windows_path)
 
 
-class TestAsyncContextSyncWithMappingPolicy(unittest.TestCase):
+class TestSyncContextSyncWithMappingPolicy(unittest.TestCase):
     """Test ContextSync with MappingPolicy functionality."""
 
     @pytest.mark.sync

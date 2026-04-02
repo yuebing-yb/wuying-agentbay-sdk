@@ -4,7 +4,7 @@ package com.aliyun.agentbay.git;
  * Thrown when the git executable is not found or not installed in the
  * remote session environment.
  *
- * <p>Ensure the session image includes git (e.g., {@code ubuntu-2204}).
+ * <p>Ensure the session image includes git (e.g., {@code code_latest}).
  */
 public class GitNotFoundError extends GitError {
 

@@ -380,7 +380,7 @@ class LocalSession(Session):
         connect_timeout: int = None,
     ):
         """
-        Async stub for local mode. Keeps call signature compatible with the async
+        Sync stub for local mode. Keeps call signature compatible with the async
         browser agent, which awaits session.call_mcp_tool. We return a real
         OperationResult instance to avoid 'OperationResult' errors.
         """

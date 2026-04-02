@@ -1,5 +1,5 @@
 """
-Unit tests for AsyncGit module.
+Unit tests for SyncGit module.
 
 This module contains comprehensive unit tests for:
 - Private helper methods (_shell_escape, _build_git_command, _get_stdout, _get_stderr)
@@ -14,7 +14,7 @@ This module contains comprehensive unit tests for:
 import unittest
 
 import pytest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 from agentbay._sync.git.git import SyncGit
 from agentbay._common.exceptions import (
@@ -41,7 +41,7 @@ from agentbay._common.models.git import (
 
 
 class DummySession:
-    """Minimal mock session for AsyncGit unit tests."""
+    """Minimal mock session for SyncGit unit tests."""
 
     def __init__(self):
         self.command = MagicMock()
@@ -75,7 +75,7 @@ def _fail(stderr="", exit_code=1, output="", error_message=""):
 # =========================================================================
 
 
-class TestAsyncGitHelpers(unittest.TestCase):
+class TestSyncGitHelpers(unittest.TestCase):
     """Tests for static / instance helper methods."""
 
     # -- _shell_escape -----------------------------------------------------
@@ -176,12 +176,15 @@ class TestAsyncGitHelpers(unittest.TestCase):
         assert SyncGit._derive_status("C", " ") == "copied"
 
     def test_derive_status_deleted(self):
+        """Test that index status 'D' (deleted in staging area) maps to 'deleted'."""
         assert SyncGit._derive_status("D", " ") == "deleted"
 
     def test_derive_status_added(self):
+        """Test that index status 'A' (added to staging area) maps to 'added'."""
         assert SyncGit._derive_status("A", " ") == "added"
 
     def test_derive_status_modified(self):
+        """Test that worktree status 'M' (modified in working tree) maps to 'modified'."""
         assert SyncGit._derive_status(" ", "M") == "modified"
 
     def test_derive_status_typechange(self):
@@ -191,6 +194,7 @@ class TestAsyncGitHelpers(unittest.TestCase):
         assert SyncGit._derive_status("?", "?") == "untracked"
 
     def test_derive_status_unknown(self):
+        """Test that two empty spaces (no index or worktree changes) maps to 'unknown'."""
         assert SyncGit._derive_status(" ", " ") == "unknown"
 
 
@@ -199,7 +203,7 @@ class TestAsyncGitHelpers(unittest.TestCase):
 # =========================================================================
 
 
-class TestAsyncGitParsers(unittest.TestCase):
+class TestSyncGitParsers(unittest.TestCase):
     """Tests for _parse_git_status, _parse_git_log, _parse_git_branches."""
 
     # -- _parse_git_status -------------------------------------------------
@@ -370,7 +374,7 @@ class TestAsyncGitParsers(unittest.TestCase):
 # =========================================================================
 
 
-class TestAsyncGitClassifyError(unittest.TestCase):
+class TestSyncGitClassifyError(unittest.TestCase):
     """Tests for _classify_error method."""
 
     def setUp(self):
@@ -459,7 +463,7 @@ class TestAsyncGitClassifyError(unittest.TestCase):
 # =========================================================================
 
 
-class TestAsyncGitAvailability(unittest.TestCase):
+class TestSyncGitAvailability(unittest.TestCase):
     """Tests for _ensure_git_available."""
 
     @pytest.mark.sync
@@ -496,7 +500,7 @@ class TestAsyncGitAvailability(unittest.TestCase):
 # =========================================================================
 
 
-class TestAsyncGitClone(unittest.TestCase):
+class TestSyncGitClone(unittest.TestCase):
     """Tests for clone()."""
 
     def setUp(self):
@@ -586,7 +590,7 @@ class TestAsyncGitClone(unittest.TestCase):
         with pytest.raises(GitError):
             self.git.clone("https://github.com/user/repo.git")
 
-class TestAsyncGitInit(unittest.TestCase):
+class TestSyncGitInit(unittest.TestCase):
     """Tests for init()."""
 
     def setUp(self):
@@ -626,7 +630,7 @@ class TestAsyncGitInit(unittest.TestCase):
             self.git.init("/tmp/repo")
 
 
-class TestAsyncGitAdd(unittest.TestCase):
+class TestSyncGitAdd(unittest.TestCase):
     """Tests for add()."""
 
     def setUp(self):
@@ -667,7 +671,7 @@ class TestAsyncGitAdd(unittest.TestCase):
             self.git.add("/not-a-repo")
 
 
-class TestAsyncGitCommit(unittest.TestCase):
+class TestSyncGitCommit(unittest.TestCase):
     """Tests for commit()."""
 
     def setUp(self):
@@ -726,7 +730,7 @@ class TestAsyncGitCommit(unittest.TestCase):
         with pytest.raises(GitError):
             self.git.commit("/repo", "msg")
 
-class TestAsyncGitStatus(unittest.TestCase):
+class TestSyncGitStatus(unittest.TestCase):
     """Tests for status()."""
 
     def setUp(self):
@@ -761,7 +765,7 @@ class TestAsyncGitStatus(unittest.TestCase):
             self.git.status("/not-a-repo")
 
 
-class TestAsyncGitLog(unittest.TestCase):
+class TestSyncGitLog(unittest.TestCase):
     """Tests for log()."""
 
     def setUp(self):
@@ -794,7 +798,7 @@ class TestAsyncGitLog(unittest.TestCase):
             self.git.log("/repo")
 
 
-class TestAsyncGitBranches(unittest.TestCase):
+class TestSyncGitBranches(unittest.TestCase):
     """Tests for list_branches, create_branch, checkout_branch, delete_branch."""
 
     def setUp(self):
@@ -886,7 +890,7 @@ class TestAsyncGitBranches(unittest.TestCase):
             self.git.delete_branch("/repo", "main")
 
 
-class TestAsyncGitRemote(unittest.TestCase):
+class TestSyncGitRemote(unittest.TestCase):
     """Tests for remote_add and remote_get."""
 
     def setUp(self):
@@ -1001,7 +1005,7 @@ class TestAsyncGitRemote(unittest.TestCase):
         assert "'--hard'" in cmd
         assert "'HEAD~2'" in cmd
 
-class TestAsyncGitRestore(unittest.TestCase):
+class TestSyncGitRestore(unittest.TestCase):
     """Tests for restore()."""
 
     def setUp(self):
@@ -1050,7 +1054,7 @@ class TestAsyncGitRestore(unittest.TestCase):
             self.git.restore("/repo", ["file.txt"])
 
 
-class TestAsyncGitPull(unittest.TestCase):
+class TestSyncGitPull(unittest.TestCase):
     """Tests for pull()."""
 
     def setUp(self):
@@ -1089,7 +1093,7 @@ class TestAsyncGitPull(unittest.TestCase):
         assert kwargs["timeout_ms"] == 120000
 
 
-class TestAsyncGitConfig(unittest.TestCase):
+class TestSyncGitConfig(unittest.TestCase):
     """Tests for configure_user, set_config, get_config."""
 
     def setUp(self):

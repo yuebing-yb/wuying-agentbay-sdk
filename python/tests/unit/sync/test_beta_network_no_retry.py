@@ -1,12 +1,12 @@
 import os
 import pytest
 import unittest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import AgentBay, Config
 
 
-class TestAsyncBetaNetworkNoRetry(unittest.TestCase):
+class TestSyncBetaNetworkNoRetry(unittest.TestCase):
     """Test beta network bind token without retry."""
 
     @patch.dict(os.environ, {"AGENTBAY_API_KEY": "test-api-key"})

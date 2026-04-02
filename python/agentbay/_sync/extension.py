@@ -31,7 +31,7 @@ _logger = get_logger("extension")
 
 class ExtensionsService:
     """
-    Provides methods to manage user browser extensions asynchronously.
+    Provides methods to manage user browser extensions synchronously.
     This service integrates with the existing context functionality for file operations.
 
     **Usage** (Simplified - Auto-detection):

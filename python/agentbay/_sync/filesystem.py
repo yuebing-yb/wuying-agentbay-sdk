@@ -633,10 +633,10 @@ class FileSystem(BaseService):
 
     def _ensure_file_transfer(self) -> FileTransfer:
         """
-        Ensure AsyncFileTransfer is initialized with the current session.
+        Ensure SyncFileTransfer is initialized with the current session.
 
         Returns:
-            AsyncFileTransfer: The AsyncFileTransfer instance
+            SyncFileTransfer: The SyncFileTransfer instance
         """
         if self._file_transfer is None:
             # Get the agent_bay instance from the session

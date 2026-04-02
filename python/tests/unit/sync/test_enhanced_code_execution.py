@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 from agentbay import Code, McpToolResult
 from agentbay import (

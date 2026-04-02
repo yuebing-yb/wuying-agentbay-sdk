@@ -74,7 +74,7 @@ class BrowserOperator(BaseService):
         timeout: Optional[int] = None,
     ) -> str:
         """
-        Asynchronously takes a screenshot of the specified page.
+        Synchronously takes a screenshot of the specified page.
 
         Args:
             page (Optional[Page]): The Playwright Page object to take a screenshot of. If None,
@@ -125,7 +125,7 @@ class BrowserOperator(BaseService):
 
     def close(self) -> bool:
         """
-        Asynchronously closes the remote browser operator session.
+        Synchronously closes the remote browser operator session.
         This will terminate the browser process managed by the operator.
         """
         try:
@@ -147,7 +147,7 @@ class BrowserOperator(BaseService):
         page=None,
     ) -> "ActResult":
         """
-        Asynchronously perform an action on a web page.
+        Synchronously perform an action on a web page.
 
         Args:
             page (Optional[Page]): The Playwright Page object to act on. If None, the operator's
@@ -357,7 +357,7 @@ class BrowserOperator(BaseService):
         page=None,
     ) -> Tuple[bool, List[ObserveResult]]:
         """
-        Asynchronously observe elements or state on a web page.
+        Synchronously observe elements or state on a web page.
 
         Args:
             page (Optional[Page]): The Playwright Page object to observe. If None, the operator's
@@ -542,7 +542,7 @@ class BrowserOperator(BaseService):
         page=None,
     ) -> Tuple[bool, T]:
         """
-        Asynchronously extract information from a web page.
+        Synchronously extract information from a web page.
 
         Args:
             page (Optional[Page]): The Playwright Page object to extract from. If None, the operator's
@@ -711,7 +711,7 @@ class BrowserOperator(BaseService):
         use_vision: Optional[bool] = False,
     ) -> "ActResult":
         """
-        Asynchronously perform a login operation on a web page.
+        Synchronously perform a login operation on a web page.
 
         Args:
             login_config (str): A JSON string containing login configuration,
@@ -752,7 +752,7 @@ class BrowserOperator(BaseService):
 
     def _get_page_and_context_index(self, page):
         """
-        Async version of _get_page_and_context_index for getting page and context indices asynchronously.
+        Sync version of _get_page_and_context_index for getting page and context indices synchronously.
         Args:
             page: Playwright Page object
         Returns:
@@ -798,7 +798,7 @@ class BrowserOperator(BaseService):
         """
         Call MCP tool with timeout.
         """
-        # AsyncBaseService.session.call_mcp_tool is async
+        # SyncBaseService.session.call_mcp_tool is async
         return self.session.call_mcp_tool(
             name,
             args,

@@ -63,7 +63,7 @@ _logger = get_logger("agentbay")
 class AgentBay:
     """
     AgentBay represents the main client for interacting with the AgentBay cloud runtime
-    environment asynchronously.
+    environment synchronously.
     """
 
     def __init__(
@@ -281,7 +281,7 @@ class AgentBay:
             params: Parameters for creating the session
 
         Returns:
-            AsyncSession: Built Session object
+            SyncSession: Built Session object
         """
         session_id = response_data.get("SessionId")
         if not session_id:
@@ -347,7 +347,7 @@ class AgentBay:
         wait_context_ids: Optional[set[str]] = None,
     ) -> None:
         """
-        Wait for context synchronization to complete asynchronously.
+        Wait for context synchronization to complete synchronously.
 
         Uses exponential backoff to balance between quick response and server load:
         - Starts with short intervals (0.5s) for fast completion detection
@@ -463,7 +463,7 @@ class AgentBay:
         mobile_sim_mode: Optional[str] = None,
     ) -> None:
         """
-        Wait for mobile simulate command to complete asynchronously.
+        Wait for mobile simulate command to complete synchronously.
 
         Args:
             session: The session to wait for mobile simulate
@@ -550,7 +550,7 @@ class AgentBay:
         self, params: Optional[CreateSessionParams] = None
     ) -> SessionResult:
         """
-        Create a new session in the AgentBay cloud environment asynchronously.
+        Create a new session in the AgentBay cloud environment synchronously.
 
         Args:
             params (Optional[CreateSessionParams], optional): Parameters for creating the session.
@@ -559,7 +559,7 @@ class AgentBay:
         Returns:
             SessionResult: Result containing the created session and request ID.
                 - success (bool): True if the operation succeeded
-                - session (AsyncSession): The created session object (if success is True)
+                - session (SyncSession): The created session object (if success is True)
                 - request_id (str): Unique identifier for this API request
                 - error_message (str): Error description (if success is False)
 
@@ -860,7 +860,7 @@ class AgentBay:
         status: Optional[str] = None,
     ) -> SessionListResult:
         """
-        Returns paginated list of session IDs filtered by labels asynchronously.
+        Returns paginated list of session IDs filtered by labels synchronously.
 
         Args:
             labels (Optional[Dict[str, str]], optional): Labels to filter sessions.
@@ -926,7 +926,7 @@ class AgentBay:
                     if next_token:
                         request.next_token = next_token
 
-                    # Async API call
+                    # Sync API call
                     response = self.client.list_session(request)
                     request_id = extract_request_id(response)
                     response_map = response.to_map()
@@ -978,7 +978,7 @@ class AgentBay:
                 request_details += f", Status={status}"
             _log_api_call("list_session", request_details)
 
-            # Make the API call asynchronously
+            # Make the API call synchronously
             response = self.client.list_session(request)
 
             # Extract request ID
@@ -1073,10 +1073,10 @@ class AgentBay:
         self, session: Session, sync_context: bool = False
     ) -> DeleteResult:
         """
-        Delete a session by session object asynchronously.
+        Delete a session by session object synchronously.
 
         Args:
-            session (AsyncSession): The session to delete.
+            session (SyncSession): The session to delete.
             sync_context (bool): Whether to sync context data (trigger file uploads)
                 before deleting the session. Defaults to False.
 
@@ -1103,7 +1103,7 @@ class AgentBay:
 
     def _get_session(self, session_id: str) -> GetSessionResult:
         """
-        Get session information by session ID asynchronously.
+        Get session information by session ID synchronously.
 
         This method retrieves detailed session metadata from the API. Unlike `get()`,
         this returns raw session data without creating a Session object.
@@ -1119,7 +1119,7 @@ class AgentBay:
             request = GetSessionRequest(
                 authorization=f"Bearer {self.api_key}", session_id=session_id
             )
-            # Async API call
+            # Sync API call
             response = self.client.get_session(request)
 
             request_id = extract_request_id(response)
@@ -1234,7 +1234,7 @@ class AgentBay:
 
     def get(self, session_id: str) -> SessionResult:
         """
-        Get a session by its ID asynchronously.
+        Get a session by its ID synchronously.
 
         Args:
             session_id (str): The ID of the session to retrieve. Must be a non-empty string.
@@ -1285,7 +1285,7 @@ class AgentBay:
         self, session: Session, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionPauseResult:
         """
-        Asynchronously pause a session (beta), putting it into a dormant state.
+        Synchronously pause a session (beta), putting it into a dormant state.
 
         Note:
             This feature is currently in whitelist-only access.
@@ -1305,7 +1305,7 @@ class AgentBay:
         self, session: Session, timeout: int = 600, poll_interval: float = 2.0
     ) -> SessionResumeResult:
         """
-        Asynchronously resume a session (beta) from a paused state.
+        Synchronously resume a session (beta) from a paused state.
         """
         try:
             return session.beta_resume(timeout, poll_interval)

@@ -176,12 +176,15 @@ class TestAsyncGitHelpers(unittest.TestCase):
         assert AsyncGit._derive_status("C", " ") == "copied"
 
     def test_derive_status_deleted(self):
+        """Test that index status 'D' (deleted in staging area) maps to 'deleted'."""
         assert AsyncGit._derive_status("D", " ") == "deleted"
 
     def test_derive_status_added(self):
+        """Test that index status 'A' (added to staging area) maps to 'added'."""
         assert AsyncGit._derive_status("A", " ") == "added"
 
     def test_derive_status_modified(self):
+        """Test that worktree status 'M' (modified in working tree) maps to 'modified'."""
         assert AsyncGit._derive_status(" ", "M") == "modified"
 
     def test_derive_status_typechange(self):
@@ -191,6 +194,7 @@ class TestAsyncGitHelpers(unittest.TestCase):
         assert AsyncGit._derive_status("?", "?") == "untracked"
 
     def test_derive_status_unknown(self):
+        """Test that two empty spaces (no index or worktree changes) maps to 'unknown'."""
         assert AsyncGit._derive_status(" ", " ") == "unknown"
 
 

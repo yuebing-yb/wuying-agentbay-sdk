@@ -1,5 +1,5 @@
 """
-Unit tests for tool list propagation into AsyncSession.
+Unit tests for tool list propagation into SyncSession.
 """
 
 import json

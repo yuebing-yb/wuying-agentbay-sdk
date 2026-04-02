@@ -2,7 +2,7 @@
 """
 Unit tests for GetCdpLink and GetAdbLink API methods
 """
-from unittest.mock import MagicMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from alibabacloud_tea_openapi import utils_models as open_api_util_models

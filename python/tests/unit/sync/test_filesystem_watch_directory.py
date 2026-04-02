@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, Mock, patch
 from agentbay import FileChangeEvent, FileChangeResult, FileSystem
 
 
-class TestAsyncFileChangeEvent(unittest.TestCase):
+class TestSyncFileChangeEvent(unittest.TestCase):
     """Test FileChangeEvent class."""
 
     @pytest.mark.sync
@@ -84,7 +84,7 @@ class TestAsyncFileChangeEvent(unittest.TestCase):
         self.assertEqual(event.path_type, "")
 
 
-class TestAsyncFileChangeResult(unittest.TestCase):
+class TestSyncFileChangeResult(unittest.TestCase):
     """Test FileChangeResult class."""
 
     @pytest.mark.sync
@@ -180,7 +180,7 @@ class TestAsyncFileChangeResult(unittest.TestCase):
         self.assertEqual(deleted_files, expected)
 
 
-class TestAsyncFileSystemWatchDirectory(unittest.TestCase):
+class TestSyncFileSystemWatchDirectory(unittest.TestCase):
     """Test FileSystem watch_directory functionality."""
 
     def setUp(self):

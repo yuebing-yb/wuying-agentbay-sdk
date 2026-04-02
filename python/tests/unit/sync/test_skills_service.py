@@ -1,7 +1,7 @@
 """Unit tests for BetaSkillsService (get_metadata)."""
 
 import pytest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 
 @pytest.mark.sync

@@ -1,6 +1,6 @@
 import os
 import pytest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import AgentBay
 from agentbay import SessionResult

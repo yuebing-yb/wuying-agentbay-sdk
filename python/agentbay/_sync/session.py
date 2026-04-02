@@ -112,7 +112,7 @@ class SessionInfo:
 
 class Session:
     """
-    AsyncSession represents a session in the AgentBay cloud environment.
+    SyncSession represents a session in the AgentBay cloud environment.
     """
 
     def __init__(self, agent_bay: "AgentBay", session_id: str):
@@ -290,7 +290,7 @@ class Session:
 
     def get_status(self) -> "SessionStatusResult":
         """
-        Get basic session status asynchronously.
+        Get basic session status synchronously.
 
         Returns:
             SessionStatusResult: Result containing session status only.
@@ -682,7 +682,7 @@ class Session:
 
     def set_labels(self, labels: Dict[str, str]) -> OperationResult:
         """
-        Sets the labels for this session asynchronously.
+        Sets the labels for this session synchronously.
         """
         try:
             # Validate labels using the extracted validation function
@@ -725,7 +725,7 @@ class Session:
 
     def get_labels(self) -> OperationResult:
         """
-        Gets the labels for this session asynchronously.
+        Gets the labels for this session synchronously.
         """
         try:
             request = GetLabelRequest(
@@ -769,7 +769,7 @@ class Session:
 
     def info(self) -> OperationResult:
         """
-        Get detailed information about this session asynchronously.
+        Get detailed information about this session synchronously.
         """
         try:
             request = GetMcpResourceRequest(
@@ -868,7 +868,7 @@ class Session:
         options: Optional[str] = None,
     ) -> OperationResult:
         """
-        Asynchronously get a link associated with the current session.
+        Synchronously get a link associated with the current session.
         """
         try:
             # Log API call with parameters
@@ -942,7 +942,7 @@ class Session:
 
     def list_mcp_tools(self, image_id: Optional[str] = None):
         """
-        List MCP tools available for this session asynchronously.
+        List MCP tools available for this session synchronously.
         """
         from .._common.models.response import McpToolsResult
         from .._common.models.mcp_tool import McpTool
@@ -1017,7 +1017,7 @@ class Session:
         auto_gen_session: bool = False,
     ):
         """
-        Call an MCP tool directly asynchronously.
+        Call an MCP tool directly synchronously.
         """
         try:
             # Normalize press_keys arguments for better case compatibility
@@ -1303,7 +1303,7 @@ class Session:
         server_name: str = "",
     ):
         """
-        Handle traditional API-based MCP tool calls asynchronously.
+        Handle traditional API-based MCP tool calls synchronously.
         """
         _log_api_call(
             "CallMcpTool",

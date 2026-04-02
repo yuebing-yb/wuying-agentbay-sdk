@@ -58,9 +58,13 @@ public class GitIntegrationTest {
     public static void tearDown() {
         System.out.println("Cleaning up: Deleting the session...");
         try {
-            // Clean up test repo
-            session.getCommand().executeCommand("rm -rf " + TEST_REPO_PATH, 5000);
-            agentBay.delete(session, false);
+            if (session != null) {
+                // Clean up test repo
+                session.getCommand().executeCommand("rm -rf " + TEST_REPO_PATH, 5000);
+            }
+            if (agentBay != null && session != null) {
+                agentBay.delete(session, false);
+            }
         } catch (Exception e) {
             System.out.println("Warning: Error during cleanup: " + e.getMessage());
         }

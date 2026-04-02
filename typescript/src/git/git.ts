@@ -373,7 +373,7 @@ export class Git {
     args.push(targetPath);
 
     const result = await this.runGit(args, undefined, {
-      timeoutMs: opts?.timeoutMs || DEFAULT_CLONE_TIMEOUT_MS,
+      timeoutMs: opts?.timeoutMs ?? DEFAULT_CLONE_TIMEOUT_MS,
     });
 
     if (!result.success) {

@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import OperationResult
 from agentbay import Command
@@ -25,7 +25,7 @@ class DummySession:
         return self.client
 
 
-class TestAsyncCommand(unittest.TestCase):
+class TestSyncCommand(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
         self.command = Command(self.session)

@@ -7,7 +7,7 @@ Verifies that:
 """
 
 import unittest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 import httpx
 import pytest
 

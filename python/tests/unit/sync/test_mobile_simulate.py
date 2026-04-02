@@ -1,7 +1,7 @@
 import json
 import pytest
 import unittest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import (
     MobileSimulateService,
@@ -30,7 +30,7 @@ class TestMobileSimulateUploadResult(unittest.TestCase):
         self.assertEqual(result.error_message, "Upload failed")
 
 
-class TestAsyncMobileSimulateService(unittest.TestCase):
+class TestSyncMobileSimulateService(unittest.TestCase):
     def setUp(self):
         self.agent_bay = MagicMock()
         self.agent_bay.context = MagicMock()

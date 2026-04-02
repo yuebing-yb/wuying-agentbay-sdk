@@ -1,18 +1,18 @@
 """
-Test to verify AsyncFileSystem methods are truly async.
+Test to verify SyncFileSystem methods are truly async.
 This test should FAIL before the fix and PASS after.
 """
 
 import inspect
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
 from agentbay import FileSystem
 
 
-class TestAsyncFileSystemBugVerification:
-    """Verify that AsyncFileSystem methods are properly async."""
+class TestSyncFileSystemBugVerification:
+    """Verify that SyncFileSystem methods are properly async."""
 
     def test_methods_are_async_functions(self):
         """Verify all file operation methods are async functions."""

@@ -1,5 +1,7 @@
 package com.aliyun.agentbay.git;
 
+import java.util.Objects;
+
 /**
  * Status information for a single file in a git repository.
  *
@@ -37,8 +39,8 @@ public class GitFileStatus {
      * @param renamedFrom    original path before rename, or {@code null}
      */
     public GitFileStatus(String path, String status, String indexStatus, String workTreeStatus, boolean staged, String renamedFrom) {
-        this.path = path;
-        this.status = status;
+        this.path = Objects.requireNonNull(path, "path must not be null");
+        this.status = Objects.requireNonNull(status, "status must not be null");
         this.indexStatus = indexStatus;
         this.workTreeStatus = workTreeStatus;
         this.staged = staged;
@@ -99,5 +101,10 @@ public class GitFileStatus {
      */
     public String getRenamedFrom() {
         return renamedFrom;
+    }
+
+    @Override
+    public String toString() {
+        return "GitFileStatus{path='" + path + "', status='" + status + "', staged=" + staged + "}";
     }
 }

@@ -1,5 +1,5 @@
 """
-Unit tests for AsyncSession.get_metrics() public API.
+Unit tests for SyncSession.get_metrics() public API.
 
 This test suite follows TDD principles:
 1. Write tests first (red)
@@ -10,7 +10,7 @@ This test suite follows TDD principles:
 import json
 import pytest
 import unittest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 
 class DummyAgentBay:
@@ -27,8 +27,8 @@ class DummyAgentBay:
         return self.client
 
 
-class TestAsyncSessionGetMetrics(unittest.TestCase):
-    """Test cases for AsyncSession.get_metrics()."""
+class TestSyncSessionGetMetrics(unittest.TestCase):
+    """Test cases for SyncSession.get_metrics()."""
 
     def setUp(self):
         from agentbay import Session

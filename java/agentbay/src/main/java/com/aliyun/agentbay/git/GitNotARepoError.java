@@ -3,9 +3,9 @@ package com.aliyun.agentbay.git;
 /**
  * Thrown when a git operation targets a directory that is not a git repository.
  *
- * <p>This typically occurs when a command like {@code status} or {@code log}
- * is run against a path that has not been initialized with {@code git init}
- * or cloned.
+ * <p>This typically occurs when a command like {@code status}, {@code log},
+ * {@code add}, or {@code commit} is run against a path that has not been
+ * initialized with {@code git init} or cloned.
  */
 public class GitNotARepoError extends GitError {
 

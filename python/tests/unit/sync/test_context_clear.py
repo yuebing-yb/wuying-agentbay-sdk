@@ -3,7 +3,7 @@
 import time
 import pytest
 import unittest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import AgentBayError, ClearanceTimeoutError
 from agentbay import ClearContextResult, ContextService
@@ -16,7 +16,7 @@ from agentbay.api.models import (
 from agentbay.api.models._get_context_response_body import GetContextResponseBodyData
 
 
-class TestAsyncContextClear(unittest.TestCase):
+class TestSyncContextClear(unittest.TestCase):
     """Test suite for Context clear operations."""
 
     def setUp(self):
@@ -449,7 +449,7 @@ class TestAsyncContextClear(unittest.TestCase):
             self.assertEqual(result.status, "available")
 
 
-class TestAsyncClearContextResult(unittest.TestCase):
+class TestSyncClearContextResult(unittest.TestCase):
     """Test suite for ClearContextResult class."""
 
     @pytest.mark.sync

@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 

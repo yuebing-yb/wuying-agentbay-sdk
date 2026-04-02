@@ -19,8 +19,8 @@ type GitCommitResult struct {
 type GitFileStatus struct {
 	Path            string
 	Status          string // Combined status: "added", "modified", "deleted", "renamed", "copied", "typechange", "untracked", "conflict", "unknown"
-	IndexStatus     string // X in porcelain status output
-	WorkTreeStatus  string // Y in porcelain status output
+	IndexStatus     string // X in porcelain status output (' '=unmodified, M=modified, A=added, D=deleted, R=renamed, C=copied, U=unmerged, ?=untracked)
+	WorkTreeStatus  string // Y in porcelain status output (' '=unmodified, M=modified, A=added, D=deleted, R=renamed, C=copied, U=unmerged, ?=untracked)
 	Staged          bool
 	RenamedFrom     string
 }
@@ -115,7 +115,7 @@ type GitLogEntry struct {
 	ShortHash   string
 	AuthorName  string
 	AuthorEmail string
-	Date        string
+	Date        string // ISO 8601 format: 2006-01-02T15:04:05Z07:00
 	Message     string
 }
 

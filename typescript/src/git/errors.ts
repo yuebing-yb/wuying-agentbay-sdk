@@ -5,8 +5,8 @@ import { AgentBayError } from "../exceptions";
  * Contains the exit code and stderr from the git command.
  */
 export class GitError extends AgentBayError {
-  exitCode: number;
-  stderr: string;
+  readonly exitCode: number;
+  readonly stderr: string;
 
   constructor(message: string, exitCode: number, stderr: string) {
     super(message, { exitCode, stderr });
