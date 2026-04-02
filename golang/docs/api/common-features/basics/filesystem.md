@@ -624,8 +624,8 @@ Read is an alias of ReadFile.
 func (fs *FileSystem) ReadFile(path string) (*FileReadResult, error)
 ```
 
-ReadFile reads the contents of a file. Automatically handles large files by chunking. ReadFile reads
-the entire content of a file in text format (default).
+ReadFile reads the contents of a file. For MQTT channel, automatically handles large files by
+chunking. For HTTP LinkUrl channel, reads the entire file in a single call without chunking.
 
 Parameters:
   - path: Absolute path to the file to read
@@ -636,8 +636,10 @@ Returns:
 
 Behavior:
 
-- Automatically handles large files by reading in 50KB chunks - Returns empty string for empty files
-- Fails if path is a directory or doesn't exist
+  - For MQTT channel: automatically handles large files by reading in 50KB chunks
+  - For HTTP LinkUrl channel: reads the entire file in a single call without chunking
+  - Returns empty string for empty files
+  - Fails if path is a directory or doesn't exist
 
 **Example:**
 
@@ -795,10 +797,17 @@ func (fs *FileSystem) WatchDirectory(
 WatchDirectory watches a directory for file changes and calls the callback function when changes
 occur.
 
+When the session provides a WebSocket connection, WatchDirectory uses real-time push notifications
+(subscribe_file_change) for near-instant event delivery. If WebSocket is unavailable or the
+subscription fails, it transparently falls back to HTTP polling.
+
+The interval parameter is used only for the polling fallback and is deprecated when running in push
+mode.
+
 Parameters:
   - path: Absolute path to the directory to watch
   - callback: Function called when changes are detected, receives array of FileChangeEvent
-  - interval: Polling interval (e.g., 1*time.Second for 1 second)
+  - interval: Polling interval (deprecated in push mode; e.g., 1*time.Second)
   - stopCh: Channel to signal when to stop watching
 
 Returns:
@@ -847,8 +856,8 @@ Write is an alias of WriteFile.
 func (fs *FileSystem) WriteFile(path, content string, mode string) (*FileWriteResult, error)
 ```
 
-WriteFile writes content to a file. Automatically handles large files by chunking. WriteFile writes
-content to a file.
+WriteFile writes content to a file. For MQTT channel, automatically handles large files by chunking.
+For HTTP LinkUrl channel, writes the entire content in a single call without chunking.
 
 Parameters:
   - path: Absolute path to the file to write
@@ -861,9 +870,11 @@ Returns:
 
 Behavior:
 
-- Automatically handles large content by writing in 50KB chunks - Creates parent directories if they
-don't exist - "overwrite" mode replaces existing file content - "append" mode adds to existing file
-content
+  - For MQTT channel: automatically handles large content by writing in 50KB chunks
+  - For HTTP LinkUrl channel: writes the entire content in a single call without chunking
+  - Creates parent directories if they don't exist
+  - "overwrite" mode replaces existing file content
+  - "append" mode adds to existing file content
 
 **Example:**
 
@@ -1179,6 +1190,19 @@ Fields:
   - BytesSent: Number of bytes uploaded
   - Path: Remote path where the file was uploaded
   - Error: Error message if the upload failed
+
+## Type wsProvider
+
+```go
+type wsProvider interface {
+	GetWsUrl() string
+	GetToken() string
+	GetWsClient() (interface{}, error)
+	GetMcpServerForTool(toolName string) string
+}
+```
+
+wsProvider is an optional interface implemented by sessions that support WebSocket.
 
 ## Related Resources
 

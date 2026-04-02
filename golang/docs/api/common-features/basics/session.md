@@ -285,6 +285,14 @@ port := int32(30100)
 linkResult, _ := result.Session.GetLink(nil, &port, nil)
 ```
 
+### GetMcpServerForTool
+
+```go
+func (s *Session) GetMcpServerForTool(toolName string) string
+```
+
+GetMcpServerForTool returns the MCP server name that provides the given tool.
+
 ### GetMetrics
 
 ```go

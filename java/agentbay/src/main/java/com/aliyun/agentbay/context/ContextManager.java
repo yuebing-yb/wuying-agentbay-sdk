@@ -181,7 +181,7 @@ public class ContextManager {
      * @return ContextSyncResult indicating initial sync trigger success/failure
      */
     public ContextSyncResult sync(String contextId, String path, String mode, Consumer<Boolean> callback) {
-        return sync(contextId, path, mode, callback, 150, 1500);
+        return sync(contextId, path, mode, callback, 150, 500);
     }
 
     /**
@@ -193,7 +193,7 @@ public class ContextManager {
      * @param mode Optional synchronization mode (e.g., "upload", "download")
      * @param callback Callback function that receives success status (true if successful, false otherwise)
      * @param maxRetries Maximum number of retries for polling completion status (default: 150)
-     * @param retryInterval Milliseconds to wait between retries (default: 1500)
+     * @param retryInterval Initial interval in milliseconds for exponential backoff polling (default: 500)
      * @return ContextSyncResult indicating initial sync trigger success/failure
      */
     public ContextSyncResult sync(String contextId, String path, String mode, Consumer<Boolean> callback,
@@ -232,22 +232,23 @@ public class ContextManager {
      * @param contextId ID of the context to check
      * @param path Path to check
      * @param maxRetries Maximum number of retries
-     * @param retryInterval Milliseconds to wait between retries
+     * @param retryInterval Initial interval in milliseconds for exponential backoff polling
      */
     private void pollForCompletion(Consumer<Boolean> callback, String contextId, String path,
                                    int maxRetries, int retryInterval) {
+        int maxInterval = 5000;
+        double backoffFactor = 1.1;
+        int currentInterval = retryInterval;
+
         for (int retry = 0; retry < maxRetries; retry++) {
             try {
-                // Get context status data
                 ContextInfoResult infoResult = info(contextId, path, null);
 
-                // Check if all sync tasks are completed
                 boolean allCompleted = true;
                 boolean hasFailure = false;
                 boolean hasSyncTasks = false;
 
                 for (ContextStatusData item : infoResult.getContextStatusData()) {
-                    // We only care about sync tasks (upload/download)
                     String taskType = item.getTaskType();
                     if (taskType == null || (!"upload".equals(taskType) && !"download".equals(taskType))) {
                         continue;
@@ -265,7 +266,6 @@ public class ContextManager {
                 }
 
                 if (allCompleted || !hasSyncTasks) {
-                    // All tasks completed or no sync tasks found
                     if (hasFailure) {
                         callback.accept(false);
                     } else if (hasSyncTasks) {
@@ -275,14 +275,16 @@ public class ContextManager {
                     }
                     return;
                 }
-                Thread.sleep(retryInterval);
+                Thread.sleep(currentInterval);
+                currentInterval = Math.min((int) (currentInterval * backoffFactor), maxInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 callback.accept(false);
                 return;
             } catch (Exception e) {
                 try {
-                    Thread.sleep(retryInterval);
+                    Thread.sleep(currentInterval);
+                    currentInterval = Math.min((int) (currentInterval * backoffFactor), maxInterval);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     callback.accept(false);
@@ -291,7 +293,6 @@ public class ContextManager {
             }
         }
 
-        // Timeout
         callback.accept(false);
     }
 
@@ -313,7 +314,7 @@ public class ContextManager {
      * @return ContextSyncResult indicating success/failure after waiting for completion
      */
     public ContextSyncResult syncAndWait(String contextId, String path, String mode) {
-        return syncAndWait(contextId, path, mode, 150, 1500);
+        return syncAndWait(contextId, path, mode, 150, 500);
     }
 
     /**
@@ -323,31 +324,30 @@ public class ContextManager {
      * @param path Path (optional)
      * @param mode Sync mode (optional)
      * @param maxRetries Maximum number of retries for polling completion status (default: 150)
-     * @param retryInterval Milliseconds to wait between retries (default: 2000)
+     * @param retryInterval Initial interval in milliseconds for exponential backoff polling (default: 500)
      * @return ContextSyncResult indicating success/failure after waiting for completion
      */
-    public ContextSyncResult syncAndWait(String contextId, String path, String mode, 
+    public ContextSyncResult syncAndWait(String contextId, String path, String mode,
                                          int maxRetries, int retryInterval) {
-        // First trigger the sync
         ContextSyncResult syncResult = sync(contextId, path, mode);
-        
+
         if (!syncResult.isSuccess()) {
             return syncResult;
         }
 
-        // Wait for sync to complete
+        int maxInterval = 5000;
+        double backoffFactor = 1.1;
+        int currentInterval = retryInterval;
+
         for (int retry = 0; retry < maxRetries; retry++) {
             try {
-                // Get context status data
                 ContextInfoResult infoResult = info(contextId, path, null);
 
-                // Check if all sync tasks are completed
                 boolean allCompleted = true;
                 boolean hasFailure = false;
                 boolean hasSyncTasks = false;
 
                 for (ContextStatusData item : infoResult.getContextStatusData()) {
-                    // We only care about sync tasks (upload/download)
                     String taskType = item.getTaskType();
                     if (taskType == null || (!"upload".equals(taskType) && !"download".equals(taskType))) {
                         continue;
@@ -365,7 +365,6 @@ public class ContextManager {
                 }
 
                 if (allCompleted || !hasSyncTasks) {
-                    // All tasks completed or no sync tasks found
                     if (hasFailure) {
                         return new ContextSyncResult(syncResult.getRequestId(), false);
                     } else if (hasSyncTasks) {
@@ -374,13 +373,15 @@ public class ContextManager {
                         return new ContextSyncResult(syncResult.getRequestId(), true);
                     }
                 }
-                Thread.sleep(retryInterval);
+                Thread.sleep(currentInterval);
+                currentInterval = Math.min((int) (currentInterval * backoffFactor), maxInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return new ContextSyncResult(syncResult.getRequestId(), false);
             } catch (Exception e) {
                 try {
-                    Thread.sleep(retryInterval);
+                    Thread.sleep(currentInterval);
+                    currentInterval = Math.min((int) (currentInterval * backoffFactor), maxInterval);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     return new ContextSyncResult(syncResult.getRequestId(), false);
@@ -388,7 +389,6 @@ public class ContextManager {
             }
         }
 
-        // Timeout
         return new ContextSyncResult(syncResult.getRequestId(), false);
     }
 

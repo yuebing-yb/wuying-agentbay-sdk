@@ -22,6 +22,11 @@ params:
     type: boolean
     default: true
     description: "Skip specified test patterns (OSS, Agent integration, Browser Agent, etc.) to avoid dependency issues"
+  ci_stable:
+    name: CI Stable Mode
+    type: boolean
+    default: true
+    description: "Only run tests and examples marked with ci-stable in first 20 lines (whitelist mode)"
 
 traits:
   - type: notification
@@ -32,21 +37,16 @@ traits:
         - 187788
         - WB02016330
       content: |
-        ---
-        - **Test Report**
-            - @${{git.repo}}
-            - **Branch**: ${{git.branch}}
-            - **Commit**: ${{git.commitId}}
-            - **Changed By**: ${{git.employeeId}}
-                      
         🤖 **智能集成测试报告**
-        
-        📊 **测试结果：** ${{jobs.smart-integration-test.outputs.test_summary}}
-        
-        **失败测试详情：**
-        ${{jobs.smart-integration-test.outputs.failed_tests}}
-        
-        💡 请查看CI详情页面获取AI分析和修复建议。
+        - 仓库: ${{git.repo}}
+        - 分支: ${{git.branch}}
+        - 提交: ${{git.commitId}}
+
+        📊 测试结果: ${{jobs.smart-integration-test.outputs.test_summary}}
+
+        失败测试详情: ${{jobs.smart-integration-test.outputs.failed_tests}}
+
+        💡 请查看CI详情页面获取详细日志。
 
 jobs:
   smart-integration-test:
@@ -226,6 +226,16 @@ jobs:
             mvn --version || echo "❌ Maven version check failed"
           fi
           
+          # Run ci-stable example checks first (if ci-stable mode is enabled)
+          CI_STABLE_FLAG=""
+          if [ "${{params.ci_stable}}" = "true" ]; then
+            CI_STABLE_FLAG="--ci-stable"
+            echo "🏷️ ci-stable mode enabled: only running ci-stable marked tests and examples"
+
+            echo "🚀 Running ci-stable example checks..."
+            python scripts/check_examples.py --ci-stable || echo "⚠️ Some ci-stable examples failed"
+          fi
+
           # Run the smart test runner
           SKIP_PATTERNS_FLAG=""
           echo "🔍 检查 skip_specified_patterns 参数值: ${{params.skip_specified_patterns}}"
@@ -236,8 +246,8 @@ jobs:
             echo "⚠️ Specified test patterns skipping disabled, will run all tests"
           fi
           echo "🔍 SKIP_PATTERNS_FLAG 值: $SKIP_PATTERNS_FLAG"
-          
-          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}" $SKIP_PATTERNS_FLAG; then
+
+          if python scripts/smart_test_runner.py --test-type="${{params.test_type}}" $SKIP_PATTERNS_FLAG $CI_STABLE_FLAG; then
             echo "✅ Smart Test Runner completed successfully"
             
             # Check if test report was generated

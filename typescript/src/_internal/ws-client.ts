@@ -1,11 +1,22 @@
 import crypto from "crypto";
 import type { WebSocket as WsType } from "./ws";
-import { logDebug, logWarn, maskSensitiveData } from "../utils/logger";
+import { logDebug, logInfo, logWarn, maskSensitiveData } from "../utils/logger";
 import { WsCancelledError } from "../exceptions";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const WebSocketImpl: typeof WsType = require("ws");
 
+export enum WsConnectionState {
+  OPEN = "OPEN",
+  CLOSED = "CLOSED",
+  RECONNECTING = "RECONNECTING",
+  ERROR = "ERROR",
+}
+
+type ConnectionStateListener = (
+  state: WsConnectionState,
+  reason: string
+) => void;
 type OnEvent = (invocationId: string, data: Record<string, any>) => void;
 type OnEnd = (invocationId: string, data: Record<string, any>) => void;
 type OnError = (invocationId: string, err: Error) => void;
@@ -37,7 +48,10 @@ export class WsClient {
   private token: string;
   private ws: any | null = null;
   private connecting: Promise<void> | null = null;
+  private closedExplicitly = false;
   private callbacksByTarget = new Map<string, Set<PushCallback>>();
+  private stateListeners: ConnectionStateListener[] = [];
+  private state: WsConnectionState = WsConnectionState.CLOSED;
   private pendingById = new Map<
     string,
     {
@@ -49,9 +63,50 @@ export class WsClient {
     }
   >();
 
-  constructor(wsUrl: string, token: string) {
+  private heartbeatIntervalMs: number;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private reconnectInitialDelayMs: number;
+  private reconnectMaxDelayMs: number;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private reconnecting = false;
+
+  constructor(
+    wsUrl: string,
+    token: string,
+    options?: {
+      heartbeatIntervalMs?: number;
+      reconnectInitialDelayMs?: number;
+      reconnectMaxDelayMs?: number;
+    }
+  ) {
     this.wsUrl = wsUrl;
     this.token = token;
+    this.heartbeatIntervalMs = options?.heartbeatIntervalMs ?? 20_000;
+    this.reconnectInitialDelayMs = options?.reconnectInitialDelayMs ?? 500;
+    this.reconnectMaxDelayMs = options?.reconnectMaxDelayMs ?? 5_000;
+  }
+
+  getState(): WsConnectionState {
+    return this.state;
+  }
+
+  onConnectionStateChange(listener: ConnectionStateListener): () => void {
+    this.stateListeners.push(listener);
+    return () => {
+      const idx = this.stateListeners.indexOf(listener);
+      if (idx >= 0) this.stateListeners.splice(idx, 1);
+    };
+  }
+
+  private setState(state: WsConnectionState, reason: string): void {
+    this.state = state;
+    for (const listener of [...this.stateListeners]) {
+      try {
+        listener(state, reason);
+      } catch (_e) {
+        logWarn("ConnectionState listener failed");
+      }
+    }
   }
 
   registerCallback(target: string, callback: PushCallback): () => void {
@@ -94,7 +149,15 @@ export class WsClient {
     if (this.ws) return;
     if (this.connecting) return this.connecting;
 
-    this.connecting = new Promise<void>((resolve, reject) => {
+    this.connecting = this.openConnection();
+    return this.connecting;
+  }
+
+  private openConnection(): Promise<void> {
+    this.setState(WsConnectionState.RECONNECTING, "connecting");
+    logInfo(`WS CONNECT url=${this.wsUrl}`);
+
+    return new Promise<void>((resolve, reject) => {
       const ws = new WebSocketImpl(this.wsUrl, {
         headers: {
           "X-Access-Token": this.token,
@@ -104,6 +167,9 @@ export class WsClient {
       ws.on("open", () => {
         this.ws = ws;
         this.connecting = null;
+        this.reconnecting = false;
+        this.setState(WsConnectionState.OPEN, "connected");
+        this.startHeartbeat();
         resolve();
       });
 
@@ -113,23 +179,34 @@ export class WsClient {
 
       ws.on("error", (err: any) => {
         const e = err instanceof Error ? err : new Error(String(err));
+        this.stopHeartbeat();
         this.failAllPending(e);
         this.ws = null;
         this.connecting = null;
-        reject(e);
+        this.setState(WsConnectionState.ERROR, e.message);
+        if (!this.reconnecting) {
+          reject(e);
+        }
+        this.scheduleReconnect();
       });
 
       ws.on("close", () => {
+        this.stopHeartbeat();
         this.failAllPending(new Error("WS connection closed"));
         this.ws = null;
         this.connecting = null;
+        if (this.state === WsConnectionState.OPEN) {
+          this.setState(WsConnectionState.CLOSED, "connection closed");
+        }
+        this.scheduleReconnect();
       });
     });
-
-    return this.connecting;
   }
 
   async close(): Promise<void> {
+    this.closedExplicitly = true;
+    this.stopHeartbeat();
+    this.cancelReconnect();
     const ws = this.ws;
     this.ws = null;
     this.connecting = null;
@@ -139,6 +216,61 @@ export class WsClient {
     } catch (_e) {
       return;
     }
+    this.setState(WsConnectionState.CLOSED, "explicit close");
+  }
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws) {
+        try {
+          this.ws.ping();
+        } catch (_e) {
+          logWarn("Heartbeat ping failed");
+        }
+      }
+    }, this.heartbeatIntervalMs);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  private cancelReconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
+
+  private scheduleReconnect(): void {
+    if (this.closedExplicitly) return;
+    if (this.reconnecting) return;
+    this.reconnecting = true;
+    this.reconnectWithBackoff(this.reconnectInitialDelayMs);
+  }
+
+  private reconnectWithBackoff(delay: number): void {
+    if (this.closedExplicitly) return;
+    const jitter = delay * 0.5 * Math.random();
+    const actualDelay = Math.min(delay + jitter, this.reconnectMaxDelayMs);
+    logInfo(`WS reconnecting in ${Math.round(actualDelay)}ms`);
+    this.setState(WsConnectionState.RECONNECTING, "reconnecting");
+
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = null;
+      if (this.closedExplicitly) return;
+      try {
+        this.connecting = this.openConnection();
+        await this.connecting;
+      } catch (_e) {
+        const nextDelay = Math.min(delay * 2, this.reconnectMaxDelayMs);
+        this.reconnectWithBackoff(nextDelay);
+      }
+    }, actualDelay);
   }
 
   /**

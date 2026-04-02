@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay, log, logError } from 'wuying-agentbay-sdk';
 
 /**

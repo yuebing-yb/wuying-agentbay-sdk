@@ -497,7 +497,9 @@ await session.delete()
 
 **Notes**:
 
-- Automatically handles large files by reading in chunks (default 50KB per chunk)
+- For MQTT channel: automatically handles large files by reading in chunks (default 50KB per chunk)
+- For HTTP LinkUrl channel: reads the entire file in a single call without chunking,
+as HTTP has no message size limit
 - Returns empty string/bytes for empty files
 - Returns error if path is a directory
 - Binary files are returned as bytes (backend uses base64 encoding internally)
@@ -561,8 +563,10 @@ await session.delete()
 
 **Notes**:
 
-- Automatically handles large files by writing in chunks
-- Chunks are split by byte size to ensure MQTT compatibility (63KB limit)
+- For MQTT channel: automatically handles large files by writing in chunks,
+split by byte size to ensure MQTT compatibility (63KB limit)
+- For HTTP LinkUrl channel: writes the entire content in a single call without
+chunking, as HTTP has no message size limit
 - Creates parent directories if they don't exist
 - In "overwrite" mode, replaces the entire file content
 - In "append" mode, adds content to the end of the file
@@ -716,12 +720,16 @@ def watch_directory(
 
 Watch a directory for file changes and call the callback function when changes occur.
 
+Uses WebSocket push notifications for near-real-time delivery when available,
+with automatic fallback to HTTP polling.
+
 **Arguments**:
 
     path: The directory path to monitor for file changes.
     callback: Callback function that will be called with a list of FileChangeEvent
   objects when changes are detected.
-    interval: Polling interval in seconds. Defaults to 0.5.
+    interval: Polling interval in seconds (default 0.5). Deprecated in WS push mode
+  where events are delivered in real time; retained for backward compatibility.
     stop_event: Optional threading.Event to stop the monitoring. If not provided,
   a new Event will be created and returned via the thread object.
   

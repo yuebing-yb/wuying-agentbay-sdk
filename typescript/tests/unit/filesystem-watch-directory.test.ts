@@ -14,6 +14,9 @@ describe("FileSystem Watch Directory Tests", () => {
       getAPIKey: sandbox.stub().returns("dummy_key"),
       getSessionId: sandbox.stub().returns("dummy_session"),
       callMcpTool: sandbox.stub(),
+      wsUrl: "",
+      token: "",
+      getMcpServerForTool: sandbox.stub().returns(null),
     };
 
     mockFileSystem = new FileSystem(mockSession);

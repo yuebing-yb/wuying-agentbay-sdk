@@ -1418,7 +1418,7 @@ export class Session {
     };
   }
 
-  private getMcpServerForTool(toolName: string): string | null {
+  getMcpServerForTool(toolName: string): string | null {
     for (const tool of this.mcpTools || []) {
       if (tool && tool.name === toolName) {
         return tool.server || null;

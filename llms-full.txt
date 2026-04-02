@@ -4693,14 +4693,17 @@ type Browser struct {
 	option               *BrowserOption
 	userCallback         BrowserCallback
 	wsCallbackRegistered bool
+	Operator             *BrowserOperator
 }
 
 // NewBrowser creates a new Browser instance
 func NewBrowser(session SessionInterface) *Browser {
-	return &Browser{
+	b := &Browser{
 		session:     session,
 		initialized: false,
 	}
+	b.Operator = NewBrowserOperator(session, b)
+	return b
 }
 
 // IsInitialized returns true if the browser was initialized, false otherwise
@@ -4750,11 +4753,8 @@ func (b *Browser) GetEndpointURL() (string, error) {
 
 	response, err := b.session.GetClient().GetCdpLink(request)
 	if err != nil {
-		return "", fmt.Errorf("failed to get CDP link: %w", err)
-	}
 
-
-... [truncated, 17,517 chars remaining] ...
+... [truncated, 17,644 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
 func (b *Browser) Initialize(option *BrowserOption) (bool, error) {
@@ -6676,6 +6676,19 @@ type FileSystem struct {
 	fileTransferOnce sync.Once
 }
 
+// isUsingLinkUrl checks if the session is using HTTP (LinkUrl) channel.
+// Returns true if both GetLinkUrl() and GetToken() return non-empty values.
+func (fs *FileSystem) isUsingLinkUrl() bool {
+	type linkUrlProvider interface {
+		GetLinkUrl() string
+		GetToken() string
+	}
+	if s, ok := fs.Session.(linkUrlProvider); ok {
+		return s.GetLinkUrl() != "" && s.GetToken() != ""
+	}
+	return false
+}
+
 // FileInfo represents file or directory information
 type FileInfo struct {
 	Name        string `json:"name"`
@@ -7226,23 +7239,8 @@ func (fs *FileSystem) readFileChunk(path string, formatType string, optionalPara
 
 	// Text format
 	return &FileReadResult{
-		ApiResponse: models.ApiResponse{
-			RequestID: result.RequestID,
-		},
-		Content: result.Data,
-	}, nil, nil
-}
 
-// ReadMultipleFiles reads multiple files and returns their contents as a map.
-//
-// Parameters:
-//   - paths: Array of absolute paths to files to read
-//
-// Returns:
-//   - map[string]string: Map with file paths as keys and their contents as values
-//   - error: Error if the operation fails
-
-... [truncated, 28,533 chars remaining] ...
+... [truncated, 29,861 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
 func (fs *FileSystem) ReadMultipleFiles(paths []string) (map[string]string, error) {
@@ -8154,7 +8152,7 @@ type Session struct {
 	linkHttpClient *http.Client
 
 	// Browser replay enabled flag
-	EnableBrowserReplay bool
+	EnableBrowserReplay *bool
 
 	// File, command and code handlers
 	FileSystem *filesystem.FileSystem
@@ -8483,16 +8481,21 @@ func (s *Session) GetSessionID() string {
 }
 
 // GetEnableBrowserReplay returns whether browser replay is enabled for this session.
-func (s *Session) GetEnableBrowserReplay() bool {
+// Returns nil if not explicitly set (server default applies).
+func (s *Session) GetEnableBrowserReplay() *bool {
 	return s.EnableBrowserReplay
 }
 
 // GetToken returns the token for LinkUrl-based direct tool calls.
+//
+// Deprecated: Internal SDK use only. Will be removed in a future version.
 func (s *Session) GetToken() string {
 	return s.Token
 }
 
 // GetLinkUrl returns the LinkUrl for LinkUrl-based direct tool calls.
+//
+// Deprecated: Internal SDK use only. Will be removed in a future version.
 func (s *Session) GetLinkUrl() string {
 	return s.LinkUrl
 }
@@ -8660,14 +8663,8 @@ func (s *Session) Delete(syncContext ...bool) (*DeleteResult, error) {
 	for {
 		pollCount++
 		// Check timeout
-		elapsedTime := time.Since(pollStartTime)
-		if elapsedTime >= pollTimeout {
-			errorMsg := fmt.Sprintf("Timeout waiting for session deletion after %v", pollTimeout)
-			LogInfo(errorMsg)
-			return &DeleteResult{
-				ApiResponse: models.ApiResponse{
 
-... [truncated, 44,512 chars remaining] ...
+... [truncated, 44,741 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
 func (s *Session) ValidateLabels(labels map[string]string) string {
@@ -10076,7 +10073,8 @@ class AsyncAgentBay:
         upload_policy = UploadPolicy(auto_upload=browser_context.auto_upload)
         recycle_policy = RecyclePolicy.default()
 
-        sync_mode = getattr(browser_context, "sync_mode", None) or BrowserSyncMode.STANDARD
+        sync_mode = getattr(browser_context, "sync_mode",
+                            None) or BrowserSyncMode.STANDARD
 
         if sync_mode == BrowserSyncMode.MINIMAL:
             white_lists = [
@@ -10097,24 +10095,32 @@ class AsyncAgentBay:
                 WhiteList(path="/Default/Session Storage", exclude_paths=[]),
                 # Saved passwords and form autofill
                 WhiteList(path="/Default/Login Data", exclude_paths=[]),
-                WhiteList(path="/Default/Login Data-journal", exclude_paths=[]),
-                WhiteList(path="/Default/Login Data For Account", exclude_paths=[]),
-                WhiteList(path="/Default/Login Data For Account-journal", exclude_paths=[]),
+                WhiteList(path="/Default/Login Data-journal",
+                          exclude_paths=[]),
+                WhiteList(path="/Default/Login Data For Account",
+                          exclude_paths=[]),
+                WhiteList(
+                    path="/Default/Login Data For Account-journal", exclude_paths=[]),
                 WhiteList(path="/Default/Web Data", exclude_paths=[]),
                 WhiteList(path="/Default/Web Data-journal", exclude_paths=[]),
                 # Browser settings and permission consistency
                 WhiteList(path="/Default/Preferences", exclude_paths=[]),
-                WhiteList(path="/Default/Secure Preferences", exclude_paths=[]),
+                WhiteList(path="/Default/Secure Preferences",
+                          exclude_paths=[]),
                 # Network behavior consistency (HSTS / QUIC)
                 WhiteList(path="/Default/TransportSecurity", exclude_paths=[]),
-                WhiteList(path="/Default/Network Persistent State", exclude_paths=[]),
+                WhiteList(path="/Default/Network Persistent State",
+                          exclude_paths=[]),
                 # Rendering fingerprint stability
                 WhiteList(path="/Default/GPUCache", exclude_paths=[]),
                 # Cross-domain password matching
-                WhiteList(path="/Default/Affiliation Database", exclude_paths=[]),
-                WhiteList(path="/Default/Affiliation Database-journal", exclude_paths=[]),
+                WhiteList(path="/Default/Affiliation Database",
+                          exclude_paths=[]),
+                WhiteList(path="/Default/Affiliation Database-journal",
+                          exclude_paths=[]),
             ]
-            _logger.info("Browser sync: STANDARD mode (login state + anti-risk-control)")
+            _logger.info(
+                "Browser sync: STANDARD mode (login state + anti-risk-control)")
 
         sync_policy = SyncPolicy(
             upload_policy=upload_policy,
@@ -10178,7 +10184,8 @@ class AsyncAgentBay:
             tools.append(
                 McpTool(
                     name=item.get("name", "") or item.get("Name", "") or "",
-                    server=item.get("server", "") or item.get("serverName", "") or item.get("Server", "") or "",
+                    server=item.get("server", "") or item.get(
+                        "serverName", "") or item.get("Server", "") or "",
                 )
             )
         return tools
@@ -10275,7 +10282,8 @@ class AsyncAgentBay:
                 If empty set, return immediately. Otherwise, only wait for the specified
                 context IDs to reach terminal status (Success/Failed).
         """
-        _log_operation_start("Context synchronization", "Waiting for completion")
+        _log_operation_start("Context synchronization",
+                             "Waiting for completion")
 
         if wait_context_ids is not None and len(wait_context_ids) == 0:
             _log_operation_success("Context synchronization")
@@ -10294,9 +10302,11 @@ class AsyncAgentBay:
             try:
                 info_result = await session.context.info()
             except Exception as e:
-                _logger.error(f"Error getting context info on attempt {retry+1}: {e}")
+                _logger.error(
+                    f"Error getting context info on attempt {retry+1}: {e}")
                 await asyncio.sleep(current_interval)
-                current_interval = min(current_interval * backoff_factor, max_interval)
+                current_interval = min(
+                    current_interval * backoff_factor, max_interval)
                 continue
 
             if wait_context_ids is None:
@@ -10321,7 +10331,8 @@ class AsyncAgentBay:
 
                 if all_completed or not info_result.context_status_data:
                     if has_failure:
-                        _log_warning("Context synchronization completed with failures")
+                        _log_warning(
+                            "Context synchronization completed with failures")
                     else:
                         _log_operation_success("Context synchronization")
                     break
@@ -10352,7 +10363,8 @@ class AsyncAgentBay:
 
                 if all_completed:
                     if has_failure:
-                        _log_warning("Context synchronization completed with failures")
+                        _log_warning(
+                            "Context synchronization completed with failures")
                     else:
                         _log_operation_success("Context synchronization")
                     break
@@ -10363,7 +10375,8 @@ class AsyncAgentBay:
             await asyncio.sleep(current_interval)
 
             # Exponential backoff: increase interval for next retry, capped at max_interval
-            current_interval = min(current_interval * backoff_factor, max_interval)
+            current_interval = min(
+                current_interval * backoff_factor, max_interval)
 
     async def _wait_for_mobile_simulate(
         self,
@@ -10382,7 +10395,8 @@ class AsyncAgentBay:
         _logger.info("⏳ Mobile simulate: Waiting for completion")
 
         if not hasattr(session, "mobile"):
-            _logger.info("Mobile module not found in session, skipping mobile simulate")
+            _logger.info(
+                "Mobile module not found in session, skipping mobile simulate")
             return
         if not hasattr(session, "command"):
             _logger.info(
@@ -10390,7 +10404,8 @@ class AsyncAgentBay:
             )
             return
         if not mobile_sim_path:
-            _logger.info("Mobile simulate path is empty, skipping mobile simulate")
+            _logger.info(
+                "Mobile simulate path is empty, skipping mobile simulate")
             return
 
         try:
@@ -10420,17 +10435,8 @@ class AsyncAgentBay:
                 end_time = time.time()
                 consume_time = end_time - start_time
                 _logger.info(
-                    f"✅ Mobile simulate completed with mode: {mobile_sim_mode or 'PropertiesOnly'}, duration: {consume_time:.2f} seconds"
-                )
-                if cmd_result.output:
-                    _logger.info(f"   Output: {cmd_result.output.strip()}")
-            else:
-                _logger.info(
-                    f"Failed to execute mobile simulate command: {cmd_result.error_message}"
-                )
-        except Exception as e:
 
-... [truncated, 33,302 chars remaining] ...
+... [truncated, 34,034 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
     def _log_request_debug_info(self, request: CreateMcpSessionRequest) -> None:
@@ -10732,8 +10738,8 @@ class AsyncBrowser(AsyncBaseService):
         try:
             browser_option_dict = option._to_map()
 
-            # Set enableRecord based on session.enableBrowserReplay
-            if hasattr(self.session, "enableBrowserReplay"):
+            # Set enableRecord based on session.enableBrowserReplay (only when explicitly set)
+            if hasattr(self.session, "enableBrowserReplay") and self.session.enableBrowserReplay is not None:
                 browser_option_dict["enableRecord"] = self.session.enableBrowserReplay
 
             request = InitBrowserRequest(
@@ -11169,9 +11175,8 @@ class AsyncBrowser(AsyncBaseService):
             ```python
             create_result = await agent_bay.create()
             session = create_result.session
-            browser_option = BrowserOption()
 
-... [truncated, 2,691 chars remaining] ...
+... [truncated, 2,736 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
     def get_option(self) -> Optional["BrowserOption"]:
@@ -11439,7 +11444,7 @@ class AsyncBrowserOperator(BaseService):
             raise BrowserError(error_msg)
 
         task_id = json.loads(response.data)["task_id"]
-        poll_interval_sec = 5.0
+        poll_interval_sec = 3.0
         start_ts = time.monotonic()
         client_timeout: Optional[int] = None
         if isinstance(action_input, ActOptions):
@@ -11633,7 +11638,7 @@ class AsyncBrowserOperator(BaseService):
         task_id = task_info["task_id"]
 
         client_timeout: Optional[int] = options.timeout
-        poll_interval_sec = 5.0
+        poll_interval_sec = 3.0
         start_ts = time.monotonic()
 
         while True:
@@ -12991,7 +12996,7 @@ class AsyncComputer(AsyncBaseService):
             - Returns the full screen dimensions in pixels
             - DPI scaling factor affects coordinate calculations on high-DPI displays
 
-... [truncated, 39,678 chars remaining] ...
+... [truncated, 39,680 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
     async def screenshot(self) -> OperationResult:
@@ -14108,7 +14113,7 @@ class AsyncFileTransfer:
         self,
         *,
 
-... [truncated, 67,930 chars remaining] ...
+... [truncated, 69,829 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
     def _put_file_sync(
@@ -14116,6 +14121,7 @@ class AsyncFileTransfer:
     def __init__(self, *args, **kwargs):
     def _ensure_file_transfer(self) -> AsyncFileTransfer:
     async def get_file_transfer_context_path(self) -> Optional[str]:
+    def _is_using_link_url(self) -> bool:
     def _split_string_by_bytes(text: str, max_bytes: int) -> str:
     def _handle_error(self, e):
     async def create_directory(self, path: str) -> BoolResult:
@@ -14760,7 +14766,7 @@ class AsyncMobile(AsyncBaseService):
             start_cmd (str): The command to start the application.
             work_directory (str, optional): The working directory for the application.
 
-... [truncated, 26,729 chars remaining] ...
+... [truncated, 26,731 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
     async def stop_app_by_cmd(self, stop_cmd: str) -> AppOperationResult:
@@ -14922,7 +14928,8 @@ class AsyncSession:
 
         # Recording functionality
         self.enableBrowserReplay = (
-            True  # Whether browser recording is enabled for this session
+            # Whether browser recording is enabled for this session (None = server default)
+            None
         )
 
         # MCP tool list returned by backend for this session
@@ -15013,15 +15020,59 @@ class AsyncSession:
         return self.link_url
 
     def get_token(self) -> str:
+        """
+        .. deprecated::
+            Internal SDK use only. Will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "get_token() is deprecated and will be removed in a future version. "
+            "This method is for internal SDK use only.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_token()
 
     def get_link_url(self) -> str:
+        """
+        .. deprecated::
+            Internal SDK use only. Will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "get_link_url() is deprecated and will be removed in a future version. "
+            "This method is for internal SDK use only.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_link_url()
 
     def getToken(self) -> str:
+        """
+        .. deprecated::
+            Internal SDK use only. Will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "getToken() is deprecated and will be removed in a future version. "
+            "This method is for internal SDK use only.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_token()
 
     def getLinkUrl(self) -> str:
+        """
+        .. deprecated::
+            Internal SDK use only. Will be removed in a future version.
+        """
+        import warnings
+        warnings.warn(
+            "getLinkUrl() is deprecated and will be removed in a future version. "
+            "This method is for internal SDK use only.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self._get_link_url()
 
     async def get_status(self) -> "SessionStatusResult":
@@ -15130,7 +15181,8 @@ class AsyncSession:
         This method calls the RefreshSessionIdleTime API.
         """
         try:
-            _log_api_call("RefreshSessionIdleTime", f"SessionId={self.session_id}")
+            _log_api_call("RefreshSessionIdleTime",
+                          f"SessionId={self.session_id}")
             request = RefreshSessionIdleTimeRequest(
                 authorization=f"Bearer {self._get_api_key()}",
                 session_id=self.session_id,
@@ -15139,7 +15191,8 @@ class AsyncSession:
             request_id = extract_request_id(response)
 
             response_map = response.to_map() if response is not None else {}
-            body = response_map.get("body", {}) if isinstance(response_map, dict) else {}
+            body = response_map.get("body", {}) if isinstance(
+                response_map, dict) else {}
 
             success = bool(body.get("Success", False))
             if not request_id:
@@ -15148,12 +15201,14 @@ class AsyncSession:
             if not success:
                 code = body.get("Code", "") or ""
                 message = body.get("Message", "") or ""
-                error_message = f"[{code}] {message or 'Unknown error'}" if code else (message or "Unknown error")
+                error_message = f"[{code}] {message or 'Unknown error'}" if code else (
+                    message or "Unknown error")
                 _log_api_response_with_details(
                     api_name="RefreshSessionIdleTime",
                     request_id=request_id,
                     success=False,
-                    full_response=json.dumps(body, ensure_ascii=False, indent=2)
+                    full_response=json.dumps(
+                        body, ensure_ascii=False, indent=2)
                     if isinstance(body, dict)
                     else str(body),
                 )
@@ -15171,7 +15226,8 @@ class AsyncSession:
             )
             return OperationResult(request_id=request_id, success=True)
         except Exception as e:
-            _log_operation_error("RefreshSessionIdleTime", str(e), exc_info=True)
+            _log_operation_error("RefreshSessionIdleTime",
+                                 str(e), exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -15252,7 +15308,8 @@ class AsyncSession:
                     api_name="DeleteSessionAsync",
                     request_id=request_id,
                     success=False,
-                    full_response=json.dumps(body, ensure_ascii=False, indent=2),
+                    full_response=json.dumps(
+                        body, ensure_ascii=False, indent=2),
                 )
                 return DeleteResult(
                     request_id=request_id,
@@ -15261,7 +15318,8 @@ class AsyncSession:
                 )
 
             # Poll for session deletion status
-            _logger.info(f"🔄 Waiting for session {self.session_id} to be deleted...")
+            _logger.info(
+                f"🔄 Waiting for session {self.session_id} to be deleted...")
             poll_timeout = 300.0  # 5 minutes timeout
             poll_interval = 1.0  # Poll every 1 second
             poll_start_time = time.time()
@@ -15285,7 +15343,8 @@ class AsyncSession:
                 if not session_result.success:
                     error_code = getattr(session_result, "code", "") or ""
                     error_message = session_result.error_message or ""
-                    http_status_code = getattr(session_result, "http_status_code", 0) or 0
+                    http_status_code = getattr(
+                        session_result, "http_status_code", 0) or 0
 
                     # Check for InvalidMcpSession.NotFound, 400 with "not found", or error_message containing "not found"
                     is_not_found = (
@@ -15300,55 +15359,12 @@ class AsyncSession:
 
                     if is_not_found:
                         # Session is deleted
-                        _logger.info(f"✅ Session {self.session_id} successfully deleted (NotFound)")
+                        _logger.info(
+                            f"✅ Session {self.session_id} successfully deleted (NotFound)")
                         break
                     else:
-                        # Other error, continue polling
-                        _logger.debug(f"⚠️  Get session error (will retry): {error_message}")
-                        # Continue to next poll iteration
 
-                # Check session status if we got valid data
-                elif session_result.status:
-                    status = session_result.status
-                    _logger.debug(f"📊 Session status: {status}")
-                    if status == "FINISH":
-                        _logger.info(f"✅ Session {self.session_id} successfully deleted")
-                        break
-
-                # Wait before next poll
-                await asyncio.sleep(poll_interval)
-
-            # Log successful deletion
-            _log_api_response_with_details(
-                api_name="DeleteSessionAsync",
-                request_id=request_id,
-                success=True,
-                key_fields={"session_id": self.session_id},
-            )
-
-            # Return success result with request ID
-            return DeleteResult(request_id=request_id, success=True)
-
-        except Exception as e:
-            _log_operation_error("delete_session_async", str(e), exc_info=True)
-            # In case of error, return failure result with error message
-            return DeleteResult(
-                success=False,
-                error_message=f"Failed to delete session {self.session_id}: {e}",
-            )
-        finally:
-            ws_client = self._ws_client
-            self._ws_client = None
-            if ws_client is not None:
-                try:
-                    await ws_client.close()
-                except Exception:
-                    pass
-            try:
-                await self._close_link_http_client()
-            except Exception:
-
-... [truncated, 38,410 chars remaining] ...
+... [truncated, 40,718 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
     def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
@@ -17320,7 +17336,7 @@ FILE: python/pyproject.toml
 ================================================
 [tool.poetry]
 name = "wuying-agentbay-sdk"
-version = "0.18.0"
+version = "0.18.1"
 description = "Python SDK for interacting with the Wuying AgentBay cloud runtime environment"
 readme = ["README.md", "CHANGELOG.md"]
 packages = [{include = "agentbay"}]
@@ -20106,14 +20122,11 @@ export class AgentBay {
           {},
           errorMessage
         );
-        logDebug("Full response:", JSON.stringify(sessionData, null, 2));
-        return {
-          requestId,
-          success: false,
 
-... [truncated, 29,745 chars remaining] ...
+... [truncated, 29,823 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
+        logDebug("Full response:", JSON.stringify(sessionData, null, 2));
       if (!sessionId) {
         logAPIResponseWithDetails(
         logDebug("Full response:", JSON.stringify(sessionData, null, 2));
@@ -20204,7 +20217,6 @@ export class AgentBay {
       if (!item || typeof item !== "object") {
   private deepCopyParams(
     if (params instanceof CreateSessionParamsClass) {
-      if (!result.enableBrowserReplay || !("enableBrowserReplay" in result)) {
       if (
       if (
         log("Added fingerprint context sync from BrowserContext");
@@ -22544,7 +22556,7 @@ interface ComputerSession {
   sessionId: string;
   getAPIKey(): string;
   getSessionId(): string;
-  getLinkUrl(): string;
+  linkUrl: string;
 }
 
 export class Computer {
@@ -23178,15 +23190,15 @@ export class Computer {
       }
 
 
-... [truncated, 25,981 chars remaining] ...
+... [truncated, 25,971 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
   async screenshot(): Promise<ScreenshotResult> {
-    if (this.session.getLinkUrl()) {
+    if (this.session.linkUrl) {
       if (!result.success) {
       if (!result.data) {
   async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
-    if (!this.session.getLinkUrl()) {
+    if (!this.session.linkUrl) {
     if (fmt !== "png" && fmt !== "jpeg") {
       if (!result.success) {
         String(result.data || ""),
@@ -24298,6 +24310,14 @@ export class FileSystem {
   }
 
   /**
+   * Check if the current session uses LinkUrl (HTTP) channel.
+   * When using LinkUrl, chunking is not needed as HTTP has no message size limit.
+   */
+  private isUsingLinkUrl(): boolean {
+    return !!(this.session.linkUrl && this.session.token);
+  }
+
+  /**
    * Deletes a file at the specified path.
    * Corresponds to Python's delete_file() method
    *
@@ -24721,15 +24741,8 @@ export class FileSystem {
               // Also check padding format (0, 1, or 2 = characters at the end)
               const paddingMatch = base64String.match(/=+$/);
               if (paddingMatch && paddingMatch[0].length > 2) {
-                throw new Error("Invalid base64 padding format");
-              }
-            }
-            const binaryContent = Buffer.from(base64String, "base64");
-            return {
-              requestId: result.requestId,
-              success: true,
 
-... [truncated, 32,651 chars remaining] ...
+... [truncated, 33,958 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
             for (let i = 0; i < binaryString.length; i++) {
@@ -24754,6 +24767,7 @@ export class FileSystem {
   async readFile(
   async readFile(
   async readFile(
+      if (this.isUsingLinkUrl()) {
       if (!fileInfoResult.success) {
         if (format === "bytes") {
       if (!fileInfoResult.fileInfo || fileInfoResult.fileInfo.isDirectory) {
@@ -24772,6 +24786,7 @@ export class FileSystem {
             if (
       if (format === "bytes") {
   async writeFile(
+      if (this.isUsingLinkUrl()) {
       if (contentLen <= chunkSize) {
       if (!firstResult.success) {
       for (let offset = firstChunkEnd; offset < contentLen; ) {
@@ -24967,7 +24982,7 @@ interface MobileSession {
   getAgentBay(): any;
   imageId?: string;
   getLink(protocolType?: string, port?: number, options?: string): Promise<any>;
-  getLinkUrl(): string;
+  linkUrl: string;
 }
 
 /**
@@ -25615,18 +25630,19 @@ export class Mobile {
       activity,
     };
     try {
+      const result = await this.session.callMcpTool("start_app", args, false);
 
-... [truncated, 21,938 chars remaining] ...
+... [truncated, 21,849 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
       if (!result.success) {
       if (!result.data) {
   async stopAppByCmd(stopCmd: string): Promise<BoolResult> {
   async screenshot(): Promise<ScreenshotResult> {
-    if (this.session.getLinkUrl()) {
+    if (this.session.linkUrl) {
       if (!result.success) {
   async betaTakeScreenshot(format = "png"): Promise<BetaScreenshotResult> {
-    if (!this.session.getLinkUrl()) {
+    if (!this.session.linkUrl) {
     if (formatNorm !== "png" && formatNorm !== "jpeg") {
       if (!result.success) {
   async betaTakeLongScreenshot(
@@ -25905,7 +25921,7 @@ export class Session {
   private _wsClient: WsClient | null = null;
 
   // Recording functionality
-  public enableBrowserReplay = false; // Whether browser recording is enabled for this session
+  public enableBrowserReplay?: boolean; // Whether browser recording is enabled for this session (undefined = server default)
 
   // File, command, code, and oss handlers (matching Python naming)
   public fileSystem: FileSystem; // file_system in Python
@@ -26018,10 +26034,16 @@ export class Session {
     return this.agentBay.getAPIKey();
   }
 
+  /**
+   * @deprecated Internal SDK use only. Will be removed in a future version.
+   */
   getToken(): string {
     return this.token;
   }
 
+  /**
+   * @deprecated Internal SDK use only. Will be removed in a future version.
+   */
   getLinkUrl(): string {
     return this.linkUrl;
   }
@@ -26382,15 +26404,11 @@ export class Session {
         }
 
         // Wait before next poll
-        await new Promise((resolve) => setTimeout(resolve, pollInterval));
-      }
 
-      // Log successful deletion
-      logAPIResponseWithDetails("DeleteSessionAsync", requestId, true, {
-
-... [truncated, 46,204 chars remaining] ...
+... [truncated, 46,394 chars remaining] ...
 
 # Remaining method/function signatures (truncated bodies):
+      logAPIResponseWithDetails("DeleteSessionAsync", requestId, true, {
       logError("Error calling delete_session_async:", error);
   private validateLabels(
     if (!labels || typeof labels !== "object") {

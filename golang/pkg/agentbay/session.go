@@ -1239,6 +1239,11 @@ func (s *Session) ListMcpTools() (*McpToolsResult, error) {
 }
 
 func (s *Session) getMcpServerForTool(toolName string) string {
+	return s.GetMcpServerForTool(toolName)
+}
+
+// GetMcpServerForTool returns the MCP server name that provides the given tool.
+func (s *Session) GetMcpServerForTool(toolName string) string {
 	for _, tool := range s.McpTools {
 		if tool.Name == toolName && tool.Server != "" {
 			return tool.Server

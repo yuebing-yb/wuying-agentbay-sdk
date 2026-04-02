@@ -153,7 +153,7 @@ agent_bay.delete(session)
 - **Text files**: The `read_file()` method supports text files (UTF-8 encoded) by default. Use `read_file(path)` or `read_file(path, format="text")` to read text files.
 - **Binary files**: The `read_file()` method now supports binary files! Use `read_file(path, format="bytes")` to read binary files such as images, executables, archives, etc. The method returns `BinaryFileContentResult` with `content` as `bytes` (Python) or `Uint8Array` (TypeScript/JavaScript).
 
-**File Size Support**: Both `read_file()` and `write_file()` methods support files of any size through automatic chunked transfer. You don't need to worry about file size limitations - the SDK handles large files transparently.
+**File Size Support**: Both `read_file()` and `write_file()` methods support files of any size. For HTTP LinkUrl channels, the SDK transfers the entire file in a single call. For MQTT channels, the SDK automatically uses chunked transfer to handle large files. You don't need to worry about file size limitations or the underlying channel - the SDK handles this transparently.
 
 **Supported File Types**:
 - ✅ Text files: `.txt`, `.json`, `.py`, `.html`, etc. (use default or `format="text"`)
@@ -709,7 +709,7 @@ agent_bay.delete(session)
 |---------|-----------------------------------|------------------------------|
 | **File Types** | ✅ Text and Binary | ✅ Text (default) and Binary (`format="bytes"` for read) |
 | **Use Case** | Local ↔ Cloud transfer | Cloud-side file processing |
-| **Size Limit** | ✅ No practical limit | ✅ No limit (chunked) |
+| **Size Limit** | ✅ No practical limit | ✅ No limit (auto-handled) |
 | **Progress Tracking** | ✅ Available | ❌ Not available |
 | **Binary Read Support** | ✅ Full support | ✅ Full support (`format="bytes"`) |
 | **Binary Write Support** | ✅ Full support | ❌ Not supported (text only) |
@@ -802,10 +802,10 @@ agent_bay.delete(session)
 
 | Use Case | Recommended Method | Notes |
 |----------|-------------------|-------|
-| Read text file | `read_file()` or `read_file(path, format="text")` | **Text files**, supports any size via chunked transfer |
+| Read text file | `read_file()` or `read_file(path, format="text")` | **Text files**, supports any size (auto-handled) |
 | Read binary file | `read_file(path, format="bytes")` | **Binary files** (images, PDFs, etc.), returns `BinaryFileContentResult` with `bytes` content |
 | Read multiple text files | `read_multiple_files()` | **Text files only**, more efficient than individual reads |
-| Write text content | `write_file()` | **Text files only**, supports any size via chunked transfer |
+| Write text content | `write_file()` | **Text files only**, supports any size (auto-handled) |
 | Upload file (local → cloud) | `upload_file()` | Supports all file types, with progress tracking |
 | Download file (cloud → local) | `download_file()` | Supports all file types, with progress tracking |
 | Find and replace text | `edit_file()` | **Text files only**, better than read-modify-write |

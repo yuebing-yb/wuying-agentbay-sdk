@@ -318,7 +318,7 @@ func (cm *ContextManager) Sync() (*ContextSyncResult, error) {
 //				}
 //			},
 //			150,  // maxRetries
-//			1500, // retryInterval in milliseconds
+//			500, // retryInterval in milliseconds (initial interval for exponential backoff)
 //		)
 //		if err != nil {
 //			fmt.Printf("Error: %v\n", err)
@@ -486,23 +486,31 @@ func (cm *ContextManager) SyncWithParams(contextId, path, mode string) (*Context
 }
 
 // pollForCompletion polls the info interface to check if sync is completed and calls callback.
+// Uses exponential backoff: retryInterval is the initial interval in ms, grows by factor 1.1 up to 5000ms.
 func (cm *ContextManager) pollForCompletion(callback SyncCallback, contextId, path string, maxRetries, retryInterval int) {
+	maxInterval := 5000
+	backoffFactor := 1.1
+	currentInterval := retryInterval
+
 	for retry := 0; retry < maxRetries; retry++ {
-		// Get context status data
 		infoResult, err := cm.InfoWithParams(contextId, path, "")
 		if err != nil {
 			LogError(fmt.Sprintf("Error checking context status on attempt %d: %v", retry+1, err))
-			time.Sleep(time.Duration(retryInterval) * time.Millisecond)
+			time.Sleep(time.Duration(currentInterval) * time.Millisecond)
+			newInterval := int(float64(currentInterval) * backoffFactor)
+			if newInterval > maxInterval {
+				currentInterval = maxInterval
+			} else {
+				currentInterval = newInterval
+			}
 			continue
 		}
 
-		// Check if all sync tasks are completed
 		allCompleted := true
 		hasFailure := false
 		hasSyncTasks := false
 
 		for _, item := range infoResult.ContextStatusData {
-			// We only care about sync tasks (upload/download)
 			if item.TaskType != "upload" && item.TaskType != "download" {
 				continue
 			}
@@ -522,7 +530,6 @@ func (cm *ContextManager) pollForCompletion(callback SyncCallback, contextId, pa
 		}
 
 		if allCompleted || !hasSyncTasks {
-			// All tasks completed or no sync tasks found
 			if hasFailure {
 				LogInfo("Context sync completed with failures")
 				callback(false)
@@ -533,14 +540,19 @@ func (cm *ContextManager) pollForCompletion(callback SyncCallback, contextId, pa
 				LogInfo("No sync tasks found")
 				callback(true)
 			}
-			return // Exit the function immediately after calling callback
+			return
 		}
 
-		LogDebug(fmt.Sprintf("Waiting for context sync to complete, attempt %d/%d", retry+1, maxRetries))
-		time.Sleep(time.Duration(retryInterval) * time.Millisecond)
+		LogDebug(fmt.Sprintf("Waiting for context sync to complete, attempt %d/%d, next interval: %dms", retry+1, maxRetries, currentInterval))
+		time.Sleep(time.Duration(currentInterval) * time.Millisecond)
+		newInterval := int(float64(currentInterval) * backoffFactor)
+		if newInterval > maxInterval {
+			currentInterval = maxInterval
+		} else {
+			currentInterval = newInterval
+		}
 	}
 
-	// If we've exhausted all retries, call callback with failure
 	LogWarn(fmt.Sprintf("Context sync polling timed out after %d attempts", maxRetries))
 	callback(false)
 }
@@ -725,22 +737,29 @@ func (cm *ContextManager) pollForBindCompletion(expectedContextIDs []string, max
 
 // pollForCompletionSync is the synchronous version of polling for sync completion.
 func (cm *ContextManager) pollForCompletionSync(contextId, path string, maxRetries, retryInterval int) (bool, error) {
+	maxInterval := 5000
+	backoffFactor := 1.1
+	currentInterval := retryInterval
+
 	for retry := 0; retry < maxRetries; retry++ {
-		// Get context status data
 		infoResult, err := cm.InfoWithParams(contextId, path, "")
 		if err != nil {
 			LogError(fmt.Sprintf("Error checking context status on attempt %d: %v", retry+1, err))
-			time.Sleep(time.Duration(retryInterval) * time.Millisecond)
+			time.Sleep(time.Duration(currentInterval) * time.Millisecond)
+			newInterval := int(float64(currentInterval) * backoffFactor)
+			if newInterval > maxInterval {
+				currentInterval = maxInterval
+			} else {
+				currentInterval = newInterval
+			}
 			continue
 		}
 
-		// Check if all sync tasks are completed
 		allCompleted := true
 		hasFailure := false
 		hasSyncTasks := false
 
 		for _, item := range infoResult.ContextStatusData {
-			// We only care about sync tasks (upload/download)
 			if item.TaskType != "upload" && item.TaskType != "download" {
 				continue
 			}
@@ -760,7 +779,6 @@ func (cm *ContextManager) pollForCompletionSync(contextId, path string, maxRetri
 		}
 
 		if allCompleted || !hasSyncTasks {
-			// All tasks completed or no sync tasks found
 			if hasFailure {
 				LogInfo("Context sync completed with failures")
 				return false, nil
@@ -773,11 +791,16 @@ func (cm *ContextManager) pollForCompletionSync(contextId, path string, maxRetri
 			}
 		}
 
-		LogDebug(fmt.Sprintf("Waiting for context sync to complete, attempt %d/%d", retry+1, maxRetries))
-		time.Sleep(time.Duration(retryInterval) * time.Millisecond)
+		LogDebug(fmt.Sprintf("Waiting for context sync to complete, attempt %d/%d, next interval: %dms", retry+1, maxRetries, currentInterval))
+		time.Sleep(time.Duration(currentInterval) * time.Millisecond)
+		newInterval := int(float64(currentInterval) * backoffFactor)
+		if newInterval > maxInterval {
+			currentInterval = maxInterval
+		} else {
+			currentInterval = newInterval
+		}
 	}
 
-	// If we've exhausted all retries, return failure
 	LogWarn(fmt.Sprintf("Context sync polling timed out after %d attempts", maxRetries))
 	return false, nil
 }

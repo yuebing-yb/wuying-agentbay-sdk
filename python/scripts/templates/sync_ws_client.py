@@ -130,8 +130,13 @@ class WsClient:
 
     def on_connection_state_change(
         self, listener: Callable[[WsConnectionState, str], None]
-    ) -> None:
-        self._call_in_loop(lambda c: c.on_connection_state_change(listener))
+    ) -> Callable[[], None]:
+        unsubscribe = self._call_in_loop(lambda c: c.on_connection_state_change(listener))
+
+        def _unsub() -> None:
+            self._call_in_loop(lambda c: unsubscribe())
+
+        return _unsub
 
     def connect(self) -> None:
         self._ensure_thread()

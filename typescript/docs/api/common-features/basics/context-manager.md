@@ -152,7 +152,7 @@ Synchronizes a context with the session. Supports both async and callback modes.
 | `mode?` | `string` | `undefined` | Optional synchronization mode (e.g., "upload", "download") |
 | `callback?` | ``SyncCallback`` | `undefined` | Optional callback function. If provided, runs in background and calls callback when complete |
 | `maxRetries` | `number` | `150` | Maximum number of retries for polling completion status (default: 150) |
-| `retryInterval` | `number` | `1500` | Milliseconds to wait between retries (default: 1500) |
+| `retryInterval` | `number` | `500` | Initial interval in milliseconds for exponential backoff polling (default: 500). Interval grows by factor 1.1 up to 5000ms. |
 
 #### Returns
 

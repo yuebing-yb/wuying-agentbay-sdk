@@ -108,7 +108,7 @@ node dist/docs/examples/data-persistence/context-sync-demo.js
 📊 Created 3/3 test files
 
 ⏳ Calling context.sync() with await...
-✅ Context sync completed successfully in 1500ms
+✅ Context sync completed successfully in 500ms
 📤 Sync result: success=true, requestId=req-101
 🗑️  Deleting session...
 ✅ Session deleted successfully
@@ -123,8 +123,8 @@ node dist/docs/examples/data-persistence/context-sync-demo.js
 The example uses default configuration values:
 
 - **Max Retries**: 150 attempts
-- **Retry Interval**: 1500ms (1.5 seconds)
-- **Timeout**: ~5 minutes (150 × 1.5s)
+- **Initial Retry Interval**: 500ms (exponential backoff, factor 1.1, max 5s)
+- **Max Timeout**: ~11 minutes (exponential backoff from 0.5s to 5s over 150 retries)
 
 ## Error Handling
 

@@ -1332,6 +1332,23 @@ public class Session {
     }
 
     /**
+     * Check if an error message indicates the session is already released/dead.
+     * "no alive session found" means the session was already released by the server
+     * (e.g., due to idle timeout), which is effectively a successful deletion.
+     *
+     * @param message The error message to check
+     * @return true if the message indicates session is already released
+     */
+    private boolean isSessionAlreadyReleased(String message) {
+        if (message == null) {
+            return false;
+        }
+        String lower = message.toLowerCase();
+        return lower.contains("no alive session")
+            || lower.contains("no need to release");
+    }
+
+    /**
      * Deletes this session with optional context synchronization.
      * 
      * <p>This method uses the DeleteSessionAsync API to release cloud resources.
@@ -1363,8 +1380,20 @@ public class Session {
             request.setAuthorization("Bearer " + getApiKey());
             request.setSessionId(sessionId);
 
-            DeleteSessionAsyncResponse response = agentBay.getClient().deleteSessionAsync(request);
-            String requestId = ResponseUtil.extractRequestId(response);
+            DeleteSessionAsyncResponse response;
+            String requestId;
+            try {
+                response = agentBay.getClient().deleteSessionAsync(request);
+                requestId = ResponseUtil.extractRequestId(response);
+            } catch (Exception deleteEx) {
+                // Check if the exception indicates session is already gone
+                String deleteErrorStr = deleteEx.getMessage() != null ? deleteEx.getMessage() : deleteEx.toString();
+                if (isSessionAlreadyReleased(deleteErrorStr)) {
+                    logger.info("Session {} already released during delete call: {}", sessionId, deleteErrorStr);
+                    return new DeleteResult("", true, "");
+                }
+                throw deleteEx; // Re-throw for outer catch to handle
+            }
 
             // Check if the response is successful
             if (response != null && response.getBody() != null) {
@@ -1373,6 +1402,11 @@ public class Session {
                     String code = response.getBody().getCode() != null ? response.getBody().getCode() : "Unknown";
                     String message = response.getBody().getMessage() != null 
                         ? response.getBody().getMessage() : "Failed to delete session";
+                    // Check if response indicates session is already released
+                    if (isSessionAlreadyReleased(message)) {
+                        logger.info("Session {} already released: {}", sessionId, message);
+                        return new DeleteResult(requestId, true, "");
+                    }
                     String errorMessage = "[" + code + "] " + message;
                     return new DeleteResult(requestId, false, errorMessage);
                 }

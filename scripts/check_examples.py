@@ -2,12 +2,17 @@
 Example code inspection script for CI.
 
 Scans and runs SDK examples across Python, TypeScript, and Golang.
-Files can be excluded from CI by adding a ci-skip marker in the first 20 lines:
-  Python:     # ci-skip: <reason>
-  TypeScript: // ci-skip: <reason>
-  Golang:     // ci-skip: <reason>
 
-See .aoneci/README.md for the full CI testing strategy and skip categories.
+Two filtering modes:
+  --ci-stable (whitelist): Only run examples marked with 'ci-stable' in first 20 lines
+  Default (blacklist):     Run all examples except those marked with 'ci-skip'
+
+Marker format (in the first 20 lines of a file):
+  Python:     # ci-stable  /  # ci-skip: <reason>
+  TypeScript: // ci-stable /  // ci-skip: <reason>
+  Golang:     // ci-stable /  // ci-skip: <reason>
+
+See .aoneci/README.md for the full CI testing strategy.
 """
 
 import argparse
@@ -26,27 +31,22 @@ RESET = '\033[0m'
 # Report file path
 REPORT_FILE = "example_check_report.md"
 
-# CI skip marker pattern: matches "# ci-skip", "// ci-skip", "# ci-skip: reason", etc.
 CI_SKIP_MARKER = "ci-skip"
+CI_STABLE_MARKER = "ci-stable"
+CI_MARKER_SCAN_LINES = 20
 
 
-def check_file_ci_skip(file_path: str) -> Optional[str]:
-    """Check if a file contains a ci-skip marker in the first 20 lines.
+def _scan_marker(file_path: str, marker: str) -> Optional[str]:
+    """Scan the first N lines of a file for a marker string.
 
-    Supports:
-      - Python:     # ci-skip  or  # ci-skip: <reason>
-      - TypeScript: // ci-skip or  // ci-skip: <reason>
-      - Go:         // ci-skip or  // ci-skip: <reason>
-
-    Returns the skip reason string if found, None otherwise.
+    Returns the text after the marker (or a default message) if found, None otherwise.
     """
     try:
         with open(file_path, "r", encoding="utf-8") as fh:
             for line_number, line in enumerate(fh):
-                if line_number >= 20:
+                if line_number >= CI_MARKER_SCAN_LINES:
                     break
                 stripped = line.strip()
-                # Remove comment prefix
                 comment_body = None
                 if stripped.startswith("//"):
                     comment_body = stripped[2:].strip()
@@ -54,14 +54,24 @@ def check_file_ci_skip(file_path: str) -> Optional[str]:
                     comment_body = stripped[1:].strip()
                 if comment_body is None:
                     continue
-                if comment_body == CI_SKIP_MARKER:
-                    return "ci-skip (no reason given)"
-                if comment_body.startswith(CI_SKIP_MARKER + ":"):
-                    reason = comment_body[len(CI_SKIP_MARKER) + 1:].strip()
-                    return reason if reason else "ci-skip (no reason given)"
+                if comment_body == marker:
+                    return f"{marker} (no reason given)"
+                if comment_body.startswith(marker + ":"):
+                    reason = comment_body[len(marker) + 1:].strip()
+                    return reason if reason else f"{marker} (no reason given)"
     except Exception:
         pass
     return None
+
+
+def check_file_ci_skip(file_path: str) -> Optional[str]:
+    """Check if a file has a ci-skip marker in the first 20 lines."""
+    return _scan_marker(file_path, CI_SKIP_MARKER)
+
+
+def check_file_ci_stable(file_path: str) -> bool:
+    """Check if a file has a ci-stable marker in the first 20 lines."""
+    return _scan_marker(file_path, CI_STABLE_MARKER) is not None
 
 def print_success(msg):
     print(f"{GREEN}{msg}{RESET}")
@@ -298,33 +308,39 @@ def process_results(results: List[Dict], language: str):
     with open(REPORT_FILE, "a", encoding="utf-8") as f:
         f.write(report_content)
 
-def check_python_examples(project_root: str, limit: int = 0) -> bool:
+def check_python_examples(project_root: str, limit: int = 0, ci_stable: bool = False) -> bool:
     print(f"\n{YELLOW}=== Checking Python Examples ==={RESET}")
     examples_dir = os.path.join(project_root, "python", "docs", "examples", "_async")
     python_root = os.path.join(project_root, "python")
-    
+
     exclude_list = ["__init__.py", "__pycache__", "requirements.txt"]
     files = find_files(examples_dir, ".py", exclude_list)
-    
+
     if not files:
         print_warning("No Python examples found.")
         return True
-        
-    print(f"Found {len(files)} Python examples.")
+
+    if ci_stable:
+        files = [f for f in files if check_file_ci_stable(f)]
+        print(f"Found {len(files)} ci-stable Python examples.")
+    else:
+        print(f"Found {len(files)} Python examples.")
+
     if limit > 0 and len(files) > limit:
         print(f"Limiting to first {limit} examples.")
         files = files[:limit]
-    
+
     env = {"PYTHONPATH": python_root}
     results = []
-    
+
     for i, file_path in enumerate(files):
         rel_path = os.path.relpath(file_path, project_root)
-        
-        skip_reason = check_file_ci_skip(file_path)
-        if skip_reason:
-            print(f"Skipping ({i+1}/{len(files)}): {rel_path} (ci-skip: {skip_reason})")
-            continue
+
+        if not ci_stable:
+            skip_reason = check_file_ci_skip(file_path)
+            if skip_reason:
+                print(f"Skipping ({i+1}/{len(files)}): {rel_path} (ci-skip: {skip_reason})")
+                continue
 
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
 
@@ -364,37 +380,43 @@ def check_python_examples(project_root: str, limit: int = 0) -> bool:
     process_results(results, "Python")
     return all(r['success'] for r in results)
 
-def check_golang_examples(project_root: str, limit: int = 0) -> bool:
+def check_golang_examples(project_root: str, limit: int = 0, ci_stable: bool = False) -> bool:
     print(f"\n{YELLOW}=== Checking Golang Examples ==={RESET}")
     examples_dir = os.path.join(project_root, "golang", "docs", "examples")
     golang_root = os.path.join(project_root, "golang")
-    
+
     example_dirs = set()
     for root, dirs, files in os.walk(examples_dir):
         if "main.go" in files:
             example_dirs.add(root)
-            
+
     sorted_dirs = sorted(list(example_dirs))
-    
+
+    if ci_stable:
+        sorted_dirs = [d for d in sorted_dirs if check_file_ci_stable(os.path.join(d, "main.go"))]
+        print(f"Found {len(sorted_dirs)} ci-stable Golang examples.")
+    else:
+        print(f"Found {len(sorted_dirs)} Golang examples.")
+
     if not sorted_dirs:
         print_warning("No Golang examples found.")
         return True
-        
-    print(f"Found {len(sorted_dirs)} Golang examples.")
+
     if limit > 0 and len(sorted_dirs) > limit:
         print(f"Limiting to first {limit} examples.")
         sorted_dirs = sorted_dirs[:limit]
-    
+
     results = []
-    
+
     for i, dir_path in enumerate(sorted_dirs):
         rel_path = os.path.relpath(dir_path, project_root)
-        
+
         main_go_path = os.path.join(dir_path, "main.go")
-        skip_reason = check_file_ci_skip(main_go_path)
-        if skip_reason:
-            print(f"Skipping ({i+1}/{len(sorted_dirs)}): {rel_path} (ci-skip: {skip_reason})")
-            continue
+        if not ci_stable:
+            skip_reason = check_file_ci_skip(main_go_path)
+            if skip_reason:
+                print(f"Skipping ({i+1}/{len(sorted_dirs)}): {rel_path} (ci-skip: {skip_reason})")
+                continue
 
         print(f"Running ({i+1}/{len(sorted_dirs)}): {rel_path} ... ", end="", flush=True)
 
@@ -430,42 +452,46 @@ def check_golang_examples(project_root: str, limit: int = 0) -> bool:
     process_results(results, "Golang")
     return all(r['success'] for r in results)
 
-def check_typescript_examples(project_root: str, limit: int = 0) -> bool:
+def check_typescript_examples(project_root: str, limit: int = 0, ci_stable: bool = False) -> bool:
     print(f"\n{YELLOW}=== Checking TypeScript Examples ==={RESET}")
     examples_dir = os.path.join(project_root, "typescript", "docs", "examples")
     typescript_root = os.path.join(project_root, "typescript")
-    
+
     exclude_list = ["node_modules", "dist"]
     files = find_files(examples_dir, ".ts", exclude_list)
     files = [f for f in files if not f.endswith(".d.ts")]
-    
+
+    if ci_stable:
+        files = [f for f in files if check_file_ci_stable(f)]
+        print(f"Found {len(files)} ci-stable TypeScript examples.")
+    else:
+        print(f"Found {len(files)} TypeScript examples.")
+
     if not files:
         print_warning("No TypeScript examples found.")
         return True
-        
-    print(f"Found {len(files)} TypeScript examples.")
+
     if limit > 0 and len(files) > limit:
         print(f"Limiting to first {limit} examples.")
         files = files[:limit]
-    
-    # Try npx ts-node
+
     ts_node_cmd = ["npx", "ts-node"]
-    
-    # Add NODE_PATH to ensure modules are found
+
     env = os.environ.copy()
     node_modules_path = os.path.join(typescript_root, "node_modules")
     current_node_path = env.get("NODE_PATH", "")
     env["NODE_PATH"] = f"{node_modules_path}{os.pathsep}{current_node_path}" if current_node_path else node_modules_path
-        
+
     results = []
-    
+
     for i, file_path in enumerate(files):
         rel_path = os.path.relpath(file_path, project_root)
-        
-        skip_reason = check_file_ci_skip(file_path)
-        if skip_reason:
-            print(f"Skipping ({i+1}/{len(files)}): {rel_path} (ci-skip: {skip_reason})")
-            continue
+
+        if not ci_stable:
+            skip_reason = check_file_ci_skip(file_path)
+            if skip_reason:
+                print(f"Skipping ({i+1}/{len(files)}): {rel_path} (ci-skip: {skip_reason})")
+                continue
 
         print(f"Running ({i+1}/{len(files)}): {rel_path} ... ", end="", flush=True)
 
@@ -506,34 +532,36 @@ def main():
     parser = argparse.ArgumentParser(description="Run SDK examples for inspection.")
     parser.add_argument("--lang", choices=["all", "python", "golang", "typescript"], default="all", help="Language to check")
     parser.add_argument("--limit", type=int, default=0, help="Limit number of examples per language (0 for all)")
+    parser.add_argument("--ci-stable", action="store_true", default=False, help="Only run examples marked with ci-stable in first 20 lines")
     args = parser.parse_args()
-    
+
     project_root = os.getcwd()
     if os.path.basename(project_root) == "scripts":
         project_root = os.path.dirname(project_root)
-        
+
     print(f"Project Root: {project_root}")
-    
-    # Initialize report file
+    if args.ci_stable:
+        print(f"🏷️ ci-stable mode: only examples with '{CI_STABLE_MARKER}' marker will run")
+
     if not os.path.exists(REPORT_FILE):
         with open(REPORT_FILE, "w", encoding="utf-8") as f:
             f.write("# 示例代码巡检报告\n\n")
             f.write(f"生成时间: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-    
+
     success = True
-    
+
     if args.lang in ["all", "python"]:
-        if not check_python_examples(project_root, args.limit):
+        if not check_python_examples(project_root, args.limit, ci_stable=args.ci_stable):
             success = False
-            
+
     if args.lang in ["all", "typescript"]:
-        if not check_typescript_examples(project_root, args.limit):
+        if not check_typescript_examples(project_root, args.limit, ci_stable=args.ci_stable):
             success = False
-            
+
     if args.lang in ["all", "golang"]:
-        if not check_golang_examples(project_root, args.limit):
+        if not check_golang_examples(project_root, args.limit, ci_stable=args.ci_stable):
             success = False
-            
+
     if not success:
         sys.exit(1)
     else:

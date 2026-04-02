@@ -325,7 +325,7 @@ func main() {
 
 		150,  // maxRetries
 
-		1500, // retryInterval in milliseconds
+		500, // retryInterval in milliseconds (initial interval for exponential backoff)
 
 	)
 

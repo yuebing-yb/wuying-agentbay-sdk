@@ -15,12 +15,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.aliyun.agentbay.exception.WsCancelledException;
 
 public class WsClient {
     private static final Logger logger = LoggerFactory.getLogger(WsClient.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    public enum ConnectionState {
+        OPEN, CLOSED, RECONNECTING, ERROR
+    }
+
+    @FunctionalInterface
+    public interface ConnectionStateListener {
+        void onStateChange(ConnectionState state, String reason);
+    }
 
     private final String wsUrl;
     private final String token;
@@ -31,6 +47,32 @@ public class WsClient {
 
     private final ConcurrentHashMap<String, PendingStream> pendingById = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, List<PushCallback>> callbacksByTarget = new ConcurrentHashMap<>();
+
+    private volatile ConnectionState state = ConnectionState.CLOSED;
+    private final CopyOnWriteArrayList<ListenerEntry> stateListeners = new CopyOnWriteArrayList<>();
+    private final AtomicLong nextListenerId = new AtomicLong(0);
+    private final AtomicBoolean closedExplicitly = new AtomicBoolean(false);
+    private final AtomicBoolean reconnecting = new AtomicBoolean(false);
+
+    private final int heartbeatIntervalMs;
+    private final int reconnectInitialDelayMs;
+    private final int reconnectMaxDelayMs;
+    private volatile ScheduledFuture<?> heartbeatFuture;
+    private volatile ScheduledFuture<?> reconnectFuture;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "WsClient-scheduler");
+        t.setDaemon(true);
+        return t;
+    });
+
+    private static class ListenerEntry {
+        final long id;
+        final ConnectionStateListener listener;
+        ListenerEntry(long id, ConnectionStateListener listener) {
+            this.id = id;
+            this.listener = listener;
+        }
+    }
 
     public interface OnEvent {
         void onEvent(String invocationId, Map<String, Object> data);
@@ -103,9 +145,45 @@ public class WsClient {
     }
 
     public WsClient(String wsUrl, String token) {
+        this(wsUrl, token, 20000, 1000, 30000);
+    }
+
+    public WsClient(String wsUrl, String token, int heartbeatIntervalMs,
+                     int reconnectInitialDelayMs, int reconnectMaxDelayMs) {
         this.wsUrl = wsUrl;
         this.token = token;
+        this.heartbeatIntervalMs = heartbeatIntervalMs;
+        this.reconnectInitialDelayMs = reconnectInitialDelayMs;
+        this.reconnectMaxDelayMs = reconnectMaxDelayMs;
         this.client = new OkHttpClient.Builder().build();
+    }
+
+    /**
+     * Register a listener for connection state changes.
+     * Returns a Runnable that unsubscribes the listener when called.
+     */
+    public Runnable onConnectionStateChange(ConnectionStateListener listener) {
+        long id = nextListenerId.incrementAndGet();
+        ListenerEntry entry = new ListenerEntry(id, listener);
+        stateListeners.add(entry);
+        return () -> stateListeners.removeIf(e -> e.id == id);
+    }
+
+    private void setState(ConnectionState newState, String reason) {
+        if (this.state == newState) return;
+        this.state = newState;
+        logger.debug("WS state → {}: {}", newState, reason);
+        for (ListenerEntry entry : stateListeners) {
+            try {
+                entry.listener.onStateChange(newState, reason);
+            } catch (Exception e) {
+                logger.warn("WS state listener error: {}", e.getMessage());
+            }
+        }
+    }
+
+    public ConnectionState getState() {
+        return state;
     }
 
     public synchronized CompletableFuture<Void> connect() {
@@ -116,17 +194,26 @@ public class WsClient {
             return connecting;
         }
 
+        closedExplicitly.set(false);
         connecting = new CompletableFuture<>();
+        openConnection();
+
+        return connecting;
+    }
+
+    private void openConnection() {
         Request request = new Request.Builder()
             .url(wsUrl)
             .addHeader("X-Access-Token", token)
             .build();
         client.newWebSocket(request, new Listener());
-
-        return connecting;
     }
 
     public synchronized void close() {
+        closedExplicitly.set(true);
+        cancelReconnect();
+        stopHeartbeat();
+
         WebSocket ws = webSocket;
         webSocket = null;
         connecting = null;
@@ -137,6 +224,79 @@ public class WsClient {
             }
         }
         failAllPending(new RuntimeException("WS connection closed"));
+        setState(ConnectionState.CLOSED, "closed by client");
+    }
+
+    private void startHeartbeat() {
+        stopHeartbeat();
+        heartbeatFuture = scheduler.scheduleAtFixedRate(() -> {
+            WebSocket ws = webSocket;
+            if (ws == null) return;
+            try {
+                Map<String, Object> ping = new HashMap<>();
+                ping.put("type", "ping");
+                String raw = objectMapper.writeValueAsString(ping);
+                ws.send(raw);
+            } catch (Exception e) {
+                logger.debug("WS heartbeat send failed: {}", e.getMessage());
+            }
+        }, heartbeatIntervalMs, heartbeatIntervalMs, TimeUnit.MILLISECONDS);
+    }
+
+    private void stopHeartbeat() {
+        ScheduledFuture<?> f = heartbeatFuture;
+        if (f != null) {
+            f.cancel(false);
+            heartbeatFuture = null;
+        }
+    }
+
+    private void scheduleReconnect() {
+        if (closedExplicitly.get() || !reconnecting.compareAndSet(false, true)) {
+            return;
+        }
+        setState(ConnectionState.RECONNECTING, "connection lost");
+        reconnectWithBackoff(0);
+    }
+
+    private void reconnectWithBackoff(int attempt) {
+        if (closedExplicitly.get()) {
+            reconnecting.set(false);
+            return;
+        }
+        double delayMs = reconnectInitialDelayMs * Math.pow(2, attempt);
+        if (delayMs > reconnectMaxDelayMs) delayMs = reconnectMaxDelayMs;
+        double jitter = delayMs * 0.3 * Math.random();
+        long delay = (long) (delayMs + jitter);
+
+        logger.debug("WS reconnect attempt {} in {}ms", attempt + 1, delay);
+        reconnectFuture = scheduler.schedule(() -> {
+            if (closedExplicitly.get()) {
+                reconnecting.set(false);
+                return;
+            }
+            try {
+                CompletableFuture<Void> future = new CompletableFuture<>();
+                synchronized (WsClient.this) {
+                    connecting = future;
+                }
+                openConnection();
+                future.get(10, TimeUnit.SECONDS);
+                reconnecting.set(false);
+            } catch (Exception e) {
+                logger.debug("WS reconnect failed: {}", e.getMessage());
+                reconnectWithBackoff(attempt + 1);
+            }
+        }, delay, TimeUnit.MILLISECONDS);
+    }
+
+    private void cancelReconnect() {
+        reconnecting.set(false);
+        ScheduledFuture<?> f = reconnectFuture;
+        if (f != null) {
+            f.cancel(false);
+            reconnectFuture = null;
+        }
     }
 
     public Runnable registerCallback(String target, PushCallback callback) {
@@ -418,6 +578,8 @@ public class WsClient {
             if (c != null && !c.isDone()) {
                 c.complete(null);
             }
+            startHeartbeat();
+            setState(ConnectionState.OPEN, "connected");
         }
 
         @Override
@@ -427,16 +589,28 @@ public class WsClient {
 
         @Override
         public void onClosing(WebSocket webSocket, int code, String reason) {
+            stopHeartbeat();
+            WsClient.this.webSocket = null;
             failAllPending(new RuntimeException("WS closing: " + code + " " + reason));
+            if (!closedExplicitly.get()) {
+                scheduleReconnect();
+            }
         }
 
         @Override
         public void onClosed(WebSocket webSocket, int code, String reason) {
+            stopHeartbeat();
+            WsClient.this.webSocket = null;
             failAllPending(new RuntimeException("WS closed: " + code + " " + reason));
+            if (!closedExplicitly.get()) {
+                scheduleReconnect();
+            }
         }
 
         @Override
         public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+            stopHeartbeat();
+            WsClient.this.webSocket = null;
             Exception e = t instanceof Exception ? (Exception) t : new RuntimeException(t);
             CompletableFuture<Void> c = WsClient.this.connecting;
             WsClient.this.connecting = null;
@@ -444,6 +618,10 @@ public class WsClient {
                 c.completeExceptionally(e);
             }
             failAllPending(e);
+            if (!closedExplicitly.get()) {
+                setState(ConnectionState.ERROR, t.getMessage());
+                scheduleReconnect();
+            }
         }
     }
 }
