@@ -20,7 +20,7 @@ Commands support configurable timeouts and optional working directory or environ
 class Command(BaseService)
 ```
 
-Async command execution service for session shells in the AgentBay cloud environment.
+Sync command execution service for session shells in the AgentBay cloud environment.
 
 Use this class for non-blocking command execution; for blocking/synchronous usage,
 refer to the `Command` service in the sync API.

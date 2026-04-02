@@ -15,7 +15,7 @@ class AgentBay()
 ```
 
 AgentBay represents the main client for interacting with the AgentBay cloud runtime
-environment asynchronously.
+environment synchronously.
 
 ### __init__
 
@@ -39,7 +39,7 @@ Initialize AgentBay client.
 def create(params: Optional[CreateSessionParams] = None) -> SessionResult
 ```
 
-Create a new session in the AgentBay cloud environment asynchronously.
+Create a new session in the AgentBay cloud environment synchronously.
 
 **Arguments**:
 
@@ -51,7 +51,7 @@ Create a new session in the AgentBay cloud environment asynchronously.
 
     SessionResult: Result containing the created session and request ID.
   - success (bool): True if the operation succeeded
-  - session (Session): The created session object (if success is True)
+  - session (SyncSession): The created session object (if success is True)
   - request_id (str): Unique identifier for this API request
   - error_message (str): Error description (if success is False)
   
@@ -81,7 +81,7 @@ def list(labels: Optional[Dict[str, str]] = None,
          status: Optional[str] = None) -> SessionListResult
 ```
 
-Returns paginated list of session IDs filtered by labels asynchronously.
+Returns paginated list of session IDs filtered by labels synchronously.
 
 **Arguments**:
 
@@ -106,11 +106,11 @@ Returns paginated list of session IDs filtered by labels asynchronously.
 def delete(session: Session, sync_context: bool = False) -> DeleteResult
 ```
 
-Delete a session by session object asynchronously.
+Delete a session by session object synchronously.
 
 **Arguments**:
 
-- `session` _Session_ - The session to delete.
+- `session` _SyncSession_ - The session to delete.
 - `sync_context` _bool_ - Whether to sync context data (trigger file uploads)
   before deleting the session. Defaults to False.
   
@@ -125,7 +125,7 @@ Delete a session by session object asynchronously.
 def get(session_id: str) -> SessionResult
 ```
 
-Get a session by its ID asynchronously.
+Get a session by its ID synchronously.
 
 **Arguments**:
 
@@ -144,7 +144,7 @@ def beta_pause(session: Session,
                poll_interval: float = 2.0) -> SessionPauseResult
 ```
 
-Asynchronously pause a session (beta), putting it into a dormant state.
+Synchronously pause a session (beta), putting it into a dormant state.
 
 **Notes**:
 
@@ -159,7 +159,7 @@ def beta_resume(session: Session,
                 poll_interval: float = 2.0) -> SessionResumeResult
 ```
 
-Asynchronously resume a session (beta) from a paused state.
+Synchronously resume a session (beta) from a paused state.
 
 ## See Also
 

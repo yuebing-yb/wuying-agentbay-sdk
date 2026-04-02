@@ -313,7 +313,7 @@ result = agent_bay.context.get(context_id="ctx-04bdwfj7u22a1s30g")
 
 **See Also**:
 
-ContextService.list, ContextService.update, ContextService.delete
+SyncContextService.list, SyncContextService.update, SyncContextService.delete
 
 ### create
 
@@ -385,7 +385,7 @@ update_result = agent_bay.context.update(result.context)
 
 **See Also**:
 
-ContextService.get, ContextService.list, ContextService.delete
+SyncContextService.get, SyncContextService.list, SyncContextService.delete
 
 ### delete
 
@@ -540,7 +540,7 @@ print(f"Found {len(files_result.entries)} files")
 def clear_async(context_id: str) -> ClearContextResult
 ```
 
-Asynchronously initiate a task to clear the context's persistent data.
+Synchronously initiate a task to clear the context's persistent data.
 
 This is a non-blocking method that returns immediately after initiating the clearing task
 on the backend. The context's state will transition to "clearing" while the operation
@@ -627,7 +627,7 @@ def clear(context_id: str,
           poll_interval: float = 2.0) -> ClearContextResult
 ```
 
-Asynchronously clear the context's persistent data and wait for the final result.
+Synchronously clear the context's persistent data and wait for the final result.
 
 This method wraps the `clear_async` and `get_clear_status` polling logic,
 providing the simplest and most direct way to handle clearing tasks.

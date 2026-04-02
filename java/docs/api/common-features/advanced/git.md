@@ -16,7 +16,7 @@ Learn how to manage git repositories in cloud environments
 
 ## 📋 Requirements
 
-- This feature requires `code_latest` image
+- Requires `code_latest` or `linux_latest` image (any image with git pre-installed)
 
 ## Git
 
@@ -1241,9 +1241,9 @@ Constructs a new {@code GitConflictError}.
 
 Thrown when a git operation targets a directory that is not a git repository.
 
-<p>This typically occurs when a command like {@code status} or {@code log}
-is run against a path that has not been initialized with {@code git init}
-or cloned.
+<p>This typically occurs when a command like {@code status}, {@code log},
+{@code add}, or {@code commit} is run against a path that has not been
+initialized with {@code git init} or cloned.
 
 ### Constructor
 
@@ -1265,7 +1265,7 @@ Constructs a new {@code GitNotARepoError}.
 Thrown when the git executable is not found or not installed in the
 remote session environment.
 
-<p>Ensure the session image includes git (e.g., {@code ubuntu-2204}).
+<p>Ensure the session image includes git (e.g., {@code code_latest}).
 
 ### Constructor
 

@@ -14,7 +14,7 @@ clone, commit, branch management, and more.
 
 ## Requirements
 
-- This feature requires `code_latest` image
+- Requires `code_latest` or `linux_latest` image (any image with git pre-installed)
 
 
 

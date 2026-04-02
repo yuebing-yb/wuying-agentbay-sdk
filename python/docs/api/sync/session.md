@@ -51,7 +51,7 @@ def __init__(self, session_id: str = "",
 class Session()
 ```
 
-Session represents a session in the AgentBay cloud environment.
+SyncSession represents a session in the AgentBay cloud environment.
 
 ### __init__
 
@@ -144,7 +144,7 @@ Internal SDK use only. Will be removed in a future version.
 def get_status() -> "SessionStatusResult"
 ```
 
-Get basic session status asynchronously.
+Get basic session status synchronously.
 
 **Returns**:
 
@@ -192,7 +192,7 @@ Delete this session and release all associated resources.
 def set_labels(labels: Dict[str, str]) -> OperationResult
 ```
 
-Sets the labels for this session asynchronously.
+Sets the labels for this session synchronously.
 
 ### get_labels
 
@@ -200,7 +200,7 @@ Sets the labels for this session asynchronously.
 def get_labels() -> OperationResult
 ```
 
-Gets the labels for this session asynchronously.
+Gets the labels for this session synchronously.
 
 ### info
 
@@ -208,7 +208,7 @@ Gets the labels for this session asynchronously.
 def info() -> OperationResult
 ```
 
-Get detailed information about this session asynchronously.
+Get detailed information about this session synchronously.
 
 ### get_link
 
@@ -218,7 +218,7 @@ def get_link(protocol_type: Optional[str] = None,
              options: Optional[str] = None) -> OperationResult
 ```
 
-Asynchronously get a link associated with the current session.
+Synchronously get a link associated with the current session.
 
 ### list_mcp_tools
 
@@ -226,7 +226,7 @@ Asynchronously get a link associated with the current session.
 def list_mcp_tools(image_id: Optional[str] = None)
 ```
 
-List MCP tools available for this session asynchronously.
+List MCP tools available for this session synchronously.
 
 ### call_mcp_tool
 
@@ -238,7 +238,7 @@ def call_mcp_tool(tool_name: str,
                   auto_gen_session: bool = False)
 ```
 
-Call an MCP tool directly asynchronously.
+Call an MCP tool directly synchronously.
 
 ### get_metrics
 

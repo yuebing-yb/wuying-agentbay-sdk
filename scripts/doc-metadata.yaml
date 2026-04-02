@@ -675,7 +675,7 @@ modules:
       clone, commit, branch management, and more.
 
     requirements:
-      - "This feature requires `code_latest` image"
+      - "Requires `code_latest` or `linux_latest` image (any image with git pre-installed)"
 
     best_practices:
       - "Always configure user identity before committing"

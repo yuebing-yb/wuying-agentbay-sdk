@@ -15,7 +15,7 @@ The Git module provides:
 ## Prerequisites
 
 Before using Git operations, you need:
-1. An active AgentBay session with `code_latest` image (git is pre-installed)
+1. An active AgentBay session with `code_latest` or `linux_latest` image (any image with git pre-installed)
 2. A valid AgentBay API Key
 
 ## Quick Start
