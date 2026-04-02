@@ -299,7 +299,8 @@ async def test_screenshot_with_multiple_pages(browser_session):
             except Exception as e:
                 print(f"⚠️ Warning: Failed to capture screenshot for {url}: {e}")
                 # Continue with other URLs
-                continue
+                if(i < len(urls) - 1):
+                    continue
 
         # Verify we got at least one screenshot
         assert (

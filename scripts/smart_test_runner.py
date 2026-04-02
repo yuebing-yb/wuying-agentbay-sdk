@@ -11,7 +11,7 @@ print(f"Python可执行文件: {sys.executable}")
 print(f"Python版本: {sys.version}")
 print(f"Python路径: {sys.path}")
 
-    # Check each import individually for better error reporting
+# Check each import individually for better error reporting
 try:
     print("📦 正在导入langchain_openai...")
     from langchain_openai import ChatOpenAI
@@ -67,8 +67,9 @@ TEST_DIR = os.path.join(PROJECT_ROOT, "python", "tests", "integration")
 LLMS_FULL_PATH = os.path.join(PROJECT_ROOT, "llms-full.txt")
 REPORT_FILE = os.path.join(PROJECT_ROOT, "test_report.md")
 
-# Test file patterns to skip configuration
-# Tests containing the following patterns will be skipped during execution
+# CI-unsupported test patterns to skip
+# Tests matching the following patterns will be skipped during CI execution
+# Categories: OSS, Agent, Browser, Network, WebSocket, Screenshot, non-default endpoints
 TEST_PATTERNS = [
     "test_oss_integration",     # Python OSS integration tests
     "oss.test.ts",             # TypeScript OSS test files
@@ -137,32 +138,32 @@ class AgentState(TypedDict):
 
 # --- Helper Functions ---
 
-def should_skip_oss_test(test_id: str, skip_oss: bool = False) -> bool:
-    """检查是否应该跳过 OSS 测试"""
-    if not skip_oss:
+def should_skip_test(test_id: str, skip_ci_unsupported: bool = False) -> bool:
+    """检查是否应该跳过 CI 环境不支持的测试（包括 OSS、Browser、Agent、Network、Screenshot 等）"""
+    if not skip_ci_unsupported:
         return False
     
-    # 检查测试ID是否包含OSS测试模式
+    # 检查测试ID是否匹配 TEST_PATTERNS 中的任意跳过模式
     for pattern in TEST_PATTERNS:
         if pattern in test_id:
             return True
     
     return False
 
-def filter_oss_tests(test_ids: List[str], skip_oss: bool = False) -> List[str]:
-    """过滤掉 OSS 测试"""
-    if not skip_oss:
-        print(f"⚠️ skip_oss=False，不进行测试过滤")
+def filter_skipped_tests(test_ids: List[str], skip_ci_unsupported: bool = False) -> List[str]:
+    """过滤掉 CI 环境不支持的测试（OSS、Browser、Agent、Network、Screenshot 等）"""
+    if not skip_ci_unsupported:
+        print(f"⚠️ skip_ci_unsupported=False，不进行测试过滤")
         return test_ids
     
-    print(f"🔍 开始过滤测试，skip_oss={skip_oss}")
+    print(f"🔍 开始过滤 CI 不支持的测试，skip_ci_unsupported={skip_ci_unsupported}")
     print(f"📋 过滤模式列表: {TEST_PATTERNS}")
     
     filtered_tests = []
     skipped_count = 0
     
     for test_id in test_ids:
-        should_skip = should_skip_oss_test(test_id, skip_oss)
+        should_skip = should_skip_test(test_id, skip_ci_unsupported)
         if should_skip:
             skipped_count += 1
             print(f"⏭️ 跳过测试: {test_id}")
@@ -327,11 +328,11 @@ def discover_python_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
     if len(test_ids) == 0 and result.stderr:
          print(f"调试输出:\n{result.stderr}")
     
-    # 应用 OSS 测试过滤
+    # 应用 CI 不支持的测试过滤（OSS、Browser、Agent、Network、Screenshot 等）
     skip_oss = state.get("skip_oss", False)
     if skip_oss:
-        print("🔍 正在过滤 OSS 测试...")
-        test_ids = filter_oss_tests(test_ids, skip_oss)
+        print("🔍 正在过滤 CI 不支持的测试...")
+        test_ids = filter_skipped_tests(test_ids, skip_oss)
         print(f"✅ 过滤后剩余 {len(test_ids)} 个Python测试。")
     
     # Load SDK Context
@@ -480,11 +481,11 @@ def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> Agen
     
     print(f"✅ 总共找到 {len(test_ids)} 个TypeScript集成测试。")
     
-    # 应用 OSS 测试过滤
+    # 应用 CI 不支持的测试过滤（OSS、Browser、Agent、Network、Screenshot 等）
     skip_oss = state.get("skip_oss", False)
     if skip_oss:
-        print("🔍 正在过滤 OSS 测试...")
-        test_ids = filter_oss_tests(test_ids, skip_oss)
+        print("🔍 正在过滤 CI 不支持的测试...")
+        test_ids = filter_skipped_tests(test_ids, skip_oss)
         print(f"✅ 过滤后剩余 {len(test_ids)} 个TypeScript测试。")
     
     # Load SDK Context
@@ -571,11 +572,11 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
         
         print(f"✅ 找到 {len(test_ids)} 个Golang集成测试。")
         
-        # 应用 OSS 测试过滤
+        # 应用 CI 不支持的测试过滤（OSS、Browser、Agent、Network、Screenshot 等）
         skip_oss = state.get("skip_oss", False)
         if skip_oss:
-            print("🔍 正在过滤 OSS 测试...")
-            test_ids = filter_oss_tests(test_ids, skip_oss)
+            print("🔍 正在过滤 CI 不支持的测试...")
+            test_ids = filter_skipped_tests(test_ids, skip_oss)
             print(f"✅ 过滤后剩余 {len(test_ids)} 个Golang测试。")
         
         # Load SDK Context
@@ -1421,7 +1422,7 @@ def main():
     parser.add_argument("-k", "--keyword", help="Run tests which match the given substring expression (same as pytest -k)", type=str)
     parser.add_argument("--test-type", help="Test type to run (all, python, typescript, golang, java)", type=str, default="all")
     parser.add_argument("--report", help="Path to save the report", default=REPORT_FILE)
-    parser.add_argument("--skip-oss", help="Skip OSS integration tests", action="store_true", default=False)
+    parser.add_argument("--skip-oss", help="Skip CI-unsupported tests (OSS, Browser, Agent, Network, Screenshot, etc.)", action="store_true", default=False)
     
     args = parser.parse_args()
     

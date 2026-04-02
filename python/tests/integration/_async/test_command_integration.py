@@ -10,7 +10,7 @@ from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def agent_bay():
     """Create an AsyncAgentBay instance."""
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -19,7 +19,7 @@ async def agent_bay():
     return AsyncAgentBay(api_key=api_key)
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture
 async def command_session(agent_bay):
     """Create a session for command testing."""
     time.sleep(3)  # Ensure a delay to avoid session creation conflicts
@@ -54,6 +54,7 @@ async def test_execute_command_success(command_session):
 async def test_run_alias_success(command_session):
     """Test command.run alias."""
     result = await command_session.command.run("echo 'Hello, AgentBay!'")
+    print(f"Command execution result: {result.stdout}")
     assert result.success
     assert result.output.strip() == "Hello, AgentBay!"
 
@@ -71,7 +72,7 @@ async def test_execute_command_with_timeout(command_session):
     command_str = "sleep 5"
     timeout_ms = 1000  # 1 second timeout
     result = await command.execute_command(command_str, timeout_ms)
-    print(f"Command execution result with timeout: {result}")
+    print(f"Command execution result with timeout: {result.stdout}")
     assert not result.success
     assert result.request_id != ""
     assert result.error_message != ""

@@ -8,7 +8,7 @@ from agentbay import CreateSessionParams
 
 
 # Define fixtures for session management
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture
 async def agent_session():
     """
     Fixture to create a session before all tests in this module
@@ -43,7 +43,7 @@ async def agent_session():
         print(f"Warning: Error deleting session: {e}")
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 def command(agent_session):
     """Fixture to get the command object from the session."""
     return agent_session.command

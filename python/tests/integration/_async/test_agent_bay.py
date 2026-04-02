@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import unittest
+import json
 
 from agentbay import AsyncAgentBay
 from agentbay import (
@@ -248,6 +249,14 @@ class TestRecyclePolicy(unittest.IsolatedAsyncioTestCase):
     async def test_create_session_with_custom_recycle_policy(self):
         """Test creating session with custom recyclePolicy using Lifecycle_1Day."""
         # Create custom recyclePolicy with Lifecycle_1Day and default paths
+
+        context_result = await self.agent_bay.context.get("test-recycle-context", create=True)
+        
+        assert context_result.success and context_result.context
+        
+        context = context_result.context
+        context_id = context.id
+        print(f"Context created successfully with ID: {context.id}")
         recycle_policy = RecyclePolicy(
             lifecycle=Lifecycle.LIFECYCLE_1DAY, paths=[""]  # Using default path value
         )
@@ -264,7 +273,7 @@ class TestRecyclePolicy(unittest.IsolatedAsyncioTestCase):
 
         # Create ContextSync with custom policy
         context_sync = ContextSync(
-            context_id="test-recycle-context",
+            context_id,
             path="/test/recycle/path",
             policy=custom_sync_policy,
         )
@@ -283,7 +292,6 @@ class TestRecyclePolicy(unittest.IsolatedAsyncioTestCase):
 
         # Create session with custom recyclePolicy
         create_result = await self.agent_bay.create(params)
-
         # Verify SessionResult structure
         self.assertTrue(create_result.success)
         self.assertIsNotNone(create_result.request_id)

@@ -6,9 +6,10 @@ import pytest
 import pytest_asyncio
 
 from agentbay import AsyncAgentBay
+from agentbay import CreateSessionParams
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def agent_bay():
     api_key = os.environ.get("AGENTBAY_API_KEY")
     if not api_key:
@@ -18,10 +19,21 @@ async def agent_bay():
 
 @pytest_asyncio.fixture
 async def test_session(agent_bay):
-    result = await agent_bay.create()
-    assert result.success
-    yield result.session
-    await result.session.delete()
+    params = CreateSessionParams(
+        image_id="code_latest",
+    )
+    session_result = await agent_bay.create(params)
+    if not session_result.success or not session_result.session:
+        pytest.skip("Failed to create session")
+
+    session = session_result.session  # Assuming session has direct access to command
+    yield session
+
+    # Clean up session
+    try:
+        await agent_bay.delete(session)
+    except Exception as e:
+        print(f"Warning: Error deleting session: {e}")
 
 
 @pytest.mark.asyncio

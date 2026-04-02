@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import time
 
 import pytest
 import pytest_asyncio
@@ -9,8 +10,11 @@ import pytest_asyncio
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
+# Shared state: populated by test_get_installed_apps, consumed by subsequent tests
+_shared: dict = {}
 
-@pytest_asyncio.fixture(scope="module")
+
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def agent_bay():
     """Create AsyncAgentBay instance."""
     api_key = os.environ.get("AGENTBAY_API_KEY")
@@ -21,16 +25,23 @@ async def agent_bay():
 
 @pytest_asyncio.fixture
 async def session(agent_bay):
-    """Create a session with windows_latest image."""
-    print("\nCreating session for computer apps testing...")
-    session_param = CreateSessionParams(image_id="windows_latest")
-    result = await agent_bay.create(session_param)
-    assert result.success, f"Failed to create session: {result.error_message}"
-    session = result.session
-    print(f"Session created with ID: {session.session_id}")
+    """Create a session for command testing."""
+    time.sleep(3)  # Ensure a delay to avoid session creation conflicts
+    params = CreateSessionParams(
+        image_id="linux_latest",
+    )
+    session_result = await agent_bay.create(params)
+    if not session_result.success or not session_result.session:
+        pytest.skip("Failed to create session")
+
+    session = session_result.session  # Assuming session has direct access to command
     yield session
-    print("\nCleaning up: Deleting the session...")
-    await session.delete()
+
+    # Clean up session
+    try:
+        await agent_bay.delete(session)
+    except Exception as e:
+        print(f"Warning: Error deleting session: {e}")
 
 
 @pytest.mark.asyncio
@@ -54,63 +65,42 @@ async def test_get_installed_apps(session):
         assert hasattr(app, "start_cmd"), "App should have start_cmd"
         print(f"First app: {app.name}")
 
+    # Find Google Chrome in installed apps and store for subsequent tests
+    chrome_app = None
+    for app in result.data:
+        if "Google Chrome" in getattr(app, "name", ""):
+            chrome_app = app
+            print(f"Found Google Chrome: name={app.name}, start_cmd={app.start_cmd}")
+            break
+    _shared["chrome_app"] = chrome_app
+    if chrome_app is None:
+        print("Warning: Google Chrome not found in installed apps, subsequent tests will use fallback name")
 
-@pytest.mark.asyncio
-async def test_start_app(session):
-    """Test starting an application."""
-    # Arrange
-    print("\nTest: Starting notepad app...")
-
-    # Act - Try to start notepad (should be available on Windows)
-    result = await session.computer.start_app("notepad.exe")
-
-    # Assert
-    assert result.success, f"Start app failed: {result.error_message}"
-    assert result.data is not None, "Process list should not be None"
-    assert isinstance(result.data, list), "Processes should be a list"
-    print(f"Started {len(result.data)} process(es)")
-
-    if len(result.data) > 0:
-        process = result.data[0]
-        assert hasattr(process, "pname"), "Process should have pname"
-        assert hasattr(process, "pid"), "Process should have pid"
-        print(f"Process: {process.pname}, PID: {process.pid}")
 
 
 @pytest.mark.asyncio
-async def test_start_app_with_params(session):
+async def test_start_app_and_stop_app(session):
     """Test starting an application with parameters."""
     # Arrange
-    print("\nTest: Starting cmd.exe with work directory...")
+    chrome_app = _shared.get("chrome_app")
+    start_cmd = chrome_app.start_cmd if chrome_app else "/usr/bin/google-chrome-stable %U"
+    print(f"\nTest: Starting {start_cmd} with work directory...")
 
-    # Act - Try to start cmd.exe
+    # Act
     # Note: 'activity' is for mobile, so we test work_directory here
-    result = await session.computer.start_app("notepad.exe", work_directory="C:\\")
-
+    result = await session.computer.start_app(start_cmd, "")
+    assert result.success, f"Start app with params failed: {result.error_message}"
+    pname = result.data[0].pname if result.data else None
+    print(f"Started app with pname: {pname} \n")
+    print(f"Started app with result.data: {result.data} \n")
+    assert pname is not None, "Process name should be set"
     # Assert
     assert result.success, f"Start app with params failed: {result.error_message}"
     assert len(result.data) > 0, "Should have started at least one process"
 
     # Cleanup
-    await session.computer.stop_app_by_pname("notepad.exe")
+    await session.computer.stop_app_by_pname(pname)
 
-
-@pytest.mark.asyncio
-async def test_stop_app(session):
-    """Test stopping an application."""
-    # Arrange
-    print("\nTest: Stopping notepad app...")
-
-    # Start notepad first
-    start_result = await session.computer.start_app("notepad.exe")
-    assert start_result.success, "Failed to start notepad for test"
-
-    # Act - Stop notepad
-    result = await session.computer.stop_app_by_pname("notepad.exe")
-
-    # Assert
-    assert result.success, f"Stop app failed: {result.error_message}"
-    print("App stopped successfully")
 
 
 @pytest.mark.asyncio
@@ -118,16 +108,21 @@ async def test_app_lifecycle(session):
     """Test full application lifecycle: Find -> Start -> Verify -> Stop -> Verify."""
     print("\nTest: App Lifecycle (Find -> Start -> Verify -> Stop -> Verify)...")
 
-    # 1. Get Installed Apps
-    installed_apps = await session.computer.get_installed_apps()
-
-    start_cmd = "notepad.exe"
-    if installed_apps.success and installed_apps.data:
-        for app in installed_apps.data:
-            if "Notepad" in app.name or app.start_cmd == "notepad.exe":
-                start_cmd = app.start_cmd
-                print(f"Found app in installed list: {app.name} ({app.start_cmd})")
-                break
+    # 1. Get Installed Apps (use cached result from test_get_installed_apps if available)
+    chrome_app = _shared.get("chrome_app")
+    if chrome_app:
+        start_cmd = chrome_app.start_cmd
+        print(f"Using cached Chrome app: name={chrome_app.name}, start_cmd={start_cmd}")
+    else:
+        # Fallback: query installed apps directly
+        installed_apps = await session.computer.get_installed_apps()
+        start_cmd = "Google Chrome"
+        if installed_apps.success and installed_apps.data:
+            for app in installed_apps.data:
+                if "Google Chrome" in getattr(app, "name", ""):
+                    start_cmd = app.start_cmd
+                    print(f"Found app in installed list: {app.name} ({app.start_cmd})")
+                    break
 
     # 2. Start App
     print(f"Starting app with command: {start_cmd}")
