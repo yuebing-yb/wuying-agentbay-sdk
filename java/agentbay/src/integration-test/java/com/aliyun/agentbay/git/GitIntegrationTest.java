@@ -296,7 +296,7 @@ public class GitIntegrationTest {
             System.out.println("test12_ClonePublicRepo passed");
         } finally {
             // Clean up
-            session.getCommand().executeCommand("rm -rf " + clonePath, 10000);
+            session.getCommand().executeCommand("rm -rf " + clonePath, 30000); // Increased timeout for cleanup
         }
     }
 
