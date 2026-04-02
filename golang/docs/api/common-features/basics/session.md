@@ -41,6 +41,9 @@ type Session struct {
 	Code		*code.Code
 	Oss		*oss.OSSManager
 
+	// Git for version control
+	Git	*git.Git
+
 	// Platform-specific automation modules
 	Computer	*computer.Computer
 	Mobile		*mobile.Mobile

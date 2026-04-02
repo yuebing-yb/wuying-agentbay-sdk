@@ -4,7 +4,7 @@ import pytest
 from agentbay import BrowserOption
 
 
-class TestAsyncBrowserTypeUnit(unittest.TestCase):
+class TestSyncBrowserTypeUnit(unittest.TestCase):
     """Unit tests for browser type functionality."""
 
     @pytest.mark.sync

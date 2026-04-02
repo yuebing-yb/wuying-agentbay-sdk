@@ -1,3 +1,4 @@
+# ci-stable
 """Command Execution Patterns Example
 
 This example demonstrates command execution patterns:

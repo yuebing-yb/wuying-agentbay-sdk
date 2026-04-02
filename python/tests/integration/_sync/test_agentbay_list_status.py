@@ -236,7 +236,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"  ✓ Session status checked")
 
         # Resume the session (asynchronous)
-        print(f"\nStep 3: Resuming session asynchronously...")
+        print(f"\nStep 3: Resuming session synchronously...")
         resume_result = self.agent_bay.beta_resume(session)
 
         # Verify async resume result

@@ -5,7 +5,7 @@ import unittest
 from agentbay import CreateSessionParams, AppManagerRule, ExtraConfigs, MobileExtraConfig
 
 
-class TestAsyncCreateSessionParams(unittest.TestCase):
+class TestSyncCreateSessionParams(unittest.TestCase):
     @pytest.mark.sync
 
     def test_default_initialization(self):

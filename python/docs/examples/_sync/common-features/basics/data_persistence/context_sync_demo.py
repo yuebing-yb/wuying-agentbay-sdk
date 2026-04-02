@@ -7,7 +7,7 @@ AgentBay SDK - Context Sync Dual-Mode Example
 
 This example demonstrates the context.sync() method with dual calling patterns:
 - Context creation for persistent storage
-- Async calling pattern (immediate return)
+- Sync calling pattern (immediate return)
 - Sync calling pattern with callback (immediate return)
 - Timing and status monitoring
 - Error handling and timeout scenarios

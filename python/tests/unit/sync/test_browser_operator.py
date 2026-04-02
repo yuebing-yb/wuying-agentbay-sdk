@@ -3,7 +3,7 @@ import json
 import os
 import unittest
 from typing import Optional
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from pydantic import BaseModel, Field
 
@@ -63,7 +63,7 @@ class TestBrowser(unittest.TestCase):
         # Actually, self.browser.initialize calls self.session.client...
         # If we don't mock session.client methods, it might fail.
 
-        # Let's look at how we mocked for AsyncBrowser.
+        # Let's look at how we mocked for SyncBrowser.
         # SyncBrowser should be similar but sync.
         self.mock_session.client.init_browser.return_value = MagicMock()
         self.mock_session.client.init_browser.return_value.to_map.return_value = {
@@ -356,7 +356,7 @@ class TestBrowser(unittest.TestCase):
         self.browser.operator.extract.assert_called()
 
 
-class TestAsyncBrowser(unittest.TestCase):
+class TestSyncBrowser(unittest.TestCase):
     def setUp(self):
         """Set up test browser."""
         self.mock_session = MagicMock()
@@ -372,7 +372,7 @@ class TestAsyncBrowser(unittest.TestCase):
         self.mock_session.call_mcp_tool = MagicMock()
 
         self.browser = Browser(self.mock_session)
-        # We are testing real AsyncBrowserOperator, so we don't mock self.browser.operator
+        # We are testing real SyncBrowserOperator, so we don't mock self.browser.operator
         # But we need to ensure dependencies work.
 
     def test_initialize_async(self):

@@ -12,7 +12,7 @@ class ContextManager()
 
 Manages context operations within a session in the AgentBay cloud environment.
 
-The ContextManager provides methods to get information about context synchronization
+The SyncContextManager provides methods to get information about context synchronization
 status and to synchronize contexts with the session.
 
 ### __init__
@@ -81,7 +81,7 @@ def info(context_id: Optional[str] = None,
          task_type: Optional[str] = None) -> ContextInfoResult
 ```
 
-Get information about context synchronization status asynchronously.
+Get information about context synchronization status synchronously.
 
 **Arguments**:
 
@@ -119,7 +119,7 @@ def sync(context_id: Optional[str] = None,
          retry_interval: int = 500) -> ContextSyncResult
 ```
 
-Synchronize a context with the session asynchronously.
+Synchronize a context with the session synchronously.
 
 **Arguments**:
 

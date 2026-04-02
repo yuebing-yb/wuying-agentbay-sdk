@@ -420,7 +420,7 @@ class ContextService:
             - Context names must be unique within your account
 
         See Also:
-            AsyncContextService.list, AsyncContextService.update, AsyncContextService.delete
+            SyncContextService.list, SyncContextService.update, SyncContextService.delete
         """
         # Validate parameters
         if name is None and context_id is None:
@@ -583,7 +583,7 @@ class ContextService:
             - Updated name must be unique within your account
 
         See Also:
-            AsyncContextService.get, AsyncContextService.list, AsyncContextService.delete
+            SyncContextService.get, SyncContextService.list, SyncContextService.delete
         """
         try:
             _log_api_call("ModifyContext", f"Id={context.id}, Name={context.name}")
@@ -959,7 +959,7 @@ class ContextService:
 
     def clear_async(self, context_id: str) -> ClearContextResult:
         """
-        Asynchronously initiate a task to clear the context's persistent data.
+        Synchronously initiate a task to clear the context's persistent data.
 
         This is a non-blocking method that returns immediately after initiating the clearing task
         on the backend. The context's state will transition to "clearing" while the operation
@@ -1144,7 +1144,7 @@ class ContextService:
         self, context_id: str, timeout: int = 60, poll_interval: float = 2.0
     ) -> ClearContextResult:
         """
-        Asynchronously clear the context's persistent data and wait for the final result.
+        Synchronously clear the context's persistent data and wait for the final result.
 
         This method wraps the `clear_async` and `get_clear_status` polling logic,
         providing the simplest and most direct way to handle clearing tasks.
@@ -1172,7 +1172,7 @@ class ContextService:
             clear_result = agent_bay.context.clear(result.context_id, timeout=60)
             ```
         """
-        # 1. Asynchronously start the clearing task
+        # 1. Synchronously start the clearing task
         start_result = self.clear_async(context_id)
         if not start_result.success:
             return start_result

@@ -1301,6 +1301,23 @@ public class GenerateApiDocs {
         moduleToClasses.put("network", Arrays.asList(
             "com.aliyun.agentbay.network.BetaNetworkService"
         ));
+        moduleToClasses.put("git", Arrays.asList(
+            "com.aliyun.agentbay.git.Git",
+            "com.aliyun.agentbay.git.GitCloneResult",
+            "com.aliyun.agentbay.git.GitInitResult",
+            "com.aliyun.agentbay.git.GitCommitResult",
+            "com.aliyun.agentbay.git.GitStatusResult",
+            "com.aliyun.agentbay.git.GitFileStatus",
+            "com.aliyun.agentbay.git.GitLogResult",
+            "com.aliyun.agentbay.git.GitLogEntry",
+            "com.aliyun.agentbay.git.GitBranchListResult",
+            "com.aliyun.agentbay.git.GitBranchInfo",
+            "com.aliyun.agentbay.git.GitError",
+            "com.aliyun.agentbay.git.GitAuthError",
+            "com.aliyun.agentbay.git.GitConflictError",
+            "com.aliyun.agentbay.git.GitNotARepoError",
+            "com.aliyun.agentbay.git.GitNotFoundError"
+        ));
         
         return moduleToClasses.getOrDefault(moduleName, new ArrayList<>());
     }

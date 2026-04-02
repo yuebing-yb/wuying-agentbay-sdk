@@ -655,3 +655,41 @@ modules:
 
     emoji: ⚙️
     category: common-features/basics
+
+  # Git module
+  git:
+    python: agentbay.git
+    typescript: git
+    golang: pkg/agentbay/git
+    java: com.aliyun.agentbay.git
+
+    tutorial:
+      url: ../../../../../docs/guides/common-features/advanced/git-operations.md
+      text: "Git Operations Guide"
+      description: "Learn how to manage git repositories in cloud environments"
+
+    overview: |
+      The Git module provides high-level git operations for managing
+      repositories in the AgentBay cloud environment. It wraps git CLI
+      commands and executes them via the Command module, supporting
+      clone, commit, branch management, and more.
+
+    requirements:
+      - "Requires `code_latest` or `linux_latest` image (any image with git pre-installed)"
+
+    best_practices:
+      - "Always configure user identity before committing"
+      - "Use depth parameter for shallow clones to save bandwidth"
+      - "Handle GitAuthError for operations requiring authentication"
+      - "Use timeout_ms for long-running operations like clone and pull"
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+        category: common-features/basics
+      - name: Command API Reference
+        module: command
+        category: common-features/basics
+
+    emoji: 🔀
+    category: common-features/advanced

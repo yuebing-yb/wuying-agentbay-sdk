@@ -1,11 +1,11 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 from agentbay import Context, ContextService
 
 
-class TestAsyncContext(unittest.TestCase):
+class TestSyncContext(unittest.TestCase):
     @pytest.mark.sync
 
     def test_context_initialization(self):
@@ -23,7 +23,7 @@ class TestAsyncContext(unittest.TestCase):
         self.assertEqual(context.last_used_at, "2025-05-29T12:30:00Z")
 
 
-class TestAsyncContextService(unittest.TestCase):
+class TestSyncContextService(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.agent_bay = MagicMock()

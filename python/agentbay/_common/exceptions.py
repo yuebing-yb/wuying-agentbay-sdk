@@ -74,3 +74,47 @@ class ClearanceTimeoutError(AgentBayError):
 
     def __init__(self, message="Context clearing operation timed out", *args, **kwargs):
         super().__init__(message, *args, **kwargs)
+
+class GitError(AgentBayError):
+    """
+    Base exception for all git operations.
+
+    Attributes:
+        exit_code: The exit code returned by the git command.
+        stderr: The stderr output from the git command.
+    """
+    def __init__(self, message="Git operation error", exit_code=1, stderr="", *args, **kwargs):
+        super().__init__(message, *args, **kwargs)
+        self.exit_code = exit_code
+        self.stderr = stderr
+
+class GitAuthError(GitError):
+    """
+    Raised when git authentication fails.
+
+    Common causes include invalid credentials, missing access tokens,
+    or insufficient repository permissions.
+    """
+    def __init__(self, message="Git authentication error", exit_code=1, stderr="", *args, **kwargs):
+        super().__init__(message, exit_code, stderr, *args, **kwargs)
+
+class GitNotFoundError(GitError):
+    """
+    Raised when git is not installed or not found on the remote environment.
+    """
+    def __init__(self, message="Git not found", exit_code=127, stderr="", *args, **kwargs):
+        super().__init__(message, exit_code, stderr, *args, **kwargs)
+
+class GitConflictError(GitError):
+    """
+    Raised when a git merge or rebase conflict occurs.
+    """
+    def __init__(self, message="Git merge conflict", exit_code=1, stderr="", *args, **kwargs):
+        super().__init__(message, exit_code, stderr, *args, **kwargs)
+
+class GitNotARepoError(GitError):
+    """
+    Raised when the target directory is not a git repository.
+    """
+    def __init__(self, message="Not a git repository", exit_code=128, stderr="", *args, **kwargs):
+        super().__init__(message, exit_code, stderr, *args, **kwargs)

@@ -19,6 +19,11 @@ from ._common.exceptions import (
     SessionError,
     AgentError,
     ClearanceTimeoutError,
+    GitError,
+    GitAuthError,
+    GitNotFoundError,
+    GitConflictError,
+    GitNotARepoError,
 )
 from ._common.logger import AgentBayLogger, get_logger, log, _colorize_log_message
 from ._common.params.context_sync import (

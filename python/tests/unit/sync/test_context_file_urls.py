@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 from agentbay import (
     ContextFileEntry,
@@ -9,7 +9,7 @@ from agentbay import (
 )
 
 
-class TestAsyncContextFileUrls(unittest.TestCase):
+class TestSyncContextFileUrls(unittest.TestCase):
     def setUp(self):
         self.agent_bay = MagicMock()
         self.agent_bay.api_key = "test-api-key"

@@ -10,7 +10,7 @@ This test suite follows TDD principles:
 import json
 import pytest
 import unittest
-from unittest.mock import MagicMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 
 class DummyAgentBay:
@@ -27,7 +27,7 @@ class DummyAgentBay:
         return self.client
 
 
-class TestAsyncSessionCallMcpTool(unittest.TestCase):
+class TestSyncSessionCallMcpTool(unittest.TestCase):
     """Test cases for Session.call_mcp_tool() public API."""
 
     def setUp(self):
@@ -464,7 +464,7 @@ class TestAsyncSessionCallMcpTool(unittest.TestCase):
         self.assertTrue(hasattr(result, "error_message"))
 
 
-class TestAsyncMcpToolResult(unittest.TestCase):
+class TestSyncMcpToolResult(unittest.TestCase):
     """Test cases for McpToolResult model."""
 
     def test_mcp_tool_result_initialization(self):
@@ -492,7 +492,7 @@ class TestAsyncMcpToolResult(unittest.TestCase):
         self.assertEqual(result.error_message, "")
 
 
-class TestAsyncSessionCallMcpToolApiFallback(unittest.TestCase):
+class TestSyncSessionCallMcpToolApiFallback(unittest.TestCase):
     """Tests call_mcp_tool falls back to OpenAPI when LinkUrl is absent."""
 
     def setUp(self):

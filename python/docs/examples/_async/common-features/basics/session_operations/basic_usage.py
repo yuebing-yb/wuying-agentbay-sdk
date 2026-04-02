@@ -1,3 +1,4 @@
+# ci-stable
 import asyncio
 import os
 import sys

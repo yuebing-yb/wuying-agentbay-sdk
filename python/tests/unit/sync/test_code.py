@@ -1,11 +1,11 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 from agentbay import Code, EnhancedCodeExecutionResult, McpToolResult
 
 
-class TestAsyncCode(unittest.TestCase):
+class TestSyncCode(unittest.TestCase):
     """Unit tests for Code module."""
 
     def setUp(self):
@@ -17,7 +17,7 @@ class TestAsyncCode(unittest.TestCase):
         self.mock_session._is_vpc_enabled.return_value = False
         self.mock_session.call_mcp_tool = MagicMock()
 
-        # AsyncCode constructor calls super which stores session
+        # SyncCode constructor calls super which stores session
         self.code = Code(self.mock_session)
 
     @pytest.mark.sync

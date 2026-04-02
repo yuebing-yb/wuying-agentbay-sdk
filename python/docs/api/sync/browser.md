@@ -56,7 +56,7 @@ session.browser.operator.navigate(url)
 def initialize(option: Optional["BrowserOption"] = None) -> bool
 ```
 
-Initialize the browser instance with the given options asynchronously.
+Initialize the browser instance with the given options synchronously.
 Returns True if successful, False otherwise.
 
 **Arguments**:

@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import McpToolResult, OperationResult
 from agentbay import FileSystem, BoolResult
@@ -32,7 +32,7 @@ class DummySession:
         return self.client
 
 
-class TestAsyncFileSystem(unittest.TestCase):
+class TestSyncFileSystem(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
         self.fs = FileSystem(self.session)

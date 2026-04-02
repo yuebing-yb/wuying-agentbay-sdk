@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 from agentbay import (
     Context,
@@ -10,7 +10,7 @@ from agentbay import (
 )
 
 
-class TestAsyncContextPagination(unittest.TestCase):
+class TestSyncContextPagination(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.agent_bay = MagicMock()

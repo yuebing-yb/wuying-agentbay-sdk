@@ -1,6 +1,6 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import McpToolResult, OperationResult
 from agentbay import FileSystem, BoolResult
@@ -24,7 +24,7 @@ class DummySession:
         return self.client
 
 
-class TestAsyncFileSystemRefactor(unittest.TestCase):
+class TestSyncFileSystemRefactor(unittest.TestCase):
     """
     Test cases to verify the refactored FileSystem API behavior.
     These tests ensure that the new unified read_file and write_file methods

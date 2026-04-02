@@ -586,7 +586,7 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print(f"  ✓ Session status: {get_result.data.status}")
 
         # Resume the session (asynchronous)
-        print(f"\nStep 3: Resuming session asynchronously...")
+        print(f"\nStep 3: Resuming session synchronously...")
 
         resume_result = await self.agent_bay.beta_resume_async(session)
 
@@ -689,9 +689,9 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay import AsyncSession
+        from agentbay import SyncSession
 
-        invalid_session = AsyncSession(self.agent_bay, "non-existent-session-12345")
+        invalid_session = SyncSession(self.agent_bay, "non-existent-session-12345")
 
         print(
             f"\nAttempting to pause non-existent session: {invalid_session.session_id}"
@@ -715,9 +715,9 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay import AsyncSession
+        from agentbay import SyncSession
 
-        invalid_session = AsyncSession(self.agent_bay, "non-existent-session-12345")
+        invalid_session = SyncSession(self.agent_bay, "non-existent-session-12345")
 
         print(
             f"\nAttempting to resume non-existent session: {invalid_session.session_id}"
@@ -741,9 +741,9 @@ class TestSessionPauseResumeIntegration(unittest.TestCase):
         print("=" * 60)
 
         # Create a mock session object with invalid session ID
-        from agentbay import AsyncSession
+        from agentbay import SyncSession
 
-        invalid_session = AsyncSession(self.agent_bay, "non-existent-session-12345")
+        invalid_session = SyncSession(self.agent_bay, "non-existent-session-12345")
 
         print(
             f"\nAttempting to async resume non-existent session: {invalid_session.session_id}"

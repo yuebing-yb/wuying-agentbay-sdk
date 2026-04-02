@@ -8,6 +8,7 @@ import com.aliyun.agentbay.mobile.Mobile;
 import com.aliyun.agentbay.context.*;
 import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.filesystem.FileSystem;
+import com.aliyun.agentbay.git.Git;
 import com.aliyun.agentbay.model.*;
 import com.aliyun.agentbay.oss.OSS;
 import com.aliyun.agentbay.code.Code;
@@ -40,6 +41,7 @@ public class Session {
     private Browser browser;
     private Computer computer;
     public Mobile mobile;
+    private Git git;
     private String fileTransferContextId;
     private String resourceUrl;
     private String token;
@@ -72,6 +74,7 @@ public class Session {
         this.browser = new Browser(this);
         this.computer = new Computer(this);
         this.mobile = new Mobile(this);
+        this.git = new Git(this);
         this.imageId = "";
         this.wsUrl = "";
     }
@@ -146,6 +149,15 @@ public class Session {
      */
     public String getSessionId() {
         return sessionId;
+    }
+
+    /**
+     * Get the Git service for this session.
+     *
+     * @return The Git service instance
+     */
+    public Git getGit() {
+        return git;
     }
 
     /**

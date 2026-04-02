@@ -33,7 +33,7 @@ class ContextManager:
     """
     Manages context operations within a session in the AgentBay cloud environment.
 
-    The AsyncContextManager provides methods to get information about context synchronization
+    The SyncContextManager provides methods to get information about context synchronization
     status and to synchronize contexts with the session.
     """
 
@@ -216,7 +216,7 @@ class ContextManager:
         task_type: Optional[str] = None,
     ) -> ContextInfoResult:
         """
-        Get information about context synchronization status asynchronously.
+        Get information about context synchronization status synchronously.
 
         Args:
             context_id: Optional ID of the context to get information for
@@ -254,7 +254,7 @@ class ContextManager:
             f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}",
         )
 
-        # Async API call
+        # Sync API call
         response = self.session._get_client().get_context_info(request)
 
         # Extract request ID
@@ -335,7 +335,7 @@ class ContextManager:
         retry_interval: int = 500,
     ) -> ContextSyncResult:
         """
-        Synchronize a context with the session asynchronously.
+        Synchronize a context with the session synchronously.
 
         Args:
             context_id: Optional ID of the context to synchronize
@@ -395,7 +395,7 @@ class ContextManager:
             f"SessionId={self.session._get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}",
         )
 
-        # Async API call
+        # Sync API call
         response = self.session._get_client().sync_context(request)
 
         # Extract request ID

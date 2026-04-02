@@ -1,12 +1,12 @@
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock
+from unittest.mock import MagicMock
 
 from agentbay import McpToolResult, OperationResult
 from agentbay import Oss
 
 
-class TestAsyncOss(unittest.TestCase):
+class TestSyncOss(unittest.TestCase):
     def setUp(self):
         self.mock_session = MagicMock()
         self.session = self.mock_session  # Add session reference

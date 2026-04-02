@@ -29,21 +29,16 @@ traits:
         - 187788
         - WB02016330
       content: |
-        ---
-        - **Example Check Report**
-            - @${{git.repo}}
-            - **Branch**: ${{git.branch}}
-            - **Commit**: ${{git.commitId}}
-            - **Changed By**: ${{git.employeeId}}
-                      
         📝 **多语言示例检查报告**
-        
-        📊 **检查结果：** ${{jobs.example-check.outputs.example_summary}}
-        
-        **失败详情：**
-        ${{jobs.example-check.outputs.failed_examples}}
-        
-        💡 请查看CI详情页面获取AI分析和修复建议。
+        - 仓库: ${{git.repo}}
+        - 分支: ${{git.branch}}
+        - 提交: ${{git.commitId}}
+
+        📊 检查结果: ${{jobs.example-check.outputs.example_summary}}
+
+        失败详情: ${{jobs.example-check.outputs.failed_examples}}
+
+        💡 请查看CI详情页面获取详细日志。
 
 jobs:
   example-check:
@@ -117,23 +112,23 @@ jobs:
           if [ "${{params.python}}" == "true" ]; then
             echo "=== Running Python Checks ==="
             set +e
-            python scripts/check_examples.py --lang python
+            python scripts/check_examples.py --lang python --ci-stable
             if [ $? -ne 0 ]; then FAILED=true; fi
             set -e
           fi
-          
+
           if [ "${{params.typescript}}" == "true" ]; then
             echo "=== Running TypeScript Checks ==="
             set +e
-            python scripts/check_examples.py --lang typescript
+            python scripts/check_examples.py --lang typescript --ci-stable
             if [ $? -ne 0 ]; then FAILED=true; fi
             set -e
           fi
-          
+
           if [ "${{params.golang}}" == "true" ]; then
             echo "=== Running Golang Checks ==="
             set +e
-            python scripts/check_examples.py --lang golang
+            python scripts/check_examples.py --lang golang --ci-stable
             if [ $? -ne 0 ]; then FAILED=true; fi
             set -e
           fi

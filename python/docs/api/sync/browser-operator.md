@@ -91,7 +91,7 @@ def screenshot(page=None,
                timeout: Optional[int] = None) -> str
 ```
 
-Asynchronously takes a screenshot of the specified page.
+Synchronously takes a screenshot of the specified page.
 
 **Arguments**:
 
@@ -113,7 +113,7 @@ Asynchronously takes a screenshot of the specified page.
 def close() -> bool
 ```
 
-Asynchronously closes the remote browser operator session.
+Synchronously closes the remote browser operator session.
 This will terminate the browser process managed by the operator.
 
 ### act
@@ -123,7 +123,7 @@ def act(action_input: Union[ObserveResult, ActOptions],
         page=None) -> "ActResult"
 ```
 
-Asynchronously perform an action on a web page.
+Synchronously perform an action on a web page.
 
 **Arguments**:
 
@@ -143,7 +143,7 @@ def observe(options: ObserveOptions,
             page=None) -> Tuple[bool, List[ObserveResult]]
 ```
 
-Asynchronously observe elements or state on a web page.
+Synchronously observe elements or state on a web page.
 
 **Arguments**:
 
@@ -163,7 +163,7 @@ Asynchronously observe elements or state on a web page.
 def extract(options: ExtractOptions, page=None) -> Tuple[bool, T]
 ```
 
-Asynchronously extract information from a web page.
+Synchronously extract information from a web page.
 
 **Arguments**:
 
@@ -185,7 +185,7 @@ def login(login_config: str,
           use_vision: Optional[bool] = False) -> "ActResult"
 ```
 
-Asynchronously perform a login operation on a web page.
+Synchronously perform a login operation on a web page.
 
 **Arguments**:
 

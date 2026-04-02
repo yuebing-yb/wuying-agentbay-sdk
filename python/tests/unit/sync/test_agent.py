@@ -2,7 +2,7 @@ import os
 import pytest
 import time
 import unittest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import get_logger
 from agentbay import OperationResult
@@ -33,7 +33,7 @@ class DummySession:
         return self.client
 
 
-class TestAsyncAgentComputer(unittest.TestCase):
+class TestSyncAgentComputer(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
         self.agent = Agent(self.session)
@@ -226,7 +226,7 @@ class TestAsyncAgentComputer(unittest.TestCase):
         args = self.session.call_mcp_tool.call_args[0][1]
         self.assertEqual(args["task_id"], "task-123")
 
-class TestAsyncAgentBrowser(unittest.TestCase):
+class TestSyncAgentBrowser(unittest.TestCase):
     def setUp(self):
         self.session = MagicMock()
         self.agent = Agent(self.session)
@@ -420,7 +420,7 @@ class TestAsyncAgentBrowser(unittest.TestCase):
         self.assertEqual(args["task_id"], "task-123")
 
 
-class TestAsyncAgentMobile(unittest.TestCase):
+class TestSyncAgentMobile(unittest.TestCase):
     def setUp(self):
         self.session = DummySession()
         self.agent = Agent(self.session)

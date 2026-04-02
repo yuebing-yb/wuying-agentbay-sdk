@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -12,7 +12,7 @@ from agentbay import (
 from agentbay._common.params.context_sync import ContextSync
 
 
-class TestAsyncContextManagerBind(unittest.TestCase):
+class TestSyncContextManagerBind(unittest.TestCase):
     def setUp(self):
         self.mock_session = MagicMock()
         self.mock_session._get_api_key.return_value = "test-api-key"

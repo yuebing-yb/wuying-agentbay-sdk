@@ -1,7 +1,7 @@
 import time
 import unittest
 import pytest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import OperationResult
 from agentbay import DeleteResult, Session, GetSessionResult, GetSessionData
@@ -19,7 +19,7 @@ class DummyAgentBay:
         return MagicMock()
 
 
-class TestAsyncSession(unittest.TestCase):
+class TestSyncSession(unittest.TestCase):
     def setUp(self):
         self.agent_bay = DummyAgentBay()
         self.session_id = "test_session_id"

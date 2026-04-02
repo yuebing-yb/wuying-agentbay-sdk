@@ -1,3 +1,4 @@
+// ci-stable
 import { before } from "node:test";
 import { AgentBay, Session } from "../../src";
 import { getTestApiKey, extractResourceId } from "../utils/test-helpers";

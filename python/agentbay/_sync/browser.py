@@ -66,7 +66,7 @@ class Browser(BaseService):
 
     def initialize(self, option: Optional["BrowserOption"] = None) -> bool:
         """
-        Initialize the browser instance with the given options asynchronously.
+        Initialize the browser instance with the given options synchronously.
         Returns True if successful, False otherwise.
 
         Args:
@@ -129,7 +129,7 @@ class Browser(BaseService):
             return success
         except Exception as e:
             _logger.exception(
-                f"❌ Failed to initialize browser instance asynchronously"
+                f"❌ Failed to initialize browser instance synchronously"
             )
             self._initialized = False
             self._endpoint_url = None
@@ -241,7 +241,7 @@ class Browser(BaseService):
     def _scroll_to_load_all_content(
         self, page, max_scrolls: int = 8, delay_ms: int = 1200
     ):
-        """Async version of _scroll_to_load_all_content."""
+        """Sync version of _scroll_to_load_all_content."""
         last_height = 0
         for _ in range(max_scrolls):
             page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -551,7 +551,7 @@ class Browser(BaseService):
                 authorization=f"Bearer {self.session.agent_bay.api_key}",
                 session_id=self.session.session_id,
             )
-            # Async call
+            # Sync call
             response = self.session.agent_bay.client.get_cdp_link(
                 request
             )

@@ -1229,7 +1229,7 @@ class Mobile(BaseService):
         command = template.format(**params)
 
         _logger.info(f"Executing {operation_name}")
-        # execute_command is async in AsyncCommand
+        # execute_command is async in SyncCommand
         result = self.session.command.execute_command(command)
 
         if result.success:

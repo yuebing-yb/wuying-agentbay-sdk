@@ -10,7 +10,7 @@ This example shows how to:
 - Create a session
 - Pause a session to save resources
 - Resume a session to continue work
-- Use both synchronous and asynchronous pause/resume methods
+- Use both synchronous and synchronous pause/resume methods
 """
 
 import os
@@ -104,8 +104,8 @@ def main_sync():
 
 
 def main_async():
-    """Demonstrate asynchronous pause and resume operations."""
-    print("\n=== Asynchronous Pause/Resume Example ===")
+    """Demonstrate synchronous pause and resume operations."""
+    print("\n=== Synchronous Pause/Resume Example ===")
 
     # Get API key from environment variable
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -142,8 +142,8 @@ def main_async():
         else:
             print(f"Setup failed: {cmd_result.error_message}")
 
-        # Pause the session asynchronously
-        print("\nPausing the session asynchronously...")
+        # Pause the session synchronously
+        print("\nPausing the session synchronously...")
         pause_result = agent_bay.beta_pause_async(session)
         if pause_result.success:
             print(f"Session pause request submitted successfully")
@@ -161,8 +161,8 @@ def main_async():
         time.sleep(2)
         print("Async work completed. Resuming session...")
 
-        # Resume the session asynchronously
-        print("\nResuming the session asynchronously...")
+        # Resume the session synchronously
+        print("\nResuming the session synchronously...")
         resume_result = agent_bay.beta_resume_async(session)
         if resume_result.success:
             print(f"Session resume request submitted successfully")

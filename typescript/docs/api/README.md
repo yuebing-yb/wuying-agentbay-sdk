@@ -14,6 +14,7 @@ These documents are generated automatically using TypeDoc. Run `npm run docs:gen
   - agent.md
   - browser-use-agent.md
   - computer-use-agent.md
+  - git.md
   - mobile-use-agent.md
   - network.md
   - oss.md

@@ -25,6 +25,7 @@ export {
 } from "./beta-skills";
 export { Computer } from "./computer";
 export * from "./exceptions";
+export * from "./git";
 export * from "./extension";
 export * from "./filesystem";
 export * from "./oss";

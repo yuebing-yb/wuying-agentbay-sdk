@@ -249,6 +249,99 @@ func TestWatchDirectoryIntegration(t *testing.T) {
 	}
 }
 
+func TestWatchDirectoryNoEventsAfterStop(t *testing.T) {
+	apiKey, err := getAPIKey()
+	if err != nil {
+		t.Skip("Skipping integration test: " + err.Error())
+	}
+
+	fmt.Println("=== Testing no events after stop ===")
+
+	ab, err := agentbay.NewAgentBay(apiKey)
+	if err != nil {
+		t.Fatalf("Failed to create AgentBay client: %v", err)
+	}
+
+	sessionParams := &agentbay.CreateSessionParams{
+		ImageId: "code_latest",
+	}
+	sessionResult, err := ab.Create(sessionParams)
+	if err != nil {
+		t.Fatalf("Failed to create session: %v", err)
+	}
+	if sessionResult.Session == nil {
+		t.Fatalf("Session creation returned nil session")
+	}
+	session := sessionResult.Session
+	fmt.Printf("✅ Session created with ID: %s\n", session.GetSessionId())
+
+	defer func() {
+		fmt.Println("\nCleaning up session...")
+		deleteResult, err := ab.Delete(session)
+		if err != nil {
+			fmt.Printf("❌ Error deleting session: %v\n", err)
+		} else if deleteResult.Success {
+			fmt.Println("✅ Session deleted successfully")
+		}
+	}()
+
+	testDir := fmt.Sprintf("/tmp/watch_stop_test_%d", time.Now().Unix())
+	createDirResult, err := session.FileSystem.CreateDirectory(testDir)
+	if err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+	assert.True(t, createDirResult.Success)
+	fmt.Printf("✅ Test directory created: %s\n", testDir)
+
+	var detectedEvents []*filesystem.FileChangeEvent
+	var mu sync.Mutex
+
+	callback := func(events []*filesystem.FileChangeEvent) {
+		mu.Lock()
+		defer mu.Unlock()
+		detectedEvents = append(detectedEvents, events...)
+		fmt.Printf("🔔 Callback triggered with %d events\n", len(events))
+	}
+
+	fmt.Println("\n1. Starting directory monitoring...")
+	stopCh := make(chan struct{})
+	wg, readyCh := session.FileSystem.WatchDirectory(testDir, callback, 500*time.Millisecond, stopCh)
+	<-readyCh
+	fmt.Println("✅ Monitoring started")
+
+	fmt.Println("\n2. Creating a file (should trigger events)...")
+	writeResult, err := session.FileSystem.WriteFile(testDir+"/before_stop.txt", "before stop", "")
+	assert.NoError(t, err)
+	assert.True(t, writeResult.Success)
+	time.Sleep(3 * time.Second)
+
+	mu.Lock()
+	eventsBeforeStop := len(detectedEvents)
+	mu.Unlock()
+	fmt.Printf("Events before stop: %d\n", eventsBeforeStop)
+	assert.Greater(t, eventsBeforeStop, 0, "Should detect at least 1 event before stop")
+
+	fmt.Println("\n3. Stopping directory monitoring...")
+	close(stopCh)
+	wg.Wait()
+	fmt.Println("✅ Monitoring stopped")
+
+	fmt.Println("\n4. Creating a file AFTER stop (should NOT trigger events)...")
+	writeResult2, err := session.FileSystem.WriteFile(testDir+"/after_stop.txt", "after stop", "")
+	assert.NoError(t, err)
+	assert.True(t, writeResult2.Success)
+	time.Sleep(3 * time.Second)
+
+	mu.Lock()
+	eventsAfterStop := len(detectedEvents)
+	mu.Unlock()
+	newEvents := eventsAfterStop - eventsBeforeStop
+	fmt.Printf("Events after stop: %d, new: %d\n", eventsAfterStop, newEvents)
+
+	assert.Equal(t, 0, newEvents, "Should have 0 new events after stop")
+	fmt.Println("✅ No events after stop — negative verification passed!")
+}
+
 func TestWatchDirectoryFileModificationIntegration(t *testing.T) {
 	// Skip if no API key
 	apiKey, err := getAPIKey()

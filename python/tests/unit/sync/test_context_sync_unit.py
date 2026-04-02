@@ -20,7 +20,7 @@ from agentbay import (
 )
 
 
-class TestAsyncContextSyncUnit(unittest.TestCase):
+class TestSyncContextSyncUnit(unittest.TestCase):
     """Unit tests for context synchronization functionality."""
 
     @pytest.mark.sync

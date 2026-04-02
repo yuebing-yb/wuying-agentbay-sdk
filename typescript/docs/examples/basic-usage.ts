@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay, logError, log } from 'wuying-agentbay-sdk';
 
 async function main() {

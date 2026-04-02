@@ -11,7 +11,7 @@ This module contains comprehensive unit tests for:
 import pytest
 import os
 import unittest
-from unittest.mock import MagicMock, MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from agentbay import FileTransfer
 
@@ -30,7 +30,7 @@ def attach_file_transfer(agent_bay, session):
     return FileTransfer(agent_bay, session)
 
 
-class TestAsyncFileTransferResultClasses(unittest.TestCase):
+class TestSyncFileTransferResultClasses(unittest.TestCase):
     """Test cases for result classes."""
 
     @pytest.mark.sync
@@ -120,7 +120,7 @@ class TestAsyncFileTransferResultClasses(unittest.TestCase):
         self.assertEqual(result.error_message, "Test error message")
 
 
-class TestAsyncFileTransfer(unittest.TestCase):
+class TestSyncFileTransfer(unittest.TestCase):
     """Test cases for FileTransfer class (Sync)."""
 
     def setUp(self):
@@ -171,8 +171,8 @@ class TestAsyncFileTransfer(unittest.TestCase):
         self.assertIn("not found", result.error_message)
 
 
-class TestAsyncFileTransfer(unittest.TestCase):
-    """Test cases for AsyncFileTransfer methods."""
+class TestSyncFileTransfer(unittest.TestCase):
+    """Test cases for SyncFileTransfer methods."""
 
     def setUp(self):
         """Set up test fixtures."""
@@ -597,7 +597,7 @@ class TestAsyncFileTransfer(unittest.TestCase):
         async_test()
 
 
-class TestAsyncFileSystemFileTransfer(unittest.TestCase):
+class TestSyncFileSystemFileTransfer(unittest.TestCase):
     """Test cases for FileSystem file transfer methods."""
 
     def setUp(self):

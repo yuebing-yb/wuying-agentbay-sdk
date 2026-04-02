@@ -7,6 +7,7 @@ This directory is generated. Run `mvn exec:java` in `java/agentbay` to refresh i
 - [browser-use/browser.md](browser-use/browser.md)
 - [codespace/code.md](codespace/code.md)
 - [common-features/advanced/agent.md](common-features/advanced/agent.md)
+- [common-features/advanced/git.md](common-features/advanced/git.md)
 - [common-features/advanced/network.md](common-features/advanced/network.md)
 - [common-features/advanced/oss.md](common-features/advanced/oss.md)
 - [common-features/basics/agentbay.md](common-features/basics/agentbay.md)

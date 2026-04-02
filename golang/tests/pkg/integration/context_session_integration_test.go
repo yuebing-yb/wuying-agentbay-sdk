@@ -1,3 +1,4 @@
+// ci-stable
 package integration_test
 
 import (

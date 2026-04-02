@@ -390,7 +390,106 @@ def test_watch_directory_file_modification():
     print("\n=== File modification monitoring test completed ===")
 
 
+def test_watch_directory_no_events_after_stop():
+    """
+    Negative test: after stopping the watch, new file operations
+    must NOT trigger callbacks.
+
+    Steps:
+    1. Create session and test directory
+    2. Start watching and wait for baseline
+    3. Create a file and verify events are detected
+    4. Stop watching
+    5. Create another file AFTER stop
+    6. Wait, then verify no new events were received
+    """
+    print("=== Testing no events after stop ===\n")
+
+    api_key = get_api_key()
+    agentbay = AgentBay(api_key=api_key)
+    print("✅ AgentBay client initialized")
+
+    session_params = CreateSessionParams(image_id="code_latest")
+    session_result = agentbay.create(session_params)
+
+    if not session_result.success:
+        print(f"❌ Failed to create session: {session_result.error_message}")
+        return
+
+    session = session_result.session
+    print(f"✅ Session created with ID: {session.session_id}")
+
+    detected_events = []
+
+    def file_change_callback(events):
+        detected_events.extend(events)
+        print(f"🔔 Callback triggered with {len(events)} events")
+
+    test_dir = f"/tmp/watch_stop_test_{int(time.time())}"
+
+    try:
+        session.file_system.create_directory(test_dir)
+        print(f"✅ Test directory created: {test_dir}")
+
+        print("\n1. Starting directory monitoring...")
+        monitor_thread = session.file_system.watch_directory(
+            path=test_dir,
+            callback=file_change_callback,
+            interval=0.5,
+        )
+        monitor_thread.start()
+        monitor_thread.ready_event.wait(timeout=30)
+        print("✅ Monitoring started")
+
+        print("\n2. Creating a file (should trigger events)...")
+        session.file_system.write_file(
+            f"{test_dir}/before_stop.txt", "before stop"
+        )
+        time.sleep(3)
+
+        events_before_stop = len(detected_events)
+        print(f"Events before stop: {events_before_stop}")
+        assert events_before_stop > 0, "Should detect at least 1 event before stop"
+        print("✅ Events detected before stop")
+
+        print("\n3. Stopping directory monitoring...")
+        monitor_thread.stop_event.set()
+        monitor_thread.join(timeout=10)
+        print("✅ Monitoring stopped")
+
+        print("\n4. Creating a file AFTER stop (should NOT trigger events)...")
+        session.file_system.write_file(
+            f"{test_dir}/after_stop.txt", "after stop"
+        )
+        time.sleep(3)
+
+        events_after_stop = len(detected_events)
+        print(f"Events after stop: {events_after_stop}")
+
+        new_events = events_after_stop - events_before_stop
+        print(f"New events after stop: {new_events}")
+
+        if new_events == 0:
+            print("✅ No events after stop — negative verification passed!")
+        else:
+            raise AssertionError(
+                f"Expected 0 new events after stop, got {new_events}"
+            )
+
+    finally:
+        print("\n5. Cleaning up session...")
+        delete_result = agentbay.delete(session)
+        if delete_result.success:
+            print("✅ Session deleted successfully")
+        else:
+            print(f"❌ Failed to delete session: {delete_result.error_message}")
+
+    print("\n=== No events after stop test completed ===")
+
+
 if __name__ == "__main__":
     test_watch_directory()
     print("\n" + "=" * 60 + "\n")
     test_watch_directory_file_modification()
+    print("\n" + "=" * 60 + "\n")
+    test_watch_directory_no_events_after_stop()

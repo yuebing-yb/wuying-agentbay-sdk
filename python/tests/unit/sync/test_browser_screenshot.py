@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import Browser, BrowserOption
 from agentbay import BrowserError

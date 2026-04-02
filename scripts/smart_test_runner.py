@@ -135,12 +135,110 @@ class AgentState(TypedDict):
     specific_test_pattern: Optional[str]
     test_type: Optional[str]
     skip_oss: Optional[bool]
+    ci_stable: Optional[bool]
+
+# ci-stable marker: when --ci-stable is enabled, only test files containing
+# this marker in the first 20 lines will be executed.
+CI_STABLE_MARKER = "ci-stable"
+CI_STABLE_SCAN_LINES = 20
 
 # --- Helper Functions ---
 
-def should_skip_test(test_id: str, skip_ci_unsupported: bool = False) -> bool:
-    """检查是否应该跳过 CI 环境不支持的测试（包括 OSS、Browser、Agent、Network、Screenshot 等）"""
-    if not skip_ci_unsupported:
+def has_ci_stable_marker(filepath: str) -> bool:
+    """Check if a file has 'ci-stable' marker in its first N lines."""
+    try:
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+            for i, line in enumerate(f):
+                if i >= CI_STABLE_SCAN_LINES:
+                    break
+                if CI_STABLE_MARKER in line:
+                    return True
+    except (OSError, IOError):
+        pass
+    return False
+
+
+def resolve_test_file(test_id: str) -> Optional[str]:
+    """Resolve a test ID to an absolute file path for ci-stable scanning."""
+    if test_id.startswith("typescript:"):
+        rel = test_id[len("typescript:"):]
+        return os.path.join(PROJECT_ROOT, "typescript", rel)
+    elif test_id.startswith("java:"):
+        class_name = test_id[len("java:"):]
+        file_path = class_name.replace(".", os.sep) + ".java"
+        return os.path.join(
+            PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java", file_path
+        )
+    elif test_id.startswith("golang:"):
+        # Golang test IDs are package.TestFunc; we need to scan all _test.go
+        # files in the integration directory for the marker.  Return None here
+        # and handle Go separately.
+        return None
+    else:
+        # Python: test_id is like tests/integration/_async/test_foo.py::test_bar
+        rel = test_id.split("::")[0]
+        return os.path.join(PROJECT_ROOT, "python", rel)
+
+
+def filter_ci_stable(test_ids: List[str], ci_stable: bool) -> List[str]:
+    """Keep only tests whose source file contains the ci-stable marker."""
+    if not ci_stable:
+        return test_ids
+
+    kept: List[str] = []
+    skipped = 0
+
+    # For Golang tests we need to scan _test.go files in the integration dir
+    go_integration_dir = os.path.join(
+        PROJECT_ROOT, "golang", "tests", "pkg", "integration"
+    )
+    # Cache: go test file basename -> has marker
+    go_file_marker_cache: Dict[str, bool] = {}
+
+    for test_id in test_ids:
+        if test_id.startswith("golang:"):
+            # Golang: test_id = "golang:pkg.TestFuncName"
+            # Extract test func name
+            parts = test_id.split(".")
+            func_name = parts[-1] if parts else ""
+            # Scan all _test.go files for both the ci-stable marker AND the func
+            found = False
+            for fname in os.listdir(go_integration_dir) if os.path.isdir(go_integration_dir) else []:
+                if not fname.endswith("_test.go"):
+                    continue
+                fpath = os.path.join(go_integration_dir, fname)
+                if fname not in go_file_marker_cache:
+                    go_file_marker_cache[fname] = has_ci_stable_marker(fpath)
+                if go_file_marker_cache[fname]:
+                    # Check if the file contains the test function
+                    try:
+                        with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                            content = f.read()
+                        if f"func {func_name}(" in content:
+                            found = True
+                            break
+                    except (OSError, IOError):
+                        pass
+            if found:
+                kept.append(test_id)
+            else:
+                skipped += 1
+                print(f"⏭️ ci-stable: skip {test_id}")
+        else:
+            fpath = resolve_test_file(test_id)
+            if fpath and has_ci_stable_marker(fpath):
+                kept.append(test_id)
+            else:
+                skipped += 1
+                print(f"⏭️ ci-stable: skip {test_id}")
+
+    print(f"📋 ci-stable filter: kept {len(kept)}, skipped {skipped}")
+    return kept
+
+
+def should_skip_oss_test(test_id: str, skip_oss: bool = False) -> bool:
+    """检查是否应该跳过 OSS 测试"""
+    if not skip_oss:
         return False
     
     # 检查测试ID是否匹配 TEST_PATTERNS 中的任意跳过模式
@@ -334,7 +432,14 @@ def discover_python_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
         print("🔍 正在过滤 CI 不支持的测试...")
         test_ids = filter_skipped_tests(test_ids, skip_oss)
         print(f"✅ 过滤后剩余 {len(test_ids)} 个Python测试。")
-    
+
+    # 应用 ci-stable 过滤
+    ci_stable = state.get("ci_stable", False)
+    if ci_stable:
+        print("🔍 正在过滤 ci-stable 测试...")
+        test_ids = filter_ci_stable(test_ids, ci_stable)
+        print(f"✅ ci-stable 过滤后剩余 {len(test_ids)} 个Python测试。")
+
     # Load SDK Context
     context = ""
     if os.path.exists(LLMS_FULL_PATH):
@@ -355,7 +460,8 @@ def discover_python_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
         "is_finished": False,
         "specific_test_pattern": pattern,
         "test_type": "python",
-        "skip_oss": state.get("skip_oss", False)
+        "skip_oss": state.get("skip_oss", False),
+        "ci_stable": state.get("ci_stable", False)
     }
 
 def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
@@ -480,14 +586,21 @@ def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> Agen
             print(f"⚠️ Jest命令执行失败: {e}")
     
     print(f"✅ 总共找到 {len(test_ids)} 个TypeScript集成测试。")
-    
-    # 应用 CI 不支持的测试过滤（OSS、Browser、Agent、Network、Screenshot 等）
+
+    # 应用 OSS 测试过滤
     skip_oss = state.get("skip_oss", False)
     if skip_oss:
         print("🔍 正在过滤 CI 不支持的测试...")
         test_ids = filter_skipped_tests(test_ids, skip_oss)
         print(f"✅ 过滤后剩余 {len(test_ids)} 个TypeScript测试。")
-    
+
+    # 应用 ci-stable 过滤
+    ci_stable = state.get("ci_stable", False)
+    if ci_stable:
+        print("🔍 正在过滤 ci-stable 测试...")
+        test_ids = filter_ci_stable(test_ids, ci_stable)
+        print(f"✅ ci-stable 过滤后剩余 {len(test_ids)} 个TypeScript测试。")
+
     # Load SDK Context
     context = ""
     if os.path.exists(LLMS_FULL_PATH):
@@ -505,7 +618,8 @@ def discover_typescript_tests(state: AgentState, pattern: Optional[str]) -> Agen
         "sdk_context": context,
         "is_finished": False,
         "specific_test_pattern": pattern,
-        "test_type": "typescript"
+        "test_type": "typescript",
+        "ci_stable": state.get("ci_stable", False)
     }
 
 def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
@@ -571,14 +685,21 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
             print(f"⚠️ 错误输出: {result.stderr}")
         
         print(f"✅ 找到 {len(test_ids)} 个Golang集成测试。")
-        
-        # 应用 CI 不支持的测试过滤（OSS、Browser、Agent、Network、Screenshot 等）
+
+        # 应用 OSS 测试过滤
         skip_oss = state.get("skip_oss", False)
         if skip_oss:
             print("🔍 正在过滤 CI 不支持的测试...")
             test_ids = filter_skipped_tests(test_ids, skip_oss)
             print(f"✅ 过滤后剩余 {len(test_ids)} 个Golang测试。")
-        
+
+        # 应用 ci-stable 过滤
+        ci_stable = state.get("ci_stable", False)
+        if ci_stable:
+            print("🔍 正在过滤 ci-stable 测试...")
+            test_ids = filter_ci_stable(test_ids, ci_stable)
+            print(f"✅ ci-stable 过滤后剩余 {len(test_ids)} 个Golang测试。")
+
         # Load SDK Context
         context = ""
         if os.path.exists(LLMS_FULL_PATH):
@@ -596,7 +717,8 @@ def discover_golang_tests(state: AgentState, pattern: Optional[str]) -> AgentSta
             "sdk_context": context,
             "is_finished": False,
             "specific_test_pattern": pattern,
-            "test_type": "golang"
+            "test_type": "golang",
+            "ci_stable": state.get("ci_stable", False)
         }
         
     except Exception as e:
@@ -716,7 +838,14 @@ def discover_java_tests(state: AgentState, pattern: Optional[str]) -> AgentState
         print(f"❌ 集成测试目录不存在: {integration_test_dir}")
     
     print(f"✅ 总共找到 {len(test_ids)} 个Java集成测试。")
-    
+
+    # 应用 ci-stable 过滤
+    ci_stable = state.get("ci_stable", False)
+    if ci_stable:
+        print("🔍 正在过滤 ci-stable 测试...")
+        test_ids = filter_ci_stable(test_ids, ci_stable)
+        print(f"✅ ci-stable 过滤后剩余 {len(test_ids)} 个Java测试。")
+
     # Load SDK Context
     context = ""
     if os.path.exists(LLMS_FULL_PATH):
@@ -735,7 +864,8 @@ def discover_java_tests(state: AgentState, pattern: Optional[str]) -> AgentState
         "is_finished": False,
         "specific_test_pattern": pattern,
         "test_type": "java",
-        "skip_oss": state.get("skip_oss", False)
+        "skip_oss": state.get("skip_oss", False),
+        "ci_stable": state.get("ci_stable", False)
     }
 
 def discover_all_tests(state: AgentState, pattern: Optional[str]) -> AgentState:
@@ -806,16 +936,17 @@ def execute_next_test(state: AgentState) -> AgentState:
         "output": result["output"],
         "error_analysis": None
     }
-    
+
     return {
         "results": state["results"] + [new_result],
-        "current_test_index": state["current_test_index"], # Keep current index, will be incremented later
+        "current_test_index": state["current_test_index"],
         "test_queue": state["test_queue"],
         "sdk_context": state["sdk_context"],
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
         "test_type": state["test_type"],
-        "skip_oss": state.get("skip_oss", False)
+        "skip_oss": state.get("skip_oss", False),
+        "ci_stable": state.get("ci_stable", False)
     }
 
 def execute_python_test(test_id: str) -> Dict[str, Any]:
@@ -1146,7 +1277,8 @@ IMPORTANT: 请务必使用中文回答，不要使用英文。
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
         "test_type": state["test_type"],
-        "skip_oss": state.get("skip_oss", False)
+        "skip_oss": state.get("skip_oss", False),
+        "ci_stable": state.get("ci_stable", False)
     }
 
 def increment_index(state: AgentState) -> AgentState:
@@ -1161,7 +1293,8 @@ def increment_index(state: AgentState) -> AgentState:
         "is_finished": state["is_finished"],
         "specific_test_pattern": state["specific_test_pattern"],
         "test_type": state["test_type"],
-        "skip_oss": state.get("skip_oss", False)
+        "skip_oss": state.get("skip_oss", False),
+        "ci_stable": state.get("ci_stable", False)
     }
 
 def generate_report(state: AgentState) -> AgentState:
@@ -1221,7 +1354,8 @@ def generate_report(state: AgentState) -> AgentState:
         "sdk_context": state["sdk_context"],
         "specific_test_pattern": state["specific_test_pattern"],
         "test_type": state["test_type"],
-        "skip_oss": state.get("skip_oss", False)
+        "skip_oss": state.get("skip_oss", False),
+        "ci_stable": state.get("ci_stable", False)
     }
 
 def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
@@ -1422,8 +1556,9 @@ def main():
     parser.add_argument("-k", "--keyword", help="Run tests which match the given substring expression (same as pytest -k)", type=str)
     parser.add_argument("--test-type", help="Test type to run (all, python, typescript, golang, java)", type=str, default="all")
     parser.add_argument("--report", help="Path to save the report", default=REPORT_FILE)
-    parser.add_argument("--skip-oss", help="Skip CI-unsupported tests (OSS, Browser, Agent, Network, Screenshot, etc.)", action="store_true", default=False)
-    
+    parser.add_argument("--skip-oss", help="Skip OSS integration tests", action="store_true", default=False)
+    parser.add_argument("--ci-stable", help="Only run tests marked with ci-stable in first 20 lines", action="store_true", default=False)
+
     args = parser.parse_args()
     
     print("🚀 Starting Smart Test Runner...")
@@ -1440,6 +1575,10 @@ def main():
     if args.report:
         REPORT_FILE = args.report
 
+    if args.ci_stable:
+        print(f"🏷️ ci-stable mode: only tests with '{CI_STABLE_MARKER}' marker will run")
+        sys.stdout.flush()
+
     initial_state = {
         "test_queue": [],
         "current_test_index": 0,
@@ -1448,7 +1587,8 @@ def main():
         "is_finished": False,
         "specific_test_pattern": args.keyword,
         "test_type": args.test_type,
-        "skip_oss": args.skip_oss
+        "skip_oss": args.skip_oss,
+        "ci_stable": args.ci_stable
     }
     
     print("🔧 正在启动工作流执行...")

@@ -1,7 +1,7 @@
 import pytest
 import json
 import unittest
-from unittest.mock import MagicMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from agentbay import (
     ContextManager,
@@ -11,7 +11,7 @@ from agentbay import (
 )
 
 
-class TestAsyncContextManager(unittest.TestCase):
+class TestSyncContextManager(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_session = MagicMock()
