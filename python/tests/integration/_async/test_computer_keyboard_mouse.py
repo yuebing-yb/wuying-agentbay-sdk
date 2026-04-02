@@ -1,4 +1,5 @@
 """Integration tests for Computer keyboard and mouse operations functionality."""
+# ci-stable
 
 import os
 

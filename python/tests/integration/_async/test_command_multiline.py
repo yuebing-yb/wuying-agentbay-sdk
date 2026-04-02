@@ -1,4 +1,5 @@
 """Integration tests for multiline commands."""
+# ci-stable
 
 import os
 

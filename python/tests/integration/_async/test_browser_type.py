@@ -1,4 +1,5 @@
 """Integration tests for browser type selection (chrome vs chromium)."""
+# ci-stable
 
 import asyncio
 import os

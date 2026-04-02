@@ -1,4 +1,5 @@
 """Integration tests for Session pause and resume operations."""
+# ci-stable
 
 import asyncio
 import os

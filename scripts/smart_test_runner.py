@@ -78,7 +78,6 @@ TEST_PATTERNS = [
     "test_agent_integration",   # Agent integration tests
     "agent-integration",        # Agent integration related tests
     "agent_test",              # Agent test files
-    "test_browser_agent",      # Browser Agent tests
     "test_network_integration",
     "network_integration_test",
     "network.integration.test",

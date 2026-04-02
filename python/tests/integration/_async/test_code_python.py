@@ -1,4 +1,5 @@
 """Integration tests for CodeSpace Python execution functionality."""
+# ci-stable
 
 import os
 

@@ -1,3 +1,5 @@
+# ci-stable
+
 import pytest
 import os
 from agentbay import AsyncAgentBay

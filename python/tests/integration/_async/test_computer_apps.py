@@ -1,4 +1,6 @@
-"""Integration tests for Computer application management functionality."""
+"""Integration tests for Computer application management functionality.
+ci-stable
+"""
 
 import asyncio
 import os

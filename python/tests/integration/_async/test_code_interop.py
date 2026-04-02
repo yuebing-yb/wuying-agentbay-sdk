@@ -1,4 +1,5 @@
 """Integration tests for CodeSpace cross-language interoperability."""
+# ci-stable
 
 import os
 

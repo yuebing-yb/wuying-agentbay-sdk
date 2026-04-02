@@ -1,5 +1,5 @@
 """Integration tests for CodeSpace JavaScript execution functionality."""
-
+# ci-stable
 import os
 
 import pytest

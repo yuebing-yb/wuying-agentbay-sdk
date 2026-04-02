@@ -1,4 +1,5 @@
 """Integration tests for command pipes and redirects."""
+# ci-stable
 
 import os
 

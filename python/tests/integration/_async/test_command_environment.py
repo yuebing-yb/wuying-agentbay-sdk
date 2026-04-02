@@ -1,4 +1,5 @@
 """Integration tests for command environment variables and advanced features (cwd, envs, new return format)."""
+# ci-stable
 
 import os
 

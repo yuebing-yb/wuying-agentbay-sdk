@@ -1,4 +1,5 @@
 """Integration tests for Browser Replay functionality."""
+# ci-stable
 
 import asyncio
 import os
