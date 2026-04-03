@@ -126,9 +126,7 @@ def test_python_error_handling(session):
             "ZeroDivisionError" in result.error_message
             or "division" in result.error_message.lower()
         )
-    else:
-        print(f"Error in output: {result.logs.stderr}")
-        assert "division by zero" in result.logs.stderr or "Error" in result.logs.stderr
+    assert not result.success
 
 @pytest.mark.sync
 def test_python_with_timeout(session):

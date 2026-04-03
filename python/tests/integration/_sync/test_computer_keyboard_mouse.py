@@ -26,7 +26,7 @@ def agent_bay():
 def session(agent_bay):
     """Create a session with windows_latest image."""
     print("\nCreating session for computer keyboard/mouse testing...")
-    session_param = CreateSessionParams(image_id="windows_latest")
+    session_param = CreateSessionParams(image_id="linux_latest")
     result = agent_bay.create(session_param)
     assert result.success, f"Failed to create session: {result.error_message}"
     session = result.session

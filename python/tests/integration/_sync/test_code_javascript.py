@@ -121,9 +121,7 @@ def test_js_error_handling(session):
         assert (
             "Error" in result.error_message or "error" in result.error_message.lower()
         )
-    else:
-        print(f"Error in output: {result.logs.stderr}")
-        assert "Test error" in result.logs.stderr
+    assert not result.success
 
 
 @pytest.mark.sync

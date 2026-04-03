@@ -455,7 +455,7 @@ class ContextManager:
         retry_interval: int = 500,
     ) -> bool:
         """
-        Async version of polling for sync completion with exponential backoff.
+        Sync version of polling for sync completion with exponential backoff.
 
         Args:
             context_id: ID of the context to check

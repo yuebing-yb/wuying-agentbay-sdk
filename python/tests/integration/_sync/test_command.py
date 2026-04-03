@@ -12,7 +12,7 @@ from agentbay import CreateSessionParams
 
 
 # Define fixtures for session management
-@pytest.fixture(scope="module")
+@pytest.fixture
 def agent_session():
     """
     Fixture to create a session before all tests in this module

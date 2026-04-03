@@ -13,7 +13,7 @@ from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", loop_scope="module")
 def agent_bay():
     """Create an AgentBay instance."""
     api_key = os.getenv("AGENTBAY_API_KEY")
@@ -22,7 +22,7 @@ def agent_bay():
     return AgentBay(api_key=api_key)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def command_session(agent_bay):
     """Create a session for command testing."""
     time.sleep(3)  # Ensure a delay to avoid session creation conflicts
@@ -57,6 +57,7 @@ def test_execute_command_success(command_session):
 def test_run_alias_success(command_session):
     """Test command.run alias."""
     result = command_session.command.run("echo 'Hello, AgentBay!'")
+    print(f"Command execution result: {result.stdout}")
     assert result.success
     assert result.output.strip() == "Hello, AgentBay!"
 
@@ -74,7 +75,7 @@ def test_execute_command_with_timeout(command_session):
     command_str = "sleep 5"
     timeout_ms = 1000  # 1 second timeout
     result = command.execute_command(command_str, timeout_ms)
-    print(f"Command execution result with timeout: {result}")
+    print(f"Command execution result with timeout: {result.stdout}")
     assert not result.success
     assert result.request_id != ""
     assert result.error_message != ""

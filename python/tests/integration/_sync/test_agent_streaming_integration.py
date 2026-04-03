@@ -34,7 +34,7 @@ def mobile_streaming_session(agent_bay):
     """Create a session with Mobile Agent debug image for streaming tests."""
     time.sleep(3)
     params = CreateSessionParams(
-        image_id="imgc-0ab5takhnmlvhx9gp",
+        image_id="mobile_latest",
     )
     session_result = agent_bay.create(params)
     if not session_result.success or not session_result.session:
