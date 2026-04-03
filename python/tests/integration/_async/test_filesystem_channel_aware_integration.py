@@ -1,4 +1,5 @@
 """Integration tests for channel-aware filesystem chunking optimization.
+ci-stable
 
 Verifies that:
 - HTTP (LinkUrl) channel: read_file/write_file work correctly without chunking

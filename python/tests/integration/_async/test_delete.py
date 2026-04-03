@@ -1,4 +1,6 @@
-"""Integration tests for Session delete operations."""
+"""Integration tests for Session delete operations.
+ci-stable
+"""
 
 import os
 

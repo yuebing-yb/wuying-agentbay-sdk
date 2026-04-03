@@ -1,61 +1,72 @@
-import pytest
+# ci-stable
+import asyncio
 import os
+
+import pytest
+import pytest_asyncio
+
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay import EnhancedCodeExecutionResult
 
 
-# Global session variable for reuse
-_shared_session = None
+@pytest.fixture(scope="module")
+def event_loop():
+    """Create a module-scoped event loop so all tests share the same loop."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
-async def get_shared_session():
-    """Get or create a shared session for all tests."""
-    global _shared_session
-    
-    if _shared_session is None:
-        api_key = os.getenv("AGENTBAY_API_KEY")
-        if not api_key:
-            pytest.skip("AGENTBAY_API_KEY environment variable not set")
+@pytest.fixture(scope="module")
+def agent_bay():
+    """Create AsyncAgentBay instance, skip if API key not available."""
+    api_key = os.getenv("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable not set")
+    return AsyncAgentBay(api_key=api_key)
 
-        agent_bay = AsyncAgentBay(api_key=api_key)
-        params = CreateSessionParams(image_id="code_latest")
-        session_result = await agent_bay.create(params)
-        if not session_result.success or not session_result.session:
-            pytest.skip(f"Failed to create session: {session_result.error_message}")
-        
-        _shared_session = session_result.session
-    
-    return _shared_session
+
+@pytest_asyncio.fixture(scope="module")
+async def session(agent_bay):
+    """Create a shared session for all tests in this module."""
+    params = CreateSessionParams(image_id="code_latest")
+    session_result = await agent_bay.create(params)
+    if not session_result.success or not session_result.session:
+        pytest.skip(f"Failed to create session: {session_result.error_message}")
+
+    yield session_result.session
+
+    # Cleanup after all tests in the module
+    try:
+        await session_result.session.delete()
+    except Exception:
+        pass  # Ignore cleanup errors
 
 
 @pytest.mark.asyncio
-async def test_enhanced_result_structure():
+async def test_enhanced_result_structure(session):
     """Test that results use the enhanced structure."""
-    session = await get_shared_session()
+
     code = """
 print("Hello, enhanced world!")
-42
 """
     result = await session.code.run_code(code, "python")
 
     assert isinstance(result, EnhancedCodeExecutionResult)
-    assert result.success
+    assert result.success, f"Code execution failed: {result.error_message}"
     assert result.request_id is not None
-    
+
     # Test backward compatibility
     assert "Hello, enhanced world!" in result.result or "42" in result.result
-    
+
     # Test enhanced features
-    assert hasattr(result, 'logs')
-    assert hasattr(result, 'results')
-    assert hasattr(result, 'execution_time')
-
-
+    assert hasattr(result, "logs")
+    assert hasattr(result, "results")
+    assert hasattr(result, "execution_time")
 @pytest.mark.asyncio
-async def test_logs_capture():
+async def test_logs_capture(session):
     """Test that stdout and stderr are properly captured."""
-    session = await get_shared_session()
     code = """
 import sys
 print("This goes to stdout")
@@ -65,7 +76,8 @@ print("This goes to stderr", file=sys.stderr)
 """
     result = await session.code.run_code(code, "python")
 
-    assert result.success
+    assert result.success, f"Code execution failed: {result.error_message}"
+
     assert isinstance(result.logs.stdout, list)
     assert isinstance(result.logs.stderr, list)
     
@@ -78,9 +90,8 @@ print("This goes to stderr", file=sys.stderr)
 
 
 @pytest.mark.asyncio
-async def test_multiple_results_formats():
+async def test_multiple_results_formats(session):
     """Test handling of multiple result formats."""
-    session = await get_shared_session()
     code = """
 # Test various output types
 print("Standard output")
@@ -107,9 +118,8 @@ text_result
 
 
 @pytest.mark.asyncio
-async def test_execution_timing():
+async def test_execution_timing(session):
     """Test that execution time is tracked."""
-    session = await get_shared_session()
     code = """
 import time
 time.sleep(0.1)  # Small delay
@@ -125,9 +135,8 @@ time.sleep(0.1)  # Small delay
 
 
 @pytest.mark.asyncio
-async def test_error_details():
+async def test_error_details(session):
     """Test enhanced error reporting."""
-    session = await get_shared_session()
     code = """
 # This should cause a NameError
 print(undefined_variable_that_does_not_exist)
@@ -150,9 +159,8 @@ print(undefined_variable_that_does_not_exist)
 
 
 @pytest.mark.asyncio
-async def test_javascript_enhanced_features():
+async def test_javascript_enhanced_features(session):
     """Test enhanced features with JavaScript."""
-    session = await get_shared_session()
     code = """
 console.log("JavaScript output");
 const data = {message: "Hello from JS", value: 123};
@@ -168,9 +176,8 @@ data.value * 2;
 
 
 @pytest.mark.asyncio
-async def test_large_output_handling():
+async def test_large_output_handling(session):
     """Test handling of large outputs."""
-    session = await get_shared_session()
     code = """
 # Generate some larger output
 large_list = list(range(100))
@@ -192,9 +199,8 @@ for i in range(10):
 
 
 @pytest.mark.asyncio
-async def test_execution_count_tracking():
+async def test_execution_count_tracking(session):
     """Test that execution count is tracked if available."""
-    session = await get_shared_session()
     code1 = "print('First execution')"
     code2 = "print('Second execution')"
     
@@ -212,9 +218,8 @@ async def test_execution_count_tracking():
 
 
 @pytest.mark.asyncio
-async def test_mixed_output_types():
+async def test_mixed_output_types(session):
     """Test code that produces mixed output types."""
-    session = await get_shared_session()
     code = """
 import json
 print("Starting mixed output test")
@@ -242,9 +247,8 @@ print("JSON:", json.dumps(json_data))
 
 
 @pytest.mark.asyncio
-async def test_empty_code_execution():
+async def test_empty_code_execution(session):
     """Test execution of empty or minimal code."""
-    session = await get_shared_session()
     code = "# Just a comment"
     result = await session.code.run_code(code, "python")
 
@@ -257,9 +261,8 @@ async def test_empty_code_execution():
 
 
 @pytest.mark.asyncio
-async def test_backward_compatibility_properties():
+async def test_backward_compatibility_properties(session):
     """Test that all backward compatibility properties work."""
-    session = await get_shared_session()
     code = """
 print("Testing backward compatibility")
 final_result = "This is the final result"
@@ -267,7 +270,8 @@ final_result
 """
     result = await session.code.run_code(code, "python")
 
-    assert result.success
+    assert result.success, f"Code execution failed: {result.error_message}"
+
     
     # Test all expected properties exist
     assert hasattr(result, 'success')
@@ -290,9 +294,8 @@ final_result
 
 
 @pytest.mark.asyncio
-async def test_html_output():
+async def test_html_output(session):
     """Test HTML output generation."""
-    session = await get_shared_session()
     code = """
 import pandas as pd
 from IPython.display import display, HTML
@@ -316,9 +319,8 @@ display(HTML("<h1>Hello HTML</h1>"))
 
 
 @pytest.mark.asyncio
-async def test_markdown_output():
+async def test_markdown_output(session):
     """Test Markdown output generation."""
-    session = await get_shared_session()
     code = """
 from IPython.display import display, Markdown
 
@@ -339,9 +341,8 @@ display(Markdown('# Hello Markdown'))
 
 
 @pytest.mark.asyncio
-async def test_image_output():
+async def test_image_output(session):
     """Test image (PNG/JPEG) output generation."""
-    session = await get_shared_session()
     code = """
 import matplotlib.pyplot as plt
 
@@ -366,9 +367,8 @@ plt.show()
 
 
 @pytest.mark.asyncio
-async def test_svg_output():
+async def test_svg_output(session):
     """Test SVG output generation."""
-    session = await get_shared_session()
     code = """
 from IPython.display import display, SVG
 
@@ -390,9 +390,8 @@ display(SVG(svg_code))
 
 
 @pytest.mark.asyncio
-async def test_latex_output():
+async def test_latex_output(session):
     """Test LaTeX output generation."""
-    session = await get_shared_session()
     code = r"""
 from IPython.display import display, Latex
 
@@ -413,9 +412,8 @@ display(Latex(r'\frac{1}{2}'))
 
 
 @pytest.mark.asyncio
-async def test_chart_output():
+async def test_chart_output(session):
     """Test structured chart output."""
-    session = await get_shared_session()
     # Use a mock object to simulate chart output without external dependencies like Altair
     code = """
 from IPython.display import display
@@ -442,14 +440,3 @@ display(MockChart())
     
     assert has_chart, "Chart output not found in results"
 
-
-@pytest.mark.asyncio
-async def test_zzz_cleanup():
-    """Cleanup shared session - runs last due to name sorting."""
-    global _shared_session
-    if _shared_session:
-        try:
-            await _shared_session.delete()
-            _shared_session = None
-        except Exception:
-            pass  # Ignore cleanup errors

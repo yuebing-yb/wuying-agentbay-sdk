@@ -1,4 +1,6 @@
-"""Integration tests for filesystem functionality."""
+"""Integration tests for filesystem functionality.
+ci-stable
+"""
 
 import os
 import time
@@ -19,7 +21,7 @@ async def agent_bay():
     return AsyncAgentBay(api_key=api_key)
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture
 async def filesystem_session(agent_bay):
     """Create a session for filesystem testing."""
     # Get API key from environment

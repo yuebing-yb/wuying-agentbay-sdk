@@ -1,4 +1,5 @@
 """
+ci-stable
 Integration test for AsyncComputer.beta_take_screenshot().
 
 This test uses real backend resources (no mocks).

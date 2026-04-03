@@ -2,6 +2,7 @@
 """
 Integration tests for GetCdpLink API
 """
+# ci-stable
 import os
 
 import pytest

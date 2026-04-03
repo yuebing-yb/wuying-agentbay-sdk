@@ -1,3 +1,4 @@
+# ci-stable
 import os
 
 import pytest
@@ -8,7 +9,7 @@ from agentbay import CreateSessionParams
 
 
 # Define fixtures for session management
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture
 async def agent_session():
     """
     Fixture to create a session before all tests in this module

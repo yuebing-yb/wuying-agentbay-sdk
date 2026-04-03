@@ -1,4 +1,6 @@
-"""Advanced filesystem integration tests."""
+"""Advanced filesystem integration tests.
+ci-stable
+"""
 
 import os
 

@@ -1,4 +1,5 @@
 """Integration tests for Context full lifecycle operations.
+ci-stable
 
 This module tests the complete context lifecycle including:
 - Context creation and deletion

@@ -29,8 +29,10 @@ class TestGetAdbLinkIntegration:
         # Create a mobile session
         params = CreateSessionParams(image_id="mobile_latest")
         session_result = await agentbay.create(params)
+        if( "no authorized app" in session_result.error_message):
+            pytest.skip("No authorization")
         assert session_result is not None
-        assert session_result.success is True
+        assert session_result.success is True, f"Failed to create session: {session_result.error_message}"
         assert session_result.session is not None
 
         session = session_result.session

@@ -1,4 +1,6 @@
-"""Integration tests for filesystem symlinks."""
+"""Integration tests for filesystem symlinks.
+ci-stable
+"""
 
 import os
 

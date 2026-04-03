@@ -1,5 +1,4 @@
 """Integration tests for Mobile Agent functionality."""
-import e2b
 import asyncio
 import os
 

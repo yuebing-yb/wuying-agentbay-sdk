@@ -1,4 +1,6 @@
-"""E2E test: verify dynamically bound context supports real data persistence."""
+"""E2E test: verify dynamically bound context supports real data persistence.
+ci-stable
+"""
 
 import os
 from uuid import uuid4

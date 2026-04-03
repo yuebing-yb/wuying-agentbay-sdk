@@ -1,4 +1,6 @@
-"""Integration tests for context file operations."""
+"""Integration tests for context file operations.
+ci-stable
+"""
 
 import os
 

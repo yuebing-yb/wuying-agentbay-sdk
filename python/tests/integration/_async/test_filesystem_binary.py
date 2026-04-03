@@ -1,4 +1,6 @@
-"""Integration tests for binary file operations."""
+"""Integration tests for binary file operations.
+ci-stable
+"""
 
 import os
 

@@ -24,6 +24,8 @@ async def session(agent_bay):
     print("\nCreating session for mobile apps testing...")
     session_param = CreateSessionParams(image_id="mobile_latest")
     result = await agent_bay.create(session_param)
+    if("no authorized app") in result.error_message:
+        pytest.skip("No authorization")
     assert result.success, f"Failed to create session: {result.error_message}"
     session = result.session
     print(f"Session created with ID: {session.session_id}")

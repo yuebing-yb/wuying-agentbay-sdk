@@ -1,4 +1,6 @@
-"""Integration test for context.sync() immediate file availability."""
+"""Integration test for context.sync() immediate file availability.
+ci-stable
+"""
 import os
 import random
 import time

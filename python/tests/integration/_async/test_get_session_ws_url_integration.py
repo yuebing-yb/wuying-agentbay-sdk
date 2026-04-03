@@ -1,3 +1,4 @@
+# ci-stable
 # -*- coding: utf-8 -*-
 import os
 

@@ -1,4 +1,6 @@
-"""Integration tests for Context clear operations."""
+"""Integration tests for Context clear operations.
+ci-stable
+"""
 
 import asyncio
 import os

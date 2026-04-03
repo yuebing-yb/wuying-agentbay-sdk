@@ -1,4 +1,6 @@
-"""Integration tests for Context dynamic binding (bind/list_bindings)."""
+"""Integration tests for Context dynamic binding (bind/list_bindings).
+ci-stable
+"""
 
 import os
 from uuid import uuid4

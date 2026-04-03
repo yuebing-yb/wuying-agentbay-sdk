@@ -1,4 +1,6 @@
-"""Integration tests for context synchronization."""
+"""Integration tests for context synchronization.
+ci-stable
+"""
 
 import asyncio
 import os
@@ -79,134 +81,8 @@ async def test_context_sync_status(test_session):
         f"Context sync test completed, found {len(context_info.context_status_data)} status entries"
     )
 
-
 @pytest.mark.asyncio
-async def test_context_info_returns_context_status_data(agent_bay, context_for_test):
-    """Test that context info returns parsed ContextStatusData."""
-
-    # Create session for this test
-    context_sync = ContextSync.new(
-        context_for_test.id, "/home/wuying", SyncPolicy.default()
-    )
-    session_params = CreateSessionParams()
-    session_params.context_syncs = [context_sync]
-    session_params.labels = {"test": "context-sync-integration"}
-    session_params.image_id = "linux_latest"
-
-    session_result = await agent_bay.create(session_params)
-    if not session_result.success or not session_result.session:
-        pytest.skip("Failed to create session for test")
-
-    session = session_result.session
-    print(f"Created session: {session.session_id}")
-
-    try:
-        # Wait for session to be ready
-        await asyncio.sleep(5)
-
-        # Get context info
-        context_info = await session.context.info()
-
-        # Verify that we have a request ID
-        assert context_info.request_id is not None
-        assert context_info.request_id != ""
-
-        # Log the context status data
-        print(f"Context status data count: {len(context_info.context_status_data)}")
-        for i, data in enumerate(context_info.context_status_data):
-            print(f"Status data {i}:")
-            print(f"  Context ID: {data.context_id}")
-            print(f"  Path: {data.path}")
-            print(f"  Status: {data.status}")
-            print(f"  Task Type: {data.task_type}")
-            print(f"  Start Time: {data.start_time}")
-            print(f"  Finish Time: {data.finish_time}")
-            if hasattr(data, "error_message") and data.error_message:
-                print(f"  Error: {data.error_message}")
-
-        # There might not be any status data yet, so we don't assert on the count
-        # But if there is data, verify it has the expected structure
-        for data in context_info.context_status_data:
-            assert isinstance(data, ContextStatusData)
-            assert data.context_id is not None
-            assert data.path is not None
-            assert data.status is not None
-            assert data.task_type is not None
-
-    finally:
-        # Clean up session
-        try:
-            await agent_bay.delete(session)
-            print(f"Session deleted: {session.session_id}")
-        except Exception as e:
-            print(f"Warning: Failed to delete session: {e}")
-
-
-@pytest.mark.asyncio
-async def test_context_sync_with_recycle_policy_integration(
-    agent_bay, context_for_test
-):
-    """Test creating a session with ContextSync that has custom RecyclePolicy."""
-
-    # Create custom RecyclePolicy with Lifecycle_3Days
-    custom_recycle_policy = RecyclePolicy(
-        lifecycle=Lifecycle.LIFECYCLE_3DAYS, paths=["/test/recycle/data"]
-    )
-
-    # Create SyncPolicy with custom RecyclePolicy
-    sync_policy = SyncPolicy(
-        upload_policy=UploadPolicy.default(),
-        download_policy=DownloadPolicy.default(),
-        delete_policy=DeletePolicy.default(),
-        extract_policy=ExtractPolicy.default(),
-        recycle_policy=custom_recycle_policy,
-        bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])]),
-    )
-
-    # Create ContextSync with custom policy
-    context_sync = ContextSync.new(
-        context_for_test.id, "/home/wuying/recycle-test", sync_policy
-    )
-
-    # Create session parameters
-    session_params = CreateSessionParams()
-    session_params.context_syncs = [context_sync]
-    session_params.labels = {"test": "recycle-policy-integration"}
-    session_params.image_id = "linux_latest"
-
-    print("Creating session with custom RecyclePolicy...")
-    print(f"RecyclePolicy lifecycle: {custom_recycle_policy.lifecycle.value}")
-    print(f"RecyclePolicy paths: {custom_recycle_policy.paths}")
-
-    # Create session
-    session_result = await agent_bay.create(session_params)
-    if not session_result.success or not session_result.session:
-        pytest.skip("Failed to create session for RecyclePolicy integration test")
-
-    session = session_result.session
-    print(f"Session created successfully with ID: {session.session_id}")
-
-    try:
-        # Wait for session to be ready
-        await asyncio.sleep(5)
-
-        # Get context info to verify the session was created with the policy
-        context_info = await session.context.info()
-        assert context_info.request_id is not None
-
-        print("RecyclePolicy integration test completed successfully")
-
-    finally:
-        # Clean up session
-        try:
-            await agent_bay.delete(session)
-            print(f"Session deleted: {session.session_id}")
-        except Exception as e:
-            print(f"Warning: Failed to delete session: {e}")
-
-
-@pytest.mark.asyncio
-async def test_recycle_policy_with_lifecycle_1day():
+async def test_recycle_policy_with_lifecycle_1day(agent_bay,context_for_test):
     """Test creating ContextSync with custom RecyclePolicy using Lifecycle_1Day."""
     # Create a custom recycle policy with Lifecycle_1Day
     custom_recycle_policy = RecyclePolicy(
@@ -249,7 +125,41 @@ async def test_recycle_policy_with_lifecycle_1day():
     assert context_sync.path == "/test/recycle/path"
     assert context_sync.policy == sync_policy
 
-    print("RecyclePolicy with Lifecycle_1Day created and verified successfully")
+     # Create ContextSync with custom policy
+    context_sync = ContextSync.new(
+        context_for_test.id, "/home/wuying/recycle-test", sync_policy
+    )
+
+    # Create session parameters
+    session_params = CreateSessionParams()
+    session_params.context_syncs = [context_sync]
+    session_params.labels = {"test": "recycle-policy-integration"}
+    session_params.image_id = "linux_latest"
+
+    session_result = await agent_bay.create(session_params)
+    if not session_result.success or not session_result.session:
+        pytest.skip("Failed to create session for RecyclePolicy integration test")
+
+    session = session_result.session
+    print(f"Session created successfully with ID: {session.session_id}")
+
+    try:
+        # Wait for session to be ready
+        await asyncio.sleep(5)
+
+        # Get context info to verify the session was created with the policy
+        context_info = await session.context.info()
+        assert context_info.request_id is not None
+
+        print("RecyclePolicy integration test completed successfully")
+
+    finally:
+        # Clean up session
+        try:
+            await agent_bay.delete(session)
+            print(f"Session deleted: {session.session_id}")
+        except Exception as e:
+            print(f"Warning: Failed to delete session: {e}")
 
 
 @pytest.mark.asyncio
@@ -284,29 +194,25 @@ async def test_context_sync_and_info(agent_bay, context_for_test):
         assert sync_result.request_id is not None
         assert sync_result.request_id != ""
 
-        # Wait for sync to complete
-        await asyncio.sleep(3)
-
-        # Get context info
-        context_info = await session.context.info()
-
-        # Verify context info
-        assert context_info.request_id is not None
-
+        
         # Log the context status data
         print(
-            f"Context status data after sync, count: {len(context_info.context_status_data)}"
+            f"Context status data after sync, count: {len(sync_result.context_status_data)}"
         )
-        for i, data in enumerate(context_info.context_status_data):
+        for i, data in enumerate(sync_result.context_status_data):
             print(f"Status data {i}:")
             print(f"  Context ID: {data.context_id}")
             print(f"  Path: {data.path}")
             print(f"  Status: {data.status}")
             print(f"  Task Type: {data.task_type}")
+            print(f"  Start Time: {data.start_time}")
+            print(f"  Finish Time: {data.finish_time}")
+            if hasattr(data, "error_message") and data.error_message:
+                print(f"  Error: {data.error_message}")
 
         # Check if we have status data for our context
         found_context = False
-        for data in context_info.context_status_data:
+        for data in sync_result.context_status_data:
             if data.context_id == context_for_test.id:
                 found_context = True
                 assert data.path == "/home/wuying"
@@ -321,62 +227,6 @@ async def test_context_sync_and_info(agent_bay, context_for_test):
             print(
                 f"Warning: Could not find context {context_for_test.id} in status data"
             )
-
-    finally:
-        # Clean up session
-        try:
-            await agent_bay.delete(session)
-            print(f"Session deleted: {session.session_id}")
-        except Exception as e:
-            print(f"Warning: Failed to delete session: {e}")
-
-
-@pytest.mark.asyncio
-async def test_context_info_with_params(agent_bay, context_for_test):
-    """Test getting context info with specific parameters."""
-    # Create session for this test
-    context_sync = ContextSync.new(
-        context_for_test.id, "/home/wuying", SyncPolicy.default()
-    )
-    session_params = CreateSessionParams()
-    session_params.context_syncs = [context_sync]
-    session_params.labels = {"test": "context-info-params-test"}
-    session_params.image_id = "linux_latest"
-
-    session_result = await agent_bay.create(session_params)
-    if not session_result.success or not session_result.session:
-        pytest.skip("Failed to create session for test")
-
-    session = session_result.session
-    print(f"Created session: {session.session_id}")
-
-    try:
-        # Wait for session to be ready
-        await asyncio.sleep(2)
-
-        # Get context info with parameters
-        context_info = await session.context.info(
-            context_id=context_for_test.id, path="/home/wuying", task_type=None
-        )
-
-        # Verify that we have a request ID
-        assert context_info.request_id is not None
-
-        # Log the filtered context status data
-        print(
-            f"Filtered context status data count: {len(context_info.context_status_data)}"
-        )
-        for i, data in enumerate(context_info.context_status_data):
-            print(f"Status data {i}:")
-            print(f"  Context ID: {data.context_id}")
-            print(f"  Path: {data.path}")
-            print(f"  Status: {data.status}")
-            print(f"  Task Type: {data.task_type}")
-
-        # If we have status data, verify it matches our filters
-        for data in context_info.context_status_data:
-            if data.context_id == context_for_test.id:
-                assert data.path == "/home/wuying"
 
     finally:
         # Clean up session

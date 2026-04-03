@@ -1,4 +1,6 @@
-"""Integration tests for context updates."""
+"""Integration tests for context updates.
+ci-stable
+"""
 
 import os
 

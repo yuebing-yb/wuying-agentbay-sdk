@@ -1,4 +1,6 @@
-"""Integration tests for nested directory operations."""
+"""Integration tests for nested directory operations.
+ci-stable
+"""
 
 import os
 

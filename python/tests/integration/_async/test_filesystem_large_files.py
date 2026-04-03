@@ -1,4 +1,6 @@
-"""Integration tests for large file operations."""
+"""Integration tests for large file operations.
+ci-stable
+"""
 
 import os
 

@@ -1,4 +1,6 @@
-"""Integration tests for filesystem permissions."""
+"""Integration tests for filesystem permissions.
+ci-stable
+"""
 
 import os
 
