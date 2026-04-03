@@ -2,6 +2,7 @@
 
 This document provides comprehensive guidance on using the session management capabilities of the AgentBay SDK. Both synchronous and asynchronous APIs are fully supported.
 
+> **Multi-language support:** Code examples use Python. Session management APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
 
 ## Overview
 
@@ -135,7 +136,7 @@ from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
 # Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=api_key)
 
 # Create a session with custom parameters
 params = CreateSessionParams(
@@ -480,7 +481,7 @@ The `get` method is the recommended way to recover a session. It retrieves sessi
 from agentbay import AgentBay
 
 # Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=api_key)
 
 # Retrieve session using its ID
 session_id = "your_existing_session_id"
@@ -591,9 +592,11 @@ For detailed API documentation, see:
 - [Python Session API](../../../../python/docs/api/sync/session.md)
 - [TypeScript Session API](../../../../typescript/docs/api/common-features/basics/session.md)
 - [Golang Session API](../../../../golang/docs/api/common-features/basics/session.md)
+- [Java Session API](../../../../java/docs/api/common-features/basics/session.md)
 - [Python AgentBay API](../../../../python/docs/api/sync/agentbay.md)
 - [TypeScript AgentBay API](../../../../typescript/docs/api/common-features/basics/agentbay.md)
 - [Golang AgentBay API](../../../../golang/docs/api/common-features/basics/agentbay.md)
+- [Java AgentBay API](../../../../java/docs/api/common-features/basics/agentbay.md)
 
 ## 📚 Related Guides
 

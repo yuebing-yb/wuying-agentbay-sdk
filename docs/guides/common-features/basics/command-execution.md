@@ -2,6 +2,8 @@
 
 This guide covers command execution capabilities in AgentBay SDK. The command module allows you to execute shell commands and system operations in cloud sessions.
 
+> **Multi-language support:** Code examples use Python. The command API is available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 > **💡 Async API Support**: This guide uses synchronous API by default. For async/await syntax and concurrent execution patterns, see:
 > - [Async-Specific Patterns](#async-specific-patterns) - Concurrent command execution
 

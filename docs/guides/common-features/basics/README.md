@@ -1,6 +1,6 @@
 # Basic Features
 
-Fundamental capabilities for working with AgentBay SDK.
+Fundamental capabilities shared across all AgentBay SDKs (Python, TypeScript, Golang, Java). These guides use Python for code examples — the concepts and API patterns apply to all languages.
 
 ## Documentation
 
