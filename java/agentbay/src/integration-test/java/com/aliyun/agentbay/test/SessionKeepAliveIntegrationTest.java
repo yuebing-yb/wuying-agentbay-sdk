@@ -48,7 +48,7 @@ public class SessionKeepAliveIntegrationTest {
 
         AgentBay agentBay = new AgentBay(apiKey);
 
-        int idleReleaseTimeoutSeconds = 30;
+        int idleReleaseTimeoutSeconds = 60;
         int maxOverSeconds = 60;
         int pollInterval = 15;
         String imageId = "linux_latest";
@@ -90,12 +90,12 @@ public class SessionKeepAliveIntegrationTest {
         System.out.println("✅ Refreshed session: " + refreshed.getSessionId());
 
         try {
-            // Wait until halfway through, then refresh the idle timer for refreshed session
+            // Wait until halfway through, then refresh the idle timer for refreshed session 60 +45
             Thread.sleep(idleReleaseTimeoutSeconds * 1000L / 2);
-            OperationResult keepAliveResult = refreshed.keepAlive();
+            OperationResult keepAliveResult = refreshed.keepAlive(); //105s
             assertTrue("keep_alive failed", keepAliveResult.isSuccess());
 
-            long deadline = start + (idleReleaseTimeoutSeconds + maxOverSeconds) * 1000L;
+            long deadline = start + (idleReleaseTimeoutSeconds + maxOverSeconds) * 1000L; //60~120s
             Long controlReleasedAt = null;
 
             while (System.currentTimeMillis() < deadline) {
