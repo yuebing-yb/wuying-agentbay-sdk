@@ -2,12 +2,23 @@
 Integration tests for watch_directory functionality.
 """
 
+import asyncio
 import os
 import threading
 import time
 
 from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
+
+
+async def _wait_ready(ready_event: threading.Event, timeout: float = 30):
+    """Wait for a threading.Event without blocking the asyncio event loop."""
+    deadline = time.monotonic() + timeout
+    while not ready_event.is_set():
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("ready_event was not set within timeout")
+        await asyncio.sleep(0.05)
 
 
 def get_api_key():
@@ -23,7 +34,7 @@ def get_api_key():
 async def test_watch_directory():
     """
     Test the watch_directory functionality by:
-    1. Creating a session with code_latest ImageId
+    1. Creating a session with linux_latest ImageId
     2. Setting up directory monitoring with a callback
     3. Creating and modifying files
     4. Verifying that callbacks are triggered with correct events
@@ -36,8 +47,8 @@ async def test_watch_directory():
     agentbay = AsyncAgentBay(api_key=api_key)
     print("✅ AsyncAgentBay client initialized")
 
-    # Create session with code_latest ImageId
-    session_params = CreateSessionParams(image_id="code_latest")
+    # Create session with linux_latest ImageId
+    session_params = CreateSessionParams(image_id="linux_latest")
     session_result = await agentbay.create(session_params)
 
     if not session_result.success:
@@ -73,38 +84,39 @@ async def test_watch_directory():
             interval=0.5,  # Poll every 0.5 seconds for faster testing
         )
         monitor_thread.start()
-        monitor_thread.ready_event.wait(timeout=30)
+        await _wait_ready(monitor_thread.ready_event)
+        await asyncio.sleep(1)
         print("✅ Directory monitoring started (baseline established)")
 
         # Test 1: Create a new file
         print("\n3. Creating a new file...")
         write_result = await session.file_system.write_file(
-        "/tmp/watch_test/test_file.txt", "Hello, World!"
-    )
+            "/tmp/watch_test/test_file.txt", "Hello, World!"
+        )
         print(f"Write file result: {write_result.success}")
 
         # Wait for detection
-        time.sleep(2)
+        await asyncio.sleep(3)
 
         # Test 2: Modify the file
         print("\n4. Modifying the file...")
         modify_result = await session.file_system.write_file(
-        "/tmp/watch_test/test_file.txt", "Modified content"
-    )
+            "/tmp/watch_test/test_file.txt", "Modified content"
+        )
         print(f"Modify file result: {modify_result.success}")
 
         # Wait for detection
-        time.sleep(2)
+        await asyncio.sleep(3)
 
         # Test 3: Create another file
         print("\n5. Creating another file...")
         write_result2 = await session.file_system.write_file(
-        "/tmp/watch_test/another_file.txt", "Another file content"
-    )
+            "/tmp/watch_test/another_file.txt", "Another file content"
+        )
         print(f"Write second file result: {write_result2.success}")
 
         # Wait for detection
-        time.sleep(2)
+        await asyncio.sleep(3)
 
         # Stop monitoring
         print("\n6. Stopping directory monitoring...")
@@ -227,7 +239,7 @@ async def test_watch_directory_file_modification():
     Test monitoring file modification events in a directory.
 
     This test:
-    1. Creates a session with code_latest ImageId
+    1. Creates a session with linux_latest ImageId
     2. Creates a test directory and initial file
     3. Sets up directory monitoring with a callback
     4. Modifies the file multiple times
@@ -240,8 +252,8 @@ async def test_watch_directory_file_modification():
     agentbay = AsyncAgentBay(api_key=api_key)
     print("✅ AgentBay client initialized")
 
-    # Create session with code_latest ImageId
-    session_params = CreateSessionParams(image_id="code_latest")
+    # Create session with linux_latest ImageId
+    session_params = CreateSessionParams(image_id="linux_latest")
     session_result = await agentbay.create(session_params)
 
     if not session_result.success:
@@ -290,7 +302,8 @@ async def test_watch_directory_file_modification():
             path=test_dir, callback=on_file_modified, interval=1.0
         )
         monitor_thread.start()
-        monitor_thread.ready_event.wait(timeout=30)
+        await _wait_ready(monitor_thread.ready_event)
+        await asyncio.sleep(1)
         print("✅ Directory monitoring started (baseline established)")
 
         # Modify file multiple times
@@ -305,10 +318,10 @@ async def test_watch_directory_file_modification():
                 )
             else:
                 print(f"✅ File modified successfully (attempt {i + 1})")
-            time.sleep(1.5)  # Ensure events are captured
+            await asyncio.sleep(2)
 
         # Wait a bit more for final events
-        time.sleep(2)
+        await asyncio.sleep(3)
 
         # Verify events
         print(f"\n5. Verifying captured events...")
@@ -406,7 +419,7 @@ async def test_watch_directory_no_events_after_stop():
     agentbay = AsyncAgentBay(api_key=api_key)
     print("✅ AsyncAgentBay client initialized")
 
-    session_params = CreateSessionParams(image_id="code_latest")
+    session_params = CreateSessionParams(image_id="linux_latest")
     session_result = await agentbay.create(session_params)
 
     if not session_result.success:
@@ -435,14 +448,15 @@ async def test_watch_directory_no_events_after_stop():
             interval=0.5,
         )
         monitor_thread.start()
-        monitor_thread.ready_event.wait(timeout=30)
+        await _wait_ready(monitor_thread.ready_event)
+        await asyncio.sleep(1)
         print("✅ Monitoring started")
 
         print("\n2. Creating a file (should trigger events)...")
         await session.file_system.write_file(
             f"{test_dir}/before_stop.txt", "before stop"
         )
-        time.sleep(3)
+        await asyncio.sleep(5)
 
         events_before_stop = len(detected_events)
         print(f"Events before stop: {events_before_stop}")
@@ -458,7 +472,7 @@ async def test_watch_directory_no_events_after_stop():
         await session.file_system.write_file(
             f"{test_dir}/after_stop.txt", "after stop"
         )
-        time.sleep(3)
+        await asyncio.sleep(3)
 
         events_after_stop = len(detected_events)
         print(f"Events after stop: {events_after_stop}")
