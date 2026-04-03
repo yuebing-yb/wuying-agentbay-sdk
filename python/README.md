@@ -1,20 +1,20 @@
 # AgentBay SDK for Python
 
-> Execute commands, operate files, and run code in cloud environments
+> Cloud sandboxes for AI agents — execute commands, operate files, browse the web, automate desktops, test mobile apps, and run code in isolated cloud environments.
 
-## 📦 Installation
-
-```bash
-pip install wuying-agentbay-sdk
-```
-
-## 🚀 Prerequisites
+## ✅ Prerequisites
 
 Before using the SDK, you need to:
 
 1. Register an Alibaba Cloud account: [https://aliyun.com](https://aliyun.com)
 2. Get API credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
 3. Set environment variable: `export AGENTBAY_API_KEY=your_api_key`
+
+## 📦 Installation
+
+```bash
+pip install wuying-agentbay-sdk
+```
 
 ## 🚀 Quick Start
 

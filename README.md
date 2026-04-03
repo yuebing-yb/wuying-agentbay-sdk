@@ -20,119 +20,15 @@
 
 <p align="center">
   <b>The Cloud Sandbox Built for AI Agents</b>
-  <br>
-  <a href="docs/guides/browser-use/README.md">Browser</a> ·
-  <a href="docs/guides/computer-use/README.md">Desktop</a> ·
-  <a href="docs/guides/mobile-use/README.md">Mobile</a> ·
-  <a href="docs/guides/codespace/README.md">Code</a> ·
-  <a href="docs/guides/common-features/advanced/skills.md">Skills</a>
 </p>
+
+AgentBay provides **on-demand cloud sandboxes** for AI agents — isolated environments with browser, desktop, mobile, and code execution capabilities. Create a sandbox in seconds, let your agent do its work, and tear it down when done. No infrastructure to manage.
+
+With SDKs for **Python**, **TypeScript**, **Golang**, and **Java**, AgentBay gives your agents a full cloud environment through a simple API: execute commands, browse the web, automate desktop apps, test mobile UIs, or run code — all in secure, disposable sandboxes.
 
 ---
 
-## 🔥 OpenClaw Quick Deployment
-
-Deploy [OpenClaw](https://github.com/anthropics/openClaw) on an AgentBay cloud desktop in minutes. Available in [Python](cookbook/openclaw/python/) and [Java](cookbook/openclaw/java/).
-
-## ✨ Skills — Equip Your Agents (Beta)
-
-Load reusable capability modules into sandbox sessions — pre-configured tools and workflows, no manual setup needed. Available in all four SDKs. [Learn more →](docs/guides/common-features/advanced/skills.md)
-
-## 📦 Installation
-
-| Language | Install Command | Documentation |
-|----------|----------------|---------------|
-| Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) |
-| TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) |
-| Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) |
-| Java | Maven/Gradle (see docs) | [Java Docs](java/README.md) |
-
-## 🚀 Prerequisites
-
-Before using the SDK, you need to:
-
-1. Register an Alibaba Cloud account: [https://aliyun.com](https://aliyun.com)
-2. Get APIKEY credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
-3. Set environment variable:
-   - For Linux/MacOS:
-     ```bash
-     export AGENTBAY_API_KEY=your_api_key_here
-     ```
-   - For Windows:
-     ```cmd
-     setx AGENTBAY_API_KEY your_api_key_here
-     ```
-
-## 🚀 Quick Start
-
-### Python
-```python
-from agentbay import AgentBay, CreateSessionParams
-
-# Create session and execute code
-agent_bay = AgentBay()
-session = agent_bay.create(CreateSessionParams(image_id="code_latest")).session
-result = session.code.run_code("print('Hello AgentBay')", "python")
-if result.success:
-    print(result.result)  # Hello AgentBay
-
-# Clean up
-agent_bay.delete(session)
-```
-
-### TypeScript
-```typescript
-import { AgentBay } from 'wuying-agentbay-sdk';
-
-// Create session and execute code
-const agentBay = new AgentBay();
-const session = (await agentBay.create({ imageId: "code_latest" })).session;
-const result = await session.code.runCode("print('Hello AgentBay')", "python");
-if (result.success) {
-    console.log(result.result);  // Hello AgentBay
-}
-
-// Clean up
-await agentBay.delete(session);
-```
-
-### Golang
-```go
-import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
-
-// Create session and execute code
-client, _ := agentbay.NewAgentBay("", nil)
-result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
-session := result.Session
-
-res, _ := session.Code.RunCode("print('Hello AgentBay')", "python")
-fmt.Println(res.Output)  // Hello AgentBay
-
-// Clean up
-client.Delete(session, false)
-```
-
-### Java
-```java
-import com.aliyun.agentbay.*;
-
-// Create session and execute code
-AgentBay agentBay = new AgentBay();
-CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
-Session session = agentBay.create(params).getSession();
-
-CodeExecutionResult result = session.getCode().runCode("print('Hello AgentBay')", "python");
-if (result.isSuccess()) {
-    System.out.println(result.getResult());  // Hello AgentBay
-}
-
-// Clean up
-agentBay.delete(session, false);
-```
-
-
-
-## 🎯 Use Cases
+## 🎯 What You Can Do
 
 <table>
 <tr>
@@ -165,57 +61,152 @@ agentBay.delete(session, false);
 </tr>
 </table>
 
+## ✅ Prerequisites
+
+Before using the SDK, you need to:
+
+1. Register an Alibaba Cloud account: [https://aliyun.com](https://aliyun.com)
+2. Get APIKEY credentials: [AgentBay Console](https://agentbay.console.aliyun.com/service-management)
+3. Set environment variable:
+   - For Linux/MacOS:
+     ```bash
+     export AGENTBAY_API_KEY=your_api_key_here
+     ```
+   - For Windows:
+     ```cmd
+     setx AGENTBAY_API_KEY your_api_key_here
+     ```
+
+## 📦 Installation
+
+| Language | Install Command | Documentation |
+|----------|----------------|---------------|
+| Python | `pip install wuying-agentbay-sdk` | [Python Docs](python/README.md) |
+| TypeScript | `npm install wuying-agentbay-sdk` | [TypeScript Docs](typescript/README.md) |
+| Golang | `go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay` | [Golang Docs](golang/README.md) |
+| Java | See Maven snippet below | [Java Docs](java/README.md) |
+
+<details>
+<summary>Java Maven dependency</summary>
+
+```xml
+<dependency>
+    <groupId>com.aliyun</groupId>
+    <artifactId>agentbay-sdk</artifactId>
+    <version>0.18.0</version>
+</dependency>
+```
+
+</details>
+
+## 🚀 Quick Start
+
+### Python
+
+```python
+from agentbay import AgentBay, CreateSessionParams
+
+agent_bay = AgentBay()
+
+# Create a cloud sandbox (options: "code_latest", "browser_latest", "desktop_latest")
+session = agent_bay.create(CreateSessionParams(image_id="code_latest")).session
+
+# Execute code in the sandbox
+result = session.code.run_code("print('Hello AgentBay')", "python")
+if result.success:
+    print(result.result)  # Hello AgentBay
+
+agent_bay.delete(session)
+```
+
+### TypeScript
+
+```typescript
+import { AgentBay } from 'wuying-agentbay-sdk';
+
+const agentBay = new AgentBay();
+
+// Create a cloud sandbox
+const session = (await agentBay.create({ imageId: "code_latest" })).session;
+
+// Execute code in the sandbox
+const result = await session.code.runCode("print('Hello AgentBay')", "python");
+if (result.success) {
+    console.log(result.result);  // Hello AgentBay
+}
+
+await agentBay.delete(session);
+```
+
+### Golang
+
+```go
+import "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
+
+client, _ := agentbay.NewAgentBay("", nil)
+
+// Create a cloud sandbox
+result, _ := client.Create(agentbay.NewCreateSessionParams().WithImageId("code_latest"))
+session := result.Session
+
+// Execute code in the sandbox
+res, _ := session.Code.RunCode("print('Hello AgentBay')", "python")
+fmt.Println(res.Output)  // Hello AgentBay
+
+client.Delete(session, false)
+```
+
+### Java
+
+```java
+import com.aliyun.agentbay.*;
+
+AgentBay agentBay = new AgentBay();
+
+// Create a cloud sandbox
+CreateSessionParams params = new CreateSessionParams().setImageId("code_latest");
+Session session = agentBay.create(params).getSession();
+
+// Execute code in the sandbox
+CodeExecutionResult result = session.getCode().runCode("print('Hello AgentBay')", "python");
+if (result.isSuccess()) {
+    System.out.println(result.getResult());  // Hello AgentBay
+}
+
+agentBay.delete(session, false);
+```
+
 ## 📚 Documentation
 
-**[Complete Documentation](docs/README.md)** - Full guides, tutorials, and API references
+> **New to AgentBay?** Start with the [Quick Start Tutorial](docs/quickstart/README.md) — you'll be up and running in 5 minutes.
 
-### 👋 Choose Your Learning Path
-
-**🆕 New Users** - If you're new to AgentBay or cloud development:
-- [Quick Start Tutorial](docs/quickstart/README.md) - Get started in 5 minutes
-- [Core Concepts](docs/quickstart/basic-concepts.md) - Understand cloud environments and sessions
-
-**🚀 Experienced Users** - Already familiar with browser automation, computer use, mobile testing, or cloud development environments:
-- Choose your environment:
-  - 🌐 [Browser Automation](docs/guides/browser-use/README.md) - Web scraping, testing, form filling with stealth capabilities
-  - 🖥️ [Computer/Windows Automation](docs/guides/computer-use/README.md) - Desktop UI automation and window management
-  - 📱 [Mobile Automation](docs/guides/mobile-use/README.md) - Android UI testing and gesture automation
-  - 💻 [CodeSpace](docs/guides/codespace/README.md) - Cloud-based code execution environments
-- [Feature Guides](docs/guides/README.md) - Complete feature introduction
-- **API Reference** - Comprehensive API documentation with examples
-  - [Python API Reference](python/docs/api/) - Auto-generated from source code
-  - [TypeScript API Reference](typescript/docs/api/) - Auto-generated from source code
-  - [Golang API Reference](golang/docs/api/) - Auto-generated from source code
-  - 📝 All API docs include complete runnable examples and actual output
-- [Cookbook](cookbook/README.md) - Real-world examples and recipes
+| Resource | Description |
+|----------|-------------|
+| [Quick Start Tutorial](docs/quickstart/README.md) | Get started in 5 minutes |
+| [Core Concepts](docs/quickstart/basic-concepts.md) | Understand sessions, environments, and sandboxes |
+| [Feature Guides](docs/guides/README.md) | In-depth guides for each capability |
+| [API Reference](python/docs/api/) | Complete API docs ([Python](python/docs/api/) · [TypeScript](typescript/docs/api/) · [Golang](golang/docs/api/) · [Java](java/docs/api/)) |
+| [Cookbook](cookbook/README.md) | Real-world examples and recipes |
 
 ## 🔧 Core Features
 
 ### 🎛️ Session Management
-- **Session Creation & Lifecycle** - Create, manage, and delete cloud environments
-- **Environment Configuration** - Configure SDK settings, regions, and endpoints  
-- **Session Monitoring** - Monitor session status and health validation
+- **Session Lifecycle** — Create, manage, and delete cloud sandboxes on demand
+- **Environment Configuration** — Configure regions, endpoints, and sandbox images
+- **Session Monitoring** — Monitor status and health
 
-### 🛠️ Common Modules
-- **Command Execution** - Execute Shell commands in cloud environments
-- **File Operations** - Upload, download, and manage cloud files
-- **Data Persistence** - Save and retrieve data across sessions
-- **Context Management** - Synchronize data and maintain state
-
-### 🎯 Scenario-Based Features
-- **Computer Use** - General automation and desktop operations
-- **Browser Use** - Web automation, scraping, and browser control
-- **CodeSpace** - Code execution and development environment
-- **Mobile Use** - Mobile device simulation and control
+### 🛠️ Built-in Modules
+- **Command Execution** — Run shell commands in cloud sandboxes
+- **File Operations** — Upload, download, and manage files
+- **Context & Data Persistence** — Save and retrieve data across sessions
+- **Git Operations** — Clone, commit, and manage repositories remotely
 
 ## 🤖 AI-Assisted Development
 
-If you're using AI coding assistants (Claude, Cursor, GitHub Copilot, etc.) to develop with AgentBay SDK, you can use [llms.txt](./llms.txt) and [llms-full.txt](./llms-full.txt) as context for better code suggestions:
+If you're using AI coding assistants (Claude, Cursor, GitHub Copilot, etc.) to develop with AgentBay SDK, use these files as context:
 
-- **[llms.txt](./llms.txt)** - Concise overview with READMEs and config (~14k tokens, ~55 KB)
-- **[llms-full.txt](./llms-full.txt)** - Core SDK source, API docs, examples and guides (~211k tokens, ~827 KB)
-
-These files are generated by `python scripts/build_llms_txt.py` using a tiered knowledge construction approach. They cover 96 carefully selected files across all languages (Python, TypeScript, Golang) with method signature indexing for truncated source files.
+- **[llms.txt](./llms.txt)** — Concise overview (~14k tokens, ~55 KB)
+- **[llms-full.txt](./llms-full.txt)** — Full SDK source, API docs, and examples (~211k tokens, ~827 KB)
 
 ## 🆘 Get Help
 
@@ -225,8 +216,8 @@ These files are generated by `python scripts/build_llms_txt.py` using a tiered k
 
 Welcome to visit our product website and join our community!
 
-- 🌐 **AgentBay International Website**: [https://www.alibabacloud.com/product/agentbay](https://www.alibabacloud.com/product/agentbay)  
-- 🇨🇳 **AgentBay China Website (Chinese)**: [https://www.aliyun.com/product/agentbay](https://www.aliyun.com/product/agentbay)  
+- 🌐 **AgentBay International Website**: [https://www.alibabacloud.com/product/agentbay](https://www.alibabacloud.com/product/agentbay)
+- 🇨🇳 **AgentBay China Website (Chinese)**: [https://www.aliyun.com/product/agentbay](https://www.aliyun.com/product/agentbay)
 - 💬 **Discord Community**: [Join on Discord](https://discord.gg/tzX52463Cp)
 - 💼 **DingTalk Group**: [Click to join](https://qr.dingtalk.com/action/joingroup?code=v1,k1,ZlCDtu+p3xq2MqVoIA3nYrvEWA21Gq86N91t9OuythQ=&_dt_no_comment=1&origin=11)
 
