@@ -1,3 +1,5 @@
+// ci-stable
+
 package com.aliyun.agentbay.mobile;
 
 import com.aliyun.agentbay.AgentBay;

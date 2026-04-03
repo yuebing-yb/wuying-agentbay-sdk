@@ -790,41 +790,54 @@ def discover_java_tests(state: AgentState, pattern: Optional[str]) -> AgentState
     # 直接扫描集成测试目录
     integration_test_dir = os.path.join(cwd, "src", "integration-test", "java")
     test_ids = []
-    
+    ci_stable = state.get("ci_stable", False)
+    skip_oss = state.get("skip_oss", False)
+
     if os.path.exists(integration_test_dir):
         print(f"📂 扫描集成测试目录: {integration_test_dir}")
         for root, dirs, files in os.walk(integration_test_dir):
             for file in files:
-                # 处理所有 .java 文件（集成测试目录下的所有 Java 文件都是测试）
-                if file.endswith('.java'):
-                    # 获取完整路径
-                    full_path = os.path.join(root, file)
-                    
-                    # 计算包名（相对于src/integration-test/java）
-                    rel_path = os.path.relpath(full_path, integration_test_dir)
-                    package_path = os.path.dirname(rel_path).replace(os.sep, '.')
-                    class_name = file[:-5]  # 移除.java后缀
-                    
-                    # 完整的测试类名
-                    if package_path:
-                        full_class_name = f"{package_path}.{class_name}"
-                    else:
-                        full_class_name = class_name
-                    
-                    # 检查是否应该跳过（匹配 TEST_PATTERNS）
-                    should_skip = False
-                    skip_oss = state.get("skip_oss", False)
-                    if skip_oss:
-                        for test_pattern in TEST_PATTERNS:
-                            if test_pattern in full_class_name or test_pattern in class_name:
-                                should_skip = True
-                                print(f"⏭️ 发现阶段跳过测试类: {full_class_name} (匹配模式: {test_pattern})")
+                if not file.endswith('.java'):
+                    continue
+                full_path = os.path.join(root, file)
+
+                # ci-stable 模式：只纳入文件前20行中有 ci-stable 标记的文件
+                if ci_stable and not has_ci_stable_marker(full_path):
+                    print(f"⏭️ ci-stable: skip {full_path}")
+                    continue
+
+                # 从文件内容中提取 public class 名（比文件名更可靠）
+                class_name = None
+                try:
+                    with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith("public class "):
+                                # 取 "public class Foo {" 中的 Foo
+                                parts = line.split()
+                                if len(parts) >= 3:
+                                    class_name = parts[2].rstrip("{").strip()
                                 break
-                    
-                    # 如果不应该跳过，再应用用户的模式过滤
-                    if not should_skip and (not pattern or pattern.lower() in full_class_name.lower()):
-                        test_ids.append(f"java:{full_class_name}")
-        
+                except (OSError, IOError):
+                    pass
+
+                if not class_name:
+                    # 回退到文件名（去掉 .java 后缀）
+                    class_name = file[:-5]
+
+                # 检查是否应该跳过（匹配 TEST_PATTERNS）
+                should_skip = False
+                if skip_oss:
+                    for test_pattern in TEST_PATTERNS:
+                        if test_pattern in class_name:
+                            should_skip = True
+                            print(f"⏭️ 发现阶段跳过测试类: {class_name} (匹配模式: {test_pattern})")
+                            break
+
+                # 应用用户模式过滤
+                if not should_skip and (not pattern or pattern.lower() in class_name.lower()):
+                    test_ids.append(f"java:{class_name}")
+
         print(f"✅ 在目录扫描中找到 {len(test_ids)} 个Java集成测试。")
         if len(test_ids) > 0:
             print("📋 测试类列表:")
@@ -834,15 +847,8 @@ def discover_java_tests(state: AgentState, pattern: Optional[str]) -> AgentState
                 print(f"   ... 还有 {len(test_ids) - 5} 个测试类")
     else:
         print(f"❌ 集成测试目录不存在: {integration_test_dir}")
-    
-    print(f"✅ 总共找到 {len(test_ids)} 个Java集成测试。")
 
-    # 应用 ci-stable 过滤
-    ci_stable = state.get("ci_stable", False)
-    if ci_stable:
-        print("🔍 正在过滤 ci-stable 测试...")
-        test_ids = filter_ci_stable(test_ids, ci_stable)
-        print(f"✅ ci-stable 过滤后剩余 {len(test_ids)} 个Java测试。")
+    print(f"✅ 总共找到 {len(test_ids)} 个Java集成测试。")
 
     # Load SDK Context
     context = ""
@@ -1102,15 +1108,15 @@ def execute_java_test(test_id: str) -> Dict[str, Any]:
         print("⚠️ 警告: 环境变量中未找到AGENTBAY_API_KEY。")
 
     # 构建集成测试的Maven命令
-    # 注意：此函数只处理集成测试，所有测试都来自 src/integration-test/java 目录
-    simple_class_name = actual_test_id.split('.')[-1] if '.' in actual_test_id else actual_test_id
-    
-    cmd = [mvn_cmd, "verify", "-Dsurefire.skip=true", f"-Dit.test={simple_class_name}"]
+    # test_id 格式: java:ClassName（discover 阶段已从 public class 定义中提取简单类名）
+    # 命令格式: mvn verify "-Dsurefire.skip=true" "-Dit.test=ClassName"
+    class_name = actual_test_id  # 已经是简单类名，如 SessionIntegrationTest
+
+    cmd = [mvn_cmd, "verify", "-Dsurefire.skip=true", f"-Dit.test={class_name}"]
     print(f"   📋 测试类型: 集成测试")
     print(f"   🔧 使用 maven-failsafe-plugin")
     print(f"   ⚠️ 使用 -Dsurefire.skip=true 跳过单元测试")
-    print(f"   📝 完全限定类名: {actual_test_id}")
-    print(f"   📝 简单类名: {simple_class_name}")
+    print(f"   📝 测试类名: {class_name}")
     
     print(f"   执行命令: {' '.join(cmd)}")
     print(f"   工作目录: {cwd}")
@@ -1177,14 +1183,18 @@ def analyze_failure(state: AgentState) -> AgentState:
         test_code = "Golang测试文件内容需要从go test输出中提取"
         test_file_path = None
     elif test_id.startswith("java:"):
-        # Java测试 - 根据类名构建文件路径
-        class_name = test_id[5:]  # 移除java:前缀
-        file_path = class_name.replace('.', os.sep) + '.java'
-        test_file_path = os.path.join(PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java", file_path)
+        # Java测试 - test_id 中存的是简单类名，在集成测试目录下搜索对应 .java 文件
+        class_name = test_id[5:]  # 移除java:前缀，得到简单类名，如 SessionIntegrationTest
+        java_int_dir = os.path.join(PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java")
+        test_file_path = None
+        for _root, _dirs, _files in os.walk(java_int_dir):
+            if f"{class_name}.java" in _files:
+                test_file_path = os.path.join(_root, f"{class_name}.java")
+                break
     else:
         # Python测试（默认）
         test_file_path = os.path.join(PROJECT_ROOT, "python", test_id.split("::")[0])
-    
+
     # 读取测试文件内容
     if test_file_path and os.path.exists(test_file_path):
         try:
@@ -1371,10 +1381,17 @@ def generate_single_ai_fix_prompt(result: TestResult, sdk_context: str) -> str:
         # Golang测试 - 需要特殊处理
         test_file_content = "Golang测试文件内容需要从go test输出中提取"
     elif test_id.startswith("java:"):
-        # Java测试 - 根据类名构建文件路径
-        class_name = test_id[5:]  # 移除java:前缀
-        file_path = class_name.replace('.', os.sep) + '.java'
-        test_file_path = os.path.join(PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java", file_path)
+        # Java测试 - test_id 中存的是简单类名，在集成测试目录下搜索对应 .java 文件
+        class_name = test_id[5:]  # 移除java:前缀，得到简单类名，如 SessionIntegrationTest
+        java_int_dir = os.path.join(PROJECT_ROOT, "java", "agentbay", "src", "integration-test", "java")
+        test_file_path = None
+        for _root, _dirs, _files in os.walk(java_int_dir):
+            print(f"   📋 遍历目录: {_root}")
+            print(f"   📋 文件列表: {_files}")
+            print(f"   📋 查找文件: {class_name}.java")
+            if f"{class_name}.java" in _files:
+                test_file_path = os.path.join(_root, f"{class_name}.java")
+                break
     else:
         # Python测试
         test_file_path = os.path.join(PROJECT_ROOT, "python", test_id.split("::")[0])

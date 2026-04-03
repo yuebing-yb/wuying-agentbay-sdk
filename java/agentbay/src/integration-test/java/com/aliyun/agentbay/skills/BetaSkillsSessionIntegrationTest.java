@@ -1,3 +1,5 @@
+// ci-stable
+
 package com.aliyun.agentbay.skills;
 
 import com.aliyun.agentbay.AgentBay;

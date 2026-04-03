@@ -98,7 +98,15 @@ jobs:
           fi
           
           # Setup Java dependencies if needed
+          # Also needed when ci_stable=true because ci-stable Java tests may be included
+          NEED_JAVA=false
           if [ "${{params.test_type}}" = "java" ] || [ "${{params.test_type}}" = "all" ]; then
+            NEED_JAVA=true
+          fi
+          if [ "${{params.ci_stable}}" = "true" ] && [ "${{params.test_type}}" != "python" ] && [ "${{params.test_type}}" != "typescript" ] && [ "${{params.test_type}}" != "golang" ]; then
+            NEED_JAVA=true
+          fi
+          if [ "$NEED_JAVA" = "true" ]; then
             echo "☕ Setting up Java environment..."
             # Java and Maven already installed by setup-env
             java -version
@@ -112,8 +120,9 @@ jobs:
               libxrandr2 libgbm1 libxkbcommon0 libpango-1.0-0 libasound2
             
             # Only compile the project, don't run tests yet
-            # Tests will be run individually by smart_test_runner.py
-            echo "🔨 Compiling Java project..."
+            # Tests will be run individually by smart_test_runner.py via:
+            #   mvn verify "-Dsurefire.skip=true" "-Dit.test=ClassName"
+            echo "🔨 Compiling Java project (including integration-test sources)..."
             cd java/agentbay
             mvn clean compile test-compile
             cd ../..
