@@ -2,6 +2,8 @@
 
 This guide covers application management capabilities for desktop environments (Windows/Linux) using the AgentBay SDK. Learn how to discover, launch, monitor, and control desktop applications in cloud environments.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)

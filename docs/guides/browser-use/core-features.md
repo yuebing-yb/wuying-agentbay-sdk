@@ -22,6 +22,15 @@
 ## Call For User
 
 - [Call For User](core-features/call-for-user.md) - Handle scenarios that require human intervention when the browser encounters user information requests or unsolvable problems
+
+## Screenshot
+
+- [Browser Screenshot](core-features/browser-screenshot.md) - Capture full-page and viewport screenshots with consistent options across SDKs
+
+## Command-Line Arguments
+
+- [Browser Command Args](core-features/browser-command-args.md) - Customize Chrome/Chromium launch parameters via `BrowserOption`
+
 ## 📚 Related Guides
 
 - [Browser Use Overview](README.md) - Complete browser automation features

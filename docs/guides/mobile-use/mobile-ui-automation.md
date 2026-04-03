@@ -2,6 +2,8 @@
 
 This guide covers mobile UI automation capabilities in AgentBay SDK for Android mobile environments, including touch operations, text input, UI element detection, and screen operations.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -32,10 +34,12 @@ All operations are performed through the `session.mobile` module, which provides
 Mobile UI automation requires creating a session with a mobile system image (this example uses `mobile_latest` for verification):
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay()
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
 # Session created successfully for mobile automation
@@ -263,7 +267,7 @@ def _prepare_for_screenshots(session) -> None:
     time.sleep(2)
 
 
-agent_bay = AgentBay()
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session = agent_bay.create(CreateSessionParams(image_id="mobile-use-android-12-gw")).session
 try:
     _prepare_for_screenshots(session)
@@ -349,10 +353,12 @@ else:
 ### Example 1: App Navigation
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay()
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
 
@@ -386,10 +392,12 @@ finally:
 ### Example 2: Form Input on Mobile
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay()
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
 
@@ -421,10 +429,12 @@ finally:
 ### Example 3: UI Element Discovery and Interaction
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay()
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
 
@@ -457,10 +467,12 @@ finally:
 ### Example 4: Scroll Through Content
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay()
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session_params = CreateSessionParams(image_id="mobile_latest")
 session = agent_bay.create(session_params).session
 

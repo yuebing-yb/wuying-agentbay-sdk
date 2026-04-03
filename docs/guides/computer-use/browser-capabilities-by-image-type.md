@@ -2,6 +2,8 @@
 
 Different image types provide different levels of browser automation capabilities. Understanding these differences is crucial for choosing the right image for your use case.
 
+> **Multi-language support:** Code examples below cover Python, TypeScript, and Golang. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## Feature Comparison Table
 
 | Feature | Browser Use Image | Computer Use Image (Linux) | Computer Use Image (Windows) |
@@ -82,11 +84,12 @@ Different image types provide different levels of browser automation capabilitie
 ### Python
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-api_key = "your_api_key"
-agent_bay = AgentBay(api_key=api_key)
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # For pure web automation with AI capabilities
 params = CreateSessionParams(image_id="browser_latest")
@@ -126,6 +129,8 @@ const result = await agentBay.create(params);
 
 ```go
 import (
+	"os"
+
 	"github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 

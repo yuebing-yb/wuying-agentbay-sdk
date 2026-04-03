@@ -2,6 +2,8 @@
 
 The Call For User feature handles scenarios where browser automation encounters situations that require human intervention. This includes authentication challenges, complex verification processes, or security measures that cannot be automatically resolved by the system.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 > **Use Cases:** This feature is triggered when the browser encounters user information requests, authentication challenges, or other scenarios that require manual human interaction to proceed.
 
 The interface is unified across BrowserUse, ComputerUse, and MobileUse. Messages are delivered as a structured payload (e.g. JSON) with the following shape:

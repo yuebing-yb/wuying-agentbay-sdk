@@ -2,6 +2,8 @@
 
 This guide demonstrates how to create mobile sessions with advanced configuration options using the AgentBay SDK. The mobile configuration allows you to control application access and screen resolution settings for mobile environments.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## Table of Contents
 - [Overview](#overview)
 - [Configuration Options](#configuration-options)
@@ -61,12 +63,14 @@ The navigation bar control feature allows you to create immersive mobile experie
 ### Example: Hiding Navigation Bar
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import ExtraConfigs, MobileExtraConfig
 
 # Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Configure mobile settings with hidden navigation bar
 mobile_config = MobileExtraConfig(
@@ -103,12 +107,14 @@ The uninstall protection feature prevents critical applications from being accid
 ### Example: Protecting Critical Applications
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import ExtraConfigs, MobileExtraConfig
 
 # Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Configure uninstall protection for critical apps
 mobile_config = MobileExtraConfig(
@@ -146,12 +152,14 @@ Use whitelists in production environments to ensure only approved applications c
 ### Example: Creating a Session with App Whitelist
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Configure mobile app management with whitelist
 app_whitelist_rule = AppManagerRule(
@@ -203,12 +211,14 @@ Use blacklists in development and testing to block known problematic application
 ### Example: Creating a Session with App Blacklist
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Configure mobile app management with blacklist
 app_blacklist_rule = AppManagerRule(
@@ -259,12 +269,14 @@ else:
 This example demonstrates all available mobile configuration options working together:
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 from agentbay import ExtraConfigs, MobileExtraConfig, AppManagerRule
 
 # Initialize the SDK
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Create comprehensive app management rule
 app_rule = AppManagerRule(

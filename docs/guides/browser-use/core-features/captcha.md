@@ -2,6 +2,8 @@
 
 CAPTCHA challenges are common obstacles in web automation that can disrupt your workflow. AIBrowser includes an intelligent CAPTCHA resolution system that automatically handles these verification challenges, ensuring your automation tasks proceed smoothly.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 > **Version Information:** CAPTCHA resolution is available starting from version 0.7.0. Currently, the system only supports automatic resolution of slider-type CAPTCHAs. Support for text-based CAPTCHAs will be added in future releases.
 
 ## Automatic CAPTCHA Resolution
@@ -18,11 +20,13 @@ The system works by:
 Enable CAPTCHA resolution by setting the appropriate flag during browser initialization:
 
 ```python
+import os
+
 from agentbay import AgentBay, CreateSessionParams, BrowserOption
 from playwright.sync_api import sync_playwright
 
 # Initialize AgentBay client
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Create a session
 params = CreateSessionParams(

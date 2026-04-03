@@ -2,6 +2,8 @@
 
 This guide covers code execution capabilities in AgentBay SDK's CodeSpace environment. CodeSpace provides a dedicated development environment optimized for running code in Python, JavaScript, R, and Java.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -33,10 +35,12 @@ CodeSpace is AgentBay's development-focused environment that provides:
 To use code execution features, create a session with the `code_latest` image:
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 session_params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(session_params)
@@ -62,9 +66,11 @@ AgentBay now provides enhanced code execution results with rich output formats a
 ### Enhanced Result Structure
 
 ```python
+import os
+
 from agentbay import AgentBay, CreateSessionParams, EnhancedCodeExecutionResult
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session_params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(session_params)
 
@@ -142,10 +148,12 @@ if isinstance(result, EnhancedCodeExecutionResult):
 ### Basic Python Execution
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 session_params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(session_params)
@@ -231,9 +239,11 @@ Notes:
 ### Example: Define Once, Use Later
 
 ```python
+import os
+
 from agentbay import AgentBay, CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session_result = agent_bay.create(CreateSessionParams(image_id="code_latest"))
 session = session_result.session
 
@@ -276,10 +286,12 @@ Verified end-to-end examples in this repository:
 ### Node.js Code Execution
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 session_params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(session_params)
@@ -372,9 +384,11 @@ AgentBay's enhanced code execution supports multiple output formats including HT
 ### HTML Output
 
 ```python
+import os
+
 from agentbay import AgentBay, CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session_params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(session_params)
 
@@ -576,9 +590,11 @@ for res in result.results:
 ### Writing and Executing Scripts
 
 ```python
+import os
+
 from agentbay import AgentBay
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 result = agent_bay.create()
 
 if result.success:
@@ -635,10 +651,12 @@ print(json.dumps(data, indent=2))
 ### Multi-file Projects
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 session_params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(session_params)

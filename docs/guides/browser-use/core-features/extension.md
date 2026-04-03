@@ -2,6 +2,8 @@
 
 Browser Extension Management is a core feature of the AgentBay SDK that enables you to upload, manage, and synchronize browser extensions with your browser sessions. This is particularly useful for automated testing of browser extensions, web scraping with custom extensions, and browser automation workflows.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 The Extension Management feature allows you to:
@@ -296,7 +298,7 @@ finally:
 import { AgentBay, ExtensionsService, CreateSessionParams, BrowserContext } from 'wuying-agentbay-sdk';
 
 // Initialize AgentBay and Extensions Service
-const agentBay = new AgentBay({ apiKey: "your_api_key" });
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY! });
 const extensionsService = new ExtensionsService(agentBay);
 
 // Upload your extension

@@ -2,6 +2,8 @@
 
 This guide covers how to use browser extensions with the AgentBay SDK for automated testing and browser automation workflows.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## Overview
 
 The AgentBay SDK provides comprehensive browser extension management capabilities, allowing you to:

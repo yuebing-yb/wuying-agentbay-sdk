@@ -7,6 +7,7 @@ In the context of AgentBay, there are three roles that can manipulate the browse
 - [Browser Agent](../../common-features/advanced/agent-modules.md): Performing tasks described in natural language with the capability of planning and execution
 - [Playwright](https://playwright.dev): An open source browser automation framework, performs specific actions with API calls
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
 
 ## Comparison
 
@@ -36,10 +37,10 @@ import os
 import asyncio
 from pydantic import BaseModel, Field
 from playwright.async_api import async_playwright
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import BrowserOperator, ActOptions, ExtractOptions
+from agentbay import AsyncBrowserOperator, ActOptions, ExtractOptions
 
 class WeatherSchema(BaseModel):
     """Schema for weather query."""
@@ -55,11 +56,11 @@ class DummySchema(BaseModel):
 
 
 async def main():
-    agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
+    agent_bay = AsyncAgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
     # Create a browser session
     params = CreateSessionParams(image_id="browser_latest")  # your image id
-    session_result = agent_bay.create(params)
+    session_result = await agent_bay.create(params)
     if not session_result.success:
         print(f"Create session failed: {session_result.error_message}")
         return
@@ -95,13 +96,13 @@ async def main():
         assert result.success
         assert result.request_id != ""
         assert result.error_message == ""
-        logger.info(f"✅ result {result.task_result}")
+        print(f"✅ result {result.task_result}")
         assert result.success
 
         result, obj = await session.browser.operator.extract(
             ExtractOptions(instruction="Extract the title", schema=DummySchema)
         )
-        logger.info(f"✅ result of extract {result}\n{obj}")
+        print(f"✅ result of extract {result}\n{obj}")
 
         await page.close()
         await browser.close()

@@ -2,6 +2,8 @@
 
 Browser Context is a core feature of the AgentBay SDK that enables persistent browser state management across multiple sessions. It allows you to maintain cookies, cache, local storage, and other browser data between sessions, significantly reducing anti-bot friction and speeding up web page navigation.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 A Browser Context represents a persistent browser environment that stores browser state such as:
@@ -309,7 +311,7 @@ print(f"Context '{context_name}' deleted")
 import { AgentBay, CreateSessionParams, BrowserContext } from 'wuying-agentbay-sdk';
 
 // Initialize AgentBay client
-const agentBay = new AgentBay({ apiKey: "your_api_key" });
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY! });
 
 // Create or get a persistent context
 const contextResult = await agentBay.context.get("my-browser-context", true);
@@ -337,7 +339,7 @@ import { AgentBay, CreateSessionParams, BrowserContext, BrowserOption } from 'wu
 import { chromium } from 'playwright';
 
 // Initialize AgentBay
-const agentBay = new AgentBay({ apiKey: "your_api_key" });
+const agentBay = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY! });
 
 // Create persistent context
 const contextResult = await agentBay.context.get("cookie-demo-context", true);

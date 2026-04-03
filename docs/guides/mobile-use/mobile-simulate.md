@@ -2,6 +2,8 @@
 
 This guide demonstrates how to use the mobile device simulation feature in AgentBay SDK to simulate different mobile devices with specific hardware characteristics and properties across sessions.
 
+> **Multi-language support:** Code examples below cover Python, TypeScript, and Golang. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## Table of Contents
 - [Overview](#overview)
 - [What is Mobile Simulate](#what-is-mobile-simulate)
@@ -105,6 +107,7 @@ We can use a persistent mobile simulate context id to simulate mobile devices ac
 ### Python Example
 
 ```python
+import os
 import time
 from agentbay import AgentBay, MobileSimulateService
 from agentbay import CreateSessionParams, ExtraConfigs
@@ -112,7 +115,7 @@ from agentbay import MobileExtraConfig, MobileSimulateMode
 
 def main():
     # Initialize AgentBay client
-    agent_bay = AgentBay(api_key="your_api_key")
+    agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
     # Step 1: Create MobileSimulateService and configure
     simulate_service = MobileSimulateService(agent_bay)
@@ -389,6 +392,7 @@ For persistent device simulation across multiple sessions, use user-specific con
 ### Python Example with Context
 
 ```python
+import os
 import time
 from agentbay import AgentBay, MobileSimulateService
 from agentbay import ContextSync, SyncPolicy, BWList, WhiteList
@@ -397,7 +401,7 @@ from agentbay import MobileExtraConfig, MobileSimulateMode
 
 def main():
     # Initialize AgentBay client
-    agent_bay = AgentBay(api_key="your_api_key")
+    agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
     # Step 1: Get or create user-specific context
     print("Getting a user specific context...")

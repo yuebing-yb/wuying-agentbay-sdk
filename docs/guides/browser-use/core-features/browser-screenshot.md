@@ -2,6 +2,8 @@
 
 The AgentBay SDK provides comprehensive screenshot capabilities across all supported languages. This document provides a summary of the API functionality and links to detailed documentation for each language implementation.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 The screenshot functionality allows you to capture web page content with enhanced options including full page capture, custom image formats, quality control, and proper handling of lazy-loaded content. All implementations follow the same design patterns and provide consistent behavior across languages.

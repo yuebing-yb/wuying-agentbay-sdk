@@ -6,6 +6,8 @@
 
 Browser Proxy is a core feature of the AgentBay SDK that enables developers to route browser traffic through proxy servers. This functionality is essential for scenarios requiring IP rotation, geographical distribution, or network anonymization. The AgentBay SDK supports both custom proxy servers and integrated Wuying Proxy Service.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Key Features
 
 ### 1. Custom Proxy Support

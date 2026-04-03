@@ -2,7 +2,9 @@
 
 CodeSpace is AgentBay's development environment for code execution and scripting.
 
-> **💡 Async API Support**: This guide uses synchronous API. For async patterns, see:
+These guides use Python for code examples — the concepts and API patterns apply to all supported languages (Python, TypeScript, Golang, Java).
+
+> **💡 Async API Support**: This guide uses synchronous API. For async patterns, see [AsyncCode API Reference](../../../python/docs/api/async/async-code.md).
 
 ## Documentation
 

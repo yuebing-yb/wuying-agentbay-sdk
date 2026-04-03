@@ -2,6 +2,8 @@
 
 This guide explains how to use the `getAdbUrl` method to connect to mobile sessions in AgentBay cloud environment via ADB (Android Debug Bridge).
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## Overview
 
 The `getAdbUrl` method provides an ADB connection URL that allows you to use standard ADB commands to interact with mobile sessions running in AgentBay cloud. This enables you to use ADB tools from your local machine to control and debug cloud-based mobile devices.
@@ -63,10 +65,12 @@ print(f"ADB key loaded (first 50 chars): {adbkey_pub[:50]}...")
 ### Step 2: Create a Mobile Session
 
 ```python
+import os
+
 from agentbay import AgentBay, CreateSessionParams
 
 # Initialize AgentBay client
-client = AgentBay(api_key="your_api_key")
+client = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Create a mobile session
 result = client.create(CreateSessionParams(image_id="mobile_latest"))
@@ -185,20 +189,21 @@ print("Session deleted")
 Here's a complete Python example that demonstrates the full workflow:
 
 ```python
-from agentbay import AgentBay, CreateSessionParams
+import os
 import subprocess
 import time
 
+from agentbay import AgentBay, CreateSessionParams
+
 def main():
     # Step 1: Read ADB public key
-    import os
     adbkey_path = os.path.expanduser('~/.android/adbkey.pub')
     with open(adbkey_path, 'r') as f:
         adbkey_pub = f.read().strip()
     print(f"ADB key loaded (first 50 chars): {adbkey_pub[:50]}...")
     
     # Initialize client
-    client = AgentBay(api_key="your_api_key")
+    client = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
     
     try:
         # Step 2: Create mobile session

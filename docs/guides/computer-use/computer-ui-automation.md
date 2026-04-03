@@ -2,6 +2,8 @@
 
 This guide covers computer UI automation capabilities in AgentBay SDK for desktop environments, including mouse operations, keyboard operations, and screen operations.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 **Verified System Images:** These features have been verified to work with `windows_latest` and `linux_latest` system images.
 
 ## 📋 Table of Contents
@@ -30,10 +32,12 @@ All operations are performed through the `session.computer` module, which provid
 Computer UI automation requires creating a session with a computer use system image:
 
 ```python
+import os
+
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay()
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 # Use windows_latest or linux_latest
 session_params = CreateSessionParams(image_id="windows_latest")
 session = agent_bay.create(session_params).session

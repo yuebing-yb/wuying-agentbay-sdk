@@ -2,6 +2,8 @@
 
 Welcome to the AgentBay AIBrowser Guides! This provides complete functionality introduction and best practices for experienced developers.
 
+These guides primarily use **Python** in code examples; the same concepts and APIs apply across all AgentBay SDK languages unless noted otherwise.
+
 > **💡 Async API Support**: This guide uses synchronous API examples. For async patterns, refer to the `_async` directory in the examples folder.
 
 ## 🎯 Quick Navigation
@@ -9,6 +11,8 @@ Welcome to the AgentBay AIBrowser Guides! This provides complete functionality i
 - [Example](code-example.md) - Index for examples demonstrating core & advance features
 - [Core Features](core-features.md) - Essential browser features and typical workflows
 - [Advance Features](advance-features.md) - Advanced configuration and capabilities
+- [Browser Extensions](browser-extensions.md) - Upload, sync, and test extensions with browser sessions
+- [Browser Replay](browser-replay.md) - Record and replay browser sessions for debugging and compliance
 - [Integrations](integrations.md) - Seamlessly weave with community tools and frameworks, extending your automation reach
 
 ## 🚀 What is AgentBay AIBrowser?

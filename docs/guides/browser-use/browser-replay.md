@@ -2,6 +2,8 @@
 
 This guide covers how to use AgentBay's built-in browser replay feature to capture browser interactions and replay them for debugging, documentation, or compliance purposes.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../python/README.md) | [TypeScript](../../../typescript/README.md) | [Golang](../../../golang/README.md) | [Java](../../../java/README.md)
+
 ## Overview
 
 AgentBay provides automatic browser replay capabilities for browser sessions, powered by the **rrweb** (record and replay the web) framework. This allows you to:
@@ -30,8 +32,11 @@ rrweb is a modern, open-source solution that offers several advantages over trad
 To enable browser replay, set `enable_browser_replay=True` when creating a session:
 
 ```python
+import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
+
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Create session with browser replay enabled
 params = CreateSessionParams(

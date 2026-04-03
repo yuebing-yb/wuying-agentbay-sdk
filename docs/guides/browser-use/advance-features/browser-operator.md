@@ -7,6 +7,8 @@ An AI-powered, natural-language browser operator that performs precise, reliable
 - Uses MCP tools under the hood (no local browser needed)
 - Optional Playwright CDP connection for advanced scenarios
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Table of Contents
 
 - [BrowserOperator Guide](#browseroperator-guide)
@@ -49,10 +51,10 @@ An AI-powered, natural-language browser operator that performs precise, reliable
 import os
 import asyncio
 from pydantic import BaseModel, Field
-from agentbay import AgentBay
+from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 from agentbay import BrowserOption
-from agentbay import BrowserOperator, ActOptions, ExtractOptions
+from agentbay import AsyncBrowserOperator, ActOptions, ExtractOptions
 
 class Product(BaseModel):
     name: str = Field(..., description="Product name")
@@ -63,11 +65,11 @@ class ProductList(BaseModel):
     products: list[Product]
 
 async def main():
-    agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
+    agent_bay = AsyncAgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
     # Create a browser session
     params = CreateSessionParams(image_id="browser_latest")  # your image id
-    session_result = agent_bay.create(params)
+    session_result = await agent_bay.create(params)
     if not session_result.success:
         print(f"Create session failed: {session_result.error_message}")
         return
@@ -79,7 +81,7 @@ async def main():
         print("Browser initialization failed")
         return
 
-    operator: BrowserOperator = session.browser.operator
+    operator: AsyncBrowserOperator = session.browser.operator
 
     # Navigate
     print(await operator.navigate("https://example.com"))

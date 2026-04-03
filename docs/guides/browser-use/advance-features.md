@@ -2,7 +2,12 @@
 
 ## BrowserOperator
 
-- [BrowserOperator](advance-features/browser-operator.md) - An AI-powered, natural-language describing task supported web operator for precise, reliable page operations 
+- [BrowserOperator](advance-features/browser-operator.md) - An AI-powered, natural-language describing task supported web operator for precise, reliable page operations
+
+## Hybrid Usage
+
+- [Browser Hybrid Usage](advance-features/browser-hybrid-usage.md) - Combine Playwright, Browser Operator, and Browser Agent on one browser instance (beta)
+
 ## 📚 Related Guides
 
 - [BrowserOperator Guide](advance-features/browser-operator.md) - AI-powered web automation
