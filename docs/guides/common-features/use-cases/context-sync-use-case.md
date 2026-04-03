@@ -2,6 +2,8 @@
 
 This guide explains how to use Context Sync effectively in the AgentBay SDK, helping you implement efficient and reliable data persistence across sessions.
 
+> **Multi-language support:** Code examples use Python. These patterns apply to all SDKs. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 Context Sync is the core feature for data persistence in the AgentBay SDK. It allows you to automatically synchronize files from your session to cloud storage and restore them in new sessions.
@@ -188,12 +190,14 @@ package main
 import (
     "fmt"
     "log"
+    "os"
+
     "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 
 func main() {
     // 1. Initialize client
-    ab, err := agentbay.NewAgentBay("your-api-key")
+    ab, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
     if err != nil {
         log.Fatalf("Failed to create AgentBay client: %v", err)
     }
@@ -247,6 +251,7 @@ func main() {
 #### Python
 
 ```python
+import os
 from agentbay import (
     AgentBay, CreateSessionParams, ContextSync,
     SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy,
@@ -254,7 +259,7 @@ from agentbay import (
 )
 
 # 1. Initialize client
-ab = AgentBay(api_key="your-api-key")
+ab = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # 2. Create or get Context
 context = ab.context.get("my-project-workspace", create=True).context
@@ -298,7 +303,7 @@ import {
 
 async function main() {
   // 1. Initialize client
-  const ab = new AgentBay({ apiKey: "your-api-key" });
+  const ab = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY! });
 
   // 2. Create or get Context
   const context = (await ab.context.get("my-project-workspace", true)).context!;
@@ -360,11 +365,13 @@ package main
 import (
     "fmt"
     "log"
+    "os"
+
     "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 
 func main() {
-    ab, err := agentbay.NewAgentBay("your-api-key")
+    ab, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
     if err != nil {
         log.Fatalf("Failed to create AgentBay client: %v", err)
     }
@@ -431,13 +438,14 @@ func main() {
 #### Python
 
 ```python
+import os
 from agentbay import (
     AgentBay, CreateSessionParams, ContextSync,
     SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy,
     UploadMode, UploadStrategy, DownloadStrategy,
 )
 
-ab = AgentBay(api_key="your-api-key")
+ab = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Create Context for storing browser user data
 context = ab.context.get("browser-user-data", create=True).context
@@ -490,7 +498,7 @@ import {
 } from "wuying-agentbay-sdk";
 
 async function main() {
-  const ab = new AgentBay({ apiKey: "your-api-key" });
+  const ab = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY! });
 
   // Create Context for storing browser user data
   const context = (await ab.context.get("browser-user-data", true)).context!;

@@ -1,6 +1,6 @@
 # Use Cases
 
-This directory contains practical use cases and examples for the AgentBay SDK. Each use case provides detailed implementation examples, integration patterns, and best practices for specific scenarios.
+This directory contains practical use cases and examples for the AgentBay SDK across supported languages (Python, TypeScript, Go, and Java). Each use case provides detailed implementation examples, integration patterns, and best practices for specific scenarios.
 
 ## Available Use Cases
 
@@ -11,6 +11,7 @@ This directory contains practical use cases and examples for the AgentBay SDK. E
 
 ### Data Persistence
 
+- **[Context Sync Best Practices](context-sync-use-case.md)** - Use Context Sync effectively for reliable data persistence across sessions
 - **[Cross-Platform Data Persistence](cross-platform-persistence.md)** - Enable context data created on one OS to be accessible on another using MappingPolicy
 
 ### Environment Patterns

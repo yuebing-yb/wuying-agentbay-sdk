@@ -2,6 +2,8 @@
 
 This guide shows you how to use `get_link()` to connect to your AgentBay cloud sessions.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 > **⚠️ Important Notice**: The Session Link feature is an exclusive premium feature for paid subscription users (Pro/Ultra). For more details about pricing and subscription plans, please visit the [AgentBay Billing Instructions](https://help.aliyun.com/zh/agentbay/product-overview/agentbay-billing-instructions).
 
 ## 📋 Table of Contents

@@ -2,6 +2,8 @@
 
 This document provides practical examples and use cases for using session information obtained from the `session.info()` API. These examples demonstrate common scenarios for integrating AgentBay sessions with different platforms and systems.
 
+> **Multi-language support:** Code examples use Python. These patterns apply to all SDKs. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 The `session.info()` method provides detailed information about a session, including direct browser access URLs and SDK integration credentials. This API serves multiple purposes:

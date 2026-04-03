@@ -2,6 +2,8 @@
 
 The Git module provides high-level git operations for managing repositories in the AgentBay cloud environment, wrapping git CLI commands and executing them via the Command module.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 The Git module provides:
@@ -23,10 +25,11 @@ Before using Git operations, you need:
 A complete clone → status → commit workflow:
 
 ```python
+import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(params)
@@ -262,10 +265,11 @@ All exceptions include `exit_code` and `stderr` attributes for diagnostics.
 ## Complete Example
 
 ```python
+import os
 from agentbay import AgentBay, CreateSessionParams
 from agentbay.git import GitAuthError, GitError
 
-agent_bay = AgentBay(api_key="your-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(params)

@@ -2,6 +2,8 @@
 
 The Network feature provides **network redirection** between your local environment and the AgentBay cloud runtime. It allows a cloud session to use your local network egress, which can help reduce risk-control issues in certain websites or mobile apps.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## When to use it
 
 - **Local egress requirement**: a target website/app only works reliably from your local network

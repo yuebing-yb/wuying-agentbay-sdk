@@ -2,6 +2,8 @@
 
 This guide explains how to use the MappingPolicy feature to enable cross-platform data persistence, allowing context data created on one operating system to be accessible on another.
 
+> **Multi-language support:** Code examples use Python. These patterns apply to all SDKs. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 By default, context data persistence is tied to the operating system where it was created. For example, data created in a Windows session (at `c:\Users\Administrator\Downloads`) can only be reused in other Windows sessions at the same path.
@@ -34,12 +36,14 @@ When you create a context sync configuration with a MappingPolicy:
 package main
 
 import (
+    "os"
+
     "github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay"
 )
 
 func main() {
     // Initialize AgentBay client
-    ab, err := agentbay.NewAgentBay("your-api-key")
+    ab, err := agentbay.NewAgentBay(os.Getenv("AGENTBAY_API_KEY"))
     if err != nil {
         panic(err)
     }
@@ -88,6 +92,7 @@ func main() {
 ### Python
 
 ```python
+import os
 from agentbay import (
     AgentBay,
     MappingPolicy,
@@ -101,7 +106,7 @@ from agentbay import (
 )
 
 # Initialize AgentBay client
-ab = AgentBay("your-api-key")
+ab = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 # Get or create a context (use create=True to auto-create)
 context_result = ab.context.get(name="my-cross-platform-context", create=True)
@@ -152,7 +157,7 @@ import {
 } from "wuying-agentbay-sdk";
 
 // Initialize AgentBay client
-const ab = new AgentBay({ apiKey: "your-api-key" });
+const ab = new AgentBay({ apiKey: process.env.AGENTBAY_API_KEY! });
 
 // Get or create a context
 const contextResult = await ab.context.get("my-cross-platform-context", true);

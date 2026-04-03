@@ -2,6 +2,8 @@
 
 Object Storage Service (OSS) integration enables file upload and download operations between AgentBay sessions and Alibaba Cloud OSS buckets.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 The OSS module provides:
@@ -27,10 +29,11 @@ Before using OSS operations, you need:
 Before performing any OSS operations, you must initialize the OSS environment with your STS temporary credentials:
 
 ```python
+import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-agentbay-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(params)
@@ -182,10 +185,11 @@ else:
 Here's a complete workflow demonstrating OSS integration:
 
 ```python
+import os
 from agentbay import AgentBay
 from agentbay import CreateSessionParams
 
-agent_bay = AgentBay(api_key="your-agentbay-api-key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 
 params = CreateSessionParams(image_id="code_latest")
 result = agent_bay.create(params)

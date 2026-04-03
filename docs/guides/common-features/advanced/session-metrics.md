@@ -2,6 +2,8 @@
 
 `linux_latest` (and future images) provides an MCP tool named `get_metrics`. The SDK exposes it as a **Session API** that returns structured runtime metrics.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## What you can get
 
 The current `get_metrics` response contains:

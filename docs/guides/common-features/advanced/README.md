@@ -1,6 +1,6 @@
 # Advanced Features
 
-Advanced capabilities for complex use cases.
+Advanced capabilities for complex AgentBay use cases. These guides use Python for code examples — the concepts and API patterns apply to all supported languages (Python, TypeScript, Golang, Java).
 
 ## Documentation
 
@@ -11,6 +11,7 @@ Advanced capabilities for complex use cases.
 - [Agent Modules](agent-modules.md) - AI-powered task execution
 - [OSS Integration](oss-integration.md) - Object Storage Service integration
 - [Skills (Beta)](skills.md) - Load reusable skill modules into sandbox sessions
+- [Git Operations](git-operations.md) - Git repository operations in cloud sessions
 
 ## Getting Help
 

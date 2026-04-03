@@ -2,6 +2,8 @@
 
 This document provides practical use cases for Session Link Access, showing you how to connect external tools to services running in your AgentBay cloud sessions.
 
+> **Multi-language support:** Code examples use Python. These patterns apply to all SDKs. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 > **⚠️ Important Notice**: The Session Link feature is an exclusive premium feature for paid subscription users (Pro/Ultra). For more details about pricing and subscription plans, please visit the [AgentBay Billing Instructions](https://help.aliyun.com/zh/agentbay/product-overview/agentbay-billing-instructions).
 
 ## 📋 Table of Contents
@@ -38,13 +40,14 @@ Call `get_link()` **with no parameters**. It returns a browser control address (
 
 ```python
 import asyncio
+import os
 from agentbay import AgentBay, CreateSessionParams
 from agentbay import BrowserOption
 from playwright.async_api import async_playwright
 
 async def main():
     # 1. Create session (MUST use Browser Use image)
-    agent_bay = AgentBay(api_key="your_api_key")
+    agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
     session = agent_bay.create(
         CreateSessionParams(image_id="browser_latest")  # or other Browser Use images
     ).session
@@ -97,10 +100,11 @@ Call `get_link(protocol_type="https", port=port_number)` to get an HTTPS URL.
 ### Minimal Code
 
 ```python
+import os
 from agentbay import AgentBay
 
 # 1. Create session (any image works)
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session = agent_bay.create().session
 
 # 2. Start a web server in the cloud (port 30150)
@@ -143,10 +147,11 @@ Call `get_link(port=port_number)` to get a WebSocket URL.
 ### Minimal Code
 
 ```python
+import os
 from agentbay import AgentBay
 
 # 1. Create session
-agent_bay = AgentBay(api_key="your_api_key")
+agent_bay = AgentBay(api_key=os.getenv("AGENTBAY_API_KEY"))
 session = agent_bay.create().session
 
 # 2. Start a service in the cloud (port 30180)

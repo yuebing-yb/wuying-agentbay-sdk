@@ -10,6 +10,8 @@ With the `linux_latest` image, you can use:
 
 This is useful when you want a single session that can both interact with UI and run scripts (or quickly fetch something from the web) without switching images.
 
+> **Multi-language support:** Code examples use Python. These patterns apply to all SDKs. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Prerequisites
 
 - Set `AGENTBAY_API_KEY` in your environment

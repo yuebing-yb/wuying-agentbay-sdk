@@ -2,6 +2,8 @@
 
 Skills are reusable capability modules that can be loaded into cloud sandbox sessions, providing pre-configured tools and scripts for AI agents.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 ## Overview
 
 The Skills feature provides:

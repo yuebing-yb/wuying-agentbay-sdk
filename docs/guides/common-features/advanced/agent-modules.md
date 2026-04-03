@@ -2,6 +2,8 @@
 
 Agent modules are specialized AI task execution units running in AgentBay windows environment to execute tasks described in natural language.
 
+> **Multi-language support:** Code examples use Python. These APIs are available in all SDKs with similar patterns. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
+
 > **💡 Async API Support**: This guide uses synchronous API. For async patterns, see [Async Agent API](../../../../python/docs/api/async/async-agent.md).
 
 ## 🤖 Agent Module Overview
