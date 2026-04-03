@@ -2,12 +2,14 @@
 
 Before we start programming, let's understand the essential concepts you need to know to use AgentBay effectively.
 
+> **Multi-language support:** Code examples use Python for illustration. The concepts apply to all SDKs. See: [Python](../../python/README.md) | [TypeScript](../../typescript/README.md) | [Golang](../../golang/README.md) | [Java](../../java/README.md)
+
 ## 🌐 What is AgentBay?
 
-AgentBay is a cloud computing platform that provides on-demand virtual environments. You can think of it as:
-- Cloud-based remote computers that support different operating systems (Windows, Linux, Android)
-- Virtual machines that can be created and destroyed instantly
-- Designed specifically for automation, testing, and development tasks
+AgentBay is a cloud sandbox platform built for AI agents, providing on-demand isolated environments. You can think of it as:
+- Cloud-based sandboxes that support different platforms (Linux, Windows, Browser, Android)
+- Environments that can be created and destroyed instantly via API
+- Designed for AI agents to browse the web, automate desktops, test mobile apps, and execute code
 
 ### 📦 AgentBay Class - Your Cloud Gateway
 
@@ -168,8 +170,8 @@ session = agent_bay.create(params).session
 
 # Execute code
 result = session.code.run_code("print('Hello from CodeSpace!')", "python")
-# Returns: CodeExecutionResult with output
-# Example: result.result = "Hello from CodeSpace!"
+# result.success = True
+# result.result = "Hello from CodeSpace!"
 
 agent_bay.delete(session)
 ```
@@ -243,12 +245,12 @@ When you call AgentBay APIs, the results are wrapped in result objects that cont
 
 ```python
 # Example API call
-screenshot = session.computer.screenshot()
+result = session.command.execute_command("echo hello")
 
 # The result object contains:
-print(screenshot.success)     # True/False - whether the operation succeeded
-print(screenshot.data)        # Your actual data (screenshot URL)
-print(screenshot.request_id)  # Request ID for troubleshooting
+print(result.success)      # True/False - whether the operation succeeded
+print(result.output)       # Your actual data (command output)
+print(result.request_id)   # Request ID for troubleshooting
 ```
 
 ### What is a Request ID?
@@ -266,9 +268,9 @@ Every API call to AgentBay gets a unique **Request ID** - a special identifier l
 
 **Example troubleshooting:**
 ```python
-result = session.code.run_code("print('hello')", "python")
+result = session.command.execute_command("some_command")
 if not result.success:
-    print(f"Code execution failed! Request ID: {result.request_id}")
+    print(f"Command failed! Request ID: {result.request_id}")
     # Share this Request ID with support for faster help
 ```
 

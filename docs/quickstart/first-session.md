@@ -2,6 +2,8 @@
 
 Now let's experience the core features of AgentBay through actual code.
 
+> **Using a different language?** This tutorial uses Python. For equivalent examples in your language, see the Quick Start section of your SDK: [Python](../../python/README.md) | [TypeScript](../../typescript/README.md) | [Golang](../../golang/README.md) | [Java](../../java/README.md)
+
 ## 🚀 Before You Start (2-minute setup)
 
 If you haven't completed the setup yet, please complete the quick setup steps:
@@ -116,11 +118,9 @@ finally:
 
 ---
 
-## 💡 Need Async API?
+## 💡 Need Async API? (Python)
 
-This quickstart uses synchronous API for simplicity. If you're building a web app or need high concurrency, check out:
-
-- 📖 **[Async API Guide](../guides/common-features/basics/session-management.md#asynchronous-api)** - Complete async patterns and examples
+This quickstart uses Python's synchronous API for simplicity. If you're building a web app or need high concurrency, see the [Python SDK docs](../../python/README.md) for `AsyncAgentBay` usage.
 
 ---
 

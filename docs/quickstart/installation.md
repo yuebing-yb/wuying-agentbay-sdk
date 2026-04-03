@@ -13,6 +13,10 @@
 ### Golang
 - Go 1.24.4+
 
+### Java
+- Java 8+
+- Maven or Gradle
+
 ## 🚀 Quick Installation
 
 ### Python
@@ -66,6 +70,32 @@ GOPROXY=direct go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay
 
 # Verify installation
 go list -m github.com/aliyun/wuying-agentbay-sdk/golang && echo "✅ Installation successful"
+```
+
+### Java
+
+**Maven:**
+
+Add the dependency to your `pom.xml`:
+```xml
+<dependency>
+    <groupId>com.aliyun</groupId>
+    <artifactId>agentbay-sdk</artifactId>
+    <version>0.16.0</version>
+</dependency>
+```
+
+**Gradle:**
+```gradle
+implementation 'com.aliyun:agentbay-sdk:0.16.0'
+```
+
+**Verify installation:**
+```bash
+# After adding the dependency, run:
+mvn dependency:resolve   # Maven
+# or
+gradle dependencies      # Gradle
 ```
 
 ## 🔑 API Key Setup
@@ -206,6 +236,41 @@ func main() {
 }
 ```
 
+### Java Test
+```java
+import com.aliyun.agentbay.AgentBay;
+import com.aliyun.agentbay.model.SessionResult;
+import com.aliyun.agentbay.session.CreateSessionParams;
+import com.aliyun.agentbay.session.Session;
+
+public class VerifyInstallation {
+    public static void main(String[] args) {
+        String apiKey = System.getenv("AGENTBAY_API_KEY");
+        if (apiKey == null || apiKey.isEmpty()) {
+            System.out.println("⚠️  Please set AGENTBAY_API_KEY environment variable");
+            return;
+        }
+
+        try {
+            AgentBay agentBay = new AgentBay();
+            System.out.println("✅ SDK initialized successfully");
+
+            SessionResult result = agentBay.create(new CreateSessionParams());
+            if (result.isSuccess()) {
+                Session session = result.getSession();
+                System.out.println("✅ Session created: " + session.getSessionId());
+                session.delete();
+                System.out.println("✅ Test completed successfully");
+            } else {
+                System.out.println("⚠️  Session creation failed: " + result.getErrorMessage());
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Error: " + e.getMessage());
+        }
+    }
+}
+```
+
 ## 🔧 Advanced Configuration (Optional)
 
 > **Note:** The SDK uses the Shanghai API gateway by default. You only need to configure a different gateway if you want to connect through other regions, such as Singapore, for better network performance.
@@ -299,6 +364,29 @@ go mod init your-project-name
 go clean -modcache
 go mod tidy
 go get github.com/aliyun/wuying-agentbay-sdk/golang/pkg/agentbay
+```
+
+### Java Issues
+
+**Dependency not found:**
+```bash
+# Ensure Maven Central is accessible
+mvn dependency:resolve -U
+# Or add Alibaba Cloud Maven mirror to settings.xml if in China
+```
+
+**`ClassNotFoundException` or `NoClassDefFoundError`:**
+```bash
+# Verify the dependency is in classpath
+mvn dependency:tree | grep agentbay
+# Check version matches your pom.xml
+```
+
+**SSL/TLS errors:**
+```bash
+# Ensure Java 8+ and up-to-date CA certificates
+java -version
+# Update Java if needed for TLS 1.2+ support
 ```
 
 ### Network and API Issues
