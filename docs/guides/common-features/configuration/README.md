@@ -1,6 +1,6 @@
 # Configuration
 
-SDK configuration options and settings.
+SDK configuration options and settings. These concepts apply to all supported languages (Python, TypeScript, Golang, Java).
 
 ## Documentation
 

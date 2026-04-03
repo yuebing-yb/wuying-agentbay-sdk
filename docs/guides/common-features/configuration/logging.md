@@ -7,6 +7,7 @@ This guide shows how to configure logging in AgentBay SDK. Each language has its
 - **[Python Logging Guide](../../../../python/docs/api/common/logging.md)** - Setup, configuration, and file logging
 - **[Go Logging Guide](../../../../golang/docs/api/common-features/basics/logging.md)** - Environment variables and code-level configuration
 - **[TypeScript Logging Guide](../../../../typescript/docs/api/common-features/basics/logging.md)** - Import-time setup and RequestID tracking
+- **Java** - Uses SLF4J; configure via your application's logging backend (e.g., Logback, Log4j2)
 
 ---
 

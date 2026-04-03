@@ -2,7 +2,7 @@
 
 This guide explains how to configure the AgentBay SDK for different environments and requirements.
 
-> **💡 Async API Support**: Configuration works identically for both sync and async APIs. For async patterns, see [Async AgentBay API](../../../../python/docs/api/async/async-agentbay.md).
+> **Multi-language support:** Configuration concepts (API key, endpoint, region) apply to all SDKs. Code examples use Python. See: [Python](../../../../python/README.md) | [TypeScript](../../../../typescript/README.md) | [Golang](../../../../golang/README.md) | [Java](../../../../java/README.md)
 
 > **Important:** The `endpoint` configuration specifies the **API Gateway location** used for SDK-backend communication. This determines which regional gateway your SDK connects to. You can use the `region_id` configuration to specify where your cloud sessions will be created.
 
@@ -303,14 +303,11 @@ except Exception as e:
 - **Validation:** Test configuration during application startup
 - **Future Planning:** Be aware that future versions may support specifying cloud environment regions separately during session creation
 
-## Related Documentation
-
-- [Getting Started](../../../quickstart/installation.md)
-- [Session Management](../basics/session-management.md)
-
 ## 📚 Related Guides
 
+- [Getting Started](../../../quickstart/installation.md) - Installation and initial setup
 - [Session Management](../basics/session-management.md) - Session lifecycle and configuration
+- [Logging](logging.md) - Log levels, output formats, and data masking
 
 ## 🆘 Getting Help
 
