@@ -24,6 +24,8 @@ async def mobile_session():
     )
     result = await agent_bay.create(params)
     session = result.session
+    if not result.success and "no authorized app" in result.error_message:
+        pytest.skip(f"The user has no authorized app instance: {result.error_message}")
     
     class SessionWrapper:
         def __init__(self):

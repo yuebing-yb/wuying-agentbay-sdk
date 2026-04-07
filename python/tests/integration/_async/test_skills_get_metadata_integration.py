@@ -1,4 +1,5 @@
 """Integration test for skills.get_metadata() via GetSkillMetaData POP action.
+ci-stable
 
 This test calls the real backend without mocks.
 """

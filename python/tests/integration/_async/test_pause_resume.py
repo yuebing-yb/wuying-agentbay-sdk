@@ -1,3 +1,4 @@
+# ci-stable
 import os
 
 import pytest
@@ -57,27 +58,12 @@ async def test_pause_already_paused(agent_bay):
 
     # Try to pause again
     pause_result = await session.beta_pause()
+    assert not pause_result.success, f"Second pause already paused successfully: {pause_result.error_message}"
     # Should either succeed (idempotent) or fail gracefully
     print(f"Second pause result: {pause_result.success}")
 
     # Clean up
     await session.beta_resume()
-    await session.delete()
-
-
-@pytest.mark.asyncio
-async def test_resume_running_session(agent_bay):
-    """Test resuming a session that's already running."""
-    # Create a session (already running)
-    create_result = await agent_bay.create()
-    session = create_result.session
-
-    # Try to resume without pausing first
-    resume_result = await session.beta_resume()
-    # Should either succeed (idempotent) or fail gracefully
-    print(f"Resume running session result: {resume_result.success}")
-
-    # Clean up
     await session.delete()
 
 

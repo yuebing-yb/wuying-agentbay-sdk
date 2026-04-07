@@ -1,4 +1,5 @@
 """Integration test for creating sessions with skills loaded.
+ci-stable
 
 This test calls the real backend without mocks.
 """

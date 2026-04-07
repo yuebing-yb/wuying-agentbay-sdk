@@ -1,4 +1,6 @@
-"""Integration tests for session metadata."""
+"""Integration tests for session metadata.
+ci-stable
+"""
 
 import os
 
@@ -9,9 +11,10 @@ from agentbay import AsyncAgentBay
 from agentbay import CreateSessionParams
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture
 async def agent_bay():
     api_key = os.environ.get("AGENTBAY_API_KEY")
+    print(f"Creating agent bay client with api key: {api_key}")
     if not api_key:
         pytest.skip("AGENTBAY_API_KEY environment variable not set")
     return AsyncAgentBay(api_key=api_key)
@@ -25,6 +28,7 @@ async def test_session_with_metadata(agent_bay):
         labels={"test_key": "test_value", "environment": "testing"},
     )
     result = await agent_bay.create(params)
+    print(f"Session created with labels: {result.request_id}")
     assert result.success
 
     session = result.session

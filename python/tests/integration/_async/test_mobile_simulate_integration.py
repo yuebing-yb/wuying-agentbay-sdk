@@ -62,7 +62,9 @@ async def test_mobile_simulate_for_model_a(agent_bay):
     )
     result = await agent_bay.create(params)
     session = None
-    assert result.success, "Failed to create session"
+    if not result.success and "no authorized app" in result.error_message:
+        pytest.skip(f"The user has no authorized app instance: {result.error_message}")
+    assert result.success, f"Failed to create session: {result.error_message}"
     assert result.session is not None, "Session should not be None"
     session = result.session
     print(f"Session created successfully: {session.session_id}")
@@ -119,7 +121,9 @@ async def test_mobile_simulate_for_model_b(agent_bay):
     )
     result = await agent_bay.create(params)
     session = None
-    assert result.success, "Failed to create session"
+    if not result.success and "no authorized app" in result.error_message:
+        pytest.skip(f"The user has no authorized app instance: {result.error_message}")
+    assert result.success, f"Failed to create session {result.error_message}"
     assert result.session is not None, "Session should not be None"
     session = result.session
     print(f"Session created successfully: {session.session_id}")
@@ -176,7 +180,9 @@ async def test_mobile_simulate_persistence(agent_bay):
         )
     )
     result = await agent_bay.create(params_1)
-    assert result.success, "Failed to create session"
+    if not result.success and "no authorized app" in result.error_message:
+        pytest.skip(f"The user has no authorized app instance: {result.error_message}")
+    assert result.success, f"Failed to create session: {result.error_message}"
     assert result.session is not None, "Session should not be None"
     session_1 = result.session
     print(f"Session 1 created successfully: {session_1.session_id}")

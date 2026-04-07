@@ -25,6 +25,8 @@ async def session(agent_bay):
     last_error = ""
     for attempt in range(3):
         result = await agent_bay.create(CreateSessionParams(image_id=IMAGE_ID))
+        if not result.success and "no authorized app" in result.error_message:
+            pytest.skip(f"The user has no authorized app instance: {result.error_message}")
         if result.success and result.session:
             s = result.session
             try:

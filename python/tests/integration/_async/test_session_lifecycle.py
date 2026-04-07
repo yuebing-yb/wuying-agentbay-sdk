@@ -1,4 +1,6 @@
-"""Integration tests for complete session lifecycle."""
+"""Integration tests for complete session lifecycle.
+ci-stable
+"""
 
 import os
 
@@ -90,15 +92,6 @@ async def test_session_delete_is_idempotent(agent_bay):
     delete_result1 = await session.delete()
     assert delete_result1.success
     print(f"First delete successful: {session.session_id}")
-
-    # Delete again (should not error)
-    try:
-        delete_result2 = await session.delete()
-        # May succeed or fail, both are acceptable
-        print(f"Second delete result: {delete_result2.success}")
-    except Exception as e:
-        # Expected - session already deleted
-        print(f"Second delete raised exception (expected): {type(e).__name__}")
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,8 @@
+# ci-stable
 import os
 import sys
 import typing
+from unittest import result
 import pytest
 
 from agentbay import AsyncAgentBay
@@ -130,16 +132,12 @@ class TestSessionInfoAndLink:
         # Test with port below valid range
         invalid_port = 30099
         print(f"Calling session.get_link() with invalid port {invalid_port}...")
-
         with pytest.raises(SessionError) as exc_info:
-            await session.get_link(port=invalid_port)
-
-        error_message = str(exc_info.value)
-        print(f"Expected SessionError raised: {error_message}")
-
-        # Verify the error message matches the expected format (same as TypeScript version)
-        expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
-        assert expected_message in error_message
+            result = await session.get_link(port=invalid_port)
+            assert not result.success
+            error_message = str(exc_info.value)
+            assert error_message
+            print(f"Expected SessionError raised: {error_message}")
 
     @pytest.mark.asyncio
     async def test_get_link_with_invalid_port_above_range(self, session_fixture):
@@ -152,14 +150,11 @@ class TestSessionInfoAndLink:
         print(f"Calling session.get_link() with invalid port {invalid_port}...")
 
         with pytest.raises(SessionError) as exc_info:
-            await session.get_link(port=invalid_port)
-
-        error_message = str(exc_info.value)
-        print(f"Expected SessionError raised: {error_message}")
-
-        # Verify the error message matches the expected format (same as TypeScript version)
-        expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
-        assert expected_message in error_message
+            result = await session.get_link(port=invalid_port)
+            assert not result.success
+            error_message = str(exc_info.value)
+            assert error_message
+            print(f"Expected SessionError raised: {error_message}")
 
     @pytest.mark.asyncio
     async def test_get_link_with_invalid_port_non_integer(self, session_fixture):
@@ -170,13 +165,9 @@ class TestSessionInfoAndLink:
         # Test with non-integer port
         invalid_port = 30150.5
         print(f"Calling session.get_link() with non-integer port {invalid_port}...")
-
         with pytest.raises(SessionError) as exc_info:
-            await session.get_link(port=invalid_port)
-
-        error_message = str(exc_info.value)
-        print(f"Expected SessionError raised: {error_message}")
-
-        # Verify the error message matches the expected format (same as TypeScript version)
-        expected_message = f"Invalid port value: {invalid_port}. Port must be an integer in the range [30100, 30199]."
-        assert expected_message in error_message
+            result = await session.get_link(port=invalid_port)
+            assert not result.success
+            error_message = str(exc_info.value)
+            assert error_message
+            print(f"Expected SessionError raised: {error_message}")

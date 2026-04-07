@@ -1,4 +1,6 @@
-"""Integration tests for different session images."""
+"""Integration tests for different session images.
+ci-stable
+"""
 
 import os
 

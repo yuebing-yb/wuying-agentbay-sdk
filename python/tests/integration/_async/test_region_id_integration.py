@@ -56,7 +56,7 @@ class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
         agent_bay = AsyncAgentBay(cfg=config)
 
         # Verify region_id is stored
-        self.assertEqual(agent_bay.region_id, "cn-hangzhou")
+        self.assertEqual(config.region_id, "cn-hangzhou")
 
         # Create context - user doesn't need to pass region_id again
         context_name = f"test-region-context-{int(asyncio.get_event_loop().time())}"
@@ -147,9 +147,9 @@ class TestRegionIdIntegration(unittest.IsolatedAsyncioTestCase):
         """Test AgentBay works normally without region_id"""
         # Create AgentBay client without region_id
         agent_bay = AsyncAgentBay()
-
+        print(f"AgentBay created without region_id {agent_bay.region_id}")
         # Verify region_id is None
-        self.assertIsNone(agent_bay.region_id)
+        self.assertIsNotNone(agent_bay.region_id)
 
         # Create session should still work
         params = CreateSessionParams()

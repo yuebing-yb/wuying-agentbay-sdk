@@ -1,4 +1,6 @@
-"""Integration tests for Session functionality."""
+"""Integration tests for Session functionality.
+ci-stable
+"""
 
 import os
 
@@ -21,6 +23,7 @@ def get_test_api_key():
 async def agent_bay():
     """Create an AsyncAgentBay instance."""
     api_key = get_test_api_key()
+    print(f"Creating agent bay client with api key: {api_key}")
     return AsyncAgentBay(api_key=api_key)
 
 

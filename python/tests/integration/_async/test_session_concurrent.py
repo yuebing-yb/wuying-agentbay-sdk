@@ -1,4 +1,6 @@
-"""Integration tests for concurrent session operations."""
+"""Integration tests for concurrent session operations.
+ci-stable
+"""
 
 import asyncio
 import os

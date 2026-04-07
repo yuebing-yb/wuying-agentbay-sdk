@@ -39,6 +39,8 @@ def _new_agent_bay(api_key: str, endpoint: str) -> AsyncAgentBay:
 
 async def _create_session(agent_bay: AsyncAgentBay, image_id: str):
     result = await agent_bay.create(CreateSessionParams(image_id=image_id))
+    if not result.success and "no authorized app" in result.error_message:
+        pytest.skip(f"The user has no authorized app instance: {result.error_message}")
     assert result.success, f"Failed to create session: {result.error_message}"
     assert result.session is not None
     return result.session

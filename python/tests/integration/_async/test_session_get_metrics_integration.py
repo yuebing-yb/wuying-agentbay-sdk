@@ -1,3 +1,4 @@
+# ci-stable
 import os
 import unittest
 import pytest

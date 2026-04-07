@@ -1,4 +1,5 @@
 """
+ci-stable
 Integration tests for watch_directory functionality.
 """
 
