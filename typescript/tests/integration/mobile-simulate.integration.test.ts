@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Integration tests for Mobile Simulate functionality.
  * Tests the complete E2E flow with real API.

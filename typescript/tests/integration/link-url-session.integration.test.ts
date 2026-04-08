@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay } from "../../src";
 
 describe("LinkUrl session integration", () => {

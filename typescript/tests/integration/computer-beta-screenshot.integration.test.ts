@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Integration tests for Computer beta screenshot APIs.
  *

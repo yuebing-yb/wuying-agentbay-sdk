@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Integration test for Session.getMetrics()
  */

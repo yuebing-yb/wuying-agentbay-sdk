@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Integration tests for Mobile.getAllUIElements XML format.
  *
@@ -32,7 +33,7 @@ describe("Mobile GetAllUIElements XML Integration Tests", () => {
     const sessionResult = await agentBay.create({
       imageId: "mobile-use-android-12-gw",
     });
-
+    expect(sessionResult.success).toBe(true);
     expect(sessionResult.session).toBeDefined();
     const session = sessionResult.session!;
 

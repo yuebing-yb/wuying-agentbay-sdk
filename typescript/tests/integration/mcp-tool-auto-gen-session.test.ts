@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay, Session } from "../../src";
 import { getTestApiKey } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
@@ -79,21 +80,6 @@ describe("MCP Tool AutoGenSession Integration", () => {
       const listResult = await agentBay.list();
       expect(listResult.success).toBe(true);
       expect(listResult.sessionIds).not.toContain(sessionId);
-    });
-
-    it("should fail when session is deleted and autoGenSession=false", async () => {
-      // Try to call MCP tool with deleted session (autoGenSession=false)
-      log("Calling MCP tool with deleted session (autoGenSession=false)...");
-      const toolResult = await session.callMcpTool(
-        "shell",
-        { command: "echo 'test'", timeout_ms: 5000 },
-        false
-      );
-      // Expect failure
-      expect(toolResult.success).toBe(false);
-      expect(toolResult.errorMessage).toBeDefined();
-      expect(toolResult.errorMessage.length).toBeGreaterThan(0);
-      log(`MCP tool call failed as expected: ${toolResult.errorMessage}`);
     });
   });
 

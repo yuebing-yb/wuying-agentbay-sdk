@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Integration tests for Mobile beta screenshot APIs.
  *

@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Integration test for extension functionality using ExtensionsService public API.
  *
@@ -69,7 +70,7 @@ async function validateExtensionServiceIntegration(
     results.fileSystemCheck = lsResult.success;
 
     if (results.fileSystemCheck) {
-      log(`  ✅ Extensions directory exists`);
+      log(`  �?Extensions directory exists`);
     }
 
     // Validate extension service integration

@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay } from "../../src";
 import fetch from "node-fetch";
 import { log } from "../../src/utils/logger";

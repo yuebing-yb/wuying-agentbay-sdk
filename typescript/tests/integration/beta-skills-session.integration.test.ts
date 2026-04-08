@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Integration tests for session creation with skills loading.
  *

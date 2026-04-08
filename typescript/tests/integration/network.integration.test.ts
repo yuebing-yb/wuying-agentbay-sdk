@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay } from "../../src";
 
 describe("BetaNetwork integration", () => {

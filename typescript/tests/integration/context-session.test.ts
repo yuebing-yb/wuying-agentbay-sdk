@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay, Session, Context, ContextSync } from "../../src";
 import { getTestApiKey, wait } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";

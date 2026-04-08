@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Computer module functional validation tests.
  * These tests validate that operations actually work by checking their effects.

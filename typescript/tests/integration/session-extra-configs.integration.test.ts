@@ -1,3 +1,4 @@
+// ci-stable
 /**
  * Integration tests for session creation with extra configurations.
  * Tests the end-to-end functionality of mobile session creation with extra configurations.

@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay } from "../../src/agent-bay";
 import {
   newContextSync,
@@ -9,6 +10,7 @@ import {
 describe("WhiteListValidationIntegration", () => {
   let agentBay: AgentBay;
   let contextId: string;
+  let contextResult: any;
 
   const apiKey = process.env.AGENTBAY_API_KEY;
   const shouldSkip = !apiKey || process.env.CI;
@@ -34,11 +36,6 @@ describe("WhiteListValidationIntegration", () => {
     if (shouldSkip || !agentBay || !contextId) {
       return;
     }
-
-    const contextResult = await agentBay.context.get(
-      `test-wildcard-validation-${contextId}`,
-      false
-    );
     if (contextResult.success && contextResult.context) {
       await agentBay.context.delete(contextResult.context);
     }

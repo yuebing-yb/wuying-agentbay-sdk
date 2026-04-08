@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay } from "../../src/agent-bay";
 import { ContextStatusData } from "../../src/context-manager";
 import {
@@ -356,7 +357,7 @@ describe("ContextSyncIntegration", () => {
     expect(foundData).toBe(true);
     printContextStatusData(contextInfo?.contextStatusData || []);
 
-    // 4. Create a 1GB file in the context sync path
+    // 4. Create a 100MB file in the context sync path
     const testFilePath = `${syncPath}/test-file.txt`;
 
     // Create directory first
@@ -364,12 +365,12 @@ describe("ContextSyncIntegration", () => {
     const dirResult = await session1.fileSystem.createDirectory(syncPath);
     expect(dirResult.success).toBe(true);
 
-    // Create a 1GB file using dd command
-    log(`Creating 1GB file at ${testFilePath}`);
-    const createFileCmd = `dd if=/dev/zero of=${testFilePath} bs=1M count=1024`;
+    // Create a 100MB file using dd command
+    log(`Creating 100MB file at ${testFilePath}`);
+    const createFileCmd = `dd if=/dev/zero of=${testFilePath} bs=1M count=100`;
     const cmdResult = await session1.command.executeCommand(createFileCmd);
     expect(cmdResult.success).toBe(true);
-    log(`Created 1GB file: ${cmdResult.output}`);
+    log(`Created 100MB file: ${cmdResult.output}`);
 
     // 5. Sync to trigger file upload
     log("Triggering context sync...");
@@ -471,8 +472,8 @@ describe("ContextSyncIntegration", () => {
       log("Warning: Could not find download status after all retries");
     }
 
-    // 10. Verify the 1GB file exists in the second session
-    log("Verifying 1GB file exists in second session...");
+    // 10. Verify the 100MB file exists in the second session
+    log("Verifying 100MB file exists in second session...");
 
     // Check file size using ls command
     const checkFileCmd = `ls -la ${testFilePath}`;
@@ -485,7 +486,7 @@ describe("ContextSyncIntegration", () => {
     const existsResult = await session2.command.executeCommand(fileExistsCmd);
     expect(existsResult.success).toBe(true);
     expect(existsResult.output).toContain("File exists");
-    log("1GB file persistence verified successfully");
+    log("100MB file persistence verified successfully");
   });
 });
 

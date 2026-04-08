@@ -1,3 +1,4 @@
+// ci-stable
 import { AgentBay, CreateSessionParams } from "../../src/agent-bay";
 import {
   newUploadPolicy,

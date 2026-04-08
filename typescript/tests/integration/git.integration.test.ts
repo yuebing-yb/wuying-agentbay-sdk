@@ -1,3 +1,4 @@
+// ci-stable
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 import { AgentBay, Session } from "../../src";
 import { log } from "../../src/utils/logger";
@@ -39,7 +40,7 @@ describe("Git Full Workflow Test", () => {
         log("会话删除成功");
       }
     } catch (error) {
-      log(`警告: 删除会话时出错: ${error}`);
+      log(`警告: 删除会话时出�? ${error}`);
     }
   });
 

@@ -1,5 +1,4 @@
 // ci-stable
-import { before } from "node:test";
 import { AgentBay, Session } from "../../src";
 import { getTestApiKey, extractResourceId } from "../utils/test-helpers";
 import { log } from "../../src/utils/logger";
@@ -39,13 +38,13 @@ describe("Session", () => {
         log(`Warning: Error deleting session: ${error}`);
       }
     });
-    it.only("should have valid sessionId", () => {
+    it("should have valid sessionId", () => {
       expect(session).toBeDefined();
       expect(session.sessionId).toBeDefined();
       expect(session.sessionId.length).toBeGreaterThan(0);
     });
 
-    it.only("should have filesystem, command, and ui properties", () => {
+    it("should have filesystem, command, and ui properties", () => {
       expect(session).toBeDefined();
       expect(session.fileSystem).toBeDefined();
       expect(session.command).toBeDefined();
@@ -87,21 +86,21 @@ describe("Session", () => {
         log(`Warning: Error deleting session: ${error}`);
       }
     });
-    it.only("should return the session ID", () => {
+    it("should return the session ID", () => {
       expect(session).toBeDefined();
       expect(session.getSessionId).toBeDefined();
       const sessionId = session.getSessionId();
       expect(sessionId).toBe(session.sessionId);
     });
 
-    it.only("should return the API key", () => {
+    it("should return the API key", () => {
       expect(session).toBeDefined();
       expect(session.getAPIKey).toBeDefined();
       const apiKey = session.getAPIKey();
       expect(apiKey).toBe(agentBay.getAPIKey());
     });
 
-    it.only("should return the client", () => {
+    it("should return the client", () => {
       expect(session).toBeDefined();
       expect(session.getClient).toBeDefined();
       const client = session.getClient();
@@ -114,7 +113,7 @@ describe("Session", () => {
     beforeEach(async () => {
       agentBay = new AgentBay({ apiKey: getTestApiKey() });
     });
-    it.only("should delete the session", async () => {
+    it("should delete the session", async () => {
       // Create a new session specifically for this test
       log("Creating a new session for delete testing...");
       const createResponse = await agentBay.create({ imageId: "linux_latest" });
@@ -196,7 +195,7 @@ describe("Session", () => {
         log(`Warning: Error deleting session: ${error}`);
       }
     });
-    it.only("should get session info if implemented", async () => {
+    it("should get session info if implemented", async () => {
       // Check if the info method exists
       if (typeof session.info === "function") {
         log("Testing session.info method...");
