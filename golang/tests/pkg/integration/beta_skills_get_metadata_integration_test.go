@@ -1,3 +1,4 @@
+// ci-stable
 // Integration tests for BetaSkills.GetMetadata() via GetSkillMetaData POP action.
 //
 // Note: This test calls the real backend. Do not run concurrently.

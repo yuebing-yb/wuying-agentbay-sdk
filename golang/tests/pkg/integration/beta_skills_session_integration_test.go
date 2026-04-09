@@ -1,3 +1,4 @@
+// ci-stable
 // Integration tests for session creation with skills loading.
 //
 // Note: This test calls the real backend. Do not run concurrently.

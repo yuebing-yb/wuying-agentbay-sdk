@@ -111,15 +111,14 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 		}()
 
 		// Test screenshot functionality on both platforms
-		desktopScreenshot1, _ := SafeScreenshot(desktopSession.Computer, "desktop_initial")
-		mobileScreenshot1, _ := SafeMobileScreenshot(mobileSession.Mobile, "mobile_initial")
-
-		if desktopScreenshot1 == "" {
-			result.SetFailure("Desktop screenshot failed")
+		desktopScreenshot1, err := SafeScreenshot(desktopSession.Computer, "desktop_initial")
+		if err != nil {
+			result.SetFailure("Desktop screenshot failed: " + err.Error())
 			return
 		}
-		if mobileScreenshot1 == "" {
-			result.SetFailure("Mobile screenshot failed")
+		mobileScreenshot1, err := SafeMobileScreenshot(mobileSession.Mobile, "mobile_initial")
+		if err != nil {
+			result.SetFailure("Mobile screenshot failed: " + err.Error())
 			return
 		}
 
@@ -139,8 +138,14 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 		time.Sleep(config.WaitTimeAfterAction)
 
 		// Take screenshots after actions
-		desktopScreenshot2, _ := SafeScreenshot(desktopSession.Computer, "desktop_after_action")
-		mobileScreenshot2, _ := SafeMobileScreenshot(mobileSession.Mobile, "mobile_after_action")
+		desktopScreenshot2, err := SafeScreenshot(desktopSession.Computer, "desktop_after_action")
+		if err != nil {
+			t.Logf("Warning: desktop after-action screenshot failed: %v", err)
+		}
+		mobileScreenshot2, err := SafeMobileScreenshot(mobileSession.Mobile, "mobile_after_action")
+		if err != nil {
+			t.Logf("Warning: mobile after-action screenshot failed: %v", err)
+		}
 
 		result.AddDetail("desktop_screenshot2", desktopScreenshot2)
 		result.AddDetail("mobile_screenshot2", mobileScreenshot2)
@@ -171,7 +176,11 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 		testText := "Cross-Platform Test"
 
 		// Test input on desktop
-		desktopScreenshot1, _ := SafeScreenshot(desktopSession.Computer, "desktop_before_input")
+		desktopScreenshot1, err := SafeScreenshot(desktopSession.Computer, "desktop_before_input")
+		if err != nil {
+			result.SetFailure("Desktop before-input screenshot failed: " + err.Error())
+			return
+		}
 
 		// Click and input on desktop
 		screen := desktopSession.Computer.GetScreenSize()
@@ -183,10 +192,17 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 		desktopInputResult := desktopSession.Computer.InputText(testText)
 		time.Sleep(config.WaitTimeAfterAction)
 
-		desktopScreenshot2, _ := SafeScreenshot(desktopSession.Computer, "desktop_after_input")
+		desktopScreenshot2, err := SafeScreenshot(desktopSession.Computer, "desktop_after_input")
+		if err != nil {
+			t.Logf("Warning: desktop after-input screenshot failed: %v", err)
+		}
 
 		// Test input on mobile
-		mobileScreenshot1, _ := SafeMobileScreenshot(mobileSession.Mobile, "mobile_before_input")
+		mobileScreenshot1, err := SafeMobileScreenshot(mobileSession.Mobile, "mobile_before_input")
+		if err != nil {
+			result.SetFailure("Mobile before-input screenshot failed: " + err.Error())
+			return
+		}
 
 		// Tap and input on mobile
 		mobileSession.Mobile.Tap(540, 960)
@@ -195,7 +211,10 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 		mobileInputResult := mobileSession.Mobile.InputText(testText)
 		time.Sleep(config.WaitTimeAfterAction)
 
-		mobileScreenshot2, _ := SafeMobileScreenshot(mobileSession.Mobile, "mobile_after_input")
+		mobileScreenshot2, err := SafeMobileScreenshot(mobileSession.Mobile, "mobile_after_input")
+		if err != nil {
+			t.Logf("Warning: mobile after-input screenshot failed: %v", err)
+		}
 
 		// Validate input functionality
 		desktopInputWorked := desktopInputResult.Success && ValidateScreenshotChanged(desktopScreenshot1, desktopScreenshot2)
@@ -344,8 +363,8 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 			success := true
 
 			// Desktop workflow steps
-			screenshot1, _ := SafeScreenshot(desktopSession.Computer, "desktop_workflow_start")
-			if screenshot1 == "" {
+			screenshot1, err := SafeScreenshot(desktopSession.Computer, "desktop_workflow_start")
+			if err != nil {
 				success = false
 			}
 
@@ -377,7 +396,10 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 
 			time.Sleep(config.WaitTimeAfterAction)
 
-			screenshot2, _ := SafeScreenshot(desktopSession.Computer, "desktop_workflow_end")
+			screenshot2, err := SafeScreenshot(desktopSession.Computer, "desktop_workflow_end")
+			if err != nil {
+				success = false
+			}
 			if success && !ValidateScreenshotChanged(screenshot1, screenshot2) {
 				success = false
 			}
@@ -391,8 +413,8 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 			success := true
 
 			// Mobile workflow steps
-			screenshot1, _ := SafeMobileScreenshot(mobileSession.Mobile, "mobile_workflow_start")
-			if screenshot1 == "" {
+			screenshot1, err := SafeMobileScreenshot(mobileSession.Mobile, "mobile_workflow_start")
+			if err != nil {
 				success = false
 			}
 
@@ -427,7 +449,10 @@ func TestCrossPlatformFunctionalValidation(t *testing.T) {
 
 			time.Sleep(config.WaitTimeAfterAction)
 
-			screenshot2, _ := SafeMobileScreenshot(mobileSession.Mobile, "mobile_workflow_end")
+			screenshot2, err := SafeMobileScreenshot(mobileSession.Mobile, "mobile_workflow_end")
+			if err != nil {
+				success = false
+			}
 			if success && !ValidateScreenshotChanged(screenshot1, screenshot2) {
 				success = false
 			}

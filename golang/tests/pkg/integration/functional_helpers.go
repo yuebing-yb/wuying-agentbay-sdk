@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -243,36 +244,44 @@ func WaitWithTimeout(condition func() bool, timeout time.Duration, checkInterval
 }
 
 // SafeScreenshot takes a screenshot with error handling
-func SafeScreenshot(computer *computer.Computer, testName string) (string, error) {
-	if computer == nil {
-		return "", nil
+func SafeScreenshot(comp *computer.Computer, testName string) (string, error) {
+	if comp == nil {
+		return "", fmt.Errorf("[%s] computer is nil", testName)
 	}
 
-	result := computer.Screenshot()
+	result := comp.Screenshot()
 	if result == nil {
-		return "", nil
+		return "", fmt.Errorf("[%s] screenshot returned nil result", testName)
 	}
 
 	if result.ErrorMessage != "" {
-		return "", nil
+		return "", fmt.Errorf("[%s] screenshot failed: %s", testName, result.ErrorMessage)
+	}
+
+	if result.Data == "" {
+		return "", fmt.Errorf("[%s] screenshot returned empty data", testName)
 	}
 
 	return result.Data, nil
 }
 
 // SafeMobileScreenshot takes a mobile screenshot with error handling
-func SafeMobileScreenshot(mobile *mobile.Mobile, testName string) (string, error) {
-	if mobile == nil {
-		return "", nil
+func SafeMobileScreenshot(mob *mobile.Mobile, testName string) (string, error) {
+	if mob == nil {
+		return "", fmt.Errorf("[%s] mobile is nil", testName)
 	}
 
-	result := mobile.Screenshot()
+	result := mob.Screenshot()
 	if result == nil {
-		return "", nil
+		return "", fmt.Errorf("[%s] screenshot returned nil result", testName)
 	}
 
 	if result.ErrorMessage != "" {
-		return "", nil
+		return "", fmt.Errorf("[%s] screenshot failed: %s", testName, result.ErrorMessage)
+	}
+
+	if result.Data == "" {
+		return "", fmt.Errorf("[%s] screenshot returned empty data", testName)
 	}
 
 	return result.Data, nil

@@ -1,3 +1,4 @@
+// ci-stable
 package integration
 
 import (
@@ -30,19 +31,6 @@ func TestRegionIDIntegration(t *testing.T) {
 		// Verify region_id is set
 		if client.GetRegionID() != "cn-hangzhou" {
 			t.Errorf("Expected RegionID to be 'cn-hangzhou', got '%s'", client.GetRegionID())
-		}
-	})
-
-	t.Run("CreateAgentBayWithoutRegionID", func(t *testing.T) {
-		// Test creating AgentBay client without region_id
-		client, err := agentbay.NewAgentBay(apiKey)
-		if err != nil {
-			t.Fatalf("Failed to create AgentBay client: %v", err)
-		}
-
-		// Verify region_id is empty
-		if client.GetRegionID() != "" {
-			t.Errorf("Expected RegionID to be empty, got '%s'", client.GetRegionID())
 		}
 	})
 

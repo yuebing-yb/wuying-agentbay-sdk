@@ -164,8 +164,12 @@ func TestComputerFunctionalValidation(t *testing.T) {
 		}()
 
 		// Step 1: Take initial screenshot
-		screenshot1, _ := SafeScreenshot(session.Computer, "before_input")
-
+		screenshot1, err := SafeScreenshot(session.Computer, "before_input")
+		t.Logf("Took screenshot before input: %s", screenshot1)
+		if err != nil {
+			result.SetFailure("Failed to take initial screenshot")
+			return
+		}
 		// Step 2: Click somewhere safe (center of screen) to focus
 		screen := session.Computer.GetScreenSize()
 		if screen.ErrorMessage != "" {
@@ -195,8 +199,11 @@ func TestComputerFunctionalValidation(t *testing.T) {
 		time.Sleep(config.WaitTimeAfterAction)
 
 		// Step 4: Take screenshot after input
-		screenshot2, _ := SafeScreenshot(session.Computer, "after_input")
-
+		screenshot2, err := SafeScreenshot(session.Computer, "after_input")
+		if err != nil {
+			result.SetFailure("Failed to take screenshot after input")
+			return
+		}
 		// Step 5: Select all text and delete it
 		selectResult := session.Computer.PressKeys([]string{"Ctrl", "a"}, false)
 		if !selectResult.Success {
@@ -215,8 +222,11 @@ func TestComputerFunctionalValidation(t *testing.T) {
 		time.Sleep(config.WaitTimeAfterAction)
 
 		// Step 6: Take final screenshot
-		screenshot3, _ := SafeScreenshot(session.Computer, "after_delete")
-
+		screenshot3, err := SafeScreenshot(session.Computer, "after_delete")
+		if err != nil {
+			result.SetFailure("Failed to take final screenshot")
+			return
+		}
 		// Validate keyboard operations
 		inputChanged := ValidateScreenshotChanged(screenshot1, screenshot2)
 		deleteChanged := ValidateScreenshotChanged(screenshot2, screenshot3)
@@ -326,7 +336,11 @@ func TestComputerFunctionalValidation(t *testing.T) {
 		screenshots := make(map[string]string)
 
 		// Step 1: Initial state
-		screenshot, _ := SafeScreenshot(session.Computer, "workflow_start")
+		screenshot, err := SafeScreenshot(session.Computer, "workflow_start")
+		if err != nil {
+			result.SetFailure("Failed to take initial screenshot")
+			return
+		}
 		screenshots["start"] = screenshot
 		workflowSteps = append(workflowSteps, "Initial screenshot taken")
 
@@ -360,7 +374,11 @@ func TestComputerFunctionalValidation(t *testing.T) {
 		time.Sleep(config.WaitTimeAfterAction)
 
 		// Step 4: Screenshot after input
-		screenshot, _ = SafeScreenshot(session.Computer, "workflow_input")
+		screenshot, err = SafeScreenshot(session.Computer, "workflow_input")
+		if err != nil {
+			result.SetFailure("Failed to take screenshot after input")
+			return
+		}
 		screenshots["after_input"] = screenshot
 
 		// Step 5: Select and copy text
@@ -390,7 +408,11 @@ func TestComputerFunctionalValidation(t *testing.T) {
 		time.Sleep(config.WaitTimeAfterAction)
 
 		// Step 7: Final screenshot
-		screenshot, _ = SafeScreenshot(session.Computer, "workflow_end")
+		screenshot, err = SafeScreenshot(session.Computer, "workflow_end")
+		if err != nil {
+			result.SetFailure("Failed to take screenshot after input")
+			return
+		}
 		screenshots["end"] = screenshot
 
 		// Validate workflow

@@ -242,7 +242,11 @@ func TestMobileFunctionalValidation(t *testing.T) {
 		}()
 
 		// Step 1: Take initial screenshot
-		screenshot1, _ := SafeMobileScreenshot(session.Mobile, "before_input")
+		screenshot1, err := SafeMobileScreenshot(session.Mobile, "before_input")
+		if err != nil {
+			result.SetFailure("Failed to take initial screenshot: " + err.Error())
+			return
+		}
 		result.AddDetail("screenshot1", screenshot1)
 
 		// Step 2: Find a text input element

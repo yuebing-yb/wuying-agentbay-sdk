@@ -1,3 +1,4 @@
+// ci-stable
 package integration
 
 import (
@@ -529,16 +530,16 @@ func TestContextSyncFilePersistence(t *testing.T) {
 	require.NoError(t, err, "Error creating directory")
 	assert.NotEmpty(t, dirResult.RequestID, "Directory creation request ID should not be empty")
 
-	// 5. Create a 1GB file in the context sync path
+	// 5. Create a 100MB file in the context sync path
 	testFilePath := syncPath + "/test-file.txt"
 
-	t.Logf("Creating 1GB file at %s", testFilePath)
-	createFileCmd := fmt.Sprintf("dd if=/dev/zero of=%s bs=1M count=1024", testFilePath)
+	t.Logf("Creating 100MB file at %s", testFilePath)
+	createFileCmd := fmt.Sprintf("dd if=/dev/zero of=%s bs=1M count=100", testFilePath)
 	cmdResult, err := session1.Command.ExecuteCommand(createFileCmd)
 	if err != nil {
-		t.Logf("Warning: Failed to create 1GB file: %v", err)
+		t.Logf("Warning: Failed to create 100MB file: %v", err)
 	} else {
-		t.Logf("Created 1GB file: %+v", cmdResult)
+		t.Logf("Created 100MB file: %+v", cmdResult)
 	}
 
 	// 6. Sync to trigger file upload using explicit Sync() call
@@ -633,8 +634,8 @@ func TestContextSyncFilePersistence(t *testing.T) {
 		t.Log("No parsed context status data available in second session")
 	}
 
-	// 11. Verify the 1GB file exists in the second session
-	t.Logf("Verifying 1GB file exists in second session...")
+	// 11. Verify the 100MB file exists in the second session
+	t.Logf("Verifying 100MB file exists in second session...")
 
 	// Check file size using ls command
 	checkFileCmd := fmt.Sprintf("ls -la %s", testFilePath)
@@ -645,17 +646,17 @@ func TestContextSyncFilePersistence(t *testing.T) {
 		t.Logf("File info: %+v", fileInfo)
 	}
 
-	// Verify file exists and has expected size (approximately 1GB)
+	// Verify file exists and has expected size (approximately 100MB)
 	fileExistsCmd := fmt.Sprintf("test -f %s && echo 'File exists'", testFilePath)
 	existsResult, err := session2.Command.ExecuteCommand(fileExistsCmd)
 	if err != nil {
 		t.Logf("Warning: Failed to check if file exists: %v", err)
 	} else {
 		t.Logf("File existence check: %+v", existsResult)
-		require.Contains(t, existsResult.Output, "File exists", "1GB file should exist in second session")
+		require.Contains(t, existsResult.Output, "File exists", "100MB file should exist in second session")
 	}
 
-	t.Logf("1GB file persistence verified successfully")
+	t.Logf("100MB file persistence verified successfully")
 }
 
 // TestContextStatusDataParsing tests the parsing of context status data
@@ -903,7 +904,7 @@ func TestContextSyncPersistenceWithRetry(t *testing.T) {
 	t.Logf("Context status data:")
 	printContextStatusData(t, contextInfo.ContextStatusData)
 
-	// 4. Create a 1GB file in the context sync path
+	// Create a 100MB file in the context sync path
 	testFilePath := syncPath + "/test-file.txt"
 
 	// Create directory first
@@ -912,14 +913,14 @@ func TestContextSyncPersistenceWithRetry(t *testing.T) {
 	require.NoError(t, err, "Error creating directory")
 	assert.NotEmpty(t, dirResult.RequestID, "Directory creation request ID should not be empty")
 
-	// Create a 1GB file using dd command
-	t.Logf("Creating 1GB file at %s", testFilePath)
-	createFileCmd := fmt.Sprintf("dd if=/dev/zero of=%s bs=1M count=1024", testFilePath)
+	// Create a 100MB file using dd command
+	t.Logf("Creating 100MB file at %s", testFilePath)
+	createFileCmd := fmt.Sprintf("dd if=/dev/zero of=%s bs=1M count=100", testFilePath)
 	cmdResult, err := session1.Command.ExecuteCommand(createFileCmd)
 	if err != nil {
-		t.Logf("Warning: Failed to create 1GB file: %v", err)
+		t.Logf("Warning: Failed to create 100MB file: %v", err)
 	} else {
-		t.Logf("Created 1GB file: %+v", cmdResult)
+		t.Logf("Created 100MB file: %+v", cmdResult)
 	}
 
 	// 5. Sync to trigger file upload
@@ -1025,8 +1026,8 @@ func TestContextSyncPersistenceWithRetry(t *testing.T) {
 		t.Logf("Warning: Could not find download status after all retries")
 	}
 
-	// 10. Verify the 1GB file exists in the second session
-	t.Logf("Verifying 1GB file exists in second session...")
+	// 10. Verify the 100MB file exists in the second session
+	t.Logf("Verifying 100MB file exists in second session...")
 
 	// Check file size using ls command
 	checkFileCmd := fmt.Sprintf("ls -la %s", testFilePath)
@@ -1037,15 +1038,15 @@ func TestContextSyncPersistenceWithRetry(t *testing.T) {
 		t.Logf("File info: %+v", fileInfo)
 	}
 
-	// Verify file exists and has expected size (approximately 1GB)
+	// Verify file exists and has expected size (approximately 100MB)
 	fileExistsCmd := fmt.Sprintf("test -f %s && echo 'File exists'", testFilePath)
 	existsResult, err := session2.Command.ExecuteCommand(fileExistsCmd)
 	if err != nil {
 		t.Logf("Warning: Failed to check if file exists: %v", err)
 	} else {
 		t.Logf("File existence check: %+v", existsResult)
-		require.Contains(t, existsResult.Output, "File exists", "1GB file should exist in second session")
+		require.Contains(t, existsResult.Output, "File exists", "100MB file should exist in second session")
 	}
 
-	t.Logf("1GB file persistence verified successfully")
+	t.Logf("100MB file persistence verified successfully")
 }

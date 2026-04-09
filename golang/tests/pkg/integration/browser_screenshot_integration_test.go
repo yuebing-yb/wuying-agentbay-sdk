@@ -1,3 +1,4 @@
+// ci-stable
 package integration
 
 import (
@@ -272,7 +273,7 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 			err = page.Close()
 			assert.NoError(t, err)
 
-			t.Logf("âœ… Screenshot %d captured for %s", i+1, url)
+			t.Logf("âœ?Screenshot %d captured for %s", i+1, url)
 		}
 	})
 
@@ -319,7 +320,7 @@ func TestBrowserScreenshot_Integration(t *testing.T) {
 		endTime := time.Now()
 		duration := endTime.Sub(startTime)
 
-		t.Logf("âœ… Screenshot attempted in %v", duration)
+		t.Logf("âœ?Screenshot attempted in %v", duration)
 
 		// Close page to free resources
 		err = page.Close()
