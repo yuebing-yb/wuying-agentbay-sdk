@@ -13,12 +13,18 @@ Optional:
 
 - `DASHSCOPE_MODEL` (default: `qwen3-max`)
 
+### Install Dependencies
+
+```bash
+pip install agentbay langchain-openai langgraph python-dotenv requests anyio
+```
+
 ### Run
 
 From repo root:
 
 ```bash
-cd cookbook/mobile/xiaohongshu-nl-control/async/langchain
+cd cookbook/mobile/nl-mobile-control/langchain
 python src/nl_mobile_agent_example.py
 ```
 
@@ -33,7 +39,7 @@ Optional overrides:
 Run the same task under different prompt styles and get a report:
 
 ```bash
-cd cookbook/mobile/xiaohongshu-nl-control/async/langchain
+cd cookbook/mobile/nl-mobile-control/langchain
 python src/nl_mobile_prompt_eval.py --runs 1
 ```
 

@@ -1219,6 +1219,7 @@ class AsyncFileSystem(BaseService):
                             request_id=result.request_id,
                             success=True,
                             content=binary_content,
+                            size=len(binary_content),
                         )
                     except Exception as e:
                         return BinaryFileContentResult(
