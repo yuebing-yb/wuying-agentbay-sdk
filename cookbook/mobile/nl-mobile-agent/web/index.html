@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NL Mobile Agent</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: rgba(255, 255, 255, 0.08);
+        --panel2: rgba(255, 255, 255, 0.06);
+        --border: rgba(255, 255, 255, 0.14);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.70);
+        --muted2: rgba(255, 255, 255, 0.55);
+        --ok: #33d17a;
+        --bad: #ff5a7a;
+        --brand: #7c5cff;
+        --brand2: #00d4ff;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        --reasoning: #fbbf24;
+        --tool-call: #60a5fa;
+        --tool-result: #a78bfa;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+        color: var(--text);
+        background:
+          radial-gradient(900px 500px at 15% 10%, rgba(124, 92, 255, 0.25), transparent 60%),
+          radial-gradient(700px 500px at 80% 30%, rgba(0, 212, 255, 0.18), transparent 60%),
+          linear-gradient(180deg, #070a14 0%, #0b1020 60%, #070a14 100%);
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 26px 18px 40px;
+      }
+      .header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
+      .subtitle { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+      .badge {
+        font-size: 12px;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        white-space: nowrap;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 14px;
+        align-items: start;
+      }
+      @media (max-width: 960px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
+        box-shadow: var(--shadow);
+        padding: 14px;
+      }
+      .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      .row.space { justify-content: space-between; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .muted { color: var(--muted); }
+      .muted2 { color: var(--muted2); }
+      .ok { color: var(--ok); }
+      .bad { color: var(--bad); }
+      a { color: rgba(255, 255, 255, 0.90); word-break: break-all; }
+
+      .btn {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: transform 0.05s ease, background 0.12s ease, border-color 0.12s ease;
+      }
+      .btn:hover { background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.22); }
+      .btn:active { transform: translateY(1px); }
+      .btn.primary {
+        border-color: rgba(124, 92, 255, 0.55);
+        background: linear-gradient(135deg, rgba(124, 92, 255, 0.45), rgba(0, 212, 255, 0.22));
+      }
+      .btn.danger {
+        border-color: rgba(255, 90, 122, 0.55);
+        background: rgba(255, 90, 122, 0.14);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 80px;
+        font-size: 14px;
+        line-height: 1.4;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        outline: none;
+        color: var(--text);
+        background: rgba(0, 0, 0, 0.22);
+        resize: vertical;
+      }
+      textarea:focus {
+        border-color: rgba(124, 92, 255, 0.8);
+        box-shadow: 0 0 0 4px rgba(124, 92, 255, 0.18);
+      }
+      .sectionTitle {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.2px;
+        margin: 2px 0 10px;
+      }
+      .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.10);
+        margin: 12px 0;
+      }
+      .frameWrap {
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.20);
+      }
+      iframe {
+        width: 100%;
+        height: 760px;
+        border: 0;
+        display: block;
+        background: #fff;
+      }
+      @media (max-width: 960px) {
+        iframe { height: 680px; }
+      }
+
+      #streamLog {
+        background: rgba(0, 0, 0, 0.30);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        padding: 12px;
+        min-height: 200px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12.5px;
+        line-height: 1.6;
+      }
+      .log-entry { margin: 0; padding: 2px 0; }
+      .log-reasoning { color: var(--reasoning); }
+      .log-content { color: var(--text); }
+      .log-tool-call { color: var(--tool-call); }
+      .log-tool-result { color: var(--tool-result); }
+      .log-error { color: var(--bad); }
+      .log-info { color: var(--muted2); }
+      .log-done-ok { color: var(--ok); font-weight: 600; }
+      .log-done-fail { color: var(--bad); font-weight: 600; }
+
+      #finalAnswer {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: rgba(0, 0, 0, 0.24);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        padding: 12px;
+        border-radius: 14px;
+        margin: 0;
+        min-height: 60px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div>
+          <h1>NL Mobile Agent</h1>
+          <div class="subtitle">
+            Built-in mobile agent powered by AgentBay platform.
+            Create a session, type a task, and watch the agent execute it in real time.
+          </div>
+        </div>
+        <div class="badge mono">AgentBay Agent &middot; SSE Streaming</div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <div class="card">
+            <div class="row space">
+              <div class="row">
+                <button class="btn primary" id="btnCreate">Create Session</button>
+                <button class="btn danger" id="btnDelete">Delete Session</button>
+              </div>
+              <div id="sessionStatus" class="mono muted">session: (none)</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row space">
+              <div>
+                <div class="sectionTitle">Cloud Phone</div>
+                <div class="muted2">Open the live phone page to watch the agent execute tasks.</div>
+              </div>
+              <div class="row">
+                <button class="btn" id="btnOpenSameTab">Open (this tab)</button>
+                <button class="btn" id="btnOpenNewTab">Open (new tab)</button>
+              </div>
+            </div>
+            <div id="iframeHint" class="mono muted2" style="margin-top: 6px;"></div>
+          </div>
+
+          <div class="card" style="margin-top: 14px;">
+            <div class="row space" style="margin-bottom: 10px;">
+              <div>
+                <div class="sectionTitle">Task</div>
+                <div class="muted2">Describe what the agent should do on the phone.</div>
+              </div>
+              <div id="jobStatus" class="mono muted">idle</div>
+            </div>
+            <textarea id="prompt" placeholder="Example: Open the Settings app and navigate to Wi-Fi settings"></textarea>
+            <div class="row" style="margin-top: 10px;">
+              <button class="btn primary" id="btnRun">Run Agent</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="sectionTitle">Agent Stream</div>
+            <div id="streamLog"></div>
+
+            <div class="divider"></div>
+
+            <div class="sectionTitle">Final Answer</div>
+            <pre id="finalAnswer" class="mono muted2"></pre>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="row space" style="margin-bottom: 10px;">
+              <div class="sectionTitle">Cloud Phone Preview</div>
+              <div class="mono muted2">iframe</div>
+            </div>
+            <div class="frameWrap">
+              <iframe id="phoneFrame" title="cloud-phone" src="about:blank"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let currentResourceUrl = "";
+      let currentEventSource = null;
+
+      function escapeHtml(s) {
+        const div = document.createElement("div");
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      function appendLog(cls, html) {
+        const el = $("streamLog");
+        const p = document.createElement("div");
+        p.className = "log-entry " + cls;
+        p.innerHTML = html;
+        el.appendChild(p);
+        el.scrollTop = el.scrollHeight;
+      }
+
+      function clearLog() {
+        $("streamLog").innerHTML = "";
+        $("finalAnswer").textContent = "";
+      }
+
+      async function api(path, opts) {
+        const res = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts || {}));
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg = data && data.detail ? data.detail : (res.status + " " + res.statusText);
+          throw new Error(msg);
+        }
+        return data;
+      }
+
+      async function refreshSession() {
+        try {
+          const s = await api("/api/session");
+          if (s && s.session_id) {
+            $("sessionStatus").textContent = "session: " + s.session_id;
+            $("sessionStatus").className = "mono ok";
+            currentResourceUrl = s.resource_url || "";
+            const frame = $("phoneFrame");
+            const hint = $("iframeHint");
+            if (currentResourceUrl) {
+              hint.textContent = "Loading iframe...";
+              hint.className = "mono muted2";
+              frame.src = currentResourceUrl;
+              frame.onload = () => {
+                hint.textContent = "iframe loaded (may be blank due to X-Frame-Options/CSP)";
+                hint.className = "mono muted2";
+              };
+              setTimeout(() => {
+                if (hint.textContent === "Loading iframe...") {
+                  hint.textContent = "iframe still loading... use 'Open' buttons if blank.";
+                  hint.className = "mono bad";
+                }
+              }, 6000);
+            } else {
+              frame.src = "about:blank";
+              hint.textContent = "";
+            }
+          } else {
+            $("sessionStatus").textContent = "session: (none)";
+            $("sessionStatus").className = "mono muted";
+            currentResourceUrl = "";
+            $("phoneFrame").src = "about:blank";
+            $("iframeHint").textContent = "";
+          }
+        } catch (e) {
+          $("sessionStatus").textContent = "session: (error) " + e.message;
+          $("sessionStatus").className = "mono bad";
+        }
+      }
+
+      async function createSession() {
+        clearLog();
+        appendLog("log-info", "Creating session...");
+        await api("/api/session/create", { method: "POST", body: JSON.stringify({}) });
+        appendLog("log-info", "Session created.");
+        await refreshSession();
+      }
+
+      async function deleteSession() {
+        if (currentEventSource) {
+          currentEventSource.close();
+          currentEventSource = null;
+        }
+        clearLog();
+        appendLog("log-info", "Deleting session...");
+        await api("/api/session/delete", { method: "POST", body: JSON.stringify({}) });
+        appendLog("log-info", "Session deleted.");
+        await refreshSession();
+      }
+
+      function subscribeSSE(jobId) {
+        if (currentEventSource) {
+          currentEventSource.close();
+        }
+
+        const es = new EventSource("/api/agent/jobs/" + encodeURIComponent(jobId) + "/stream");
+        currentEventSource = es;
+
+        es.addEventListener("log", (e) => {
+          const d = JSON.parse(e.data);
+          appendLog("log-info", escapeHtml(d.message || JSON.stringify(d)));
+        });
+
+        es.addEventListener("reasoning", (e) => {
+          const d = JSON.parse(e.data);
+          appendLog("log-reasoning", "[Reasoning] " + escapeHtml(d.content || ""));
+        });
+
+        es.addEventListener("content", (e) => {
+          const d = JSON.parse(e.data);
+          appendLog("log-content", "[Content] " + escapeHtml(d.content || ""));
+        });
+
+        es.addEventListener("tool_call", (e) => {
+          const d = JSON.parse(e.data);
+          appendLog("log-tool-call", "[ToolCall] " + escapeHtml(d.tool_name || "") + "(" + escapeHtml(d.args || "") + ")");
+        });
+
+        es.addEventListener("tool_result", (e) => {
+          const d = JSON.parse(e.data);
+          const preview = (d.result || "").substring(0, 300);
+          appendLog("log-tool-result", "[ToolResult] " + escapeHtml(d.tool_name || "") + " &rarr; " + escapeHtml(preview));
+        });
+
+        es.addEventListener("error", (e) => {
+          try {
+            const d = JSON.parse(e.data);
+            appendLog("log-error", "[Error] " + escapeHtml(d.error || ""));
+          } catch (_) {
+            appendLog("log-error", "[Error] SSE error");
+          }
+        });
+
+        es.addEventListener("done", (e) => {
+          const d = JSON.parse(e.data);
+          if (d.status === "succeeded") {
+            appendLog("log-done-ok", "Task succeeded.");
+            $("jobStatus").textContent = "succeeded";
+            $("jobStatus").className = "mono ok";
+          } else {
+            appendLog("log-done-fail", "Task failed: " + escapeHtml(d.error || ""));
+            $("jobStatus").textContent = "failed";
+            $("jobStatus").className = "mono bad";
+          }
+          $("finalAnswer").textContent = d.final_answer || "";
+          es.close();
+          currentEventSource = null;
+        });
+
+        es.addEventListener("heartbeat", () => {});
+      }
+
+      async function runTask() {
+        const p = $("prompt").value || "";
+        if (!p.trim()) {
+          alert("Please enter a task description.");
+          return;
+        }
+        clearLog();
+        $("jobStatus").textContent = "starting...";
+        $("jobStatus").className = "mono muted";
+        const r = await api("/api/agent/run", { method: "POST", body: JSON.stringify({ prompt: p }) });
+        $("jobStatus").textContent = "running...";
+        $("jobStatus").className = "mono muted";
+        subscribeSSE(r.job_id);
+      }
+
+      $("btnCreate").addEventListener("click", () => createSession().catch((e) => alert(e.message)));
+      $("btnDelete").addEventListener("click", () => deleteSession().catch((e) => alert(e.message)));
+      $("btnRun").addEventListener("click", () => runTask().catch((e) => alert(e.message)));
+      $("btnOpenNewTab").addEventListener("click", () => {
+        if (!currentResourceUrl) { alert("Please create a session first."); return; }
+        window.open(currentResourceUrl, "_blank", "noopener,noreferrer");
+      });
+      $("btnOpenSameTab").addEventListener("click", () => {
+        if (!currentResourceUrl) { alert("Please create a session first."); return; }
+        window.location.href = currentResourceUrl;
+      });
+      refreshSession();
+    </script>
+  </body>
+</html>
