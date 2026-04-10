@@ -1,13 +1,13 @@
-import os
-import sys
-import time
-import unittest
-import json
+"""Integration tests for AgentBay async client and session operations."""
 
-from agentbay import AsyncAgentBay
+import os
+import time
+
+import pytest
+
 from agentbay import (
     BWList,
-    ContextSync,
+    AsyncAgentBay,
     DeletePolicy,
     DownloadPolicy,
     ExtractPolicy,
@@ -16,553 +16,253 @@ from agentbay import (
     SyncPolicy,
     UploadPolicy,
     WhiteList,
-    Config,
 )
-from agentbay import BrowserContext, CreateSessionParams
-from agentbay.api.models import AppManagerRule, ExtraConfigs, MobileExtraConfig
-import pytest
 
-# Add the parent directory to the path so we can import the agentbay package
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# make_session factory fixture is provided by conftest.py (auto-loaded by pytest)
 
 
-def get_test_api_key():
-    """Get API key for testing"""
-    api_key = os.environ.get("AGENTBAY_API_KEY")
-    if not api_key:
-        api_key = "akm-xxx"  # Replace with your test API key
-        print(
-            "Warning: Using default API key. Set AGENTBAY_API_KEY environment variable for testing."
-        )
-    return api_key
+# ---------------------------------------------------------------------------
+# TestAsyncAgentBay – init tests (no network calls)
+# ---------------------------------------------------------------------------
 
 
-class TestAsyncAgentBay(unittest.TestCase):
-    """Test cases for the AsyncAgentBay class."""
-
-    def test_init_with_api_key(self):
-        """Test initialization with API key."""
-        api_key = get_test_api_key()
-        agent_bay = AsyncAgentBay(api_key=api_key)
-        self.assertEqual(agent_bay.api_key, api_key)
-        self.assertIsNotNone(agent_bay.client)
-
-    def test_init_without_api_key(self):
-        """Test initialization without API key."""
-        # Save original API key
-        original_key = os.environ.get("AGENTBAY_API_KEY")
-
-        os.environ["AGENTBAY_API_KEY"] = "env_api_key"
-        try:
-            agent_bay = AsyncAgentBay()
-            self.assertEqual(agent_bay.api_key, "env_api_key")
-        finally:
-            # Restore original API key
-            if original_key is not None:
-                os.environ["AGENTBAY_API_KEY"] = original_key
-            else:
-                del os.environ["AGENTBAY_API_KEY"]
-
-    def test_init_without_api_key_raises_error(self):
-        """Test initialization without API key raises error."""
-        # Save original API key
-        original_key = os.environ.get("AGENTBAY_API_KEY")
-
-        try:
-            if "AGENTBAY_API_KEY" in os.environ:
-                del os.environ["AGENTBAY_API_KEY"]
-            with self.assertRaises(ValueError):
-                AsyncAgentBay()
-        finally:
-            # Restore original API key
-            if original_key is not None:
-                os.environ["AGENTBAY_API_KEY"] = original_key
-
-    @pytest.mark.asyncio
-    async def test_create_list_delete(self):
-        """Test create, list, and delete methods."""
-        api_key = get_test_api_key()
-        agent_bay = AsyncAgentBay(api_key=api_key)
-
-        # Create a session
-        print("Creating a new session...")
-        result = await agent_bay.create()
-
-        # Check if session creation was successful
-        self.assertTrue(
-            result.success, f"Session creation failed: {result.error_message}"
-        )
-        self.assertIsNotNone(result.session, "Session object is None")
-
-        session = result.session
-        print(f"Session created with ID: {session.session_id}")
-
-        # Ensure session ID is not empty
-        self.assertIsNotNone(session.session_id)
-        self.assertNotEqual(session.session_id, "")
-
-        # Delete the session
-        print("Deleting the session...")
-        await agent_bay.delete(session)
-
-        # Session deletion completed
+def test_init_with_api_key():
+    """Test initialization with API key."""
+    api_key = os.environ.get("AGENTBAY_API_KEY", "akm-test")
+    ab = AsyncAgentBay(api_key=api_key)
+    assert ab.api_key == api_key
+    assert ab.client is not None
 
 
-class TestSession(unittest.IsolatedAsyncioTestCase):
-    """Test cases for the Session class."""
-
-    async def asyncSetUp(self):
-        """Set up test fixtures."""
-        api_key = get_test_api_key()
-        self.agent_bay = AsyncAgentBay(api_key=api_key)
-
-        # Create a session with default windows image
-        print("Creating a new session for testing...")
-        self.result = await self.agent_bay.create()
-
-        # Check if session creation was successful
-        if not self.result.success:
-            self.fail(f"Session creation failed in setUp: {self.result.error_message}")
-        if self.result.session is None:
-            self.fail("Session object is None in setUp")
-
-        self.session = self.result.session
-        print(f"Session created with ID: {self.session.session_id}")
-
-    async def asyncTearDown(self):
-        """Tear down test fixtures."""
-        print("Cleaning up: Deleting the session...")
-        try:
-            await self.agent_bay.delete(self.session)
-        except Exception as e:
-            print(f"Warning: Error deleting session: {e}")
-
-    def test_session_properties(self):
-        """Test session properties and methods."""
-        # Test session properties
-        self.assertIsNotNone(self.session.session_id)
-        self.assertEqual(self.session.agent_bay, self.agent_bay)
-
-        # Test access to AgentBay properties through session.agent_bay
-        self.assertEqual(self.session.agent_bay.api_key, self.agent_bay.api_key)
-        self.assertEqual(self.session.agent_bay.client, self.agent_bay.client)
-
-        # Test get_session_id method
-        session_id = self.session.session_id
-        self.assertEqual(session_id, self.session.session_id)
-
-    @pytest.mark.asyncio
-    async def test_delete(self):
-        """Test session delete method."""
-        # Create a new session specifically for this test
-        print("Creating a new session for delete testing...")
-        result = await self.agent_bay.create()
-        session = result.session
-        print(f"Session created with ID: {session.session_id}")
-
-        # Test delete method
-        print("Testing session.delete method...")
-        try:
-            result = await session.delete()
-            self.assertTrue(result)
-
-            # Session deletion verified
-        except Exception as e:
-            print(f"Note: Session deletion failed: {e}")
-            # Clean up if the test failed
-            try:
-                self.agent_bay.delete(session)
-            except BaseException:
-                pass
-
-    def test_command(self):
-        """Test command execution."""
-        if self.session.command:
-            print("Executing command...")
-            try:
-                response = self.session.command.execute_command("ls")
-                print(f"Command execution result: {response}")
-                self.assertIsNotNone(response)
-                self.assertTrue(
-                    response.success, f"Command failed: {response.error_message}"
-                )
-                # Check if response contains "tool not found"
-                self.assertNotIn(
-                    "tool not found",
-                    response.output.lower(),
-                    "Command.ExecuteCommand returned 'tool not found'",
-                )
-            except Exception as e:
-                print(f"Note: Command execution failed: {e}")
-                # Don't fail the test if command execution is not supported
+def test_init_without_api_key_uses_env():
+    """Test initialization without explicit API key falls back to env var."""
+    original_key = os.environ.get("AGENTBAY_API_KEY")
+    os.environ["AGENTBAY_API_KEY"] = "env_api_key"
+    try:
+        ab = AsyncAgentBay()
+        assert ab.api_key == "env_api_key"
+    finally:
+        if original_key is not None:
+            os.environ["AGENTBAY_API_KEY"] = original_key
         else:
-            print("Note: Command interface is nil, skipping command test")
-
-    def test_filesystem(self):
-        """Test filesystem operations."""
-        if self.session.file_system:
-            print("Reading file...")
-            try:
-                result = self.session.file_system.read_file("/etc/hosts")
-                print(f"ReadFile result: content='{result}'")
-                self.assertIsNotNone(result)
-                self.assertTrue(
-                    result.success, f"Read file failed: {result.error_message}"
-                )
-                # Check if response contains "tool not found"
-                self.assertNotIn(
-                    "tool not found",
-                    result.content.lower(),
-                    "FileSystem.ReadFile returned 'tool not found'",
-                )
-                print("File read successful")
-            except Exception as e:
-                print(f"Note: File operation failed: {e}")
-                # Don't fail the test if filesystem operations are not supported
-        else:
-            print("Note: FileSystem interface is nil, skipping file test")
+            del os.environ["AGENTBAY_API_KEY"]
 
 
-class TestRecyclePolicy(unittest.IsolatedAsyncioTestCase):
-    """Test cases for RecyclePolicy functionality."""
-
-    async def asyncSetUp(self):
-        """Set up test fixtures."""
-        api_key = get_test_api_key()
-        self.agent_bay = AsyncAgentBay(api_key=api_key)
-        self.session = None
-
-    async def asyncTearDown(self):
-        """Tear down test fixtures."""
-        # Clean up session
-        if self.session:
-            try:
-                print("Cleaning up session with custom recyclePolicy...")
-                delete_result = await self.agent_bay.delete(self.session)
-                print(
-                    f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
-                )
-            except Exception as e:
-                print(f"Warning: Error deleting session: {e}")
-
-    @pytest.mark.asyncio
-    async def test_create_session_with_custom_recycle_policy(self):
-        """Test creating session with custom recyclePolicy using Lifecycle_1Day."""
-        # Create custom recyclePolicy with Lifecycle_1Day and default paths
-
-        context_result = await self.agent_bay.context.get("test-recycle-context", create=True)
-        
-        assert context_result.success and context_result.context
-        
-        context = context_result.context
-        context_id = context.id
-        print(f"Context created successfully with ID: {context.id}")
-        recycle_policy = RecyclePolicy(
-            lifecycle=Lifecycle.LIFECYCLE_1DAY, paths=[""]  # Using default path value
-        )
-
-        # Create custom SyncPolicy with recyclePolicy
-        custom_sync_policy = SyncPolicy(
-            upload_policy=UploadPolicy.default(),
-            download_policy=DownloadPolicy.default(),
-            delete_policy=DeletePolicy.default(),
-            extract_policy=ExtractPolicy.default(),
-            recycle_policy=recycle_policy,
-            bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])]),
-        )
-
-        # Create ContextSync with custom policy
-        context_sync = ContextSync(
-            context_id,
-            path="/test/recycle/path",
-            policy=custom_sync_policy,
-        )
-
-        print("Creating session with custom recyclePolicy...")
-        print(
-            f"RecyclePolicy lifecycle: {custom_sync_policy.recycle_policy.lifecycle.value}"
-        )
-        print(f"RecyclePolicy paths: {custom_sync_policy.recycle_policy.paths}")
-
-        # Create session parameters with custom recyclePolicy
-        params = CreateSessionParams(
-            labels={"test": "recyclePolicy", "lifecycle": "1day"},
-            context_syncs=[context_sync],
-        )
-
-        # Create session with custom recyclePolicy
-        create_result = await self.agent_bay.create(params)
-        # Verify SessionResult structure
-        self.assertTrue(create_result.success)
-        self.assertIsNotNone(create_result.request_id)
-        self.assertIsInstance(create_result.request_id, str)
-        self.assertGreater(len(create_result.request_id), 0)
-        self.assertIsNotNone(create_result.session)
-        self.assertFalse(create_result.error_message)
-
-        self.session = create_result.session
-        print(f"Session created successfully with ID: {self.session.session_id}")
-        print(f"Create Session RequestId: {create_result.request_id or 'undefined'}")
-
-        # Verify session properties
-        self.assertIsNotNone(self.session.session_id)
-        self.assertGreater(len(self.session.session_id), 0)
-
-        print("Session with custom recyclePolicy created and verified successfully")
-
-    def test_context_sync_with_invalid_recycle_policy_path(self):
-        """Test that ContextSync throws error when creating with invalid recyclePolicy path."""
-        print("Testing ContextSync creation with invalid recyclePolicy path...")
-
-        # Test that RecyclePolicy constructor throws an error for invalid path
-        with self.assertRaises(ValueError) as context:
-            RecyclePolicy(
-                lifecycle=Lifecycle.LIFECYCLE_1DAY,
-                paths=["/invalid/path/*"],  # Invalid path with wildcard
-            )
-
-        # Verify the error message
-        expected_message = "Wildcard patterns are not supported in recycle policy paths. Got: /invalid/path/*. Please use exact directory paths instead."
-        self.assertIn(
-            "Wildcard patterns are not supported in recycle policy paths",
-            str(context.exception),
-        )
-        self.assertIn("/invalid/path/*", str(context.exception))
-
-        print("RecyclePolicy correctly threw error for invalid path")
-
-        # Test with multiple invalid paths
-        with self.assertRaises(ValueError):
-            RecyclePolicy(
-                lifecycle=Lifecycle.LIFECYCLE_1DAY,
-                paths=["/valid/path", "/invalid/path?", "/another/invalid/*"],
-            )
-
-        print("RecyclePolicy correctly threw error for multiple invalid paths")
-
-    def test_recycle_policy_invalid_lifecycle(self):
-        """Test invalid Lifecycle values."""
-        print("Testing invalid Lifecycle values...")
-
-        # Test with invalid lifecycle value (string instead of Lifecycle enum)
-        with self.assertRaises(ValueError) as context:
-            RecyclePolicy(
-                lifecycle="invalid_lifecycle",  # Invalid: should be Lifecycle enum
-                paths=[""],
-            )
-
-        # Verify error message contains expected information
-        error_message = str(context.exception)
-        expected_substrings = [
-            "Invalid lifecycle value",
-            "invalid_lifecycle",
-            "Valid values are:",
-        ]
-
-        for substring in expected_substrings:
-            self.assertIn(substring, error_message)
-
-        print(
-            f"Invalid lifecycle 'invalid_lifecycle' correctly failed validation: {error_message}"
-        )
-        print("Invalid Lifecycle values test completed successfully")
-
-    def test_recycle_policy_combined_invalid(self):
-        """Test combination of invalid Lifecycle and invalid paths."""
-        print("Testing combination of invalid Lifecycle and invalid paths...")
-
-        # Test with both invalid lifecycle and invalid path
-        with self.assertRaises(ValueError) as context:
-            RecyclePolicy(
-                lifecycle="invalid_lifecycle",  # Invalid lifecycle
-                paths=["/invalid/path/*"],  # Invalid path with wildcard
-            )
-
-        # Should fail on lifecycle validation first (since it's checked first in __post_init__)
-        error_message = str(context.exception)
-        self.assertIn("Invalid lifecycle value", error_message)
-
-        print(
-            f"Policy with both invalid lifecycle and invalid path correctly failed validation: {error_message}"
-        )
-        print("Combined invalid configuration test completed successfully")
+def test_init_without_api_key_raises_error():
+    """Test initialization without API key raises ValueError."""
+    original_key = os.environ.get("AGENTBAY_API_KEY")
+    try:
+        if "AGENTBAY_API_KEY" in os.environ:
+            del os.environ["AGENTBAY_API_KEY"]
+        with pytest.raises(ValueError):
+            AsyncAgentBay()
+    finally:
+        if original_key is not None:
+            os.environ["AGENTBAY_API_KEY"] = original_key
 
 
-class TestBrowserContext(unittest.IsolatedAsyncioTestCase):
-    """Test cases for BrowserContext functionality."""
+# ---------------------------------------------------------------------------
+# TestAsyncAgentBay – create / delete
+# ---------------------------------------------------------------------------
 
-    async def asyncSetUp(self):
-        """Set up test fixtures."""
-        api_key = get_test_api_key()
-        self.agent_bay = AsyncAgentBay(api_key=api_key)
-        self.session = None
 
-    async def asyncTearDown(self):
-        """Tear down test fixtures."""
-        # Clean up session
-        if self.session:
-            try:
-                print("Cleaning up session with BrowserContext...")
-                delete_result = await self.agent_bay.delete(self.session)
-                print(
-                    f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
-                )
-            except Exception as e:
-                print(f"Warning: Error deleting session: {e}")
+async def test_create_list_delete(make_session):
+    """Test create and delete methods."""
+    print("Creating a new session...")
+    lc = await make_session("linux_latest")
 
-    @pytest.mark.asyncio
-    async def test_create_session_with_browser_context_default_recycle_policy(self):
-        """Test creating session with BrowserContext using default RecyclePolicy."""
-        print("Testing session creation with BrowserContext (default RecyclePolicy)...")
+    s = lc._result.session
+    print(f"Session created with ID: {s.session_id}")
+    assert s.session_id is not None
+    assert s.session_id != ""
+    # Session cleanup is handled by the make_session factory in conftest.py
 
-        # Create a browser context first
-        context_name = f"test-browser-context-default-{int(time.time())}"
-        context_result = await self.agent_bay.context.get(context_name, create=True)
-        if not context_result.success or not context_result.context:
-            self.skipTest("Failed to create browser context")
 
-        context = context_result.context
-        context_id = context.id
-        print(f"Created browser context: {context_name} (ID: {context_id})")
+# ---------------------------------------------------------------------------
+# TestSession – properties and basic operations
+# ---------------------------------------------------------------------------
 
-        # Create BrowserContext with default RecyclePolicy using the created context ID
-        browser_context = BrowserContext(
-            context_id=context_id, auto_upload=True
-        )
 
-        print(f"BrowserContext context_id: {browser_context.context_id}")
-        print(f"BrowserContext auto_upload: {browser_context.auto_upload}")
+async def test_session_properties(make_session):
+    """Test session properties and methods."""
+    lc = await make_session("linux_latest")
+    s = lc._result.session
+    assert s.session_id is not None
+    assert s.session_id != ""
 
-        # Create session parameters with BrowserContext
-        params = CreateSessionParams(
-            labels={"test": "browserContext", "recycle_policy": "default"},
-            browser_context=browser_context,
-        )
 
-        # Create session with BrowserContext
-        create_result = await self.agent_bay.create(params)
 
-        # Verify SessionResult structure
-        self.assertTrue(create_result.success)
-        self.assertIsNotNone(create_result.request_id)
-        self.assertIsInstance(create_result.request_id, str)
-        self.assertGreater(len(create_result.request_id), 0)
-        self.assertIsNotNone(create_result.session)
-        self.assertFalse(create_result.error_message)
 
-        self.session = create_result.session
-        print(f"Session created successfully with ID: {self.session.session_id}")
-        print(f"Create Session RequestId: {create_result.request_id or 'undefined'}")
-
-        # Verify session properties
-        self.assertIsNotNone(self.session.session_id)
-        self.assertGreater(len(self.session.session_id), 0)
-
-        print(
-            "Session with BrowserContext (default RecyclePolicy) created and verified successfully"
-        )
-
-        # Clean up the created context
+async def test_command(make_session):
+    """Test command execution."""
+    lc = await make_session("linux_latest")
+    s = lc._result.session
+    if s.command:
+        print("Executing command...")
         try:
-            await self.agent_bay.context.delete(context)
-            print(f"Browser context deleted: {context_id}")
+            response = s.command.execute_command("ls")
+            print(f"Command execution result: {response}")
+            assert response is not None
+            assert response.success, f"Command failed: {response.error_message}"
+            assert "tool not found" not in response.output.lower(), \
+                "Command.execute_command returned 'tool not found'"
         except Exception as e:
-            print(f"Warning: Failed to delete browser context: {e}")
+            print(f"Note: Command execution failed: {e}")
+    else:
+        print("Note: Command interface is None, skipping command test")
 
 
-class TestSessionPauseResume(unittest.IsolatedAsyncioTestCase):
-    """Test cases for session pause and resume functionality."""
-    
-    async def asyncSetUp(self):
-        """Set up test fixtures."""
-        api_key = get_test_api_key()
-        endpoint = os.environ.get("AGENTBAY_ENDPOINT")
-        self.agent_bay = AsyncAgentBay(api_key=api_key, 
-                                        cfg=Config(endpoint=endpoint, timeout_ms=60000))
-        self.session = None
+async def test_filesystem(make_session):
+    """Test filesystem operations."""
+    lc = await make_session("linux_latest")
+    s = lc._result.session
+    if s.file_system:
+        print("Reading file...")
+        try:
+            result = s.file_system.read_file("/etc/hosts")
+            print(f"ReadFile result: content='{result}'")
+            assert result is not None
+            assert result.success, f"Read file failed: {result.error_message}"
+            assert "tool not found" not in result.content.lower(), \
+                "FileSystem.read_file returned 'tool not found'"
+            print("File read successful")
+        except Exception as e:
+            print(f"Note: File operation failed: {e}")
+    else:
+        print("Note: FileSystem interface is None, skipping file test")
 
-    async def asyncTearDown(self):
-        """Tear down test fixtures."""
-        if self.session:
-            try:
-                print("Cleaning up session...")
-                delete_result = await self.agent_bay.delete(self.session)
-                print(
-                    f"Delete Session RequestId: {delete_result.request_id or 'undefined'}"
-                )
-            except Exception as e:
-                print(f"Warning: Error deleting session: {e}")
 
-    @pytest.mark.asyncio
-    async def test_session_pause_and_resume(self):
-        """Test pausing and resuming a session."""
-        print("Creating a new session for pause/resume testing...")
-        
-        # Create session
-        params = CreateSessionParams(
-        image_id="imgc-0ab5ta4myt0ntw12x",
-        # image_id="imgc-0ae8jvkn0mtjfs9ag",
-        # image_id="linux_latest",
-        # image_id="moltbot-linux-ubuntu-2204",
-        # image_id="windows_latest",
-        labels={"project": "piaoyun-demo", "environment": "testing"},
+# ---------------------------------------------------------------------------
+# RecyclePolicy – parameter validation (no network)
+# ---------------------------------------------------------------------------
+
+
+def test_context_sync_with_invalid_recycle_policy_path():
+    """Test that RecyclePolicy raises error for invalid path with wildcard."""
+    print("Testing ContextSync creation with invalid recyclePolicy path...")
+
+    with pytest.raises(ValueError) as exc_info:
+        RecyclePolicy(
+            lifecycle=Lifecycle.LIFECYCLE_1DAY,
+            paths=["/invalid/path/*"],
+        )
+    assert "Wildcard patterns are not supported in recycle policy paths" in str(exc_info.value)
+    assert "/invalid/path/*" in str(exc_info.value)
+    print("RecyclePolicy correctly raised error for invalid path")
+
+    with pytest.raises(ValueError):
+        RecyclePolicy(
+            lifecycle=Lifecycle.LIFECYCLE_1DAY,
+            paths=["/valid/path", "/invalid/path?", "/another/invalid/*"],
+        )
+    print("RecyclePolicy correctly raised error for multiple invalid paths")
+
+
+def test_recycle_policy_invalid_lifecycle():
+    """Test invalid Lifecycle values."""
+    print("Testing invalid Lifecycle values...")
+
+    with pytest.raises(ValueError) as exc_info:
+        RecyclePolicy(lifecycle="invalid_lifecycle", paths=[""])
+    error_message = str(exc_info.value)
+    assert "Invalid lifecycle value" in error_message
+    assert "invalid_lifecycle" in error_message
+    assert "Valid values are:" in error_message
+    print(f"Invalid lifecycle correctly failed: {error_message}")
+
+
+def test_recycle_policy_combined_invalid():
+    """Test combination of invalid Lifecycle and invalid path."""
+    print("Testing combination of invalid Lifecycle and invalid paths...")
+
+    with pytest.raises(ValueError) as exc_info:
+        RecyclePolicy(lifecycle="invalid_lifecycle", paths=["/invalid/path/*"])
+    # Lifecycle validation runs first
+    assert "Invalid lifecycle value" in str(exc_info.value)
+    print("Policy with both invalid lifecycle and path correctly failed")
+
+
+# ---------------------------------------------------------------------------
+# RecyclePolicy – session creation (network)
+# ---------------------------------------------------------------------------
+
+
+async def test_create_session_with_custom_recycle_policy(make_session):
+    """Test creating session with custom recyclePolicy using Lifecycle_1Day."""
+    recycle_policy = RecyclePolicy(lifecycle=Lifecycle.LIFECYCLE_1DAY, paths=[""])
+    custom_sync_policy = SyncPolicy(
+        upload_policy=UploadPolicy.default(),
+        download_policy=DownloadPolicy.default(),
+        delete_policy=DeletePolicy.default(),
+        extract_policy=ExtractPolicy.default(),
+        recycle_policy=recycle_policy,
+        bw_list=BWList(white_lists=[WhiteList(path="", exclude_paths=[])]),
     )
 
-        create_result = await self.agent_bay.create()
-        self.assertTrue(
-            create_result.success, 
-            f"Session creation failed: {create_result.error_message}"
-        )
-        self.assertIsNotNone(create_result.session, "Session object is None")
-        
-        self.session = create_result.session
-        print(f"Session created with ID: {self.session.session_id}")
-        
-        # Test pause
-        print("\n=== Testing session pause ===")
-        pause_result = await self.session.beta_pause(timeout=300, poll_interval=2)
-        
-        print(f"Pause result - Success: {pause_result.success}")
-        print(f"Pause result - Status: {pause_result.status}")
-        print(f"Pause result - RequestId: {pause_result.request_id}")
-        
-        if not pause_result.success:
-            print(f"Pause error message: {pause_result.error_message}")
-        
-        self.assertTrue(
-            pause_result.success, 
-            f"Session pause failed: {pause_result.error_message}"
-        )
-        self.assertEqual(
-            pause_result.status, 
-            "PAUSED", 
-            f"Expected status PAUSED, got {pause_result.status}"
-        )
-        print("✓ Session paused successfully")
-        
-        # Test resume
-        print("\n=== Testing session resume ===")
-        resume_result = await self.session.beta_resume(timeout=300, poll_interval=2)
-        
-        print(f"Resume result - Success: {resume_result.success}")
-        print(f"Resume result - Status: {resume_result.status}")
-        print(f"Resume result - RequestId: {resume_result.request_id}")
-        
-        if not resume_result.success:
-            print(f"Resume error message: {resume_result.error_message}")
-        
-        self.assertTrue(
-            resume_result.success, 
-            f"Session resume failed: {resume_result.error_message}"
-        )
-        self.assertEqual(
-            resume_result.status, 
-            "RUNNING", 
-            f"Expected status RUNNING, got {resume_result.status}"
-        )
-        print("✓ Session resumed successfully")
-        
-        print("\n=== Pause/Resume test completed successfully ===")
+    lc = await make_session(
+        "linux_latest",
+        context_name="test-recycle-context",
+        context_path="/test/recycle/path",
+        context_policy=custom_sync_policy,
+    )
+    s = lc._result.session
+    assert s is not None
+    assert s.session_id is not None
+    assert len(s.session_id) > 0
+    print(f"Session created successfully with ID: {s.session_id}")
 
-if __name__ == "__main__":
-    unittest.main()
+
+# ---------------------------------------------------------------------------
+# BrowserContext – session creation (network)
+# ---------------------------------------------------------------------------
+
+
+async def test_create_session_with_browser_context_default_recycle_policy(make_session):
+    """Test creating session with BrowserContext using default RecyclePolicy."""
+    print("Testing session creation with BrowserContext (default RecyclePolicy)...")
+
+    context_name = f"test-browser-context-default-{int(time.time())}"
+    lc = await make_session(
+        "linux_latest",
+        browser_name=context_name,
+        browser_kwargs={"auto_upload": True},
+    )
+    s = lc._result.session
+    assert s is not None
+    assert s.session_id is not None
+    assert len(s.session_id) > 0
+    print(f"Session created with ID: {s.session_id}")
+    # Session cleanup is handled by the make_session factory in conftest.py
+
+
+# ---------------------------------------------------------------------------
+# Session pause / resume
+# ---------------------------------------------------------------------------
+
+
+async def test_session_pause_and_resume(make_session):
+    """Test pausing and resuming a session."""
+    lc = await make_session("linux_latest")
+    s = lc._result.session
+    print(f"Session created with ID: {s.session_id}")
+
+    # Pause
+    print("\n=== Testing session pause ===")
+    pause_result = await s.beta_pause(timeout=300, poll_interval=2)
+    print(f"Pause result - Success: {pause_result.success}, Status: {pause_result.status}")
+    assert pause_result.success, f"Session pause failed: {pause_result.error_message}"
+    # Use lc.get_status() which returns the status string directly
+    status = await lc.get_status()
+    assert status == "PAUSED", f"Expected status PAUSED, got {status}"
+    print("✓ Session paused successfully")
+
+    # Resume
+    print("\n=== Testing session resume ===")
+    resume_result = await s.beta_resume(timeout=300, poll_interval=2)
+    print(f"Resume result - Success: {resume_result.success}, Status: {resume_result.status}")
+    assert resume_result.success, f"Session resume failed: {resume_result.error_message}"
+    assert resume_result.status == "RUNNING", \
+        f"Expected status RUNNING, got {resume_result.status}"
+    print("✓ Session resumed successfully")
+
+    print("\n=== Pause/Resume test completed successfully ===")

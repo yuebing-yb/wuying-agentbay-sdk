@@ -81,17 +81,27 @@ class AsyncSessionLifecycle:
         self._agent_bay = AsyncAgentBay(api_key=resolved_key)
         # Stores the SessionResult from the last create call
         self._result = None
+        # Whether to sync context data when deleting the session.
+        # True for context_name / browser_name sessions, False for default sessions.
+        self._sync_context = False
 
     # ------------------------------------------------------------------
     # Session creation
     # ------------------------------------------------------------------
 
-    async def default_create(self, image_id: str) -> object:
+    async def default_create(
+        self,
+        image_id: Optional[str] = None,
+        params: Optional[CreateSessionParams] = None,
+    ) -> object:
         """
-        Create a session with the given image_id and cache the result.
+        Create a session and cache the result.
 
         Args:
-            image_id: The image ID to create the session with.
+            image_id: Convenience shorthand – creates a ``CreateSessionParams``
+                      with only ``image_id`` set.  Ignored when *params* is given.
+            params: Full :class:`CreateSessionParams` to use.  When provided,
+                    *image_id* is ignored.
 
         Returns:
             SessionResult: The full result object from AgentBay.create().
@@ -99,7 +109,8 @@ class AsyncSessionLifecycle:
         Raises:
             SessionLifecycleError: If the API call fails or returns success=False.
         """
-        params = CreateSessionParams(image_id=image_id)
+        if params is None:
+            params = CreateSessionParams(image_id=image_id)
         try:
             result = await self._agent_bay.create(params)
         except Exception as exc:
@@ -117,27 +128,60 @@ class AsyncSessionLifecycle:
                 f"Failed to create session: {result.error_message}"
             )
         self._result = result
+        self._sync_context = False
         return result
 
-    async def create_with_context_sync(
+    async def create_with_context_name(
         self,
         image_id: str,
-        context_sync: ContextSync,
+        context_name: str,
+        path: str,
+        policy: object,
     ) -> object:
         """
-        Create a session with the given image_id and a ContextSync configuration.
+        Create a session with a ContextSync built from a context name.
+
+        Internally calls ``agent_bay.context.get(context_name, create=True)`` to
+        resolve the context ID, then assembles a :class:`ContextSync` and creates the
+        session.  Everything uses the same ``self._agent_bay`` instance so the resulting
+        session belongs to the same account / connection as any other session created
+        by this lifecycle object.
 
         Args:
             image_id: The image ID to create the session with.
-            context_sync: A :class:`ContextSync` instance describing the context
-                          sync policy to apply when creating the session.
+            context_name: Name of the context to look up or create.
+            path: The local path for the ContextSync.
+            policy: Required :class:`SyncPolicy` to attach to the ContextSync.
 
         Returns:
             SessionResult: The full result object from AgentBay.create().
 
         Raises:
-            SessionLifecycleError: If the API call fails or returns success=False.
+            SessionLifecycleError: If context lookup or session creation fails.
         """
+        if policy is None:
+            raise SessionLifecycleError(
+                "policy is required for create_with_context_name(). "
+                "Please provide a SyncPolicy instance."
+            )
+        try:
+            ctx_result = await self._agent_bay.context.get(context_name, create=True)
+        except Exception as exc:
+            raise SessionLifecycleError(
+                f"context.get({context_name!r}) raised an exception",
+                cause=exc,
+            ) from exc
+
+        if not ctx_result.success or ctx_result.context is None:
+            raise SessionLifecycleError(
+                f"Failed to get/create context {context_name!r}: {ctx_result.error_message}"
+            )
+
+        context_sync = ContextSync(
+            ctx_result.context.id,
+            path=path,
+            policy=policy,
+        )
         params = CreateSessionParams(
             image_id=image_id,
             context_syncs=[context_sync],
@@ -146,7 +190,7 @@ class AsyncSessionLifecycle:
             result = await self._agent_bay.create(params)
         except Exception as exc:
             raise SessionLifecycleError(
-                "AsyncAgentBay.create (with context_sync) raised an exception",
+                "AsyncAgentBay.create (with context_name) raised an exception",
                 cause=exc,
             ) from exc
 
@@ -156,38 +200,60 @@ class AsyncSessionLifecycle:
             )
         if not result.success or result.session is None:
             raise SessionLifecycleError(
-                f"Failed to create session with context_sync: {result.error_message}"
+                f"Failed to create session with context_name: {result.error_message}"
             )
         self._result = result
+        self._sync_context = True
         return result
 
-    async def create_with_browser_context(
+    async def create_with_browser_name(
         self,
         image_id: str,
-        browser_context: Optional[BrowserContext] = None,
+        context_name: str,
+        **kwargs,
     ) -> object:
         """
-        Create a browser session with the given image_id and optional BrowserContext.
+        Create a browser session with a BrowserContext built from a context name.
+
+        Internally calls ``agent_bay.context.get(context_name, create=True)`` to
+        resolve the context ID, then assembles a :class:`BrowserContext` using the
+        resolved ID and any extra keyword arguments, and delegates to the standard
+        session-create path.  Everything uses the same ``self._agent_bay`` instance.
 
         Args:
-            image_id: The image ID to create the session with (e.g. ``"browser_latest"``）.
-            browser_context: An optional :class:`BrowserContext` instance to attach
-                             persistent context / extension options to the session.
+            image_id: The image ID to create the session with (e.g. ``"browser_latest"``).
+            context_name: Name of the browser context to look up or create.
+            **kwargs: Extra keyword arguments forwarded to :class:`BrowserContext`
+                      (e.g. ``auto_upload=True``, ``sync_mode=...``,
+                      ``extension_option=...``, ``fingerprint_context=...``).
 
         Returns:
             SessionResult: The full result object from AgentBay.create().
 
         Raises:
-            SessionLifecycleError: If session creation or browser initialization fails.
+            SessionLifecycleError: If context lookup or session creation fails.
         """
+        try:
+            ctx_result = await self._agent_bay.context.get(context_name, create=True)
+        except Exception as exc:
+            raise SessionLifecycleError(
+                f"context.get({context_name!r}) raised an exception",
+                cause=exc,
+            ) from exc
+
+        if not ctx_result.success or ctx_result.context is None:
+            raise SessionLifecycleError(
+                f"Failed to get/create browser context {context_name!r}: {ctx_result.error_message}"
+            )
+
+        browser_context = BrowserContext(ctx_result.context.id, **kwargs)
         params = CreateSessionParams(image_id=image_id)
-        if browser_context is not None:
-            params.browser_context = browser_context
+        params.browser_context = browser_context
         try:
             result = await self._agent_bay.create(params)
         except Exception as exc:
             raise SessionLifecycleError(
-                "AsyncAgentBay.create (with browser_option) raised an exception",
+                "AsyncAgentBay.create (with browser_name) raised an exception",
                 cause=exc,
             ) from exc
 
@@ -201,6 +267,7 @@ class AsyncSessionLifecycle:
             )
 
         self._result = result
+        self._sync_context = True
         return result
 
     # ------------------------------------------------------------------
@@ -221,10 +288,11 @@ class AsyncSessionLifecycle:
         """
         if self._result is None or self._result.session is None:
             raise SessionLifecycleError(
-                "No active session. Call default_create() or create_with_context_sync() first."
+                "No active session. Call default_create(), create_with_context_name(), or create_with_browser_name() first."
             )
         try:
             status_result = await self._result.session.get_status()
+            print(f"Session status: {status_result.status}")
         except SessionError:
             raise
         except Exception as exc:
@@ -247,6 +315,10 @@ class AsyncSessionLifecycle:
         """
         Delete the currently cached session.
 
+        Uses ``sync_context=True`` automatically when the session was created
+        via :meth:`create_with_context_name` or :meth:`create_with_browser_name`,
+        and ``sync_context=False`` for sessions created via :meth:`default_create`.
+
         Returns:
             DeleteResult.
 
@@ -257,11 +329,11 @@ class AsyncSessionLifecycle:
         """
         if self._result is None or self._result.session is None:
             raise SessionLifecycleError(
-                "No active session. Call default_create() or create_with_context_sync() first."
+                "No active session. Call default_create(), create_with_context_name(), or create_with_browser_name() first."
             )
         session = self._result.session
         try:
-            result = await self._agent_bay.delete(session)
+            result = await self._agent_bay.delete(session, sync_context=self._sync_context)
         except Exception as exc:
             raise SessionLifecycleError(
                 "AsyncAgentBay.delete raised an exception",
@@ -274,6 +346,7 @@ class AsyncSessionLifecycle:
             )
 
         self._result = None
+        self._sync_context = False
         return result
 
 
@@ -314,17 +387,27 @@ class SyncSessionLifecycle:
         self._agent_bay = AgentBay(api_key=resolved_key)
         # Stores the SessionResult from the last create call
         self._result = None
+        # Whether to sync context data when deleting the session.
+        # True for context_name / browser_name sessions, False for default sessions.
+        self._sync_context = False
 
     # ------------------------------------------------------------------
     # Session creation
     # ------------------------------------------------------------------
 
-    def default_create(self, image_id: str) -> object:
+    def default_create(
+        self,
+        image_id: Optional[str] = None,
+        params: Optional[CreateSessionParams] = None,
+    ) -> object:
         """
-        Create a session with the given image_id and cache the result.
+        Create a session and cache the result.
 
         Args:
-            image_id: The image ID to create the session with.
+            image_id: Convenience shorthand – creates a ``CreateSessionParams``
+                      with only ``image_id`` set.  Ignored when *params* is given.
+            params: Full :class:`CreateSessionParams` to use.  When provided,
+                    *image_id* is ignored.
 
         Returns:
             SessionResult: The full result object from AgentBay.create().
@@ -332,7 +415,8 @@ class SyncSessionLifecycle:
         Raises:
             SessionLifecycleError: If the API call fails or returns success=False.
         """
-        params = CreateSessionParams(image_id=image_id)
+        if params is None:
+            params = CreateSessionParams(image_id=image_id)
         try:
             result = self._agent_bay.create(params)
         except Exception as exc:
@@ -350,27 +434,60 @@ class SyncSessionLifecycle:
                 f"Failed to create session: {result.error_message}"
             )
         self._result = result
+        self._sync_context = False
         return result
 
-    def create_with_context_sync(
+    def create_with_context_name(
         self,
         image_id: str,
-        context_sync: ContextSync,
+        context_name: str,
+        path: str,
+        policy: object,
     ) -> object:
         """
-        Create a session with the given image_id and a ContextSync configuration.
+        Create a session with a ContextSync built from a context name.
+
+        Internally calls ``agent_bay.context.get(context_name, create=True)`` to
+        resolve the context ID, then assembles a :class:`ContextSync` and creates the
+        session.  Everything uses the same ``self._agent_bay`` instance so the resulting
+        session belongs to the same account / connection as any other session created
+        by this lifecycle object.
 
         Args:
             image_id: The image ID to create the session with.
-            context_sync: A :class:`ContextSync` instance describing the context
-                          sync policy to apply when creating the session.
+            context_name: Name of the context to look up or create.
+            path: The local path for the ContextSync.
+            policy: Required :class:`SyncPolicy` to attach to the ContextSync.
 
         Returns:
             SessionResult: The full result object from AgentBay.create().
 
         Raises:
-            SessionLifecycleError: If the API call fails or returns success=False.
+            SessionLifecycleError: If context lookup or session creation fails.
         """
+        if policy is None:
+            raise SessionLifecycleError(
+                "policy is required for create_with_context_name(). "
+                "Please provide a SyncPolicy instance."
+            )
+        try:
+            ctx_result = self._agent_bay.context.get(context_name, create=True)
+        except Exception as exc:
+            raise SessionLifecycleError(
+                f"context.get({context_name!r}) raised an exception",
+                cause=exc,
+            ) from exc
+
+        if not ctx_result.success or ctx_result.context is None:
+            raise SessionLifecycleError(
+                f"Failed to get/create context {context_name!r}: {ctx_result.error_message}"
+            )
+
+        context_sync = ContextSync(
+            ctx_result.context.id,
+            path=path,
+            policy=policy,
+        )
         params = CreateSessionParams(
             image_id=image_id,
             context_syncs=[context_sync],
@@ -379,7 +496,7 @@ class SyncSessionLifecycle:
             result = self._agent_bay.create(params)
         except Exception as exc:
             raise SessionLifecycleError(
-                "AgentBay.create (with context_sync) raised an exception",
+                "AgentBay.create (with context_name) raised an exception",
                 cause=exc,
             ) from exc
 
@@ -389,38 +506,60 @@ class SyncSessionLifecycle:
             )
         if not result.success or result.session is None:
             raise SessionLifecycleError(
-                f"Failed to create session with context_sync: {result.error_message}"
+                f"Failed to create session with context_name: {result.error_message}"
             )
         self._result = result
+        self._sync_context = True
         return result
 
-    def create_with_browser_context(
+    def create_with_browser_name(
         self,
         image_id: str,
-        browser_context: Optional[BrowserContext] = None,
+        context_name: str,
+        **kwargs,
     ) -> object:
         """
-        Create a browser session with the given image_id and optional BrowserContext.
+        Create a browser session with a BrowserContext built from a context name.
+
+        Internally calls ``agent_bay.context.get(context_name, create=True)`` to
+        resolve the context ID, then assembles a :class:`BrowserContext` using the
+        resolved ID and any extra keyword arguments, and creates the session.
+        Everything uses the same ``self._agent_bay`` instance.
 
         Args:
-            image_id: The image ID to create the session with (e.g. ``"browser_latest"``）.
-            browser_context: An optional :class:`BrowserContext` instance to attach
-                             persistent context / extension options to the session.
+            image_id: The image ID to create the session with (e.g. ``"browser_latest"``).
+            context_name: Name of the browser context to look up or create.
+            **kwargs: Extra keyword arguments forwarded to :class:`BrowserContext`
+                      (e.g. ``auto_upload=True``, ``sync_mode=...``,
+                      ``extension_option=...``, ``fingerprint_context=...``).
 
         Returns:
             SessionResult: The full result object from AgentBay.create().
 
         Raises:
-            SessionLifecycleError: If session creation fails.
+            SessionLifecycleError: If context lookup or session creation fails.
         """
+        try:
+            ctx_result = self._agent_bay.context.get(context_name, create=True)
+        except Exception as exc:
+            raise SessionLifecycleError(
+                f"context.get({context_name!r}) raised an exception",
+                cause=exc,
+            ) from exc
+
+        if not ctx_result.success or ctx_result.context is None:
+            raise SessionLifecycleError(
+                f"Failed to get/create browser context {context_name!r}: {ctx_result.error_message}"
+            )
+
+        browser_context = BrowserContext(ctx_result.context.id, **kwargs)
         params = CreateSessionParams(image_id=image_id)
-        if browser_context is not None:
-            params.browser_context = browser_context
+        params.browser_context = browser_context
         try:
             result = self._agent_bay.create(params)
         except Exception as exc:
             raise SessionLifecycleError(
-                "AgentBay.create (with browser_context) raised an exception",
+                "AgentBay.create (with browser_name) raised an exception",
                 cause=exc,
             ) from exc
 
@@ -434,6 +573,7 @@ class SyncSessionLifecycle:
             )
 
         self._result = result
+        self._sync_context = True
         return result
 
     # ------------------------------------------------------------------
@@ -454,7 +594,7 @@ class SyncSessionLifecycle:
         """
         if self._result is None or self._result.session is None:
             raise SessionLifecycleError(
-                "No active session. Call default_create() or create_with_context_sync() first."
+                "No active session. Call default_create(), create_with_context_name(), or create_with_browser_name() first."
             )
         try:
             status_result = self._result.session.get_status()
@@ -480,6 +620,10 @@ class SyncSessionLifecycle:
         """
         Delete the currently cached session.
 
+        Uses ``sync_context=True`` automatically when the session was created
+        via :meth:`create_with_context_name` or :meth:`create_with_browser_name`,
+        and ``sync_context=False`` for sessions created via :meth:`default_create`.
+
         Returns:
             DeleteResult.
 
@@ -490,11 +634,11 @@ class SyncSessionLifecycle:
         """
         if self._result is None or self._result.session is None:
             raise SessionLifecycleError(
-                "No active session. Call default_create() or create_with_context_sync() first."
+                "No active session. Call default_create(), create_with_context_name(), or create_with_browser_name() first."
             )
         session = self._result.session
         try:
-            result = self._agent_bay.delete(session)
+            result = self._agent_bay.delete(session, sync_context=self._sync_context)
         except Exception as exc:
             raise SessionLifecycleError(
                 "AgentBay.delete raised an exception",
@@ -507,4 +651,5 @@ class SyncSessionLifecycle:
             )
 
         self._result = None
+        self._sync_context = False
         return result
