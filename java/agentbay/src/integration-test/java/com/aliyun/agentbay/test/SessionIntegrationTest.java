@@ -6,6 +6,8 @@ import com.aliyun.agentbay.exception.AgentBayException;
 import com.aliyun.agentbay.model.CommandResult;
 import com.aliyun.agentbay.model.DeleteResult;
 import com.aliyun.agentbay.model.FileContentResult;
+import com.aliyun.agentbay.model.SessionMetrics;
+import com.aliyun.agentbay.model.SessionMetricsResult;
 import com.aliyun.agentbay.model.SessionResult;
 import com.aliyun.agentbay.session.CreateSessionParams;
 import com.aliyun.agentbay.session.Session;
@@ -154,6 +156,32 @@ public class SessionIntegrationTest {
         } else {
             System.out.println("Note: FileSystem interface is null, skipping file test");
         }
+    }
+
+    @Test
+    public void testGetMetrics() {
+        // Test session.getMetrics() returns structured data
+        // Equivalent to test_get_metrics_returns_structured_data in test_session_get_metrics_integration.py
+        System.out.println("Testing session.getMetrics()...");
+        SessionMetricsResult metricsResult = this.session.getMetrics();
+
+        assertNotNull(metricsResult);
+        assertTrue(
+            "getMetrics() failed: " + metricsResult.getErrorMessage(),
+            metricsResult.isSuccess()
+        );
+
+        SessionMetrics m = metricsResult.getMetrics();
+        assertNotNull("metrics object should not be null", m);
+        assertTrue("cpu_count should be >= 1", m.getCpuCount() >= 1);
+        assertTrue("mem_total should be > 0", m.getMemTotal() > 0);
+        assertTrue("disk_total should be > 0", m.getDiskTotal() > 0);
+        assertTrue("cpu_used_pct should be >= 0.0", m.getCpuUsedPct() >= 0.0);
+        assertTrue("cpu_used_pct should be <= 100.0", m.getCpuUsedPct() <= 100.0);
+        assertNotNull("timestamp should not be null", m.getTimestamp());
+        assertTrue("timestamp should not be empty", m.getTimestamp().length() > 0);
+
+        System.out.println("✅ testGetMetrics passed");
     }
 }
 
