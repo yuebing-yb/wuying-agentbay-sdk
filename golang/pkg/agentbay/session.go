@@ -122,6 +122,9 @@ type Session struct {
 	ImageId   string // ImageId used when creating this session
 	McpTools  []McpTool
 
+	// Application instance ID
+	AppInstanceId string
+
 	// Resource URL for accessing the session
 	ResourceUrl string
 

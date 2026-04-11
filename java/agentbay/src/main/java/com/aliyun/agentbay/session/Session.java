@@ -43,6 +43,7 @@ public class Session {
     public Mobile mobile;
     private Git git;
     private String fileTransferContextId;
+    private String appInstanceId;
     private String resourceUrl;
     private String token;
     private String linkUrl;
@@ -77,6 +78,25 @@ public class Session {
         this.git = new Git(this);
         this.imageId = "";
         this.wsUrl = "";
+        this.appInstanceId = "";
+    }
+
+    /**
+     * Get the application instance ID.
+     *
+     * @return The application instance ID
+     */
+    public String getAppInstanceId() {
+        return appInstanceId;
+    }
+
+    /**
+     * Set the application instance ID.
+     *
+     * @param appInstanceId The application instance ID
+     */
+    public void setAppInstanceId(String appInstanceId) {
+        this.appInstanceId = appInstanceId;
     }
 
     public String getWsUrl() {

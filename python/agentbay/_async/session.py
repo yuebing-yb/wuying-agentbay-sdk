@@ -117,6 +117,9 @@ class AsyncSession:
         self.agent_bay = agent_bay
         self.session_id = session_id
 
+        # Application instance ID
+        self.app_instance_id = ""
+
         # Resource URL for accessing the session
         self.resource_url = ""
 

@@ -217,15 +217,19 @@ export class Session {
   private agentBay: AgentBay;
   public sessionId: string;
 
-  // Resource URL for accessing the session
   public resourceUrl = "";
 
-  // LinkUrl-based direct tool call (non-VPC)
+  /** Application instance ID */
+  public appInstanceId = "";
+
+  /** Token for VPC sessions */
   public token = "";
   public linkUrl = "";
 
-  // WS long connection URL (for streaming output)
+  /** WebSocket URL for streaming features */
   public wsUrl = "";
+
+  /** Cached WebSocket client instance */
   private _wsClient: WsClient | null = null;
 
   // Recording functionality
