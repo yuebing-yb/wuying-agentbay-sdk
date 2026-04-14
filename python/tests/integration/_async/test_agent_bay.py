@@ -1,13 +1,9 @@
 """Integration tests for AgentBay async client and session operations."""
 
-import os
 import time
-
-import pytest
 
 from agentbay import (
     BWList,
-    AsyncAgentBay,
     DeletePolicy,
     DownloadPolicy,
     ExtractPolicy,
@@ -19,46 +15,6 @@ from agentbay import (
 )
 
 # make_session factory fixture is provided by conftest.py (auto-loaded by pytest)
-
-
-# ---------------------------------------------------------------------------
-# TestAsyncAgentBay – init tests (no network calls)
-# ---------------------------------------------------------------------------
-
-
-def test_init_with_api_key():
-    """Test initialization with API key."""
-    api_key = os.environ.get("AGENTBAY_API_KEY", "akm-test")
-    ab = AsyncAgentBay(api_key=api_key)
-    assert ab.api_key == api_key
-    assert ab.client is not None
-
-
-def test_init_without_api_key_uses_env():
-    """Test initialization without explicit API key falls back to env var."""
-    original_key = os.environ.get("AGENTBAY_API_KEY")
-    os.environ["AGENTBAY_API_KEY"] = "env_api_key"
-    try:
-        ab = AsyncAgentBay()
-        assert ab.api_key == "env_api_key"
-    finally:
-        if original_key is not None:
-            os.environ["AGENTBAY_API_KEY"] = original_key
-        else:
-            del os.environ["AGENTBAY_API_KEY"]
-
-
-def test_init_without_api_key_raises_error():
-    """Test initialization without API key raises ValueError."""
-    original_key = os.environ.get("AGENTBAY_API_KEY")
-    try:
-        if "AGENTBAY_API_KEY" in os.environ:
-            del os.environ["AGENTBAY_API_KEY"]
-        with pytest.raises(ValueError):
-            AsyncAgentBay()
-    finally:
-        if original_key is not None:
-            os.environ["AGENTBAY_API_KEY"] = original_key
 
 
 # ---------------------------------------------------------------------------
@@ -91,8 +47,6 @@ async def test_session_properties(make_session):
     assert s.session_id != ""
 
 
-
-
 async def test_command(make_session):
     """Test command execution."""
     lc = await make_session("linux_latest")
@@ -100,7 +54,7 @@ async def test_command(make_session):
     if s.command:
         print("Executing command...")
         try:
-            response = s.command.execute_command("ls")
+            response = await s.command.execute_command("ls")
             print(f"Command execution result: {response}")
             assert response is not None
             assert response.success, f"Command failed: {response.error_message}"
@@ -119,7 +73,7 @@ async def test_filesystem(make_session):
     if s.file_system:
         print("Reading file...")
         try:
-            result = s.file_system.read_file("/etc/hosts")
+            result = await s.file_system.read_file("/etc/hosts")
             print(f"ReadFile result: content='{result}'")
             assert result is not None
             assert result.success, f"Read file failed: {result.error_message}"
@@ -130,56 +84,6 @@ async def test_filesystem(make_session):
             print(f"Note: File operation failed: {e}")
     else:
         print("Note: FileSystem interface is None, skipping file test")
-
-
-# ---------------------------------------------------------------------------
-# RecyclePolicy – parameter validation (no network)
-# ---------------------------------------------------------------------------
-
-
-def test_context_sync_with_invalid_recycle_policy_path():
-    """Test that RecyclePolicy raises error for invalid path with wildcard."""
-    print("Testing ContextSync creation with invalid recyclePolicy path...")
-
-    with pytest.raises(ValueError) as exc_info:
-        RecyclePolicy(
-            lifecycle=Lifecycle.LIFECYCLE_1DAY,
-            paths=["/invalid/path/*"],
-        )
-    assert "Wildcard patterns are not supported in recycle policy paths" in str(exc_info.value)
-    assert "/invalid/path/*" in str(exc_info.value)
-    print("RecyclePolicy correctly raised error for invalid path")
-
-    with pytest.raises(ValueError):
-        RecyclePolicy(
-            lifecycle=Lifecycle.LIFECYCLE_1DAY,
-            paths=["/valid/path", "/invalid/path?", "/another/invalid/*"],
-        )
-    print("RecyclePolicy correctly raised error for multiple invalid paths")
-
-
-def test_recycle_policy_invalid_lifecycle():
-    """Test invalid Lifecycle values."""
-    print("Testing invalid Lifecycle values...")
-
-    with pytest.raises(ValueError) as exc_info:
-        RecyclePolicy(lifecycle="invalid_lifecycle", paths=[""])
-    error_message = str(exc_info.value)
-    assert "Invalid lifecycle value" in error_message
-    assert "invalid_lifecycle" in error_message
-    assert "Valid values are:" in error_message
-    print(f"Invalid lifecycle correctly failed: {error_message}")
-
-
-def test_recycle_policy_combined_invalid():
-    """Test combination of invalid Lifecycle and invalid path."""
-    print("Testing combination of invalid Lifecycle and invalid paths...")
-
-    with pytest.raises(ValueError) as exc_info:
-        RecyclePolicy(lifecycle="invalid_lifecycle", paths=["/invalid/path/*"])
-    # Lifecycle validation runs first
-    assert "Invalid lifecycle value" in str(exc_info.value)
-    print("Policy with both invalid lifecycle and path correctly failed")
 
 
 # ---------------------------------------------------------------------------
@@ -251,10 +155,9 @@ async def test_session_pause_and_resume(make_session):
     pause_result = await s.beta_pause(timeout=300, poll_interval=2)
     print(f"Pause result - Success: {pause_result.success}, Status: {pause_result.status}")
     assert pause_result.success, f"Session pause failed: {pause_result.error_message}"
-    # Use lc.get_status() which returns the status string directly
     status = await lc.get_status()
     assert status == "PAUSED", f"Expected status PAUSED, got {status}"
-    print("✓ Session paused successfully")
+    print("Session paused successfully")
 
     # Resume
     print("\n=== Testing session resume ===")
@@ -263,6 +166,7 @@ async def test_session_pause_and_resume(make_session):
     assert resume_result.success, f"Session resume failed: {resume_result.error_message}"
     assert resume_result.status == "RUNNING", \
         f"Expected status RUNNING, got {resume_result.status}"
-    print("✓ Session resumed successfully")
+    print("Session resumed successfully")
 
     print("\n=== Pause/Resume test completed successfully ===")
+

@@ -41,10 +41,37 @@ Usage::
         assert lc._result.session.session_id
 """
 
+import asyncio
+import os
+
 import pytest
 import pytest_asyncio
 
+from agentbay import AsyncAgentBay
 from .._common import AsyncSessionLifecycle, SessionLifecycleError
+
+
+@pytest.fixture(scope="module")
+def agent_bay_client() -> AsyncAgentBay:
+    """Lightweight module-scoped fixture: constructs an AsyncAgentBay client
+    without creating any cloud session.
+
+    Use this fixture when a test only needs to call AgentBay-level APIs
+    (e.g. ``get``, ``list``, ``create``, ``delete``, ``context.*``) directly,
+    without going through the ``make_session`` factory.
+
+    Typical use-cases:
+      - Parameter validation tests (empty / whitespace session IDs)
+      - Tests that create and manage sessions manually via ``agent_bay_client.create()``
+      - Tests that need ``agent_bay`` alongside a ``make_session``-managed session
+        (access ``lc.agent_bay`` instead for those cases)
+
+    Skips automatically when ``AGENTBAY_API_KEY`` is not set.
+    """
+    api_key = os.environ.get("AGENTBAY_API_KEY")
+    if not api_key:
+        pytest.skip("AGENTBAY_API_KEY environment variable is not set")
+    return AsyncAgentBay(api_key=api_key)
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -89,10 +116,13 @@ async def make_session():
 
     yield _factory
 
-    # Teardown: clean up all sessions created during this test function
-    for lc in created:
+    # Teardown: clean up all sessions and contexts created during this test function concurrently
+    async def _delete_one(lc: AsyncSessionLifecycle):
         try:
             result = await lc.delete()
             assert result.success, f"Session delete failed: {result.error_message}"
         except SessionLifecycleError as e:
             print(f"Warning: teardown delete failed: {e}")
+        await lc.delete_all_contexts()
+
+    await asyncio.gather(*(_delete_one(lc) for lc in created))

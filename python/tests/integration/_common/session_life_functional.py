@@ -84,10 +84,68 @@ class AsyncSessionLifecycle:
         # Whether to sync context data when deleting the session.
         # True for context_name / browser_name sessions, False for default sessions.
         self._sync_context = False
+        # Tracks all contexts created via create_context(); deleted by delete_all_contexts()
+        self._owned_contexts: list = []
+
+    @property
+    def agent_bay(self) -> AsyncAgentBay:
+        """Public accessor for the underlying AsyncAgentBay client.
+
+        Useful when a test needs to call AgentBay-level APIs (e.g. list, get,
+        delete, context.*) alongside the session managed by this lifecycle.
+        """
+        return self._agent_bay
 
     # ------------------------------------------------------------------
-    # Session creation
+    # Context helpers
     # ------------------------------------------------------------------
+
+    async def create_context(self, name: str) -> object:
+        """Get or create a named context and track it for cleanup.
+
+        Calls ``agent_bay.context.get(name, create=True)`` to resolve the
+        context, caches it in ``_owned_contexts``, and returns the context
+        object so callers can use its ``id`` directly.
+
+        Args:
+            name: Context name to look up or create.
+
+        Returns:
+            The context object (with ``.id`` and ``.name`` attributes).
+
+        Raises:
+            SessionLifecycleError: If the API call fails.
+        """
+        try:
+            result = await self._agent_bay.context.get(name, create=True)
+        except Exception as exc:
+            raise SessionLifecycleError(
+                f"context.get({name!r}) raised an exception",
+                cause=exc,
+            ) from exc
+
+        if not result.success or result.context is None:
+            raise SessionLifecycleError(
+                f"Failed to get/create context {name!r}: {result.error_message}"
+            )
+
+        self._owned_contexts.append(result.context)
+        print(f"Context created/resolved: {result.context.name} (ID: {result.context.id})")
+        return result.context
+
+    async def delete_all_contexts(self) -> None:
+        """Delete all contexts previously created via :meth:`create_context`.
+
+        Errors are printed as warnings and do not raise, so teardown always
+        completes even when individual deletes fail.
+        """
+        for context in self._owned_contexts:
+            try:
+                await self._agent_bay.context.delete(context)
+                print(f"Context deleted: {context.id}")
+            except Exception as e:
+                print(f"Warning: Failed to delete context {context.id}: {e}")
+        self._owned_contexts.clear()
 
     async def default_create(
         self,
@@ -164,21 +222,9 @@ class AsyncSessionLifecycle:
                 "policy is required for create_with_context_name(). "
                 "Please provide a SyncPolicy instance."
             )
-        try:
-            ctx_result = await self._agent_bay.context.get(context_name, create=True)
-        except Exception as exc:
-            raise SessionLifecycleError(
-                f"context.get({context_name!r}) raised an exception",
-                cause=exc,
-            ) from exc
-
-        if not ctx_result.success or ctx_result.context is None:
-            raise SessionLifecycleError(
-                f"Failed to get/create context {context_name!r}: {ctx_result.error_message}"
-            )
-
+        ctx = await self.create_context(context_name)
         context_sync = ContextSync(
-            ctx_result.context.id,
+            ctx.id,
             path=path,
             policy=policy,
         )
@@ -233,20 +279,8 @@ class AsyncSessionLifecycle:
         Raises:
             SessionLifecycleError: If context lookup or session creation fails.
         """
-        try:
-            ctx_result = await self._agent_bay.context.get(context_name, create=True)
-        except Exception as exc:
-            raise SessionLifecycleError(
-                f"context.get({context_name!r}) raised an exception",
-                cause=exc,
-            ) from exc
-
-        if not ctx_result.success or ctx_result.context is None:
-            raise SessionLifecycleError(
-                f"Failed to get/create browser context {context_name!r}: {ctx_result.error_message}"
-            )
-
-        browser_context = BrowserContext(ctx_result.context.id, **kwargs)
+        ctx = await self.create_context(context_name)
+        browser_context = BrowserContext(ctx.id, **kwargs)
         params = CreateSessionParams(image_id=image_id)
         params.browser_context = browser_context
         try:
@@ -390,6 +424,59 @@ class SyncSessionLifecycle:
         # Whether to sync context data when deleting the session.
         # True for context_name / browser_name sessions, False for default sessions.
         self._sync_context = False
+        # Tracks all contexts created via create_context(); deleted by delete_all_contexts()
+        self._owned_contexts: list = []
+
+    # ------------------------------------------------------------------
+    # Context helpers
+    # ------------------------------------------------------------------
+
+    def create_context(self, name: str) -> object:
+        """Get or create a named context and track it for cleanup.
+
+        Calls ``agent_bay.context.get(name, create=True)`` to resolve the
+        context, caches it in ``_owned_contexts``, and returns the context
+        object so callers can use its ``id`` directly.
+
+        Args:
+            name: Context name to look up or create.
+
+        Returns:
+            The context object (with ``.id`` and ``.name`` attributes).
+
+        Raises:
+            SessionLifecycleError: If the API call fails.
+        """
+        try:
+            result = self._agent_bay.context.get(name, create=True)
+        except Exception as exc:
+            raise SessionLifecycleError(
+                f"context.get({name!r}) raised an exception",
+                cause=exc,
+            ) from exc
+
+        if not result.success or result.context is None:
+            raise SessionLifecycleError(
+                f"Failed to get/create context {name!r}: {result.error_message}"
+            )
+
+        self._owned_contexts.append(result.context)
+        print(f"Context created/resolved: {result.context.name} (ID: {result.context.id})")
+        return result.context
+
+    def delete_all_contexts(self) -> None:
+        """Delete all contexts previously created via :meth:`create_context`.
+
+        Errors are printed as warnings and do not raise, so teardown always
+        completes even when individual deletes fail.
+        """
+        for context in self._owned_contexts:
+            try:
+                self._agent_bay.context.delete(context)
+                print(f"Context deleted: {context.id}")
+            except Exception as e:
+                print(f"Warning: Failed to delete context {context.id}: {e}")
+        self._owned_contexts.clear()
 
     # ------------------------------------------------------------------
     # Session creation
@@ -470,21 +557,9 @@ class SyncSessionLifecycle:
                 "policy is required for create_with_context_name(). "
                 "Please provide a SyncPolicy instance."
             )
-        try:
-            ctx_result = self._agent_bay.context.get(context_name, create=True)
-        except Exception as exc:
-            raise SessionLifecycleError(
-                f"context.get({context_name!r}) raised an exception",
-                cause=exc,
-            ) from exc
-
-        if not ctx_result.success or ctx_result.context is None:
-            raise SessionLifecycleError(
-                f"Failed to get/create context {context_name!r}: {ctx_result.error_message}"
-            )
-
+        ctx = self.create_context(context_name)
         context_sync = ContextSync(
-            ctx_result.context.id,
+            ctx.id,
             path=path,
             policy=policy,
         )
@@ -539,20 +614,8 @@ class SyncSessionLifecycle:
         Raises:
             SessionLifecycleError: If context lookup or session creation fails.
         """
-        try:
-            ctx_result = self._agent_bay.context.get(context_name, create=True)
-        except Exception as exc:
-            raise SessionLifecycleError(
-                f"context.get({context_name!r}) raised an exception",
-                cause=exc,
-            ) from exc
-
-        if not ctx_result.success or ctx_result.context is None:
-            raise SessionLifecycleError(
-                f"Failed to get/create browser context {context_name!r}: {ctx_result.error_message}"
-            )
-
-        browser_context = BrowserContext(ctx_result.context.id, **kwargs)
+        ctx = self.create_context(context_name)
+        browser_context = BrowserContext(ctx.id, **kwargs)
         params = CreateSessionParams(image_id=image_id)
         params.browser_context = browser_context
         try:

@@ -1,5 +1,6 @@
 # ci-stable
 
+import asyncio
 import random
 import time
 
@@ -20,7 +21,7 @@ async def test_list_all_sessions(make_session):
     print("\n=== Testing list() without labels ===")
 
     lc = await make_session("linux_latest")
-    agent_bay = lc._agent_bay
+    agent_bay = lc.agent_bay
 
     result = await agent_bay.list()
 
@@ -40,7 +41,7 @@ async def test_list_with_single_label(make_session):
     unique_id = generate_unique_id()
     print(f"Using unique ID for test: {unique_id}")
 
-    # Create 3 sessions with the same project label but different environments
+    # Create 3 sessions concurrently with the same project label but different environments
     params_list = [
         CreateSessionParams(labels={
             "project": f"list-test-{unique_id}",
@@ -64,12 +65,12 @@ async def test_list_with_single_label(make_session):
     for i, p in enumerate(params_list):
         lc = await make_session(params=p)
         if agent_bay is None:
-            agent_bay = lc._agent_bay
+            agent_bay = lc.agent_bay
         session_ids.append(lc._result.session.session_id)
         print(f"Session {i + 1} created: {lc._result.session.session_id}")
 
     # Wait for labels to propagate
-    time.sleep(5)
+    await asyncio.sleep(5)
 
     result = await agent_bay.list(labels={"project": f"list-test-{unique_id}"})
 
@@ -97,24 +98,26 @@ async def test_list_with_multiple_labels(make_session):
     unique_id = generate_unique_id()
     print(f"Using unique ID for test: {unique_id}")
 
-    # Create dev and staging sessions
-    dev_lc = await make_session(params=CreateSessionParams(labels={
-        "project": f"list-test-{unique_id}",
-        "environment": "dev",
-        "owner": f"test-{unique_id}",
-    }))
-    await make_session(params=CreateSessionParams(labels={
-        "project": f"list-test-{unique_id}",
-        "environment": "staging",
-        "owner": f"test-{unique_id}",
-    }))
+    # Create dev and staging sessions concurrently
+    dev_lc, _ = await asyncio.gather(
+        make_session(params=CreateSessionParams(labels={
+            "project": f"list-test-{unique_id}",
+            "environment": "dev",
+            "owner": f"test-{unique_id}",
+        })),
+        make_session(params=CreateSessionParams(labels={
+            "project": f"list-test-{unique_id}",
+            "environment": "staging",
+            "owner": f"test-{unique_id}",
+        })),
+    )
 
-    agent_bay = dev_lc._agent_bay
+    agent_bay = dev_lc.agent_bay
     dev_session_id = dev_lc._result.session.session_id
     print(f"Dev session ID: {dev_session_id}")
 
     # Wait for labels to propagate
-    time.sleep(5)
+    await asyncio.sleep(5)
 
     result = await agent_bay.list(labels={
         "project": f"list-test-{unique_id}",
