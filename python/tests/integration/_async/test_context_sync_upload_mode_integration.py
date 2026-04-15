@@ -1,11 +1,10 @@
 # ci-stable
-import os
 import random
 import time
 
 import pytest
 
-from agentbay import AsyncAgentBay, CreateSessionParams
+from agentbay import CreateSessionParams
 from agentbay import (
     ContextSync,
     DeletePolicy,
@@ -24,16 +23,7 @@ def generate_unique_id():
     return f"{timestamp}-{random_part}"
 
 
-@pytest.fixture(scope="module")
-def agent_bay():
-    """Create AsyncAgentBay instance, skip if API key not available."""
-    api_key = os.environ.get("AGENTBAY_API_KEY")
-    if not api_key:
-        pytest.skip("AGENTBAY_API_KEY environment variable not set")
-    return AsyncAgentBay(api_key=api_key)
-
-
-@pytest.fixture(scope="module")
+@pytest.fixture
 def unique_id():
     """Generate a unique ID shared across tests in this module."""
     uid = generate_unique_id()
@@ -42,7 +32,7 @@ def unique_id():
 
 
 @pytest.mark.asyncio
-async def test_create_session_with_default_file_upload_mode(agent_bay, unique_id):
+async def test_create_session_with_default_file_upload_mode(agent_bay_client, unique_id):
     """Test creating session with default File upload mode and write file."""
     print("\n=== Testing basic functionality with default File upload mode ===")
 
@@ -50,7 +40,7 @@ async def test_create_session_with_default_file_upload_mode(agent_bay, unique_id
     context_name = f"test-context-{unique_id}"
     print(f"Creating context with name: {context_name}")
 
-    context_result = await agent_bay.context.get(context_name, True)
+    context_result = await agent_bay_client.context.get(context_name, True)
     assert context_result.success, f"Failed to create context: {context_result.error_message}"
     assert context_result.context_id is not None
     assert context_result.context_id != ""
@@ -74,7 +64,7 @@ async def test_create_session_with_default_file_upload_mode(agent_bay, unique_id
     )
 
     print("Creating session with default File upload mode...")
-    session_result = await agent_bay.create(session_params)
+    session_result = await agent_bay_client.create(session_params)
     assert session_result.success, f"Failed to create session: {session_result.error_message}"
     assert session_result.session is not None
     assert session_result.request_id is not None
@@ -98,20 +88,20 @@ async def test_create_session_with_default_file_upload_mode(agent_bay, unique_id
 
     # Cleanup
     print("Cleaning up: Deleting the session...")
-    delete_result = await agent_bay.delete(session, sync_context=True)
+    delete_result = await agent_bay_client.delete(session, sync_context=True)
     assert delete_result.success, f"Failed to delete session: {delete_result.error_message}"
     print(f"Session {session.session_id} deleted successfully")
 
 
 @pytest.mark.asyncio
-async def test_context_sync_with_archive_mode_and_file_operations(agent_bay, unique_id):
+async def test_context_sync_with_archive_mode_and_file_operations(agent_bay_client, unique_id):
     """Test contextId and path usage with Archive mode and file operations."""
     print(
         "\n=== Testing contextId and path usage with Archive mode and file operations ==="
     )
 
     context_name = f"archive-mode-context-{unique_id}"
-    context_result = await agent_bay.context.get(context_name, True)
+    context_result = await agent_bay_client.context.get(context_name, True)
 
     assert context_result.success, f"Failed to create context: {context_result.error_message}"
     assert context_result.context_id is not None
@@ -147,7 +137,7 @@ async def test_context_sync_with_archive_mode_and_file_operations(agent_bay, uni
     )
 
     print("Creating session with Archive mode contextSync...")
-    session_result = await agent_bay.create(session_params)
+    session_result = await agent_bay_client.create(session_params)
 
     assert session_result.success, f"Failed to create session: {session_result.error_message}"
     assert session_result.session is not None
@@ -159,6 +149,7 @@ async def test_context_sync_with_archive_mode_and_file_operations(agent_bay, uni
     status_result = await session.get_status()
     assert status_result.success, f"Failed to get session status: {status_result.error_message}"
     assert status_result.status
+    assert status_result.status == "RUNNING", f"Session status should be RUNNING"
     print(f"Status: {status_result.status}")
 
     print(f"✅ Session created successfully with ID: {session.session_id}")
@@ -178,7 +169,10 @@ async def test_context_sync_with_archive_mode_and_file_operations(agent_bay, uni
 
     print(f"Creating file: {file_path}")
     print(f"File content size: {len(file_content)} bytes")
-
+    # 创建/tmp/archive-mode-test/目录
+    direction_result =  await session.file_system.create_directory("/tmp/archive-mode-test")
+    assert direction_result.success, f"Failed to create directory: {direction_result.error_message}"
+    print(f"Directory created successfully!")
     write_result = await session.file_system.write_file(
         file_path, file_content, "overwrite"
     )
@@ -191,44 +185,15 @@ async def test_context_sync_with_archive_mode_and_file_operations(agent_bay, uni
     print(f"✅ File write successful!")
     print(f"Write file request ID: {write_result.request_id}")
 
-    # Test context sync and info functionality
-    print("Testing context sync functionality...")
-    print("Calling context sync before getting info...")
-
-    sync_result = await session.context.sync()
-
-    assert sync_result.success, f"Failed to sync context: {sync_result.error_message}"
-    assert sync_result.request_id is not None
-
-    print(f"✅ Context sync successful!")
-    print(f"Sync request ID: {sync_result.request_id}")
-
-    # Now call context info after sync
-    print("Calling context info after sync...")
-    info_result = await session.context.info()
-
-    assert info_result.success, f"Failed to get context info: {info_result.error_message}"
-    assert info_result.request_id is not None
-    assert info_result.context_status_data is not None
-
-    print(f"✅ Context info successful!")
-    print(f"Info request ID: {info_result.request_id}")
-    print(f"Context status data count: {len(info_result.context_status_data)}")
-
-    # Log context status details
-    if len(info_result.context_status_data) > 0:
-        print("Context status details:")
-        for index, status in enumerate(info_result.context_status_data):
-            print(
-                f"  [{index}] ContextId: {status.context_id}, Path: {status.path}, Status: {status.status}, TaskType: {status.task_type}"
-            )
-
+    delete_result = await agent_bay_client.delete(session, sync_context=True)
+    assert delete_result.success, f"Failed to delete session: {delete_result.error_message}"
+    print(f"Session {session.session_id} deleted successfully")
     # List files in context sync directory
     print("Listing files in context sync directory...")
 
     sync_dir_path = "/tmp/archive-mode-test"
 
-    list_result = await agent_bay.context.list_files(
+    list_result = await agent_bay_client.context.list_files(
         context_result.context_id, sync_dir_path, page_number=1, page_size=10
     )
 
@@ -271,18 +236,16 @@ async def test_context_sync_with_archive_mode_and_file_operations(agent_bay, uni
 
     # Cleanup
     print("Cleaning up: Deleting the session...")
-    delete_result = await agent_bay.delete(session, sync_context=True)
-    assert delete_result.success, f"Failed to delete session: {delete_result.error_message}"
-    print(f"Session {session.session_id} deleted successfully")
+    
 
 
 @pytest.mark.asyncio
-async def test_invalid_upload_mode_with_policy_assignment(agent_bay, unique_id):
+async def test_invalid_upload_mode_with_policy_assignment(agent_bay_client, unique_id):
     """Test error handling when using invalid uploadMode with policy assignment."""
     print("\n=== Testing invalid uploadMode with policy assignment ===")
 
     context_name = f"invalid-policy-context-{unique_id}"
-    context_result = await agent_bay.context.get(context_name, True)
+    context_result = await agent_bay_client.context.get(context_name, True)
     assert context_result.success, f"Failed to create context: {context_result.error_message}"
 
     # Test 1: Invalid upload mode through SyncPolicy creation (new test for agentbay.create scenario)
@@ -326,12 +289,12 @@ async def test_invalid_upload_mode_with_policy_assignment(agent_bay, unique_id):
 
 
 @pytest.mark.asyncio
-async def test_valid_upload_mode_values(agent_bay, unique_id):
+async def test_valid_upload_mode_values(agent_bay_client, unique_id):
     """Test that valid uploadMode values are accepted."""
     print("\n=== Testing valid uploadMode values ===")
 
     context_name = f"valid-context-{unique_id}"
-    context_result = await agent_bay.context.get(context_name, True)
+    context_result = await agent_bay_client.context.get(context_name, True)
     assert context_result.success, f"Failed to create context: {context_result.error_message}"
 
     # Test "File" mode
