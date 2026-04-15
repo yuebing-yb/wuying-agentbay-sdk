@@ -61,8 +61,10 @@ async def test_start_app_and_stop_app(session):
     """Test starting an application with parameters."""
     # Arrange
     chrome_app = _shared.get("chrome_app")
-    start_cmd = chrome_app.start_cmd if chrome_app else "/usr/bin/google-chrome-stable %U"
+    start_cmd = chrome_app.start_cmd if chrome_app else "should skip pytest"
     print(f"\nTest: Starting {start_cmd} with work directory...")
+    if start_cmd == "should skip pytest":
+        pytest.skip("Google Chrome not found in installed apps")
 
     # Act
     # Note: 'activity' is for mobile, so we test work_directory here
